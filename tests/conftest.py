@@ -1,27 +1,32 @@
 from __future__ import annotations
 
+import contextlib
 import logging
 import os
 import re
 import shutil
 import sys
 
-from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Iterator
 
 import httpretty
+import keyring
 import pytest
 
+from jaraco.classes import properties
 from keyring.backend import KeyringBackend
+from keyring.backends.fail import Keyring as FailKeyring
+from keyring.errors import KeyringError
+from keyring.errors import KeyringLocked
 
 from poetry.config.config import Config as BaseConfig
 from poetry.config.dict_config_source import DictConfigSource
 from poetry.factory import Factory
-from poetry.inspection.info import PackageInfo
-from poetry.inspection.info import PackageInfoError
 from poetry.layouts import layout
+from poetry.packages.direct_origin import _get_package_from_git
 from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
 from poetry.utils.cache import ArtifactCache
@@ -32,9 +37,11 @@ from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.helpers import TestLocker
 from tests.helpers import TestRepository
 from tests.helpers import get_package
+from tests.helpers import http_setup_redirect
 from tests.helpers import isolated_environment
 from tests.helpers import mock_clone
-from tests.helpers import mock_download
+from tests.helpers import switch_working_directory
+from tests.helpers import with_working_directory
 
 
 if TYPE_CHECKING:
@@ -43,12 +50,19 @@ if TYPE_CHECKING:
 
     from _pytest.config import Config as PyTestConfig
     from _pytest.config.argparsing import Parser
+    from _pytest.tmpdir import TempPathFactory
     from pytest_mock import MockerFixture
 
     from poetry.poetry import Poetry
     from tests.types import FixtureCopier
     from tests.types import FixtureDirGetter
     from tests.types import ProjectFactory
+    from tests.types import SetProjectContext
+
+
+pytest_plugins = [
+    "tests.repositories.fixtures",
+]
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -65,7 +79,10 @@ def pytest_configure(config: PyTestConfig) -> None:
     config.addinivalue_line("markers", "integration: mark integration tests")
 
     if not config.option.integration:
-        config.option.markexpr = "not integration"
+        if config.option.markexpr:
+            config.option.markexpr += " and not integration"
+        else:
+            config.option.markexpr = "not integration"
 
 
 class Config(BaseConfig):
@@ -95,8 +112,8 @@ class DummyBackend(KeyringBackend):
     def __init__(self) -> None:
         self._passwords: dict[str, dict[str | None, str | None]] = {}
 
-    @classmethod
-    def priority(cls) -> int:
+    @properties.classproperty
+    def priority(self) -> float:
         return 42
 
     def set_password(self, service: str, username: str | None, password: Any) -> None:
@@ -113,6 +130,33 @@ class DummyBackend(KeyringBackend):
             del self._passwords[service][username]
 
 
+class LockedBackend(KeyringBackend):
+    @properties.classproperty
+    def priority(self) -> float:
+        return 42
+
+    def set_password(self, service: str, username: str | None, password: Any) -> None:
+        raise KeyringLocked()
+
+    def get_password(self, service: str, username: str | None) -> Any:
+        raise KeyringLocked()
+
+    def get_credential(self, service: str, username: str | None) -> Any:
+        raise KeyringLocked()
+
+    def delete_password(self, service: str, username: str | None) -> None:
+        raise KeyringLocked()
+
+
+class ErroneousBackend(FailKeyring):
+    @properties.classproperty
+    def priority(self) -> float:
+        return 42
+
+    def get_credential(self, service: str, username: str | None) -> Any:
+        raise KeyringError()
+
+
 @pytest.fixture()
 def dummy_keyring() -> DummyBackend:
     return DummyBackend()
@@ -120,24 +164,26 @@ def dummy_keyring() -> DummyBackend:
 
 @pytest.fixture()
 def with_simple_keyring(dummy_keyring: DummyBackend) -> None:
-    import keyring
-
-    keyring.set_keyring(dummy_keyring)  # type: ignore[no-untyped-call]
+    keyring.set_keyring(dummy_keyring)
 
 
 @pytest.fixture()
 def with_fail_keyring() -> None:
-    import keyring
+    keyring.set_keyring(FailKeyring())  # type: ignore[no-untyped-call]
 
-    from keyring.backends.fail import Keyring
 
-    keyring.set_keyring(Keyring())  # type: ignore[no-untyped-call]
+@pytest.fixture()
+def with_locked_keyring() -> None:
+    keyring.set_keyring(LockedBackend())  # type: ignore[no-untyped-call]
+
+
+@pytest.fixture()
+def with_erroneous_keyring() -> None:
+    keyring.set_keyring(ErroneousBackend())  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture()
 def with_null_keyring() -> None:
-    import keyring
-
     from keyring.backends.null import Keyring
 
     keyring.set_keyring(Keyring())  # type: ignore[no-untyped-call]
@@ -145,14 +191,10 @@ def with_null_keyring() -> None:
 
 @pytest.fixture()
 def with_chained_fail_keyring(mocker: MockerFixture) -> None:
-    from keyring.backends.fail import Keyring
-
     mocker.patch(
         "keyring.backend.get_all_keyring",
-        lambda: [Keyring()],  # type: ignore[no-untyped-call]
+        lambda: [FailKeyring()],  # type: ignore[no-untyped-call]
     )
-    import keyring
-
     from keyring.backends.chainer import ChainerBackend
 
     keyring.set_keyring(ChainerBackend())  # type: ignore[no-untyped-call]
@@ -166,8 +208,6 @@ def with_chained_null_keyring(mocker: MockerFixture) -> None:
         "keyring.backend.get_all_keyring",
         lambda: [Keyring()],  # type: ignore[no-untyped-call]
     )
-    import keyring
-
     from keyring.backends.chainer import ChainerBackend
 
     keyring.set_keyring(ChainerBackend())  # type: ignore[no-untyped-call]
@@ -206,11 +246,7 @@ def config(
     auth_config_source: DictConfigSource,
     mocker: MockerFixture,
 ) -> Config:
-    import keyring
-
-    from keyring.backends.fail import Keyring
-
-    keyring.set_keyring(Keyring())  # type: ignore[no-untyped-call]
+    keyring.set_keyring(FailKeyring())  # type: ignore[no-untyped-call]
 
     c = Config()
     c.merge(config_source.config)
@@ -241,27 +277,6 @@ def mock_user_config_dir(mocker: MockerFixture, config_dir: Path) -> None:
     mocker.patch("poetry.config.config.CONFIG_DIR", new=config_dir)
 
 
-@pytest.fixture(autouse=True)
-def download_mock(mocker: MockerFixture) -> None:
-    # Patch download to not download anything but to just copy from fixtures
-    mocker.patch("poetry.utils.helpers.download_file", new=mock_download)
-    mocker.patch("poetry.packages.direct_origin.download_file", new=mock_download)
-    mocker.patch("poetry.repositories.http_repository.download_file", new=mock_download)
-
-
-@pytest.fixture(autouse=True)
-def pep517_metadata_mock(mocker: MockerFixture) -> None:
-    def get_pep517_metadata(path: Path) -> PackageInfo:
-        with suppress(PackageInfoError):
-            return PackageInfo.from_setup_files(path)
-        return PackageInfo(name="demo", version="0.1.2")
-
-    mocker.patch(
-        "poetry.inspection.info.get_pep517_metadata",
-        get_pep517_metadata,
-    )
-
-
 @pytest.fixture
 def environ() -> Iterator[None]:
     with isolated_environment():
@@ -286,12 +301,19 @@ def git_mock(mocker: MockerFixture) -> None:
     p = mocker.patch("poetry.vcs.git.Git.get_revision")
     p.return_value = MOCK_DEFAULT_GIT_REVISION
 
+    _get_package_from_git.cache_clear()
+
 
 @pytest.fixture
 def http() -> Iterator[type[httpretty.httpretty]]:
     httpretty.reset()
-    with httpretty.enabled(allow_net_connect=False):
+    with httpretty.enabled(allow_net_connect=False, verbose=True):
         yield httpretty
+
+
+@pytest.fixture
+def http_redirector(http: type[httpretty.httpretty]) -> None:
+    http_setup_redirect(http, http.HEAD, http.GET, http.PUT, http.POST)
 
 
 @pytest.fixture
@@ -409,7 +431,7 @@ def project_factory(
 
         if use_test_locker:
             locker = TestLocker(
-                poetry.locker.lock, locker_config or poetry.locker._local_config
+                poetry.locker.lock, locker_config or poetry.locker._pyproject_data
             )
             locker.write()
 
@@ -486,3 +508,46 @@ def venv_flags_default() -> dict[str, bool]:
         "no-pip": False,
         "no-setuptools": False,
     }
+
+
+@pytest.fixture(autouse=(os.name == "nt"))
+def httpretty_windows_mock_urllib3_wait_for_socket(mocker: MockerFixture) -> None:
+    # this is a workaround for https://github.com/gabrielfalcao/HTTPretty/issues/442
+    mocker.patch("urllib3.util.wait.select_wait_for_socket", returns=True)
+
+
+@pytest.fixture
+def disable_http_status_force_list(mocker: MockerFixture) -> Iterator[None]:
+    mocker.patch("poetry.utils.authenticator.STATUS_FORCELIST", [])
+    yield
+
+
+@pytest.fixture(autouse=True)
+def tmp_working_directory(tmp_path: Path) -> Iterator[Path]:
+    with switch_working_directory(tmp_path):
+        yield tmp_path
+
+
+@pytest.fixture(autouse=True, scope="session")
+def tmp_session_working_directory(tmp_path_factory: TempPathFactory) -> Iterator[Path]:
+    tmp_path = tmp_path_factory.mktemp("session-working-directory")
+    with switch_working_directory(tmp_path):
+        yield tmp_path
+
+
+@pytest.fixture
+def set_project_context(
+    tmp_working_directory: Path, tmp_path: Path, fixture_dir: FixtureDirGetter
+) -> SetProjectContext:
+    @contextlib.contextmanager
+    def project_context(project: str | Path, in_place: bool = False) -> Iterator[Path]:
+        if isinstance(project, str):
+            project = fixture_dir(project)
+
+        with with_working_directory(
+            source=project,
+            target=tmp_path.joinpath(project.name) if not in_place else None,
+        ) as path:
+            yield path
+
+    return project_context

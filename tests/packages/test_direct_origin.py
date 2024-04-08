@@ -26,7 +26,7 @@ def test_direct_origin_get_package_from_file(fixture_dir: FixtureDirGetter) -> N
 def test_direct_origin_caches_url_dependency(tmp_path: Path) -> None:
     artifact_cache = ArtifactCache(cache_dir=tmp_path)
     direct_origin = DirectOrigin(artifact_cache)
-    url = "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+    url = "https://files.pythonhosted.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
 
     package = direct_origin.get_package_from_url(url)
 
@@ -42,9 +42,9 @@ def test_direct_origin_does_not_download_url_dependency_when_cached(
         return_value=fixture_dir("distributions") / "demo-0.1.2-py2.py3-none-any.whl"
     )
     direct_origin = DirectOrigin(artifact_cache)
-    url = "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
-    mocker.patch(
-        "poetry.packages.direct_origin.download_file",
+    url = "https://files.pythonhosted.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+    download_file = mocker.patch(
+        "poetry.packages.direct_origin.DirectOrigin._download_file",
         side_effect=Exception("download_file should not be called"),
     )
 
@@ -52,5 +52,5 @@ def test_direct_origin_does_not_download_url_dependency_when_cached(
 
     assert package.name == "demo"
     artifact_cache.get_cached_archive_for_link.assert_called_once_with(
-        Link(url), strict=True
+        Link(url), strict=True, download_func=download_file
     )

@@ -1,0 +1,35 @@
+Metadata-Version: 2.1
+Name: setuptools
+Version: 39.2.0
+Summary: Easily download, build, install, upgrade, and uninstall Python packages
+Home-page: https://github.com/pypa/setuptools
+Author: Python Packaging Authority
+Author-email: distutils-sig@python.org
+License: UNKNOWN
+Project-URL: Documentation, https://setuptools.readthedocs.io/
+Keywords: CPAN PyPI distutils eggs package management
+Platform: UNKNOWN
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: System :: Archiving :: Packaging
+Classifier: Topic :: System :: Systems Administration
+Classifier: Topic :: Utilities
+Requires-Python: >=2.7,!=3.0.*,!=3.1.*,!=3.2.*
+Description-Content-Type: text/x-rst; charset=UTF-8
+Provides-Extra: ssl
+Provides-Extra: certs
+Provides-Extra: certs
+Requires-Dist: certifi (==2016.9.26); extra == 'certs'
+Provides-Extra: ssl
+Requires-Dist: wincertstore (==0.2); (sys_platform=='win32') and extra == 'ssl'
+

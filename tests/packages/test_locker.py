@@ -552,7 +552,7 @@ def test_lock_file_should_not_have_mixed_types(
         Factory.create_dependency("B", {"version": ">=1.0.0", "optional": True})
     )
     package_a.requires[-1].activate()
-    package_a.extras[canonicalize_name("foo")] = [get_dependency("B", ">=1.0.0")]
+    package_a.extras = {canonicalize_name("foo"): [get_dependency("B", ">=1.0.0")]}
 
     locker.set_lock_data(root, [package_a])
 
@@ -620,6 +620,37 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
         _ = locker.lock_data
 
     assert "Unable to read the lock file" in str(e.value)
+
+
+def test_reading_lock_file_should_raise_an_error_on_missing_metadata(
+    locker: Locker,
+) -> None:
+    content = f"""\
+# {GENERATED_COMMENT}
+
+[[package]]
+name = "A"
+version = "1.0.0"
+description = ""
+optional = false
+python-versions = "*"
+files = []
+
+[package.source]
+type = "legacy"
+url = "https://foo.bar"
+reference = "legacy"
+"""
+    with locker.lock.open("w", encoding="utf-8") as f:
+        f.write(content)
+
+    with pytest.raises(RuntimeError) as e:
+        _ = locker.lock_data
+
+    assert (
+        "The lock file does not have a metadata entry.\nRegenerate the lock file with"
+        " the `poetry lock` command." in str(e.value)
+    )
 
 
 def test_locking_legacy_repository_package_should_include_source_section(
@@ -746,7 +777,6 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
     with locker.lock.open(encoding="utf-8") as f:
         content = f.read()
 
-    print(content)
     assert content == expected
 
 
@@ -787,7 +817,7 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
     assert content == expected
 
 
-def test_locker_should_neither_emit_warnings_nor_raise_error_for_lower_compatible_versions(  # noqa: E501
+def test_locker_should_neither_emit_warnings_nor_raise_error_for_lower_compatible_versions(
     locker: Locker, caplog: LogCaptureFixture
 ) -> None:
     older_version = "1.1"
@@ -832,7 +862,7 @@ def test_locker_dumps_dependency_information_correctly(
     )
     package_a.add_dependency(
         Factory.create_dependency(
-            "E", {"url": "https://python-poetry.org/poetry-1.2.0.tar.gz"}
+            "E", {"url": "https://files.pythonhosted.org/poetry-1.2.0.tar.gz"}
         )
     )
     package_a.add_dependency(
@@ -882,7 +912,7 @@ files = []
 B = {{path = "project_with_extras", develop = true}}
 C = {{path = "directory/project_with_transitive_directory_dependencies"}}
 D = {{path = "distributions/demo-0.1.0.tar.gz"}}
-E = {{url = "https://python-poetry.org/poetry-1.2.0.tar.gz"}}
+E = {{url = "https://files.pythonhosted.org/poetry-1.2.0.tar.gz"}}
 F = {{git = "https://github.com/python-poetry/poetry.git", branch = "foo"}}
 G = {{git = "https://github.com/python-poetry/poetry.git", subdirectory = "bar"}}
 H = {{git = "https://github.com/python-poetry/poetry.git", tag = "baz"}}
@@ -1063,7 +1093,7 @@ def test_content_hash_with_legacy_is_compatible(
 
     locker = locker.__class__(
         lock=locker.lock,
-        local_config=local_config,
+        pyproject_data={"tool": {"poetry": local_config}},
     )
 
     old_content_hash = sha256(
@@ -1096,9 +1126,7 @@ def test_lock_file_resolves_file_url_symlinks(root: ProjectPackage) -> None:
             dir=d1
         ) as d4, tempfile.TemporaryDirectory(dir=d2) as d3, tempfile.NamedTemporaryFile(
             dir=d4
-        ) as source_file, tempfile.NamedTemporaryFile(
-            dir=d3
-        ) as lock_file:
+        ) as source_file, tempfile.NamedTemporaryFile(dir=d3) as lock_file:
             lock_file.close()
             try:
                 os.symlink(Path(d3), symlink_path)

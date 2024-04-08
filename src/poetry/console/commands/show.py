@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import ClassVar
 
 from cleo.helpers import argument
 from cleo.helpers import option
@@ -11,6 +12,8 @@ from poetry.console.commands.group_command import GroupCommand
 
 
 if TYPE_CHECKING:
+    from cleo.io.inputs.argument import Argument
+    from cleo.io.inputs.option import Option
     from cleo.io.io import IO
     from cleo.ui.table import Rows
     from packaging.utils import NormalizedName
@@ -36,8 +39,10 @@ class ShowCommand(GroupCommand, EnvCommand):
     name = "show"
     description = "Shows information about packages."
 
-    arguments = [argument("package", "The package to inspect", optional=True)]
-    options = [
+    arguments: ClassVar[list[Argument]] = [
+        argument("package", "The package to inspect", optional=True)
+    ]
+    options: ClassVar[list[Option]] = [
         *GroupCommand._group_dependency_options(),
         option(
             "no-dev",
@@ -48,8 +53,9 @@ class ShowCommand(GroupCommand, EnvCommand):
         option(
             "why",
             None,
-            "When showing the full list, or a <info>--tree</info> for a single"
-            " package, also display why it's included.",
+            "When showing the full list, or a <info>--tree</info> for a single package,"
+            " display whether they are a direct dependency or required by other"
+            " packages",
         ),
         option("latest", "l", "Show the latest version."),
         option(
@@ -68,7 +74,7 @@ class ShowCommand(GroupCommand, EnvCommand):
     help = """The show command displays detailed information about a package, or
 lists all packages available."""
 
-    colors = ["cyan", "yellow", "green", "magenta", "blue"]
+    colors: ClassVar[list[str]] = ["cyan", "yellow", "green", "magenta", "blue"]
 
     def handle(self) -> int:
         package = self.argument("package")
@@ -211,8 +217,7 @@ lists all packages available."""
         from poetry.utils.helpers import get_package_version_display_string
 
         locked_packages = locked_repository.packages
-        pool = RepositoryPool(ignore_repository_names=True, config=self.poetry.config)
-        pool.add_repository(locked_repository)
+        pool = RepositoryPool.from_packages(locked_packages, self.poetry.config)
         solver = Solver(
             root,
             pool=pool,

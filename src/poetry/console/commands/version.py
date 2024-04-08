@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import ClassVar
 
 from cleo.helpers import argument
 from cleo.helpers import option
@@ -12,6 +13,8 @@ from poetry.console.commands.command import Command
 
 
 if TYPE_CHECKING:
+    from cleo.io.inputs.argument import Argument
+    from cleo.io.inputs.option import Option
     from poetry.core.constraints.version import Version
 
 
@@ -22,20 +25,21 @@ class VersionCommand(Command):
         "bump rule is provided."
     )
 
-    arguments = [
+    arguments: ClassVar[list[Argument]] = [
         argument(
             "version",
             "The version number or the rule to update the version.",
             optional=True,
-        )
+        ),
     ]
-    options = [
+    options: ClassVar[list[Option]] = [
         option("short", "s", "Output the version number only"),
         option(
             "dry-run",
             None,
             "Do not update pyproject.toml file",
         ),
+        option("next-phase", None, "Increment the phase of the current version"),
     ]
 
     help = """\
@@ -47,7 +51,7 @@ The new version should ideally be a valid semver string or a valid bump rule:
 patch, minor, major, prepatch, preminor, premajor, prerelease.
 """
 
-    RESERVED = {
+    RESERVED: ClassVar[set[str]] = {
         "major",
         "minor",
         "patch",
@@ -62,7 +66,7 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
 
         if version:
             version = self.increment_version(
-                self.poetry.package.pretty_version, version
+                self.poetry.package.pretty_version, version, self.option("next-phase")
             )
 
             if self.option("short"):
@@ -85,13 +89,15 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
                 self.line(self.poetry.package.pretty_version)
             else:
                 self.line(
-                    f"<comment>{self.poetry.package.name}</>"
+                    f"<comment>{self.poetry.package.pretty_name}</>"
                     f" <info>{self.poetry.package.pretty_version}</>"
                 )
 
         return 0
 
-    def increment_version(self, version: str, rule: str) -> Version:
+    def increment_version(
+        self, version: str, rule: str, next_phase: bool = False
+    ) -> Version:
         from poetry.core.constraints.version import Version
 
         try:
@@ -115,7 +121,8 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
             if parsed.is_unstable():
                 pre = parsed.pre
                 assert pre is not None
-                new = Version(parsed.epoch, parsed.release, pre.next())
+                pre = pre.next_phase() if next_phase else pre.next()
+                new = Version(parsed.epoch, parsed.release, pre)
             else:
                 new = parsed.next_patch().first_prerelease()
         else:

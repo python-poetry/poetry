@@ -1,15 +1,22 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+from typing import ClassVar
+
 from cleo.helpers import option
 
 from poetry.console.commands.installer_command import InstallerCommand
+
+
+if TYPE_CHECKING:
+    from cleo.io.inputs.option import Option
 
 
 class LockCommand(InstallerCommand):
     name = "lock"
     description = "Locks the project dependencies."
 
-    options = [
+    options: ClassVar[list[Option]] = [
         option(
             "no-update", None, "Do not update locked versions, only refresh lock file."
         ),
@@ -31,7 +38,7 @@ file.
 <info>poetry lock</info>
 """
 
-    loggers = ["poetry.repositories.pypi_repository"]
+    loggers: ClassVar[list[str]] = ["poetry.repositories.pypi_repository"]
 
     def handle(self) -> int:
         if self.option("check"):
@@ -44,8 +51,8 @@ file.
                 return 0
             self.line_error(
                 "<error>"
-                "Error: poetry.lock is not consistent with pyproject.toml. "
-                "Run `poetry lock [--no-update]` to fix it."
+                "Error: pyproject.toml changed significantly since poetry.lock was last generated. "
+                "Run `poetry lock [--no-update]` to fix the lock file."
                 "</error>"
             )
             return 1

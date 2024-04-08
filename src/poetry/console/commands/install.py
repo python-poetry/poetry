@@ -1,15 +1,22 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+from typing import ClassVar
+
 from cleo.helpers import option
 
 from poetry.console.commands.installer_command import InstallerCommand
+
+
+if TYPE_CHECKING:
+    from cleo.io.inputs.option import Option
 
 
 class InstallCommand(InstallerCommand):
     name = "install"
     description = "Installs the project dependencies."
 
-    options = [
+    options: ClassVar[list[Option]] = [
         *InstallerCommand._group_dependency_options(),
         option(
             "no-dev",
@@ -77,9 +84,15 @@ dependencies and not including the current project, run the command with the
 <info>--no-root</info> option like below:
 
 <info> poetry install --no-root</info>
+
+If you want to use Poetry only for dependency management but not for packaging,
+you can set the "package-mode" to false in your pyproject.toml file.
 """
 
-    _loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
+    _loggers: ClassVar[list[str]] = [
+        "poetry.repositories.pypi_repository",
+        "poetry.inspection.info",
+    ]
 
     @property
     def activated_groups(self) -> set[str]:
@@ -152,15 +165,7 @@ dependencies and not including the current project, run the command with the
         if return_code != 0:
             return return_code
 
-        if self.option("no-root"):
-            return 0
-
-        try:
-            builder = EditableBuilder(self.poetry, self.env, self.io)
-        except ModuleOrPackageNotFound:
-            # This is likely due to the fact that the project is an application
-            # not following the structure expected by Poetry
-            # If this is a true error it will be picked up later by build anyway.
+        if self.option("no-root") or not self.poetry.is_package_mode:
             return 0
 
         log_install = (
@@ -178,7 +183,30 @@ dependencies and not including the current project, run the command with the
             self.line("")
             return 0
 
-        builder.build()
+        # Prior to https://github.com/python-poetry/poetry-core/pull/629
+        # the existence of a module/package was checked when creating the
+        # EditableBuilder. Afterwards, the existence is checked after
+        # executing the build script (if there is one),
+        # i.e. during EditableBuilder.build().
+        try:
+            builder = EditableBuilder(self.poetry, self.env, self.io)
+            builder.build()
+        except (ModuleOrPackageNotFound, FileNotFoundError) as e:
+            # This is likely due to the fact that the project is an application
+            # not following the structure expected by Poetry.
+            # No need for an editable install in this case.
+            self.line("")
+            self.line_error(
+                f"Warning: The current project could not be installed: {e}\n"
+                "If you do not want to install the current project"
+                " use <c1>--no-root</c1>.\n"
+                "If you want to use Poetry only for dependency management"
+                " but not for packaging, you can disable package mode by setting"
+                " <c1>package-mode = false</> in your pyproject.toml file.\n"
+                "In a future version of Poetry this warning will become an error!",
+                style="warning",
+            )
+            return 0
 
         if overwrite:
             self.overwrite(log_install.format(tag="success"))

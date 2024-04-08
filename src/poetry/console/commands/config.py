@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import ClassVar
 from typing import cast
 
 from cleo.helpers import argument
@@ -19,6 +20,9 @@ from poetry.console.commands.command import Command
 
 
 if TYPE_CHECKING:
+    from cleo.io.inputs.argument import Argument
+    from cleo.io.inputs.option import Option
+
     from poetry.config.config_source import ConfigSource
 
 
@@ -26,12 +30,12 @@ class ConfigCommand(Command):
     name = "config"
     description = "Manages configuration settings."
 
-    arguments = [
+    arguments: ClassVar[list[Argument]] = [
         argument("key", "Setting key.", optional=True),
         argument("value", "Setting value.", optional=True, multiple=True),
     ]
 
-    options = [
+    options: ClassVar[list[Option]] = [
         option("list", None, "List configuration settings."),
         option("unset", None, "Unset configuration setting."),
         option("local", None, "Set/Get from the project's local configuration."),
@@ -48,7 +52,7 @@ To remove a repository (repo is a short alias for repositories):
 
     <comment>poetry config --unset repo.foo</comment>"""
 
-    LIST_PROHIBITED_SETTINGS = {"http-basic", "pypi-token"}
+    LIST_PROHIBITED_SETTINGS: ClassVar[set[str]] = {"http-basic", "pypi-token"}
 
     @property
     def unique_config_values(self) -> dict[str, tuple[Any, Any]]:
@@ -68,15 +72,22 @@ To remove a repository (repo is a short alias for repositories):
             ),
             "virtualenvs.path": (str, lambda val: str(Path(val))),
             "virtualenvs.prefer-active-python": (boolean_validator, boolean_normalizer),
+            "virtualenvs.prompt": (str, str),
             "experimental.system-git-client": (boolean_validator, boolean_normalizer),
             "installer.modern-installation": (boolean_validator, boolean_normalizer),
             "installer.parallel": (boolean_validator, boolean_normalizer),
             "installer.max-workers": (lambda val: int(val) > 0, int_normalizer),
-            "virtualenvs.prompt": (str, lambda val: str(val)),
             "installer.no-binary": (
                 PackageFilterPolicy.validator,
                 PackageFilterPolicy.normalize,
             ),
+            "installer.only-binary": (
+                PackageFilterPolicy.validator,
+                PackageFilterPolicy.normalize,
+            ),
+            "solver.lazy-wheel": (boolean_validator, boolean_normalizer),
+            "warnings.export": (boolean_validator, boolean_normalizer),
+            "keyring.enabled": (boolean_validator, boolean_normalizer),
         }
 
         return unique_config_values
@@ -122,6 +133,9 @@ To remove a repository (repo is a short alias for repositories):
 
         # show the value if no value is provided
         if not self.argument("value") and not self.option("unset"):
+            if setting_key.split(".")[0] in self.LIST_PROHIBITED_SETTINGS:
+                raise ValueError(f"Expected a value for {setting_key} setting.")
+
             m = re.match(r"^repos?(?:itories)?(?:\.(.+))?", self.argument("key"))
             value: str | dict[str, Any]
             if m:

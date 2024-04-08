@@ -38,6 +38,17 @@ def test_repository_no_repository() -> None:
         pool.repository("foo")
 
 
+def test_repository_deprecated_ignore_repository_names() -> None:
+    with pytest.warns(DeprecationWarning):
+        RepositoryPool(ignore_repository_names=True)
+    with pytest.warns(DeprecationWarning):
+        RepositoryPool(ignore_repository_names=False)
+    with pytest.warns(DeprecationWarning):
+        RepositoryPool(None, True)
+    with pytest.warns(DeprecationWarning):
+        RepositoryPool(None, False)
+
+
 def test_adding_repositories_with_same_name_twice_raises_value_error() -> None:
     repo1 = Repository("repo")
     repo2 = Repository("repo")
@@ -340,10 +351,17 @@ def test_search_no_legacy_repositories() -> None:
     assert pool.search("nothing") == []
 
 
-def test_search_legacy_repositories_are_skipped() -> None:
-    package = get_package("foo", "1.0.0")
-    repo1 = Repository("repo1", [package])
-    repo2 = LegacyRepository("repo2", "https://fake.repo/")
+def test_search_legacy_repositories_are_not_skipped(
+    legacy_repository: LegacyRepository,
+) -> None:
+    foo_package = get_package("foo", "1.0.0")
+    demo_package = get_package("demo", "0.1.0")
+
+    repo1 = Repository("repo1", [foo_package])
+    repo2 = legacy_repository
     pool = RepositoryPool([repo1, repo2])
 
-    assert pool.search("foo") == [package]
+    assert pool.search("foo") == [foo_package]
+
+    assert repo1.search("demo") == []
+    assert repo2.search("demo") == pool.search("demo") == [demo_package]

@@ -1,0 +1,11 @@
+Metadata-Version: 2.2
+Name: demo
+Version: 0.1.0
+Summary: Demo project.
+Home-page: https://github.com/demo/demo
+Author: Sébastien Eustace
+Author-email: sebastien@eustace.io
+License: MIT
+Description: UNKNOWN
+Platform: UNKNOWN
+Dynamic: Requires-Dist

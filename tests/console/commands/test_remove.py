@@ -65,12 +65,14 @@ def test_remove_without_specific_group_removes_from_all_groups(
 
     pyproject: dict[str, Any] = app.poetry.file.read()
 
-    groups_content: dict[str, Any] = tomlkit.parse("""\
+    groups_content: dict[str, Any] = tomlkit.parse(
+        """\
 [tool.poetry.group.bar.dependencies]
 foo = "^2.0.0"
 baz = "^1.0.0"
 
-""")
+"""
+    )
     pyproject["tool"]["poetry"]["dependencies"]["foo"] = "^2.0.0"
     pyproject["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
     pyproject = cast("TOMLDocument", pyproject)
@@ -123,12 +125,14 @@ def test_remove_without_specific_group_removes_from_specific_groups(
 
     pyproject: dict[str, Any] = app.poetry.file.read()
 
-    groups_content: dict[str, Any] = tomlkit.parse("""\
+    groups_content: dict[str, Any] = tomlkit.parse(
+        """\
 [tool.poetry.group.bar.dependencies]
 foo = "^2.0.0"
 baz = "^1.0.0"
 
-""")
+"""
+    )
     pyproject["tool"]["poetry"]["dependencies"]["foo"] = "^2.0.0"
     pyproject["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
     pyproject = cast("TOMLDocument", pyproject)
@@ -180,12 +184,14 @@ def test_remove_does_not_live_empty_groups(
 
     content: dict[str, Any] = app.poetry.file.read()
 
-    groups_content: dict[str, Any] = tomlkit.parse("""\
+    groups_content: dict[str, Any] = tomlkit.parse(
+        """\
 [tool.poetry.group.bar.dependencies]
 foo = "^2.0.0"
 baz = "^1.0.0"
 
-""")
+"""
+    )
     content["tool"]["poetry"]["dependencies"]["foo"] = "^2.0.0"
     content["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
     content = cast("TOMLDocument", content)
@@ -226,12 +232,14 @@ def test_remove_canonicalized_named_removes_dependency_correctly(
 
     pyproject: dict[str, Any] = app.poetry.file.read()
 
-    groups_content: dict[str, Any] = tomlkit.parse("""\
+    groups_content: dict[str, Any] = tomlkit.parse(
+        """\
 [tool.poetry.group.bar.dependencies]
 foo-bar = "^2.0.0"
 baz = "^1.0.0"
 
-""")
+"""
+    )
     pyproject["tool"]["poetry"]["dependencies"]["foo-bar"] = "^2.0.0"
     pyproject["tool"]["poetry"].value._insert_after(
         "dependencies", "group", groups_content["tool"]["poetry"]["group"]
@@ -327,7 +335,7 @@ Resolving dependencies...
 
 Package operations: 0 installs, 0 updates, 1 removal
 
-  • Removing docker (4.3.1)
+  - Removing docker (4.3.1)
 
 Writing lock file
 """

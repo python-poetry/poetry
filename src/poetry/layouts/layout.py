@@ -96,14 +96,16 @@ class Layout:
         if self.basedir != Path():
             package.append("from", self.basedir.as_posix())
         else:
-            if include == self._project:
+            if module_name(self._project) == include:
                 # package include and package name are the same,
                 # packages table is redundant here.
                 return None
 
         return package
 
-    def create(self, path: Path, with_tests: bool = True) -> None:
+    def create(
+        self, path: Path, with_tests: bool = True, with_pyproject: bool = True
+    ) -> None:
         path.mkdir(parents=True, exist_ok=True)
 
         self._create_default(path)
@@ -112,7 +114,8 @@ class Layout:
         if with_tests:
             self._create_tests(path)
 
-        self._write_poetry(path)
+        if with_pyproject:
+            self._write_poetry(path)
 
     def generate_poetry_content(self) -> TOMLDocument:
         template = POETRY_DEFAULT
@@ -144,9 +147,9 @@ class Layout:
 
         if self._dev_dependencies:
             for dep_name, dep_constraint in self._dev_dependencies.items():
-                poetry_content["group"]["dev"]["dependencies"][
-                    dep_name
-                ] = dep_constraint
+                poetry_content["group"]["dev"]["dependencies"][dep_name] = (
+                    dep_constraint
+                )
         else:
             del poetry_content["group"]
 

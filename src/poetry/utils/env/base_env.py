@@ -21,7 +21,6 @@ from poetry.utils.helpers import get_real_windows_path
 
 if TYPE_CHECKING:
     from packaging.tags import Tag
-    from poetry.core.constraints.version import Version
     from poetry.core.version.markers import BaseMarker
     from virtualenv.seed.wheels.util import Wheel
 
@@ -54,7 +53,6 @@ class Env:
         self._base = base or path
 
         self._marker_env: dict[str, Any] | None = None
-        self._pip_version: Version | None = None
         self._site_packages: SitePackages | None = None
         self._paths: dict[str, str] | None = None
         self._supported_tags: list[Tag] | None = None
@@ -171,13 +169,6 @@ class Env:
         return os.name
 
     @property
-    def pip_version(self) -> Version:
-        if self._pip_version is None:
-            self._pip_version = self.get_pip_version()
-
-        return self._pip_version
-
-    @property
     def site_packages(self) -> SitePackages:
         if self._site_packages is None:
             # we disable write checks if no user site exist
@@ -219,8 +210,11 @@ class Env:
 
         return self._platlib
 
+    def _get_lib_dirs(self) -> list[Path]:
+        return [self.purelib, self.platlib]
+
     def is_path_relative_to_lib(self, path: Path) -> bool:
-        for lib_path in [self.purelib, self.platlib]:
+        for lib_path in self._get_lib_dirs():
             with contextlib.suppress(ValueError):
                 path.relative_to(lib_path)
                 return True
@@ -285,9 +279,6 @@ class Env:
     def get_supported_tags(self) -> list[Tag]:
         raise NotImplementedError()
 
-    def get_pip_version(self) -> Version:
-        raise NotImplementedError()
-
     def get_paths(self) -> dict[str, str]:
         raise NotImplementedError()
 
@@ -324,8 +315,8 @@ class Env:
             "-I",
             "-W",
             "ignore",
-            "-",
-            input_=content,
+            "-c",
+            content,
             stderr=subprocess.PIPE,
             **kwargs,
         )
@@ -335,23 +326,11 @@ class Env:
         Run a command inside the Python environment.
         """
         call = kwargs.pop("call", False)
-        input_ = kwargs.pop("input_", None)
         env = kwargs.pop("env", dict(os.environ))
         stderr = kwargs.pop("stderr", subprocess.STDOUT)
 
         try:
-            if input_:
-                output: str = subprocess.run(
-                    cmd,
-                    stdout=subprocess.PIPE,
-                    stderr=stderr,
-                    input=input_,
-                    check=True,
-                    env=env,
-                    text=True,
-                    **kwargs,
-                ).stdout
-            elif call:
+            if call:
                 assert stderr != subprocess.PIPE
                 subprocess.check_call(cmd, stderr=stderr, env=env, **kwargs)
                 output = ""
@@ -360,7 +339,7 @@ class Env:
                     cmd, stderr=stderr, env=env, text=True, **kwargs
                 )
         except CalledProcessError as e:
-            raise EnvCommandError(e, input=input_)
+            raise EnvCommandError(e)
 
         return output
 

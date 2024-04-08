@@ -23,6 +23,7 @@
       "last_month": -1,
       "last_week": -1
     },
+    "dynamic": null,
     "home_page": "https://github.com/python-poetry/poetry-core",
     "keywords": "packaging,dependency,poetry",
     "license": "MIT",
@@ -37,6 +38,7 @@
       "Homepage": "https://github.com/python-poetry/poetry-core",
       "Repository": "https://github.com/python-poetry/poetry-core"
     },
+    "provides_extra": null,
     "release_url": "https://pypi.org/project/poetry-core/1.5.0/",
     "requires_dist": [
       "importlib-metadata (>=1.7.0) ; python_version < \"3.8\""
@@ -47,12 +49,11 @@
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 16600250,
+  "last_serial": 0,
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "2d996b0c5fe90e247b2b7b96a27cdf39ee59a02aab3c01d7243fc0c63cd7fb73",
         "md5": "be7589b4902793e66d7d979bd8581591",
         "sha256": "e216b70f013c47b82a72540d34347632c5bfe59fd54f5fe5d51f6a68b19aaf84"
       },
@@ -73,14 +74,13 @@
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "57bb2435fef60bb01f6c0891d9482c7053b50e90639f0f74d7658e99bdd4da69",
-        "md5": "481671a4895af7cdda4944eab67f3843",
-        "sha256": "253521bb7104e1df81f64d7b49ea1825057c91fa156d7d0bd752fefdad6f8c7a"
+        "md5": "3f9b36a7a94cd235bfd5f05794828445",
+        "sha256": "0ae8d28caf5c12ec1714b16d2e7157ddd52397ea6bfdeba5a9432e449a0184da"
       },
       "downloads": -1,
       "filename": "poetry_core-1.5.0.tar.gz",
       "has_sig": false,
-      "md5_digest": "481671a4895af7cdda4944eab67f3843",
+      "md5_digest": "3f9b36a7a94cd235bfd5f05794828445",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.7,<4.0",

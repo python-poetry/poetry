@@ -1,0 +1,26 @@
+Metadata-Version: 2.0
+Name: toga
+Version: 0.3.0.dev2
+Summary: A Python native, OS native GUI toolkit.
+Home-page: http://pybee.org/toga
+Author: Russell Keith-Magee
+Author-email: russell@keith-magee.com
+License: New BSD
+Description-Content-Type: UNKNOWN
+Platform: UNKNOWN
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Topic :: Software Development
+Classifier: Topic :: Software Development :: User Interfaces
+Classifier: Topic :: Software Development :: Widget Sets
+Requires-Dist: toga-cocoa; sys_platform=="darwin"
+Requires-Dist: toga-gtk; sys_platform=="linux"
+Requires-Dist: toga-winforms; sys_platform=="win32"
+

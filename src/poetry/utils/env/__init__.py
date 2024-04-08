@@ -35,13 +35,14 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from cleo.io.io import IO
-    from poetry.core.poetry import Poetry as CorePoetry
+
+    from poetry.poetry import Poetry
 
 
 @contextmanager
 def ephemeral_environment(
     executable: Path | None = None,
-    flags: dict[str, bool] | None = None,
+    flags: dict[str, str | bool] | None = None,
 ) -> Iterator[VirtualEnv]:
     with temporary_directory() as tmp_dir:
         # TODO: cache PEP 517 build environment corresponding to each project venv
@@ -56,7 +57,7 @@ def ephemeral_environment(
 
 @contextmanager
 def build_environment(
-    poetry: CorePoetry, env: Env | None = None, io: IO | None = None
+    poetry: Poetry, env: Env | None = None, io: IO | None = None
 ) -> Iterator[Env]:
     """
     If a build script is specified for the project, there could be additional build
@@ -66,36 +67,25 @@ def build_environment(
     environment is returned.
     """
     if not env or poetry.package.build_script:
-        with ephemeral_environment(executable=env.python if env else None) as venv:
-            overwrite = (
-                io is not None and io.output.is_decorated() and not io.is_debug()
-            )
-
+        with ephemeral_environment(
+            executable=env.python if env else None,
+            flags={"no-pip": True, "no-setuptools": True, "no-wheel": True},
+        ) as venv:
             if io:
-                if not overwrite:
-                    io.write_error_line("")
-
                 requires = [
                     f"<c1>{requirement}</c1>"
                     for requirement in poetry.pyproject.build_system.requires
                 ]
 
-                io.overwrite_error(
+                io.write_error_line(
                     "<b>Preparing</b> build environment with build-system requirements"
                     f" {', '.join(requires)}"
                 )
 
-            venv.run_pip(
-                "install",
-                "--disable-pip-version-check",
-                "--ignore-installed",
-                "--no-input",
-                *poetry.pyproject.build_system.requires,
-            )
+            from poetry.utils.isolated_build import IsolatedEnv
 
-            if overwrite:
-                assert io is not None
-                io.write_error_line("")
+            isolated_env = IsolatedEnv(venv, poetry.pool)
+            isolated_env.install(poetry.pyproject.build_system.requires)
 
             yield venv
     else:

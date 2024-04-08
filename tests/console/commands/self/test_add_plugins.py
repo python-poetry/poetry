@@ -57,7 +57,7 @@ Resolving dependencies...
 
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing poetry-plugin (0.1.0)
+  - Installing poetry-plugin (0.1.0)
 
 Writing lock file
 """
@@ -79,7 +79,7 @@ Resolving dependencies...
 
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing poetry-plugin (0.2.0)
+  - Installing poetry-plugin (0.2.0)
 
 Writing lock file
 """
@@ -101,8 +101,8 @@ Resolving dependencies...
 
 Package operations: 2 installs, 0 updates, 0 removals
 
-  • Installing pendulum (2.0.5)
-  • Installing poetry-plugin (0.1.2 9cf87a2)
+  - Installing pendulum (2.0.5)
+  - Installing poetry-plugin (0.1.2 9cf87a2)
 
 Writing lock file
 """
@@ -127,9 +127,9 @@ Resolving dependencies...
 
 Package operations: 3 installs, 0 updates, 0 removals
 
-  • Installing pendulum (2.0.5)
-  • Installing tomlkit (0.7.0)
-  • Installing poetry-plugin (0.1.2 9cf87a2)
+  - Installing pendulum (2.0.5)
+  - Installing tomlkit (0.7.0)
+  - Installing poetry-plugin (0.1.2 9cf87a2)
 
 Writing lock file
 """
@@ -167,8 +167,8 @@ Resolving dependencies...
 
 Package operations: 2 installs, 0 updates, 0 removals
 
-  • Installing pendulum (2.0.5)
-  • Installing poetry-plugin (0.1.2 9cf87a2)
+  - Installing pendulum (2.0.5)
+  - Installing poetry-plugin (0.1.2 9cf87a2)
 
 Writing lock file
 """
@@ -195,7 +195,8 @@ def test_add_existing_plugin_warns_about_no_operation(
 ) -> None:
     pyproject = SelfCommand.get_default_system_pyproject_file()
     with open(pyproject, "w", encoding="utf-8", newline="") as f:
-        f.write(f"""\
+        f.write(
+            f"""\
 [tool.poetry]
 name = "poetry-instance"
 version = "1.2.0"
@@ -207,7 +208,8 @@ python = "^3.6"
 
 [tool.poetry.group.{SelfCommand.ADDITIONAL_PACKAGE_GROUP}.dependencies]
 poetry-plugin = "^1.2.3"
-""")
+"""
+        )
 
     installed.add_package(Package("poetry-plugin", "1.2.3"))
 
@@ -220,7 +222,7 @@ poetry-plugin = "^1.2.3"
 The following packages are already present in the pyproject.toml and will be\
  skipped:
 
-  • poetry-plugin
+  - poetry-plugin
 {tester.command._hint_update_packages}
 Nothing to add.
 """
@@ -235,7 +237,8 @@ def test_add_existing_plugin_updates_if_requested(
 ) -> None:
     pyproject = SelfCommand.get_default_system_pyproject_file()
     with open(pyproject, "w", encoding="utf-8", newline="") as f:
-        f.write(f"""\
+        f.write(
+            f"""\
 [tool.poetry]
 name = "poetry-instance"
 version = "1.2.0"
@@ -247,7 +250,8 @@ python = "^3.6"
 
 [tool.poetry.group.{SelfCommand.ADDITIONAL_PACKAGE_GROUP}.dependencies]
 poetry-plugin = "^1.2.3"
-""")
+"""
+        )
 
     installed.add_package(Package("poetry-plugin", "1.2.3"))
 
@@ -264,7 +268,7 @@ Resolving dependencies...
 
 Package operations: 0 installs, 1 update, 0 removals
 
-  • Updating poetry-plugin (1.2.3 -> 2.3.4)
+  - Updating poetry-plugin (1.2.3 -> 2.3.4)
 
 Writing lock file
 """
@@ -300,8 +304,8 @@ Resolving dependencies...
 
 Package operations: 1 install, 1 update, 0 removals
 
-  • Updating tomlkit (0.7.1 -> 0.7.2)
-  • Installing poetry-plugin (1.2.3)
+  - Updating tomlkit (0.7.1 -> 0.7.2)
+  - Installing poetry-plugin (1.2.3)
 
 Writing lock file
 """

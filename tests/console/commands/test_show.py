@@ -2070,7 +2070,9 @@ def test_url_dependency_is_not_outdated_by_repository_package(
     installed: Repository,
     repo: TestRepository,
 ) -> None:
-    demo_url = "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+    demo_url = (
+        "https://files.pythonhosted.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+    )
     poetry.package.add_dependency(
         Factory.create_dependency(
             "demo",

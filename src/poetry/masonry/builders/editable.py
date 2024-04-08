@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import locale
 import os
 
 from base64 import urlsafe_b64encode
@@ -60,8 +61,7 @@ class EditableBuilder(Builder):
                     "  - <warning>Falling back on using a <b>setup.py</b></warning>"
                 )
                 self._setup_build()
-                path: Path = self._path
-                return path
+                return self._path
 
             self._run_build_script(self._package.build_script)
 
@@ -78,8 +78,7 @@ class EditableBuilder(Builder):
         added_files += self._add_scripts()
         self._add_dist_info(added_files)
 
-        path = self._path
-        return path
+        return self._path
 
     def _run_build_script(self, build_script: str) -> None:
         with build_environment(poetry=self._poetry, env=self._env, io=self._io) as env:
@@ -126,7 +125,7 @@ class EditableBuilder(Builder):
 
         try:
             pth_file = self._env.site_packages.write_text(
-                pth_file, content, encoding="utf-8"
+                pth_file, content, encoding=locale.getpreferredencoding()
             )
             self._debug(
                 f"  - Adding <c2>{pth_file.name}</c2> to <b>{pth_file.parent}</b> for"
@@ -157,8 +156,27 @@ class EditableBuilder(Builder):
 
         scripts = entry_points.get("console_scripts", [])
         for script in scripts:
-            name, script = script.split(" = ")
-            module, callable_ = script.split(":")
+            name, script_with_extras = script.split(" = ")
+            script_without_extras = script_with_extras.split("[")[0]
+            try:
+                module, callable_ = script_without_extras.split(":")
+            except ValueError as exc:
+                msg = (
+                    f"Bad script ({name}): script needs to specify a function within a"
+                    " module like: module(.submodule):function\nInstead got:"
+                    f" {script_with_extras}"
+                )
+                if "not enough values" in str(exc):
+                    msg += (
+                        "\nHint: If the script depends on module-level code, try"
+                        " wrapping it in a main() function and modifying your script"
+                        f' like:\n{name} = "{script_with_extras}:main"'
+                    )
+                elif "too many values" in str(exc):
+                    msg += '\nToo many ":" found!'
+
+                raise ValueError(msg)
+
             callable_holder = callable_.split(".", 1)[0]
 
             script_file = scripts_path.joinpath(name)

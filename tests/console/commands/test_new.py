@@ -9,6 +9,8 @@ from typing import Any
 
 import pytest
 
+from poetry.core.utils.helpers import module_name
+
 from poetry.factory import Factory
 
 
@@ -55,10 +57,11 @@ def verify_project_directory(
     else:
         package_include = {"include": package_path.parts[0]}
 
+    name = poetry.local_config.get("name", "")
     packages = poetry.local_config.get("packages")
 
     if not packages:
-        assert poetry.local_config.get("name") == package_include.get("include")
+        assert module_name(name) == package_include.get("include")
     else:
         assert len(packages) == 1
         assert packages[0] == package_include
@@ -226,3 +229,12 @@ python = "^{python}"
 """
 
     assert expected in pyproject_file.read_text()
+
+
+def test_basic_interactive_new(
+    tester: CommandTester, tmp_path: Path, init_basic_inputs: str, init_basic_toml: str
+) -> None:
+    path = tmp_path / "somepackage"
+    tester.execute(f"--interactive {path.as_posix()}", inputs=init_basic_inputs)
+    verify_project_directory(path, "my-package", "my_package", None)
+    assert init_basic_toml in tester.io.fetch_output()

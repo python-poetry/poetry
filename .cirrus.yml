@@ -1,36 +1,79 @@
-freebsd_instance:
-  image_family: freebsd-13-1
-  cpu: 2
-  memory: 4G
+tests_task:
+  # We only use Cirrus CI for FreeBSD at present; the rest of the task will assume FreeBSD.
+  freebsd_instance:
+    image_family: freebsd-14-0
+    # Cirrus has a concurrency limit of 8 vCPUs for FreeBSD. Allow executing 4 tasks in parallel.
+    cpu: 2
+    memory: 2G
 
-test_task:
-  name: "Tests / FreeBSD / "
-  only_if: $CIRRUS_TAG == ''
-  skip: "!changesInclude('.cirrus.yml', 'poetry.lock', 'pyproject.toml', '**.json','**.py')"
   env:
-    # `SHELL` environment variable is not set by default, so we explicitly set it to
-    # avoid failures on tests that depend on it.
-    SHELL: sh
     matrix:
       - PYTHON: python3.8
+        PYTHON_VERSION: 3.8
+        PYTHON_PACKAGE: python38
+        SQLITE_PACKAGE: py38-sqlite3
       - PYTHON: python3.9
+        PYTHON_VERSION: 3.9
+        PYTHON_PACKAGE: python39
+        SQLITE_PACKAGE: py39-sqlite3
       - PYTHON: python3.10
+        PYTHON_VERSION: 3.10
+        PYTHON_PACKAGE: python310
+        SQLITE_PACKAGE: py310-sqlite3
       - PYTHON: python3.11
-  install_prereqs_script:
-    - V=$(printf '%s' $PYTHON | tr -d '.[:alpha:]')
-    - pkg install -y python${V} py${V}-sqlite3
-  install_poetry_script:
-    - POETRY_HOME=/opt/poetry
+        PYTHON_VERSION: 3.11
+        PYTHON_PACKAGE: python311
+        SQLITE_PACKAGE: py311-sqlite3
+      # FIXME: Python 3.12 is not available in Ports.
+      # - PYTHON: python3.12
+      #   PYTHON_VERSION: 3.12
+      #   PYTHON_PACKAGE: python312
+      #   SQLITE_PACKAGE: py312-sqlite3
+    # FIXME: use pipx for install. pipx is currently broken in Ports.
+    POETRY_HOME: /opt/poetry
+    # SHELL is not set by default, and we have tests that depend on it.
+    SHELL: sh
+
+  bootstrap_poetry_script:
+    - pkg install -y git $PYTHON_PACKAGE $SQLITE_PACKAGE
     - $PYTHON -m venv $POETRY_HOME
-    - $POETRY_HOME/bin/pip install --upgrade pip setuptools wheel
-    # jsonschema 4.18 uses Rust-based libraries which causes issues when building from source
-    - $POETRY_HOME/bin/pip install poetry "jsonschema<4.18.0"
-    - echo "PATH=$POETRY_HOME/bin:$PATH" >> $CIRRUS_ENV
-  install_and_test_script:
+    - $POETRY_HOME/bin/pip install poetry
+    - echo "PATH=${POETRY_HOME}/bin:${PATH}" >> $CIRRUS_ENV
+
+  setup_environment_script:
+    # TODO: caching
     - poetry install
-    - poetry run pytest --junitxml=junit.xml -v
-  on_failure:
-    annotate_failure_artifacts:
-      path: junit.xml
-      format: junit
-      type: text/xml
+    - poetry env info
+    - poetry show
+
+  matrix:
+    - alias: pytest
+      name: "Tests / FreeBSD (Python ${PYTHON_VERSION}) / pytest"
+      skip: "!changesInclude('.cirrus.yml', 'poetry.lock', 'pyproject.toml', 'src/**.py', 'tests/**')"
+      pytest_script: poetry run pytest --integration -v --junitxml=junit.xml
+      on_failure:
+        annotate_failure_artifacts:
+          path: junit.xml
+          format: junit
+          type: text/xml
+
+    # TODO: caching
+    - alias: mypy
+      name: "Tests / FreeBSD (Python ${PYTHON_VERSION}) / mypy"
+      skip: "!changesInclude('.cirrus.yml', 'poetry.lock', 'pyproject.toml', 'src/**.py')"
+      mypy_script: poetry run mypy
+
+status_task:
+  name: "Tests / FreeBSD Status"
+
+  depends_on:
+    - pytest
+    - mypy
+
+  container:
+    image: alpine:latest
+    cpu: 0.5
+    memory: 512M
+
+  # No-op the clone.
+  clone_script: true

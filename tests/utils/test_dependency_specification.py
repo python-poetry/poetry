@@ -7,6 +7,7 @@ import pytest
 
 from deepdiff import DeepDiff
 
+from poetry.inspection.info import PackageInfo
 from poetry.utils.dependency_specification import RequirementsParser
 
 
@@ -22,6 +23,10 @@ if TYPE_CHECKING:
 @pytest.mark.parametrize(
     ("requirement", "expected_variants"),
     [
+        (
+            "git+http://github.com/demo/demo.git",
+            ({"git": "http://github.com/demo/demo.git", "name": "demo"},),
+        ),
         (
             "git+https://github.com/demo/demo.git",
             ({"git": "https://github.com/demo/demo.git", "name": "demo"},),
@@ -75,11 +80,11 @@ if TYPE_CHECKING:
         ("../demo", ({"name": "demo", "path": "../demo"},)),
         ("../demo/demo.whl", ({"name": "demo", "path": "../demo/demo.whl"},)),
         (
-            "https://example.com/distributions/demo-0.1.0.tar.gz",
+            "https://files.pythonhosted.org/distributions/demo-0.1.0.tar.gz",
             (
                 {
                     "name": "demo",
-                    "url": "https://example.com/distributions/demo-0.1.0.tar.gz",
+                    "url": "https://files.pythonhosted.org/distributions/demo-0.1.0.tar.gz",
                 },
             ),
         ),
@@ -163,12 +168,19 @@ def test_parse_dependency_specification(
 ) -> None:
     original = Path.exists
 
+    # Parsing file and path dependencies reads metadata from the file or path in
+    # question: for these tests we mock that out.
     def _mock(self: Path) -> bool:
         if "/" in requirement and self == Path.cwd().joinpath(requirement):
             return True
         return original(self)
 
     mocker.patch("pathlib.Path.exists", _mock)
+
+    mocker.patch(
+        "poetry.inspection.info.get_pep517_metadata",
+        return_value=PackageInfo(name="demo", version="0.1.2"),
+    )
 
     assert any(
         not DeepDiff(

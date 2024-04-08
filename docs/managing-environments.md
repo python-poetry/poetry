@@ -22,7 +22,7 @@ By default, Poetry will try to use the Python version used during Poetry's insta
 to create the virtual environment for the current project.
 
 However, for various reasons, this Python version might not be compatible
-with the `python` requirement of the project. In this case, Poetry will try
+with the `python` range supported by the project. In this case, Poetry will try
 to find one that is and use it. If it's unable to do so then you will be prompted
 to activate one explicitly, see [Switching environments](#switching-between-environments).
 
@@ -88,13 +88,13 @@ poetry env info
 will output something similar to this:
 
 ```text
-Virtual environment
+Virtualenv
 Python:         3.7.1
 Implementation: CPython
 Path:           /path/to/poetry/cache/virtualenvs/test-O3eWbxRl-py3.7
 Valid:          True
 
-System
+Base
 Platform: darwin
 OS:       posix
 Python:   /path/to/main/python
@@ -160,3 +160,12 @@ poetry env remove --all
 ```
 
 If you remove the currently activated virtual environment, it will be automatically deactivated.
+
+{{% note %}}
+If you use the [`virtualenvs.in-project`]({{< relref "configuration#virtualenvsin-project" >}}) configuration, you
+can simply use the command as shown below.
+
+```bash
+poetry env remove
+```
+{{% /note %}}

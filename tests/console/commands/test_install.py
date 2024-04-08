@@ -33,7 +33,6 @@ authors = [
     "Python Poetry <tests@python-poetry.org>"
 ]
 license = "MIT"
-readme = "README.rst"
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.4"
@@ -348,9 +347,8 @@ def test_remove_untracked_outputs_deprecation_warning(
 
     assert tester.status_code == 0
     assert (
-        tester.io.fetch_error()
-        == "The `--remove-untracked` option is deprecated, use the `--sync` option"
-        " instead.\n"
+        "The `--remove-untracked` option is deprecated, use the `--sync` option"
+        " instead.\n" in tester.io.fetch_error()
     )
 
 
@@ -417,6 +415,38 @@ def test_install_logs_output_decorated(
     assert tester.io.fetch_output() == expected
 
 
+@pytest.mark.parametrize("with_root", [True, False])
+@pytest.mark.parametrize("error", ["module", "readme", ""])
+def test_install_warning_corrupt_root(
+    command_tester_factory: CommandTesterFactory,
+    project_factory: ProjectFactory,
+    with_root: bool,
+    error: str,
+) -> None:
+    name = "corrupt"
+    content = f"""\
+[tool.poetry]
+name = "{name}"
+version = "1.2.3"
+description = ""
+authors = []
+"""
+    if error == "readme":
+        content += 'readme = "missing_readme.md"\n'
+    poetry = project_factory(name=name, pyproject_content=content)
+    if error != "module":
+        (poetry.pyproject_path.parent / f"{name}.py").touch()
+
+    tester = command_tester_factory("install", poetry=poetry)
+    tester.execute("" if with_root else "--no-root")
+
+    assert tester.status_code == 0
+    if with_root and error:
+        assert "The current project could not be installed: " in tester.io.fetch_error()
+    else:
+        assert tester.io.fetch_error() == ""
+
+
 @pytest.mark.parametrize("options", ["", "--without dev"])
 @pytest.mark.parametrize(
     "project", ["missing_directory_dependency", "missing_file_dependency"]
@@ -433,6 +463,25 @@ def test_install_path_dependency_does_not_exist(
     poetry.locker.locked(True)
     tester = command_tester_factory("install", poetry=poetry)
     if options:
+        tester.execute(options)
+    else:
+        with pytest.raises(ValueError, match="does not exist"):
+            tester.execute(options)
+
+
+@pytest.mark.parametrize("options", ["", "--extras notinstallable"])
+def test_install_extra_path_dependency_does_not_exist(
+    command_tester_factory: CommandTesterFactory,
+    project_factory: ProjectFactory,
+    fixture_dir: FixtureDirGetter,
+    options: str,
+) -> None:
+    project = "missing_extra_directory_dependency"
+    poetry = _project_factory(project, project_factory, fixture_dir)
+    assert isinstance(poetry.locker, TestLocker)
+    poetry.locker.locked(True)
+    tester = command_tester_factory("install", poetry=poetry)
+    if not options:
         tester.execute(options)
     else:
         with pytest.raises(ValueError, match="does not exist"):
@@ -457,3 +506,20 @@ def test_install_missing_directory_dependency_with_no_directory(
     else:
         with pytest.raises(ValueError, match="does not exist"):
             tester.execute(options)
+
+
+def test_non_package_mode_does_not_try_to_install_root(
+    command_tester_factory: CommandTesterFactory,
+    project_factory: ProjectFactory,
+) -> None:
+    content = """\
+[tool.poetry]
+package-mode = false
+"""
+    poetry = project_factory(name="non-package-mode", pyproject_content=content)
+
+    tester = command_tester_factory("install", poetry=poetry)
+    tester.execute()
+
+    assert tester.status_code == 0
+    assert tester.io.fetch_error() == ""

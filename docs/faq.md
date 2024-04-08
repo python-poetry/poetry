@@ -83,8 +83,9 @@ If your package will be used as an application, it might be worth to define an u
 
 ### Is tox supported?
 
-**Yes**. By using the [isolated builds](https://tox.readthedocs.io/en/latest/config.html#conf-isolated_build) `tox` provides,
-you can use it in combination with the PEP 517 compliant build system provided by Poetry.
+**Yes**. Provided that you are using `tox` >= 4, you can use it in combination with
+the PEP 517 compliant build system provided by Poetry. (With tox 3, you have to set the
+[isolated build](https://tox.wiki/en/3.27.1/config.html#conf-isolated_build) option.)
 
 So, in your `pyproject.toml` file, add this section if it does not already exist:
 
@@ -97,10 +98,9 @@ build-backend = "poetry.core.masonry.api"
 `tox` can be configured in multiple ways. It depends on what should be the code under test and which dependencies
 should be installed.
 
-#### Usecase #1
+#### Use case #1
 ```ini
 [tox]
-isolated_build = true
 
 [testenv]
 deps =
@@ -112,10 +112,9 @@ commands =
 `tox` will create an `sdist` package of the project and uses `pip` to install it in a fresh environment.
 Thus, dependencies are resolved by `pip`.
 
-#### Usecase #2
+#### Use case #2
 ```ini
 [tox]
-isolated_build = true
 
 [testenv]
 allowlist_externals = poetry
@@ -126,13 +125,12 @@ commands =
 ```
 
 `tox` will create an `sdist` package of the project and uses `pip` to install it in a fresh environment.
-Thus, dependencies are resolved by `pip` in the first place. But afterwards we run Poetry,
+Thus, dependencies are resolved by `pip` in the first place. But afterward we run Poetry,
  which will install the locked dependencies into the environment.
 
-#### Usecase #3
+#### Use case #3
 ```ini
 [tox]
-isolated_build = true
 
 [testenv]
 skip_install = true
@@ -146,6 +144,25 @@ commands =
 `tox` will not do any install. Poetry installs all the dependencies and the current package in editable mode.
 Thus, tests are running against the local files and not the built and installed package.
 
+#### Note about credentials
+
+Note that `tox` does not forward the environment variables of your current shell session by default.
+This may cause Poetry to not be able to install dependencies in the `tox` environments if you have configured
+credentials using the system keyring on Linux systems or using environment variables in general.
+You can use the `passenv` [configuration option](https://tox.wiki/en/latest/config.html#passenv) to forward the
+required variables explicitly or `passenv = "*"` to forward all of them.
+Linux systems may require forwarding the `DBUS_SESSION_BUS_ADDRESS` variable to allow access to the system keyring,
+though this may vary between desktop environments.
+
+Alternatively, you can disable the keyring completely:
+
+```bash
+poetry config keyring.enabled false
+```
+
+Be aware that this will cause Poetry to write passwords to plaintext config files.
+You will need to set the credentials again after changing this setting.
+
 ### Is Nox supported?
 
 Use the [`nox-poetry`](https://github.com/cjolowicz/nox-poetry) package to install locked versions of
@@ -154,8 +171,8 @@ dependencies specified in `poetry.lock` into [Nox](https://nox.thea.codes/en/sta
 ### I don't want Poetry to manage my virtual environments. Can I disable it?
 
 While Poetry automatically creates virtual environments to always work isolated
-from the global Python installation, there are valid reasons why it's not necessary
-and is an overhead, like when working with containers.
+from the global Python installation, there are rare scenarios where the use a Poetry managed
+virtual environment is not possible or preferred.
 
 In this case, you can disable this feature by setting the `virtualenvs.create` setting to `false`:
 
@@ -163,7 +180,14 @@ In this case, you can disable this feature by setting the `virtualenvs.create` s
 poetry config virtualenvs.create false
 ```
 
-### Why is Poetry telling me that the current project's Python requirement is not compatible with one or more packages' Python requirements?
+{{% warning %}}
+The recommended best practice, including when installing an application within a container, is to make
+use of a virtual environment. This can also be managed by another tool.
+
+The Poetry team strongly encourages the use of a virtual environment.
+{{% /warning %}}
+
+### Why is Poetry telling me that the current project's supported Python range is not compatible with one or more packages' Python requirements?
 
 Unlike `pip`, Poetry doesn't resolve for just the Python in the current environment. Instead it makes sure that a dependency
 is resolvable within the given Python version range in `pyproject.toml`.
@@ -179,18 +203,18 @@ This means your project aims to be compatible with any Python version >=3.7,<4.0
 whose Python requirement doesn't match the whole range Poetry will tell you this, e.g.:
 
 ```
-The current project's Python requirement (>=3.7.0,<4.0.0) is not compatible with some of the required packages Python requirement:
+The current project's supported Python range (>=3.7.0,<4.0.0) is not compatible with some of the required packages Python requirement:
     - scipy requires Python >=3.7,<3.11, so it will not be satisfied for Python >=3.11,<4.0.0
 ```
 
-Usually you will want to match the Python requirement of your project with the upper bound of the failing dependency.
-Alternative you can tell Poetry to install this dependency [only for a specific range of Python versions]({{< relref "dependency-specification#multiple-constraints-dependencies" >}}),
+Usually you will want to match the supported Python range of your project with the upper bound of the failing dependency.
+Alternatively you can tell Poetry to install this dependency [only for a specific range of Python versions]({{< relref "dependency-specification#multiple-constraints-dependencies" >}}),
 if you know that it's not needed in all versions.
 
 
 ### Why does Poetry enforce PEP 440 versions?
 
-This is done so to be compliant with the broader Python ecosystem.
+This is done to be compliant with the broader Python ecosystem.
 
 For example, if Poetry builds a distribution for a project that uses a version that is not valid according to
 [PEP 440](https://peps.python.org/pep-0440), third party tools will be unable to parse the version correctly.
@@ -198,7 +222,7 @@ For example, if Poetry builds a distribution for a project that uses a version t
 
 ### Poetry busts my Docker cache because it requires me to COPY my source files in before installing 3rd party dependencies
 
-By default running `poetry install ...` requires you to have your source files present (both the "root" package and any directory path dependencies you might have).
+By default, running `poetry install ...` requires you to have your source files present (both the "root" package and any directory path dependencies you might have).
 This interacts poorly with Docker's caching mechanisms because any change to a source file will make any layers (subsequent commands in your Dockerfile) re-run.
 For example, you might have a Dockerfile that looks something like this:
 
@@ -206,7 +230,7 @@ For example, you might have a Dockerfile that looks something like this:
 FROM python
 COPY pyproject.toml poetry.lock .
 COPY src/ ./src
-RUN pip install poetry && poetry install --no-dev
+RUN pip install poetry && poetry install --only main
 ```
 
 As soon as *any* source file changes, the cache for the `RUN` layer will be invalidated, which forces all 3rd party dependencies (likely the slowest step out of these) to be installed again if you changed any files in `src/`.
@@ -221,9 +245,9 @@ This might look something like this:
 ```text
 FROM python
 COPY pyproject.toml poetry.lock .
-RUN pip install poetry && poetry install --no-root --no-directory
+RUN pip install poetry && poetry install --only main --no-root --no-directory
 COPY src/ ./src
-RUN poetry install --no-dev
+RUN poetry install --only main
 ```
 
 The two key options we are using here are `--no-root` (skips installing the project source) and `--no-directory` (skips installing any local directory path dependencies, you can omit this if you don't have any).

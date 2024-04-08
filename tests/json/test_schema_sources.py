@@ -29,8 +29,8 @@ def test_pyproject_toml_invalid_priority() -> None:
     content = toml["tool"]["poetry"]
     assert Factory.validate(content) == {
         "errors": [
-            "[source.0.priority] 'arbitrary' is not one of ['primary', 'default',"
-            " 'secondary', 'supplemental', 'explicit']"
+            "data.source[0].priority must be one of ['primary', 'default', "
+            "'secondary', 'supplemental', 'explicit']"
         ],
         "warnings": [],
     }
@@ -42,12 +42,6 @@ def test_pyproject_toml_invalid_priority_legacy_and_new() -> None:
     ).read()
     content = toml["tool"]["poetry"]
     assert Factory.validate(content) == {
-        "errors": [
-            "[source.0] {'name': 'pypi-simple', 'url': "
-            "'https://pypi.org/simple/', 'default': False, 'priority': "
-            "'primary'} should not be valid under {'anyOf': [{'required': "
-            "['priority', 'default']}, {'required': ['priority', "
-            "'secondary']}]}"
-        ],
+        "errors": ["data.source[0] must NOT match a disallowed definition"],
         "warnings": [],
     }

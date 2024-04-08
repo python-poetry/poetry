@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+from typing import ClassVar
+
 from cleo.helpers import argument
 from cleo.helpers import option
 from cleo.io.null_io import NullIO
@@ -10,11 +13,16 @@ from poetry.console.commands.command import Command
 from poetry.repositories.repository_pool import Priority
 
 
+if TYPE_CHECKING:
+    from cleo.io.inputs.argument import Argument
+    from cleo.io.inputs.option import Option
+
+
 class SourceAddCommand(Command):
     name = "source add"
     description = "Add source configuration for project."
 
-    arguments = [
+    arguments: ClassVar[list[Argument]] = [
         argument(
             "name",
             "Source repository name.",
@@ -27,7 +35,7 @@ class SourceAddCommand(Command):
         ),
     ]
 
-    options = [
+    options: ClassVar[list[Option]] = [
         option(
             "default",
             "d",
@@ -107,11 +115,19 @@ class SourceAddCommand(Command):
             priority = Priority[priority_str.upper()]
 
         if priority is Priority.SECONDARY:
-            allowed_prios = (p for p in Priority if p is not Priority.SECONDARY)
+            allowed_prios = (
+                p for p in Priority if p not in {Priority.DEFAULT, Priority.SECONDARY}
+            )
             self.line_error(
                 "<warning>Warning: Priority 'secondary' is deprecated. Consider"
                 " changing the priority to one of the non-deprecated values:"
                 f" {', '.join(repr(p.name.lower()) for p in allowed_prios)}.</warning>"
+            )
+        if priority is Priority.DEFAULT:
+            self.line_error(
+                "<warning>Warning: Priority 'default' is deprecated. You can achieve"
+                " the same effect by changing the priority to 'primary' and putting"
+                " the source first.</warning>"
             )
 
         sources = AoT([])

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from typing import Any
+from typing import ClassVar
 
 from cleo.helpers import argument
 from cleo.helpers import option
@@ -11,12 +13,19 @@ from tomlkit.toml_document import TOMLDocument
 from poetry.console.commands.installer_command import InstallerCommand
 
 
+if TYPE_CHECKING:
+    from cleo.io.inputs.argument import Argument
+    from cleo.io.inputs.option import Option
+
+
 class RemoveCommand(InstallerCommand):
     name = "remove"
     description = "Removes a package from the project dependencies."
 
-    arguments = [argument("packages", "The packages to remove.", multiple=True)]
-    options = [
+    arguments: ClassVar[list[Argument]] = [
+        argument("packages", "The packages to remove.", multiple=True)
+    ]
+    options: ClassVar[list[Option]] = [
         option("group", "G", "The group to remove the dependency from.", flag=False),
         option(
             "dev",
@@ -39,7 +48,10 @@ list of installed packages
 
 <info>poetry remove</info>"""
 
-    loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
+    loggers: ClassVar[list[str]] = [
+        "poetry.repositories.pypi_repository",
+        "poetry.inspection.info",
+    ]
 
     def handle(self) -> int:
         packages = self.argument("packages")
@@ -105,7 +117,8 @@ list of installed packages
             )
 
         # Refresh the locker
-        self.poetry.locker.set_local_config(poetry_content)
+        content["tool"]["poetry"] = poetry_content
+        self.poetry.locker.set_pyproject_data(content)
         self.installer.set_locker(self.poetry.locker)
         self.installer.set_package(self.poetry.package)
         self.installer.dry_run(self.option("dry-run", False))

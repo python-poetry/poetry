@@ -1,0 +1,70 @@
+name: Documentation Preview
+
+on:
+  pull_request:
+    # allow repository maintainers to modify and test workflow
+    paths-ignore:
+      - "**"
+      - "!.github/workflows/docs.yaml"
+  pull_request_target:
+    # enable runs for this workflow when labeled as documentation only
+    # prevent execution when the workflow itself is modified from a fork
+    types:
+      - labeled
+      - synchronize
+    paths-ignore:
+      - "**"
+      - "!docs/**"
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    if: >
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'impact/docs'))
+      || (github.event_name != 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        with:
+          repository: python-poetry/website
+
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        with:
+          path: poetry
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4
+        with:
+          node-version: "18"
+
+      - uses: peaceiris/actions-hugo@16361eb4acea8698b220b76c0d4e84e1fd22c61d # v2
+        with:
+          hugo-version: '0.83.1'
+
+      - uses: ./poetry/.github/actions/bootstrap-poetry
+
+      - uses: ./poetry/.github/actions/poetry-install
+        with:
+          args: --no-root --only main
+
+      - name: website-build
+        run: |
+          # Rebuild the docs files from the PR checkout.
+          poetry run python bin/website build --local ./poetry
+          # Build website assets (CSS/JS).
+          npm ci && npm run prod
+          # Build the static website.
+          hugo -v --minify
+
+      - uses: amondnet/vercel-action@16e87c0a08142b0d0d33b76aeaf20823c381b9b9 # v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          scope: python-poetry
+          github-comment: true
+          working-directory: public

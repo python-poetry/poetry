@@ -1,17 +1,62 @@
 {
-  "name": "pluggy",
   "files": [
     {
-      "filename": "pluggy-0.6.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/11/bf/cbeb8cdfaffa9f2ea154a30ae31a9d04a1209312e2919138b4171a1f8199/pluggy-0.6.0.tar.gz",
+      "core-metadata": {
+        "sha256": "4d9f559e9a7cda8e28dcedbc0f37ef6335a7560e3386c8016358ed4c5f3785a6"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "4d9f559e9a7cda8e28dcedbc0f37ef6335a7560e3386c8016358ed4c5f3785a6"
+      },
+      "filename": "pluggy-0.6.0-py2-none-any.whl",
       "hashes": {
-        "md5": "ffdde7c3a5ba9a440404570366ffb6d5",
-        "sha256": "7f8ae7f5bdf75671a718d2daf0a64b7885f74510bcd98b1a0bb420eb9a9d0cff"
-      }
+        "md5": "de6f342e8044d0071eefc3c9cda33055",
+        "sha256": "9b835f86bfe5498c87ace7f4899cb1b0c40e71c9277377f6851c74a307879285"
+      },
+      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+      "size": 11953,
+      "upload-time": "2018-04-15T17:55:28.983278Z",
+      "url": "https://files.pythonhosted.org/packages/82/05/43e3947125a2137cba4746135c75934ceed1863f27e050fc560052104a71/pluggy-0.6.0-py2-none-any.whl",
+      "yanked": false
+    },
+    {
+      "core-metadata": {
+        "sha256": "77f2f50376e7e82c6302a126af0eaf929596851f0586ced7ac1d5d381c9b6f19"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "77f2f50376e7e82c6302a126af0eaf929596851f0586ced7ac1d5d381c9b6f19"
+      },
+      "filename": "pluggy-0.6.0-py3-none-any.whl",
+      "hashes": {
+        "md5": "f2fc2c3179edccaa7728650178c9133c",
+        "sha256": "8c646771f5eab7557d1f3924077c55408e86bdfb700f7d86a6d83abeabff4c66"
+      },
+      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+      "size": 13723,
+      "upload-time": "2018-04-15T17:55:22.927924Z",
+      "url": "https://files.pythonhosted.org/packages/ba/65/ded3bc40bbf8d887f262f150fbe1ae6637765b5c9534bd55690ed2c0b0f7/pluggy-0.6.0-py3-none-any.whl",
+      "yanked": false
+    },
+    {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
+      "filename": "pluggy-0.6.0.tar.gz",
+      "hashes": {
+        "md5": "ef8a88abcd501afd47cb22245fe4315a",
+        "sha256": "a982e208d054867661d27c6d2a86b17ba05fbb6b1bdc01f42660732dd107f865"
+      },
+      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+      "size": 19678,
+      "upload-time": "2017-11-24T16:33:11.250495Z",
+      "url": "https://files.pythonhosted.org/packages/11/bf/cbeb8cdfaffa9f2ea154a30ae31a9d04a1209312e2919138b4171a1f8199/pluggy-0.6.0.tar.gz",
+      "yanked": false
     }
   ],
   "meta": {
-    "api-version": "1.0",
-    "_last-serial": 3361295
-  }
+    "_last-serial": 0,
+    "api-version": "1.1"
+  },
+  "name": "pluggy",
+  "versions": [
+    "0.6.0"
+  ]
 }

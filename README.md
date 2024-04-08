@@ -46,7 +46,7 @@ requests = { version = "^2.28", extras = ["security"] }
 # Version-specific dependencies with prereleases allowed
 tomli = { version = "^2.0.1", python = "<3.11", allow-prereleases = true }
 # Git dependencies
-cleo = { git = "https://github.com/python-poetry/cleo.git", branch = "master" }
+cleo = { git = "https://github.com/python-poetry/cleo.git", branch = "main" }
 # Optional dependencies (installed by extras)
 pendulum = { version = "^2.1.2", optional = true }
 

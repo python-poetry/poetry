@@ -113,7 +113,7 @@ class GroupCommand(Command):
 
     def _validate_group_options(self, group_options: dict[str, set[str]]) -> None:
         """
-        Raises en error if it detects that a group is not part of pyproject.toml
+        Raises an error if it detects that a group is not part of pyproject.toml
         """
         invalid_options = defaultdict(set)
         for opt, groups in group_options.items():

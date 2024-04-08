@@ -221,8 +221,7 @@ you encounter on the [issue tracker](https://github.com/python-poetry/poetry/iss
 
 *Introduced in 1.2.0*
 
-When set this configuration allows users to configure package distribution format policy for all or
-specific packages.
+When set, this configuration allows users to disallow the use of binary distribution format for all, none or specific packages.
 
 | Configuration          | Description                                                |
 |------------------------|------------------------------------------------------------|
@@ -259,6 +258,24 @@ Unless this is required system-wide, if configured globally, you could encounter
 across all your projects if incorrectly set.
 {{% /warning %}}
 
+### `installer.only-binary`
+
+**Type**: `string | boolean`
+
+**Default**: `false`
+
+**Environment Variable**: `POETRY_INSTALLER_ONLY_BINARY`
+
+*Introduced in 1.9.0*
+
+When set, this configuration allows users to enforce the use of binary distribution format for all, none or
+specific packages.
+
+{{% note %}}
+Please refer to [`installer.no-binary`]({{< relref "configuration#installerno-binary" >}}) for information on allowed
+values, usage instructions and warnings.
+{{% /note %}}
+
 ### `installer.parallel`
 
 **Type**: `boolean`
@@ -270,6 +287,23 @@ across all your projects if incorrectly set.
 *Introduced in 1.1.4*
 
 Use parallel execution when using the new (`>=1.1.0`) installer.
+
+### `solver.lazy-wheel`
+
+**Type**: `boolean`
+
+**Default**: `true`
+
+**Environment Variable**: `POETRY_SOLVER_LAZY_WHEEL`
+
+*Introduced in 1.8.0*
+
+Do not download entire wheels to extract metadata but use
+[HTTP range requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests)
+to only download the METADATA files of wheels.
+Especially with slow network connections this setting can speed up dependency resolution significantly.
+If the cache has already been filled or the server does not support HTTP range requests,
+this setting makes no difference.
 
 ### `virtualenvs.create`
 
@@ -375,6 +409,12 @@ If set to `true` the `--no-setuptools` parameter is passed to `virtualenv` on cr
 means when a new virtual environment is created, `setuptools` will not be installed in the environment. Poetry, for its
 internal operations, does not require `setuptools` and this can safely be set to `true`.
 
+For environments using python 3.12 or later, `virtualenv` defaults to not
+installing `setuptools` when creating a virtual environment.
+In such environments this poetry configuration option therefore has no effect:
+`setuptools` is not installed either way.
+If your project relies on `setuptools`, you should declare it as a dependency.
+
 {{% warning %}}
 Some development tools like IDEs, make an assumption that `setuptools` (and other) packages are always present and
 available within a virtual environment. This can cause some features in these tools to not work as expected.
@@ -431,19 +471,21 @@ If set to `false`, Python version used during Poetry installation is used.
 Format string defining the prompt to be displayed when the virtual environment is activated.
 The variables `project_name` and `python_version` are available for formatting.
 
-### `repositories.<name>`
+### `repositories.<name>.url`
 
 **Type**: `string`
 
-**Environment Variable**: `POETRY_REPOSITORIES_<NAME>`
+**Environment Variable**: `POETRY_REPOSITORIES_<NAME>_URL`
 
-Set a new alternative repository. See [Repositories]({{< relref "repositories" >}}) for more information.
+Set the repository URL for `<name>`.
 
-### `http-basic.<name>`:
+See [Publishable Repositories]({{< relref "repositories#publishable-repositories" >}}) for more information.
 
-**Type**: `(string, string)`
+### `http-basic.<name>.[username|password]`:
 
-**Environment Variable**: `POETRY_HTTP_BASIC_<NAME>`
+**Type**: `string`
+
+**Environment Variables**: `POETRY_HTTP_BASIC_<NAME>_USERNAME`, `POETRY_HTTP_BASIC_<NAME>_PASSWORD`
 
 Set repository credentials (`username` and `password`) for `<name>`.
 See [Repositories - Configuring credentials]({{< relref "repositories#configuring-credentials" >}})
@@ -480,4 +522,16 @@ repository.
 
 Set client certificate for repository `<name>`.
 See [Repositories - Configuring credentials - Custom certificate authority]({{< relref "repositories#custom-certificate-authority-and-mutual-tls-authentication" >}})
+for more information.
+
+### `keyring.enabled`:
+
+**Type**: `boolean`
+
+**Default**: `true`
+
+**Environment Variable**: `POETRY_KEYRING_ENABLED`
+
+Enable the system keyring for storing credentials.
+See [Repositories - Configuring credentials]({{< relref "repositories#configuring-credentials" >}})
 for more information.

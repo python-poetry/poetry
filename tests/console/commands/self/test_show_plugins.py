@@ -163,7 +163,7 @@ def test_show_displays_installed_plugins(
     tester.execute("")
 
     expected = """
-  • poetry-plugin (1.2.3)
+  - poetry-plugin (1.2.3)
       1 plugin and 1 application plugin
 """
 
@@ -189,7 +189,7 @@ def test_show_displays_installed_plugins_with_multiple_plugins(
     tester.execute("")
 
     expected = """
-  • poetry-plugin (1.2.3)
+  - poetry-plugin (1.2.3)
       2 plugins and 2 application plugins
 """
 
@@ -215,7 +215,7 @@ def test_show_displays_installed_plugins_with_dependencies(
     tester.execute("")
 
     expected = """
-  • poetry-plugin (1.2.3)
+  - poetry-plugin (1.2.3)
       1 plugin and 1 application plugin
 
       Dependencies

@@ -1,33 +1,62 @@
 {
-  "name": "more-itertools",
   "files": [
     {
-      "filename": "more_itertools-4.1.0-py2-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/4a/88/c28e2a2da8f3dc3a391d9c97ad949f2ea0c05198222e7e6af176e5bf9b26/more_itertools-4.1.0-py2-none-any.whl",
-      "hashes": {
-        "md5": "2a6a4b9abf941edf6d190fc995c0c935",
-        "sha256": "11a625025954c20145b37ff6309cd54e39ca94f72f6bb9576d1195db6fa2442e"
-      }
-    },
-    {
-      "filename": "more_itertools-4.1.0-py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/7a/46/886917c6a4ce49dd3fff250c01c5abac5390d57992751384fe61befc4877/more_itertools-4.1.0-py3-none-any.whl",
-      "hashes": {
-        "md5": "3229d872f8d193e36119ec76e1b0c097",
-        "sha256": "0dd8f72eeab0d2c3bd489025bb2f6a1b8342f9b198f6fc37b52d15cfa4531fea"
-      }
-    },
-    {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
       "filename": "more-itertools-4.1.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/db/0b/f5660bf6299ec5b9f17bd36096fa8148a1c843fa77ddfddf9bebac9301f7/more-itertools-4.1.0.tar.gz",
       "hashes": {
-        "md5": "246f46686d95879fbad37855c115dc52",
-        "sha256": "c9ce7eccdcb901a2c75d326ea134e0886abfbea5f93e91cc95de9507c0816c44"
-      }
+        "md5": "bf351a1050242ce3af7e475a4da1a26b",
+        "sha256": "bab2dc6f4be8f9a4a72177842c5283e2dff57c167439a03e3d8d901e854f0f2e"
+      },
+      "requires-python": null,
+      "size": 51310,
+      "upload-time": "2018-01-21T15:34:22.533243Z",
+      "url": "https://files.pythonhosted.org/packages/db/0b/f5660bf6299ec5b9f17bd36096fa8148a1c843fa77ddfddf9bebac9301f7/more-itertools-4.1.0.tar.gz",
+      "yanked": false
+    },
+    {
+      "core-metadata": {
+        "sha256": "59c3513ac4a78ad61b2a0eda88807985c4bb71cd36e6917f2f9c0ea121a7c029"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "59c3513ac4a78ad61b2a0eda88807985c4bb71cd36e6917f2f9c0ea121a7c029"
+      },
+      "filename": "more_itertools-4.1.0-py2-none-any.whl",
+      "hashes": {
+        "md5": "c70269eabc5fae5e0d93c2eca638720e",
+        "sha256": "5dd7dfd88d2fdaea446da478ffef8d7151fdf26ee92ac7ed7b14e8d71efe4b62"
+      },
+      "requires-python": null,
+      "size": 47987,
+      "upload-time": "2018-01-21T15:34:19.304356Z",
+      "url": "https://files.pythonhosted.org/packages/4a/88/c28e2a2da8f3dc3a391d9c97ad949f2ea0c05198222e7e6af176e5bf9b26/more_itertools-4.1.0-py2-none-any.whl",
+      "yanked": false
+    },
+    {
+      "core-metadata": {
+        "sha256": "59c3513ac4a78ad61b2a0eda88807985c4bb71cd36e6917f2f9c0ea121a7c029"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "59c3513ac4a78ad61b2a0eda88807985c4bb71cd36e6917f2f9c0ea121a7c029"
+      },
+      "filename": "more_itertools-4.1.0-py3-none-any.whl",
+      "hashes": {
+        "md5": "26d7c309ef806b4e563d2a7e4ceafb14",
+        "sha256": "29b1e1661aaa56875ce090fa219fa84dfc13daecb52cd4fae321f6f57b419ec4"
+      },
+      "requires-python": null,
+      "size": 47988,
+      "upload-time": "2018-01-21T15:34:20.567853Z",
+      "url": "https://files.pythonhosted.org/packages/7a/46/886917c6a4ce49dd3fff250c01c5abac5390d57992751384fe61befc4877/more_itertools-4.1.0-py3-none-any.whl",
+      "yanked": false
     }
   ],
   "meta": {
-    "api-version": "1.0",
-    "_last-serial": 3508946
-  }
+    "_last-serial": 0,
+    "api-version": "1.1"
+  },
+  "name": "more-itertools",
+  "versions": [
+    "4.1.0"
+  ]
 }
