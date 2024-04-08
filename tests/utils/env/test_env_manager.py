@@ -1237,6 +1237,49 @@ def test_create_venv_accepts_fallback_version_w_nonzero_patchlevel(
     )
 
 
+@pytest.mark.parametrize("is_inconsistent_entry", [False, True])
+def test_create_venv_does_not_keep_inconsistent_envs_entry(
+    tmp_path: Path,
+    manager: EnvManager,
+    poetry: Poetry,
+    config: Config,
+    mocker: MockerFixture,
+    venv_name: str,
+    is_inconsistent_entry: bool,
+) -> None:
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
+
+    # There is an entry in the envs.toml file but the venv does not exist
+    envs_file = TOMLFile(tmp_path / "envs.toml")
+    doc = tomlkit.document()
+    if is_inconsistent_entry:
+        doc[venv_name] = {"minor": "3.7", "patch": "3.7.0"}
+    doc["other"] = {"minor": "3.7", "patch": "3.7.0"}
+    envs_file.write(doc)
+
+    config.merge({"virtualenvs": {"path": str(tmp_path)}})
+
+    mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
+    mocker.patch(
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(),
+    )
+    m = mocker.patch(
+        "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
+    )
+
+    manager.create_venv()
+
+    m.assert_called()
+
+    assert envs_file.exists()
+    envs: dict[str, Any] = envs_file.read()
+    assert venv_name not in envs
+    assert envs["other"]["minor"] == "3.7"
+    assert envs["other"]["patch"] == "3.7.0"
+
+
 def test_build_venv_does_not_change_loglevel(
     tmp_path: Path, manager: EnvManager, caplog: LogCaptureFixture
 ) -> None:
