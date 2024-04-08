@@ -1792,7 +1792,7 @@ def test_solver_duplicate_dependencies_ignore_overrides_with_empty_marker_inters
     solver: Solver, repo: Repository, package: ProjectPackage
 ) -> None:
     """
-    Empty intersection between top level dependency and transient dependency.
+    Empty intersection between top level dependency and transitive dependency.
     """
     package.add_dependency(Factory.create_dependency("A", {"version": "1.0"}))
     package.add_dependency(
@@ -3307,7 +3307,7 @@ def test_solver_chooses_direct_dependency_from_explicit_if_explicit(
     assert ops[0].package.source_url is None
 
 
-def test_solver_ignores_explicit_repo_for_transient_dependencies(
+def test_solver_ignores_explicit_repo_for_transitive_dependencies(
     package: ProjectPackage,
     io: NullIO,
     legacy_repository: LegacyRepository,
@@ -4358,7 +4358,7 @@ def test_solver_does_not_update_ref_of_locked_vcs_package(
         Factory.create_dependency("demo", {"git": "https://github.com/demo/demo.git"})
     )
 
-    # transient dependencies of demo
+    # transitive dependencies of demo
     pendulum = get_package("pendulum", "2.0.3")
     repo.add_package(pendulum)
 
@@ -4404,7 +4404,7 @@ def test_solver_does_not_fetch_locked_vcs_package_with_ref(
         Factory.create_dependency("demo", {"git": "https://github.com/demo/demo.git"})
     )
 
-    # transient dependencies of demo
+    # transitive dependencies of demo
     pendulum = get_package("pendulum", "2.0.3")
     repo.add_package(pendulum)
 

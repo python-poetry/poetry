@@ -20,6 +20,7 @@ from poetry.puzzle.provider import Provider
 if TYPE_CHECKING:
     from collections.abc import Collection
     from collections.abc import Iterator
+    from collections.abc import Sequence
 
     from cleo.io.io import IO
     from packaging.utils import NormalizedName
@@ -207,7 +208,7 @@ class DFSNode:
         self.name = name
         self.base_name = base_name
 
-    def reachable(self: T) -> list[T]:
+    def reachable(self: T) -> Sequence[T]:
         return []
 
     def visit(self, parents: list[PackageNode]) -> None:
@@ -284,7 +285,7 @@ class PackageNode(DFSNode):
             package.name,
         )
 
-    def reachable(self) -> list[PackageNode]:
+    def reachable(self) -> Sequence[PackageNode]:
         children: list[PackageNode] = []
 
         for dependency in self.package.all_requires:

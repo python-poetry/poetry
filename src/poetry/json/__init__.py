@@ -7,7 +7,7 @@ from typing import Any
 
 import fastjsonschema
 
-from fastjsonschema.exceptions import JsonSchemaException
+from fastjsonschema.exceptions import JsonSchemaValueException
 from poetry.core.json import SCHEMA_DIR as CORE_SCHEMA_DIR
 
 
@@ -27,7 +27,7 @@ def validate_object(obj: dict[str, Any]) -> list[str]:
     errors = []
     try:
         validate(obj)
-    except JsonSchemaException as e:
+    except JsonSchemaValueException as e:
         errors = [e.message]
 
     core_schema = json.loads(
