@@ -170,14 +170,11 @@ class SitePackages:
         results = []
 
         for candidate in candidates:
-            try:
+            with contextlib.suppress(OSError):
                 result = candidate, getattr(candidate, method)(*args, **kwargs)
                 if return_first:
                     return result
                 results.append(result)
-            except OSError:
-                # TODO: Replace with PermissionError
-                pass
 
         if results:
             return results

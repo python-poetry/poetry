@@ -132,8 +132,7 @@ class EditableBuilder(Builder):
                 f" {self._poetry.file.path.parent}"
             )
             return [pth_file]
-        except OSError:
-            # TODO: Replace with PermissionError
+        except PermissionError:
             self._io.write_error_line(
                 f"  - Failed to create <c2>{pth_file.name}</c2> for"
                 f" {self._poetry.file.path.parent}"
