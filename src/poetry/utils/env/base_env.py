@@ -7,6 +7,7 @@ import subprocess
 import sys
 import sysconfig
 
+from functools import cached_property
 from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
@@ -20,11 +21,15 @@ from poetry.utils.helpers import get_real_windows_path
 
 
 if TYPE_CHECKING:
+    from typing import Tuple
+
     from packaging.tags import Tag
     from poetry.core.version.markers import BaseMarker
     from virtualenv.seed.wheels.util import Wheel
 
     from poetry.utils.env.generic_env import GenericEnv
+
+    PythonVersion = Tuple[int, int, int, str, int]
 
 
 class Env:
@@ -52,7 +57,6 @@ class Env:
 
         self._base = base or path
 
-        self._marker_env: dict[str, Any] | None = None
         self._site_packages: SitePackages | None = None
         self._paths: dict[str, str] | None = None
         self._supported_tags: list[Tag] | None = None
@@ -71,8 +75,8 @@ class Env:
         return self._base
 
     @property
-    def version_info(self) -> tuple[int, int, int, str, int]:
-        version_info: tuple[int, int, int, str, int] = self.marker_env["version_info"]
+    def version_info(self) -> PythonVersion:
+        version_info: PythonVersion = self.marker_env["version_info"]
         return version_info
 
     @property
@@ -87,12 +91,9 @@ class Env:
         """
         return Path(self._bin(self._executable))
 
-    @property
+    @cached_property
     def marker_env(self) -> dict[str, Any]:
-        if self._marker_env is None:
-            self._marker_env = self.get_marker_env()
-
-        return self._marker_env
+        return self.get_marker_env()
 
     @property
     def parent_env(self) -> GenericEnv:
