@@ -22,10 +22,8 @@ from poetry.utils.env.script_strings import GET_ENV_PATH_ONELINER
 from poetry.utils.env.script_strings import GET_ENVIRONMENT_INFO
 from poetry.utils.env.script_strings import GET_PATHS
 from poetry.utils.env.script_strings import GET_PATHS_FOR_GENERIC_ENVS
-from poetry.utils.env.script_strings import GET_PYTHON_VERSION
 from poetry.utils.env.script_strings import GET_PYTHON_VERSION_ONELINER
 from poetry.utils.env.script_strings import GET_SYS_PATH
-from poetry.utils.env.script_strings import GET_SYS_TAGS
 from poetry.utils.env.site_packages import SitePackages
 from poetry.utils.env.system_env import SystemEnv
 from poetry.utils.env.virtual_env import VirtualEnv
@@ -96,9 +94,7 @@ __all__ = [
     "GET_BASE_PREFIX",
     "GET_ENVIRONMENT_INFO",
     "GET_PATHS",
-    "GET_PYTHON_VERSION",
     "GET_SYS_PATH",
-    "GET_SYS_TAGS",
     "GET_ENV_PATH_ONELINER",
     "GET_PYTHON_VERSION_ONELINER",
     "GET_PATHS_FOR_GENERIC_ENVS",

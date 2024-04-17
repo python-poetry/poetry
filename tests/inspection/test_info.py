@@ -311,7 +311,7 @@ def test_info_no_setup_pkg_info_no_deps_dynamic(fixture_dir: FixtureDirGetter) -
 def test_info_setup_simple(mocker: MockerFixture, demo_setup: Path) -> None:
     spy = mocker.spy(VirtualEnv, "run")
     info = PackageInfo.from_directory(demo_setup)
-    assert spy.call_count == 5
+    assert spy.call_count == 4
     demo_check_info(info, requires_dist={"package"})
 
 
