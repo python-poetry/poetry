@@ -81,12 +81,12 @@ def repo_add_default_packages(repo: TestRepository) -> None:
     repo.add_package(redis)
 
     cachy010 = get_package("cachy", "0.1.0")
-    cachy010.extras = {"msgpack": [msgpack_dep]}
+    cachy010.extras = {canonicalize_name("msgpack"): [msgpack_dep]}
     cachy010.add_dependency(msgpack_optional_dep)
     repo.add_package(cachy010)
 
     cachy020 = get_package("cachy", "0.2.0")
-    cachy020.extras = {"msgpack": [get_dependency("msgpack-python")]}
+    cachy020.extras = {canonicalize_name("msgpack"): [get_dependency("msgpack-python")]}
     cachy020.add_dependency(msgpack_dep)
     repo.add_package(cachy020)
 
