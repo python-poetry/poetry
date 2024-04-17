@@ -60,7 +60,7 @@ tests_task:
     # TODO: caching
     - alias: mypy
       name: "Tests / FreeBSD (Python ${PYTHON_VERSION}) / mypy"
-      skip: "!changesInclude('.cirrus.yml', 'poetry.lock', 'pyproject.toml', 'src/**.py')"
+      skip: "!changesInclude('.cirrus.yml', 'poetry.lock', 'pyproject.toml', 'src/**.py', 'tests/**')"
       mypy_script: poetry run mypy
 
 status_task:

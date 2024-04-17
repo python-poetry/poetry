@@ -108,7 +108,7 @@ jobs:
     with:
       runner: ${{ matrix.os.image }}
       python-version: ${{ matrix.python-version }}
-      run-mypy: ${{ needs.changes.outputs.src == 'true' }}
+      run-mypy: ${{ needs.changes.outputs.tests == 'true' }}
       run-pytest: ${{ needs.changes.outputs.tests == 'true' }}
       run-pytest-export: ${{ needs.changes.outputs.src == 'true' }}
     secrets: inherit
