@@ -709,7 +709,9 @@ poetry search requests pendulum
 This command locks (without installing) the dependencies specified in `pyproject.toml`.
 
 {{% note %}}
-By default, this will lock all dependencies to the latest available compatible versions. To only refresh the lock file, use the `--no-update` option.
+By default, packages that have already been added to the lock file before will not be updated.
+To update all dependencies to the latest available compatible versions, use `poetry update --lock`
+or `poetry lock --regenerate`, which normally produce the same result.
 This command is also available as a pre-commit hook. See [pre-commit hooks]({{< relref "pre-commit-hooks#poetry-lock">}}) for more information.
 {{% /note %}}
 
@@ -720,7 +722,7 @@ poetry lock
 ### Options
 
 * `--check`: Verify that `poetry.lock` is consistent with `pyproject.toml`. (**Deprecated**) Use `poetry check --lock` instead.
-* `--no-update`: Do not update locked versions, only refresh lock file.
+* `--regenerate`: Ignore existing lock file and overwrite it with a new lock file created from scratch.
 
 ## version
 
