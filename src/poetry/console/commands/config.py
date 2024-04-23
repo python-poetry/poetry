@@ -66,10 +66,6 @@ To remove a repository (repo is a short alias for repositories):
                 boolean_normalizer,
             ),
             "virtualenvs.options.no-pip": (boolean_validator, boolean_normalizer),
-            "virtualenvs.options.no-setuptools": (
-                boolean_validator,
-                boolean_normalizer,
-            ),
             "virtualenvs.path": (str, lambda val: str(Path(val))),
             "virtualenvs.prefer-active-python": (boolean_validator, boolean_normalizer),
             "virtualenvs.prompt": (str, str),
