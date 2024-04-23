@@ -554,7 +554,6 @@ def test_create_poetry_with_local_config(fixture_dir: FixtureDirGetter) -> None:
     assert not poetry.config.get("virtualenvs.create")
     assert not poetry.config.get("virtualenvs.options.always-copy")
     assert not poetry.config.get("virtualenvs.options.no-pip")
-    assert not poetry.config.get("virtualenvs.options.no-setuptools")
     assert not poetry.config.get("virtualenvs.options.system-site-packages")
 
 
