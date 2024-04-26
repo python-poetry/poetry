@@ -202,7 +202,9 @@ pipx inject poetry poetry-plugin
 If you want to uninstall a plugin, you can run:
 
 ```shell
-pipx runpip poetry uninstall poetry-plugin
+pipx uninject poetry poetry-plugin          # For pipx versions >= 1.2.0
+
+pipx runpip poetry uninstall poetry-plugin  # For pipx versions  < 1.2.0
 ```
 
 ### With `pip`
