@@ -1089,7 +1089,7 @@ def test_run_installs_extras_with_deps_if_requested(
         expected_installations_count = 0 if is_installed else 2
         # We only want to uninstall extras if we do a "poetry install" without extras,
         # not if we do a "poetry update" or "poetry add".
-        expected_removals_count = 2 if is_installed and is_locked else 0
+        expected_removals_count = 2 if is_installed else 0
 
     assert installer.executor.installations_count == expected_installations_count
     assert installer.executor.removals_count == expected_removals_count
