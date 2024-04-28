@@ -745,6 +745,24 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
         _ = locker.lock_data
 
 
+def test_locker_should_raise_an_error_if_no_lock_version(
+    locker: Locker, caplog: LogCaptureFixture
+) -> None:
+    """Lock file prior Poetry 1.1 have no lock file version."""
+    content = """\
+[metadata]
+python-versions = "~2.7 || ^3.4"
+content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
+"""
+    caplog.set_level(logging.WARNING, logger="poetry.packages.locker")
+
+    with open(locker.lock, "w", encoding="utf-8") as f:
+        f.write(content)
+
+    with pytest.raises(RuntimeError, match="^The lock file is not compatible"):
+        _ = locker.lock_data
+
+
 def test_root_extras_dependencies_are_ordered(
     locker: Locker, root: ProjectPackage, fixture_base: Path
 ) -> None:

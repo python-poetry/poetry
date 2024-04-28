@@ -55,16 +55,16 @@ class Transaction:
         uninstalls: set[NormalizedName] = set()
         for result_package, priority in self._result_packages:
             installed = False
+            is_unsolicited_extra = extras is not None and (
+                result_package.optional and result_package.name not in extra_packages
+            )
 
             for installed_package in self._installed_packages:
                 if result_package.name == installed_package.name:
                     installed = True
 
                     # Extras that were not requested are always uninstalled.
-                    if extras is not None and (
-                        result_package.optional
-                        and result_package.name not in extra_packages
-                    ):
+                    if is_unsolicited_extra:
                         uninstalls.add(installed_package.name)
                         operations.append(Uninstall(installed_package))
 
@@ -100,7 +100,10 @@ class Transaction:
                 installed
                 or (skip_directory and result_package.source_type == "directory")
             ):
-                operations.append(Install(result_package, priority=priority))
+                op = Install(result_package, priority=priority)
+                if is_unsolicited_extra:
+                    op.skip("Not required")
+                operations.append(op)
 
         if with_uninstalls:
             for current_package in self._current_packages:

@@ -13,7 +13,6 @@ from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.repositories.lockfile_repository import LockfileRepository
-from poetry.utils.extras import get_extra_package_names
 
 
 if TYPE_CHECKING:
@@ -301,11 +300,6 @@ class Installer:
                 extras=set(self._extras),
             )
 
-        # We need to filter operations so that packages
-        # not compatible with the current system,
-        # or optional and not requested, are dropped
-        self._filter_operations(ops, lockfile_repo)
-
         # Validate the dependencies
         for op in ops:
             dep = op.package.to_dependency()
@@ -343,35 +337,6 @@ class Installer:
             package = op.target_package if isinstance(op, Update) else op.package
             if not repo.has_package(package):
                 repo.add_package(package)
-
-    def _filter_operations(self, ops: Iterable[Operation], repo: Repository) -> None:
-        extra_packages = self._get_extra_packages(repo)
-        for op in ops:
-            package = op.target_package if isinstance(op, Update) else op.package
-
-            if op.job_type == "uninstall":
-                continue
-
-            if not self._env.is_valid_for_marker(package.marker):
-                op.skip("Not needed for the current environment")
-                continue
-
-            # If a package is optional and not requested
-            # in any extra we skip it
-            if package.optional and package.name not in extra_packages:
-                op.skip("Not required")
-
-    def _get_extra_packages(self, repo: Repository) -> set[NormalizedName]:
-        """
-        Returns all package names required by extras.
-
-        Maybe we just let the solver handle it?
-        """
-        return get_extra_package_names(
-            repo.packages,
-            {k: [d.name for d in v] for k, v in self._package.extras.items()},
-            self._extras,
-        )
 
     def _get_installed(self) -> InstalledRepository:
         return InstalledRepository.load(self._env)
