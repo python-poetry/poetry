@@ -2,8 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from poetry.utils.extras import get_extra_package_names
+
 
 if TYPE_CHECKING:
+    from packaging.utils import NormalizedName
     from poetry.core.packages.package import Package
 
     from poetry.installation.operations.operation import Operation
@@ -32,6 +35,7 @@ class Transaction:
         synchronize: bool = False,
         *,
         skip_directory: bool = False,
+        extras: set[NormalizedName] | None = None,
     ) -> list[Operation]:
         from poetry.installation.operations import Install
         from poetry.installation.operations import Uninstall
@@ -39,6 +43,16 @@ class Transaction:
 
         operations: list[Operation] = []
 
+        extra_packages: set[NormalizedName] = set()
+        if extras is not None:
+            assert self._root_package is not None
+            extra_packages = get_extra_package_names(
+                [package for package, _ in self._result_packages],
+                {k: [d.name for d in v] for k, v in self._root_package.extras.items()},
+                extras,
+            )
+
+        uninstalls: set[NormalizedName] = set()
         for result_package, priority in self._result_packages:
             installed = False
 
@@ -46,9 +60,17 @@ class Transaction:
                 if result_package.name == installed_package.name:
                     installed = True
 
+                    # Extras that were not requested are always uninstalled.
+                    if extras is not None and (
+                        result_package.optional
+                        and result_package.name not in extra_packages
+                    ):
+                        uninstalls.add(installed_package.name)
+                        operations.append(Uninstall(installed_package))
+
                     # We have to perform an update if the version or another
                     # attribute of the package has changed (source type, url, ref, ...).
-                    if result_package.version != installed_package.version or (
+                    elif result_package.version != installed_package.version or (
                         (
                             # This has to be done because installed packages cannot
                             # have type "legacy". If a package with type "legacy"
@@ -81,7 +103,6 @@ class Transaction:
                 operations.append(Install(result_package, priority=priority))
 
         if with_uninstalls:
-            uninstalls: set[str] = set()
             for current_package in self._current_packages:
                 found = any(
                     current_package.name == result_package.name
@@ -92,7 +113,7 @@ class Transaction:
                     for installed_package in self._installed_packages:
                         if installed_package.name == current_package.name:
                             uninstalls.add(installed_package.name)
-                            operations.append(Uninstall(current_package))
+                            operations.append(Uninstall(installed_package))
 
             if synchronize:
                 result_package_names = {
