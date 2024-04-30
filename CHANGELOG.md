@@ -1,6 +1,43 @@
 # Change Log
 
 
+## [1.8.3] - 2024-05-03
+
+### Added
+
+- Add support for untagged CPython builds with versions ending with a `+` ([#9207](https://github.com/python-poetry/poetry/pull/9207)).
+
+### Changed
+
+- Require `pkginfo>=1.10` to ensure support for packages with metadata version 2.3 ([#9130](https://github.com/python-poetry/poetry/pull/9130)).
+- Improve locking on FIPS systems ([#9152](https://github.com/python-poetry/poetry/pull/9152)).
+
+### Fixed
+
+- Fix an issue where unrecognized package metadata versions silently resulted in empty dependencies ([#9203](https://github.com/python-poetry/poetry/pull/9203),
+[#9226](https://github.com/python-poetry/poetry/pull/9226)).
+- Fix an issue where trailing slashes in git URLs where not handled correctly ([#9205](https://github.com/python-poetry/poetry/pull/9205)).
+- Fix an issue where `poetry self` commands printed a warning that the current project cannot be installed ([#9302](https://github.com/python-poetry/poetry/pull/9302)).
+- Fix an issue where `poetry install` sporadically failed with a `KeyError` due to a race condition ([#9335](https://github.com/python-poetry/poetry/pull/9335)).
+
+### Docs
+
+- Fix incorrect information about `poetry shell` ([#9060](https://github.com/python-poetry/poetry/pull/9060)).
+- Add a git subdirectory example to `poetry add` ([#9080](https://github.com/python-poetry/poetry/pull/9080)).
+- Mention interactive credential configuration ([#9074](https://github.com/python-poetry/poetry/pull/9074)).
+- Add notes for optional advanced installation steps ([#9098](https://github.com/python-poetry/poetry/pull/9098)).
+- Add reference to configuration credentials in documentation of poetry `publish` ([#9110](https://github.com/python-poetry/poetry/pull/9110)).
+- Improve documentation for configuring credentials via environment variables ([#9121](https://github.com/python-poetry/poetry/pull/9121)).
+- Remove misleading wording around virtual environments ([#9213](https://github.com/python-poetry/poetry/pull/9213)).
+- Remove outdated advice regarding seeding keyring backends ([#9213](https://github.com/python-poetry/poetry/pull/9213)).
+- Add a `pyproject.toml` example for a dependency with multiple extras ([#9138](https://github.com/python-poetry/poetry/pull/9138)).
+- Clarify help of `poetry add` ([#9230](https://github.com/python-poetry/poetry/pull/9230)).
+- Add a note how to configure credentials for TestPyPI for `poetry publish` ([#9255](https://github.com/python-poetry/poetry/pull/9255)).
+- Fix information about the `--readme` option in `poetry new` ([#9260](https://github.com/python-poetry/poetry/pull/9260)).
+- Clarify what is special about the Python constraint in `dependencies` ([#9256](https://github.com/python-poetry/poetry/pull/9256)).
+- Update how to uninstall plugins via `pipx` ([#9320](https://github.com/python-poetry/poetry/pull/9320)).
+
+
 ## [1.8.2] - 2024-03-02
 
 ### Fixed
@@ -10,7 +47,7 @@
 - Improve `lazy-wheel` error handling if the index server pretends to support HTTP range requests but does not respect them ([#9084](https://github.com/python-poetry/poetry/pull/9084)).
 - Improve `lazy-wheel` to allow redirects for HEAD requests ([#9087](https://github.com/python-poetry/poetry/pull/9087)).
 - Improve debug logging for `lazy-wheel` errors ([#9059](https://github.com/python-poetry/poetry/pull/9059)).
-- Fix an issue where the hash of a metadata file could not be calculated correctly due to an encoding issue ([#9048](https://github.com/python-poetry/poetry/pull/9048)).
+- Fix an issue where the hash of a metadata file could not be calculated correctly due to an encoding issue ([#9049](https://github.com/python-poetry/poetry/pull/9049)).
 - Fix an issue where `poetry add` failed in non-package mode if no project name was set ([#9046](https://github.com/python-poetry/poetry/pull/9046)).
 - Fix an issue where a hint to non-package mode was not compliant with the final name of the setting ([#9073](https://github.com/python-poetry/poetry/pull/9073)).
 
@@ -2152,7 +2189,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.8.2...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.8.3...master
+[1.8.3]: https://github.com/python-poetry/poetry/releases/tag/1.8.3
 [1.8.2]: https://github.com/python-poetry/poetry/releases/tag/1.8.2
 [1.8.1]: https://github.com/python-poetry/poetry/releases/tag/1.8.1
 [1.8.0]: https://github.com/python-poetry/poetry/releases/tag/1.8.0
