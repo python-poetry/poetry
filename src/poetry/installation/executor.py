@@ -106,6 +106,10 @@ class Executor:
         self._shutdown = False
         self._hashes: dict[str, str] = {}
 
+        # Cache whether decorated output is supported.
+        # https://github.com/python-poetry/cleo/issues/423
+        self._decorated_output: bool = self._io.output.is_decorated()
+
     @property
     def installations_count(self) -> int:
         return self._executed["install"]
@@ -123,7 +127,7 @@ class Executor:
         return self._enabled
 
     def supports_fancy_output(self) -> bool:
-        return self._io.output.is_decorated() and not self._dry_run
+        return self._decorated_output and not self._dry_run
 
     def disable(self) -> Executor:
         self._enabled = False
