@@ -276,6 +276,7 @@ class EnvManager:
         ).to_string()
 
         env = None
+        envs = None
         if self.envs_file.exists():
             envs = self.envs_file.read()
             env = envs.get(self.base_env_name)
@@ -310,6 +311,9 @@ class EnvManager:
             venv = venv_path / name
 
             if not venv.exists():
+                if env and envs:
+                    del envs[self.base_env_name]
+                    self.envs_file.write(envs)
                 return self.get_system_env()
 
             return VirtualEnv(venv)

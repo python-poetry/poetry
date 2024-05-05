@@ -32,7 +32,6 @@ class SitePackages:
             self._platlib = purelib
 
         self._fallbacks = fallbacks or []
-        self._skip_write_checks = skip_write_checks
 
         self._candidates: list[Path] = []
         for path in itertools.chain([self._purelib, self._platlib], self._fallbacks):
@@ -170,14 +169,11 @@ class SitePackages:
         results = []
 
         for candidate in candidates:
-            try:
+            with contextlib.suppress(OSError):
                 result = candidate, getattr(candidate, method)(*args, **kwargs)
                 if return_first:
                     return result
                 results.append(result)
-            except OSError:
-                # TODO: Replace with PermissionError
-                pass
 
         if results:
             return results

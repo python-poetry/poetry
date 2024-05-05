@@ -77,10 +77,6 @@ class AuthenticatorRepositoryConfig:
     def certs(self, config: Config) -> RepositoryCertificateConfig:
         return RepositoryCertificateConfig.create(self.name, config)
 
-    @property
-    def http_credential_keys(self) -> list[str]:
-        return [self.url, self.netloc, self.name]
-
     def get_http_credentials(
         self, password_manager: PasswordManager, username: str | None = None
     ) -> HTTPAuthCredential:

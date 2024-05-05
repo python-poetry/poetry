@@ -73,6 +73,7 @@ class SelfCommand(InstallerCommand):
         package.python_versions = ".".join(str(v) for v in self.env.version_info[:3])
 
         content = Factory.create_pyproject_from_package(package=package)
+        content["tool"]["poetry"]["package-mode"] = False  # type: ignore[index]
 
         for key in preserved:
             content["tool"]["poetry"][key] = preserved[key]  # type: ignore[index]

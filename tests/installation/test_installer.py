@@ -1625,7 +1625,7 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock(
     assert installer.executor.removals_count == 0
 
 
-def test_run_update_uninstalls_after_removal_transient_dependency(
+def test_run_update_uninstalls_after_removal_transitive_dependency(
     installer: Installer,
     locker: Locker,
     repo: Repository,

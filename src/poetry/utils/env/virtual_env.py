@@ -12,20 +12,18 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 
-from packaging.tags import Tag
-
 from poetry.utils.env.base_env import Env
 from poetry.utils.env.script_strings import GET_BASE_PREFIX
 from poetry.utils.env.script_strings import GET_ENVIRONMENT_INFO
 from poetry.utils.env.script_strings import GET_PATHS
-from poetry.utils.env.script_strings import GET_PYTHON_VERSION
 from poetry.utils.env.script_strings import GET_SYS_PATH
-from poetry.utils.env.script_strings import GET_SYS_TAGS
 from poetry.utils.env.system_env import SystemEnv
 
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+
+    from packaging.tags import Tag
 
 
 class VirtualEnv(Env):
@@ -50,20 +48,26 @@ class VirtualEnv(Env):
         paths: list[str] = json.loads(output)
         return paths
 
-    def get_version_info(self) -> tuple[Any, ...]:
-        output = self.run_python_script(GET_PYTHON_VERSION)
-        assert isinstance(output, str)
-
-        return tuple(int(s) for s in output.strip().split("."))
-
-    def get_python_implementation(self) -> str:
-        implementation: str = self.marker_env["platform_python_implementation"]
-        return implementation
-
     def get_supported_tags(self) -> list[Tag]:
-        output = self.run_python_script(GET_SYS_TAGS)
+        from packaging.tags import compatible_tags
+        from packaging.tags import cpython_tags
+        from packaging.tags import generic_tags
 
-        return [Tag(*t) for t in json.loads(output)]
+        python = self.version_info[:3]
+        interpreter_name = self.marker_env["interpreter_name"]
+        interpreter_version = self.marker_env["interpreter_version"]
+
+        if interpreter_name == "pp":
+            interpreter = "pp3"
+        elif interpreter_name == "cp":
+            interpreter = f"{interpreter_name}{interpreter_version}"
+        else:
+            interpreter = None
+
+        return [
+            *(cpython_tags(python) if interpreter_name == "cp" else generic_tags()),
+            *compatible_tags(python, interpreter=interpreter),
+        ]
 
     def get_marker_env(self) -> dict[str, Any]:
         output = self.run_python_script(GET_ENVIRONMENT_INFO)

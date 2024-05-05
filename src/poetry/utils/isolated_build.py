@@ -19,6 +19,7 @@ from poetry.utils.env import ephemeral_environment
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from build import DistributionType
     from build import ProjectBuilder
 
     from poetry.repositories import RepositoryPool
@@ -107,7 +108,7 @@ class IsolatedEnv(BaseIsolatedEnv):
 @contextmanager
 def isolated_builder(
     source: Path,
-    distribution: str = "wheel",
+    distribution: DistributionType = "wheel",
     python_executable: Path | None = None,
     pool: RepositoryPool | None = None,
 ) -> Iterator[ProjectBuilder]:

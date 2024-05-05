@@ -10,14 +10,11 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-# TODO: use try/except ImportError when
-# https://github.com/python/mypy/issues/1393 is fixed
-
 if sys.version_info < (3, 11):
     # compatibility for python <3.11
     import tomli as tomllib
 else:
-    import tomllib  # nopycln: import
+    import tomllib
 
 
 if sys.version_info < (3, 10):

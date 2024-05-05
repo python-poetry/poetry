@@ -69,12 +69,43 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("add")
 
 
-def test_add_no_constraint(
-    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-) -> None:
-    repo.add_package(get_package("cachy", "0.1.0"))
-    repo.add_package(get_package("cachy", "0.2.0"))
+@pytest.fixture(autouse=True)
+def repo_add_default_packages(repo: TestRepository) -> None:
+    msgpack_optional_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
+    msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6")
+    msgpack = get_package("msgpack-python", "0.5.6")
+    repo.add_package(msgpack)
 
+    redis_dep = get_dependency("redis", ">=3.3.6 <4.0.0", optional=True)
+    redis = get_package("redis", "3.4.0")
+    repo.add_package(redis)
+
+    cachy010 = get_package("cachy", "0.1.0")
+    cachy010.extras = {canonicalize_name("msgpack"): [msgpack_dep]}
+    cachy010.add_dependency(msgpack_optional_dep)
+    repo.add_package(cachy010)
+
+    cachy020 = get_package("cachy", "0.2.0")
+    cachy020.extras = {canonicalize_name("msgpack"): [get_dependency("msgpack-python")]}
+    cachy020.add_dependency(msgpack_dep)
+    repo.add_package(cachy020)
+
+    cleo065 = get_package("cleo", "0.6.5")
+    cleo065.add_dependency(msgpack_optional_dep)
+    cleo065.add_dependency(redis_dep)
+    cleo065.extras = {
+        canonicalize_name("redis"): [redis_dep],
+        canonicalize_name("msgpack"): [msgpack_dep],
+    }
+    repo.add_package(cleo065)
+
+    repo.add_package(get_package("pendulum", "1.4.4"))
+    repo.add_package(get_package("tomlkit", "0.5.5"))
+    repo.add_package(get_package("pyyaml", "3.13"))
+    repo.add_package(get_package("pyyaml", "4.2b2"))
+
+
+def test_add_no_constraint(app: PoetryTestApplication, tester: CommandTester) -> None:
     tester.execute("cachy")
 
     expected = """\
@@ -83,8 +114,9 @@ Using version ^0.2.0 for cachy
 Updating dependencies
 Resolving dependencies...
 
-Package operations: 1 install, 0 updates, 0 removals
+Package operations: 2 installs, 0 updates, 0 removals
 
+  - Installing msgpack-python (0.5.6)
   - Installing cachy (0.2.0)
 
 Writing lock file
@@ -92,7 +124,7 @@ Writing lock file
 
     assert tester.io.fetch_output() == expected
     assert isinstance(tester.command, InstallerCommand)
-    assert tester.command.installer.executor.installations_count == 1
+    assert tester.command.installer.executor.installations_count == 2
 
     pyproject: dict[str, Any] = app.poetry.file.read()
     content = pyproject["tool"]["poetry"]
@@ -102,12 +134,9 @@ Writing lock file
 
 
 def test_add_non_package_mode_no_name(
-    repo: TestRepository,
     project_factory: ProjectFactory,
     command_tester_factory: CommandTesterFactory,
 ) -> None:
-    repo.add_package(get_package("cachy", "0.2.0"))
-
     poetry = project_factory(
         name="foobar", pyproject_content="[tool.poetry]\npackage-mode = false\n"
     )
@@ -115,7 +144,7 @@ def test_add_non_package_mode_no_name(
     tester.execute("cachy")
 
     assert isinstance(tester.command, InstallerCommand)
-    assert tester.command.installer.executor.installations_count == 1
+    assert tester.command.installer.executor.installations_count == 2
 
     pyproject: dict[str, Any] = poetry.file.read()
     content = pyproject["tool"]["poetry"]
@@ -125,11 +154,8 @@ def test_add_non_package_mode_no_name(
 
 
 def test_add_replace_by_constraint(
-    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+    app: PoetryTestApplication, tester: CommandTester
 ) -> None:
-    repo.add_package(get_package("cachy", "0.1.0"))
-    repo.add_package(get_package("cachy", "0.2.0"))
-
     tester.execute("cachy")
 
     expected = """\
@@ -138,15 +164,16 @@ Using version ^0.2.0 for cachy
 Updating dependencies
 Resolving dependencies...
 
-Package operations: 1 install, 0 updates, 0 removals
+Package operations: 2 installs, 0 updates, 0 removals
 
+  - Installing msgpack-python (0.5.6)
   - Installing cachy (0.2.0)
 
 Writing lock file
 """
     assert tester.io.fetch_output() == expected
     assert isinstance(tester.command, InstallerCommand)
-    assert tester.command.installer.executor.installations_count == 1
+    assert tester.command.installer.executor.installations_count == 2
 
     pyproject: dict[str, Any] = app.poetry.file.read()
     content = pyproject["tool"]["poetry"]
@@ -175,12 +202,10 @@ Writing lock file
 
 
 def test_add_no_constraint_editable_error(
-    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+    app: PoetryTestApplication, tester: CommandTester
 ) -> None:
     pyproject: dict[str, Any] = app.poetry.file.read()
     content = pyproject["tool"]["poetry"]
-
-    repo.add_package(get_package("cachy", "0.2.0"))
 
     tester.execute("-e cachy")
 
@@ -199,10 +224,7 @@ No changes were applied.
     assert content == pyproject2["tool"]["poetry"]
 
 
-def test_add_equal_constraint(repo: TestRepository, tester: CommandTester) -> None:
-    repo.add_package(get_package("cachy", "0.1.0"))
-    repo.add_package(get_package("cachy", "0.2.0"))
-
+def test_add_equal_constraint(tester: CommandTester) -> None:
     tester.execute("cachy==0.1.0")
 
     expected = """\
@@ -222,10 +244,7 @@ Writing lock file
     assert tester.command.installer.executor.installations_count == 1
 
 
-def test_add_greater_constraint(repo: TestRepository, tester: CommandTester) -> None:
-    repo.add_package(get_package("cachy", "0.1.0"))
-    repo.add_package(get_package("cachy", "0.2.0"))
-
+def test_add_greater_constraint(tester: CommandTester) -> None:
     tester.execute("cachy>=0.1.0")
 
     expected = """\
@@ -233,8 +252,9 @@ def test_add_greater_constraint(repo: TestRepository, tester: CommandTester) -> 
 Updating dependencies
 Resolving dependencies...
 
-Package operations: 1 install, 0 updates, 0 removals
+Package operations: 2 installs, 0 updates, 0 removals
 
+  - Installing msgpack-python (0.5.6)
   - Installing cachy (0.2.0)
 
 Writing lock file
@@ -242,24 +262,14 @@ Writing lock file
 
     assert tester.io.fetch_output() == expected
     assert isinstance(tester.command, InstallerCommand)
-    assert tester.command.installer.executor.installations_count == 1
+    assert tester.command.installer.executor.installations_count == 2
 
 
 @pytest.mark.parametrize("extra_name", ["msgpack", "MsgPack"])
 def test_add_constraint_with_extras(
-    repo: TestRepository,
     tester: CommandTester,
     extra_name: str,
 ) -> None:
-    cachy1 = get_package("cachy", "0.1.0")
-    cachy1.extras = {canonicalize_name("msgpack"): [get_dependency("msgpack-python")]}
-    msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
-    cachy1.add_dependency(msgpack_dep)
-
-    repo.add_package(get_package("cachy", "0.2.0"))
-    repo.add_package(cachy1)
-    repo.add_package(get_package("msgpack-python", "0.5.3"))
-
     tester.execute(f"cachy[{extra_name}]>=0.1.0,<0.2.0")
 
     expected = """\
@@ -269,7 +279,7 @@ Resolving dependencies...
 
 Package operations: 2 installs, 0 updates, 0 removals
 
-  - Installing msgpack-python (0.5.3)
+  - Installing msgpack-python (0.5.6)
   - Installing cachy (0.1.0)
 
 Writing lock file
@@ -280,17 +290,7 @@ Writing lock file
     assert tester.command.installer.executor.installations_count == 2
 
 
-def test_add_constraint_dependencies(
-    repo: TestRepository, tester: CommandTester
-) -> None:
-    cachy2 = get_package("cachy", "0.2.0")
-    msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6")
-    cachy2.add_dependency(msgpack_dep)
-
-    repo.add_package(get_package("cachy", "0.1.0"))
-    repo.add_package(cachy2)
-    repo.add_package(get_package("msgpack-python", "0.5.3"))
-
+def test_add_constraint_dependencies(tester: CommandTester) -> None:
     tester.execute("cachy=0.2.0")
 
     expected = """\
@@ -300,7 +300,7 @@ Resolving dependencies...
 
 Package operations: 2 installs, 0 updates, 0 removals
 
-  - Installing msgpack-python (0.5.3)
+  - Installing msgpack-python (0.5.6)
   - Installing cachy (0.2.0)
 
 Writing lock file
@@ -313,15 +313,11 @@ Writing lock file
 
 def test_add_git_constraint(
     app: PoetryTestApplication,
-    repo: TestRepository,
     tester: CommandTester,
     tmp_venv: VirtualEnv,
 ) -> None:
     assert isinstance(tester.command, InstallerCommand)
     tester.command.set_env(tmp_venv)
-
-    repo.add_package(get_package("pendulum", "1.4.4"))
-    repo.add_package(get_package("cleo", "0.6.5"))
 
     tester.execute("git+https://github.com/demo/demo.git")
 
@@ -351,14 +347,11 @@ Writing lock file
 
 
 def test_add_git_constraint_with_poetry(
-    repo: TestRepository,
     tester: CommandTester,
     tmp_venv: VirtualEnv,
 ) -> None:
     assert isinstance(tester.command, InstallerCommand)
     tester.command.set_env(tmp_venv)
-
-    repo.add_package(get_package("pendulum", "1.4.4"))
 
     tester.execute("git+https://github.com/demo/pyproject-demo.git")
 
@@ -382,17 +375,12 @@ Writing lock file
 @pytest.mark.parametrize("extra_name", ["foo", "FOO"])
 def test_add_git_constraint_with_extras(
     app: PoetryTestApplication,
-    repo: TestRepository,
     tester: CommandTester,
     tmp_venv: VirtualEnv,
     extra_name: str,
 ) -> None:
     assert isinstance(tester.command, InstallerCommand)
     tester.command.set_env(tmp_venv)
-
-    repo.add_package(get_package("pendulum", "1.4.4"))
-    repo.add_package(get_package("cleo", "0.6.5"))
-    repo.add_package(get_package("tomlkit", "0.5.5"))
 
     tester.execute(f"git+https://github.com/demo/demo.git[{extra_name},bar]")
 
@@ -475,15 +463,11 @@ Writing lock file
 def test_add_git_ssh_constraint(
     editable: bool,
     app: PoetryTestApplication,
-    repo: TestRepository,
     tester: CommandTester,
     tmp_venv: VirtualEnv,
 ) -> None:
     assert isinstance(tester.command, InstallerCommand)
     tester.command.set_env(tmp_venv)
-
-    repo.add_package(get_package("pendulum", "1.4.4"))
-    repo.add_package(get_package("cleo", "0.6.5"))
 
     url = "git+ssh://git@github.com/demo/demo.git@develop"
     tester.execute(f"{url}" if not editable else f"-e {url}")
@@ -527,12 +511,8 @@ Writing lock file
 def test_add_directory_constraint(
     editable: bool,
     app: PoetryTestApplication,
-    repo: TestRepository,
     tester: CommandTester,
 ) -> None:
-    repo.add_package(get_package("pendulum", "1.4.4"))
-    repo.add_package(get_package("cleo", "0.6.5"))
-
     path = "../git/github.com/demo/demo"
     tester.execute(f"{path}" if not editable else f"-e {path}")
 
@@ -572,11 +552,8 @@ Writing lock file
 )
 def test_add_directory_with_poetry(
     app: PoetryTestApplication,
-    repo: TestRepository,
     tester: CommandTester,
 ) -> None:
-    repo.add_package(get_package("pendulum", "1.4.4"))
-
     path = "../git/github.com/demo/pyproject-demo"
     tester.execute(f"{path}")
 
@@ -605,11 +582,8 @@ Writing lock file
 )
 def test_add_file_constraint_wheel(
     app: PoetryTestApplication,
-    repo: TestRepository,
     tester: CommandTester,
 ) -> None:
-    repo.add_package(get_package("pendulum", "1.4.4"))
-
     path = "../distributions/demo-0.1.0-py2.py3-none-any.whl"
     tester.execute(f"{path}")
 
@@ -644,11 +618,8 @@ Writing lock file
 )
 def test_add_file_constraint_sdist(
     app: PoetryTestApplication,
-    repo: TestRepository,
     tester: CommandTester,
 ) -> None:
-    repo.add_package(get_package("pendulum", "1.4.4"))
-
     path = "../distributions/demo-0.1.0.tar.gz"
     tester.execute(f"{path}")
 
@@ -680,19 +651,9 @@ Writing lock file
 @pytest.mark.parametrize("extra_name", ["msgpack", "MsgPack"])
 def test_add_constraint_with_extras_option(
     app: PoetryTestApplication,
-    repo: TestRepository,
     tester: CommandTester,
     extra_name: str,
 ) -> None:
-    cachy2 = get_package("cachy", "0.2.0")
-    cachy2.extras = {canonicalize_name("msgpack"): [get_dependency("msgpack-python")]}
-    msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
-    cachy2.add_dependency(msgpack_dep)
-
-    repo.add_package(get_package("cachy", "0.1.0"))
-    repo.add_package(cachy2)
-    repo.add_package(get_package("msgpack-python", "0.5.3"))
-
     tester.execute(f"cachy=0.2.0 --extras {extra_name}")
 
     expected = """\
@@ -702,7 +663,7 @@ Resolving dependencies...
 
 Package operations: 2 installs, 0 updates, 0 removals
 
-  - Installing msgpack-python (0.5.3)
+  - Installing msgpack-python (0.5.6)
   - Installing cachy (0.2.0)
 
 Writing lock file
@@ -724,14 +685,11 @@ Writing lock file
 
 def test_add_url_constraint_wheel(
     app: PoetryTestApplication,
-    repo: TestRepository,
     tester: CommandTester,
     mocker: MockerFixture,
 ) -> None:
     p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__) / ".."
-
-    repo.add_package(get_package("pendulum", "1.4.4"))
 
     tester.execute(
         "https://files.pythonhosted.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
@@ -767,14 +725,9 @@ Writing lock file
 @pytest.mark.parametrize("extra_name", ["foo", "FOO"])
 def test_add_url_constraint_wheel_with_extras(
     app: PoetryTestApplication,
-    repo: TestRepository,
     tester: CommandTester,
     extra_name: str,
 ) -> None:
-    repo.add_package(get_package("pendulum", "1.4.4"))
-    repo.add_package(get_package("cleo", "0.6.5"))
-    repo.add_package(get_package("tomlkit", "0.5.5"))
-
     tester.execute(
         "https://files.pythonhosted.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
         f"[{extra_name},bar]"
@@ -815,9 +768,8 @@ Writing lock file
 
 
 def test_add_constraint_with_optional(
-    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+    app: PoetryTestApplication, tester: CommandTester
 ) -> None:
-    repo.add_package(get_package("cachy", "0.2.0"))
     tester.execute("cachy=0.2.0 --optional")
     expected = """\
 
@@ -844,13 +796,8 @@ Writing lock file
 
 
 def test_add_constraint_with_python(
-    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+    app: PoetryTestApplication, tester: CommandTester
 ) -> None:
-    cachy2 = get_package("cachy", "0.2.0")
-
-    repo.add_package(get_package("cachy", "0.1.0"))
-    repo.add_package(cachy2)
-
     tester.execute("cachy=0.2.0 --python >=2.7")
 
     expected = """\
@@ -858,8 +805,9 @@ def test_add_constraint_with_python(
 Updating dependencies
 Resolving dependencies...
 
-Package operations: 1 install, 0 updates, 0 removals
+Package operations: 2 installs, 0 updates, 0 removals
 
+  - Installing msgpack-python (0.5.6)
   - Installing cachy (0.2.0)
 
 Writing lock file
@@ -867,7 +815,7 @@ Writing lock file
 
     assert tester.io.fetch_output() == expected
     assert isinstance(tester.command, InstallerCommand)
-    assert tester.command.installer.executor.installations_count == 1
+    assert tester.command.installer.executor.installations_count == 2
 
     pyproject: dict[str, Any] = app.poetry.file.read()
     content = pyproject["tool"]["poetry"]
@@ -878,17 +826,11 @@ Writing lock file
 
 def test_add_constraint_with_platform(
     app: PoetryTestApplication,
-    repo: TestRepository,
     tester: CommandTester,
     env: MockEnv,
 ) -> None:
     platform = sys.platform
     env._platform = platform
-
-    cachy2 = get_package("cachy", "0.2.0")
-
-    repo.add_package(get_package("cachy", "0.1.0"))
-    repo.add_package(cachy2)
 
     tester.execute(f"cachy=0.2.0 --platform {platform} -vvv")
 
@@ -897,8 +839,9 @@ def test_add_constraint_with_platform(
 Updating dependencies
 Resolving dependencies...
 
-Package operations: 1 install, 0 updates, 0 removals
+Package operations: 2 installs, 0 updates, 0 removals
 
+  - Installing msgpack-python (0.5.6)
   - Installing cachy (0.2.0)
 
 Writing lock file
@@ -906,7 +849,7 @@ Writing lock file
 
     assert tester.io.fetch_output() == expected
     assert isinstance(tester.command, InstallerCommand)
-    assert tester.command.installer.executor.installations_count == 1
+    assert tester.command.installer.executor.installations_count == 2
 
     pyproject: dict[str, Any] = app.poetry.file.read()
     content = pyproject["tool"]["poetry"]
@@ -992,13 +935,13 @@ def test_add_constraint_not_found_with_source(
     assert str(e.value) == "Could not find a matching version of package cachy"
 
 
+@pytest.mark.parametrize("group_name", ["dev", "foo.BAR"])
 def test_add_to_section_that_does_not_exist_yet(
-    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+    app: PoetryTestApplication,
+    tester: CommandTester,
+    group_name: str,
 ) -> None:
-    repo.add_package(get_package("cachy", "0.1.0"))
-    repo.add_package(get_package("cachy", "0.2.0"))
-
-    tester.execute("cachy --group dev")
+    tester.execute(f"cachy --group {group_name}")
 
     expected = """\
 Using version ^0.2.0 for cachy
@@ -1006,8 +949,9 @@ Using version ^0.2.0 for cachy
 Updating dependencies
 Resolving dependencies...
 
-Package operations: 1 install, 0 updates, 0 removals
+Package operations: 2 installs, 0 updates, 0 removals
 
+  - Installing msgpack-python (0.5.6)
   - Installing cachy (0.2.0)
 
 Writing lock file
@@ -1015,17 +959,18 @@ Writing lock file
 
     assert tester.io.fetch_output() == expected
     assert isinstance(tester.command, InstallerCommand)
-    assert tester.command.installer.executor.installations_count == 1
+    assert tester.command.installer.executor.installations_count == 2
 
     pyproject: dict[str, Any] = app.poetry.file.read()
     content = pyproject["tool"]["poetry"]
 
-    assert "cachy" in content["group"]["dev"]["dependencies"]
-    assert content["group"]["dev"]["dependencies"]["cachy"] == "^0.2.0"
+    assert "cachy" in content["group"][group_name]["dependencies"]
+    assert content["group"][group_name]["dependencies"]["cachy"] == "^0.2.0"
 
-    expected = """\
+    escaped_group_name = f'"{group_name}"' if "." in group_name else group_name
+    expected = f"""\
 
-[tool.poetry.group.dev.dependencies]
+[tool.poetry.group.{escaped_group_name}.dependencies]
 cachy = "^0.2.0"
 
 """
@@ -1038,11 +983,8 @@ cachy = "^0.2.0"
 
 
 def test_add_to_dev_section_deprecated(
-    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+    app: PoetryTestApplication, tester: CommandTester
 ) -> None:
-    repo.add_package(get_package("cachy", "0.1.0"))
-    repo.add_package(get_package("cachy", "0.2.0"))
-
     tester.execute("cachy --dev")
 
     warning = """\
@@ -1055,8 +997,9 @@ Using version ^0.2.0 for cachy
 Updating dependencies
 Resolving dependencies...
 
-Package operations: 1 install, 0 updates, 0 removals
+Package operations: 2 installs, 0 updates, 0 removals
 
+  - Installing msgpack-python (0.5.6)
   - Installing cachy (0.2.0)
 
 Writing lock file
@@ -1065,7 +1008,7 @@ Writing lock file
     assert tester.io.fetch_error() == warning
     assert tester.io.fetch_output() == expected
     assert isinstance(tester.command, InstallerCommand)
-    assert tester.command.installer.executor.installations_count == 1
+    assert tester.command.installer.executor.installations_count == 2
 
     pyproject: dict[str, Any] = app.poetry.file.read()
     content = pyproject["tool"]["poetry"]
@@ -1075,11 +1018,8 @@ Writing lock file
 
 
 def test_add_should_not_select_prereleases(
-    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
+    app: PoetryTestApplication, tester: CommandTester
 ) -> None:
-    repo.add_package(get_package("pyyaml", "3.13"))
-    repo.add_package(get_package("pyyaml", "4.2b2"))
-
     tester.execute("pyyaml")
 
     expected = """\
@@ -1287,11 +1227,8 @@ Writing lock file
     assert expected in tester.io.fetch_output()
 
 
-def test_add_with_lock(
-    app: PoetryTestApplication, repo: TestRepository, tester: CommandTester
-) -> None:
+def test_add_with_lock(app: PoetryTestApplication, tester: CommandTester) -> None:
     content_hash = app.poetry.locker._get_content_hash()
-    repo.add_package(get_package("cachy", "0.2.0"))
 
     tester.execute("cachy --lock")
 
@@ -1306,41 +1243,6 @@ Writing lock file
 
     assert tester.io.fetch_output() == expected
     assert content_hash != app.poetry.locker.lock_data["metadata"]["content-hash"]
-
-
-def test_add_to_section_that_does_no_exist_yet(
-    app: PoetryTestApplication,
-    repo: TestRepository,
-    tester: CommandTester,
-) -> None:
-    repo.add_package(get_package("cachy", "0.1.0"))
-    repo.add_package(get_package("cachy", "0.2.0"))
-
-    tester.execute("cachy --group dev")
-
-    expected = """\
-Using version ^0.2.0 for cachy
-
-Updating dependencies
-Resolving dependencies...
-
-Package operations: 1 install, 0 updates, 0 removals
-
-  - Installing cachy (0.2.0)
-
-Writing lock file
-"""
-
-    assert tester.io.fetch_output() == expected
-
-    assert isinstance(tester.command, InstallerCommand)
-    assert tester.command.installer.executor.installations_count == 1
-
-    pyproject: dict[str, Any] = app.poetry.file.read()
-    content = pyproject["tool"]["poetry"]
-
-    assert "cachy" in content["group"]["dev"]["dependencies"]
-    assert content["group"]["dev"]["dependencies"]["cachy"] == "^0.2.0"
 
 
 def test_add_keyboard_interrupt_restore_content(
@@ -1358,7 +1260,6 @@ def test_add_keyboard_interrupt_restore_content(
     original_pyproject_content = poetry_with_up_to_date_lockfile.file.read()
     original_lockfile_content = poetry_with_up_to_date_lockfile._locker.lock_data
 
-    repo.add_package(get_package("cachy", "0.2.0"))
     repo.add_package(get_package("docker", "4.3.1"))
 
     tester.execute("cachy")
@@ -1387,7 +1288,6 @@ def test_add_with_dry_run_keep_files_intact(
     original_pyproject_content = poetry_with_up_to_date_lockfile.file.read()
     original_lockfile_content = poetry_with_up_to_date_lockfile._locker.lock_data
 
-    repo.add_package(get_package("cachy", "0.2.0"))
     repo.add_package(get_package("docker", "4.3.1"))
 
     tester.execute(command)
@@ -1407,7 +1307,6 @@ def test_add_should_not_change_lock_file_when_dependency_installation_fail(
     tester = command_tester_factory("add", poetry=poetry_with_up_to_date_lockfile)
 
     repo.add_package(get_package("docker", "4.3.1"))
-    repo.add_package(get_package("cachy", "0.2.0"))
 
     original_pyproject_content = poetry_with_up_to_date_lockfile.file.read()
     original_lockfile_content = poetry_with_up_to_date_lockfile.locker.lock_data
@@ -1454,40 +1353,21 @@ def test_add_with_path_dependency_no_loopiness(
 
 def test_add_extras_are_parsed_and_included(
     app: PoetryTestApplication,
-    repo: TestRepository,
     tester: CommandTester,
 ) -> None:
-    msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
-    redis_dep = get_dependency("redis", ">=3.3.6 <4.0.0", optional=True)
-
-    cachy = get_package("cachy", "0.2.0")
-    cachy.add_dependency(msgpack_dep)
-    cachy.add_dependency(redis_dep)
-    cachy.extras = {
-        canonicalize_name("redis"): [redis_dep],
-        canonicalize_name("msgpack"): [msgpack_dep],
-    }
-    repo.add_package(cachy)
-
-    msgpack = get_package("msgpack-python", "0.5.1")
-    repo.add_package(msgpack)
-
-    redis = get_package("redis", "3.4.0")
-    repo.add_package(redis)
-
-    tester.execute('cachy --extras "redis msgpack"')
+    tester.execute('cleo --extras "redis msgpack"')
 
     expected = """\
-Using version ^0.2.0 for cachy
+Using version ^0.6.5 for cleo
 
 Updating dependencies
 Resolving dependencies...
 
 Package operations: 3 installs, 0 updates, 0 removals
 
-  - Installing msgpack-python (0.5.1)
+  - Installing msgpack-python (0.5.6)
   - Installing redis (3.4.0)
-  - Installing cachy (0.2.0)
+  - Installing cleo (0.6.5)
 
 Writing lock file
 """
@@ -1497,9 +1377,9 @@ Writing lock file
     pyproject: dict[str, Any] = app.poetry.file.read()
     content = pyproject["tool"]["poetry"]
 
-    assert "cachy" in content["dependencies"]
-    assert content["dependencies"]["cachy"] == {
-        "version": "^0.2.0",
+    assert "cleo" in content["dependencies"]
+    assert content["dependencies"]["cleo"] == {
+        "version": "^0.6.5",
         "extras": ["redis", "msgpack"],
     }
 
