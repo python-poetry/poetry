@@ -7,6 +7,7 @@ from cleo.io.null_io import NullIO
 from packaging.utils import canonicalize_name
 
 from poetry.installation.executor import Executor
+from poetry.puzzle.transaction import Transaction
 from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
 from poetry.repositories.installed_repository import InstalledRepository
@@ -206,6 +207,10 @@ class Installer:
         from poetry.puzzle.solver import Solver
 
         locked_repository = Repository("poetry-locked")
+        reresolve = self._config.get("installer.re-resolve", True)
+        solved_packages: dict[Package, TransitivePackageInfo] = {}
+        lockfile_repo = LockfileRepository()
+
         if self._update:
             if not self._lock and self._locker.is_locked():
                 locked_repository = self._locker.locked_repository()
@@ -242,7 +247,6 @@ class Installer:
                 self._write_lock_file(solved_packages)
                 return 0
 
-            lockfile_repo = LockfileRepository()
             for package in solved_packages:
                 if not lockfile_repo.has_package(package):
                     lockfile_repo.add_package(package)
@@ -255,6 +259,13 @@ class Installer:
                     "pyproject.toml changed significantly since poetry.lock was last"
                     " generated. Run `poetry lock [--no-update]` to fix the lock file."
                 )
+            if not (reresolve or self._locker.is_locked_groups_and_markers()):
+                if self._io.is_verbose():
+                    self._io.write_line(
+                        "<info>Cannot install without re-resolving"
+                        " because the lock file is not at least version 2.1</>"
+                    )
+                reresolve = True
 
             locker_extras = {
                 canonicalize_name(extra)
@@ -265,7 +276,10 @@ class Installer:
                     raise ValueError(f"Extra [{extra}] is not specified.")
 
             locked_repository = self._locker.locked_repository()
-            lockfile_repo = locked_repository
+            if reresolve:
+                lockfile_repo = locked_repository
+            else:
+                solved_packages = self._locker.locked_packages()
 
         if self._io.is_verbose():
             self._io.write_line("")
@@ -273,33 +287,52 @@ class Installer:
                 "<info>Finding the necessary packages for the current system</>"
             )
 
-        if self._groups is not None:
-            root = self._package.with_dependency_groups(list(self._groups), only=True)
-        else:
-            root = self._package.without_optional_dependency_groups()
+        if reresolve:
+            if self._groups is not None:
+                root = self._package.with_dependency_groups(
+                    list(self._groups), only=True
+                )
+            else:
+                root = self._package.without_optional_dependency_groups()
 
-        # We resolve again by only using the lock file
-        packages = lockfile_repo.packages + locked_repository.packages
-        pool = RepositoryPool.from_packages(packages, self._config)
+            # We resolve again by only using the lock file
+            packages = lockfile_repo.packages + locked_repository.packages
+            pool = RepositoryPool.from_packages(packages, self._config)
 
-        solver = Solver(
-            root,
-            pool,
-            self._installed_repository.packages,
-            locked_repository.packages,
-            NullIO(),
-        )
-        # Everything is resolved at this point, so we no longer need
-        # to load deferred dependencies (i.e. VCS, URL and path dependencies)
-        solver.provider.load_deferred(False)
-
-        with solver.use_environment(self._env):
-            ops = solver.solve(use_latest=self._whitelist).calculate_operations(
-                with_uninstalls=self._requires_synchronization or self._update,
-                synchronize=self._requires_synchronization,
-                skip_directory=self._skip_directory,
-                extras=set(self._extras),
+            solver = Solver(
+                root,
+                pool,
+                self._installed_repository.packages,
+                locked_repository.packages,
+                NullIO(),
             )
+            # Everything is resolved at this point, so we no longer need
+            # to load deferred dependencies (i.e. VCS, URL and path dependencies)
+            solver.provider.load_deferred(False)
+
+            with solver.use_environment(self._env):
+                transaction = solver.solve(use_latest=self._whitelist)
+
+        else:
+            if self._groups is None:
+                groups = self._package.dependency_group_names()
+            else:
+                groups = set(self._groups)
+            transaction = Transaction(
+                locked_repository.packages,
+                solved_packages,
+                self._installed_repository.packages,
+                self._package,
+                self._env.marker_env,
+                groups,
+            )
+
+        ops = transaction.calculate_operations(
+            with_uninstalls=self._requires_synchronization or self._update,
+            synchronize=self._requires_synchronization,
+            skip_directory=self._skip_directory,
+            extras=set(self._extras),
+        )
 
         # Validate the dependencies
         for op in ops:

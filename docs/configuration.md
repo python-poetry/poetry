@@ -269,6 +269,21 @@ Use parallel execution when using the new (`>=1.1.0`) installer.
 Set the maximum number of retries in an unstable network.
 This setting has no effect if the server does not support HTTP range requests.
 
+### `installer.re-resolve`
+
+**Type**: `boolean`
+
+**Default**: `true`
+
+**Environment Variable**: `POETRY_INSTALLER_RE_RESOLVE`
+
+*Introduced in 2.0.0*
+
+If the config option is _not_ set and the lock file is at least version 2.1
+(created by Poetry 2.0 or above), the installer will not re-resolve dependencies
+but evaluate the locked markers to decide which of the locked dependencies have to
+be installed into the target environment.
+
 ### `solver.lazy-wheel`
 
 **Type**: `boolean`

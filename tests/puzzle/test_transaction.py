@@ -3,7 +3,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Any
 
+import pytest
+
+from packaging.utils import canonicalize_name
+from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
+from poetry.core.packages.project_package import ProjectPackage
+from poetry.core.version.markers import AnyMarker
+from poetry.core.version.markers import parse_marker
 
 from poetry.installation.operations.update import Update
 from poetry.packages.transitive_package_info import TransitivePackageInfo
@@ -185,4 +192,183 @@ def test_it_should_update_installed_packages_if_sources_are_different() -> None:
                 ),
             }
         ],
+    )
+
+
+@pytest.mark.parametrize(
+    ("groups", "expected"),
+    [
+        (set(), []),
+        ({"main"}, ["a", "c"]),
+        ({"dev"}, ["b", "c"]),
+        ({"main", "dev"}, ["a", "b", "c"]),
+    ],
+)
+@pytest.mark.parametrize("installed", [False, True])
+@pytest.mark.parametrize("sync", [False, True])
+def test_calculate_operations_with_groups(
+    installed: bool, sync: bool, groups: set[str], expected: list[str]
+) -> None:
+    transaction = Transaction(
+        [Package("a", "1"), Package("b", "1"), Package("c", "1")],
+        {
+            Package("a", "1"): TransitivePackageInfo(
+                0, {"main"}, {"main": AnyMarker()}
+            ),
+            Package("b", "1"): TransitivePackageInfo(0, {"dev"}, {"dev": AnyMarker()}),
+            Package("c", "1"): TransitivePackageInfo(
+                0, {"main", "dev"}, {"main": AnyMarker(), "dev": AnyMarker()}
+            ),
+        },
+        [Package("a", "1"), Package("b", "1"), Package("c", "1")] if installed else [],
+        None,
+        {"python_version": "3.8"},
+        groups,
+    )
+
+    expected_ops = [
+        {"job": "install", "package": Package(name, "1")} for name in expected
+    ]
+    if installed:
+        for op in expected_ops:
+            op["skipped"] = True
+        if sync:
+            for name in sorted({"a", "b", "c"}.difference(expected), reverse=True):
+                expected_ops.insert(0, {"job": "remove", "package": Package(name, "1")})
+
+    check_operations(transaction.calculate_operations(sync), expected_ops)
+
+
+@pytest.mark.parametrize(
+    ("python_version", "expected"), [("3.8", ["a"]), ("3.9", ["b"])]
+)
+@pytest.mark.parametrize("installed", [False, True])
+@pytest.mark.parametrize("sync", [False, True])
+def test_calculate_operations_with_markers(
+    installed: bool, sync: bool, python_version: str, expected: list[str]
+) -> None:
+    transaction = Transaction(
+        [Package("a", "1"), Package("b", "1")],
+        {
+            Package("a", "1"): TransitivePackageInfo(
+                0, {"main"}, {"main": parse_marker("python_version < '3.9'")}
+            ),
+            Package("b", "1"): TransitivePackageInfo(
+                0, {"main"}, {"main": parse_marker("python_version >= '3.9'")}
+            ),
+        },
+        [Package("a", "1"), Package("b", "1")] if installed else [],
+        None,
+        {"python_version": python_version},
+        {"main"},
+    )
+
+    expected_ops = [
+        {"job": "install", "package": Package(name, "1")} for name in expected
+    ]
+    if installed:
+        for op in expected_ops:
+            op["skipped"] = True
+        if sync:
+            for name in sorted({"a", "b"}.difference(expected), reverse=True):
+                expected_ops.insert(0, {"job": "remove", "package": Package(name, "1")})
+
+    check_operations(transaction.calculate_operations(sync), expected_ops)
+
+
+@pytest.mark.parametrize(
+    ("python_version", "sys_platform", "groups", "expected"),
+    [
+        ("3.8", "win32", {"main"}, True),
+        ("3.9", "linux", {"main"}, False),
+        ("3.9", "linux", {"dev"}, True),
+        ("3.8", "win32", {"dev"}, False),
+        ("3.9", "linux", {"main", "dev"}, True),
+        ("3.8", "win32", {"main", "dev"}, True),
+        ("3.8", "linux", {"main", "dev"}, True),
+        ("3.9", "win32", {"main", "dev"}, False),
+    ],
+)
+def test_calculate_operations_with_groups_and_markers(
+    python_version: str,
+    sys_platform: str,
+    groups: set[str],
+    expected: bool,
+) -> None:
+    transaction = Transaction(
+        [Package("a", "1")],
+        {
+            Package("a", "1"): TransitivePackageInfo(
+                0,
+                {"main", "dev"},
+                {
+                    "main": parse_marker("python_version < '3.9'"),
+                    "dev": parse_marker("sys_platform == 'linux'"),
+                },
+            ),
+        },
+        [],
+        None,
+        {"python_version": python_version, "sys_platform": sys_platform},
+        groups,
+    )
+
+    expected_ops = (
+        [{"job": "install", "package": Package("a", "1")}] if expected else []
+    )
+
+    check_operations(transaction.calculate_operations(), expected_ops)
+
+
+@pytest.mark.parametrize("extras", [False, True])
+@pytest.mark.parametrize("marker_env", [False, True])
+@pytest.mark.parametrize("installed", [False, True])
+@pytest.mark.parametrize("with_uninstalls", [False, True])
+@pytest.mark.parametrize("sync", [False, True])
+def test_calculate_operations_extras(
+    extras: bool,
+    marker_env: bool,
+    installed: bool,
+    with_uninstalls: bool,
+    sync: bool,
+) -> None:
+    extra_name = canonicalize_name("foo")
+    package = ProjectPackage("root", "1.0")
+    dep_a = Dependency("a", "1", optional=True)
+    dep_a._in_extras = [extra_name]
+    package.add_dependency(dep_a)
+    package.extras = {extra_name: [dep_a]}
+    opt_a = Package("a", "1")
+    opt_a.optional = True
+
+    transaction = Transaction(
+        [Package("a", "1")],
+        {
+            opt_a: TransitivePackageInfo(
+                0,
+                {"main"} if marker_env else set(),
+                {"main": parse_marker("extra == 'foo'")} if marker_env else {},
+            )
+        },
+        [Package("a", "1")] if installed else [],
+        package,
+        {"python_version": "3.8"} if marker_env else None,
+        {"main"} if marker_env else None,
+    )
+
+    if extras:
+        ops = [{"job": "install", "package": Package("a", "1"), "skipped": installed}]
+    elif installed:
+        # extras are always removed, even if with_uninstalls is False
+        ops = [{"job": "remove", "package": Package("a", "1")}]
+    else:
+        ops = [{"job": "install", "package": Package("a", "1"), "skipped": True}]
+
+    check_operations(
+        transaction.calculate_operations(
+            with_uninstalls,
+            sync,
+            extras={extra_name} if extras else set(),
+        ),
+        ops,
     )

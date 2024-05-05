@@ -54,6 +54,42 @@ def transitive_info() -> TransitivePackageInfo:
     return TransitivePackageInfo(0, {MAIN_GROUP}, {})
 
 
+@pytest.mark.parametrize("is_locked", [True, False])
+def test_is_locked(locker: Locker, root: ProjectPackage, is_locked: bool) -> None:
+    if is_locked:
+        locker.set_lock_data(root, {})
+    assert locker.is_locked() is is_locked
+
+
+@pytest.mark.parametrize("is_fresh", [True, False])
+def test_is_fresh(
+    locker: Locker,
+    root: ProjectPackage,
+    transitive_info: TransitivePackageInfo,
+    is_fresh: bool,
+) -> None:
+    locker.set_lock_data(root, {})
+    if not is_fresh:
+        locker.set_pyproject_data(
+            {"tool": {"poetry": {"dependencies": {"tomli": "*"}}}}
+        )
+    assert locker.is_fresh() is is_fresh
+
+
+@pytest.mark.parametrize("lock_version", [None, "2.0", "2.1"])
+def test_is_locked_group_and_markers(
+    locker: Locker, root: ProjectPackage, lock_version: str | None
+) -> None:
+    if lock_version:
+        locker.set_lock_data(root, {})
+        with locker.lock.open("r", encoding="utf-8") as f:
+            content = f.read()
+        content = content.replace(locker._VERSION, lock_version)
+        with locker.lock.open("w", encoding="utf-8") as f:
+            f.write(content)
+    assert locker.is_locked_groups_and_markers() is (lock_version == "2.1")
+
+
 def test_lock_file_data_is_ordered(
     locker: Locker, root: ProjectPackage, transitive_info: TransitivePackageInfo
 ) -> None:
@@ -425,6 +461,64 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 
     package = packages[0]
     assert package.source_subdirectory == "subdir"
+
+
+@pytest.mark.parametrize(
+    ("groups", "marker", "expected"),
+    [
+        (["main"], None, {"main": "*"}),
+        (
+            ["main"],
+            repr('python_version == "3.9"'),
+            {"main": 'python_version == "3.9"'},
+        ),
+        (
+            ["main", "dev"],
+            repr('python_version == "3.9"'),
+            {"main": 'python_version == "3.9"', "dev": 'python_version == "3.9"'},
+        ),
+        (
+            ["main", "dev"],
+            (
+                '{"main" = \'python_version == "3.9"\','
+                ' "dev" = \'sys_platform == "linux"\'}'
+            ),
+            {"main": 'python_version == "3.9"', "dev": 'sys_platform == "linux"'},
+        ),
+        (
+            ["main", "dev"],
+            '{"main" = \'python_version == "3.9"\'}',
+            {"main": 'python_version == "3.9"', "dev": "*"},
+        ),
+    ],
+)
+def test_locker_properly_loads_groups_and_markers(
+    locker: Locker, groups: list[str], marker: str, expected: dict[str, str]
+) -> None:
+    content = rf"""
+[[package]]
+name = "a"
+version = "1.0"
+optional = false
+python-versions = "*"
+groups = {groups}
+{"markers = " + marker if marker else ""}
+files = []
+
+[metadata]
+lock-version = "2.1"
+python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+"""
+    with open(locker.lock, "w", encoding="utf-8") as f:
+        f.write(content)
+
+    packages = locker.locked_packages()
+
+    a = get_package("a", "1.0")
+    assert len(packages) == 1
+    assert packages[a].groups == set(groups)
+    assert packages[a].markers == {g: parse_marker(m) for g, m in expected.items()}
 
 
 def test_locker_properly_assigns_metadata_files(locker: Locker) -> None:
