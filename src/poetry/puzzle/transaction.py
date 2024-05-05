@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from typing import TYPE_CHECKING
+from typing import Any
 
 from poetry.utils.extras import get_extra_package_names
 
@@ -21,6 +22,8 @@ class Transaction:
         result_packages: list[Package] | dict[Package, TransitivePackageInfo],
         installed_packages: list[Package] | None = None,
         root_package: Package | None = None,
+        marker_env: dict[str, Any] | None = None,
+        groups: set[str] | None = None,
     ) -> None:
         self._current_packages = current_packages
         self._result_packages = result_packages
@@ -30,6 +33,8 @@ class Transaction:
 
         self._installed_packages = installed_packages
         self._root_package = root_package
+        self._marker_env = marker_env
+        self._groups = groups
 
     def get_solved_packages(self) -> dict[Package, TransitivePackageInfo]:
         assert isinstance(self._result_packages, dict)
@@ -50,7 +55,11 @@ class Transaction:
         operations: list[Operation] = []
 
         extra_packages: set[NormalizedName] = set()
-        if extras is not None:
+        if self._marker_env:
+            marker_env_with_extras = self._marker_env.copy()
+            if extras is not None:
+                marker_env_with_extras["extra"] = extras
+        elif extras is not None:
             assert self._root_package is not None
             extra_packages = get_extra_package_names(
                 self._result_packages,
@@ -64,13 +73,31 @@ class Transaction:
             }
         else:
             priorities = defaultdict(int)
+        relevant_result_packages: set[NormalizedName] = set()
         uninstalls: set[NormalizedName] = set()
         for result_package in self._result_packages:
-            installed = False
-            is_unsolicited_extra = extras is not None and (
-                result_package.optional and result_package.name not in extra_packages
-            )
+            is_unsolicited_extra = False
+            if self._marker_env:
+                assert self._groups is not None
+                assert isinstance(self._result_packages, dict)
+                info = self._result_packages[result_package]
 
+                if info.groups & self._groups and info.get_marker(
+                    self._groups
+                ).validate(marker_env_with_extras):
+                    relevant_result_packages.add(result_package.name)
+                elif result_package.optional:
+                    is_unsolicited_extra = True
+                else:
+                    continue
+            else:
+                relevant_result_packages.add(result_package.name)
+                is_unsolicited_extra = extras is not None and (
+                    result_package.optional
+                    and result_package.name not in extra_packages
+                )
+
+            installed = False
             for installed_package in self._installed_packages:
                 if result_package.name == installed_package.name:
                     installed = True
@@ -123,10 +150,7 @@ class Transaction:
 
         if with_uninstalls:
             for current_package in self._current_packages:
-                found = any(
-                    current_package.name == result_package.name
-                    for result_package in self._result_packages
-                )
+                found = current_package.name in (relevant_result_packages | uninstalls)
 
                 if not found:
                     for installed_package in self._installed_packages:
@@ -135,12 +159,9 @@ class Transaction:
                             operations.append(Uninstall(installed_package))
 
             if synchronize:
-                result_package_names = {
-                    result_package.name for result_package in self._result_packages
-                }
                 # We preserve pip when not managed by poetry, this is done to avoid
                 # externally managed virtual environments causing unnecessary removals.
-                preserved_package_names = {"pip"} - result_package_names
+                preserved_package_names = {"pip"} - relevant_result_packages
 
                 for installed_package in self._installed_packages:
                     if installed_package.name in uninstalls:
@@ -155,7 +176,7 @@ class Transaction:
                     if installed_package.name in preserved_package_names:
                         continue
 
-                    if installed_package.name not in result_package_names:
+                    if installed_package.name not in relevant_result_packages:
                         uninstalls.add(installed_package.name)
                         operations.append(Uninstall(installed_package))
 
