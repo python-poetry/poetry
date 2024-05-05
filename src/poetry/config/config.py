@@ -129,6 +129,7 @@ class Config:
         },
         "installer": {
             "modern-installation": True,
+            "re-resolve": True,
             "parallel": True,
             "max-workers": None,
             "no-binary": None,
@@ -308,6 +309,7 @@ class Config:
             "virtualenvs.options.prefer-active-python",
             "experimental.system-git-client",
             "installer.modern-installation",
+            "installer.re-resolve",
             "installer.parallel",
             "solver.lazy-wheel",
             "warnings.export",
