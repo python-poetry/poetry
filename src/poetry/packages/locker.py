@@ -18,6 +18,7 @@ from poetry.core.constraints.version import Version
 from poetry.core.constraints.version import parse_constraint
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
+from poetry.core.version.markers import parse_marker
 from poetry.core.version.requirements import InvalidRequirementError
 from tomlkit import array
 from tomlkit import comment
@@ -26,6 +27,7 @@ from tomlkit import inline_table
 from tomlkit import table
 
 from poetry.__version__ import __version__
+from poetry.packages.transitive_package_info import TransitivePackageInfo
 from poetry.toml.file import TOMLFile
 from poetry.utils._compat import tomllib
 
@@ -38,7 +40,6 @@ if TYPE_CHECKING:
     from poetry.core.packages.vcs_dependency import VCSDependency
     from tomlkit.toml_document import TOMLDocument
 
-    from poetry.packages.transitive_package_info import TransitivePackageInfo
     from poetry.repositories.lockfile_repository import LockfileRepository
 
 logger = logging.getLogger(__name__)
@@ -103,6 +104,13 @@ class Locker:
 
         return False
 
+    def is_locked_groups_and_markers(self) -> bool:
+        if not self.is_locked():
+            return False
+
+        version = Version.parse(self.lock_data["metadata"]["lock-version"])
+        return version >= Version.parse("2.1")
+
     def set_pyproject_data(self, pyproject_data: dict[str, Any]) -> None:
         self._pyproject_data = pyproject_data
         self._content_hash = self._get_content_hash()
@@ -121,7 +129,6 @@ class Locker:
         """
         Searches and returns a repository of locked packages.
         """
-        from poetry.factory import Factory
         from poetry.repositories.lockfile_repository import LockfileRepository
 
         repository = LockfileRepository()
@@ -129,113 +136,41 @@ class Locker:
         if not self.is_locked():
             return repository
 
-        lock_data = self.lock_data
-        locked_packages = cast("list[dict[str, Any]]", lock_data["package"])
+        locked_packages = cast("list[dict[str, Any]]", self.lock_data["package"])
 
         if not locked_packages:
             return repository
 
         for info in locked_packages:
-            source = info.get("source", {})
-            source_type = source.get("type")
-            url = source.get("url")
-            if source_type in ["directory", "file"]:
-                url = self.lock.parent.joinpath(url).resolve().as_posix()
-
-            name = info["name"]
-            package = Package(
-                name,
-                info["version"],
-                source_type=source_type,
-                source_url=url,
-                source_reference=source.get("reference"),
-                source_resolved_reference=source.get("resolved_reference"),
-                source_subdirectory=source.get("subdirectory"),
-            )
-            package.description = info.get("description", "")
-            package.optional = info["optional"]
-            metadata = cast("dict[str, Any]", lock_data["metadata"])
-
-            # Storing of package files and hashes has been through a few generations in
-            # the lockfile, we can read them all:
-            #
-            # - latest and preferred is that this is read per package, from
-            #   package.files
-            # - oldest is that hashes were stored in metadata.hashes without filenames
-            # - in between those two, hashes were stored alongside filenames in
-            #   metadata.files
-            package_files = info.get("files")
-            if package_files is not None:
-                package.files = package_files
-            elif "hashes" in metadata:
-                hashes = cast("dict[str, Any]", metadata["hashes"])
-                package.files = [{"name": h, "hash": h} for h in hashes[name]]
-            elif source_type in {"git", "directory", "url"}:
-                package.files = []
-            else:
-                files = metadata["files"][name]
-                if source_type == "file":
-                    filename = Path(url).name
-                    package.files = [item for item in files if item["file"] == filename]
-                else:
-                    # Strictly speaking, this is not correct, but we have no chance
-                    # to always determine which are the correct files because the
-                    # lockfile doesn't keep track which files belong to which package.
-                    package.files = files
-
-            package.python_versions = info["python-versions"]
-
-            package_extras: dict[NormalizedName, list[Dependency]] = {}
-            extras = info.get("extras", {})
-            if extras:
-                for name, deps in extras.items():
-                    name = canonicalize_name(name)
-                    package_extras[name] = []
-
-                    for dep in deps:
-                        try:
-                            dependency = Dependency.create_from_pep_508(dep)
-                        except InvalidRequirementError:
-                            # handle lock files with invalid PEP 508
-                            m = re.match(r"^(.+?)(?:\[(.+?)])?(?:\s+\((.+)\))?$", dep)
-                            if not m:
-                                raise
-                            dep_name = m.group(1)
-                            extras = m.group(2) or ""
-                            constraint = m.group(3) or "*"
-                            dependency = Dependency(
-                                dep_name, constraint, extras=extras.split(",")
-                            )
-                        package_extras[name].append(dependency)
-
-            package.extras = package_extras
-
-            for dep_name, constraint in info.get("dependencies", {}).items():
-                root_dir = self.lock.parent
-                if package.source_type == "directory":
-                    # root dir should be the source of the package relative to the lock
-                    # path
-                    assert package.source_url is not None
-                    root_dir = Path(package.source_url)
-
-                if isinstance(constraint, list):
-                    for c in constraint:
-                        package.add_dependency(
-                            Factory.create_dependency(dep_name, c, root_dir=root_dir)
-                        )
-
-                    continue
-
-                package.add_dependency(
-                    Factory.create_dependency(dep_name, constraint, root_dir=root_dir)
-                )
-
-            if "develop" in info:
-                package.develop = info["develop"]
-
-            repository.add_package(package)
+            repository.add_package(self._get_locked_package(info))
 
         return repository
+
+    def locked_packages(self) -> dict[Package, TransitivePackageInfo]:
+        if not self.is_locked_groups_and_markers():
+            raise RuntimeError(
+                "This method should not be called if the lock file"
+                " is not at least version 2.1."
+            )
+
+        locked_packages: dict[Package, TransitivePackageInfo] = {}
+
+        locked_package_info = cast("list[dict[str, Any]]", self.lock_data["package"])
+
+        for info in locked_package_info:
+            package = self._get_locked_package(info, with_dependencies=False)
+            groups = set(info["groups"])
+            locked_marker = info.get("markers", "*")
+            if isinstance(locked_marker, str):
+                markers = {group: parse_marker(locked_marker) for group in groups}
+            else:
+                markers = {
+                    group: parse_marker(locked_marker.get(group, "*"))
+                    for group in groups
+                }
+            locked_packages[package] = TransitivePackageInfo(0, groups, markers)
+
+        return locked_packages
 
     def set_lock_data(
         self, root: Package, packages: dict[Package, TransitivePackageInfo]
@@ -409,6 +344,111 @@ class Locker:
             )
 
         return lock_data
+
+    def _get_locked_package(
+        self, info: dict[str, Any], with_dependencies: bool = True
+    ) -> Package:
+        source = info.get("source", {})
+        source_type = source.get("type")
+        url = source.get("url")
+        if source_type in ["directory", "file"]:
+            url = self.lock.parent.joinpath(url).resolve().as_posix()
+
+        name = info["name"]
+        package = Package(
+            name,
+            info["version"],
+            source_type=source_type,
+            source_url=url,
+            source_reference=source.get("reference"),
+            source_resolved_reference=source.get("resolved_reference"),
+            source_subdirectory=source.get("subdirectory"),
+        )
+        package.description = info.get("description", "")
+        package.optional = info["optional"]
+        metadata = cast("dict[str, Any]", self.lock_data["metadata"])
+
+        # Storing of package files and hashes has been through a few generations in
+        # the lockfile, we can read them all:
+        #
+        # - latest and preferred is that this is read per package, from
+        #   package.files
+        # - oldest is that hashes were stored in metadata.hashes without filenames
+        # - in between those two, hashes were stored alongside filenames in
+        #   metadata.files
+        package_files = info.get("files")
+        if package_files is not None:
+            package.files = package_files
+        elif "hashes" in metadata:
+            hashes = cast("dict[str, Any]", metadata["hashes"])
+            package.files = [{"name": h, "hash": h} for h in hashes[name]]
+        elif source_type in {"git", "directory", "url"}:
+            package.files = []
+        else:
+            files = metadata["files"][name]
+            if source_type == "file":
+                filename = Path(url).name
+                package.files = [item for item in files if item["file"] == filename]
+            else:
+                # Strictly speaking, this is not correct, but we have no chance
+                # to always determine which are the correct files because the
+                # lockfile doesn't keep track which files belong to which package.
+                package.files = files
+
+        package.python_versions = info["python-versions"]
+
+        if "develop" in info:
+            package.develop = info["develop"]
+
+        if with_dependencies:
+            from poetry.factory import Factory
+
+            package_extras: dict[NormalizedName, list[Dependency]] = {}
+            extras = info.get("extras", {})
+            if extras:
+                for name, deps in extras.items():
+                    name = canonicalize_name(name)
+                    package_extras[name] = []
+
+                    for dep in deps:
+                        try:
+                            dependency = Dependency.create_from_pep_508(dep)
+                        except InvalidRequirementError:
+                            # handle lock files with invalid PEP 508
+                            m = re.match(r"^(.+?)(?:\[(.+?)])?(?:\s+\((.+)\))?$", dep)
+                            if not m:
+                                raise
+                            dep_name = m.group(1)
+                            extras = m.group(2) or ""
+                            constraint = m.group(3) or "*"
+                            dependency = Dependency(
+                                dep_name, constraint, extras=extras.split(",")
+                            )
+                        package_extras[name].append(dependency)
+
+            package.extras = package_extras
+
+            for dep_name, constraint in info.get("dependencies", {}).items():
+                root_dir = self.lock.parent
+                if package.source_type == "directory":
+                    # root dir should be the source of the package relative to the lock
+                    # path
+                    assert package.source_url is not None
+                    root_dir = Path(package.source_url)
+
+                if isinstance(constraint, list):
+                    for c in constraint:
+                        package.add_dependency(
+                            Factory.create_dependency(dep_name, c, root_dir=root_dir)
+                        )
+
+                    continue
+
+                package.add_dependency(
+                    Factory.create_dependency(dep_name, constraint, root_dir=root_dir)
+                )
+
+        return package
 
     def _lock_packages(
         self, packages: dict[Package, TransitivePackageInfo]
