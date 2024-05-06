@@ -74,7 +74,6 @@ def setup_mocks(
     mocker.patch(
         "poetry.repositories.repository_pool.RepositoryPool.package", pool.package
     )
-    mocker.patch("poetry.installation.executor.pip_install")
     mocker.patch(
         "poetry.installation.installer.Installer._get_installed",
         return_value=installed,
