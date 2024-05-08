@@ -1,7 +1,7 @@
 # Change Log
 
 
-## [1.8.3] - 2024-05-03
+## [1.8.3] - 2024-05-08
 
 ### Added
 
@@ -29,7 +29,7 @@
 - Add reference to configuration credentials in documentation of poetry `publish` ([#9110](https://github.com/python-poetry/poetry/pull/9110)).
 - Improve documentation for configuring credentials via environment variables ([#9121](https://github.com/python-poetry/poetry/pull/9121)).
 - Remove misleading wording around virtual environments ([#9213](https://github.com/python-poetry/poetry/pull/9213)).
-- Remove outdated advice regarding seeding keyring backends ([#9213](https://github.com/python-poetry/poetry/pull/9213)).
+- Remove outdated advice regarding seeding keyring backends ([#9164](https://github.com/python-poetry/poetry/pull/9164)).
 - Add a `pyproject.toml` example for a dependency with multiple extras ([#9138](https://github.com/python-poetry/poetry/pull/9138)).
 - Clarify help of `poetry add` ([#9230](https://github.com/python-poetry/poetry/pull/9230)).
 - Add a note how to configure credentials for TestPyPI for `poetry publish` ([#9255](https://github.com/python-poetry/poetry/pull/9255)).
