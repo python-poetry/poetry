@@ -171,13 +171,10 @@ class Downloader:
     ):
         self._dest = dest
 
-        session = session or get_default_authenticator()
-        headers = {"Accept-Encoding": "Identity"}
-
-        self._response = session.get(
-            url, stream=True, headers=headers, timeout=REQUESTS_TIMEOUT
-        )
-        self._response.raise_for_status()
+        self._session = session or get_default_authenticator()
+        self._url = url
+        self._response = self._get()
+        self._fetched_size = 0
 
     @cached_property
     def accepts_ranges(self) -> bool:
@@ -191,15 +188,36 @@ class Downloader:
                 total_size = int(self._response.headers["Content-Length"])
         return total_size
 
+    def _get(self, start: int = 0) -> None:
+        headers = {"Accept-Encoding": "Identity"}
+        if start > 0:
+            headers["Range"] = f"bytes={start}-"
+        headers = {"Accept-Encoding": "Identity"}
+        response = self._session.get(
+            self._url, stream=True, headers=headers, timeout=REQUESTS_TIMEOUT
+        )
+        response.raise_for_status()
+        return response
+    
+    def _write_chunks(self, f, chunk_size) -> Iterator[int]:
+        for chunk in self._response.iter_content(chunk_size=chunk_size):
+            if chunk:
+                f.write(chunk)
+                self._fetched_size += len(chunk)
+                yield self._fetched_size
+    
     def download_with_progress(self, chunk_size: int = 1024) -> Iterator[int]:
-        fetched_size = 0
         with atomic_open(self._dest) as f:
-            for chunk in self._response.iter_content(chunk_size=chunk_size):
-                if chunk:
-                    f.write(chunk)
-                    fetched_size += len(chunk)
-                    yield fetched_size
-
+            while True:
+                try:
+                    yield from self._write_chunks(f, chunk_size)
+                except Exception:
+                    if self.accepts_ranges:
+                        self._response=self._get(self._fetched_size)
+                        continue
+                    raise
+                else:
+                    break
 
 def get_package_version_display_string(
     package: Package, root: Path | None = None
