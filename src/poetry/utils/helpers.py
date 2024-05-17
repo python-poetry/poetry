@@ -192,7 +192,6 @@ class Downloader:
         headers = {"Accept-Encoding": "Identity"}
         if start > 0:
             headers["Range"] = f"bytes={start}-"
-        headers = {"Accept-Encoding": "Identity"}
         response = self._session.get(
             self._url, stream=True, headers=headers, timeout=REQUESTS_TIMEOUT
         )
