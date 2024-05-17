@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 
     from poetry.core.packages.package import Package
     from requests import Session
-
+    from requests import Response
     from poetry.utils.authenticator import Authenticator
 
 logger = logging.getLogger(__name__)
@@ -188,7 +188,7 @@ class Downloader:
                 total_size = int(self._response.headers["Content-Length"])
         return total_size
 
-    def _get(self, start: int = 0) -> None:
+    def _get(self, start: int = 0) -> Response:
         headers = {"Accept-Encoding": "Identity"}
         if start > 0:
             headers["Range"] = f"bytes={start}-"
