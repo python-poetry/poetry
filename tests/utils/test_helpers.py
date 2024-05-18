@@ -9,13 +9,14 @@ from typing import Any
 import pytest
 
 from poetry.core.utils.helpers import parse_requires
+from requests.exceptions import ChunkedEncodingError
 
 from poetry.utils.helpers import Downloader
 from poetry.utils.helpers import HTTPRangeRequestSupported
 from poetry.utils.helpers import download_file
 from poetry.utils.helpers import get_file_hash
 from poetry.utils.helpers import get_highest_priority_hash_type
-from requests.exceptions import ChunkedEncodingError
+
 
 if TYPE_CHECKING:
     from pathlib import Path

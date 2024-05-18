@@ -20,9 +20,9 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import overload
 
-from requests.utils import atomic_open
 from requests.exceptions import ChunkedEncodingError
 from requests.exceptions import ConnectionError
+from requests.utils import atomic_open
 
 from poetry.utils.authenticator import get_default_authenticator
 from poetry.utils.constants import REQUESTS_TIMEOUT
@@ -35,8 +35,9 @@ if TYPE_CHECKING:
     from types import TracebackType
 
     from poetry.core.packages.package import Package
-    from requests import Session
     from requests import Response
+    from requests import Session
+
     from poetry.utils.authenticator import Authenticator
 
 logger = logging.getLogger(__name__)
@@ -221,6 +222,7 @@ class Downloader:
                     f.write(chunk)
                     fetched_size += len(chunk)
                     yield fetched_size
+
 
 def get_package_version_display_string(
     package: Package, root: Path | None = None
