@@ -89,6 +89,7 @@ class Executor:
         # Cache whether decorated output is supported.
         # https://github.com/python-poetry/cleo/issues/423
         self._decorated_output: bool = self._io.output.is_decorated()
+        self._max_retries = config.get("installer.max-retries", 0)
 
     @property
     def installations_count(self) -> int:
@@ -719,7 +720,9 @@ class Executor:
         url: str,
         dest: Path,
     ) -> None:
-        downloader = Downloader(url, dest, self._authenticator)
+        downloader = Downloader(
+            url, dest, self._authenticator, max_retries=self._max_retries
+        )
         wheel_size = downloader.total_size
 
         operation_message = self.get_operation_message(operation)

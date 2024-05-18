@@ -175,7 +175,7 @@ def test_download_file_recover_from_error(
     http.register_uri(http.GET, url, body=handle_request)
     dest = tmp_path / "demo-0.1.0.tar.gz"
 
-    download_file(url, dest, chunk_size=file_length // 2)
+    download_file(url, dest, chunk_size=file_length // 2, max_retries=1)
 
     expect_sha_256 = "9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad"
     assert get_file_hash(dest) == expect_sha_256
@@ -200,7 +200,7 @@ def test_download_file_fail_when_no_range(
     http.register_uri(http.GET, url, body=handle_request)
     dest = tmp_path / "demo-0.1.0.tar.gz"
     with pytest.raises(ChunkedEncodingError):
-        download_file(url, dest, chunk_size=file_length // 2)
+        download_file(url, dest, chunk_size=file_length // 2, max_retries=1)
 
 
 def test_download_file_fail_when_first_chunk_failed(
@@ -221,7 +221,7 @@ def test_download_file_fail_when_first_chunk_failed(
     http.register_uri(http.GET, url, body=handle_request)
     dest = tmp_path / "demo-0.1.0.tar.gz"
     with pytest.raises(ChunkedEncodingError):
-        download_file(url, dest, chunk_size=file_length)
+        download_file(url, dest, chunk_size=file_length, max_retries=1)
 
 
 @pytest.mark.parametrize(
