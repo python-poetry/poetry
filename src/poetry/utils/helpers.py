@@ -38,7 +38,6 @@ if TYPE_CHECKING:
     from requests import Session
     from requests import Response
     from poetry.utils.authenticator import Authenticator
-    from io import BufferedWriter
 
 logger = logging.getLogger(__name__)
 prioritised_hash_types: tuple[str, ...] = tuple(
