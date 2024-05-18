@@ -164,6 +164,7 @@ def download_file(
                     last_percent = percent
                     update_context(f"Downloading {url} {percent:3}%")
 
+
 class Downloader:
     def __init__(
         self,
