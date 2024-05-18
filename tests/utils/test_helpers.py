@@ -15,7 +15,7 @@ from poetry.utils.helpers import HTTPRangeRequestSupported
 from poetry.utils.helpers import download_file
 from poetry.utils.helpers import get_file_hash
 from poetry.utils.helpers import get_highest_priority_hash_type
-
+from requests.exceptions import ChunkedEncodingError
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -149,6 +149,61 @@ def test_download_file(
     assert get_file_hash(dest) == expect_sha_256
     assert http.last_request().headers["Accept-Encoding"] == "Identity"
 
+def test_download_file_recover_from_error(
+    http: type[httpretty], fixture_dir: FixtureDirGetter, tmp_path: Path
+) -> None:
+    file_path = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
+    file_body = file_path.read_bytes()
+    file_length = len(file_body)
+    url = "https://foo.com/demo-0.1.0.tar.gz"
+    def handle_request(request: HTTPrettyRequest, uri: str, response_headers: dict[str, Any]) -> tuple[int, dict[str, Any], bytes]:
+        if request.headers.get("Range") is None:
+            response_headers["Content-Length"] = str(file_length)
+            response_headers["Accept-Ranges"] = "bytes"
+            return 200, response_headers, file_body[: file_length // 2]
+        else:
+            start = int(request.headers.get("Range", "bytes=0-").split("=")[1].split("-")[0])
+            return 206, response_headers, file_body[start:]
+    http.register_uri(http.GET, url, body=handle_request)
+    dest = tmp_path / "demo-0.1.0.tar.gz"
+
+    download_file(url, dest, chunk_size=file_length//2)
+
+    expect_sha_256 = "9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad"
+    assert get_file_hash(dest) == expect_sha_256
+    assert http.last_request().headers["Accept-Encoding"] == "Identity"
+    assert http.last_request().headers["Range"] == f"bytes={file_length // 2}-"
+
+def test_download_file_fail_when_no_range(
+    http: type[httpretty], fixture_dir: FixtureDirGetter, tmp_path: Path
+) -> None:
+    file_path = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
+    file_body = file_path.read_bytes()
+    file_length = len(file_body)
+    url = "https://foo.com/demo-0.1.0.tar.gz"
+    def handle_request(request: HTTPrettyRequest, uri: str, response_headers: dict[str, Any]) -> tuple[int, dict[str, Any], bytes]:
+        response_headers["Content-Length"] = str(file_length)
+        return 200, response_headers, file_body[: file_length // 2]
+    http.register_uri(http.GET, url, body=handle_request)
+    dest = tmp_path / "demo-0.1.0.tar.gz"
+    with pytest.raises(ChunkedEncodingError):
+        download_file(url, dest, chunk_size=file_length//2)
+
+def test_download_file_fail_when_first_chunk_failed(
+    http: type[httpretty], fixture_dir: FixtureDirGetter, tmp_path: Path
+) -> None:
+    file_path = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
+    file_body = file_path.read_bytes()
+    file_length = len(file_body)
+    url = "https://foo.com/demo-0.1.0.tar.gz"
+    def handle_request(request: HTTPrettyRequest, uri: str, response_headers: dict[str, Any]) -> tuple[int, dict[str, Any], bytes]:
+        response_headers["Content-Length"] = str(file_length)
+        response_headers["Accept-Ranges"] = "bytes"
+        return 200, response_headers, file_body[: file_length // 2]
+    http.register_uri(http.GET, url, body=handle_request)
+    dest = tmp_path / "demo-0.1.0.tar.gz"
+    with pytest.raises(ChunkedEncodingError):
+        download_file(url, dest, chunk_size=file_length)
 
 @pytest.mark.parametrize(
     "hash_types,expected",
