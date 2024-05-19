@@ -31,7 +31,7 @@ Changelog = "https://python-poetry.org/history/"
 [tool.poetry.dependencies]
 python = "^3.8"
 
-poetry-core = "1.9.0"
+poetry-core = { git = "https://github.com/radoering/poetry-core.git", branch = "markers/reduce-by-python-constraint" }
 poetry-plugin-export = "^1.8.0"
 build = "^1.2.1"
 cachecontrol = { version = "^0.14.0", extras = ["filecache"] }
