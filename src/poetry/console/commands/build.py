@@ -5,6 +5,9 @@ from typing import TYPE_CHECKING
 from typing import ClassVar
 
 from cleo.helpers import option
+from poetry.core.packages.dependency_group import MAIN_GROUP
+from poetry.core.version.markers import MultiMarker
+from poetry.core.version.markers import parse_marker
 
 from poetry.console.commands.env_command import EnvCommand
 from poetry.utils.env import build_environment
@@ -68,8 +71,30 @@ class BuildCommand(EnvCommand):
                 local=local_version_label
             )
 
-        for builder in builders:
-            builder(self.poetry, executable=executable).build(target_dir)
+        if not self.poetry.locker.is_locked_groups_and_markers():
+            raise RuntimeError("lock file version too old")
+        for package, info in self.poetry.locker.locked_packages().items():
+            if MAIN_GROUP not in info.groups:
+                continue
+            package.optional = True
+            dependency = package.to_dependency()
+            # We could just intersect 'extra == "pinned"' with the marker.
+            # However, since this extra is not part of the marker, we can avoid
+            # some work by building the MultiMarker manually. Besides,
+            # we can ensure that the extra is the first part of the marker.
+            extra_marker = parse_marker('extra == "pinned"')
+            locked_marker = info.get_marker({MAIN_GROUP})
+            if locked_marker.is_any():
+                dependency.marker = extra_marker
+            else:
+                # We explicitly do not MultiMarker.of() here
+                # because it is not necessary.
+                dependency.marker = MultiMarker(extra_marker, locked_marker)
+            self.poetry.package.add_dependency(dependency)
+        for builder_class in builders:
+            builder = builder_class(self.poetry, executable=executable)
+            builder._meta.provides_extra.append("pinned")
+            builder.build(target_dir)
 
     def handle(self) -> int:
         if not self.poetry.is_package_mode:
