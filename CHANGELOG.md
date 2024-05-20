@@ -182,7 +182,7 @@
 - Set Poetry as `user-agent` for all HTTP requests ([#8394](https://github.com/python-poetry/poetry/pull/8394)).
 - Do not install `setuptools` per default in Python 3.12 ([#7803](https://github.com/python-poetry/poetry/pull/7803)).
 - Do not install `wheel` per default ([#7803](https://github.com/python-poetry/poetry/pull/7803)).
-- Remove `setuptools` and `wheel` when running `poetry install --sync` if they are not required by the project ([#8600](https://github.com/python-poetry/poetry/pull/#8600)).
+- Remove `setuptools` and `wheel` when running `poetry install --sync` if they are not required by the project ([#8600](https://github.com/python-poetry/poetry/pull/8600)).
 - Improve error message about PEP-517 support ([#8463](https://github.com/python-poetry/poetry/pull/8463)).
 - Improve `keyring` handling ([#8227](https://github.com/python-poetry/poetry/pull/8227)).
 - Read the `description` field when extracting metadata from `setup.py` files ([#8545](https://github.com/python-poetry/poetry/pull/8545)).
