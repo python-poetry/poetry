@@ -121,7 +121,7 @@ class Application(BaseApplication):
         project_path = Path.cwd()
 
         if self._io and self._io.input.option("directory"):
-            project_path = self._io.input.option("directory")
+            project_path = Path(self._io.input.option("directory")).absolute()
 
         self._poetry = Factory().create_poetry(
             cwd=project_path,
