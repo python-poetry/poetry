@@ -333,16 +333,13 @@ def switch_working_directory(path: Path, remove: bool = False) -> Iterator[Path]
     original_cwd = Path.cwd()
     os.chdir(path)
 
-    with contextlib.suppress(Exception) as exception:
+    try:
         yield path
+    finally:
+        os.chdir(original_cwd)
 
-    os.chdir(original_cwd)
-
-    if remove:
-        shutil.rmtree(path, ignore_errors=True)
-
-    if exception is not None:
-        raise exception
+        if remove:
+            shutil.rmtree(path, ignore_errors=True)
 
 
 @contextlib.contextmanager
