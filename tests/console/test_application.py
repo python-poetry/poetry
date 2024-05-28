@@ -116,6 +116,12 @@ def test_application_verify_cache_flag_at_install(
     disable_cache: bool,
     set_project_context: SetProjectContext,
 ) -> None:
+    import poetry.utils.authenticator
+
+    # Set default authenticator to None so that it is recreated for each test
+    # and we get a consistent call_count.
+    poetry.utils.authenticator._authenticator = None
+
     with set_project_context("sample_project"):
         app = Application()
 
@@ -129,8 +135,9 @@ def test_application_verify_cache_flag_at_install(
 
         tester.execute(command)
 
-        assert spy.call_count == 2
-        for call in spy.mock_calls:
+        # The third call is the default authenticator, which ignores the cache flag.
+        assert spy.call_count == 3
+        for call in spy.mock_calls[:2]:
             (name, args, kwargs) = call
             assert "disable_cache" in kwargs
             assert disable_cache is kwargs["disable_cache"]
