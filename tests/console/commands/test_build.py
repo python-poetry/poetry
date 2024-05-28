@@ -7,8 +7,12 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from cleo.testers.application_tester import ApplicationTester
+
+from poetry.console.application import Application
 from poetry.factory import Factory
 from poetry.utils.helpers import remove_directory
+from tests.helpers import with_working_directory
 
 
 if TYPE_CHECKING:
@@ -60,6 +64,7 @@ def test_build_format_is_not_valid(tmp_tester: CommandTester) -> None:
 def test_build_creates_packages_in_dist_directory_if_no_output_is_specified(
     tmp_tester: CommandTester, tmp_project_path: Path, tmp_poetry: Poetry, format: str
 ) -> None:
+    shutil.rmtree(tmp_project_path / "dist")
     tmp_tester.execute(f"--format {format}")
     build_artifacts = tuple(
         (tmp_project_path / "dist").glob(get_package_glob(tmp_poetry))
@@ -71,6 +76,7 @@ def test_build_creates_packages_in_dist_directory_if_no_output_is_specified(
 def test_build_with_local_version_label(
     tmp_tester: CommandTester, tmp_project_path: Path, tmp_poetry: Poetry
 ) -> None:
+    shutil.rmtree(tmp_project_path / "dist")
     local_version_label = "local-version"
     tmp_tester.execute(f"--local-version {local_version_label}")
     build_artifacts = tuple(
@@ -169,6 +175,7 @@ def test_build_output_option(
     tmp_poetry: Poetry,
     output_dir: str,
 ) -> None:
+    shutil.rmtree(tmp_project_path / "dist")
     if output_dir is None:
         tmp_tester.execute()
         build_dir = tmp_project_path / "dist"
@@ -182,3 +189,25 @@ def test_build_output_option(
     build_artifacts = tuple(build_dir.glob(get_package_glob(tmp_poetry)))
     assert len(build_artifacts) > 0
     assert all(archive.exists() for archive in build_artifacts)
+
+
+def test_build_relative_directory_src_layout(
+    tmp_path: Path, fixture_dir: FixtureDirGetter
+) -> None:
+    tmp_project_path = tmp_path / "project"
+    with with_working_directory(fixture_dir("simple_project"), tmp_project_path):
+        shutil.rmtree(tmp_project_path / "dist")
+        (tmp_project_path / "src").mkdir()
+        (tmp_project_path / "simple_project").rename(
+            tmp_project_path / "src" / "simple_project"
+        )
+
+        # We have to use ApplicationTester because CommandTester
+        # initializes Poetry before passing the directory.
+        app = Application()
+        tester = ApplicationTester(app)
+        tester.execute("build --directory .")
+
+        build_dir = tmp_project_path / "dist"
+
+        assert len(list(build_dir.iterdir())) == 2
