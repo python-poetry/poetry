@@ -7,6 +7,9 @@ inputs:
   cache:
     description: Enable transparent Poetry artifact and metadata caching
     default: 'true'
+  path:
+    description: Path to Poetry project
+    default: '.'
 
 outputs:
   cache-hit:
@@ -33,7 +36,7 @@ runs:
         path: |
           ${{ steps.poetry-config.outputs.cache-dir }}/artifacts
           ${{ steps.poetry-config.outputs.cache-dir }}/cache
-        key: poetry-${{ steps.get-date.outputs.date }}-${{ runner.os }}-${{ hashFiles('pyproject.toml', 'poetry.lock') }}
+        key: poetry-${{ steps.get-date.outputs.date }}-${{ runner.os }}-${{ hashFiles(format('{0}/pyproject.toml', inputs.path), format('{0}/poetry.lock', inputs.path)) }}
         # The cache is cross-platform, and other platforms are used to seed cache misses.
         restore-keys: |
           poetry-${{ steps.get-date.outputs.date }}-${{ runner.os }}-
@@ -41,10 +44,13 @@ runs:
         enableCrossOsArchive: true
 
     - run: poetry install ${{ inputs.args }}
+      working-directory: ${{ inputs.path }}
       shell: bash
 
     - run: poetry env info
+      working-directory: ${{ inputs.path }}
       shell: bash
 
     - run: poetry show
+      working-directory: ${{ inputs.path }}
       shell: bash

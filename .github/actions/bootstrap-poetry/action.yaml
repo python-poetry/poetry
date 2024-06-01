@@ -35,10 +35,7 @@ runs:
         allow-prereleases: ${{ inputs.python-prereleases == 'true' }}
         update-environment: false
 
-    - run: >
-        pipx install \
-          ${{ inputs.python-version != 'default' && format('--python "{0}"', steps.setup-python.outputs.python-path) || '' }} \
-          '${{ inputs.poetry-spec }}'
+    - run: pipx install ${{ inputs.python-version != 'default' && format('--python "{0}"', steps.setup-python.outputs.python-path) || '' }} '${{ inputs.poetry-spec }}'
       shell: bash
 
     # Enable handling long path names (+260 char) on the Windows platform
