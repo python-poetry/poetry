@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import os
@@ -26,6 +27,7 @@ from tomlkit import inline_table
 from tomlkit import table
 
 from poetry.__version__ import __version__
+from poetry.toml import TOMLError
 from poetry.toml.file import TOMLFile
 from poetry.utils._compat import tomllib
 
@@ -292,7 +294,9 @@ class Locker:
     def _write_lock_data(self, data: TOMLDocument) -> None:
         lockfile = TOMLFile(self.lock)
         if self.lock.exists():
-            lockfile.read()  # get original line ending
+            # get original line ending.
+            with contextlib.suppress(TOMLError):
+                lockfile.read()
         lockfile.write(data)
 
         self._lock_data = None
