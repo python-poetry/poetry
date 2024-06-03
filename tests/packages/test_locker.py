@@ -1231,3 +1231,23 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
         content = f.read()
 
     assert content == old_content
+
+
+def test_lockfile_keep_eol(
+    locker: Locker, root: ProjectPackage
+) -> None:
+    sep = '\n' if os.sep == '\r\n' else '\r\n'
+
+    with open(locker.lock, "wb") as f:
+        f.write((sep * 10).encode())
+
+    assert locker.set_lock_data(root, [Package('test', version='0.0.1')])
+
+    with locker.lock.open(encoding="utf-8", newline='') as f:
+        l, *_ = f.read().splitlines(keepends=True)
+
+    if sep == '\r\n':
+        assert l.endswith('\r\n')
+    else:
+        assert not l.endswith('\r\n')
+
