@@ -291,6 +291,8 @@ class Locker:
 
     def _write_lock_data(self, data: TOMLDocument) -> None:
         lockfile = TOMLFile(self.lock)
+        if self.lock.exists():
+            lockfile.read() # get original line ending
         lockfile.write(data)
 
         self._lock_data = None
