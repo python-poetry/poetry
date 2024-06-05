@@ -1,6 +1,6 @@
 name: "\U0001F381 Feature Request"
 labels: ["kind/feature", "status/triage"]
-description: "Did you find errors, omissions, or anything unintelligible in the documentation?"
+description: "Want something new?"
 
 body:
   - type: markdown
