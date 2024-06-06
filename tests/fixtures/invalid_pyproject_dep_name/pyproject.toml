@@ -16,7 +16,7 @@ readme = "never/exists.md"
 [tool.poetry.dependencies]
 python = "*"
 pendulum = {"version" = "^2.0.5", allows-prereleases = true}
-invalid_dep = "1.0"
+invalid = "1.0"
 invalid_source = { "version" = "*", source = "not-exists" }
 invalid_source_multi = [
     { "version" = "*", platform = "linux", source = "exists" },
@@ -26,4 +26,3 @@ invalid_source_multi = [
 [[tool.poetry.source]]
 name = "exists"
 priority = "explicit"
-url = "https://example.com"
