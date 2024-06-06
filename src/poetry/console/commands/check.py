@@ -95,6 +95,7 @@ class CheckCommand(Command):
     def _validate_dependencies_source(self, config: dict[str, Any]) -> list[str]:
         """Check dependencies's source are valid"""
         sources = {k["name"] for k in config.get("source", [])}
+        sources.add("pypi")
 
         dependency_declarations: list[
             dict[str, str | dict[str, str] | list[dict[str, str]]]

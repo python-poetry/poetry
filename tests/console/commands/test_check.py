@@ -43,6 +43,14 @@ def poetry_with_up_to_date_lockfile(
         yield Factory().create_poetry(cwd)
 
 
+@pytest.fixture
+def poetry_with_pypi_reference(
+    set_project_context: SetProjectContext,
+) -> Iterator[Poetry]:
+    with set_project_context("pypi_reference", in_place=False) as cwd:
+        yield Factory().create_poetry(cwd)
+
+
 @pytest.fixture()
 def tester(
     command_tester_factory: CommandTesterFactory, poetry_sample_project: Poetry
@@ -209,4 +217,16 @@ def test_check_lock_up_to_date(
     assert tester.io.fetch_output() == expected
 
     # exit with an error
+    assert status_code == 0
+
+
+def test_check_does_not_error_on_pypi_reference(
+    command_tester_factory: CommandTesterFactory,
+    poetry_with_pypi_reference: Poetry,
+) -> None:
+    tester = command_tester_factory("check", poetry=poetry_with_pypi_reference)
+    status_code = tester.execute("")
+    expected = "All set!\n"
+
+    assert tester.io.fetch_output() == expected
     assert status_code == 0
