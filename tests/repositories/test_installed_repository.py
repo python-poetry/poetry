@@ -61,7 +61,10 @@ def installed_results(
         metadata.PathDistribution(site_purelib / "cleo-0.7.6.dist-info"),
         metadata.PathDistribution(src_dir / "pendulum" / "pendulum.egg-info"),
         metadata.PathDistribution(
-            zipfile.Path(site_purelib / "foo-0.1.0-py3.8.egg", "EGG-INFO")
+            zipfile.Path(  # type: ignore[arg-type]
+                site_purelib / "foo-0.1.0-py3.8.egg",
+                "EGG-INFO",
+            )
         ),
         metadata.PathDistribution(site_purelib / "standard-1.2.3.dist-info"),
         metadata.PathDistribution(site_purelib / "editable-2.3.4.dist-info"),
