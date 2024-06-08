@@ -12,6 +12,7 @@ import pytest
 from build import BuildBackendException
 from build import ProjectBuilder
 from packaging.metadata import parse_email
+from pkginfo.distribution import NewMetadataVersion  # type: ignore[attr-defined]
 
 from poetry.inspection.info import PackageInfo
 from poetry.inspection.info import PackageInfoError
@@ -212,7 +213,7 @@ def test_info_from_wheel_metadata_version_unknown(
         / "demo_metadata_version_unknown-0.1.0-py2.py3-none-any.whl"
     )
 
-    with pytest.raises(PackageInfoError) as e:
+    with pytest.warns(NewMetadataVersion), pytest.raises(PackageInfoError) as e:
         PackageInfo.from_wheel(path)
 
     assert "Unknown metadata version: 999.3" in str(e.value)
