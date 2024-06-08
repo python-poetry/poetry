@@ -59,6 +59,10 @@ xattr = { version = "^1.0.0", markers = "sys_platform == 'darwin'" }
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = ">=2.10"
+# add setuptools for PyCharm
+# see https://youtrack.jetbrains.com/issue/PY-48909
+# and https://github.com/JetBrains/intellij-community/commit/3f37786ec0bf5066e4527690d1068b5a00680ea3
+setuptools = { version = ">=60", python = "<3.10" }
 
 [tool.poetry.group.test.dependencies]
 coverage = ">=7.2.0"
