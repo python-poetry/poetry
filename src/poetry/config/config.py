@@ -317,7 +317,10 @@ class Config:
         if name == "virtualenvs.path":
             return lambda val: str(Path(val))
 
-        if name == "installer.max-workers":
+        if name in {
+            "installer.max-workers",
+            "installer.max-retries",
+        }:
             return int_normalizer
 
         if name in ["installer.no-binary", "installer.only-binary"]:

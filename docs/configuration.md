@@ -283,7 +283,7 @@ Use parallel execution when using the new (`>=1.1.0`) installer.
 
 *Introduced in 1.9.0*
 
-Set the maximum number of retries in an unstable network when using the new (`>=1.9.0`) installer.
+Set the maximum number of retries in an unstable network.
 This setting only valid if the server support HTTP range requests.
 
 ### `solver.lazy-wheel`
