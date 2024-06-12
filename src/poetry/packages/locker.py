@@ -65,6 +65,7 @@ class Locker:
         self._pyproject_data = pyproject_data
         self._lock_data: dict[str, Any] | None = None
         self._content_hash = self._get_content_hash()
+        self._contains_credential = False
 
     @property
     def lock(self) -> Path:
@@ -290,6 +291,10 @@ class Locker:
         return do_write
 
     def _write_lock_data(self, data: TOMLDocument) -> None:
+        if self._contains_credential:
+            logger.warning(
+                "A package URL contains credentials and will be written to poetry.lock."
+            )
         lockfile = TOMLFile(self.lock)
         lockfile.write(data)
 
@@ -469,6 +474,7 @@ class Locker:
 
         if package.source_url:
             url = package.source_url
+            self._contains_credential |= bool(re.match("[a-z]+://.*:.*@.*", url))
             if package.source_type in ["file", "directory"]:
                 # The lock file should only store paths relative to the root project
                 url = Path(
