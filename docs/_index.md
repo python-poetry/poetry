@@ -165,7 +165,7 @@ source, using a pre-release build, configuring a different installation location
 
 By default, Poetry is installed into a platform and user-specific directory:
 
-- `~/Library/Application Support/pypoetry` on MacOS.
+- `~/Library/Application Support/pypoetry` on macOS.
 - `~/.local/share/pypoetry` on Linux/Unix.
 - `%APPDATA%\pypoetry` on Windows.
 
@@ -213,7 +213,7 @@ as `poetry`.
 
 Alternatively, the full path to the `poetry` binary can always be used:
 
-- `~/Library/Application Support/pypoetry/venv/bin/poetry` on MacOS.
+- `~/Library/Application Support/pypoetry/venv/bin/poetry` on macOS.
 - `~/.local/share/pypoetry/venv/bin/poetry` on Linux/Unix.
 - `%APPDATA%\pypoetry\venv\Scripts\poetry` on Windows.
 - `$POETRY_HOME/venv/bin/poetry` if `$POETRY_HOME` is set.
@@ -228,7 +228,7 @@ Once Poetry is installed and in your `$PATH`, you can execute the following:
 poetry --version
 ```
 
-If you see something like `Poetry (version 1.2.0)`, your install is ready to use!
+If you see something like `Poetry (version 1.2.0)`, your installation is ready to use!
 {{< /step >}}
 {{< step >}}
 **Update Poetry**
