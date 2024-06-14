@@ -123,7 +123,7 @@ Poetry uses the following default directories:
 
 - Linux: `$XDG_CONFIG_HOME/pypoetry` or `~/.config/pypoetry`
 - Windows: `%APPDATA%\pypoetry`
-- MacOS: `~/Library/Application Support/pypoetry`
+- macOS: `~/Library/Application Support/pypoetry`
 
 You can override the Config directory by setting the `POETRY_CONFIG_DIR` environment variable.
 
@@ -131,7 +131,7 @@ You can override the Config directory by setting the `POETRY_CONFIG_DIR` environ
 
 - Linux: `$XDG_DATA_HOME/pypoetry` or `~/.local/share/pypoetry`
 - Windows: `%APPDATA%\pypoetry`
-- MacOS: `~/Library/Application Support/pypoetry`
+- macOS: `~/Library/Application Support/pypoetry`
 
 You can override the Data directory by setting the `POETRY_DATA_DIR` or `POETRY_HOME` environment variables. If `POETRY_HOME` is set, it will be given higher priority.
 
@@ -139,7 +139,7 @@ You can override the Data directory by setting the `POETRY_DATA_DIR` or `POETRY_
 
 - Linux: `$XDG_CACHE_HOME/pypoetry` or `~/.cache/pypoetry`
 - Windows: `%LOCALAPPDATA%\pypoetry`
-- MacOS: `~/Library/Caches/pypoetry`
+- macOS: `~/Library/Caches/pypoetry`
 
 You can override the Cache directory by setting the `POETRY_CACHE_DIR` environment variable.
 
