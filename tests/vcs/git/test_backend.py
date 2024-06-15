@@ -1,9 +1,15 @@
 from __future__ import annotations
 
+from unittest.mock import MagicMock
+
 import pytest
 
+from dulwich.repo import Repo
+
 from poetry.vcs.git.backend import Git
+from poetry.vcs.git.backend import annotated_tag
 from poetry.vcs.git.backend import is_revision_sha
+from poetry.vcs.git.backend import urlpathjoin
 
 
 VALID_SHA = "c5c7624ef64f34d9f50c3b7e8118f7f652fddbbd"
@@ -41,3 +47,25 @@ def test_invalid_revision_sha_max_len() -> None:
 def test_get_name_from_source_url(url: str) -> None:
     name = Git.get_name_from_source_url(url)
     assert name == "poetry"
+
+
+def test_annotated_tag() -> None:
+    tag = annotated_tag("my-tag")
+    assert tag == b"my-tag^{}"
+
+
+def test_get_remote_url() -> None:
+    repo = MagicMock(spec=Repo)
+    repo.get_config.return_value.get.return_value = (
+        b"https://github.com/python-poetry/poetry.git"
+    )
+
+    assert Git.get_remote_url(repo) == "https://github.com/python-poetry/poetry.git"
+
+
+def test_urlpathjoin() -> None:
+    base = "ssh://git@github.com/org/repo"
+    path = "../other-repo"
+    result = urlpathjoin(base, path)
+
+    assert result == "ssh://git@github.com/other-repo"
