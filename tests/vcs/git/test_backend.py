@@ -65,11 +65,13 @@ def test_get_remote_url() -> None:
 
 
 @pytest.mark.parametrize(
-    ("url"), ["ssh://git@github.com/org/repo", "ssh://git@github.com/org/repo"]
+    "url, expected_result",
+    [
+        ("ssh://git@github.com/org/repo", "ssh://git@github.com/other-repo"),
+        ("ssh://git@github.com/org/repo/", "ssh://git@github.com/org/other-repo"),
+    ],
 )
-def test_urlpathjoin(url: str) -> None:
-    base = url
+def test_urlpathjoin(url: str, expected_result: str) -> None:
     path = "../other-repo"
-    result = urlpathjoin(base, path)
-
-    assert result == "ssh://git@github.com/other-repo"
+    result = urlpathjoin(url, path)
+    assert result == expected_result
