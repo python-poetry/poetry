@@ -49,7 +49,8 @@ def test_get_name_from_source_url(url: str) -> None:
     assert name == "poetry"
 
 
-def test_annotated_tag() -> None:
+@pytest.mark.parametrize(("tag"), ["my-tag", b"my-tag"])
+def test_annotated_tag(tag: str | bytes) -> None:
     tag = annotated_tag("my-tag")
     assert tag == b"my-tag^{}"
 
@@ -63,8 +64,11 @@ def test_get_remote_url() -> None:
     assert Git.get_remote_url(repo) == "https://github.com/python-poetry/poetry.git"
 
 
-def test_urlpathjoin() -> None:
-    base = "ssh://git@github.com/org/repo"
+@pytest.mark.parametrize(
+    ("url"), ["ssh://git@github.com/org/repo", "ssh://git@github.com/org/repo"]
+)
+def test_urlpathjoin(url: str) -> None:
+    base = url
     path = "../other-repo"
     result = urlpathjoin(base, path)
 
