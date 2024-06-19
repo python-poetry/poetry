@@ -136,7 +136,7 @@ def isolated_builder(
 
     with ephemeral_environment(
         executable=python_executable,
-        flags={"no-pip": True, "no-setuptools": True, "no-wheel": True},
+        flags={"no-pip": True},
     ) as venv:
         env = IsolatedEnv(venv, pool)
         stdout = StringIO()
