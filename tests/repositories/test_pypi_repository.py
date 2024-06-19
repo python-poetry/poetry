@@ -44,9 +44,9 @@ def test_find_packages_does_not_select_prereleases_if_not_allowed(
     pypi_repository: PyPiRepository,
 ) -> None:
     repo = pypi_repository
-    packages = repo.find_packages(Factory.create_dependency("pyyaml", "*"))
+    packages = repo.find_packages(Factory.create_dependency("toga", ">=0.2.0"))
 
-    assert len(packages) == 1
+    assert len(packages) == 2
 
 
 @pytest.mark.parametrize(
@@ -104,6 +104,7 @@ def test_package(
             f"{package.name}-{package.version}.tar.gz",
         ]
     ]
+
     win_inet = package.extras[canonicalize_name("socks")][1]
     assert win_inet.name == "win-inet-pton"
     assert win_inet.python_versions == "~2.7 || ~2.6"
@@ -181,7 +182,6 @@ def test_find_links_for_package_yanked(
 
 def test_fallback_on_downloading_packages(pypi_repository: PyPiRepository) -> None:
     repo = pypi_repository
-    repo._fallback = True
 
     package = repo.package("jupyter", Version.parse("1.0.0"))
 
@@ -203,7 +203,6 @@ def test_fallback_inspects_sdist_first_if_no_matching_wheels_can_be_found(
     pypi_repository: PyPiRepository,
 ) -> None:
     repo = pypi_repository
-    repo._fallback = True
 
     package = repo.package("isort", Version.parse("4.3.4"))
 
@@ -215,35 +214,10 @@ def test_fallback_inspects_sdist_first_if_no_matching_wheels_can_be_found(
     assert dep.python_versions == "~2.7"
 
 
-def test_fallback_pep_658_metadata(
-    mocker: MockerFixture, pypi_repository: PyPiRepository
-) -> None:
-    repo = pypi_repository
-    repo._fallback = True
-
-    spy = mocker.spy(repo, "_get_info_from_metadata")
-
-    try:
-        package = repo.package("isort-metadata", Version.parse("4.3.4"))
-    except FileNotFoundError:
-        pytest.fail("Metadata was not successfully retrieved")
-    else:
-        assert spy.call_count > 0
-        assert spy.spy_return is not None
-
-        assert package.name == "isort-metadata"
-        assert len(package.requires) == 1
-
-        dep = package.requires[0]
-        assert dep.name == "futures"
-        assert dep.python_versions == "~2.7"
-
-
 def test_pypi_repository_supports_reading_bz2_files(
     pypi_repository: PyPiRepository,
 ) -> None:
     repo = pypi_repository
-    repo._fallback = True
     package = repo.package("twisted", Version.parse("18.9.0"))
 
     assert package.name == "twisted"

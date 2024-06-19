@@ -10,7 +10,6 @@ import requests.adapters
 
 from cachecontrol.controller import logger as cache_control_logger
 from poetry.core.packages.package import Package
-from poetry.core.packages.utils.link import Link
 from poetry.core.version.exceptions import InvalidVersion
 
 from poetry.repositories.exceptions import PackageNotFound
@@ -26,10 +25,7 @@ logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from packaging.utils import NormalizedName
-    from poetry.core.constraints.version import Version
     from poetry.core.constraints.version import VersionConstraint
-
-SUPPORTED_PACKAGE_TYPES = {"sdist", "bdist_wheel"}
 
 
 class PyPiRepository(HTTPRepository):
@@ -37,7 +33,6 @@ class PyPiRepository(HTTPRepository):
         self,
         url: str = "https://pypi.org/",
         disable_cache: bool = False,
-        fallback: bool = True,
         pool_size: int = requests.adapters.DEFAULT_POOLSIZE,
     ) -> None:
         super().__init__(
@@ -48,7 +43,6 @@ class PyPiRepository(HTTPRepository):
         )
 
         self._base_url = url
-        self._fallback = fallback
 
     def search(self, query: str) -> list[Package]:
         results = []
@@ -109,79 +103,6 @@ class PyPiRepository(HTTPRepository):
             raise PackageNotFound(f"Package [{name}] not found.")
 
         return info
-
-    def find_links_for_package(self, package: Package) -> list[Link]:
-        json_data = self._get(f"pypi/{package.name}/{package.version}/json")
-        if json_data is None:
-            return []
-
-        links = []
-        for url in json_data["urls"]:
-            if url["packagetype"] in SUPPORTED_PACKAGE_TYPES:
-                h = f"sha256={url['digests']['sha256']}"
-                links.append(Link(url["url"] + "#" + h, yanked=self._get_yanked(url)))
-
-        return links
-
-    def _get_release_info(
-        self, name: NormalizedName, version: Version
-    ) -> dict[str, Any]:
-        from poetry.inspection.info import PackageInfo
-
-        self._log(f"Getting info for {name} ({version}) from PyPI", "debug")
-
-        json_data = self._get(f"pypi/{name}/{version}/json")
-        if json_data is None:
-            raise PackageNotFound(f"Package [{name}] not found.")
-
-        info = json_data["info"]
-
-        data = PackageInfo(
-            name=info["name"],
-            version=info["version"],
-            summary=info["summary"],
-            requires_dist=info["requires_dist"],
-            requires_python=info["requires_python"],
-            yanked=self._get_yanked(info),
-            cache_version=str(self.CACHE_VERSION),
-        )
-
-        try:
-            version_info = json_data["urls"]
-        except KeyError:
-            version_info = []
-
-        files = info.get("files", [])
-        for file_info in version_info:
-            if file_info["packagetype"] in SUPPORTED_PACKAGE_TYPES:
-                files.append(
-                    {
-                        "file": file_info["filename"],
-                        "hash": "sha256:" + file_info["digests"]["sha256"],
-                    }
-                )
-        data.files = files
-
-        if self._fallback and data.requires_dist is None:
-            self._log(
-                "No dependencies found, downloading metadata and/or archives",
-                level="debug",
-            )
-            # No dependencies set (along with other information)
-            # This might be due to actually no dependencies
-            # or badly set metadata when uploading.
-            # So, we need to make sure there is actually no
-            # dependencies by introspecting packages.
-            page = self.get_page(name)
-            links = list(page.links_for_version(name, version))
-            info = self._get_info_from_links(links)
-
-            data.requires_dist = info.requires_dist
-
-            if not data.requires_python:
-                data.requires_python = info.requires_python
-
-        return data.asdict()
 
     def _get_page(self, name: NormalizedName) -> SimpleJsonPage:
         source = self._base_url + f"simple/{name}/"
