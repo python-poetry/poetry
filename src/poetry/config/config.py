@@ -128,7 +128,6 @@ class Config:
             "system-git-client": False,
         },
         "installer": {
-            "modern-installation": True,
             "parallel": True,
             "max-workers": None,
             "no-binary": None,
@@ -307,7 +306,6 @@ class Config:
             "virtualenvs.options.system-site-packages",
             "virtualenvs.options.prefer-active-python",
             "experimental.system-git-client",
-            "installer.modern-installation",
             "installer.parallel",
             "solver.lazy-wheel",
             "warnings.export",

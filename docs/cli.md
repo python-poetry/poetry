@@ -249,12 +249,6 @@ you can use the `--compile` option:
 poetry install --compile
 ```
 
-{{% note %}}
-The `--compile` option has no effect if `installer.modern-installation`
-is set to `false` because the old installer always compiles source files to bytecode.
-{{% /note %}}
-
-
 ### Options
 
 * `--without`: The dependency groups to ignore.

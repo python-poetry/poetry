@@ -65,9 +65,7 @@ class InstallCommand(InstallerCommand):
         option(
             "compile",
             None,
-            "Compile Python source files to bytecode."
-            " (This option has no effect if modern-installation is disabled"
-            " because the old installer always compiles.)",
+            "Compile Python source files to bytecode.",
         ),
     ]
 

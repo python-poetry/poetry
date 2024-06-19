@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import contextlib
 import csv
 import functools
 import itertools
@@ -14,7 +13,6 @@ from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
 
-from cleo.io.null_io import NullIO
 from poetry.core.packages.utils.link import Link
 
 from poetry.installation.chef import Chef
@@ -34,13 +32,11 @@ from poetry.utils.helpers import pluralize
 from poetry.utils.helpers import remove_directory
 from poetry.utils.isolated_build import IsolatedBuildError
 from poetry.utils.isolated_build import IsolatedBuildInstallError
-from poetry.utils.pip import pip_install
 
 
 if TYPE_CHECKING:
     from cleo.io.io import IO
     from cleo.io.outputs.section_output import SectionOutput
-    from poetry.core.masonry.builders.builder import Builder
     from poetry.core.packages.package import Package
 
     from poetry.config.config import Config
@@ -65,20 +61,6 @@ class Executor:
         self._enabled = True
         self._verbose = False
         self._wheel_installer = WheelInstaller(self._env)
-        self._use_modern_installation = config.get(
-            "installer.modern-installation", True
-        )
-        if not self._use_modern_installation:
-            self._io.write_line(
-                "<warning>Warning: Setting `installer.modern-installation` to `false` "
-                "is deprecated.</>"
-            )
-            self._io.write_line(
-                "<warning>The pip-based installer will be removed in a future release.</>"
-            )
-            self._io.write_line(
-                "<warning>See https://github.com/python-poetry/poetry/issues/8987.</>"
-            )
 
         if parallel is None:
             parallel = config.get("installer.parallel", True)
@@ -145,22 +127,6 @@ class Executor:
     def enable_bytecode_compilation(self, enable: bool = True) -> None:
         self._wheel_installer.enable_bytecode_compilation(enable)
 
-    def pip_install(
-        self, req: Path, upgrade: bool = False, editable: bool = False
-    ) -> int:
-        try:
-            pip_install(req, self._env, upgrade=upgrade, editable=editable)
-        except EnvCommandError as e:
-            output = decode(e.e.output)
-            if (
-                "KeyboardInterrupt" in output
-                or "ERROR: Operation cancelled by user" in output
-            ):
-                return -2
-            raise
-
-        return 0
-
     def execute(self, operations: list[Operation]) -> int:
         for job_type in self._executed:
             self._executed[job_type] = 0
@@ -171,13 +137,6 @@ class Executor:
 
         self._sections = {}
         self._yanked_warnings = []
-
-        # pip has to be installed first without parallelism if we install via pip
-        for i, op in enumerate(operations):
-            if op.package.name == "pip":
-                wait([self._executor.submit(self._execute_operation, op)])
-                del operations[i]
-                break
 
         # We group operations by priority
         groups = itertools.groupby(operations, key=lambda o: -o.priority)
@@ -535,8 +494,6 @@ class Executor:
 
     def _install(self, operation: Install | Update) -> int:
         package = operation.package
-        if package.source_type == "directory" and not self._use_modern_installation:
-            return self._install_directory_without_wheel_installer(operation)
 
         cleanup_archive: bool = False
         if package.source_type == "git":
@@ -559,9 +516,6 @@ class Executor:
             " <info>Installing...</info>"
         )
         self._write(operation, message)
-
-        if not self._use_modern_installation:
-            return self.pip_install(archive, upgrade=operation.job_type == "update")
 
         try:
             if operation.job_type == "update":
@@ -674,59 +628,6 @@ class Executor:
             (output_dir / ".created_from_git_dependency").touch()
 
         return archive
-
-    def _install_directory_without_wheel_installer(
-        self, operation: Install | Update
-    ) -> int:
-        from poetry.factory import Factory
-        from poetry.pyproject.toml import PyProjectTOML
-
-        package = operation.package
-        operation_message = self.get_operation_message(operation)
-
-        message = (
-            f"  <fg=blue;options=bold>-</> {operation_message}:"
-            " <info>Building...</info>"
-        )
-        self._write(operation, message)
-
-        assert package.source_url is not None
-        if package.root_dir:
-            req = package.root_dir / package.source_url
-        else:
-            req = Path(package.source_url).resolve(strict=False)
-
-        if package.source_subdirectory:
-            req /= package.source_subdirectory
-
-        pyproject = PyProjectTOML(req / "pyproject.toml")
-
-        package_poetry = None
-        if pyproject.is_poetry_project():
-            with contextlib.suppress(RuntimeError):
-                package_poetry = Factory().create_poetry(pyproject.file.path.parent)
-
-        if package_poetry is not None:
-            builder: Builder
-            if package.develop and not package_poetry.package.build_script:
-                from poetry.masonry.builders.editable import EditableBuilder
-
-                # This is a Poetry package in editable mode
-                # we can use the EditableBuilder without going through pip
-                # to install it, unless it has a build script.
-                builder = EditableBuilder(package_poetry, self._env, NullIO())
-                builder.build()
-
-                return 0
-
-            if package_poetry.package.build_script:
-                from poetry.core.masonry.builders.sdist import SdistBuilder
-
-                builder = SdistBuilder(package_poetry)
-                with builder.setup_py():
-                    return self.pip_install(req, upgrade=True, editable=package.develop)
-
-        return self.pip_install(req, upgrade=True, editable=package.develop)
 
     def _download(self, operation: Install | Update) -> Path:
         link = self._chooser.choose_for(operation.package)
@@ -866,18 +767,6 @@ class Executor:
         package = operation.package
 
         if not package.source_url or package.source_type == "legacy":
-            if not self._use_modern_installation:
-                # Since we are installing from our own distribution cache pip will write
-                # a `direct_url.json` file pointing to the cache distribution.
-                #
-                # That's not what we want, so we remove the direct_url.json file, if it
-                # exists.
-                for (
-                    direct_url_json
-                ) in self._env.site_packages.find_distribution_direct_url_json_files(
-                    distribution_name=package.name, writable_only=True
-                ):
-                    direct_url_json.unlink(missing_ok=True)
             return
 
         url_reference: dict[str, Any] | None = None
