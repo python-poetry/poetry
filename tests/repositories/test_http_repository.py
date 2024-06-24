@@ -80,7 +80,11 @@ def test_get_info_from_wheel(
     else:
         mock_metadata_from_wheel_url.assert_not_called()
         mock_download.assert_called_once_with(
-            url, mocker.ANY, session=repo.session, raise_accepts_ranges=lazy_wheel
+            url,
+            mocker.ANY,
+            session=repo.session,
+            raise_accepts_ranges=lazy_wheel,
+            max_retries=0,
         )
         if lazy_wheel:
             assert repo._supports_range_requests[domain] is False

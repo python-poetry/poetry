@@ -127,6 +127,9 @@ class Config:
         "experimental": {
             "system-git-client": False,
         },
+        "requests": {
+            "max-retries": 0,
+        },
         "installer": {
             "modern-installation": True,
             "parallel": True,
@@ -318,7 +321,10 @@ class Config:
         if name == "virtualenvs.path":
             return lambda val: str(Path(val))
 
-        if name == "installer.max-workers":
+        if name in {
+            "installer.max-workers",
+            "requests.max-retries",
+        }:
             return int_normalizer
 
         if name in ["installer.no-binary", "installer.only-binary"]:
