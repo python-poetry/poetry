@@ -36,11 +36,11 @@ poetry-plugin-export = "^1.8.0"
 build = "^1.2.1"
 cachecontrol = { version = "^0.14.0", extras = ["filecache"] }
 cleo = "^2.1.0"
-dulwich = "^0.21.2"
+dulwich = "^0.22.1"
 fastjsonschema = "^2.18.0"
 importlib-metadata = { version = ">=4.4", python = "<3.10" }
 installer = "^0.7.0"
-keyring = "^24.3.1"
+keyring = "^25.1.0"
 # packaging uses calver, so version is unclamped
 packaging = ">=24.0"
 pexpect = "^4.7.0"
@@ -59,17 +59,21 @@ xattr = { version = "^1.0.0", markers = "sys_platform == 'darwin'" }
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = ">=2.10"
+# add setuptools for PyCharm
+# see https://youtrack.jetbrains.com/issue/PY-48909
+# and https://github.com/JetBrains/intellij-community/commit/3f37786ec0bf5066e4527690d1068b5a00680ea3
+setuptools = { version = ">=60", python = "<3.10" }
 
 [tool.poetry.group.test.dependencies]
 coverage = ">=7.2.0"
-deepdiff = "^6.3"
-httpretty = "^1.1"
-jaraco-classes = "^3.3.1"
-pytest = "^8.0"
-pytest-cov = "^4.0"
-pytest-mock = "^3.9"
-pytest-randomly = "^3.12"
-pytest-xdist = { version = "^3.1", extras = ["psutil"] }
+deepdiff = ">=6.3"
+httpretty = ">=1.1"
+jaraco-classes = ">=3.3.1"
+pytest = ">=8.0"
+pytest-cov = ">=4.0"
+pytest-mock = ">=3.9"
+pytest-randomly = ">=3.12"
+pytest-xdist = { version = ">=3.1", extras = ["psutil"] }
 
 [tool.poetry.group.typing.dependencies]
 mypy = ">=1.8.0"
@@ -167,9 +171,9 @@ exclude = [
 # python versions.
 [[tool.mypy.overrides]]
 module = [
-    'poetry.plugins.plugin_manager',
     'poetry.repositories.installed_repository',
     'tests.console.commands.self.test_show_plugins',
+    'tests.repositories.test_installed_repository',
     'tests.helpers',
 ]
 warn_unused_ignores = false

@@ -109,7 +109,7 @@ constantly evolving, and this means that sometimes our documentation has gaps. Y
 editing the existing content to be more accessible, or creating new content such as tutorials, FAQs, etc.
 
 {{% note %}}
-Github [Discussions](https://github.com/python-poetry/poetry/discussions) and the
+GitHub [Discussions](https://github.com/python-poetry/poetry/discussions) and the
 [kind/question label](https://github.com/python-poetry/poetry/labels/kind/question) are excellent sources for FAQ
 candidates.
 {{% /note %}}

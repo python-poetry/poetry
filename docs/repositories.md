@@ -67,7 +67,7 @@ poetry add --source foo private-package
 Great, now all that is left is to publish your package. Assuming you'd want to share it privately
 with your team, you can configure the
 [Upload API](https://warehouse.pypa.io/api-reference/legacy.html#upload-api) endpoint for your
-[publishable repository](#publishable-repository).
+[publishable repository](#publishable-repositories).
 
 ```bash
 poetry config repositories.foo https://pypi.example.org/legacy/
@@ -95,7 +95,7 @@ export POETRY_HTTP_BASIC_FOO_PASSWORD=<password>
 ```
 {{% /note %}}
 
-Now, all the is left is to build and publish your project using the
+Now, all that is left is to build and publish your project using the
 [`publish`]({{< relref "cli#publish" >}}).
 
 ```bash
@@ -378,7 +378,7 @@ package's versions, metadata, files, etc.
 
 {{% note %}}
 
-If the the package's published metadata is invalid, Poetry will download the available bdist/sdist to
+If the package's published metadata is invalid, Poetry will download the available bdist/sdist to
 inspect it locally to identify the relevant metadata.
 
 {{% /note %}}
@@ -540,7 +540,7 @@ poetry config keyring.enabled false
 
 {{% note %}}
 
-Poetry will fallback to Pip style use of keyring so that backends like
+Poetry will fall back to Pip style use of keyring so that backends like
 Microsoft's [artifacts-keyring](https://pypi.org/project/artifacts-keyring/) get a chance to retrieve
 valid credentials. It will need to be properly installed into Poetry's virtualenv,
 preferably by installing a plugin.
@@ -591,7 +591,7 @@ poetry config certificates.foo.cert false
 ```
 
 {{% warning %}}
-Disabling certificate verification is not recommended as it is does not conform to security
+Disabling certificate verification is not recommended as it does not conform to security
 best practices.
 {{% /warning %}}
 {{% /note %}}
