@@ -55,12 +55,12 @@ def test_list_displays_default_value_if_not_set(
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
 experimental.system-git-client = false
-installer.max-retries = 0
 installer.max-workers = null
 installer.no-binary = null
 installer.only-binary = null
 installer.parallel = true
 keyring.enabled = true
+requests.max-retries = 0
 solver.lazy-wheel = true
 virtualenvs.create = true
 virtualenvs.in-project = null
@@ -88,12 +88,12 @@ def test_list_displays_set_get_setting(
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
 experimental.system-git-client = false
-installer.max-retries = 0
 installer.max-workers = null
 installer.no-binary = null
 installer.only-binary = null
 installer.parallel = true
 keyring.enabled = true
+requests.max-retries = 0
 solver.lazy-wheel = true
 virtualenvs.create = false
 virtualenvs.in-project = null
@@ -142,12 +142,12 @@ def test_unset_setting(
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
 experimental.system-git-client = false
-installer.max-retries = 0
 installer.max-workers = null
 installer.no-binary = null
 installer.only-binary = null
 installer.parallel = true
 keyring.enabled = true
+requests.max-retries = 0
 solver.lazy-wheel = true
 virtualenvs.create = true
 virtualenvs.in-project = null
@@ -174,12 +174,12 @@ def test_unset_repo_setting(
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
 experimental.system-git-client = false
-installer.max-retries = 0
 installer.max-workers = null
 installer.no-binary = null
 installer.only-binary = null
 installer.parallel = true
 keyring.enabled = true
+requests.max-retries = 0
 solver.lazy-wheel = true
 virtualenvs.create = true
 virtualenvs.in-project = null
@@ -304,12 +304,12 @@ def test_list_displays_set_get_local_setting(
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
 experimental.system-git-client = false
-installer.max-retries = 0
 installer.max-workers = null
 installer.no-binary = null
 installer.only-binary = null
 installer.parallel = true
 keyring.enabled = true
+requests.max-retries = 0
 solver.lazy-wheel = true
 virtualenvs.create = false
 virtualenvs.in-project = null
@@ -344,13 +344,13 @@ def test_list_must_not_display_sources_from_pyproject_toml(
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
 experimental.system-git-client = false
-installer.max-retries = 0
 installer.max-workers = null
 installer.no-binary = null
 installer.only-binary = null
 installer.parallel = true
 keyring.enabled = true
 repositories.foo.url = "https://foo.bar/simple/"
+requests.max-retries = 0
 solver.lazy-wheel = true
 virtualenvs.create = true
 virtualenvs.in-project = null

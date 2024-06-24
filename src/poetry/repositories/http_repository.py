@@ -66,6 +66,7 @@ class HTTPRepository(CachedRepository):
         self.get_page = functools.lru_cache(maxsize=None)(self._get_page)
 
         self._lazy_wheel = config.get("solver.lazy-wheel", True)
+        self._max_retries = config.get("requests.max-retries", 0)
         # We are tracking if a domain supports range requests or not to avoid
         # unnecessary requests.
         # ATTENTION: A domain might support range requests only for some files, so the
@@ -95,7 +96,11 @@ class HTTPRepository(CachedRepository):
         self, url: str, dest: Path, *, raise_accepts_ranges: bool = False
     ) -> None:
         return download_file(
-            url, dest, session=self.session, raise_accepts_ranges=raise_accepts_ranges
+            url,
+            dest,
+            session=self.session,
+            raise_accepts_ranges=raise_accepts_ranges,
+            max_retries=self._max_retries,
         )
 
     @contextmanager
