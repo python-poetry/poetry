@@ -23,6 +23,7 @@ def get_head_sha(cwd: Path) -> str:
         ["git", "rev-parse", "HEAD"],
         cwd=cwd,
         text=True,
+        encoding="utf-8",
     ).strip()
 
 
@@ -39,7 +40,7 @@ def temp_repo(tmp_path: Path) -> TempRepoFixture:
     repo = dulwich.repo.Repo.init(str(tmp_path))
 
     # init commit
-    (tmp_path / "foo").write_text("foo")
+    (tmp_path / "foo").write_text("foo", encoding="utf-8")
     repo.stage(["foo"])
 
     init_commit = repo.do_commit(
@@ -50,7 +51,7 @@ def temp_repo(tmp_path: Path) -> TempRepoFixture:
     )
 
     # extra commit
-    (tmp_path / "foo").write_text("bar")
+    (tmp_path / "foo").write_text("bar", encoding="utf-8")
     repo.stage(["foo"])
 
     head_commit = repo.do_commit(
