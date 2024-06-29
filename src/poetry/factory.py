@@ -99,9 +99,10 @@ class Factory(BaseFactory):
             )
         )
 
-        plugin_manager = PluginManager(Plugin.group, disable_plugins=disable_plugins)
-        plugin_manager.load_plugins()
-        plugin_manager.activate(poetry, io)
+        if not disable_plugins:
+            plugin_manager = PluginManager(Plugin.group)
+            plugin_manager.load_plugins()
+            plugin_manager.activate(poetry, io)
 
         return poetry
 
