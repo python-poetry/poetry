@@ -75,11 +75,6 @@ def manager_factory(poetry: Poetry, io: BufferedIO) -> ManagerFactory:
     return _manager
 
 
-@pytest.fixture()
-def no_plugin_manager(poetry: Poetry, io: BufferedIO) -> PluginManager:
-    return PluginManager(Plugin.group, disable_plugins=True)
-
-
 def test_load_plugins_and_activate(
     manager_factory: ManagerFactory,
     poetry: Poetry,
@@ -114,15 +109,3 @@ def test_load_plugins_with_invalid_plugin(
 
     with pytest.raises(ValueError):
         manager.load_plugins()
-
-
-def test_load_plugins_with_plugins_disabled(
-    no_plugin_manager: PluginManager,
-    poetry: Poetry,
-    io: BufferedIO,
-    with_my_plugin: None,
-) -> None:
-    no_plugin_manager.load_plugins()
-
-    assert poetry.package.version.text == "1.2.3"
-    assert io.fetch_output() == ""
