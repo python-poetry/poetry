@@ -12,7 +12,7 @@ from poetry.core.packages.package import Package
 from poetry.inspection.info import PackageInfo
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.http_repository import HTTPRepository
-from poetry.repositories.link_sources.html import SimpleRepositoryPage
+from poetry.repositories.link_sources.html import HTMLPage, SimpleRepositoryPage
 from poetry.repositories.link_sources.html import SimpleRepositoryRootPage
 
 
@@ -125,7 +125,7 @@ class LegacyRepository(HTTPRepository):
             ),
         )
 
-    def _get_page(self, name: NormalizedName) -> SimpleRepositoryPage:
+    def _get_page(self, name: NormalizedName) -> HTMLPage:
         if not (response := self._get_response(f"/{name}/")):
             raise PackageNotFound(f"Package [{name}] not found.")
         return SimpleRepositoryPage(response.url, response.text)

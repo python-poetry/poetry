@@ -5,6 +5,8 @@ import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from requests import Response
+
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.utils.link import Link
 
@@ -17,10 +19,12 @@ if TYPE_CHECKING:
     from packaging.utils import NormalizedName
 
 
-class MockResponse:
+class MockResponse(Response):
     def __init__(self, url: str, content: str):
+        super().__init__()
         self.url = url
-        self.text = content
+        self._content = content.encode("utf-8")
+        self.status_code = 200
 
 
 class MockSinglePageRepository(SinglePageRepository):
@@ -35,7 +39,7 @@ class MockSinglePageRepository(SinglePageRepository):
         )
         self._lazy_wheel = False
 
-    def _get_response(self, endpoint: str):
+    def _get_response(self, endpoint: str) -> MockResponse:
         fixture = self.FIXTURES / (self.url.rsplit("/", 1)[-1] + endpoint)
         if not fixture.exists():
             raise PackageNotFound(f"Package not found.")
