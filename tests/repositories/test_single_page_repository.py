@@ -63,6 +63,15 @@ def test_single_page_repository_get_page() -> None:
         assert link.path.startswith("/jax-releases/")
 
 
+def test_single_page_repository_relative_links_get_page() -> None:
+    repo = MockSinglePageRepository("relative_links")
+
+    page = repo.get_page("/ignored")
+    links = list(page.links)
+
+    assert links == [Link(f"{repo.BASE_URL}/relative-links-0.1.0.tar.gz")]
+
+
 def test_single_page_repository_find_packages() -> None:
     repo = MockSinglePageRepository("jax_releases")
 
