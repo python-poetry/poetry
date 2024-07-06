@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from poetry.core.packages.dependency import Dependency
+from poetry.core.packages.utils.link import Link
 
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.link_sources.html import SimpleRepositoryPage
@@ -16,24 +17,31 @@ if TYPE_CHECKING:
     from packaging.utils import NormalizedName
 
 
+class MockResponse:
+    def __init__(self, url: str, content: str):
+        self.url = url
+        self.text = content
+
+
 class MockSinglePageRepository(SinglePageRepository):
     FIXTURES = Path(__file__).parent / "fixtures" / "single-page"
+    BASE_URL = "http://single-page.foo.bar"
 
     def __init__(self, page: str) -> None:
         super().__init__(
             "single-page",
-            url=f"http://single-page.foo.bar/{page}.html",
+            url=f"{self.BASE_URL}/{page}.html",
             disable_cache=True,
         )
         self._lazy_wheel = False
 
-    def _get_page(self, name: NormalizedName) -> SimpleRepositoryPage:
+    def _get_response(self, endpoint: str):
         fixture = self.FIXTURES / self.url.rsplit("/", 1)[-1]
         if not fixture.exists():
-            raise PackageNotFound(f"Package [{name}] not found.")
+            raise PackageNotFound(f"Package not found.")
 
         with fixture.open(encoding="utf-8") as f:
-            return SimpleRepositoryPage(self._url, f.read())
+            return MockResponse(self._url, f.read())
 
     def _download(
         self, url: str, dest: Path, *, raise_accepts_ranges: bool = False
