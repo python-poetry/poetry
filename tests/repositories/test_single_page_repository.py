@@ -36,7 +36,7 @@ class MockSinglePageRepository(SinglePageRepository):
         self._lazy_wheel = False
 
     def _get_response(self, endpoint: str):
-        fixture = self.FIXTURES / self.url.rsplit("/", 1)[-1]
+        fixture = self.FIXTURES / (self.url.rsplit("/", 1)[-1] + endpoint)
         if not fixture.exists():
             raise PackageNotFound(f"Package not found.")
 
