@@ -100,10 +100,3 @@ class SimpleRepositoryRootPage:
                 results.append(href.rstrip("/"))
 
         return results
-
-
-class SimpleRepositoryPage(HTMLPage):
-    def __init__(self, url: str, content: str) -> None:
-        if not url.endswith("/"):
-            url += "/"
-        super().__init__(url=url, content=content)
