@@ -70,9 +70,7 @@ commands respectively.
         }
 
         for group in [ApplicationPlugin.group, Plugin.group]:
-            for entry_point in PluginManager(group).get_plugin_entry_points(
-                env=system_env
-            ):
+            for entry_point in PluginManager(group).get_plugin_entry_points():
                 assert entry_point.dist is not None
 
                 package = packages_by_name[canonicalize_name(entry_point.dist.name)]

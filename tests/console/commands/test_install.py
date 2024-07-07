@@ -247,6 +247,20 @@ def test_extras_are_parsed_and_populate_installer(
     assert tester.command.installer._extras == ["first", "second", "third"]
 
 
+def test_install_ensures_project_plugins(
+    tester: CommandTester, mocker: MockerFixture
+) -> None:
+    assert isinstance(tester.command, InstallerCommand)
+    mocker.patch.object(tester.command.installer, "run", return_value=1)
+    ensure_project_plugins = mocker.patch(
+        "poetry.plugins.plugin_manager.PluginManager.ensure_project_plugins"
+    )
+
+    tester.execute("")
+
+    ensure_project_plugins.assert_called_once()
+
+
 def test_extras_conflicts_all_extras(
     tester: CommandTester, mocker: MockerFixture
 ) -> None:
