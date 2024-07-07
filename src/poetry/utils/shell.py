@@ -110,6 +110,8 @@ class Shell:
                 args = ["-e", cmd]
             elif self._name == "fish":
                 args = ["-i", "--init-command", cmd]
+            elif self._name in ("powershell", "pwsh"):
+                args = ["-NoExit", "-File", str(activate_path)]
             else:
                 args = ["-i"]
 
@@ -126,9 +128,10 @@ class Shell:
             c.sendline(f"emulate bash -c {shlex.quote(f'. {quoted_activate_path}')}")
         elif self._name == "xonsh":
             c.sendline(f"vox activate {shlex.quote(str(env.path))}")
-        elif self._name in ["nu", "fish"]:
-            # If this is nu or fish, we don't want to send the activation command to the
-            # command line since we already ran it via the shell's invocation.
+        elif self._name in ["nu", "fish", "powershell", "pwsh"]:
+            # If this is nu, fish or PowerShell, we don't want to send the activation
+            # command to the command line since we already ran it via the shell's
+            # invocation.
             pass
         else:
             c.sendline(cmd)
