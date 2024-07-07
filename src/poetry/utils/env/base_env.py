@@ -60,7 +60,6 @@ class Env(ABC):
         self._base = base or path
 
         self._site_packages: SitePackages | None = None
-        self._paths: dict[str, str] | None = None
         self._supported_tags: list[Tag] | None = None
         self._purelib: Path | None = None
         self._platlib: Path | None = None
@@ -228,22 +227,20 @@ class Env(ABC):
     @abstractmethod
     def sys_path(self) -> list[str]: ...
 
-    @property
+    @cached_property
     def paths(self) -> dict[str, str]:
-        if self._paths is None:
-            self._paths = self.get_paths()
+        paths = self.get_paths()
 
-            if self.is_venv():
-                # We copy pip's logic here for the `include` path
-                self._paths["include"] = str(
-                    self.path.joinpath(
-                        "include",
-                        "site",
-                        f"python{self.version_info[0]}.{self.version_info[1]}",
-                    )
+        if self.is_venv():
+            # We copy pip's logic here for the `include` path
+            paths["include"] = str(
+                self.path.joinpath(
+                    "include",
+                    "site",
+                    f"python{self.version_info[0]}.{self.version_info[1]}",
                 )
-
-        return self._paths
+            )
+        return paths
 
     @property
     def supported_tags(self) -> list[Tag]:

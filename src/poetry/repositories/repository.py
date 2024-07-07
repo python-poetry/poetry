@@ -12,6 +12,8 @@ from poetry.repositories.exceptions import PackageNotFoundError
 
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from packaging.utils import NormalizedName
     from poetry.core.constraints.version import VersionConstraint
     from poetry.core.packages.dependency import Dependency
@@ -20,7 +22,7 @@ if TYPE_CHECKING:
 
 
 class Repository(AbstractRepository):
-    def __init__(self, name: str, packages: list[Package] | None = None) -> None:
+    def __init__(self, name: str, packages: Sequence[Package] | None = None) -> None:
         super().__init__(name)
         self._packages: list[Package] = []
 

@@ -6,6 +6,7 @@ from typing import ClassVar
 from cleo.helpers import option
 
 from poetry.console.commands.installer_command import InstallerCommand
+from poetry.plugins.plugin_manager import PluginManager
 
 
 if TYPE_CHECKING:
@@ -103,6 +104,8 @@ you can set the "package-mode" to false in your pyproject.toml file.
         from poetry.core.masonry.utils.module import ModuleOrPackageNotFoundError
 
         from poetry.masonry.builders.editable import EditableBuilder
+
+        PluginManager.ensure_project_plugins(self.poetry, self.io)
 
         if self.option("extras") and self.option("all-extras"):
             self.line_error(
