@@ -4,6 +4,7 @@ import os
 import shutil
 import zipfile
 
+from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Iterator
@@ -95,7 +96,7 @@ def env(
     env_dir: Path, site_purelib: Path, site_platlib: Path, src_dir: Path
 ) -> MockEnv:
     class _MockEnv(MockEnv):
-        @property
+        @cached_property
         def paths(self) -> dict[str, str]:
             return {
                 "purelib": site_purelib.as_posix(),
@@ -199,6 +200,30 @@ def test_load_successful_with_invalid_distribution(
     message = caplog.messages[0]
     assert message.startswith("Project environment contains an invalid distribution")
     assert str(invalid_dist_info) in message
+
+
+def test_loads_in_correct_sys_path_order(
+    tmp_path: Path, current_python: tuple[int, int, int], fixture_dir: FixtureDirGetter
+) -> None:
+    path1 = tmp_path / "path1"
+    path1.mkdir()
+    path2 = tmp_path / "path2"
+    path2.mkdir()
+    env = MockEnv(path=tmp_path, sys_path=[str(path1), str(path2)])
+    fixtures = fixture_dir("project_plugins")
+    dist_info_1 = "my_application_plugin-1.0.dist-info"
+    dist_info_2 = "my_application_plugin-2.0.dist-info"
+    dist_info_other = "my_other_plugin-1.0.dist-info"
+    shutil.copytree(fixtures / dist_info_1, path1 / dist_info_1)
+    shutil.copytree(fixtures / dist_info_2, path2 / dist_info_2)
+    shutil.copytree(fixtures / dist_info_other, path2 / dist_info_other)
+
+    repo = InstalledRepository.load(env)
+
+    assert {f"{p.name} {p.version}" for p in repo.packages} == {
+        "my-application-plugin 1.0",
+        "my-other-plugin 1.0",
+    }
 
 
 def test_load_ensure_isolation(repository: InstalledRepository) -> None:

@@ -239,7 +239,7 @@ class InstalledRepository(Repository):
         seen = set()
         skipped = set()
 
-        for entry in reversed(env.sys_path):
+        for entry in env.sys_path:
             if not entry.strip():
                 logger.debug(
                     "Project environment contains an empty path in <c1>sys_path</>,"
