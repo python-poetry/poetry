@@ -63,8 +63,29 @@ Similarly, the traditional `MANIFEST.in` file is replaced by the `tool.poetry.re
 `tool.poetry.exclude` sections. `tool.poetry.exclude` is additionally implicitly populated by your `.gitignore`. For
 full documentation on the project format, see the [pyproject section]({{< relref "pyproject" >}}) of the documentation.
 
+### Setting a Python Version
+
+{{% note %}}
+Unlike with other packages, Poetry will not automatically install a python interpreter for you.
+If you want to run Python files in your package like a script or application, you must _bring your own_ python interpreter to run them.
+{{% /note %}}
+
 Poetry will require you to explicitly specify what versions of Python you intend to support, and its universal locking
 will guarantee that your project is installable (and all dependencies claim support for) all supported Python versions.
+Again, it's important to remember that -- unlike other dependencies -- setting a Python version is merely specifying which versions of Python you intend to support.
+
+For example, in this `pyproject.toml` file:
+
+```toml
+[tool.poetry.dependencies]
+python = "^3.7.0"
+```
+
+we are allowing any version of Python 3 that is greater than `3.7.0`.
+
+When you run `poetry install`, you must have access to some version of a Python interpreter that satisfies this constraint available on your system.
+Poetry will not install a Python interpreter for you.
+If you use a tool like `pyenv`, you can use the experimental configuration value [`virtualenvs.prefer-active-python`]({{< relref "configuration/#virtualenvsprefer-active-python-experimental" >}}).
 
 ### Initialising a pre-existing project
 
@@ -75,6 +96,29 @@ directory. To interactively create a `pyproject.toml` file in directory `pre-exi
 cd pre-existing-project
 poetry init
 ```
+
+### Operating modes
+
+Poetry can be operated in two different modes. The default mode is the **package mode**, which is the right mode
+if you want to package your project into an sdist or a wheel and perhaps publish it to a package index.
+In this mode, some metadata such as `name` and `version`, which are required for packaging, are mandatory.
+Further, the project itself will be installed in editable mode when running `poetry install`.
+
+If you want to use Poetry only for dependency management but not for packaging, you can use the **non-package mode**:
+
+```toml
+[tool.poetry]
+package-mode = false
+```
+
+In this mode, metadata such as `name` and `version` are optional.
+Therefore, it is not possible to build a distribution or publish the project to a package index.
+Further, when running `poetry install`, Poetry does not try to install the project itself,
+but only its dependencies (same as `poetry install --no-root`).
+
+{{% note %}}
+In the [pyproject section]({{< relref "pyproject" >}}) you can see which fields are required in package mode.
+{{% /note %}}
 
 ### Specifying dependencies
 
@@ -128,17 +172,33 @@ any Poetry commands that expect to manipulate an environment.
 To run your script simply use `poetry run python your_script.py`.
 Likewise if you have command line tools such as `pytest` or `black` you can run them using `poetry run pytest`.
 
+{{% note %}}
+If managing your own virtual environment externally, you do not need to use `poetry run` or `poetry shell` since
+you will, presumably, already have activated that virtual environment and made available the correct python instance.
+For example, these commands should output the same python path:
+
+```shell
+conda activate your_env_name
+which python
+poetry run which python
+poetry shell
+which python
+```
+
+{{% /note %}}
+
 ### Activating the virtual environment
 
-The easiest way to activate the virtual environment is to create a new shell with `poetry shell`.
+The easiest way to activate the virtual environment is to create a nested shell with `poetry shell`.
+
 To deactivate the virtual environment and exit this new shell type `exit`.
 To deactivate the virtual environment without leaving the shell use `deactivate`.
 
 {{% note %}}
-**Why a new shell?**
+**Why a nested shell?**
 
 Child processes inherit their environment from their parents, but do not share
-them. As such, any modifications made by a child process, is not persisted after
+them. As such, any modifications made by a child process is not persisted after
 the child process exits. A Python application (Poetry), being a child process,
 cannot modify the environment of the shell that it has been called from such
 that an activated virtual environment remains active after the Poetry command
@@ -148,17 +208,22 @@ Therefore, Poetry has to create a sub-shell with the virtual environment activat
 in order for the subsequent commands to run from within the virtual environment.
 {{% /note %}}
 
+If you'd like to prevent `poetry shell` from modifying your shell prompt on virtual environment activation, you should
+set `VIRTUAL_ENV_DISABLE_PROMPT=1` as an environment variable before running the command.
+
 Alternatively, to avoid creating a new shell, you can manually activate the
-virtual environment by running `source {path_to_venv}/bin/activate` (`{path_to_venv}\Scripts\activate.ps1` on Windows PowerShell).
+virtual environment by running `source {path_to_venv}/bin/activate` (`{path_to_venv}\Scripts\activate.ps1` in PowerShell).
 To get the path to your virtual environment run `poetry env info --path`.
-You can also combine these into a nice one-liner, `source $(poetry env info --path)/bin/activate`
+You can also combine these into a one-liner, such as `source $(poetry env info --path)/bin/activate`
+(`& ((poetry env info --path) + "\Scripts\activate.ps1")` in Powershell).
+
 To deactivate this virtual environment simply use `deactivate`.
 
-|                   | POSIX Shell                                     | Windows (PowerShell)                  | Exit/Deactivate |
-| ----------------- | ----------------------------------------------- | ------------------------------------- | --------------- |
-| New Shell         | `poetry shell`                                  | `poetry shell`                        | `exit`          |
-| Manual Activation | `source {path_to_venv}/bin/activate`            | `{path_to_venv}\Scripts\activate.ps1` | `deactivate`    |
-| One-liner         | `source $(poetry env info --path)/bin/activate` |                                       | `deactivate`    |
+|                   | POSIX Shell                                     | Windows (PowerShell)                                     | Exit/Deactivate |
+| ----------------- | ----------------------------------------------- | -------------------------------------------------------- | --------------- |
+| Sub-shell         | `poetry shell`                                  | `poetry shell`                                           | `exit`          |
+| Manual Activation | `source {path_to_venv}/bin/activate`            | `{path_to_venv}\Scripts\activate.ps1`                    | `deactivate`    |
+| One-liner         | `source $(poetry env info --path)/bin/activate` | `& ((poetry env info --path) + "\Scripts\activate.ps1")` | `deactivate`    |
 
 ## Version constraints
 
@@ -213,7 +278,11 @@ but they may not all be at the very latest available versions
 (some dependencies listed in the `poetry.lock` file may have released newer versions since the file was created).
 This is by design, it ensures that your project does not break because of unexpected changes in dependencies.
 
-### Commit your `poetry.lock` file to version control
+### Committing your `poetry.lock` file to version control
+
+#### As an application developer
+
+Application developers commit `poetry.lock` to get more reproducible builds.
 
 Committing this file to VC is important because it will cause anyone who sets up the project
 to use the exact same versions of the dependencies that you are using.
@@ -224,9 +293,18 @@ Even if you develop alone, in six months when reinstalling the project you can f
 the dependencies installed are still working even if your dependencies released many new versions since then.
 (See note below about using the update command.)
 
-{{% note %}}
-For libraries it is not necessary to commit the lock file.
-{{% /note %}}
+{{% warning %}} If you have added the recommended [`[build-system]`]({{< relref "pyproject#poetry-and-pep-517" >}}) section to your project's pyproject.toml then you _can_ successfully install your project and its dependencies into a virtual environment using a command like `pip install -e .`. However, pip will not use the lock file to determine dependency versions as the poetry-core build system is intended for library developers (see next section).
+{{% /warning %}}
+
+#### As a library developer
+
+Library developers have more to consider. Your users are application developers, and your library will run in a Python environment you don't control.
+
+The application ignores your library's lock file. It can use whatever dependency version meets the constraints in your `pyproject.toml`. The application will probably use the latest compatible dependency version. If your library's `poetry.lock` falls behind some new dependency version that breaks things for your users, you're likely to be the last to find out about it.
+
+A simple way to avoid such a scenario is to omit the `poetry.lock` file. However, by doing so, you sacrifice reproducibility and performance to a certain extent. Without a lockfile, it can be difficult to find the reason for failing tests, because in addition to obvious code changes an unnoticed library update might be the culprit. Further, Poetry will have to lock before installing a dependency if `poetry.lock` has been omitted. Depending on the number of dependencies, locking may take a significant amount of time.
+
+If you do not want to give up the reproducibility and performance benefits, consider a regular refresh of `poetry.lock` to stay up-to-date and reduce the risk of sudden breakage for users.
 
 ### Installing dependencies only
 

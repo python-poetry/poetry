@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import ClassVar
 from typing import cast
 
 from cleo.helpers import argument
@@ -16,10 +17,12 @@ from poetry.config.config import boolean_normalizer
 from poetry.config.config import boolean_validator
 from poetry.config.config import int_normalizer
 from poetry.console.commands.command import Command
-from poetry.locations import DEFAULT_CACHE_DIR
 
 
 if TYPE_CHECKING:
+    from cleo.io.inputs.argument import Argument
+    from cleo.io.inputs.option import Option
+
     from poetry.config.config_source import ConfigSource
 
 
@@ -27,12 +30,12 @@ class ConfigCommand(Command):
     name = "config"
     description = "Manages configuration settings."
 
-    arguments = [
+    arguments: ClassVar[list[Argument]] = [
         argument("key", "Setting key.", optional=True),
         argument("value", "Setting value.", optional=True, multiple=True),
     ]
 
-    options = [
+    options: ClassVar[list[Option]] = [
         option("list", None, "List configuration settings."),
         option("unset", None, "Unset configuration setting."),
         option("local", None, "Set/Get from the project's local configuration."),
@@ -49,78 +52,42 @@ To remove a repository (repo is a short alias for repositories):
 
     <comment>poetry config --unset repo.foo</comment>"""
 
-    LIST_PROHIBITED_SETTINGS = {"http-basic", "pypi-token"}
+    LIST_PROHIBITED_SETTINGS: ClassVar[set[str]] = {"http-basic", "pypi-token"}
 
     @property
-    def unique_config_values(self) -> dict[str, tuple[Any, Any, Any]]:
+    def unique_config_values(self) -> dict[str, tuple[Any, Any]]:
         unique_config_values = {
-            "cache-dir": (
-                str,
-                lambda val: str(Path(val)),
-                str(DEFAULT_CACHE_DIR / "virtualenvs"),
-            ),
-            "virtualenvs.create": (boolean_validator, boolean_normalizer, True),
-            "virtualenvs.in-project": (boolean_validator, boolean_normalizer, False),
-            "virtualenvs.options.always-copy": (
-                boolean_validator,
-                boolean_normalizer,
-                False,
-            ),
+            "cache-dir": (str, lambda val: str(Path(val))),
+            "virtualenvs.create": (boolean_validator, boolean_normalizer),
+            "virtualenvs.in-project": (boolean_validator, boolean_normalizer),
+            "virtualenvs.options.always-copy": (boolean_validator, boolean_normalizer),
             "virtualenvs.options.system-site-packages": (
                 boolean_validator,
                 boolean_normalizer,
-                False,
             ),
-            "virtualenvs.options.no-pip": (
-                boolean_validator,
-                boolean_normalizer,
-                False,
-            ),
+            "virtualenvs.options.no-pip": (boolean_validator, boolean_normalizer),
             "virtualenvs.options.no-setuptools": (
                 boolean_validator,
                 boolean_normalizer,
-                False,
             ),
-            "virtualenvs.path": (
-                str,
-                lambda val: str(Path(val)),
-                str(DEFAULT_CACHE_DIR / "virtualenvs"),
-            ),
-            "virtualenvs.prefer-active-python": (
-                boolean_validator,
-                boolean_normalizer,
-                False,
-            ),
-            "experimental.new-installer": (
-                boolean_validator,
-                boolean_normalizer,
-                True,
-            ),
-            "experimental.system-git-client": (
-                boolean_validator,
-                boolean_normalizer,
-                False,
-            ),
-            "installer.parallel": (
-                boolean_validator,
-                boolean_normalizer,
-                True,
-            ),
-            "installer.max-workers": (
-                lambda val: int(val) > 0,
-                int_normalizer,
-                None,
-            ),
-            "virtualenvs.prompt": (
-                str,
-                lambda val: str(val),
-                "{project_name}-py{python_version}",
-            ),
+            "virtualenvs.path": (str, lambda val: str(Path(val))),
+            "virtualenvs.prefer-active-python": (boolean_validator, boolean_normalizer),
+            "virtualenvs.prompt": (str, str),
+            "experimental.system-git-client": (boolean_validator, boolean_normalizer),
+            "installer.modern-installation": (boolean_validator, boolean_normalizer),
+            "installer.parallel": (boolean_validator, boolean_normalizer),
+            "installer.max-workers": (lambda val: int(val) > 0, int_normalizer),
             "installer.no-binary": (
                 PackageFilterPolicy.validator,
                 PackageFilterPolicy.normalize,
-                None,
             ),
+            "installer.only-binary": (
+                PackageFilterPolicy.validator,
+                PackageFilterPolicy.normalize,
+            ),
+            "solver.lazy-wheel": (boolean_validator, boolean_normalizer),
+            "warnings.export": (boolean_validator, boolean_normalizer),
+            "keyring.enabled": (boolean_validator, boolean_normalizer),
         }
 
         return unique_config_values
@@ -129,17 +96,17 @@ To remove a repository (repo is a short alias for repositories):
         from pathlib import Path
 
         from poetry.core.pyproject.exceptions import PyProjectException
-        from poetry.core.toml.file import TOMLFile
 
         from poetry.config.config import Config
         from poetry.config.file_config_source import FileConfigSource
         from poetry.locations import CONFIG_DIR
+        from poetry.toml.file import TOMLFile
 
         config = Config.create()
         config_file = TOMLFile(CONFIG_DIR / "config.toml")
 
         try:
-            local_config_file = TOMLFile(self.poetry.file.parent / "poetry.toml")
+            local_config_file = TOMLFile(self.poetry.file.path.parent / "poetry.toml")
             if local_config_file.exists():
                 config.merge(local_config_file.read())
         except (RuntimeError, PyProjectException):
@@ -150,7 +117,7 @@ To remove a repository (repo is a short alias for repositories):
 
         if not config_file.exists():
             config_file.path.parent.mkdir(parents=True, exist_ok=True)
-            config_file.touch(mode=0o0600)
+            config_file.path.touch(mode=0o0600)
 
         if self.option("list"):
             self._list_configuration(config.all(), config.raw())
@@ -166,6 +133,9 @@ To remove a repository (repo is a short alias for repositories):
 
         # show the value if no value is provided
         if not self.argument("value") and not self.option("unset"):
+            if setting_key.split(".")[0] in self.LIST_PROHIBITED_SETTINGS:
+                raise ValueError(f"Expected a value for {setting_key} setting.")
+
             m = re.match(r"^repos?(?:itories)?(?:\.(.+))?", self.argument("key"))
             value: str | dict[str, Any]
             if m:
@@ -196,8 +166,7 @@ To remove a repository (repo is a short alias for repositories):
 
         values: list[str] = self.argument("value")
 
-        unique_config_values = self.unique_config_values
-        if setting_key in unique_config_values:
+        if setting_key in self.unique_config_values:
             if self.option("unset"):
                 config.config_source.remove_property(setting_key)
                 return 0
@@ -205,7 +174,7 @@ To remove a repository (repo is a short alias for repositories):
             return self._handle_single_value(
                 config.config_source,
                 setting_key,
-                unique_config_values[setting_key],
+                self.unique_config_values[setting_key],
                 values,
             )
 
@@ -255,6 +224,7 @@ To remove a repository (repo is a short alias for repositories):
                     username = values[0]
                     # Only username, so we prompt for password
                     password = self.secret("Password:")
+                    assert isinstance(password, str)
                 elif len(values) != 2:
                     raise ValueError(
                         "Expected one or two arguments "
@@ -310,10 +280,10 @@ To remove a repository (repo is a short alias for repositories):
         self,
         source: ConfigSource,
         key: str,
-        callbacks: tuple[Any, Any, Any],
+        callbacks: tuple[Any, Any],
         values: list[Any],
     ) -> int:
-        validator, normalizer, _ = callbacks
+        validator, normalizer = callbacks
 
         if len(values) > 1:
             raise RuntimeError("You can only pass one value.")

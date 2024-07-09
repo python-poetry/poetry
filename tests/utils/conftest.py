@@ -17,5 +17,5 @@ def venv_name(
 ) -> str:
     return manager.generate_env_name(
         poetry.package.name,
-        str(poetry.file.parent),
+        str(poetry.file.path.parent),
     )

@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 from poetry.mixology.incompatibility_cause import ConflictCause
 from poetry.mixology.incompatibility_cause import DependencyCause
 from poetry.mixology.incompatibility_cause import NoVersionsCause
-from poetry.mixology.incompatibility_cause import PackageNotFoundCause
 from poetry.mixology.incompatibility_cause import PlatformCause
 from poetry.mixology.incompatibility_cause import PythonCause
 from poetry.mixology.incompatibility_cause import RootCause
@@ -44,10 +43,7 @@ class Incompatibility:
             # Coalesce multiple terms about the same package if possible.
             by_name: dict[str, dict[str, Term]] = {}
             for term in terms:
-                if term.dependency.complete_name not in by_name:
-                    by_name[term.dependency.complete_name] = {}
-
-                by_ref = by_name[term.dependency.complete_name]
+                by_ref = by_name.setdefault(term.dependency.complete_name, {})
                 ref = term.dependency.complete_name
 
                 if ref in by_ref:
@@ -146,11 +142,6 @@ class Incompatibility:
                 f"no versions of {self._terms[0].dependency.name} match"
                 f" {self._terms[0].constraint}"
             )
-        elif isinstance(self._cause, PackageNotFoundCause):
-            assert len(self._terms) == 1
-            assert self._terms[0].is_positive()
-
-            return f"{self._terms[0].dependency.name} doesn't exist"
         elif isinstance(self._cause, RootCause):
             assert len(self._terms) == 1
             assert not self._terms[0].is_positive()
@@ -202,7 +193,7 @@ class Incompatibility:
             if len(positive) != 1:
                 return f"if {' and '.join(positive)} then {' or '.join(negative)}"
 
-            positive_term = [term for term in self._terms if term.is_positive()][0]
+            positive_term = next(term for term in self._terms if term.is_positive())
             return (
                 f"{self._terse(positive_term, allow_every=True)} requires"
                 f" {' or '.join(negative)}"
@@ -420,8 +411,6 @@ class Incompatibility:
             buffer.append(f"which requires Python {cause.python_version}")
         elif isinstance(latter.cause, NoVersionsCause):
             buffer.append("which doesn't match any versions")
-        elif isinstance(latter.cause, PackageNotFoundCause):
-            buffer.append("which doesn't exist")
         else:
             buffer.append("which is forbidden")
 
@@ -440,7 +429,8 @@ class Incompatibility:
 
         if term.dependency.source_type:
             return str(term.dependency)
-        return f"{term.dependency.pretty_name} ({term.dependency.pretty_constraint})"
+        pretty_name = term.dependency.complete_pretty_name
+        return f"{pretty_name} ({term.dependency.pretty_constraint})"
 
     def _single_term_where(self, callable: Callable[[Term], bool]) -> Term | None:
         found = None

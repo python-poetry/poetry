@@ -10,7 +10,10 @@ from poetry.console.commands.version import VersionCommand
 if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
 
+    from poetry.poetry import Poetry
     from tests.types import CommandTesterFactory
+    from tests.types import FixtureDirGetter
+    from tests.types import ProjectFactory
 
 
 @pytest.fixture()
@@ -21,6 +24,18 @@ def command() -> VersionCommand:
 @pytest.fixture
 def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("version")
+
+
+@pytest.fixture
+def poetry_with_underscore(
+    project_factory: ProjectFactory, fixture_dir: FixtureDirGetter
+) -> Poetry:
+    source = fixture_dir("simple_project")
+    pyproject_content = (source / "pyproject.toml").read_text(encoding="utf-8")
+    pyproject_content = pyproject_content.replace("simple-project", "simple_project")
+    return project_factory(
+        "project_with_underscore", pyproject_content=pyproject_content
+    )
 
 
 @pytest.mark.parametrize(
@@ -51,31 +66,66 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
 )
 def test_increment_version(
     version: str, rule: str, expected: str, command: VersionCommand
-):
+) -> None:
     assert command.increment_version(version, rule).text == expected
 
 
-def test_version_show(tester: CommandTester):
+@pytest.mark.parametrize(
+    "version, rule, expected",
+    [
+        ("1.2.3", "prerelease", "1.2.4a0"),
+        ("1.2.3a0", "prerelease", "1.2.3b0"),
+        ("1.2.3a1", "prerelease", "1.2.3b0"),
+        ("1.2.3b1", "prerelease", "1.2.3rc0"),
+        ("1.2.3rc0", "prerelease", "1.2.3"),
+        ("1.2.3-beta.1", "prerelease", "1.2.3rc0"),
+        ("1.2.3-beta1", "prerelease", "1.2.3rc0"),
+        ("1.2.3beta1", "prerelease", "1.2.3rc0"),
+    ],
+)
+def test_next_phase_version(
+    version: str, rule: str, expected: str, command: VersionCommand
+) -> None:
+    assert command.increment_version(version, rule, True).text == expected
+
+
+def test_version_show(tester: CommandTester) -> None:
     tester.execute()
     assert tester.io.fetch_output() == "simple-project 1.2.3\n"
 
 
-def test_short_version_show(tester: CommandTester):
+def test_version_show_with_underscore(
+    command_tester_factory: CommandTesterFactory, poetry_with_underscore: Poetry
+) -> None:
+    tester = command_tester_factory("version", poetry=poetry_with_underscore)
+    tester.execute()
+    assert tester.io.fetch_output() == "simple_project 1.2.3\n"
+
+
+def test_short_version_show(tester: CommandTester) -> None:
     tester.execute("--short")
     assert tester.io.fetch_output() == "1.2.3\n"
 
 
-def test_version_update(tester: CommandTester):
+def test_version_update(tester: CommandTester) -> None:
     tester.execute("2.0.0")
     assert tester.io.fetch_output() == "Bumping version from 1.2.3 to 2.0.0\n"
 
 
-def test_short_version_update(tester: CommandTester):
+def test_short_version_update(tester: CommandTester) -> None:
     tester.execute("--short 2.0.0")
     assert tester.io.fetch_output() == "2.0.0\n"
 
 
-def test_dry_run(tester: CommandTester):
+def test_phase_version_update(tester: CommandTester) -> None:
+    assert isinstance(tester.command, VersionCommand)
+    tester.command.poetry.package._set_version("1.2.4a0")
+    tester.execute("prerelease --next-phase")
+    assert tester.io.fetch_output() == "Bumping version from 1.2.4a0 to 1.2.4b0\n"
+
+
+def test_dry_run(tester: CommandTester) -> None:
+    assert isinstance(tester.command, VersionCommand)
     old_pyproject = tester.command.poetry.file.path.read_text()
     tester.execute("--dry-run major")
 

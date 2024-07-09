@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import os
 import sys
 
-from os import environ
 from typing import TYPE_CHECKING
 from typing import cast
 
@@ -17,9 +17,12 @@ class ShellCommand(EnvCommand):
     name = "shell"
     description = "Spawns a shell within the virtual environment."
 
-    help = """The <info>shell</> command spawns a shell, according to the
-<comment>$SHELL</> environment variable, within the virtual environment.
-If one doesn't exist yet, it will be created.
+    help = f"""The <info>shell</> command spawns a shell within the project's virtual environment.
+
+By default, the current active shell is detected and used. Failing that,
+the shell defined via the environment variable <comment>{'COMSPEC' if os.name == 'nt' else 'SHELL'}</> is used.
+
+If a virtual environment does not exist, it will be created.
 """
 
     def handle(self) -> int:
@@ -41,14 +44,14 @@ If one doesn't exist yet, it will be created.
         env = cast("VirtualEnv", env)
 
         # Setting this to avoid spawning unnecessary nested shells
-        environ["POETRY_ACTIVE"] = "1"
+        os.environ["POETRY_ACTIVE"] = "1"
         shell = Shell.get()
         shell.activate(env)
-        environ.pop("POETRY_ACTIVE")
+        os.environ.pop("POETRY_ACTIVE")
 
         return 0
 
     def _is_venv_activated(self) -> bool:
-        return bool(environ.get("POETRY_ACTIVE")) or getattr(
+        return bool(os.environ.get("POETRY_ACTIVE")) or getattr(
             sys, "real_prefix", sys.prefix
         ) == str(self.env.path)

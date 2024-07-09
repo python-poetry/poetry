@@ -1,0 +1,2 @@
+# Do not mess with line endings in metadata files or the hash will be wrong.
+*.metadata binary

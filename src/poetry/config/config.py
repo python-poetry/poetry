@@ -9,14 +9,15 @@ from copy import deepcopy
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import ClassVar
 
 from packaging.utils import canonicalize_name
-from poetry.core.toml import TOMLFile
 
 from poetry.config.dict_config_source import DictConfigSource
 from poetry.config.file_config_source import FileConfigSource
 from poetry.locations import CONFIG_DIR
 from poetry.locations import DEFAULT_CACHE_DIR
+from poetry.toml import TOMLFile
 
 
 if TYPE_CHECKING:
@@ -100,12 +101,11 @@ class PackageFilterPolicy:
 
 logger = logging.getLogger(__name__)
 
-
 _default_config: Config | None = None
 
 
 class Config:
-    default_config: dict[str, Any] = {
+    default_config: ClassVar[dict[str, Any]] = {
         "cache-dir": str(DEFAULT_CACHE_DIR),
         "virtualenvs": {
             "create": True,
@@ -124,16 +124,30 @@ class Config:
             "prefer-active-python": False,
             "prompt": "{project_name}-py{python_version}",
         },
-        "experimental": {"new-installer": True, "system-git-client": False},
-        "installer": {"parallel": True, "max-workers": None, "no-binary": None},
+        "experimental": {
+            "system-git-client": False,
+        },
+        "installer": {
+            "modern-installation": True,
+            "parallel": True,
+            "max-workers": None,
+            "no-binary": None,
+            "only-binary": None,
+        },
+        "solver": {
+            "lazy-wheel": True,
+        },
+        "warnings": {
+            "export": True,
+        },
+        "keyring": {
+            "enabled": True,
+        },
     }
 
-    def __init__(
-        self, use_environment: bool = True, base_dir: Path | None = None
-    ) -> None:
+    def __init__(self, use_environment: bool = True) -> None:
         self._config = deepcopy(self.default_config)
         self._use_environment = use_environment
-        self._base_dir = base_dir
         self._config_source: ConfigSource = DictConfigSource()
         self._auth_config_source: ConfigSource = DictConfigSource()
 
@@ -192,7 +206,7 @@ class Config:
         repositories = {}
         pattern = re.compile(r"POETRY_REPOSITORIES_(?P<name>[A-Z_]+)_URL")
 
-        for env_key in os.environ.keys():
+        for env_key in os.environ:
             match = pattern.match(env_key)
             if match:
                 repositories[match.group("name").lower().replace("_", "-")] = {
@@ -203,7 +217,11 @@ class Config:
 
     @property
     def repository_cache_directory(self) -> Path:
-        return Path(self.get("cache-dir")) / "cache" / "repositories"
+        return Path(self.get("cache-dir")).expanduser() / "cache" / "repositories"
+
+    @property
+    def artifacts_cache_directory(self) -> Path:
+        return Path(self.get("cache-dir")).expanduser() / "artifacts"
 
     @property
     def virtualenvs_path(self) -> Path:
@@ -211,6 +229,22 @@ class Config:
         if path is None:
             path = Path(self.get("cache-dir")) / "virtualenvs"
         return Path(path).expanduser()
+
+    @property
+    def installer_max_workers(self) -> int:
+        # This should be directly handled by ThreadPoolExecutor
+        # however, on some systems the number of CPUs cannot be determined
+        # (it raises a NotImplementedError), so, in this case, we assume
+        # that the system only has one CPU.
+        try:
+            default_max_workers = (os.cpu_count() or 1) + 4
+        except NotImplementedError:
+            default_max_workers = 5
+
+        desired_max_workers = self.get("installer.max-workers")
+        if desired_max_workers is None:
+            return default_max_workers
+        return min(default_max_workers, int(desired_max_workers))
 
     def get(self, setting_name: str, default: Any = None) -> Any:
         """
@@ -239,6 +273,11 @@ class Config:
 
             value = value[key]
 
+        if self._use_environment and isinstance(value, dict):
+            # this is a configuration table, it is likely that we missed env vars
+            # in order to capture them recurse, eg: virtualenvs.options
+            return {k: self.get(f"{setting_name}.{k}") for k in value}
+
         return self.process(value)
 
     def process(self, value: Any) -> Any:
@@ -263,11 +302,16 @@ class Config:
             "virtualenvs.create",
             "virtualenvs.in-project",
             "virtualenvs.options.always-copy",
+            "virtualenvs.options.no-pip",
+            "virtualenvs.options.no-setuptools",
             "virtualenvs.options.system-site-packages",
             "virtualenvs.options.prefer-active-python",
-            "experimental.new-installer",
             "experimental.system-git-client",
+            "installer.modern-installation",
             "installer.parallel",
+            "solver.lazy-wheel",
+            "warnings.export",
+            "keyring.enabled",
         }:
             return boolean_normalizer
 
@@ -277,7 +321,7 @@ class Config:
         if name == "installer.max-workers":
             return int_normalizer
 
-        if name == "installer.no-binary":
+        if name in ["installer.no-binary", "installer.only-binary"]:
             return PackageFilterPolicy.normalize
 
         return lambda val: val

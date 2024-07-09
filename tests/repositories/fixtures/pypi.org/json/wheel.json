@@ -1,0 +1,44 @@
+{
+  "files": [
+    {
+      "core-metadata": {
+        "sha256": "bf7a632f73a2d57bb54d06bbb2a46c162e6dfbe7565b0746e588ce6f080e49f7"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "bf7a632f73a2d57bb54d06bbb2a46c162e6dfbe7565b0746e588ce6f080e49f7"
+      },
+      "filename": "wheel-0.40.0-py3-none-any.whl",
+      "hashes": {
+        "md5": "517d39f133bd7b1ff17caf09784b7543",
+        "sha256": "d236b20e7cb522daf2390fa84c55eea81c5c30190f90f29ae2ca1ad8355bf247"
+      },
+      "requires-python": ">=3.7",
+      "size": 64545,
+      "upload-time": "2023-03-14T15:10:00.828550Z",
+      "url": "https://files.pythonhosted.org/packages/61/86/cc8d1ff2ca31a312a25a708c891cf9facbad4eae493b3872638db6785eb5/wheel-0.40.0-py3-none-any.whl",
+      "yanked": false
+    },
+    {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
+      "filename": "wheel-0.40.0.tar.gz",
+      "hashes": {
+        "md5": "5f175a8d693f74878964d4fd29729ab7",
+        "sha256": "5cb7e75751aa82e1b7db3fd52f5a9d59e7b06905630bed135793295931528740"
+      },
+      "requires-python": ">=3.7",
+      "size": 96226,
+      "upload-time": "2023-03-14T15:10:02.873691Z",
+      "url": "https://files.pythonhosted.org/packages/fc/ef/0335f7217dd1e8096a9e8383e1d472aa14717878ffe07c4772e68b6e8735/wheel-0.40.0.tar.gz",
+      "yanked": false
+    }
+  ],
+  "meta": {
+    "_last-serial": 0,
+    "api-version": "1.1"
+  },
+  "name": "wheel",
+  "versions": [
+    "0.40.0"
+  ]
+}

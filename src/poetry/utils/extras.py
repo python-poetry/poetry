@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Collection
     from collections.abc import Iterable
-    from typing import Mapping
+    from collections.abc import Mapping
 
     from packaging.utils import NormalizedName
     from poetry.core.packages.package import Package
@@ -14,8 +14,8 @@ if TYPE_CHECKING:
 
 def get_extra_package_names(
     packages: Iterable[Package],
-    extras: Mapping[str, list[str]],
-    extra_names: Collection[str],
+    extras: Mapping[NormalizedName, Iterable[NormalizedName]],
+    extra_names: Collection[NormalizedName],
 ) -> set[NormalizedName]:
     """
     Returns all package names required by the given extras.

@@ -39,7 +39,7 @@ version = "1.0.0"
 # ...
 [tool.poetry.dependencies]
 python = "^3.7"
-poetry = "^1.0"
+poetry = "^1.2"
 
 [tool.poetry.plugins."poetry.plugin"]
 demo = "poetry_demo_plugin.plugin:MyPlugin"
@@ -191,32 +191,6 @@ Installed plugin packages are automatically loaded when Poetry starts up.
 
 You have multiple ways to install plugins for Poetry
 
-### The `self add` command
-
-This is the easiest way and should account for all the ways Poetry can be installed.
-
-```bash
-poetry self add poetry-plugin
-```
-
-The `self add` command will ensure that the plugin is compatible with the current version of Poetry
-and install the needed packages for the plugin to work.
-
-The package specification formats supported by the `self add` command are the same as the ones supported
-by the [`add` command]({{< relref "cli#add" >}}).
-
-If you no longer need a plugin and want to uninstall it, you can use the `self remove` command.
-
-```shell
-poetry self remove poetry-plugin
-```
-
-You can also list all currently installed plugins by running:
-
-```shell
-poetry self show
-```
-
 ### With `pipx inject`
 
 If you used `pipx` to install Poetry you can add the plugin packages via the `pipx inject` command.
@@ -228,7 +202,9 @@ pipx inject poetry poetry-plugin
 If you want to uninstall a plugin, you can run:
 
 ```shell
-pipx runpip poetry uninstall poetry-plugin
+pipx uninject poetry poetry-plugin          # For pipx versions >= 1.2.0
+
+pipx runpip poetry uninstall poetry-plugin  # For pipx versions  < 1.2.0
 ```
 
 ### With `pip`
@@ -249,3 +225,47 @@ If you want to uninstall a plugin, you can run:
 ```shell
 $POETRY_HOME/bin/pip uninstall poetry-plugin
 ```
+
+### The `self add` command
+
+{{% warning %}}
+Especially on Windows, `self add` and `self remove` may be problematic
+so that other methods should be preferred.
+{{% /warning %}}
+
+```bash
+poetry self add poetry-plugin
+```
+
+The `self add` command will ensure that the plugin is compatible with the current version of Poetry
+and install the needed packages for the plugin to work.
+
+The package specification formats supported by the `self add` command are the same as the ones supported
+by the [`add` command]({{< relref "cli#add" >}}).
+
+If you no longer need a plugin and want to uninstall it, you can use the `self remove` command.
+
+```shell
+poetry self remove poetry-plugin
+```
+
+You can also list all currently installed plugins by running:
+
+```shell
+poetry self show plugins
+```
+
+
+## Maintaining a plugin
+
+When writing a plugin, you will probably access internals of Poetry, since there is no
+stable public API. Although we try our best to deprecate methods first, before
+removing them, sometimes the signature of an internal method has to be changed.
+
+As the author of a plugin, you are probably testing your plugin
+against the latest release of Poetry.
+Additionally, you should consider testing against the latest release branch and the
+main branch of Poetry and schedule a CI job that runs regularly even if you did not
+make any changes to your plugin.
+This way, you will notice internal changes that break your plugin immediately
+and can prepare for the next Poetry release.

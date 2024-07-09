@@ -2,22 +2,20 @@
 name = "A"
 version = "1.0"
 description = ""
-category = "main"
 optional = false
 python-versions = "*"
 files = []
 
 [package.dependencies]
 B = [
-    {version = "^1.0", markers = "python_version < \"4.0\""},
-    {version = "^2.0", markers = "python_version >= \"4.0\""},
+    {version = ">=1.0,<2.0", markers = "python_version < \"4.0\""},
+    {version = ">=2.0,<3.0", markers = "python_version >= \"4.0\""},
 ]
 
 [[package]]
 name = "B"
 version = "1.0"
 description = ""
-category = "main"
 optional = false
 python-versions = "*"
 files = []
@@ -29,7 +27,6 @@ C = "1.2"
 name = "B"
 version = "2.0"
 description = ""
-category = "main"
 optional = false
 python-versions = "*"
 files = []
@@ -41,7 +38,6 @@ C = "1.5"
 name = "C"
 version = "1.2"
 description = ""
-category = "main"
 optional = false
 python-versions = "*"
 files = []
@@ -50,7 +46,6 @@ files = []
 name = "C"
 version = "1.5"
 description = ""
-category = "main"
 optional = false
 python-versions = "*"
 files = []

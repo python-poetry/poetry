@@ -1,127 +1,155 @@
 [tool.poetry]
 name = "poetry"
-version = "1.3.0.dev0"
+version = "1.9.0.dev0"
 description = "Python dependency management and packaging made easy."
-authors = [
-    "Sébastien Eustace <sebastien@eustace.io>",
-]
+authors = ["Sébastien Eustace <sebastien@eustace.io>"]
 maintainers = [
     "Arun Babu Neelicattu <arun.neelicattu@gmail.com>",
     "Bjorn Neergaard <bjorn@neersighted.com>",
     "Branch Vincent <branchevincent@gmail.com>",
-    "Bryce Drennan <github@accounts.brycedrennan.com>",
-    "Daniel Eades <danieleades@hotmail.com>",
     "Randy Döring <radoering.poetry@gmail.com>",
     "Steph Samson <hello@stephsamson.com>",
     "finswimmer <finswimmer77@gmail.com>",
+    "Secrus <b.sokorski@gmail.com>",
 ]
 license = "MIT"
-
 readme = "README.md"
-
-packages = [
-    { include = "poetry", from = "src" }
-]
-include = [
-    { path = "tests", format = "sdist" }
-]
-
+include = [{ path = "tests", format = "sdist" }]
 homepage = "https://python-poetry.org/"
 repository = "https://github.com/python-poetry/poetry"
 documentation = "https://python-poetry.org/docs"
-
 keywords = ["packaging", "dependency", "poetry"]
-
 classifiers = [
     "Topic :: Software Development :: Build Tools",
-    "Topic :: Software Development :: Libraries :: Python Modules"
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
-[tool.poetry.build]
-generate-setup-file = false
+[tool.poetry.urls]
+Changelog = "https://python-poetry.org/history/"
 
 # Requirements
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.8"
 
-poetry-core = "^1.2.0"
-poetry-plugin-export = "^1.0.7"
-"backports.cached-property" = { version = "^1.0.2", python = "<3.8" }
-cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
-cachy = "^0.3.0"
-cleo = "^1.0.0a5"
-crashtest = "^0.3.0"
-dulwich = "^0.20.46"
-filelock = "^3.8.0"
-html5lib = "^1.0"
-importlib-metadata = { version = "^4.4", python = "<3.10" }
-jsonschema = "^4.10.0"
-keyring = "^23.9.0"
+poetry-core = "1.9.0"
+poetry-plugin-export = "^1.8.0"
+build = "^1.2.1"
+cachecontrol = { version = "^0.14.0", extras = ["filecache"] }
+cleo = "^2.1.0"
+dulwich = "^0.22.1"
+fastjsonschema = "^2.18.0"
+importlib-metadata = { version = ">=4.4", python = "<3.10" }
+installer = "^0.7.0"
+keyring = "^25.1.0"
 # packaging uses calver, so version is unclamped
-packaging = ">=20.4"
+packaging = ">=24.0"
 pexpect = "^4.7.0"
-pkginfo = "^1.5"
-platformdirs = "^2.5.2"
-requests = "^2.18"
-requests-toolbelt = "^0.9.1"
+pkginfo = "^1.10"
+platformdirs = ">=3.0.0,<5"
+pyproject-hooks = "^1.0.0"
+requests = "^2.26"
+requests-toolbelt = "^1.0.0"
 shellingham = "^1.5"
-# exclude 0.11.2 and 0.11.3 due to https://github.com/sdispater/tomlkit/issues/225
-tomlkit = ">=0.11.1,<1.0.0,!=0.11.2,!=0.11.3"
-trove-classifiers = "^2022.5.19"
-# exclude 20.4.5 - 20.4.6 due to https://github.com/pypa/pip/issues/9953
-virtualenv = "^20.4.3,!=20.4.5,!=20.4.6"
-xattr = { version = "^0.9.7", markers = "sys_platform == 'darwin'" }
-urllib3 = "^1.26.0"
+tomli = { version = "^2.0.1", python = "<3.11" }
+tomlkit = ">=0.11.4,<1.0.0"
+# trove-classifiers uses calver, so version is unclamped
+trove-classifiers = ">=2022.5.19"
+virtualenv = "^20.23.0"
+xattr = { version = "^1.0.0", markers = "sys_platform == 'darwin'" }
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.1"
-pytest-cov = "^3.0"
-pytest-mock = "^3.5"
-pytest-randomly = "^3.10"
-pytest-sugar = "^0.9"
-pytest-xdist = { version = "^2.5", extras = ["psutil"] }
-pre-commit = "^2.6"
-deepdiff = "^5.0"
-httpretty = "^1.0"
-typing-extensions = { version = "^4.0.0", python = "<3.8" }
-zipp = { version = "^3.4", python = "<3.8" }
-flatdict = "^4.0.1"
-mypy = ">=0.971"
-types-html5lib = ">=1.1.9"
-types-jsonschema = ">=4.9.0"
+pre-commit = ">=2.10"
+# add setuptools for PyCharm
+# see https://youtrack.jetbrains.com/issue/PY-48909
+# and https://github.com/JetBrains/intellij-community/commit/3f37786ec0bf5066e4527690d1068b5a00680ea3
+setuptools = { version = ">=60", python = "<3.10" }
+
+[tool.poetry.group.test.dependencies]
+coverage = ">=7.2.0"
+deepdiff = ">=6.3"
+httpretty = ">=1.1"
+jaraco-classes = ">=3.3.1"
+pytest = ">=8.0"
+pytest-cov = ">=4.0"
+pytest-mock = ">=3.9"
+pytest-randomly = ">=3.12"
+pytest-xdist = { version = ">=3.1", extras = ["psutil"] }
+
+[tool.poetry.group.typing.dependencies]
+mypy = ">=1.8.0"
 types-requests = ">=2.28.8"
+
+# only used in github actions
+[tool.poetry.group.github-actions]
+optional = true
+[tool.poetry.group.github-actions.dependencies]
+pytest-github-actions-annotate-failures = "^0.1.7"
 
 [tool.poetry.scripts]
 poetry = "poetry.console.application:main"
 
 
 [build-system]
-requires = ["poetry-core>=1.1.0"]
+requires = ["poetry-core>=1.5.0"]
 build-backend = "poetry.core.masonry.api"
 
 
-[tool.isort]
-py_version = 37
-profile = "black"
-force_single_line = true
-combine_as_imports = true
-lines_between_types = 1
-lines_after_imports = 2
-src_paths = ["src", "tests"]
-extend_skip = ["setup.py"]
-known_third_party = ["poetry.core"]
+[tool.ruff]
+extend-exclude = [
+    "docs/*",
+    # External to the project's coding standards
+    "tests/fixtures/git/*",
+    "tests/fixtures/project_with_setup*/*",
+    "tests/masonry/builders/fixtures/pep_561_stub_only*/*",
+    "tests/utils/fixtures/setups/*",
+]
+fix = true
+line-length = 88
+src = ["src"]
+target-version = "py38"
 
+[tool.ruff.lint]
+extend-select = [
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "ERA", # flake8-eradicate/eradicate
+    "I",   # isort
+    "N",   # pep8-naming
+    "PIE", # flake8-pie
+    "PGH", # pygrep
+    "RUF", # ruff checks
+    "SIM", # flake8-simplify
+    "T20", # flake8-print
+    "TCH", # flake8-type-checking
+    "TID", # flake8-tidy-imports
+    "UP",  # pyupgrade
+]
+ignore = [
+    "B904", # use 'raise ... from err'
+    "B905", # use explicit 'strict=' parameter with 'zip()'
+    "N818", #  Exception name should be named with an Error suffix
+]
+extend-safe-fixes = [
+    "TCH", # move import from and to TYPE_CHECKING blocks
+]
+unfixable = [
+    "ERA", # do not autoremove commented out code
+]
 
-[tool.black]
-target-version = ['py37']
-preview = true
-force-exclude = '''
-.*/setup\.py$
-'''
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.lint.isort]
+force-single-line = true
+lines-between-types = 1
+lines-after-imports = 2
+known-first-party = ["poetry"]
+known-third-party = ["poetry.core"]
+required-imports = ["from __future__ import annotations"]
 
 
 [tool.mypy]
-files = "src"
+files = "src, tests"
 mypy_path = "src"
 namespace_packages = true
 explicit_package_bases = true
@@ -132,42 +160,47 @@ enable_error_code = [
     "redundant-expr",
     "truthy-bool",
 ]
+exclude = [
+    "tests/fixtures",
+    "tests/masonry/builders/fixtures",
+    "tests/utils/fixtures",
+]
 
-# use of importlib-metadata backport at python3.7 makes it impossible to
-# satisfy mypy without some ignores: but we get a different set of ignores at
-# different python versions.
-#
-# <https://github.com/python/mypy/issues/8823>, meanwhile suppress that
-# warning.
+# use of importlib-metadata backport makes it impossible to satisfy mypy
+# without some ignores: but we get different sets of ignores at different
+# python versions.
 [[tool.mypy.overrides]]
 module = [
-  'poetry.console.commands.self.show.plugins',
-  'poetry.installation.executor',
-  'poetry.mixology.version_solver',
-  'poetry.plugins.plugin_manager',
-  'poetry.repositories.installed_repository',
-  'poetry.utils.env',
+    'poetry.repositories.installed_repository',
+    'tests.console.commands.self.test_show_plugins',
+    'tests.repositories.test_installed_repository',
+    'tests.helpers',
 ]
 warn_unused_ignores = false
 
 [[tool.mypy.overrides]]
 module = [
-  'cachecontrol.*',
-  'cachy.*',
-  'cleo.*',
-  'crashtest.*',
-  'lockfile.*',
-  'pexpect.*',
-  'pkginfo.*',
-  'requests_toolbelt.*',
-  'shellingham.*',
-  'virtualenv.*',
-  'xattr.*',
+    'deepdiff.*',
+    'fastjsonschema.*',
+    'httpretty.*',
+    'pexpect.*',
+    'requests_toolbelt.*',
+    'shellingham.*',
+    'virtualenv.*',
+    'xattr.*',
 ]
 ignore_missing_imports = true
 
+
+[tool.pytest.ini_options]
+addopts = "-n logical"
+testpaths = ["tests"]
+markers = [
+    "network: mark tests that require internet access",
+]
+
+
 [tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
+exclude_also = [
     "if TYPE_CHECKING:"
 ]

@@ -6,54 +6,23 @@ import re
 from typing import TYPE_CHECKING
 from typing import Any
 
-from packaging.tags import Tag
-
 from poetry.config.config import Config
 from poetry.config.config import PackageFilterPolicy
-from poetry.utils.patterns import wheel_file_re
+from poetry.repositories.http_repository import HTTPRepository
+from poetry.utils.helpers import get_highest_priority_hash_type
+from poetry.utils.wheel import Wheel
 
 
 if TYPE_CHECKING:
+    from poetry.core.constraints.version import Version
     from poetry.core.packages.package import Package
     from poetry.core.packages.utils.link import Link
-    from poetry.core.semver.version import Version
 
-    from poetry.repositories.pool import Pool
+    from poetry.repositories.repository_pool import RepositoryPool
     from poetry.utils.env import Env
 
 
 logger = logging.getLogger(__name__)
-
-
-class InvalidWheelName(Exception):
-    pass
-
-
-class Wheel:
-    def __init__(self, filename: str) -> None:
-        wheel_info = wheel_file_re.match(filename)
-        if not wheel_info:
-            raise InvalidWheelName(f"{filename} is not a valid wheel filename.")
-
-        self.filename = filename
-        self.name = wheel_info.group("name").replace("_", "-")
-        self.version = wheel_info.group("ver").replace("_", "-")
-        self.build_tag = wheel_info.group("build")
-        self.pyversions = wheel_info.group("pyver").split(".")
-        self.abis = wheel_info.group("abi").split(".")
-        self.plats = wheel_info.group("plat").split(".")
-
-        self.tags = {
-            Tag(x, y, z) for x in self.pyversions for y in self.abis for z in self.plats
-        }
-
-    def get_minimum_supported_index(self, tags: list[Tag]) -> int | None:
-        indexes = [tags.index(t) for t in self.tags if t in tags]
-
-        return min(indexes) if indexes else None
-
-    def is_supported_by_environment(self, env: Env) -> bool:
-        return bool(set(env.supported_tags).intersection(self.tags))
 
 
 class Chooser:
@@ -61,12 +30,17 @@ class Chooser:
     A Chooser chooses an appropriate release archive for packages.
     """
 
-    def __init__(self, pool: Pool, env: Env, config: Config | None = None) -> None:
+    def __init__(
+        self, pool: RepositoryPool, env: Env, config: Config | None = None
+    ) -> None:
         self._pool = pool
         self._env = env
         self._config = config or Config.create()
         self._no_binary_policy: PackageFilterPolicy = PackageFilterPolicy(
             self._config.get("installer.no-binary", [])
+        )
+        self._only_binary_policy: PackageFilterPolicy = PackageFilterPolicy(
+            self._config.get("installer.only-binary", [])
         )
 
     def choose_for(self, package: Package) -> Link:
@@ -97,6 +71,15 @@ class Chooser:
                 logger.debug("Skipping unsupported distribution %s", link.filename)
                 continue
 
+            if link.is_sdist and not self._only_binary_policy.allows(package.name):
+                logger.debug(
+                    "Skipping source distribution for %s as requested in only binary policy for"
+                    " package (%s)",
+                    link.filename,
+                    package.name,
+                )
+                continue
+
             links.append(link)
 
         if not links:
@@ -118,32 +101,43 @@ class Chooser:
             repository = self._pool.repository("pypi")
         links = repository.find_links_for_package(package)
 
-        hashes = [f["hash"] for f in package.files]
-        if not hashes:
+        locked_hashes = {f["hash"] for f in package.files}
+        if not locked_hashes:
             return links
 
         selected_links = []
+        skipped = []
+        locked_hash_names = {h.split(":")[0] for h in locked_hashes}
         for link in links:
-            if not link.hash:
+            if not link.hashes:
                 selected_links.append(link)
                 continue
 
-            assert link.hash_name is not None
-            h = link.hash_name + ":" + link.hash
-            if h not in hashes:
+            link_hash: str | None = None
+            if (candidates := locked_hash_names.intersection(link.hashes.keys())) and (
+                hash_name := get_highest_priority_hash_type(candidates, link.filename)
+            ):
+                link_hash = f"{hash_name}:{link.hashes[hash_name]}"
+
+            elif isinstance(repository, HTTPRepository):
+                link_hash = repository.calculate_sha256(link)
+
+            if link_hash not in locked_hashes:
+                skipped.append((link.filename, link_hash))
                 logger.debug(
                     "Skipping %s as %s checksum does not match expected value",
                     link.filename,
-                    link.hash_name,
+                    link_hash,
                 )
                 continue
 
             selected_links.append(link)
 
         if links and not selected_links:
+            links_str = ", ".join(f"{link}({h})" for link, h in skipped)
             raise RuntimeError(
-                f"Retrieved digest for link {link.filename}({h}) not in poetry.lock"
-                f" metadata {hashes}"
+                f"Retrieved digests for links {links_str} not in poetry.lock"
+                f" metadata {locked_hashes}"
             )
 
         return selected_links
@@ -210,10 +204,10 @@ class Chooser:
         )
 
     def _is_link_hash_allowed_for_package(self, link: Link, package: Package) -> bool:
-        if not link.hash:
+        if not link.hashes:
             return True
 
-        assert link.hash_name is not None
-        h = link.hash_name + ":" + link.hash
+        link_hashes = {f"{name}:{h}" for name, h in link.hashes.items()}
+        locked_hashes = {f["hash"] for f in package.files}
 
-        return h in {f["hash"] for f in package.files}
+        return bool(link_hashes & locked_hashes)

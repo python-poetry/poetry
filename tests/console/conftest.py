@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
@@ -12,7 +11,6 @@ from cleo.testers.application_tester import ApplicationTester
 from cleo.testers.command_tester import CommandTester
 
 from poetry.installation import Installer
-from poetry.installation.noop_installer import NoopInstaller
 from poetry.utils.env import MockEnv
 from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.helpers import PoetryTestApplication
@@ -22,6 +20,7 @@ from tests.helpers import mock_clone
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from pathlib import Path
 
     from pytest_mock import MockerFixture
 
@@ -31,17 +30,13 @@ if TYPE_CHECKING:
     from poetry.utils.env import Env
     from tests.conftest import Config
     from tests.types import CommandTesterFactory
+    from tests.types import FixtureDirGetter
     from tests.types import ProjectFactory
 
 
-@pytest.fixture()
-def installer() -> NoopInstaller:
-    return NoopInstaller()
-
-
 @pytest.fixture
-def env(tmp_dir: str) -> MockEnv:
-    path = Path(tmp_dir) / ".venv"
+def env(tmp_path: Path) -> MockEnv:
+    path = tmp_path / ".venv"
     path.mkdir(parents=True)
     return MockEnv(path=path, is_venv=True)
 
@@ -49,15 +44,10 @@ def env(tmp_dir: str) -> MockEnv:
 @pytest.fixture(autouse=True)
 def setup(
     mocker: MockerFixture,
-    installer: NoopInstaller,
     installed: Repository,
     config: Config,
     env: MockEnv,
 ) -> Iterator[None]:
-    # Set Installer's installer
-    p = mocker.patch("poetry.installation.installer.Installer._get_installer")
-    p.return_value = installer
-
     # Do not run pip commands of the executor
     mocker.patch("poetry.installation.executor.Executor.run_pip")
 
@@ -96,11 +86,12 @@ def project_directory() -> str:
 
 
 @pytest.fixture
-def poetry(project_directory: str, project_factory: ProjectFactory) -> Poetry:
-    return project_factory(
-        name="simple",
-        source=Path(__file__).parent.parent / "fixtures" / project_directory,
-    )
+def poetry(
+    project_directory: str,
+    project_factory: ProjectFactory,
+    fixture_dir: FixtureDirGetter,
+) -> Poetry:
+    return project_factory(name="simple", source=fixture_dir(project_directory))
 
 
 @pytest.fixture
@@ -113,11 +104,6 @@ def app(poetry: Poetry) -> PoetryTestApplication:
 @pytest.fixture
 def app_tester(app: PoetryTestApplication) -> ApplicationTester:
     return ApplicationTester(app)
-
-
-@pytest.fixture
-def new_installer_disabled(config: Config) -> None:
-    config.merge({"experimental": {"new-installer": False}})
 
 
 @pytest.fixture()
@@ -136,8 +122,8 @@ def command_tester_factory(
         executor: Executor | None = None,
         environment: Env | None = None,
     ) -> CommandTester:
-        command = app.find(command)
-        tester = CommandTester(command)
+        command_obj = app.find(command)
+        tester = CommandTester(command_obj)
 
         # Setting the formatter from the application
         # TODO: Find a better way to do this in Cleo
@@ -150,12 +136,11 @@ def command_tester_factory(
             app._poetry = poetry
 
         poetry = app.poetry
-        command._pool = poetry.pool
 
-        if hasattr(command, "set_env"):
-            command.set_env(environment or env)
+        if hasattr(command_obj, "set_env"):
+            command_obj.set_env(environment or env)
 
-        if hasattr(command, "set_installer"):
+        if hasattr(command_obj, "set_installer"):
             installer = installer or Installer(
                 tester.io,
                 env,
@@ -166,8 +151,7 @@ def command_tester_factory(
                 executor=executor
                 or TestExecutor(env, poetry.pool, poetry.config, tester.io),
             )
-            installer.use_executor(True)
-            command.set_installer(installer)
+            command_obj.set_installer(installer)
 
         return tester
 

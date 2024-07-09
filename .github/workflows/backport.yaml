@@ -8,29 +8,26 @@ on:
 
 jobs:
   backport:
-    name: Backport
+    name: Create backport
     runs-on: ubuntu-latest
-    # Only react to merged PRs for security reasons.
+    # This workflow only applies to merged PRs; and triggers on a PR being closed, or the backport label being applied.
     # See https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target.
     if: >
       github.event.pull_request.merged
       && (
         github.event.action == 'closed'
-        || (
-          github.event.action == 'labeled'
-          && contains(github.event.label.name, 'backport')
+        ||
+          (github.event.action == 'labeled' && contains(github.event.label.name, 'backport/')
         )
       )
     steps:
-      - name: Generate token
-        id: generate_token
-        uses: tibdex/github-app-token@v1
+      - uses: actions/create-github-app-token@7bfa3a4717ef143a604ee0a99d859b8886a96d00 # v1.9.3
+        id: app-token
         with:
-          app_id: ${{ secrets.POETRY_TOKEN_APP_ID }}
-          private_key: ${{ secrets.POETRY_TOKEN_APP_KEY }}
-      - name: Generate backport
-        uses: tibdex/backport@v2
+          app-id: ${{ secrets.POETRY_TOKEN_APP_ID }}
+          private-key: ${{ secrets.POETRY_TOKEN_APP_KEY }}
+      - uses: tibdex/backport@9565281eda0731b1d20c4025c43339fb0a23812e # v2.0.4
         with:
-          github_token: ${{ steps.generate_token.outputs.token }}
+          github_token: ${{ steps.app-token.outputs.token }}
           title_template: "[<%= base %>] <%= title %>"
           label_pattern: "^backport/(?<base>([^ ]+))$"

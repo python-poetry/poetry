@@ -27,6 +27,7 @@
       "last_month": -1,
       "last_week": -1
     },
+    "dynamic": null,
     "home_page": "https://github.com/Rapptz/discord.py",
     "keywords": "",
     "license": "MIT",
@@ -41,24 +42,25 @@
       "Homepage": "https://github.com/Rapptz/discord.py",
       "Issue tracker": "https://github.com/Rapptz/discord.py/issues"
     },
+    "provides_extra": null,
     "release_url": "https://pypi.org/project/discord.py/2.0.0/",
     "requires_dist": [
-      "PyNaCl (<1.6,>=1.3.0) ; extra == 'voice'",
-      "typing-extensions (<5,>=4.3) ; extra == 'test'",
-      "pytest-mock ; extra == 'test'",
-      "pytest-cov ; extra == 'test'",
-      "pytest-asyncio ; extra == 'test'",
-      "pytest ; extra == 'test'",
-      "coverage[toml] ; extra == 'test'",
-      "cchardet ; extra == 'speed'",
-      "Brotli ; extra == 'speed'",
-      "aiodns (>=1.1) ; extra == 'speed'",
-      "orjson (>=3.5.4) ; extra == 'speed'",
-      "typing-extensions (<5,>=4.3) ; extra == 'docs'",
-      "sphinxcontrib-websupport ; extra == 'docs'",
-      "sphinxcontrib-trio (==1.1.2) ; extra == 'docs'",
+      "aiohttp (<4,>=3.7.4)",
       "sphinx (==4.4.0) ; extra == 'docs'",
-      "aiohttp (<4,>=3.7.4)"
+      "sphinxcontrib-trio (==1.1.2) ; extra == 'docs'",
+      "sphinxcontrib-websupport ; extra == 'docs'",
+      "typing-extensions (<5,>=4.3) ; extra == 'docs'",
+      "orjson (>=3.5.4) ; extra == 'speed'",
+      "aiodns (>=1.1) ; extra == 'speed'",
+      "Brotli ; extra == 'speed'",
+      "cchardet ; extra == 'speed'",
+      "coverage[toml] ; extra == 'test'",
+      "pytest ; extra == 'test'",
+      "pytest-asyncio ; extra == 'test'",
+      "pytest-cov ; extra == 'test'",
+      "pytest-mock ; extra == 'test'",
+      "typing-extensions (<5,>=4.3) ; extra == 'test'",
+      "PyNaCl (<1.6,>=1.3.0) ; extra == 'voice'"
     ],
     "requires_python": ">=3.8.0",
     "summary": "A Python wrapper for the Discord API",
@@ -66,18 +68,18 @@
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 14796560,
+  "last_serial": 0,
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "md5": "4df2fceef99934d1fdac5a9b0aa94173",
-        "sha256": "18b06870bdc85d29e0d55f4a4b2abe9d7cdae2b197e23d49f82886ba27ba1aec"
+        "md5": "8ffc907807f8351401dbe4408dcaff79",
+        "sha256": "054c3d8cf89a8e37a691e0268232dad23e07f4e9a06f33454c3bafeaba34a9b7"
       },
       "downloads": -1,
       "filename": "discord.py-2.0.0-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "4df2fceef99934d1fdac5a9b0aa94173",
+      "md5_digest": "8ffc907807f8351401dbe4408dcaff79",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.8.0",
@@ -91,13 +93,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "3aaca51997210bd2ae4d4b5401c00ab7",
-        "sha256": "c36f26935938194c3465c2abf8ecfbbf5560c50b189f1b746d6f00d1e78c0d3b"
+        "md5": "6c0505a6032342b29f31f9979f37d277",
+        "sha256": "b86fa9dd562684f7a52564e6dfe0216f6c172a009c0d86b8dea8bdd6ffa6b1f4"
       },
       "downloads": -1,
       "filename": "discord.py-2.0.0.tar.gz",
       "has_sig": false,
-      "md5_digest": "3aaca51997210bd2ae4d4b5401c00ab7",
+      "md5_digest": "6c0505a6032342b29f31f9979f37d277",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.8.0",

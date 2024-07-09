@@ -29,11 +29,11 @@ By default, Poetry discovers and installs packages from [PyPI](https://pypi.org)
 install a dependency to your project for a [simple API repository](#simple-api-repository)? Let's
 do it.
 
-First, [configure](#project-configuration) the [package source](#package-source) as a [secondary package source](#secondary-package-sources) to your
+First, [configure](#project-configuration) the [package source](#package-sources) as a [supplemental](#supplemental-package-sources) (or [explicit](#explicit-package-sources)) package source to your
 project.
 
 ```bash
-poetry source add --secondary foo https://pypi.example.org/simple/
+poetry source add --priority=supplemental foo https://pypi.example.org/simple/
 ```
 
 Then, assuming the repository requires authentication, configure credentials for it.
@@ -47,6 +47,15 @@ Depending on your system configuration, credentials might be saved in your comma
 Many shells do not save commands to history when they are prefixed by a space character. For more information, please refer to your shell's documentation.
 {{% /warning %}}
 
+{{% note %}}
+If you would like to provide the password interactively, you can simply omit `<password>` in your command. And
+Poetry will prompt you to enter the credential manually.
+
+```bash
+poetry config http-basic.foo <username>
+```
+{{% /note %}}
+
 Once this is done, you can add dependencies to your project from this source.
 
 ```bash
@@ -58,7 +67,7 @@ poetry add --source foo private-package
 Great, now all that is left is to publish your package. Assuming you'd want to share it privately
 with your team, you can configure the
 [Upload API](https://warehouse.pypa.io/api-reference/legacy.html#upload-api) endpoint for your
-[publishable repository](#publishable-repository).
+[publishable repository](#publishable-repositories).
 
 ```bash
 poetry config repositories.foo https://pypi.example.org/legacy/
@@ -76,7 +85,17 @@ poetry config http-basic.foo-pub <username> <password>
 
 {{% /note %}}
 
-Now, all the is left is to build and publish your project using the
+{{% note %}}
+When configuring a repository using environment variables, note that correct suffixes need to be used.
+
+```bash
+export POETRY_REPOSITORIES_FOO_URL=https://pypi.example.org/legacy/
+export POETRY_HTTP_BASIC_FOO_USERNAME=<username>
+export POETRY_HTTP_BASIC_FOO_PASSWORD=<password>
+```
+{{% /note %}}
+
+Now, all that is left is to build and publish your project using the
 [`publish`]({{< relref "cli#publish" >}}).
 
 ```bash
@@ -120,73 +139,183 @@ This will generate the following configuration snippet in your
 [[tool.poetry.source]]
 name = "foo"
 url = "https://foo.bar/simple/"
-default = false
-secondary = false
+priority = "primary"
 ```
 
-Any package source not marked as `secondary` will take precedence over [PyPI](https://pypi.org).
+If `priority` is undefined, the source is considered a primary source that takes precedence over PyPI, secondary, supplemental and explicit sources.
 
+Package sources are considered in the following order:
+1. [default source](#default-package-source-deprecated) (DEPRECATED),
+2. [primary sources](#primary-package-sources),
+3. implicit PyPI (unless disabled by another [primary source](#primary-package-sources), [default source](#default-package-source-deprecated) or configured explicitly),
+4. [secondary sources](#secondary-package-sources-deprecated) (DEPRECATED),
+5. [supplemental sources](#supplemental-package-sources).
+
+[Explicit sources](#explicit-package-sources) are considered only for packages that explicitly [indicate their source](#package-source-constraint).
+
+Within each priority class, package sources are considered in order of appearance in `pyproject.toml`.
 
 {{% note %}}
 
-If you prefer to disable [PyPI](https://pypi.org) completely, you may choose to set one of your package sources to be the [default](#default-package-source).
+If you want to change the priority of [PyPI](https://pypi.org), you can set it explicitly, e.g.
 
-If you prefer to specify a package source for a specific dependency, see [Secondary Package Sources](#secondary-package-sources).
+```bash
+poetry source add --priority=primary PyPI
+```
+
+If you prefer to disable PyPI completely,
+just add a [primary source](#primary-package-sources)
+or configure PyPI as [explicit source](#explicit-package-sources).
 
 {{% /note %}}
 
 
+#### Default Package Source (DEPRECATED)
+
+*Deprecated in 1.8.0*
+
 {{% warning %}}
 
-If you do not want any of the custom sources to take precedence over [PyPI](https://pypi.org),
-you must declare **all** package sources to be [secondary](#secondary-package-sources).
+Configuring a default package source is deprecated because it is the same
+as the topmost [primary source](#primary-package-sources).
+Just configure a primary package source and put it first in the list of package sources.
 
 {{% /warning %}}
 
-
-#### Default Package Source
-
-By default, Poetry configures [PyPI](https://pypi.org) as the default package source for your
-project. You can alter this behaviour and exclusively look up packages only from the configured
-package sources by adding a **single** source with `default = true`.
+By default, if you have not configured any primary source,
+Poetry will configure [PyPI](https://pypi.org) as the package source for your project.
+You can alter this behaviour and exclusively look up packages only from the configured
+package sources by adding at least one primary source (recommended)
+or a **single** source with `priority = "default"` (deprecated).
 
 ```bash
-poetry source add --default foo https://foo.bar/simple/
+poetry source add --priority=default foo https://foo.bar/simple/
+```
+
+
+#### Primary Package Sources
+
+All primary package sources are searched for each dependency without a [source constraint](#package-source-constraint).
+If you configure at least one primary source, the implicit PyPI source is disabled.
+
+```bash
+poetry source add --priority=primary foo https://foo.bar/simple/
+```
+
+Sources without a priority are considered primary sources, too.
+
+```bash
+poetry source add foo https://foo.bar/simple/
 ```
 
 {{% warning %}}
 
-Configuring a custom package source as default, will effectively disable [PyPI](https://pypi.org)
-as a package source for your project.
+The implicit PyPI source is disabled automatically if at least one primary source is configured.
+If you want to use PyPI in addition to a primary source, configure it explicitly
+with a certain priority, e.g.
+
+```bash
+poetry source add --priority=primary PyPI
+```
+
+This way, the priority of PyPI can be set in a fine-granular way.
+
+The equivalent specification in `pyproject.toml` is:
+
+```toml
+[[tool.poetry.source]]
+name = "pypi"
+priority = "primary"
+```
+
+**Omit the `url` when specifying PyPI explicitly.** Because PyPI is internally configured
+with Poetry, the PyPI repository cannot be configured with a given URL. Remember, you can always use
+`poetry check` to ensure the validity of the `pyproject.toml` file.
 
 {{% /warning %}}
 
-#### Secondary Package Sources
+#### Secondary Package Sources (DEPRECATED)
+
+*Deprecated in 1.5.0*
 
 If package sources are configured as secondary, all it means is that these will be given a lower
-priority when selecting compatible package distribution that also exists in your default package
-source.
+priority when selecting compatible package distribution that also exists in your default and primary package sources. If the package source should instead be searched only if higher-priority repositories did not return results, please consider a [supplemental source](#supplemental-package-sources) instead.
 
-You can configure a package source as a secondary source with `secondary = true` in your package
+You can configure a package source as a secondary source with `priority = "secondary"` in your package
 source configuration.
 
 ```bash
-poetry source add --secondary foo https://foo.bar/simple/
+poetry source add --priority=secondary foo https://foo.bar/simple/
 ```
 
 There can be more than one secondary package source.
 
-{{% note %}}
+{{% warning %}}
 
-All package sources (including secondary sources) will be searched during the package lookup
+Secondary package sources are deprecated in favor of supplemental package sources.
+
+{{% /warning %}}
+
+#### Supplemental Package Sources
+
+*Introduced in 1.5.0*
+
+Package sources configured as supplemental are only searched if no other (higher-priority) source yields a compatible package distribution. This is particularly convenient if the response time of the source is high and relatively few package distributions are to be fetched from this source.
+
+You can configure a package source as a supplemental source with `priority = "supplemental"` in your package
+source configuration.
+
+```bash
+poetry source add --priority=supplemental foo https://foo.bar/simple/
+```
+
+There can be more than one supplemental package source.
+
+{{% warning %}}
+
+Take into account that someone could publish a new package to a primary source
+which matches a package in your supplemental source. They could coincidentally
+or intentionally replace your dependency with something you did not expect.
+
+{{% /warning %}}
+
+
+#### Explicit Package Sources
+
+*Introduced in 1.5.0*
+
+If package sources are configured as explicit, these sources are only searched when a package configuration [explicitly indicates](#package-source-constraint) that it should be found on this package source.
+
+You can configure a package source as an explicit source with `priority = "explicit"` in your package source configuration.
+
+```bash
+poetry source add --priority=explicit foo https://foo.bar/simple/
+```
+
+There can be more than one explicit package source.
+
+{{% note %}}
+A real-world example where an explicit package source is useful, is for PyTorch GPU packages.
+
+```bash
+poetry source add --priority=explicit pytorch-gpu-src https://download.pytorch.org/whl/cu118
+poetry add --source pytorch-gpu-src torch torchvision torchaudio
+```
+{{% /note %}}
+
+#### Package Source Constraint
+
+All package sources (including secondary and possibly supplemental sources) will be searched during the package lookup
 process. These network requests will occur for all sources, regardless of if the package is
 found at one or more sources.
 
-In order to limit the search for a specific package to a particular package repository, you can specify the source explicitly. This is strongly suggested for all private packages to avoid dependency confusion attacks.
+In order to limit the search for a specific package to a particular package repository, you can specify the source explicitly.
 
 ```bash
 poetry add --source internal-pypi httpx
 ```
+
+This results in the following configuration in `pyproject.toml`:
 
 ```toml
 [tool.poetry.dependencies]
@@ -195,9 +324,47 @@ httpx = { version = "^0.22", source = "internal-pypi" }
 
 [[tool.poetry.source]]
 name = "internal-pypi"
-url = "https://foo.bar/simple/"
-secondary = true
+url = ...
+priority = ...
 ```
+
+{{% note %}}
+
+A repository that is configured to be the only source for retrieving a certain package can itself have any priority.
+In particular, it does not need to have priority `"explicit"`.
+If a repository is configured to be the source of a package, it will be the only source that is considered for that package
+and the repository priority will have no effect on the resolution.
+
+{{% /note %}}
+
+{{% note %}}
+
+Package `source` keys are not inherited by their dependencies.
+In particular, if `package-A` is configured to be found in `source = internal-pypi`,
+and `package-A` depends on `package-B` that is also to be found on `internal-pypi`,
+then `package-B` needs to be configured as such in `pyproject.toml`.
+The easiest way to achieve this is to add `package-B` with a wildcard constraint:
+
+```bash
+poetry add --source internal-pypi package-B@*
+```
+
+This will ensure that `package-B` is searched only in the `internal-pypi` package source.
+The version constraints on `package-B` are derived from `package-A` (and other client packages), as usual.
+
+If you want to avoid additional main dependencies,
+you can add `package-B` to a dedicated [dependency group]({{< relref "managing-dependencies#dependency-groups" >}}):
+
+```bash
+poetry add --group explicit --source internal-pypi package-B@*
+```
+
+{{% /note %}}
+
+{{% note %}}
+
+Package source constraints are strongly suggested for all packages that are expected
+to be provided only by one specific source to avoid dependency confusion attacks.
 
 {{% /note %}}
 
@@ -211,7 +378,7 @@ package's versions, metadata, files, etc.
 
 {{% note %}}
 
-If the the package's published metadata is invalid, Poetry will download the available bdist/sdist to
+If the package's published metadata is invalid, Poetry will download the available bdist/sdist to
 inspect it locally to identify the relevant metadata.
 
 {{% /note %}}
@@ -231,7 +398,7 @@ httpx = {version = "^0.22.0", source = "pypi"}
 
 {{% warning %}}
 
-If any source within a project is configured with `default = true`, The implicit `pypi` source will
+If any source within a project is configured with `priority = "default"`, The implicit `pypi` source will
 be disabled and not used for any packages.
 
 {{% /warning %}}
@@ -249,7 +416,7 @@ manifest as long dependency resolution times when adding packages from this sour
 
 {{% /warning %}}
 
-These package sources maybe configured via the following command in your project.
+These package sources may be configured via the following command in your project.
 
 ```bash
 poetry source add testpypi https://test.pypi.org/simple/
@@ -286,7 +453,7 @@ inspecting it locally is the only remaining option.
 Some projects choose to release their binary distributions via a single page link source that
 partially follows the structure of a package page in [PEP 503](https://peps.python.org/pep-0503/).
 
-These package sources maybe configured via the following command in your project.
+These package sources may be configured via the following command in your project.
 
 ```bash
 poetry source add jax https://storage.googleapis.com/jax-releases/jax_releases.html
@@ -319,7 +486,7 @@ poetry config repositories.testpypi https://test.pypi.org/legacy/
 [Legacy Upload API](https://warehouse.pypa.io/api-reference/legacy.html#upload-api) URLs are
 typically different to the same one provided by the repository for the simple API. You'll note that
 in the example of [Test PyPI](https://test.pypi.org/), both the host (`test.pypi.org`) as
-well as the path (`/legacy`) are different to it's simple API (`https://test.pypi.org/simple`).
+well as the path (`/legacy`) are different to its simple API (`https://test.pypi.org/simple`).
 
 {{% /note %}}
 
@@ -342,7 +509,11 @@ when uploading packages to PyPI.
 Once you have created a new token, you can tell Poetry to use it:
 
 ```bash
-poetry config pypi-token.pypi my-token
+poetry config pypi-token.pypi <my-token>
+```
+If you have configured **testpypi** as a [Publishable Repository](#publishable-repositories), the token can be set using
+```bash
+poetry config pypi-token.testpypi <your-token>
 ```
 
 If you still want to use your username and password, you can do so with the following
@@ -361,29 +532,30 @@ If a system keyring is available and supported, the password is stored to and re
 
 Keyring support is enabled using the [keyring library](https://pypi.org/project/keyring/). For more information on supported backends refer to the [library documentation](https://keyring.readthedocs.io/en/latest/?badge=latest).
 
+If you do not want to use the keyring, you can tell Poetry to disable it and store the credentials in plaintext config files:
+
+```bash
+poetry config keyring.enabled false
+```
+
 {{% note %}}
 
-Poetry will fallback to Pip style use of keyring so that backends like
+Poetry will fall back to Pip style use of keyring so that backends like
 Microsoft's [artifacts-keyring](https://pypi.org/project/artifacts-keyring/) get a chance to retrieve
 valid credentials. It will need to be properly installed into Poetry's virtualenv,
 preferably by installing a plugin.
-
-If you are letting Poetry manage your virtual environments you will want a virtualenv
-seeder installed in Poetry's virtualenv that installs the desired keyring backend
-during `poetry install`. To again use Azure DevOps as an example: [azure-devops-artifacts-helpers](https://pypi.org/project/azure-devops-artifacts-helpers/)
-provides such a seeder. This would of course best achieved by installing a Poetry plugin
-if it exists for you use case instead of doing it yourself.
 
 {{% /note %}}
 
 Alternatively, you can use environment variables to provide the credentials:
 
 ```bash
-export POETRY_PYPI_TOKEN_PYPI=my-token
-export POETRY_HTTP_BASIC_PYPI_USERNAME=<username>
-export POETRY_HTTP_BASIC_PYPI_PASSWORD=<password>
+export POETRY_PYPI_TOKEN_FOO=my-token
+export POETRY_HTTP_BASIC_FOO_USERNAME=<username>
+export POETRY_HTTP_BASIC_FOO_PASSWORD=<password>
 ```
 
+where `FOO` is the name of the repository in uppercase (e.g. `PYPI`).
 See [Using environment variables]({{< relref "configuration#using-environment-variables" >}}) for more information
 on how to configure Poetry with environment variables.
 
@@ -419,7 +591,7 @@ poetry config certificates.foo.cert false
 ```
 
 {{% warning %}}
-Disabling certificate verification is not recommended as it is does not conform to security
+Disabling certificate verification is not recommended as it does not conform to security
 best practices.
 {{% /warning %}}
 {{% /note %}}

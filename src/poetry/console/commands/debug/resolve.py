@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+from typing import ClassVar
+
 from cleo.helpers import argument
 from cleo.helpers import option
 from cleo.io.outputs.output import Verbosity
@@ -8,14 +11,20 @@ from poetry.console.commands.init import InitCommand
 from poetry.console.commands.show import ShowCommand
 
 
+if TYPE_CHECKING:
+    from cleo.io.inputs.argument import Argument
+    from cleo.io.inputs.option import Option
+    from cleo.ui.table import Rows
+
+
 class DebugResolveCommand(InitCommand):
     name = "debug resolve"
     description = "Debugs dependency resolution."
 
-    arguments = [
+    arguments: ClassVar[list[Argument]] = [
         argument("package", "The packages to resolve.", optional=True, multiple=True)
     ]
-    options = [
+    options: ClassVar[list[Option]] = [
         option(
             "extras",
             "E",
@@ -28,7 +37,10 @@ class DebugResolveCommand(InitCommand):
         option("install", None, "Show what would be installed for the current system."),
     ]
 
-    loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
+    loggers: ClassVar[list[str]] = [
+        "poetry.repositories.pypi_repository",
+        "poetry.inspection.info",
+    ]
 
     def handle(self) -> int:
         from cleo.io.null_io import NullIO
@@ -36,8 +48,8 @@ class DebugResolveCommand(InitCommand):
 
         from poetry.factory import Factory
         from poetry.puzzle.solver import Solver
-        from poetry.repositories.pool import Pool
         from poetry.repositories.repository import Repository
+        from poetry.repositories.repository_pool import RepositoryPool
         from poetry.utils.env import EnvManager
 
         packages = self.argument("package")
@@ -86,7 +98,7 @@ class DebugResolveCommand(InitCommand):
         self.line("")
 
         if self.option("tree"):
-            show_command = self.application.find("show")
+            show_command = self.get_application().find("show")
             assert isinstance(show_command, ShowCommand)
             show_command.init_styles(self.io)
 
@@ -103,11 +115,11 @@ class DebugResolveCommand(InitCommand):
 
         table = self.table(style="compact")
         table.style.set_vertical_border_chars("", " ")
-        rows = []
+        rows: Rows = []
 
         if self.option("install"):
             env = EnvManager(self.poetry).get()
-            pool = Pool()
+            pool = RepositoryPool(config=self.poetry.config)
             locked_repository = Repository("poetry-locked")
             for op in ops:
                 locked_repository.add_package(op.package)

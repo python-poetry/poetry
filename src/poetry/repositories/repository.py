@@ -5,31 +5,27 @@ import logging
 from typing import TYPE_CHECKING
 
 from packaging.utils import canonicalize_name
-from poetry.core.semver.version import Version
-from poetry.core.semver.version_range import VersionRange
+from poetry.core.constraints.version import Version
 
+from poetry.repositories.abstract_repository import AbstractRepository
 from poetry.repositories.exceptions import PackageNotFound
 
 
 if TYPE_CHECKING:
     from packaging.utils import NormalizedName
+    from poetry.core.constraints.version import VersionConstraint
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
     from poetry.core.packages.utils.link import Link
-    from poetry.core.semver.version_constraint import VersionConstraint
 
 
-class Repository:
+class Repository(AbstractRepository):
     def __init__(self, name: str, packages: list[Package] | None = None) -> None:
-        self._name = name
+        super().__init__(name)
         self._packages: list[Package] = []
 
         for package in packages or []:
             self.add_package(package)
-
-    @property
-    def name(self) -> str:
-        return self._name
 
     @property
     def packages(self) -> list[Package]:
@@ -37,11 +33,10 @@ class Repository:
 
     def find_packages(self, dependency: Dependency) -> list[Package]:
         packages = []
-        constraint, allow_prereleases = self._get_constraints_from_dependency(
-            dependency
-        )
         ignored_pre_release_packages = []
 
+        constraint = dependency.constraint
+        allow_prereleases = dependency.allows_prereleases()
         for package in self._find_packages(dependency.name, constraint):
             if package.yanked and not isinstance(constraint, Version):
                 # PEP 592: yanked files are always ignored, unless they are the only
@@ -53,9 +48,7 @@ class Repository:
                 and not allow_prereleases
                 and not package.is_direct_origin()
             ):
-                if constraint.is_any():
-                    # we need this when all versions of the package are pre-releases
-                    ignored_pre_release_packages.append(package)
+                ignored_pre_release_packages.append(package)
                 continue
 
             packages.append(package)
@@ -76,18 +69,6 @@ class Repository:
     def add_package(self, package: Package) -> None:
         self._packages.append(package)
 
-    def remove_package(self, package: Package) -> None:
-        package_id = package.unique_name
-
-        index = None
-        for i, repo_package in enumerate(self.packages):
-            if package_id == repo_package.unique_name:
-                index = i
-                break
-
-        if index is not None:
-            del self._packages[index]
-
     def search(self, query: str) -> list[Package]:
         results: list[Package] = []
 
@@ -96,23 +77,6 @@ class Repository:
                 results.append(package)
 
         return results
-
-    @staticmethod
-    def _get_constraints_from_dependency(
-        dependency: Dependency,
-    ) -> tuple[VersionConstraint, bool]:
-        constraint = dependency.constraint
-
-        allow_prereleases = dependency.allows_prereleases()
-        if isinstance(constraint, VersionRange) and (
-            constraint.max is not None
-            and constraint.max.is_unstable()
-            or constraint.min is not None
-            and constraint.min.is_unstable()
-        ):
-            allow_prereleases = True
-
-        return constraint, allow_prereleases
 
     def _find_packages(
         self, name: NormalizedName, constraint: VersionConstraint
@@ -139,6 +103,6 @@ class Repository:
         canonicalized_name = canonicalize_name(name)
         for package in self.packages:
             if canonicalized_name == package.name and package.version == version:
-                return package.clone()
+                return package
 
         raise PackageNotFound(f"Package {name} ({version}) not found.")

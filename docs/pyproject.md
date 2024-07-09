@@ -13,9 +13,19 @@ menu:
 
 The `tool.poetry` section of the `pyproject.toml` file is composed of multiple sections.
 
+## package-mode
+
+Whether Poetry operates in package mode (default) or not. **Optional**
+
+See [basic usage]({{< relref "basic-usage#operating-modes" >}}) for more information.
+
+```toml
+package-mode = false
+```
+
 ## name
 
-The name of the package. **Required**
+The name of the package. **Required in package mode**
 
 This should be a valid name as defined by [PEP 508](https://peps.python.org/pep-0508/#names).
 
@@ -26,7 +36,7 @@ name = "my-package"
 
 ## version
 
-The version of the package. **Required**
+The version of the package. **Required in package mode**
 
 This should be a valid [PEP 440](https://peps.python.org/pep-0440/) string.
 
@@ -43,7 +53,7 @@ If you would like to use semantic versioning for your project, please see
 
 ## description
 
-A short description of the package. **Required**
+A short description of the package. **Required in package mode**
 
 ```toml
 description = "A short description of the package."
@@ -81,7 +91,7 @@ If your project is proprietary and does not use a specific licence, you can set 
 
 ## authors
 
-The authors of the package. **Required**
+The authors of the package. **Required in package mode**
 
 This is a list of authors and should contain at least one author. Authors must be in the form `name <email>`.
 
@@ -113,6 +123,12 @@ The file(s) can be of any format, but if you intend to publish to PyPI keep the
 [recommendations for a PyPI-friendly README](
 https://packaging.python.org/en/latest/guides/making-a-pypi-friendly-readme/) in
 mind. README paths are implicitly relative to `pyproject.toml`.
+
+{{% note %}}
+Whether paths are case-sensitive follows platform defaults, but it is recommended to keep cases.
+
+To be specific, you can set `readme = "rEaDmE.mD"` for `README.md` on macOS and Windows, but Linux users can't `poetry install` after cloning your repo. This is because macOS and Windows are case-insensitive and case-preserving.
+{{% /note %}}
 
 The contents of the README file(s) are used to populate the [Description
 field](https://packaging.python.org/en/latest/specifications/core-metadata/#description-optional)
@@ -208,7 +224,19 @@ packages = [
 ]
 ```
 
-If you want to restrict a package to a specific [build](#build) format you can specify
+The `to` parameter is designed to specify the relative destination path
+where the package will be located upon installation. This allows for
+greater control over the organization of packages within your project's structure.
+
+```toml
+[tool.poetry]
+# ...
+packages = [
+    { include = "my_package", from = "lib", to = "target_package" },
+]
+```
+
+If you want to restrict a package to a specific build format you can specify
 it by using `format`:
 
 ```toml
@@ -273,7 +301,9 @@ include = [
 ]
 ```
 
-If no format is specified, it will default to include both `sdist` and `wheel`.
+If no format is specified, `include` defaults to only `sdist`.
+
+In contrast, `exclude` defaults to both `sdist` and `wheel`.
 
 ```toml
 exclude = ["my_package/excluded.py"]
@@ -341,13 +371,6 @@ my_package_cli = 'my_package.console:run'
 
 Here, we will have the `my_package_cli` script installed which will execute the `run` function in the `console` module in the `my_package` package.
 
-To specify a script that [depends on an extra](#extras), you may provide an entry as an inline table:
-
-```toml
-[tool.poetry.scripts]
-devtest = { callable = "mypackage:test.run_tests", extras = ["test"] }
-```
-
 {{% note %}}
 When a script is added or updated, run `poetry install` to make them available in the project's virtualenv.
 {{% /note %}}
@@ -395,6 +418,18 @@ You can install all extras with the `--all-extras` option:
 poetry install --all-extras
 ```
 
+{{% note %}}
+Note that `install --extras` and the variations mentioned above (`--all-extras`, `--extras foo`, etc.) only work on dependencies defined in the current project. If you want to install extras defined by dependencies, you'll have to express that in the dependency itself:
+```toml
+[tool.poetry.dependencies]
+pandas = {version="^2.2.1", extras=["computation", "performance"]}
+```
+```toml
+[tool.poetry.group.dev.dependencies]
+fastapi = {version="^0.92.0", extras=["all"]}
+```
+{{% /note %}}
+
 When installing or specifying Poetry-built packages, the extras defined in this section can be activated
 as described in [PEP 508](https://www.python.org/dev/peps/pep-0508/#extras).
 
@@ -421,7 +456,7 @@ The syntax for registering a plugin is:
 [tool.poetry.plugins] # Optional super table
 
 [tool.poetry.plugins."A"]
-"B" = "C:D"
+B = "C:D"
 ```
 Which are:
 

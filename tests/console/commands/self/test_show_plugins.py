@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
@@ -17,6 +16,7 @@ from poetry.utils._compat import metadata
 
 if TYPE_CHECKING:
     from os import PathLike
+    from pathlib import Path
 
     from cleo.io.io import IO
     from cleo.testers.command_tester import CommandTester
@@ -64,7 +64,7 @@ def plugin_package(plugin_package_requires_dist: list[str]) -> Package:
 
 
 @pytest.fixture()
-def plugin_distro(plugin_package: Package, tmp_dir: str) -> metadata.Distribution:
+def plugin_distro(plugin_package: Package, tmp_path: Path) -> metadata.Distribution:
     class MockDistribution(metadata.Distribution):
         def read_text(self, filename: str) -> str | None:
             if filename == "METADATA":
@@ -80,10 +80,10 @@ def plugin_distro(plugin_package: Package, tmp_dir: str) -> metadata.Distributio
                 )
             return None
 
-        def locate_file(self, path: PathLike[str]) -> PathLike[str]:
-            return Path(tmp_dir, path)
+        def locate_file(self, path: str | PathLike[str]) -> Path:
+            return tmp_path / path
 
-    return MockDistribution()
+    return MockDistribution()  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture
@@ -101,10 +101,14 @@ def entry_points(
     entry_point_name: str,
     entry_point_values_by_group: dict[str, list[str]],
     plugin_distro: metadata.Distribution,
-) -> Callable[[...], list[metadata.EntryPoint]]:
+) -> Callable[..., list[metadata.EntryPoint]]:
     by_group = {
         key: [
-            EntryPoint(name=entry_point_name, group=key, value=value)._for(
+            EntryPoint(  # type: ignore[no-untyped-call]
+                name=entry_point_name,
+                group=key,
+                value=value,
+            )._for(  # type: ignore[attr-defined]
                 plugin_distro
             )
             for value in values
@@ -118,7 +122,9 @@ def entry_points(
         if group not in by_group:
             return []
 
-        return by_group.get(group)
+        eps: list[metadata.EntryPoint] = by_group[group]
+
+        return eps
 
     return _entry_points
 
@@ -130,7 +136,7 @@ def mock_metadata_entry_points(
     installed: Repository,
     mocker: MockerFixture,
     tmp_venv: Env,
-    entry_points: Callable[[...], metadata.EntryPoint],
+    entry_points: Callable[..., metadata.EntryPoint],
 ) -> None:
     installed.add_package(plugin_package)
 
@@ -153,11 +159,11 @@ def mock_metadata_entry_points(
 def test_show_displays_installed_plugins(
     app: PoetryTestApplication,
     tester: CommandTester,
-):
+) -> None:
     tester.execute("")
 
     expected = """
-  • poetry-plugin (1.2.3)
+  - poetry-plugin (1.2.3)
       1 plugin and 1 application plugin
 """
 
@@ -179,11 +185,11 @@ def test_show_displays_installed_plugins(
 def test_show_displays_installed_plugins_with_multiple_plugins(
     app: PoetryTestApplication,
     tester: CommandTester,
-):
+) -> None:
     tester.execute("")
 
     expected = """
-  • poetry-plugin (1.2.3)
+  - poetry-plugin (1.2.3)
       2 plugins and 2 application plugins
 """
 
@@ -205,11 +211,11 @@ def test_show_displays_installed_plugins_with_multiple_plugins(
 def test_show_displays_installed_plugins_with_dependencies(
     app: PoetryTestApplication,
     tester: CommandTester,
-):
+) -> None:
     tester.execute("")
 
     expected = """
-  • poetry-plugin (1.2.3)
+  - poetry-plugin (1.2.3)
       1 plugin and 1 application plugin
 
       Dependencies

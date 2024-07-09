@@ -3,21 +3,25 @@ from __future__ import annotations
 import sys
 
 from contextlib import suppress
+from typing import TYPE_CHECKING
 
 
-# TODO: use try/except ImportError when
-# https://github.com/python/mypy/issues/1393 is fixed
+if TYPE_CHECKING:
+    from pathlib import Path
+
+
+if sys.version_info < (3, 11):
+    # compatibility for python <3.11
+    import tomli as tomllib
+else:
+    import tomllib
+
+
 if sys.version_info < (3, 10):
     # compatibility for python <3.10
     import importlib_metadata as metadata
 else:
     from importlib import metadata
-
-if sys.version_info < (3, 8):
-    # compatibility for python <3.8
-    from backports.cached_property import cached_property
-else:
-    from functools import cached_property
 
 WINDOWS = sys.platform == "win32"
 
@@ -48,23 +52,27 @@ def encode(string: str, encodings: list[str] | None = None) -> bytes:
     return string.encode(encodings[0], errors="ignore")
 
 
-def to_str(string: str) -> str:
-    return decode(string)
+def is_relative_to(this: Path, other: Path) -> bool:
+    """
+    Return whether `this` path is relative to the `other` path. This is compatibility wrapper around
+    `PurePath.is_relative_to()` method. This method was introduced only in Python 3.9.
 
+    See: https://docs.python.org/3/library/pathlib.html#pathlib.PurePath.is_relative_to
+    """
+    if sys.version_info < (3, 9):
+        with suppress(ValueError):
+            this.relative_to(other)
+            return True
+        return False
 
-def list_to_shell_command(cmd: list[str]) -> str:
-    return " ".join(
-        f'"{token}"' if " " in token and token[0] not in {"'", '"'} else token
-        for token in cmd
-    )
+    return this.is_relative_to(other)
 
 
 __all__ = [
     "WINDOWS",
-    "cached_property",
     "decode",
     "encode",
-    "list_to_shell_command",
+    "is_relative_to",
     "metadata",
-    "to_str",
+    "tomllib",
 ]

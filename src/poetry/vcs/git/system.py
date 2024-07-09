@@ -15,31 +15,18 @@ if TYPE_CHECKING:
 
 class SystemGit:
     @classmethod
-    def clone(cls, repository: str, dest: Path) -> str:
+    def clone(cls, repository: str, dest: Path) -> None:
         cls._check_parameter(repository)
 
-        return cls.run("clone", "--recurse-submodules", "--", repository, str(dest))
+        cls.run("clone", "--recurse-submodules", "--", repository, str(dest))
 
     @classmethod
-    def checkout(cls, rev: str, target: Path | None = None) -> str:
-        args = []
-
-        if target:
-            args += [
-                "--git-dir",
-                (target / ".git").as_posix(),
-                "--work-tree",
-                target.as_posix(),
-            ]
-
+    def checkout(cls, rev: str, target: Path | None = None) -> None:
         cls._check_parameter(rev)
-
-        args += ["checkout", rev]
-
-        return cls.run(*args)
+        cls.run("checkout", rev, folder=target)
 
     @staticmethod
-    def run(*args: Any, **kwargs: Any) -> str:
+    def run(*args: Any, **kwargs: Any) -> None:
         folder = kwargs.pop("folder", None)
         if folder:
             args = (
@@ -47,19 +34,18 @@ class SystemGit:
                 (folder / ".git").as_posix(),
                 "--work-tree",
                 folder.as_posix(),
-            ) + args
+                *args,
+            )
 
         git_command = find_git_command()
         env = os.environ.copy()
         env["GIT_TERMINAL_PROMPT"] = "0"
-        return (
-            subprocess.check_output(
-                git_command + list(args),
-                stderr=subprocess.STDOUT,
-                env=env,
-            )
-            .decode()
-            .strip()
+        subprocess.check_call(
+            git_command + list(args),
+            stderr=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            env=env,
+            text=True,
         )
 
     @staticmethod

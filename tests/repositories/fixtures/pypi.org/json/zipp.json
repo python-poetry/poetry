@@ -1,0 +1,44 @@
+{
+  "files": [
+    {
+      "core-metadata": {
+        "sha256": "03c98c88c78ef3602e6fd904a321359fa0e374bee5d9e5bf3b1fbdecc3c8a92d"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "03c98c88c78ef3602e6fd904a321359fa0e374bee5d9e5bf3b1fbdecc3c8a92d"
+      },
+      "filename": "zipp-3.5.0-py3-none-any.whl",
+      "hashes": {
+        "md5": "52aecc0484efd07d62575d152f6a98f6",
+        "sha256": "82da6dcae3676123d6f493a876259614e7e6e970b14c59b1830a2c901ed91306"
+      },
+      "requires-python": ">=3.6",
+      "size": 5700,
+      "upload-time": "2021-07-02T23:51:45.759726Z",
+      "url": "https://files.pythonhosted.org/packages/92/d9/89f433969fb8dc5b9cbdd4b4deb587720ec1aeb59a020cf15002b9593eef/zipp-3.5.0-py3-none-any.whl",
+      "yanked": false
+    },
+    {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
+      "filename": "zipp-3.5.0.tar.gz",
+      "hashes": {
+        "md5": "16bf2a24fae340052e8565c264d21092",
+        "sha256": "239d50954a15aa4b283023f18dc451ba811fb4d263f4dd6855642e4d1c80cc9f"
+      },
+      "requires-python": ">=3.6",
+      "size": 13270,
+      "upload-time": "2021-07-02T23:51:47.004396Z",
+      "url": "https://files.pythonhosted.org/packages/3a/9f/1d4b62cbe8d222539a84089eeab603d8e45ee1f897803a0ae0860400d6e7/zipp-3.5.0.tar.gz",
+      "yanked": false
+    }
+  ],
+  "meta": {
+    "_last-serial": 0,
+    "api-version": "1.1"
+  },
+  "name": "zipp",
+  "versions": [
+    "3.5.0"
+  ]
+}

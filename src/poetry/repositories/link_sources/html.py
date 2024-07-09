@@ -1,40 +1,39 @@
 from __future__ import annotations
 
 import urllib.parse
-import warnings
 
 from collections import defaultdict
+from functools import cached_property
 from html import unescape
 from typing import TYPE_CHECKING
 
 from poetry.core.packages.utils.link import Link
 
 from poetry.repositories.link_sources.base import LinkSource
-from poetry.utils._compat import cached_property
+from poetry.repositories.parsers.html_page_parser import HTMLPageParser
 
 
 if TYPE_CHECKING:
     from poetry.repositories.link_sources.base import LinkCache
 
 
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    import html5lib
-
-
 class HTMLPage(LinkSource):
     def __init__(self, url: str, content: str) -> None:
         super().__init__(url=url)
 
-        self._parsed = html5lib.parse(content, namespaceHTMLElements=False)
+        parser = HTMLPageParser()
+        parser.feed(content)
+        self._parsed = parser.anchors
+        self._base_url: str | None = parser.base_url
 
     @cached_property
     def _link_cache(self) -> LinkCache:
         links: LinkCache = defaultdict(lambda: defaultdict(list))
-        for anchor in self._parsed.findall(".//a"):
-            if anchor.get("href"):
-                href = anchor.get("href")
-                url = self.clean_link(urllib.parse.urljoin(self._url, href))
+        for anchor in self._parsed:
+            if href := anchor.get("href"):
+                url = self.clean_link(
+                    urllib.parse.urljoin(self._base_url or self._url, href)
+                )
                 pyrequire = anchor.get("data-requires-python")
                 pyrequire = unescape(pyrequire) if pyrequire else None
                 yanked_value = anchor.get("data-yanked")
@@ -42,8 +41,22 @@ class HTMLPage(LinkSource):
                 if yanked_value:
                     yanked = unescape(yanked_value)
                 else:
-                    yanked = "data-yanked" in anchor.attrib
-                link = Link(url, requires_python=pyrequire, yanked=yanked)
+                    yanked = "data-yanked" in anchor
+
+                # see https://peps.python.org/pep-0714/#clients
+                # and https://peps.python.org/pep-0658/#specification
+                metadata: str | bool
+                for metadata_key in ("data-core-metadata", "data-dist-info-metadata"):
+                    metadata_value = anchor.get(metadata_key)
+                    if metadata_value:
+                        metadata = unescape(metadata_value)
+                    else:
+                        metadata = metadata_key in anchor
+                    if metadata:
+                        break
+                link = Link(
+                    url, requires_python=pyrequire, yanked=yanked, metadata=metadata
+                )
 
                 if link.ext not in self.SUPPORTED_FORMATS:
                     continue
@@ -55,8 +68,35 @@ class HTMLPage(LinkSource):
         return links
 
 
-class SimpleRepositoryPage(HTMLPage):
-    def __init__(self, url: str, content: str) -> None:
-        if not url.endswith("/"):
-            url += "/"
-        super().__init__(url=url, content=content)
+class SimpleRepositoryRootPage:
+    """
+    This class represents the parsed content of a "simple" repository's root page. This follows the
+    specification laid out in PEP 503.
+
+    See: https://peps.python.org/pep-0503/
+    """
+
+    def __init__(self, content: str | None = None) -> None:
+        parser = HTMLPageParser()
+        parser.feed(content or "")
+        self._parsed = parser.anchors
+
+    def search(self, query: str) -> list[str]:
+        results: list[str] = []
+
+        for anchor in self._parsed:
+            href = anchor.get("href")
+            if href and query in href:
+                results.append(href.rstrip("/"))
+
+        return results
+
+    @cached_property
+    def package_names(self) -> list[str]:
+        results: list[str] = []
+
+        for anchor in self._parsed:
+            if href := anchor.get("href"):
+                results.append(href.rstrip("/"))
+
+        return results

@@ -2,7 +2,6 @@
 name = "cachy"
 version = "0.2.0"
 description = ""
-category = "main"
 optional = false
 python-versions = "*"
 files = []
@@ -11,7 +10,6 @@ files = []
 name = "pendulum"
 version = "1.4.4"
 description = ""
-category = "main"
 optional = false
 python-versions = "*"
 files = []
@@ -21,14 +19,13 @@ name = "project-with-setup"
 version = "0.1.2"
 develop = false
 description = "Demo project."
-category = "main"
 optional = false
 python-versions = "*"
 files = []
 
 [package.source]
 type = "directory"
-url = "tests/fixtures/project_with_setup"
+url = "project"
 
 [package.dependencies]
 cachy = {version = ">=0.2.0", extras = ["msgpack"]}

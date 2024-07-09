@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+from typing import ClassVar
+
 from cleo.helpers import argument
 from cleo.helpers import option
 from cleo.io.inputs.string_input import StringInput
@@ -9,16 +12,21 @@ from poetry.console.commands.add import AddCommand
 from poetry.console.commands.self.self_command import SelfCommand
 
 
+if TYPE_CHECKING:
+    from cleo.io.inputs.argument import Argument
+    from cleo.io.inputs.option import Option
+
+
 class SelfUpdateCommand(SelfCommand):
     name = "self update"
     description = "Updates Poetry to the latest version."
 
-    arguments = [
+    arguments: ClassVar[list[Argument]] = [
         argument(
             "version", "The version to update to.", optional=True, default="latest"
         )
     ]
-    options = [
+    options: ClassVar[list[Option]] = [
         option("preview", None, "Allow the installation of pre-release versions."),
         option(
             "dry-run",

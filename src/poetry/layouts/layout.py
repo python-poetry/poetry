@@ -5,16 +5,17 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 from packaging.utils import canonicalize_name
-from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.core.utils.helpers import module_name
 from tomlkit import inline_table
 from tomlkit import loads
 from tomlkit import table
 from tomlkit.toml_document import TOMLDocument
 
+from poetry.pyproject.toml import PyProjectTOML
+
 
 if TYPE_CHECKING:
-    from typing import Mapping
+    from collections.abc import Mapping
 
     from tomlkit.items import InlineTable
 
@@ -48,8 +49,8 @@ class Layout:
         author: str | None = None,
         license: str | None = None,
         python: str = "*",
-        dependencies: dict[str, str | Mapping[str, Any]] | None = None,
-        dev_dependencies: dict[str, str | Mapping[str, Any]] | None = None,
+        dependencies: Mapping[str, str | Mapping[str, Any]] | None = None,
+        dev_dependencies: Mapping[str, str | Mapping[str, Any]] | None = None,
     ) -> None:
         self._project = canonicalize_name(project)
         self._package_path_relative = Path(
@@ -90,22 +91,21 @@ class Layout:
             return None
 
         include = parts[0]
-        package.append("include", include)  # type: ignore[no-untyped-call]
+        package.append("include", include)
 
         if self.basedir != Path():
-            package.append(  # type: ignore[no-untyped-call]
-                "from",
-                self.basedir.as_posix(),
-            )
+            package.append("from", self.basedir.as_posix())
         else:
-            if include == self._project:
+            if module_name(self._project) == include:
                 # package include and package name are the same,
                 # packages table is redundant here.
                 return None
 
         return package
 
-    def create(self, path: Path, with_tests: bool = True) -> None:
+    def create(
+        self, path: Path, with_tests: bool = True, with_pyproject: bool = True
+    ) -> None:
         path.mkdir(parents=True, exist_ok=True)
 
         self._create_default(path)
@@ -114,7 +114,8 @@ class Layout:
         if with_tests:
             self._create_tests(path)
 
-        self._write_poetry(path)
+        if with_pyproject:
+            self._write_poetry(path)
 
     def generate_poetry_content(self) -> TOMLDocument:
         template = POETRY_DEFAULT
@@ -146,9 +147,9 @@ class Layout:
 
         if self._dev_dependencies:
             for dep_name, dep_constraint in self._dev_dependencies.items():
-                poetry_content["group"]["dev"]["dependencies"][
-                    dep_name
-                ] = dep_constraint
+                poetry_content["group"]["dev"]["dependencies"][dep_name] = (
+                    dep_constraint
+                )
         else:
             del poetry_content["group"]
 
@@ -194,6 +195,6 @@ class Layout:
     def _write_poetry(self, path: Path) -> None:
         pyproject = PyProjectTOML(path / "pyproject.toml")
         content = self.generate_poetry_content()
-        for section in content:
-            pyproject.data.append(section, content[section])
+        for section, item in content.items():
+            pyproject.data.append(section, item)
         pyproject.save()

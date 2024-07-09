@@ -19,18 +19,12 @@ FIXTURES_DIRECTORY = (
 )
 
 
-@pytest.fixture(autouse=True)
-def mock_search_http_response(http: type[httpretty.httpretty]) -> None:
-    with FIXTURES_DIRECTORY.joinpath("search.html").open(encoding="utf-8") as f:
-        http.register_uri("GET", "https://pypi.org/search", f.read())
-
-
 @pytest.fixture
 def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("search")
 
 
-def test_search(tester: CommandTester, http: type[httpretty.httpretty]):
+def test_search(tester: CommandTester, http: type[httpretty.httpretty]) -> None:
     tester.execute("sqlalchemy")
 
     expected = """

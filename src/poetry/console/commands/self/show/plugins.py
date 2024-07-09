@@ -25,14 +25,14 @@ class PluginPackage:
         from poetry.plugins.application_plugin import ApplicationPlugin
         from poetry.plugins.plugin import Plugin
 
-        group = entry_point.group  # type: ignore[attr-defined]
+        group = entry_point.group
 
         if group == ApplicationPlugin.group:
             self.application_plugins.append(entry_point)
         elif group == Plugin.group:
             self.plugins.append(entry_point)
         else:
-            name = entry_point.name  # type: ignore[attr-defined]
+            name = entry_point.name
             raise ValueError(f"Unknown plugin group ({group}) for {name}")
 
 
@@ -88,7 +88,7 @@ commands respectively.
             package = info.package
             description = " " + package.description if package.description else ""
             self.line("")
-            self.line(f"  • <c1>{name}</c1> (<c2>{package.version}</c2>){description}")
+            self.line(f"  - <c1>{name}</c1> (<c2>{package.version}</c2>){description}")
             provide_line = "     "
 
             if info.plugins:

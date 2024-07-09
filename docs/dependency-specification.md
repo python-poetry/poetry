@@ -79,10 +79,14 @@ Multiple version requirements can also be separated with a comma, e.g. `>= 1.2, 
 
 You can specify the exact version of a package.
 
-`==1.2.3` is an example of an exact version specification.
+`1.2.3` is an example of an exact version specification.
 
 This will tell Poetry to install this version and this version only.
 If other dependencies require a different version, the solver will ultimately fail and abort any install or update procedures.
+
+Exact versions can also be specified with `==` according to [PEP 440](https://peps.python.org/pep-0440/).
+
+`==1.2.3` is an example of this.
 
 ### Using the `@` operator
 
@@ -128,7 +132,7 @@ requests = { git = "https://github.com/requests/requests.git" }
 ```
 
 Since we haven’t specified any other information,
-Poetry assumes that we intend to use the latest commit on the `master` branch
+Poetry assumes that we intend to use the latest commit on the `main` branch
 to build our project.
 
 You can combine the `git` key with the `branch` key to use another branch.
@@ -156,7 +160,7 @@ subdir_package = { git = "https://github.com/myorg/mypackage_with_subdirs.git", 
 with the corresponding `add` call:
 
 ```bash
-poetry add "https://github.com/myorg/mypackage_with_subdirs.git#subdirectory=subdir"
+poetry add "git+https://github.com/myorg/mypackage_with_subdirs.git#subdirectory=subdir"
 ```
 
 To use an SSH connection, for example in the case of private repositories, use the following example syntax:
@@ -247,14 +251,14 @@ for extras in your project refer to [`extras`]({{< relref "pyproject#extras" >}}
 
 ## `source` dependencies
 
-To depend on a package from an [alternate repository]({{< relref "repositories/#install-dependencies-from-a-private-repository" >}}),
+To depend on a package from an [alternate repository]({{< relref "repositories#installing-from-private-package-sources" >}}),
 you can use the `source` property:
 
 ```toml
 [[tool.poetry.source]]
 name = "foo"
 url = "https://foo.bar/simple/"
-secondary = true
+priority = "supplemental"
 
 [tool.poetry.dependencies]
 my-cool-package = { version = "*", source = "foo" }
@@ -267,7 +271,7 @@ poetry add my-cool-package --source foo
 ```
 
 {{% note %}}
-In this example, we expect `foo` to be configured correctly. See [using a private repository](repositories.md#using-a-private-repository)
+In this example, we expect `foo` to be configured correctly. See [using a private repository]({{< relref "repositories#installing-from-private-package-sources" >}})
 for further information.
 {{% /note %}}
 
@@ -317,6 +321,29 @@ foo = [
 The constraints **must** have different requirements (like `python`)
 otherwise it will cause an error when resolving dependencies.
 {{% /note %}}
+
+### Combining git / url / path dependencies with source repositories
+
+Direct origin (`git`/ `url`/ `path`) dependencies can satisfy the requirement of a dependency that
+doesn't explicitly specify a source, even when mutually exclusive markers are used. For instance
+in the following example the url package will also be a valid solution for the second requirement:
+```toml
+foo = [
+    { platform = "darwin", url = "https://example.com/example-1.0-py3-none-any.whl" },
+    { platform = "linux", version = "^1.0" },
+]
+```
+
+Sometimes you may instead want to use a direct origin dependency for specific conditions
+(i.e. a compiled package that is not available on PyPI for a certain platform/architecture) while
+falling back on source repositories in other cases. In this case you should explicitly ask for your
+dependency to be satisfied by another `source`. For example:
+```toml
+foo = [
+    { platform = "darwin", url = "https://example.com/foo-1.0.0-py3-none-macosx_11_0_arm64.whl" },
+    { platform = "linux", version = "^1.0", source = "pypi" },
+]
+```
 
 ## Expanded dependency specification syntax
 

@@ -1,6 +1,5 @@
 [[package]]
 description = ""
-category = "main"
 name = "pendulum"
 optional = false
 python-versions = "*"
@@ -8,7 +7,6 @@ files = []
 version = "1.4.4"
 
 [[package]]
-category = "main"
 description = "This is a description"
 develop = false
 name = "project-with-extras"
@@ -21,8 +19,8 @@ version = "1.2.3"
 pendulum = {version = ">=1.4.4", optional = true}
 
 [package.extras]
-extras_a = ["pendulum (>=1.4.4)"]
-extras_b = ["cachy (>=0.2.0)"]
+extras-a = ["pendulum (>=1.4.4)"]
+extras-b = ["cachy (>=0.2.0)"]
 
 [package.source]
 type = "directory"

@@ -4,6 +4,7 @@ version = "1.0.0"
 authors = [
     "Foo <foo@bar.com>"
 ]
+readme = "never/exists.md"
 license = "INVALID"
 classifiers = [
     "Environment :: Console",
@@ -15,3 +16,13 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "*"
 pendulum = {"version" = "^2.0.5", allows-prereleases = true}
+invalid = "1.0"
+invalid_source = { "version" = "*", source = "not-exists" }
+invalid_source_multi = [
+    { "version" = "*", platform = "linux", source = "exists" },
+    { "version" = "*", platform = "win32", source = "not-exists2" },
+]
+
+[[tool.poetry.source]]
+name = "exists"
+priority = "explicit"

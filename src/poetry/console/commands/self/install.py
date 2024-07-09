@@ -1,9 +1,16 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+from typing import ClassVar
+
 from poetry.core.packages.dependency_group import MAIN_GROUP
 
 from poetry.console.commands.install import InstallCommand
 from poetry.console.commands.self.self_command import SelfCommand
+
+
+if TYPE_CHECKING:
+    from cleo.io.inputs.option import Option
 
 
 class SelfInstallCommand(SelfCommand, InstallCommand):
@@ -11,7 +18,9 @@ class SelfInstallCommand(SelfCommand, InstallCommand):
     description = (
         "Install locked packages (incl. addons) required by this Poetry installation."
     )
-    options = [o for o in InstallCommand.options if o.name in {"sync", "dry-run"}]
+    options: ClassVar[list[Option]] = [
+        o for o in InstallCommand.options if o.name in {"sync", "dry-run"}
+    ]
     help = f"""\
 The <c1>self install</c1> command ensures all additional packages specified are \
 installed in the current runtime environment.

@@ -4,13 +4,14 @@ import os
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
 
 import pytest
 import tomlkit
 
-from poetry.core.semver.version import Version
-from poetry.core.toml.file import TOMLFile
+from poetry.core.constraints.version import Version
 
+from poetry.toml.file import TOMLFile
 from poetry.utils.env import MockEnv
 from tests.console.commands.env.helpers import build_venv
 from tests.console.commands.env.helpers import check_output_wrapper
@@ -55,7 +56,8 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     venv_cache: Path,
     venv_name: str,
     venvs_in_cache_config: None,
-):
+) -> None:
+    mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
     mocker.patch(
         "subprocess.check_output",
         side_effect=check_output_wrapper(),
@@ -70,7 +72,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     venv_py37 = venv_cache / f"{venv_name}-py3.7"
     mock_build_env.assert_called_with(
         venv_py37,
-        executable="/usr/bin/python3.7",
+        executable=Path("/usr/bin/python3.7"),
         flags={
             "always-copy": False,
             "system-site-packages": False,
@@ -82,7 +84,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
 
     envs_file = TOMLFile(venv_cache / "envs.toml")
     assert envs_file.exists()
-    envs = envs_file.read()
+    envs: dict[str, Any] = envs_file.read()
     assert envs[venv_name]["minor"] == "3.7"
     assert envs[venv_name]["patch"] == "3.7.1"
 
@@ -94,12 +96,13 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
 
 
 def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
+    mocker: MockerFixture,
     tester: CommandTester,
     current_python: tuple[int, int, int],
     venv_cache: Path,
     venv_name: str,
     venvs_in_cache_config: None,
-):
+) -> None:
     os.environ["VIRTUAL_ENV"] = "/environment/prefix"
 
     python_minor = ".".join(str(v) for v in current_python[:2])
@@ -111,6 +114,8 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
     doc = tomlkit.document()
     doc[venv_name] = {"minor": python_minor, "patch": python_patch}
     envs_file.write(doc)
+
+    mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
 
     tester.execute(python_minor)
 
@@ -128,12 +133,13 @@ def test_get_prefers_explicitly_activated_non_existing_virtualenvs_over_env_var(
     venv_cache: Path,
     venv_name: str,
     venvs_in_cache_config: None,
-):
+) -> None:
     os.environ["VIRTUAL_ENV"] = "/environment/prefix"
 
     python_minor = ".".join(str(v) for v in current_python[:2])
     venv_dir = venv_cache / f"{venv_name}-py{python_minor}"
 
+    mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
     mocker.patch(
         "poetry.utils.env.EnvManager._env",
         new_callable=mocker.PropertyMock,

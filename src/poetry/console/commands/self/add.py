@@ -1,22 +1,29 @@
 from __future__ import annotations
 
-from poetry.core.semver.version import Version
+from typing import TYPE_CHECKING
+from typing import ClassVar
+
+from poetry.core.constraints.version import Version
 
 from poetry.__version__ import __version__
 from poetry.console.commands.add import AddCommand
 from poetry.console.commands.self.self_command import SelfCommand
 
 
+if TYPE_CHECKING:
+    from cleo.io.inputs.option import Option
+
+
 class SelfAddCommand(SelfCommand, AddCommand):
     name = "self add"
     description = "Add additional packages to Poetry's runtime environment."
-    options = [
+    options: ClassVar[list[Option]] = [
         o
         for o in AddCommand.options
         if o.name in {"editable", "extras", "source", "dry-run", "allow-prereleases"}
     ]
     help = f"""\
-The <c1>self add</c1> command installs additional package's to Poetry's runtime \
+The <c1>self add</c1> command installs additional packages to Poetry's runtime \
 environment.
 
 This is managed in the <comment>{SelfCommand.get_default_system_pyproject_file()}</> \

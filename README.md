@@ -1,5 +1,6 @@
 # Poetry: Python packaging and dependency management made easy
 
+[![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
 [![Stable Version](https://img.shields.io/pypi/v/poetry?label=stable)][PyPI Releases]
 [![Pre-release Version](https://img.shields.io/github/v/release/python-poetry/poetry?label=pre-release&include_prereleases&sort=semver)][PyPI Releases]
 [![Python Versions](https://img.shields.io/pypi/pyversions/poetry)][PyPI]
@@ -45,7 +46,7 @@ requests = { version = "^2.28", extras = ["security"] }
 # Version-specific dependencies with prereleases allowed
 tomli = { version = "^2.0.1", python = "<3.11", allow-prereleases = true }
 # Git dependencies
-cleo = { git = "https://github.com/python-poetry/cleo.git", branch = "master" }
+cleo = { git = "https://github.com/python-poetry/cleo.git", branch = "main" }
 # Optional dependencies (installed by extras)
 pendulum = { version = "^2.1.2", optional = true }
 
