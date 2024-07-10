@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "minimum-poetry"
+version = "0.1.0"
+description = "A minimum functioning example of Docker image based on Poetry"
+authors = ["gianfa <gian.angelini@hotmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+numpy = "^2.0.0"
+matplotlib = "^3.9.1"
+pandas = "^2.2.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
