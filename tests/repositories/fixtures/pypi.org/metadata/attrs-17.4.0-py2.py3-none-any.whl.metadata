@@ -1,0 +1,46 @@
+Metadata-Version: 2.0
+Name: attrs
+Version: 17.4.0
+Summary: Classes Without Boilerplate
+Home-page: http://www.attrs.org/
+Author: Hynek Schlawack
+Author-email: hs@ox.cx
+License: MIT
+Description-Content-Type: UNKNOWN
+Keywords: class,attribute,boilerplate
+Platform: UNKNOWN
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: Natural Language :: English
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Programming Language :: Python :: Implementation :: PyPy
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Provides-Extra: dev
+Requires-Dist: coverage; extra == 'dev'
+Requires-Dist: hypothesis; extra == 'dev'
+Requires-Dist: pympler; extra == 'dev'
+Requires-Dist: pytest; extra == 'dev'
+Requires-Dist: six; extra == 'dev'
+Requires-Dist: zope.interface; extra == 'dev'
+Requires-Dist: sphinx; extra == 'dev'
+Requires-Dist: zope.interface; extra == 'dev'
+Provides-Extra: docs
+Requires-Dist: sphinx; extra == 'docs'
+Requires-Dist: zope.interface; extra == 'docs'
+Provides-Extra: tests
+Requires-Dist: coverage; extra == 'tests'
+Requires-Dist: hypothesis; extra == 'tests'
+Requires-Dist: pympler; extra == 'tests'
+Requires-Dist: pytest; extra == 'tests'
+Requires-Dist: six; extra == 'tests'
+Requires-Dist: zope.interface; extra == 'tests'
+

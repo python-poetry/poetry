@@ -1,0 +1,13 @@
+[tool.poetry]
+name = "project-with-missing-directory-dependency"
+version = "1.2.3"
+description = "This is a description"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+packages = []
+
+[tool.poetry.dependencies]
+python = "*"
+
+[tool.poetry.dev-dependencies]
+missing = { file = "missing-0.1.0-py2.py3-none-any.whl" }

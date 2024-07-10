@@ -1,0 +1,105 @@
+{
+  "info": {
+    "author": "Łukasz Langa",
+    "author_email": "lukasz@langa.pl",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 4 - Beta",
+      "Environment :: Console",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.6",
+      "Programming Language :: Python :: 3.7",
+      "Programming Language :: Python :: 3.8",
+      "Topic :: Software Development :: Libraries :: Python Modules",
+      "Topic :: Software Development :: Quality Assurance"
+    ],
+    "description": "",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": null,
+    "home_page": "https://github.com/psf/black",
+    "keywords": "automation formatter yapf autopep8 pyfmt gofmt rustfmt",
+    "license": "MIT",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "black",
+    "package_url": "https://pypi.org/project/black/",
+    "platform": "",
+    "project_url": "https://pypi.org/project/black/",
+    "project_urls": {
+      "Homepage": "https://github.com/psf/black"
+    },
+    "provides_extra": null,
+    "release_url": "https://pypi.org/project/black/19.10b0/",
+    "requires_dist": [
+      "click (>=6.5)",
+      "attrs (>=18.1.0)",
+      "appdirs",
+      "toml (>=0.9.4)",
+      "typed-ast (>=1.4.0)",
+      "regex",
+      "pathspec (<1,>=0.6)",
+      "aiohttp (>=3.3.2) ; extra == 'd'",
+      "aiohttp-cors ; extra == 'd'"
+    ],
+    "requires_python": ">=3.6",
+    "summary": "The uncompromising code formatter.",
+    "version": "19.10b0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 0,
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "4a420234749e1ea350581160ef51cd02",
+        "sha256": "3471ff321348d851b6f3047f4ed42c88622ac038caf7c2d160bd653334c88e88"
+      },
+      "downloads": -1,
+      "filename": "black-19.10b0-py36-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "4a420234749e1ea350581160ef51cd02",
+      "packagetype": "bdist_wheel",
+      "python_version": "py36",
+      "requires_python": ">=3.6",
+      "size": 97525,
+      "upload_time": "2019-10-28T23:53:54",
+      "upload_time_iso_8601": "2019-10-28T23:53:54.000711Z",
+      "url": "https://files.pythonhosted.org/packages/fd/bb/ad34bbc93d1bea3de086d7c59e528d4a503ac8fe318bd1fa48605584c3d2/black-19.10b0-py36-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "c383543109a66a5a99113e6326db5251",
+        "sha256": "6cada614d5d2132698c6d5fff384657273d922c4fffa6a2f0de9e03e25b8913a"
+      },
+      "downloads": -1,
+      "filename": "black-19.10b0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "c383543109a66a5a99113e6326db5251",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.6",
+      "size": 1019740,
+      "upload_time": "2019-10-28T23:54:05",
+      "upload_time_iso_8601": "2019-10-28T23:54:05.455213Z",
+      "url": "https://files.pythonhosted.org/packages/b0/dc/ecd83b973fb7b82c34d828aad621a6e5865764d52375b8ac1d7a45e23c8d/black-19.10b0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

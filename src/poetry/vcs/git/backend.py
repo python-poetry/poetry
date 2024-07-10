@@ -7,6 +7,9 @@ import re
 from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
+from urllib.parse import urljoin
+from urllib.parse import urlparse
+from urllib.parse import urlunparse
 
 from dulwich import porcelain
 from dulwich.client import HTTPUnauthorized
@@ -14,10 +17,11 @@ from dulwich.client import get_transport_and_path
 from dulwich.config import ConfigFile
 from dulwich.config import parse_submodules
 from dulwich.errors import NotGitRepository
+from dulwich.index import IndexEntry
 from dulwich.refs import ANNOTATED_TAG_SUFFIX
 from dulwich.repo import Repo
 
-from poetry.console.exceptions import PoetrySimpleConsoleException
+from poetry.console.exceptions import PoetryConsoleError
 from poetry.utils.authenticator import get_default_authenticator
 from poetry.utils.helpers import remove_directory
 
@@ -28,6 +32,9 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
+
+# A relative URL by definition starts with ../ or ./
+RELATIVE_SUBMODULE_REGEX = re.compile(r"^\.{1,2}/")
 
 
 def is_revision_sha(revision: str | None) -> bool:
@@ -127,7 +134,9 @@ class GitRefSpec:
 
     @property
     def is_ref(self) -> bool:
-        return self.branch is not None and self.branch.startswith("refs/")
+        return self.branch is not None and (
+            self.branch.startswith("refs/") or self.branch == "HEAD"
+        )
 
     @property
     def is_sha_short(self) -> bool:
@@ -136,11 +145,11 @@ class GitRefSpec:
 
 @dataclasses.dataclass
 class GitRepoLocalInfo:
-    repo: dataclasses.InitVar[Repo | Path | str]
+    repo: dataclasses.InitVar[Repo | Path]
     origin: str = dataclasses.field(init=False)
     revision: str = dataclasses.field(init=False)
 
-    def __post_init__(self, repo: Repo | Path | str) -> None:
+    def __post_init__(self, repo: Repo | Path) -> None:
         repo = Git.as_repo(repo=repo) if not isinstance(repo, Repo) else repo
         self.origin = Git.get_remote_url(repo=repo, remote="origin")
         self.revision = Git.get_revision(repo=repo)
@@ -148,8 +157,8 @@ class GitRepoLocalInfo:
 
 class Git:
     @staticmethod
-    def as_repo(repo: Path | str) -> Repo:
-        return Repo(str(repo))  # type: ignore[no-untyped-call]
+    def as_repo(repo: Path) -> Repo:
+        return Repo(str(repo))
 
     @staticmethod
     def get_remote_url(repo: Repo, remote: str = "origin") -> str:
@@ -158,9 +167,8 @@ class Git:
             section = (b"remote", remote.encode("utf-8"))
 
             url = ""
-            if config.has_section(section):  # type: ignore[no-untyped-call]
-                value = config.get(section, b"url")  # type: ignore[no-untyped-call]
-                assert value is not None
+            if config.has_section(section):
+                value = config.get(section, b"url")
                 url = value.decode("utf-8")
 
             return url
@@ -171,12 +179,12 @@ class Git:
             return repo.head().decode("utf-8")
 
     @classmethod
-    def info(cls, repo: Repo | Path | str) -> GitRepoLocalInfo:
+    def info(cls, repo: Repo | Path) -> GitRepoLocalInfo:
         return GitRepoLocalInfo(repo=repo)
 
     @staticmethod
     def get_name_from_source_url(url: str) -> str:
-        return re.sub(r"(.git)?$", "", url.rsplit("/", 1)[-1])
+        return re.sub(r"(.git)?$", "", url.rstrip("/").rsplit("/", 1)[-1])
 
     @classmethod
     def _fetch_remote_refs(cls, url: str, local: Repo) -> FetchPackResult:
@@ -195,12 +203,11 @@ class Git:
             kwargs["username"] = credentials.username
             kwargs["password"] = credentials.password
 
-        client, path = get_transport_and_path(  # type: ignore[no-untyped-call]
-            url, **kwargs
-        )
+        config = local.get_config_stack()
+        client, path = get_transport_and_path(url, config=config, **kwargs)
 
         with local:
-            result: FetchPackResult = client.fetch(  # type: ignore[no-untyped-call]
+            result: FetchPackResult = client.fetch(
                 path,
                 local,
                 determine_wants=local.object_store.determine_wants_all,
@@ -225,7 +232,7 @@ class Git:
         try:
             SystemGit.clone(url, target)
         except CalledProcessError:
-            raise PoetrySimpleConsoleException(
+            raise PoetryConsoleError(
                 f"Failed to clone {url}, check your git configuration and permissions"
                 " for this repository."
             )
@@ -237,11 +244,9 @@ class Git:
         try:
             SystemGit.checkout(revision, target)
         except CalledProcessError:
-            raise PoetrySimpleConsoleException(
-                f"Failed to checkout {url} at '{revision}'"
-            )
+            raise PoetryConsoleError(f"Failed to checkout {url} at '{revision}'")
 
-        repo = Repo(str(target))  # type: ignore[no-untyped-call]
+        repo = Repo(str(target))
         return repo
 
     @classmethod
@@ -252,10 +257,10 @@ class Git:
         """
         local: Repo
         if not target.exists():
-            local = Repo.init(str(target), mkdir=True)  # type: ignore[no-untyped-call]
-            porcelain.remote_add(local, "origin", url)  # type: ignore[no-untyped-call]
+            local = Repo.init(str(target), mkdir=True)
+            porcelain.remote_add(local, "origin", url)
         else:
-            local = Repo(str(target))  # type: ignore[no-untyped-call]
+            local = Repo(str(target))
 
         remote_refs = cls._fetch_remote_refs(url=url, local=local)
 
@@ -266,7 +271,7 @@ class Git:
         try:
             refspec.resolve(remote_refs=remote_refs)
         except KeyError:  # branch / ref does not exist
-            raise PoetrySimpleConsoleException(
+            raise PoetryConsoleError(
                 f"Failed to clone {url} at '{refspec.key}', verify ref exists on"
                 " remote."
             )
@@ -282,7 +287,7 @@ class Git:
             (b"refs/remotes/origin", b"refs/heads/"),
             (b"refs/tags", b"refs/tags"),
         }:
-            local.refs.import_refs(  # type: ignore[no-untyped-call]
+            local.refs.import_refs(
                 base=base,
                 other={
                     n[len(prefix) :]: v
@@ -293,7 +298,7 @@ class Git:
 
         try:
             with local:
-                local.reset_index()  # type: ignore[no-untyped-call]
+                local.reset_index()
         except (AssertionError, KeyError) as e:
             # this implies the ref we need does not exist or is invalid
             if isinstance(e, KeyError):
@@ -303,19 +308,20 @@ class Git:
                     " broken state.",
                     local.path,
                 )
-                remove_directory(local.path, force=True)
+                remove_directory(Path(local.path), force=True)
 
             if isinstance(e, AssertionError) and "Invalid object name" not in str(e):
                 raise
 
             logger.debug(
-                "\nRequested ref (<c2>%s</c2>) was not fetched to local copy and cannot"
-                " be used. The following error was raised:\n\n\t<warning>%s</>",
+                "\nRequested ref (<c2>%s</c2>) was not fetched to local copy and"
+                " cannot be used. The following error was"
+                " raised:\n\n\t<warning>%s</>",
                 refspec.key,
                 e,
             )
 
-            raise PoetrySimpleConsoleException(
+            raise PoetryConsoleError(
                 f"Failed to clone {url} at '{refspec.key}', verify ref exists on"
                 " remote."
             )
@@ -328,39 +334,71 @@ class Git:
         Helper method to identify configured submodules and clone them recursively.
         """
         repo_root = Path(repo.path)
-        modules_config = repo_root.joinpath(".gitmodules")
+        for submodule in cls._get_submodules(repo):
+            path_absolute = repo_root / submodule.path
+            source_root = path_absolute.parent
+            source_root.mkdir(parents=True, exist_ok=True)
+            cls.clone(
+                url=submodule.url,
+                source_root=source_root,
+                name=path_absolute.name,
+                revision=submodule.revision,
+                clean=path_absolute.exists()
+                and not path_absolute.joinpath(".git").is_dir(),
+            )
 
-        if modules_config.exists():
-            config = ConfigFile.from_path(modules_config)
+    @classmethod
+    def _get_submodules(cls, repo: Repo) -> list[SubmoduleInfo]:
+        modules_config = Path(repo.path, ".gitmodules")
 
-            url: bytes
-            path: bytes
-            submodules = parse_submodules(config)  # type: ignore[no-untyped-call]
-            for path, url, _ in submodules:
-                path_relative = Path(path.decode("utf-8"))
-                path_absolute = repo_root.joinpath(path_relative)
+        if not modules_config.exists():
+            return []
 
-                source_root = path_absolute.parent
-                source_root.mkdir(parents=True, exist_ok=True)
+        config = ConfigFile.from_path(str(modules_config))
 
-                with repo:
-                    revision = repo.open_index()[path].sha.decode("utf-8")
+        submodules: list[SubmoduleInfo] = []
+        for path, url, name in parse_submodules(config):
+            url_str = url.decode("utf-8")
+            path_str = path.decode("utf-8")
+            name_str = name.decode("utf-8")
 
-                cls.clone(
-                    url=url.decode("utf-8"),
-                    source_root=source_root,
-                    name=path_relative.name,
+            if RELATIVE_SUBMODULE_REGEX.search(url_str):
+                url_str = urlpathjoin(f"{cls.get_remote_url(repo)}/", url_str)
+
+            with repo:
+                index = repo.open_index()
+
+                try:
+                    entry = index[path]
+                except KeyError:
+                    logger.debug(
+                        "Skip submodule %s in %s, path %s not found",
+                        name,
+                        repo.path,
+                        path,
+                    )
+                    continue
+
+                assert isinstance(entry, IndexEntry)
+                revision = entry.sha.decode("utf-8")
+
+            submodules.append(
+                SubmoduleInfo(
+                    path=path_str,
+                    url=url_str,
+                    name=name_str,
                     revision=revision,
-                    clean=path_absolute.exists()
-                    and not path_absolute.joinpath(".git").is_dir(),
                 )
+            )
+
+        return submodules
 
     @staticmethod
     def is_using_legacy_client() -> bool:
         from poetry.config.config import Config
 
-        legacy_client: bool = (
-            Config.create().get("experimental", {}).get("system-git-client", False)
+        legacy_client: bool = Config.create().get(
+            "experimental.system-git-client", False
         )
         return legacy_client
 
@@ -395,7 +433,7 @@ class Git:
             else:
                 # check if the current local copy matches the requested ref spec
                 try:
-                    current_repo = Repo(str(target))  # type: ignore[no-untyped-call]
+                    current_repo = Repo(str(target))
 
                     with current_repo:
                         current_sha = current_repo.head().decode("utf-8")
@@ -435,3 +473,31 @@ class Git:
 
         # fallback to legacy git client
         return cls._clone_legacy(url=url, refspec=refspec, target=target)
+
+
+def urlpathjoin(base: str, path: str) -> str:
+    """
+    Allow any URL to be joined with a path
+
+    This works around an issue with urllib.parse.urljoin where it only handles
+    relative URLs for protocols contained in urllib.parse.uses_relative. As it
+    happens common protocols used with git, like ssh or git+ssh are not in that
+    list.
+
+    Thus we need to implement our own version of urljoin that handles all URLs
+    protocols. This is accomplished by using urlparse and urlunparse to split
+    the URL into its components, join the path, and then reassemble the URL.
+
+    See: https://github.com/python-poetry/poetry/issues/6499#issuecomment-1564712609
+    """
+    parsed_base = urlparse(base)
+    new = parsed_base._replace(path=urljoin(parsed_base.path, path))
+    return urlunparse(new)
+
+
+@dataclasses.dataclass
+class SubmoduleInfo:
+    path: str
+    url: str
+    name: str
+    revision: str

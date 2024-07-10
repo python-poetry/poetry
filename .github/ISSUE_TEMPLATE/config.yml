@@ -1,7 +1,11 @@
 # Ref: https://help.github.com/en/github/building-a-strong-community/configuring-issue-templates-for-your-repository#configuring-the-template-chooser
-blank_issues_enabled: true
+blank_issues_enabled: false
 contact_links:
+- name: '💬 Discussions'
+  url: https://github.com/python-poetry/poetry/discussions
+  about: |
+    Ask questions about using Poetry, Poetry's features and roadmap, or get support and feedback for your usage of Poetry.
 - name: '💬 Discord Server'
   url: https://discordapp.com/invite/awxPgve
   about: |
-    Chat with the community, ask questions and learn about best practices.
+    Chat with the community and Poetry maintainers about both the usage of and development of the project.

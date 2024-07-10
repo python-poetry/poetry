@@ -1,0 +1,93 @@
+{
+  "info": {
+    "author": "ubershmekel",
+    "author_email": "ubershmekel@gmail.com",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 4 - Beta",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 2",
+      "Programming Language :: Python :: 3",
+      "Topic :: Software Development :: Libraries :: Python Modules",
+      "Topic :: Utilities"
+    ],
+    "description": "",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": null,
+    "home_page": "https://github.com/ubershmekel/filecache",
+    "keywords": "",
+    "license": "",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "filecache",
+    "package_url": "https://pypi.org/project/filecache/",
+    "platform": "",
+    "project_url": "https://pypi.org/project/filecache/",
+    "project_urls": {
+      "Homepage": "https://github.com/ubershmekel/filecache"
+    },
+    "provides_extra": null,
+    "release_url": "https://pypi.org/project/filecache/0.81/",
+    "requires_dist": null,
+    "requires_python": "",
+    "summary": "Persistent caching decorator",
+    "version": "0.81",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 0,
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "blake2b_256": "eb79f96a2addff21798ea11aa51ae15052514e9ac0ab4ab9470ddd1a0da6fd3e",
+        "md5": "0979123d410d2e411025d2e369a10179",
+        "sha256": "91ce1a42b532d0e9ad75364c13159bafc3015973d4a5a0dbf37e4b4feb194055"
+      },
+      "downloads": -1,
+      "filename": "filecache-0.81-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "0979123d410d2e411025d2e369a10179",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": null,
+      "size": 4449,
+      "upload_time": "2020-05-29T20:07:06",
+      "upload_time_iso_8601": "2020-05-29T20:07:06.928906Z",
+      "url": "https://files.pythonhosted.org/packages/eb/79/f96a2addff21798ea11aa51ae15052514e9ac0ab4ab9470ddd1a0da6fd3e/filecache-0.81-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "blake2b_256": "b3f5647f13b1cae32f8d3b84866f6bac688b7923c5d7643b994e5e89865c9a2a",
+        "md5": "f4c8b0e4aba2e37a4d2045a1470fa018",
+        "sha256": "be071ad64937b51f38b03ecd82b9b68c08d0f570cdddb30aa8f90150fe54b30a"
+      },
+      "downloads": -1,
+      "filename": "filecache-0.81.tar.gz",
+      "has_sig": false,
+      "md5_digest": "f4c8b0e4aba2e37a4d2045a1470fa018",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": null,
+      "size": 6423,
+      "upload_time": "2020-05-29T20:07:07",
+      "upload_time_iso_8601": "2020-05-29T20:07:07.751617Z",
+      "url": "https://files.pythonhosted.org/packages/b3/f5/647f13b1cae32f8d3b84866f6bac688b7923c5d7643b994e5e89865c9a2a/filecache-0.81.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

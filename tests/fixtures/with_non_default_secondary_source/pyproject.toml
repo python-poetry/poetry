@@ -9,11 +9,11 @@ license = "MIT"
 
 # Requirements
 [tool.poetry.dependencies]
-python = "~2.7 || ^3.6"
+python = "^3.6"
 
 [tool.poetry.dev-dependencies]
 
 [[tool.poetry.source]]
 name = "foo"
 url = "https://foo.bar/simple/"
-secondary = true
+priority = "secondary"

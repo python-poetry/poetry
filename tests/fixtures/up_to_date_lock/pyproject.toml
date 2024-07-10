@@ -6,7 +6,7 @@ authors = ["Poetry Developer <developer@python-poetry.org>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-docker = "4.3.1"
+docker = ">=4.3.1"
 
 [tool.poetry.dev-dependencies]
 

@@ -1,11 +1,9 @@
 version: 2
 
 updates:
-  - package-ecosystem: "pip"
+  - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "monthly"
-    # keep dependency updates manual for now
-    open-pull-requests-limit: 0
-    reviewers:
-      - "python-poetry/triage"
+      interval: "weekly"
+    labels:
+      - "area/ci"

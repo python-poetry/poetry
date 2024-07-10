@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "private"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+classifiers = [
+    "Private :: Do Not Upload",
+]
+
+
+[tool.poetry.dependencies]
+python = "^3.7"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

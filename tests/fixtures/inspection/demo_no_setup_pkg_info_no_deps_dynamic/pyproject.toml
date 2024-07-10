@@ -1,0 +1,19 @@
+# this was copied over and modified from orjson project's pyproject.toml
+# https://github.com/ijl/orjson/blob/master/pyproject.toml
+[project]
+name = "demo"
+repository = "https://github.com/demo/demo"
+
+[build-system]
+build-backend = "maturin"
+requires = ["maturin>=0.8.1,<0.9"]
+
+[tool.maturin]
+manylinux = "off"
+sdist-include = ["Cargo.lock", "json/**/*"]
+strip = "on"
+
+[tool.black]
+line-length = 88
+target-version = ['py36', 'py37', 'py38']
+include = '\.pyi?$'

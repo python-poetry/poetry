@@ -1,0 +1,36 @@
+Metadata-Version: 2.1
+Name: toga
+Version: 0.4.0
+Summary: A Python native, OS native GUI toolkit.
+Home-page: https://beeware.org/project/projects/libraries/toga/
+Author: Russell Keith-Magee
+Author-email: russell@keith-magee.com
+Maintainer: BeeWare Team
+Maintainer-email: team@beeware.org
+License: New BSD
+Project-URL: Funding, https://beeware.org/contributing/membership/
+Project-URL: Documentation, http://toga.readthedocs.io/en/latest/
+Project-URL: Tracker, https://github.com/beeware/toga/issues
+Project-URL: Source, https://github.com/beeware/toga
+Keywords: gui,widget,cross-platform,desktop,mobile,web,macOS,cocoa,iOS,android,windows,winforms,linux,freeBSD,gtk
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Topic :: Software Development
+Classifier: Topic :: Software Development :: User Interfaces
+Classifier: Topic :: Software Development :: Widget Sets
+Requires-Python: >=3.8
+Description-Content-Type: text/x-rst; charset=UTF-8
+Requires-Dist: toga-gtk ==0.4.0 ; "freebsd" in sys_platform
+Requires-Dist: toga-cocoa ==0.4.0 ; sys_platform=="darwin"
+Requires-Dist: toga-gtk ==0.4.0 ; sys_platform=="linux"
+Requires-Dist: toga-winforms ==0.4.0 ; sys_platform=="win32"
+

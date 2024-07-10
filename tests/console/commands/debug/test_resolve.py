@@ -33,7 +33,7 @@ def __add_packages(repo: TestRepository) -> None:
     repo.add_package(get_package("cleo", "0.6.5"))
 
 
-def test_debug_resolve_gives_resolution_results(tester: CommandTester):
+def test_debug_resolve_gives_resolution_results(tester: CommandTester) -> None:
     tester.execute("cachy")
 
     expected = """\
@@ -48,7 +48,9 @@ cachy          0.2.0
     assert tester.io.fetch_output() == expected
 
 
-def test_debug_resolve_tree_option_gives_the_dependency_tree(tester: CommandTester):
+def test_debug_resolve_tree_option_gives_the_dependency_tree(
+    tester: CommandTester,
+) -> None:
     tester.execute("cachy --tree")
 
     expected = """\
@@ -63,7 +65,7 @@ cachy 0.2.0
     assert tester.io.fetch_output() == expected
 
 
-def test_debug_resolve_git_dependency(tester: CommandTester):
+def test_debug_resolve_git_dependency(tester: CommandTester) -> None:
     tester.execute("git+https://github.com/demo/demo.git")
 
     expected = """\

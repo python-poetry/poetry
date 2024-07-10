@@ -6,15 +6,12 @@ from typing import TYPE_CHECKING
 
 from poetry.publishing.uploader import Uploader
 from poetry.utils.authenticator import Authenticator
-from poetry.utils.helpers import get_cert
-from poetry.utils.helpers import get_client_cert
 
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from cleo.io import BufferedIO
-    from cleo.io import ConsoleIO
+    from cleo.io.io import IO
 
     from poetry.poetry import Poetry
 
@@ -26,11 +23,11 @@ class Publisher:
     Registers and publishes packages to remote repositories.
     """
 
-    def __init__(self, poetry: Poetry, io: BufferedIO | ConsoleIO) -> None:
+    def __init__(self, poetry: Poetry, io: IO, dist_dir: Path | None = None) -> None:
         self._poetry = poetry
         self._package = poetry.package
         self._io = io
-        self._uploader = Uploader(poetry, io)
+        self._uploader = Uploader(poetry, io, dist_dir)
         self._authenticator = Authenticator(poetry.config, self._io)
 
     @property
@@ -60,29 +57,21 @@ class Publisher:
             # Check if we have a token first
             token = self._authenticator.get_pypi_token(repository_name)
             if token:
-                logger.debug(f"Found an API token for {repository_name}.")
+                logger.debug("Found an API token for %s.", repository_name)
                 username = "__token__"
                 password = token
             else:
                 auth = self._authenticator.get_http_auth(repository_name)
                 if auth:
                     logger.debug(
-                        f"Found authentication information for {repository_name}."
+                        "Found authentication information for %s.", repository_name
                     )
                     username = auth.username
                     password = auth.password
 
-        resolved_client_cert = client_cert or get_client_cert(
-            self._poetry.config, repository_name
-        )
-        # Requesting missing credentials but only if there is not a client cert defined.
-        if not resolved_client_cert and hasattr(self._io, "ask"):
-            if username is None:
-                username = self._io.ask("Username:")
-
-            # skip password input if no username is provided, assume unauthenticated
-            if username and password is None:
-                password = self._io.ask_hidden("Password:")
+        certificates = self._authenticator.get_certs_for_repository(repository_name)
+        resolved_cert = cert or certificates.cert or certificates.verify
+        resolved_client_cert = client_cert or certificates.client_cert
 
         self._uploader.auth(username, password)
 
@@ -96,7 +85,7 @@ class Publisher:
 
         self._uploader.upload(
             url,
-            cert=cert or get_cert(self._poetry.config, repository_name),
+            cert=resolved_cert,
             client_cert=resolved_client_cert,
             dry_run=dry_run,
             skip_existing=skip_existing,

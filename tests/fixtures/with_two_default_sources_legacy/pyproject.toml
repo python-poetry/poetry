@@ -1,0 +1,66 @@
+[tool.poetry]
+name = "two-default-sources-legacy"
+version = "1.2.3"
+description = "Some description."
+authors = [
+    "Sébastien Eustace <sebastien@eustace.io>"
+]
+license = "MIT"
+
+readme = "README.rst"
+
+homepage = "https://python-poetry.org"
+repository = "https://github.com/python-poetry/poetry"
+documentation = "https://python-poetry.org/docs"
+
+keywords = ["packaging", "dependency", "poetry"]
+
+classifiers = [
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+
+# Requirements
+[tool.poetry.dependencies]
+python = "^3.6"
+cleo = "^0.6"
+pendulum = { git = "https://github.com/sdispater/pendulum.git", branch = "2.0" }
+requests = { version = "^2.18", optional = true, extras=[ "security" ] }
+pathlib2 = { version = "^2.2", python = "~3.6" }
+
+orator = { version = "^0.9", optional = true }
+
+# File dependency
+demo = { path = "../distributions/demo-0.1.0-py2.py3-none-any.whl" }
+
+# Dir dependency with setup.py
+my-package = { path = "../project_with_setup/" }
+
+# Dir dependency with pyproject.toml
+simple-project = { path = "../simple_project/" }
+
+
+[tool.poetry.extras]
+db = [ "orator" ]
+
+[tool.poetry.dev-dependencies]
+pytest = "~3.4"
+
+
+[tool.poetry.scripts]
+my-script = "two_default_sources_legacy:main"
+
+
+[tool.poetry.plugins."blogtool.parsers"]
+".rst" = "some_module::SomeClass"
+
+
+[[tool.poetry.source]]
+name = "foo"
+url = "https://foo.bar/simple/"
+default = true
+
+[[tool.poetry.source]]
+name = "bar"
+url = "https://bar.foo/simple/"
+default = true

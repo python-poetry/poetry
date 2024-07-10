@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "demo"
+version = "0.1.2"
+description = "Demo package"
+authors = ["Poetry Team <noreply@python-poetry.org>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "*"
+pendulum = ">=1.4.4"
+cleo = {version="*", optional = true}
+tomlkit = {version="*", optional = true}
+
+[tool.poetry.extras]
+foo = ["cleo"]
+bar = ["tomlkit"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

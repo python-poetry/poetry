@@ -1,0 +1,11 @@
+[tool.poetry]
+name = "quix"
+version = "1.2.3"
+description = "Some description."
+authors = ["Poetry Maintainer <tests@python-poetry.org>"]
+license = "MIT"
+
+# Requirements
+[tool.poetry.dependencies]
+python = "~2.7 || ^3.4"
+sampleproject = ">=1.3.1"

@@ -22,6 +22,7 @@
       "Topic :: Terminals"
     ],
     "description": "",
+    "description_content_type": null,
     "docs_url": null,
     "download_url": "UNKNOWN",
     "downloads": {
@@ -29,6 +30,7 @@
       "last_month": -1,
       "last_week": -1
     },
+    "dynamic": null,
     "home_page": "https://github.com/tartley/colorama",
     "keywords": "color colour terminal text ansi windows crossplatform xplatform",
     "license": "BSD",
@@ -38,81 +40,61 @@
     "package_url": "https://pypi.org/project/colorama/",
     "platform": "UNKNOWN",
     "project_url": "https://pypi.org/project/colorama/",
+    "project_urls": {
+      "Download": "UNKNOWN",
+      "Homepage": "https://github.com/tartley/colorama"
+    },
+    "provides_extra": null,
     "release_url": "https://pypi.org/project/colorama/0.3.9/",
     "requires_dist": null,
     "requires_python": null,
     "summary": "Cross-platform colored terminal text.",
-    "version": "0.3.9"
+    "version": "0.3.9",
+    "yanked": false,
+    "yanked_reason": null
   },
-  "last_serial": 2833818,
-  "releases": {
-    "0.3.9": [
-      {
-        "comment_text": "",
-        "digests": {
-          "md5": "cc0c01c7b3b34d0354d813e9ab26aca3",
-          "sha256": "463f8483208e921368c9f306094eb6f725c6ca42b0f97e313cb5d5512459feda"
-        },
-        "downloads": -1,
-        "filename": "colorama-0.3.9-py2.py3-none-any.whl",
-        "has_sig": false,
-        "md5_digest": "cc0c01c7b3b34d0354d813e9ab26aca3",
-        "packagetype": "bdist_wheel",
-        "python_version": "2.7",
-        "size": 20181,
-        "upload_time": "2017-04-27T07:12:36",
-        "url": "https://files.pythonhosted.org/packages/db/c8/7dcf9dbcb22429512708fe3a547f8b6101c0d02137acbd892505aee57adf/colorama-0.3.9-py2.py3-none-any.whl"
-      },
-      {
-        "comment_text": "",
-        "digests": {
-          "md5": "3a0e415259690f4dd7455c2683ee5850",
-          "sha256": "48eb22f4f8461b1df5734a074b57042430fb06e1d61bd1e11b078c0fe6d7a1f1"
-        },
-        "downloads": -1,
-        "filename": "colorama-0.3.9.tar.gz",
-        "has_sig": false,
-        "md5_digest": "3a0e415259690f4dd7455c2683ee5850",
-        "packagetype": "sdist",
-        "python_version": "source",
-        "size": 25053,
-        "upload_time": "2017-04-27T07:12:12",
-        "url": "https://files.pythonhosted.org/packages/e6/76/257b53926889e2835355d74fec73d82662100135293e17d382e2b74d1669/colorama-0.3.9.tar.gz"
-      }
-    ]
-  },
+  "last_serial": 0,
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "md5": "cc0c01c7b3b34d0354d813e9ab26aca3",
-        "sha256": "463f8483208e921368c9f306094eb6f725c6ca42b0f97e313cb5d5512459feda"
+        "md5": "faef2bbd3c2ecc43e0969877d67b4c92",
+        "sha256": "5b632359f1ed2b7676a869812ba0edaacb99be04679b29eb56c07a5e137ab5a2"
       },
       "downloads": -1,
       "filename": "colorama-0.3.9-py2.py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "cc0c01c7b3b34d0354d813e9ab26aca3",
+      "md5_digest": "faef2bbd3c2ecc43e0969877d67b4c92",
       "packagetype": "bdist_wheel",
       "python_version": "2.7",
+      "requires_python": null,
       "size": 20181,
       "upload_time": "2017-04-27T07:12:36",
-      "url": "https://files.pythonhosted.org/packages/db/c8/7dcf9dbcb22429512708fe3a547f8b6101c0d02137acbd892505aee57adf/colorama-0.3.9-py2.py3-none-any.whl"
+      "upload_time_iso_8601": "2017-04-27T07:12:36.597052Z",
+      "url": "https://files.pythonhosted.org/packages/db/c8/7dcf9dbcb22429512708fe3a547f8b6101c0d02137acbd892505aee57adf/colorama-0.3.9-py2.py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "md5": "3a0e415259690f4dd7455c2683ee5850",
-        "sha256": "48eb22f4f8461b1df5734a074b57042430fb06e1d61bd1e11b078c0fe6d7a1f1"
+        "md5": "8323a5b84fdf7ad810804e51fc256b39",
+        "sha256": "4c5a15209723ce1330a5c193465fe221098f761e9640d823a2ce7c03f983137f"
       },
       "downloads": -1,
       "filename": "colorama-0.3.9.tar.gz",
       "has_sig": false,
-      "md5_digest": "3a0e415259690f4dd7455c2683ee5850",
+      "md5_digest": "8323a5b84fdf7ad810804e51fc256b39",
       "packagetype": "sdist",
       "python_version": "source",
+      "requires_python": null,
       "size": 25053,
       "upload_time": "2017-04-27T07:12:12",
-      "url": "https://files.pythonhosted.org/packages/e6/76/257b53926889e2835355d74fec73d82662100135293e17d382e2b74d1669/colorama-0.3.9.tar.gz"
+      "upload_time_iso_8601": "2017-04-27T07:12:12.351237Z",
+      "url": "https://files.pythonhosted.org/packages/e6/76/257b53926889e2835355d74fec73d82662100135293e17d382e2b74d1669/colorama-0.3.9.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
     }
-  ]
+  ],
+  "vulnerabilities": []
 }

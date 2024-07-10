@@ -1,0 +1,72 @@
+{
+  "info": {
+    "author": "Mike Bayer",
+    "author_email": "mike_mp@zzzcomputing.com",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 5 - Production/Stable",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: Implementation :: CPython",
+      "Programming Language :: Python :: Implementation :: PyPy",
+      "Topic :: Database :: Front-Ends"
+    ],
+    "description": "",
+    "description_content_type": "",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": null,
+    "home_page": "http://www.sqlalchemy.org",
+    "keywords": "",
+    "license": "MIT License",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "SQLAlchemy",
+    "package_url": "https://pypi.org/project/SQLAlchemy/",
+    "platform": "",
+    "project_url": "https://pypi.org/project/SQLAlchemy/",
+    "project_urls": {
+      "Homepage": "http://www.sqlalchemy.org"
+    },
+    "provides_extra": null,
+    "release_url": "https://pypi.org/project/SQLAlchemy/1.2.12/",
+    "requires_dist": null,
+    "requires_python": "",
+    "summary": "Database Abstraction Library",
+    "version": "1.2.12",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 0,
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "4a2617b5254748828d09349fc4eff6bd",
+        "sha256": "b5a127599b3f27847fba6119de0fcb70832a8041b103701a708b7c7d044faa38"
+      },
+      "downloads": -1,
+      "filename": "SQLAlchemy-1.2.12.tar.gz",
+      "has_sig": false,
+      "md5_digest": "4a2617b5254748828d09349fc4eff6bd",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": null,
+      "size": 5634807,
+      "upload_time": "2018-09-19T18:14:55",
+      "upload_time_iso_8601": "2018-09-19T18:14:55.299706Z",
+      "url": "https://files.pythonhosted.org/packages/25/c9/b0552098cee325425a61efdf380c51b5c721e459081c85bbb860f501c091/SQLAlchemy-1.2.12.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

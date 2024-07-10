@@ -8,8 +8,8 @@ from cleo.io.null_io import NullIO
 from poetry.core.packages.project_package import ProjectPackage
 
 from poetry.puzzle.provider import Provider as BaseProvider
-from poetry.repositories import Pool
 from poetry.repositories import Repository
+from poetry.repositories import RepositoryPool
 
 
 if TYPE_CHECKING:
@@ -24,12 +24,12 @@ class Provider(BaseProvider):
 
 @pytest.fixture
 def repo() -> Repository:
-    return Repository()
+    return Repository("repo")
 
 
 @pytest.fixture
-def pool(repo: TestRepository) -> Pool:
-    pool = Pool()
+def pool(repo: TestRepository) -> RepositoryPool:
+    pool = RepositoryPool()
     pool.add_repository(repo)
 
     return pool
@@ -41,5 +41,5 @@ def root() -> ProjectPackage:
 
 
 @pytest.fixture
-def provider(pool: Pool, root: ProjectPackage) -> Provider:
+def provider(pool: RepositoryPool, root: ProjectPackage) -> Provider:
     return Provider(root, pool, NullIO())

@@ -1,0 +1,35 @@
+Metadata-Version: 2.1
+Name: black
+Version: 19.10b0
+Summary: The uncompromising code formatter.
+Home-page: https://github.com/psf/black
+Author: Łukasz Langa
+Author-email: lukasz@langa.pl
+License: MIT
+Keywords: automation formatter yapf autopep8 pyfmt gofmt rustfmt
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Software Development :: Quality Assurance
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+Requires-Dist: click (>=6.5)
+Requires-Dist: attrs (>=18.1.0)
+Requires-Dist: appdirs
+Requires-Dist: toml (>=0.9.4)
+Requires-Dist: typed-ast (>=1.4.0)
+Requires-Dist: regex
+Requires-Dist: pathspec (<1,>=0.6)
+Provides-Extra: d
+Requires-Dist: aiohttp (>=3.3.2) ; extra == 'd'
+Requires-Dist: aiohttp-cors ; extra == 'd'
+

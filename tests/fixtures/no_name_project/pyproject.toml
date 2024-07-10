@@ -1,0 +1,18 @@
+[tool.poetry]
+name = ""
+version = "1.2.3"
+description = "This project has no name"
+authors = [
+    "Sébastien Eustace <sebastien@eustace.io>"
+]
+license = "MIT"
+
+readme = "README.rst"
+
+
+# Requirements
+[tool.poetry.dependencies]
+python = "~2.7 || ^3.6"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "~3.4"

@@ -1,18 +1,26 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+from typing import ClassVar
+
 from cleo.helpers import option
 
 from poetry.console.commands.command import Command
 
 
-class EnvListCommand(Command):
+if TYPE_CHECKING:
+    from cleo.io.inputs.option import Option
 
+
+class EnvListCommand(Command):
     name = "env list"
     description = "Lists all virtualenvs associated with the current project."
 
-    options = [option("full-path", None, "Output the full paths of the virtualenvs.")]
+    options: ClassVar[list[Option]] = [
+        option("full-path", None, "Output the full paths of the virtualenvs.")
+    ]
 
-    def handle(self) -> None:
+    def handle(self) -> int:
         from poetry.utils.env import EnvManager
 
         manager = EnvManager(self.poetry)
@@ -29,3 +37,5 @@ class EnvListCommand(Command):
                 continue
 
             self.line(name)
+
+        return 0

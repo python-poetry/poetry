@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "foobar"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+[[tool.poetry.source]]
+name = "pypi-simple"
+url = "https://pypi.org/simple/"
+priority = "explicit"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

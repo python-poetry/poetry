@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "bazz"
+version = "1"
+description = "Demo package"
+authors = ["Poetry Team <noreply@python-poetry.org>"]
+license = "MIT"
+readme = "README.md"
+packages = [
+    { include = "demo", from = "src" }
+]
+
+[tool.poetry.dependencies]
+python = "*"
+requests = "~=2.25.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

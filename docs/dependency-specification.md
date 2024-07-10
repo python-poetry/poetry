@@ -71,15 +71,55 @@ Here are some examples of inequality requirements:
 != 1.2.3
 ```
 
-### Exact requirements
-
-You can specify the exact version of a package.
-This will tell Poetry to install this version and this version only.
-If other dependencies require a different version, the solver will ultimately fail and abort any install or update procedures.
-
 #### Multiple requirements
 
 Multiple version requirements can also be separated with a comma, e.g. `>= 1.2, < 1.5`.
+
+### Exact requirements
+
+You can specify the exact version of a package.
+
+`1.2.3` is an example of an exact version specification.
+
+This will tell Poetry to install this version and this version only.
+If other dependencies require a different version, the solver will ultimately fail and abort any install or update procedures.
+
+Exact versions can also be specified with `==` according to [PEP 440](https://peps.python.org/pep-0440/).
+
+`==1.2.3` is an example of this.
+
+### Using the `@` operator
+
+When adding dependencies via `poetry add`, you can use the `@` operator.
+This is understood similarly to the `==` syntax, but also allows prefixing any
+specifiers that are valid in `pyproject.toml`. For example:
+
+```shell
+poetry add django@^4.0.0
+```
+
+The above would translate to the following entry in `pyproject.toml`:
+```toml
+Django = "^4.0.0"
+```
+
+The special keyword `latest` is also understood by the `@` operator:
+```shell
+poetry add django@latest
+```
+
+The above would translate to the following entry in `pyproject.toml`, assuming the latest release of `django` is `4.0.5`:
+```toml
+Django = "^4.0.5"
+```
+
+#### Extras
+
+Extras and `@` can be combined as one might expect (`package[extra]@version`):
+
+```shell
+poetry add django[bcrypt]@^4.0.0
+```
 
 ## `git` dependencies
 
@@ -92,7 +132,7 @@ requests = { git = "https://github.com/requests/requests.git" }
 ```
 
 Since we haven’t specified any other information,
-Poetry assumes that we intend to use the latest commit on the `master` branch
+Poetry assumes that we intend to use the latest commit on the `main` branch
 to build our project.
 
 You can combine the `git` key with the `branch` key to use another branch.
@@ -107,6 +147,20 @@ requests = { git = "https://github.com/kennethreitz/requests.git", branch = "nex
 flask = { git = "https://github.com/pallets/flask.git", rev = "38eb5d3b" }
 # Get a revision by its tag
 numpy = { git = "https://github.com/numpy/numpy.git", tag = "v0.13.2" }
+```
+
+In cases where the package you want to install is located in a subdirectory of the VCS repository, you can use the `subdirectory` option, similarly to what [pip](https://pip.pypa.io/en/stable/topics/vcs-support/#url-fragments) provides:
+
+```toml
+[tool.poetry.dependencies]
+# Install a package named `subdir_package` from a folder called `subdir` within the repository
+subdir_package = { git = "https://github.com/myorg/mypackage_with_subdirs.git", subdirectory = "subdir" }
+```
+
+with the corresponding `add` call:
+
+```bash
+poetry add "git+https://github.com/myorg/mypackage_with_subdirs.git#subdirectory=subdir"
 ```
 
 To use an SSH connection, for example in the case of private repositories, use the following example syntax:
@@ -180,16 +234,31 @@ with the corresponding `add` call:
 poetry add https://example.com/my-package-0.1.0.tar.gz
 ```
 
+## Dependency `extras`
+
+You can specify [PEP-508 Extras](https://www.python.org/dev/peps/pep-0508/#extras)
+for a dependency as shown here.
+
+```toml
+[tool.poetry.dependencies]
+gunicorn = { version = "^20.1", extras = ["gevent"] }
+```
+
+{{% note %}}
+These activate extra defined for the dependency, to configure an optional dependency
+for extras in your project refer to [`extras`]({{< relref "pyproject#extras" >}}).
+{{% /note %}}
+
 ## `source` dependencies
 
-To depend on a package from an [alternate repository](/docs/repositories/#install-dependencies-from-a-private-repository),
+To depend on a package from an [alternate repository]({{< relref "repositories#installing-from-private-package-sources" >}}),
 you can use the `source` property:
 
 ```toml
 [[tool.poetry.source]]
 name = "foo"
 url = "https://foo.bar/simple/"
-secondary = true
+priority = "supplemental"
 
 [tool.poetry.dependencies]
 my-cool-package = { version = "*", source = "foo" }
@@ -202,7 +271,7 @@ poetry add my-cool-package --source foo
 ```
 
 {{% note %}}
-In this example, we expect `foo` to be configured correctly. See [using a private repository](repositories.md#using-a-private-repository)
+In this example, we expect `foo` to be configured correctly. See [using a private repository]({{< relref "repositories#installing-from-private-package-sources" >}})
 for further information.
 {{% /note %}}
 
@@ -212,12 +281,12 @@ You can also specify that a dependency should be installed only for specific Pyt
 
 ```toml
 [tool.poetry.dependencies]
-pathlib2 = { version = "^2.2", python = "~2.7" }
+tomli = { version = "^2.0.1", python = "<3.11" }
 ```
 
 ```toml
 [tool.poetry.dependencies]
-pathlib2 = { version = "^2.2", python = "~2.7 || ^3.2" }
+pathlib2 = { version = "^2.2", python = "^3.2" }
 ```
 
 ## Using environment markers
@@ -228,7 +297,7 @@ via the `markers` property:
 
 ```toml
 [tool.poetry.dependencies]
-pathlib2 = { version = "^2.2", markers = "python_version ~= '2.7' or sys_platform == 'win32'" }
+pathlib2 = { version = "^2.2", markers = "python_version <= '3.4' or sys_platform == 'win32'" }
 ```
 
 ## Multiple constraints dependencies
@@ -237,14 +306,14 @@ Sometimes, one of your dependency may have different version ranges depending
 on the target Python versions.
 
 Let's say you have a dependency on the package `foo` which is only compatible
-with Python <3.0 up to version 1.9 and compatible with Python 3.4+ from version 2.0:
+with Python 3.6-3.7 up to version 1.9, and compatible with Python 3.8+ from version 2.0:
 you would declare it like so:
 
 ```toml
 [tool.poetry.dependencies]
 foo = [
-    {version = "<=1.9", python = "^2.7"},
-    {version = "^2.0", python = "^3.8"}
+    {version = "<=1.9", python = ">=3.6,<3.8"},
+    {version = "^2.0", python = ">=3.8"}
 ]
 ```
 
@@ -252,6 +321,29 @@ foo = [
 The constraints **must** have different requirements (like `python`)
 otherwise it will cause an error when resolving dependencies.
 {{% /note %}}
+
+### Combining git / url / path dependencies with source repositories
+
+Direct origin (`git`/ `url`/ `path`) dependencies can satisfy the requirement of a dependency that
+doesn't explicitly specify a source, even when mutually exclusive markers are used. For instance
+in the following example the url package will also be a valid solution for the second requirement:
+```toml
+foo = [
+    { platform = "darwin", url = "https://example.com/example-1.0-py3-none-any.whl" },
+    { platform = "linux", version = "^1.0" },
+]
+```
+
+Sometimes you may instead want to use a direct origin dependency for specific conditions
+(i.e. a compiled package that is not available on PyPI for a certain platform/architecture) while
+falling back on source repositories in other cases. In this case you should explicitly ask for your
+dependency to be satisfied by another `source`. For example:
+```toml
+foo = [
+    { platform = "darwin", url = "https://example.com/foo-1.0.0-py3-none-macosx_11_0_arm64.whl" },
+    { platform = "linux", version = "^1.0", source = "pypi" },
+]
+```
 
 ## Expanded dependency specification syntax
 

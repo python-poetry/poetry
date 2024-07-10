@@ -1,0 +1,41 @@
+Metadata-Version: 2.1
+Name: pytest
+Version: 3.5.1
+Summary: pytest: simple powerful testing with Python
+Home-page: http://pytest.org
+Author: Holger Krekel, Bruno Oliveira, Ronny Pfannschmidt, Floris Bruynooghe, Brianna Laugher, Florian Bruhin and others
+License: MIT license
+Project-URL: Source, https://github.com/pytest-dev/pytest
+Project-URL: Tracker, https://github.com/pytest-dev/pytest/issues
+Keywords: test unittest
+Platform: unix
+Platform: linux
+Platform: osx
+Platform: cygwin
+Platform: win32
+Classifier: Development Status :: 6 - Mature
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: POSIX
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: MacOS :: MacOS X
+Classifier: Topic :: Software Development :: Testing
+Classifier: Topic :: Software Development :: Libraries
+Classifier: Topic :: Utilities
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Requires-Python: >=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*
+Requires-Dist: py (>=1.5.0)
+Requires-Dist: six (>=1.10.0)
+Requires-Dist: setuptools
+Requires-Dist: attrs (>=17.4.0)
+Requires-Dist: more-itertools (>=4.0.0)
+Requires-Dist: pluggy (<0.7,>=0.5)
+Requires-Dist: funcsigs; python_version < "3.0"
+Requires-Dist: colorama; sys_platform == "win32"
+

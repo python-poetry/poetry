@@ -1,0 +1,89 @@
+{
+  "info": {
+    "author": "Alex Grönholm",
+    "author_email": "alex.gronholm@nextday.fi",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 5 - Production/Stable",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: Python Software Foundation License",
+      "Programming Language :: Python :: 2 :: Only",
+      "Programming Language :: Python :: 2.6",
+      "Programming Language :: Python :: 2.7"
+    ],
+    "description": "",
+    "description_content_type": null,
+    "docs_url": "https://pythonhosted.org/futures/",
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": null,
+    "home_page": "https://github.com/agronholm/pythonfutures",
+    "keywords": "",
+    "license": "PSF",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "futures",
+    "package_url": "https://pypi.org/project/futures/",
+    "platform": "",
+    "project_url": "https://pypi.org/project/futures/",
+    "project_urls": {
+      "Homepage": "https://github.com/agronholm/pythonfutures"
+    },
+    "provides_extra": null,
+    "release_url": "https://pypi.org/project/futures/3.2.0/",
+    "requires_dist": null,
+    "requires_python": ">=2.6, <3",
+    "summary": "Backport of the concurrent.futures package from Python 3",
+    "version": "3.2.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 0,
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "33e76564a87766c3e186d986ddc55bd8",
+        "sha256": "d89e1540e8b553fbda912230db359954365a1f5d0d0fa7fab96ad3969d9d5a93"
+      },
+      "downloads": -1,
+      "filename": "futures-3.2.0-py2-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "33e76564a87766c3e186d986ddc55bd8",
+      "packagetype": "bdist_wheel",
+      "python_version": "py2",
+      "requires_python": ">=2.6, <3",
+      "size": 15847,
+      "upload_time": "2017-11-30T23:22:35",
+      "upload_time_iso_8601": "2017-11-30T23:22:35.590688Z",
+      "url": "https://files.pythonhosted.org/packages/2d/99/b2c4e9d5a30f6471e410a146232b4118e697fa3ffc06d6a65efde84debd0/futures-3.2.0-py2-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "40eb168dab84e606df3fdb7e67fe27b7",
+        "sha256": "baf0d469c9e541b747986b7404cd63a5496955bd0c43a3cc068c449b09b7d4a4"
+      },
+      "downloads": -1,
+      "filename": "futures-3.2.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "40eb168dab84e606df3fdb7e67fe27b7",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=2.6, <3",
+      "size": 27320,
+      "upload_time": "2017-11-30T23:22:36",
+      "upload_time_iso_8601": "2017-11-30T23:22:36.994073Z",
+      "url": "https://files.pythonhosted.org/packages/1f/9e/7b2ff7e965fc654592269f2906ade1c7d705f1bf25b7d469fa153f7d19eb/futures-3.2.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

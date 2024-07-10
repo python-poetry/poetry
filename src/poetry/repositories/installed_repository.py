@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import itertools
 import json
+import logging
 
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from packaging.utils import canonicalize_name
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.utils import url_to_path
-from poetry.core.utils.helpers import canonicalize_name
 from poetry.core.utils.helpers import module_name
 
 from poetry.repositories.repository import Repository
@@ -19,16 +20,13 @@ if TYPE_CHECKING:
     from poetry.utils.env import Env
 
 
-_VENDORS = Path(__file__).parent.parent.joinpath("_vendor")
-
-
-try:
-    FileNotFoundError
-except NameError:
-    FileNotFoundError = OSError
+logger = logging.getLogger(__name__)
 
 
 class InstalledRepository(Repository):
+    def __init__(self) -> None:
+        super().__init__("poetry-installed")
+
     @classmethod
     def get_package_paths(cls, env: Env, name: str) -> set[Path]:
         """
@@ -103,7 +101,7 @@ class InstalledRepository(Repository):
     ) -> Package:
         # We first check for a direct_url.json file to determine
         # the type of package.
-        path = Path(str(distribution._path))
+        path = Path(str(distribution._path))  # type: ignore[attr-defined]
 
         if (
             path.name.endswith(".dist-info")
@@ -117,6 +115,7 @@ class InstalledRepository(Repository):
         source_url = None
         source_reference = None
         source_resolved_reference = None
+        source_subdirectory = None
         if is_standard_package:
             if path.name.endswith(".dist-info"):
                 paths = cls.get_package_paths(
@@ -162,18 +161,24 @@ class InstalledRepository(Repository):
             source_url=source_url,
             source_reference=source_reference,
             source_resolved_reference=source_resolved_reference,
+            source_subdirectory=source_subdirectory,
         )
-        package.description = distribution.metadata.get("summary", "")
+
+        package.description = distribution.metadata.get(  # type: ignore[attr-defined]
+            "summary",
+            "",
+        )
 
         return package
 
     @classmethod
     def create_package_from_pep610(cls, distribution: metadata.Distribution) -> Package:
-        path = Path(str(distribution._path))
+        path = Path(str(distribution._path))  # type: ignore[attr-defined]
         source_type = None
         source_url = None
         source_reference = None
         source_resolved_reference = None
+        source_subdirectory = None
         develop = False
 
         url_reference = json.loads(
@@ -202,6 +207,7 @@ class InstalledRepository(Repository):
             source_reference = url_reference["vcs_info"].get(
                 "requested_revision", source_resolved_reference
             )
+        source_subdirectory = url_reference.get("subdirectory")
 
         package = Package(
             distribution.metadata["name"],
@@ -210,10 +216,14 @@ class InstalledRepository(Repository):
             source_url=source_url,
             source_reference=source_reference,
             source_resolved_reference=source_resolved_reference,
+            source_subdirectory=source_subdirectory,
             develop=develop,
         )
 
-        package.description = distribution.metadata.get("summary", "")
+        package.description = distribution.metadata.get(  # type: ignore[attr-defined]
+            "summary",
+            "",
+        )
 
         return package
 
@@ -226,24 +236,39 @@ class InstalledRepository(Repository):
 
         repo = cls()
         seen = set()
+        skipped = set()
 
         for entry in reversed(env.sys_path):
+            if not entry.strip():
+                logger.debug(
+                    "Project environment contains an empty path in <c1>sys_path</>,"
+                    " ignoring."
+                )
+                continue
+
             for distribution in sorted(
                 metadata.distributions(path=[entry]),
-                key=lambda d: str(d._path),
+                key=lambda d: str(d._path),  # type: ignore[attr-defined]
             ):
-                name = canonicalize_name(distribution.metadata["name"])
+                path = Path(str(distribution._path))  # type: ignore[attr-defined]
 
-                if name in seen:
+                if path in skipped:
                     continue
 
-                path = Path(str(distribution._path))
+                name = distribution.metadata.get("name")  # type: ignore[attr-defined]
+                if name is None:
+                    logger.warning(
+                        "Project environment contains an invalid distribution"
+                        " (<c1>%s</>). Consider removing it manually or recreate"
+                        " the environment.",
+                        path,
+                    )
+                    skipped.add(path)
+                    continue
 
-                try:
-                    path.relative_to(_VENDORS)
-                except ValueError:
-                    pass
-                else:
+                name = canonicalize_name(name)
+
+                if name in seen:
                     continue
 
                 package = cls.create_package_from_distribution(distribution, env)

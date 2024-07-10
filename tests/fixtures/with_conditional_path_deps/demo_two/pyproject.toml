@@ -1,0 +1,9 @@
+[tool.poetry]
+name = "demo"
+version = "1.2.3"
+description = "Some description."
+authors = []
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.7"

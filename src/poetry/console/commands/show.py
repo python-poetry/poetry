@@ -1,24 +1,26 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import cast
+from typing import ClassVar
 
 from cleo.helpers import argument
 from cleo.helpers import option
-from poetry.core.packages.directory_dependency import DirectoryDependency
-from poetry.core.packages.file_dependency import FileDependency
-from poetry.core.packages.vcs_dependency import VCSDependency
+from packaging.utils import canonicalize_name
 
+from poetry.console.commands.env_command import EnvCommand
 from poetry.console.commands.group_command import GroupCommand
 
 
 if TYPE_CHECKING:
+    from cleo.io.inputs.argument import Argument
+    from cleo.io.inputs.option import Option
     from cleo.io.io import IO
+    from cleo.ui.table import Rows
+    from packaging.utils import NormalizedName
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
     from poetry.core.packages.project_package import ProjectPackage
 
-    from poetry.repositories.installed_repository import InstalledRepository
     from poetry.repositories.repository import Repository
 
 
@@ -33,13 +35,14 @@ def reverse_deps(pkg: Package, repo: Repository) -> dict[str, str]:
     return required_by
 
 
-class ShowCommand(GroupCommand):
-
+class ShowCommand(GroupCommand, EnvCommand):
     name = "show"
     description = "Shows information about packages."
 
-    arguments = [argument("package", "The package to inspect", optional=True)]
-    options = [
+    arguments: ClassVar[list[Argument]] = [
+        argument("package", "The package to inspect", optional=True)
+    ]
+    options: ClassVar[list[Option]] = [
         *GroupCommand._group_dependency_options(),
         option(
             "no-dev",
@@ -50,7 +53,9 @@ class ShowCommand(GroupCommand):
         option(
             "why",
             None,
-            "When listing the tree for a single package, start from parents.",
+            "When showing the full list, or a <info>--tree</info> for a single package,"
+            " display whether they are a direct dependency or required by other"
+            " packages",
         ),
         option("latest", "l", "Show the latest version."),
         option(
@@ -63,27 +68,33 @@ class ShowCommand(GroupCommand):
             "a",
             "Show all packages (even those not compatible with current system).",
         ),
+        option("top-level", "T", "Show only top-level dependencies."),
     ]
 
     help = """The show command displays detailed information about a package, or
 lists all packages available."""
 
-    colors = ["cyan", "yellow", "green", "magenta", "blue"]
+    colors: ClassVar[list[str]] = ["cyan", "yellow", "green", "magenta", "blue"]
 
-    def handle(self) -> int | None:
-        from cleo.io.null_io import NullIO
-        from cleo.terminal import Terminal
-
-        from poetry.puzzle.solver import Solver
-        from poetry.repositories.installed_repository import InstalledRepository
-        from poetry.repositories.pool import Pool
-        from poetry.repositories.repository import Repository
-        from poetry.utils.helpers import get_package_version_display_string
-
+    def handle(self) -> int:
         package = self.argument("package")
 
         if self.option("tree"):
             self.init_styles(self.io)
+
+        if self.option("top-level"):
+            if self.option("tree"):
+                self.line_error(
+                    "<error>Error: Cannot use --tree and --top-level at the same"
+                    " time.</error>"
+                )
+                return 1
+            if package is not None:
+                self.line_error(
+                    "<error>Error: Cannot use --top-level when displaying a single"
+                    " package.</error>"
+                )
+                return 1
 
         if self.option("why"):
             if self.option("tree") and package is None:
@@ -103,7 +114,7 @@ lists all packages available."""
                 return 1
 
         if self.option("outdated"):
-            self._io.input.set_option("latest", True)
+            self.io.input.set_option("latest", True)
 
         if not self.poetry.locker.is_locked():
             self.line_error(
@@ -113,29 +124,105 @@ lists all packages available."""
             return 1
 
         locked_repo = self.poetry.locker.locked_repository()
+
+        if package:
+            return self._display_single_package_information(package, locked_repo)
+
         root = self.project_with_activated_groups_only()
 
         # Show tree view if requested
-        if self.option("tree") and package is None:
-            requires = root.all_requires
-            packages = locked_repo.packages
-            for p in packages:
-                for require in requires:
-                    if p.name == require.name:
-                        self.display_package_tree(self._io, p, locked_repo)
-                        break
+        if self.option("tree"):
+            return self._display_packages_tree_information(locked_repo, root)
+
+        return self._display_packages_information(locked_repo, root)
+
+    def _display_single_package_information(
+        self, package: str, locked_repository: Repository
+    ) -> int:
+        locked_packages = locked_repository.packages
+        canonicalized_package = canonicalize_name(package)
+        pkg = None
+
+        for locked in locked_packages:
+            if locked.name == canonicalized_package:
+                pkg = locked
+                break
+
+        if not pkg:
+            raise ValueError(f"Package {package} not found")
+
+        required_by = reverse_deps(pkg, locked_repository)
+
+        if self.option("tree"):
+            if self.option("why"):
+                # The default case if there's no reverse dependencies is to query
+                # the subtree for pkg but if any rev-deps exist we'll query for each
+                # of them in turn
+                packages = [pkg]
+                if required_by:
+                    packages = [
+                        p for p in locked_packages for r in required_by if p.name == r
+                    ]
+                else:
+                    # if no rev-deps exist we'll make this clear as it can otherwise
+                    # look very odd for packages that also have no or few direct
+                    # dependencies
+                    self.io.write_line(f"Package {package} is a direct dependency.")
+
+                for p in packages:
+                    self.display_package_tree(
+                        self.io, p, locked_packages, why_package=pkg
+                    )
+
+            else:
+                self.display_package_tree(self.io, pkg, locked_packages)
 
             return 0
 
-        table = self.table(style="compact")
-        locked_packages = locked_repo.packages
-        pool = Pool(ignore_repository_names=True)
-        pool.add_repository(locked_repo)
+        rows: Rows = [
+            ["<info>name</>", f" : <c1>{pkg.pretty_name}</>"],
+            ["<info>version</>", f" : <b>{pkg.pretty_version}</b>"],
+            ["<info>description</>", f" : {pkg.description}"],
+        ]
+
+        self.table(rows=rows, style="compact").render()
+
+        if pkg.requires:
+            self.line("")
+            self.line("<info>dependencies</info>")
+            for dependency in pkg.requires:
+                self.line(
+                    f" - <c1>{dependency.pretty_name}</c1>"
+                    f" <b>{dependency.pretty_constraint}</b>"
+                )
+
+        if required_by:
+            self.line("")
+            self.line("<info>required by</info>")
+            for parent, requires_version in required_by.items():
+                self.line(f" - <c1>{parent}</c1> <b>{requires_version}</b>")
+
+        return 0
+
+    def _display_packages_information(
+        self, locked_repository: Repository, root: ProjectPackage
+    ) -> int:
+        import shutil
+
+        from cleo.io.null_io import NullIO
+
+        from poetry.puzzle.solver import Solver
+        from poetry.repositories.installed_repository import InstalledRepository
+        from poetry.repositories.repository_pool import RepositoryPool
+        from poetry.utils.helpers import get_package_version_display_string
+
+        locked_packages = locked_repository.packages
+        pool = RepositoryPool.from_packages(locked_packages, self.poetry.config)
         solver = Solver(
             root,
             pool=pool,
-            installed=Repository(),
-            locked=locked_repo,
+            installed=[],
+            locked=locked_packages,
             io=NullIO(),
         )
         solver.provider.load_deferred(False)
@@ -144,79 +231,10 @@ lists all packages available."""
 
         required_locked_packages = {op.package for op in ops if not op.skipped}
 
-        if package:
-            pkg = None
-            for locked in locked_packages:
-                if package.lower() == locked.name:
-                    pkg = locked
-                    break
-
-            if not pkg:
-                raise ValueError(f"Package {package} not found")
-
-            required_by = reverse_deps(pkg, locked_repo)
-
-            if self.option("tree"):
-                if self.option("why"):
-                    # The default case if there's no reverse dependencies is to query
-                    # the subtree for pkg but if any rev-deps exist we'll query for each
-                    # of them in turn
-                    packages = [pkg]
-                    if required_by:
-                        packages = [
-                            p
-                            for p in locked_packages
-                            for r in required_by.keys()
-                            if p.name == r
-                        ]
-                    else:
-                        # if no rev-deps exist we'll make this clear as it can otherwise
-                        # look very odd for packages that also have no or few direct
-                        # dependencies
-                        self._io.write_line(
-                            f"Package {package} is a direct dependency."
-                        )
-
-                    for p in packages:
-                        self.display_package_tree(
-                            self._io, p, locked_repo, why_package=pkg
-                        )
-
-                else:
-                    self.display_package_tree(self._io, pkg, locked_repo)
-
-                return 0
-
-            rows = [
-                ["<info>name</>", f" : <c1>{pkg.pretty_name}</>"],
-                ["<info>version</>", f" : <b>{pkg.pretty_version}</b>"],
-                ["<info>description</>", f" : {pkg.description}"],
-            ]
-
-            table.add_rows(rows)
-            table.render()
-
-            if pkg.requires:
-                self.line("")
-                self.line("<info>dependencies</info>")
-                for dependency in pkg.requires:
-                    self.line(
-                        f" - <c1>{dependency.pretty_name}</c1>"
-                        f" <b>{dependency.pretty_constraint}</b>"
-                    )
-
-            if required_by:
-                self.line("")
-                self.line("<info>required by</info>")
-                for parent, requires_version in required_by.items():
-                    self.line(f" - <c1>{parent}</c1> <b>{requires_version}</b>")
-
-            return 0
-
         show_latest = self.option("latest")
         show_all = self.option("all")
-        terminal = Terminal()
-        width = terminal.width
+        show_top_level = self.option("top-level")
+        width = shutil.get_terminal_size().columns
         name_length = version_length = latest_length = required_by_length = 0
         latest_packages = {}
         latest_statuses = {}
@@ -228,8 +246,10 @@ lists all packages available."""
                 continue
 
             current_length = len(locked.pretty_name)
-            if not self._io.output.is_decorated():
-                installed_status = self.get_installed_status(locked, installed_repo)
+            if not self.io.output.is_decorated():
+                installed_status = self.get_installed_status(
+                    locked, installed_repo.packages
+                )
 
                 if installed_status == "not-installed":
                     current_length += 4
@@ -240,9 +260,9 @@ lists all packages available."""
                     latest = locked
 
                 latest_packages[locked.pretty_name] = latest
-                update_status = latest_statuses[
-                    locked.pretty_name
-                ] = self.get_update_status(latest, locked)
+                update_status = latest_statuses[locked.pretty_name] = (
+                    self.get_update_status(latest, locked)
+                )
 
                 if not self.option("outdated") or update_status != "up-to-date":
                     name_length = max(name_length, current_length)
@@ -250,7 +270,7 @@ lists all packages available."""
                         version_length,
                         len(
                             get_package_version_display_string(
-                                locked, root=self.poetry.file.parent
+                                locked, root=self.poetry.file.path.parent
                             )
                         ),
                     )
@@ -258,13 +278,13 @@ lists all packages available."""
                         latest_length,
                         len(
                             get_package_version_display_string(
-                                latest, root=self.poetry.file.parent
+                                latest, root=self.poetry.file.path.parent
                             )
                         ),
                     )
 
                     if self.option("why"):
-                        required_by = reverse_deps(locked, locked_repo)
+                        required_by = reverse_deps(locked, locked_repository)
                         required_by_length = max(
                             required_by_length,
                             len(" from " + ",".join(required_by.keys())),
@@ -275,13 +295,13 @@ lists all packages available."""
                     version_length,
                     len(
                         get_package_version_display_string(
-                            locked, root=self.poetry.file.parent
+                            locked, root=self.poetry.file.path.parent
                         )
                     ),
                 )
 
                 if self.option("why"):
-                    required_by = reverse_deps(locked, locked_repo)
+                    required_by = reverse_deps(locked, locked_repository)
                     required_by_length = max(
                         required_by_length, len(" from " + ",".join(required_by.keys()))
                     )
@@ -295,21 +315,29 @@ lists all packages available."""
         write_why = self.option("why") and (why_end_column + 3) <= width
         write_description = (why_end_column + 24) <= width
 
+        requires = root.all_requires
+
         for locked in locked_packages:
             color = "cyan"
             name = locked.pretty_name
             install_marker = ""
+
+            if show_top_level and not any(locked.satisfies(r) for r in requires):
+                continue
+
             if locked not in required_locked_packages:
                 if not show_all:
                     continue
 
                 color = "black;options=bold"
             else:
-                installed_status = self.get_installed_status(locked, installed_repo)
+                installed_status = self.get_installed_status(
+                    locked, installed_repo.packages
+                )
                 if installed_status == "not-installed":
                     color = "red"
 
-                    if not self._io.output.is_decorated():
+                    if not self.io.output.is_decorated():
                         # Non installed in non decorated mode
                         install_marker = " (!)"
 
@@ -326,7 +354,7 @@ lists all packages available."""
             )
             if write_version:
                 version = get_package_version_display_string(
-                    locked, root=self.poetry.file.parent
+                    locked, root=self.poetry.file.path.parent
                 )
                 line += f" <b>{version:{version_length}}</b>"
             if show_latest:
@@ -341,12 +369,12 @@ lists all packages available."""
                         color = "yellow"
 
                     version = get_package_version_display_string(
-                        latest, root=self.poetry.file.parent
+                        latest, root=self.poetry.file.path.parent
                     )
                     line += f" <fg={color}>{version:{latest_length}}</>"
 
             if write_why:
-                required_by = reverse_deps(locked, locked_repo)
+                required_by = reverse_deps(locked, locked_repository)
                 if required_by:
                     content = ",".join(required_by.keys())
                     # subtract 6 for ' from '
@@ -370,13 +398,26 @@ lists all packages available."""
 
             self.line(line)
 
-        return None
+        return 0
+
+    def _display_packages_tree_information(
+        self, locked_repository: Repository, root: ProjectPackage
+    ) -> int:
+        packages = locked_repository.packages
+
+        for p in packages:
+            for require in root.all_requires:
+                if p.name == require.name:
+                    self.display_package_tree(self.io, p, packages)
+                    break
+
+        return 0
 
     def display_package_tree(
         self,
         io: IO,
         package: Package,
-        installed_repo: Repository,
+        installed_packages: list[Package],
         why_package: Package | None = None,
     ) -> None:
         io.write(f"<c1>{package.pretty_name}</c1>")
@@ -392,7 +433,7 @@ lists all packages available."""
             dependencies = package.requires
             dependencies = sorted(
                 dependencies,
-                key=lambda x: x.name,  # type: ignore[no-any-return]
+                key=lambda x: x.name,
             )
 
         tree_bar = "├"
@@ -413,22 +454,27 @@ lists all packages available."""
             packages_in_tree = [package.name, dependency.name]
 
             self._display_tree(
-                io, dependency, installed_repo, packages_in_tree, tree_bar, level + 1
+                io,
+                dependency,
+                installed_packages,
+                packages_in_tree,
+                tree_bar,
+                level + 1,
             )
 
     def _display_tree(
         self,
         io: IO,
         dependency: Dependency,
-        installed_repo: Repository,
-        packages_in_tree: list[str],
+        installed_packages: list[Package],
+        packages_in_tree: list[NormalizedName],
         previous_tree_bar: str = "├",
         level: int = 1,
     ) -> None:
         previous_tree_bar = previous_tree_bar.replace("├", "│")
 
         dependencies = []
-        for package in installed_repo.packages:
+        for package in installed_packages:
             if package.name == dependency.name:
                 dependencies = package.requires
 
@@ -436,7 +482,7 @@ lists all packages available."""
 
         dependencies = sorted(
             dependencies,
-            key=lambda x: x.name,  # type: ignore[no-any-return]
+            key=lambda x: x.name,
         )
         tree_bar = previous_tree_bar + "   ├"
         total = len(dependencies)
@@ -464,7 +510,12 @@ lists all packages available."""
                 current_tree.append(dependency.name)
 
                 self._display_tree(
-                    io, dependency, installed_repo, current_tree, tree_bar, level + 1
+                    io,
+                    dependency,
+                    installed_packages,
+                    current_tree,
+                    tree_bar,
+                    level + 1,
                 )
 
     def _write_tree_line(self, io: IO, line: str) -> None:
@@ -493,37 +544,35 @@ lists all packages available."""
         from poetry.version.version_selector import VersionSelector
 
         # find the latest version allowed in this pool
-        if package.source_type in ("git", "file", "directory"):
-            requires = root.all_requires
-
+        requires = root.all_requires
+        if package.is_direct_origin():
             for dep in requires:
-                if dep.name == package.name:
+                if dep.name == package.name and dep.source_type == package.source_type:
                     provider = Provider(root, self.poetry.pool, NullIO())
+                    return provider.search_for_direct_origin_dependency(dep)
 
-                    if dep.is_vcs():
-                        dep = cast(VCSDependency, dep)
-                        return provider.search_for_vcs(dep)[0]
-                    if dep.is_file():
-                        dep = cast(FileDependency, dep)
-                        return provider.search_for_file(dep)[0]
-                    if dep.is_directory():
-                        dep = cast(DirectoryDependency, dep)
-                        return provider.search_for_directory(dep)[0]
+        allow_prereleases = False
+        for dep in requires:
+            if dep.name == package.name:
+                allow_prereleases = dep.allows_prereleases()
+                break
 
         name = package.name
         selector = VersionSelector(self.poetry.pool)
 
-        return selector.find_best_candidate(name, f">={package.pretty_version}")
+        return selector.find_best_candidate(
+            name, f">={package.pretty_version}", allow_prereleases
+        )
 
     def get_update_status(self, latest: Package, package: Package) -> str:
-        from poetry.core.semver.helpers import parse_constraint
+        from poetry.core.constraints.version import parse_constraint
 
         if latest.full_pretty_version == package.full_pretty_version:
             return "up-to-date"
 
         constraint = parse_constraint("^" + package.pretty_version)
 
-        if latest.version and constraint.allows(latest.version):
+        if constraint.allows(latest.version):
             # It needs an immediate semver-compliant upgrade
             return "semver-safe-update"
 
@@ -531,9 +580,9 @@ lists all packages available."""
         return "update-possible"
 
     def get_installed_status(
-        self, locked: Package, installed_repo: InstalledRepository
+        self, locked: Package, installed_packages: list[Package]
     ) -> str:
-        for package in installed_repo.packages:
+        for package in installed_packages:
             if locked.name == package.name:
                 return "installed"
 

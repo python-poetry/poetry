@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "my-package"
+version = "0.1"
+description = "Some description."
+authors = [
+    "Your Name <you@example.com>"
+]
+license = "MIT"
+
+readme = [
+    "README-1.rst",
+    "README-2.rst"
+]
+
+homepage = "https://python-poetry.org"
+
+
+[tool.poetry.dependencies]
+python = "^2.7"

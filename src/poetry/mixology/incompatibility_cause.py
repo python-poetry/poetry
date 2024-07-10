@@ -14,17 +14,14 @@ class IncompatibilityCause(Exception):
 
 
 class RootCause(IncompatibilityCause):
-
     pass
 
 
 class NoVersionsCause(IncompatibilityCause):
-
     pass
 
 
 class DependencyCause(IncompatibilityCause):
-
     pass
 
 
@@ -82,17 +79,3 @@ class PlatformCause(IncompatibilityCause):
     @property
     def platform(self) -> str:
         return self._platform
-
-
-class PackageNotFoundCause(IncompatibilityCause):
-    """
-    The incompatibility represents a package that couldn't be found by its
-    source.
-    """
-
-    def __init__(self, error: Exception) -> None:
-        self._error = error
-
-    @property
-    def error(self) -> Exception:
-        return self._error

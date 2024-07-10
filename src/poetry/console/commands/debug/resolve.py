@@ -1,27 +1,30 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import ClassVar
 
 from cleo.helpers import argument
 from cleo.helpers import option
 from cleo.io.outputs.output import Verbosity
 
 from poetry.console.commands.init import InitCommand
+from poetry.console.commands.show import ShowCommand
 
 
 if TYPE_CHECKING:
-    from poetry.console.commands.show import ShowCommand
+    from cleo.io.inputs.argument import Argument
+    from cleo.io.inputs.option import Option
+    from cleo.ui.table import Rows
 
 
 class DebugResolveCommand(InitCommand):
-
     name = "debug resolve"
     description = "Debugs dependency resolution."
 
-    arguments = [
+    arguments: ClassVar[list[Argument]] = [
         argument("package", "The packages to resolve.", optional=True, multiple=True)
     ]
-    options = [
+    options: ClassVar[list[Option]] = [
         option(
             "extras",
             "E",
@@ -34,7 +37,10 @@ class DebugResolveCommand(InitCommand):
         option("install", None, "Show what would be installed for the current system."),
     ]
 
-    loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
+    loggers: ClassVar[list[str]] = [
+        "poetry.repositories.pypi_repository",
+        "poetry.inspection.info",
+    ]
 
     def handle(self) -> int:
         from cleo.io.null_io import NullIO
@@ -42,8 +48,8 @@ class DebugResolveCommand(InitCommand):
 
         from poetry.factory import Factory
         from poetry.puzzle.solver import Solver
-        from poetry.repositories.pool import Pool
         from poetry.repositories.repository import Repository
+        from poetry.repositories.repository_pool import RepositoryPool
         from poetry.utils.env import EnvManager
 
         packages = self.argument("package")
@@ -71,10 +77,7 @@ class DebugResolveCommand(InitCommand):
                 assert isinstance(name, str)
                 extras = []
                 for extra in self.option("extras"):
-                    if " " in extra:
-                        extras += [e.strip() for e in extra.split(" ")]
-                    else:
-                        extras.append(extra)
+                    extras += extra.split()
 
                 constraint["extras"] = extras
 
@@ -86,7 +89,7 @@ class DebugResolveCommand(InitCommand):
 
         pool = self.poetry.pool
 
-        solver = Solver(package, pool, Repository(), Repository(), self._io)
+        solver = Solver(package, pool, [], [], self.io)
 
         ops = solver.solve().calculate_operations()
 
@@ -95,35 +98,35 @@ class DebugResolveCommand(InitCommand):
         self.line("")
 
         if self.option("tree"):
-            show_command: ShowCommand = self.application.find("show")
+            show_command = self.get_application().find("show")
+            assert isinstance(show_command, ShowCommand)
             show_command.init_styles(self.io)
 
             packages = [op.package for op in ops]
-            repo = Repository(packages=packages)
 
             requires = package.all_requires
-            for pkg in repo.packages:
+            for pkg in packages:
                 for require in requires:
                     if pkg.name == require.name:
-                        show_command.display_package_tree(self.io, pkg, repo)
+                        show_command.display_package_tree(self.io, pkg, packages)
                         break
 
             return 0
 
         table = self.table(style="compact")
         table.style.set_vertical_border_chars("", " ")
-        rows = []
+        rows: Rows = []
 
         if self.option("install"):
             env = EnvManager(self.poetry).get()
-            pool = Pool()
-            locked_repository = Repository()
+            pool = RepositoryPool(config=self.poetry.config)
+            locked_repository = Repository("poetry-locked")
             for op in ops:
                 locked_repository.add_package(op.package)
 
             pool.add_repository(locked_repository)
 
-            solver = Solver(package, pool, Repository(), Repository(), NullIO())
+            solver = Solver(package, pool, [], [], NullIO())
             with solver.use_environment(env):
                 ops = solver.solve().calculate_operations()
 

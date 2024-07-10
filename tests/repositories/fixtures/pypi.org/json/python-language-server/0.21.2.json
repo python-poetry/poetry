@@ -1,0 +1,62 @@
+{
+  "info": {
+    "author": "Palantir Technologies, Inc.",
+    "author_email": "",
+    "bugtrack_url": null,
+    "classifiers": [],
+    "description": "",
+    "description_content_type": "",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": null,
+    "home_page": "https://github.com/palantir/python-language-server",
+    "keywords": "",
+    "license": "",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "python-language-server",
+    "package_url": "https://pypi.org/project/python-language-server/",
+    "platform": "",
+    "project_url": "https://pypi.org/project/python-language-server/",
+    "project_urls": {
+      "Homepage": "https://github.com/palantir/python-language-server"
+    },
+    "provides_extra": null,
+    "release_url": "https://pypi.org/project/python-language-server/0.21.2/",
+    "requires_dist": null,
+    "requires_python": "",
+    "summary": "Python Language Server for the Language Server Protocol",
+    "version": "0.21.2",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 0,
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "677602ec38bc1c7b72de6128d90d846b",
+        "sha256": "91b564e092f3135b2bac70dbd23d283da5ad50269766a76648787b69fe702c7e"
+      },
+      "downloads": -1,
+      "filename": "python-language-server-0.21.2.tar.gz",
+      "has_sig": false,
+      "md5_digest": "677602ec38bc1c7b72de6128d90d846b",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": null,
+      "size": 51676,
+      "upload_time": "2018-09-06T18:11:28",
+      "upload_time_iso_8601": "2018-09-06T18:11:28.546667Z",
+      "url": "https://files.pythonhosted.org/packages/9f/1d/2817b5dc2dd77f897410a11c1c9e2a6d96b3273c53d4219dd9edab7882af/python-language-server-0.21.2.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

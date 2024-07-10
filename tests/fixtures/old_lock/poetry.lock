@@ -1,5 +1,4 @@
 [[package]]
-category = "main"
 description = "A sample Python project"
 name = "sampleproject"
 optional = false

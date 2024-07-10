@@ -1,0 +1,51 @@
+Metadata-Version: 2.1
+Name: black
+Version: 21.11b0
+Summary: The uncompromising code formatter.
+Home-page: https://github.com/psf/black
+Author: Łukasz Langa
+Author-email: lukasz@langa.pl
+License: MIT
+Project-URL: Changelog, https://github.com/psf/black/blob/main/CHANGES.md
+Keywords: automation formatter yapf autopep8 pyfmt gofmt rustfmt
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Software Development :: Quality Assurance
+Requires-Python: >=3.6.2
+Description-Content-Type: text/markdown
+License-File: LICENSE
+License-File: AUTHORS.md
+Requires-Dist: click (>=7.1.2)
+Requires-Dist: platformdirs (>=2)
+Requires-Dist: tomli (<2.0.0,>=0.2.6)
+Requires-Dist: regex (>=2020.1.8)
+Requires-Dist: pathspec (<1,>=0.9.0)
+Requires-Dist: typing-extensions (>=3.10.0.0)
+Requires-Dist: mypy-extensions (>=0.4.3)
+Requires-Dist: dataclasses (>=0.6) ; python_version < "3.7"
+Requires-Dist: typed-ast (>=1.4.2) ; python_version < "3.8" and implementation_name == "cpython"
+Requires-Dist: typing-extensions (!=3.10.0.1) ; python_version >= "3.10"
+Provides-Extra: colorama
+Requires-Dist: colorama (>=0.4.3) ; extra == 'colorama'
+Provides-Extra: d
+Requires-Dist: aiohttp (>=3.7.4) ; extra == 'd'
+Provides-Extra: jupyter
+Requires-Dist: ipython (>=7.8.0) ; extra == 'jupyter'
+Requires-Dist: tokenize-rt (>=3.2.0) ; extra == 'jupyter'
+Provides-Extra: python2
+Requires-Dist: typed-ast (>=1.4.3) ; extra == 'python2'
+Provides-Extra: uvloop
+Requires-Dist: uvloop (>=0.15.2) ; extra == 'uvloop'
+

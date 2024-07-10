@@ -1,0 +1,26 @@
+Metadata-Version: 2.0
+Name: jupyter
+Version: 1.0.0
+Summary: Jupyter metapackage. Install all the Jupyter components in one go.
+Home-page: http://jupyter.org
+Author: Jupyter Development Team
+Author-email: jupyter@googlegroups.org
+License: BSD
+Platform: UNKNOWN
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: System Administrators
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.3
+Classifier: Programming Language :: Python :: 3.4
+Requires-Dist: notebook
+Requires-Dist: qtconsole
+Requires-Dist: jupyter-console
+Requires-Dist: nbconvert
+Requires-Dist: ipykernel
+Requires-Dist: ipywidgets
+

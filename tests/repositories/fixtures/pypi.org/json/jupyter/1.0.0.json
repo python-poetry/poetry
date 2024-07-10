@@ -1,0 +1,114 @@
+{
+  "info": {
+    "author": "Jupyter Development Team",
+    "author_email": "jupyter@googlegroups.org",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Intended Audience :: Developers",
+      "Intended Audience :: Science/Research",
+      "Intended Audience :: System Administrators",
+      "License :: OSI Approved :: BSD License",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 2",
+      "Programming Language :: Python :: 2.7",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.3",
+      "Programming Language :: Python :: 3.4"
+    ],
+    "description": "",
+    "description_content_type": null,
+    "docs_url": null,
+    "download_url": "UNKNOWN",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": null,
+    "home_page": "http://jupyter.org",
+    "keywords": null,
+    "license": "BSD",
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "jupyter",
+    "package_url": "https://pypi.org/project/jupyter/",
+    "platform": "UNKNOWN",
+    "project_url": "https://pypi.org/project/jupyter/",
+    "project_urls": {
+      "Download": "UNKNOWN",
+      "Homepage": "http://jupyter.org"
+    },
+    "provides_extra": null,
+    "release_url": "https://pypi.org/project/jupyter/1.0.0/",
+    "requires_dist": null,
+    "requires_python": null,
+    "summary": "Jupyter metapackage. Install all the Jupyter components in one go.",
+    "version": "1.0.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 0,
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "b2f5e2daab779c7bda0be38925ab1b92",
+        "sha256": "83c4591b9c7392ea5f91e0d9f8e98d894f76e8e669260788f0fcb281ec0b3b1f"
+      },
+      "downloads": -1,
+      "filename": "jupyter-1.0.0-py2.py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "b2f5e2daab779c7bda0be38925ab1b92",
+      "packagetype": "bdist_wheel",
+      "python_version": "3.4",
+      "requires_python": null,
+      "size": 2736,
+      "upload_time": "2015-08-12T00:42:58",
+      "upload_time_iso_8601": "2015-08-12T00:42:58.951595Z",
+      "url": "https://files.pythonhosted.org/packages/83/df/0f5dd132200728a86190397e1ea87cd76244e42d39ec5e88efd25b2abd7e/jupyter-1.0.0-py2.py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "78acaec88533ea6b6e761e7d086a1d04",
+        "sha256": "3ef1e86ba0556ea5922b846416a41acfd2625830d996c7d06d80c90bed1dc193"
+      },
+      "downloads": -1,
+      "filename": "jupyter-1.0.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "78acaec88533ea6b6e761e7d086a1d04",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": null,
+      "size": 12916,
+      "upload_time": "2015-08-12T00:43:08",
+      "upload_time_iso_8601": "2015-08-12T00:43:08.537857Z",
+      "url": "https://files.pythonhosted.org/packages/c9/a9/371d0b8fe37dd231cf4b2cff0a9f0f25e98f3a73c3771742444be27f2944/jupyter-1.0.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "7b7a957694a73ac0c19fe46c216c0ea0",
+        "sha256": "4a855b9717c3ea24fd8ca4fd91ab5995894aecc4d20e7f39c28786a2c1869fae"
+      },
+      "downloads": -1,
+      "filename": "jupyter-1.0.0.zip",
+      "has_sig": false,
+      "md5_digest": "7b7a957694a73ac0c19fe46c216c0ea0",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": null,
+      "size": 16690,
+      "upload_time": "2015-08-12T00:43:12",
+      "upload_time_iso_8601": "2015-08-12T00:43:12.460314Z",
+      "url": "https://files.pythonhosted.org/packages/fc/21/a372b73e3a498b41b92ed915ada7de2ad5e16631546329c03e484c3bf4e9/jupyter-1.0.0.zip",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

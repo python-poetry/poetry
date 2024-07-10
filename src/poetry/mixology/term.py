@@ -8,8 +8,8 @@ from poetry.mixology.set_relation import SetRelation
 
 
 if TYPE_CHECKING:
+    from poetry.core.constraints.version import VersionConstraint
     from poetry.core.packages.dependency import Dependency
-    from poetry.core.semver.version_constraint import VersionConstraint
 
 
 class Term:
@@ -23,6 +23,8 @@ class Term:
     def __init__(self, dependency: Dependency, is_positive: bool) -> None:
         self._dependency = dependency
         self._positive = is_positive
+        self.relation = functools.lru_cache(maxsize=None)(self._relation)
+        self.intersect = functools.lru_cache(maxsize=None)(self._intersect)
 
     @property
     def inverse(self) -> Term:
@@ -48,8 +50,7 @@ class Term:
             and self.relation(other) == SetRelation.SUBSET
         )
 
-    @functools.lru_cache(maxsize=None)
-    def relation(self, other: Term) -> str:
+    def _relation(self, other: Term) -> str:
         """
         Returns the relationship between the package versions
         allowed by this term and another.
@@ -111,8 +112,7 @@ class Term:
                 # not foo ^1.5.0 is a superset of not foo ^1.0.0
                 return SetRelation.OVERLAPPING
 
-    @functools.lru_cache(maxsize=None)
-    def intersect(self, other: Term) -> Term | None:
+    def _intersect(self, other: Term) -> Term | None:
         """
         Returns a Term that represents the packages
         allowed by both this term and another
@@ -127,17 +127,17 @@ class Term:
                 negative = other if self.is_positive() else self
 
                 return self._non_empty_term(
-                    positive.constraint.difference(negative.constraint), True
+                    positive.constraint.difference(negative.constraint), True, other
                 )
             elif self.is_positive():
                 # foo ^1.0.0 ∩ foo >=1.5.0 <3.0.0 → foo ^1.5.0
                 return self._non_empty_term(
-                    self.constraint.intersect(other.constraint), True
+                    self.constraint.intersect(other.constraint), True, other
                 )
             else:
                 # not foo ^1.0.0 ∩ not foo >=1.5.0 <3.0.0 → not foo >=1.0.0 <3.0.0
                 return self._non_empty_term(
-                    self.constraint.union(other.constraint), False
+                    self.constraint.union(other.constraint), False, other
                 )
         elif self.is_positive() != other.is_positive():
             return self if self.is_positive() else other
@@ -152,20 +152,32 @@ class Term:
         return self.intersect(other.inverse)
 
     def _compatible_dependency(self, other: Dependency) -> bool:
-        compatible: bool = (
+        return (
             self.dependency.is_root
             or other.is_root
             or other.is_same_package_as(self.dependency)
+            or (
+                # we do this here to indicate direct origin dependencies are
+                # compatible with NVR dependencies
+                self.dependency.complete_name == other.complete_name
+                and self.dependency.is_direct_origin() != other.is_direct_origin()
+            )
         )
-        return compatible
 
     def _non_empty_term(
-        self, constraint: VersionConstraint, is_positive: bool
+        self, constraint: VersionConstraint, is_positive: bool, other: Term
     ) -> Term | None:
         if constraint.is_empty():
             return None
 
-        return Term(self.dependency.with_constraint(constraint), is_positive)
+        # when creating a new term prefer direct-reference dependencies
+        dependency = (
+            other.dependency
+            if not self.dependency.is_direct_origin()
+            and other.dependency.is_direct_origin()
+            else self.dependency
+        )
+        return Term(dependency.with_constraint(constraint), is_positive)
 
     def __str__(self) -> str:
         prefix = "not " if not self.is_positive() else ""

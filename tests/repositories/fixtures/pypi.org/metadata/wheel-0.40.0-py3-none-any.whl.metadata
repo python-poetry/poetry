@@ -1,0 +1,26 @@
+Metadata-Version: 2.1
+Name: wheel
+Version: 0.40.0
+Summary: A built-package format for Python
+Keywords: wheel,packaging
+Author-email: Daniel Holth <dholth@fastmail.fm>
+Maintainer-email: Alex Grönholm <alex.gronholm@nextday.fi>
+Requires-Python: >=3.7
+Description-Content-Type: text/x-rst
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: System :: Archiving :: Packaging
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Requires-Dist: pytest >= 6.0.0 ; extra == "test"
+Project-URL: Changelog, https://wheel.readthedocs.io/en/stable/news.html
+Project-URL: Documentation, https://wheel.readthedocs.io/
+Project-URL: Issue Tracker, https://github.com/pypa/wheel/issues
+Provides-Extra: test
+

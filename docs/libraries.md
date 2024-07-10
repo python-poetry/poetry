@@ -19,10 +19,11 @@ This chapter will tell you how to make your library installable through Poetry.
 
 Poetry requires [PEP 440](https://peps.python.org/pep-0440)-compliant versions for all projects.
 
-While Poetry does not enforce any release convention, it does encourage the use of
+While Poetry does not enforce any release convention, it used to encourage the use of
 [semantic versioning](https://semver.org/) within the scope of
-[PEP 440](https://peps.python.org/pep-0440/#semantic-versioning). This has many advantages for the end users
-and allows them to set appropriate [version constraints]({{< relref "dependency-specification#version-constraints" >}}).
+[PEP 440](https://peps.python.org/pep-0440/#semantic-versioning) and supports
+[version constraints]({{< relref "dependency-specification/#caret-requirements" >}})
+that are especially suitable for semver.
 
 {{% note %}}
 
@@ -51,7 +52,18 @@ poetry build
 This command will package your library in two different formats: `sdist` which is
 the source format, and `wheel` which is a `compiled` package.
 
-Once that's done you are ready to publish your library
+Poetry will automatically include some metadata files when building a package. When building
+a `wheel`, the following files are included in the `.dist-info` directory:
+- `LICENSE`
+- `LICENSE.*`
+- `COPYING`
+- `COPYING.*`
+- `LICENSES/**`
+
+When building an `sdist`, the following files will be included in the root folder:
+  - `LICENSE*`
+
+Once building is done you are ready to publish your library.
 
 ## Publishing to PyPI
 

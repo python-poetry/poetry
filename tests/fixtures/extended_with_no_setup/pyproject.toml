@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "extended"
+version = "0.1"
+description = "Some description."
+authors = [
+    "Sébastien Eustace <sebastien@eustace.io>"
+]
+license = "MIT"
+
+readme = "README.md"
+
+homepage = "https://python-poetry.org/"
+
+include = [
+    # C extensions must be included in the wheel distributions
+    {path = "extended/*.so", format = "wheel"},
+    {path = "extended/*.pyd", format = "wheel"},
+]
+
+[tool.poetry.build]
+script = "build.py"
+generate-setup-file = false
+
+[build-system]
+requires = ["poetry-core>=1.5.0", "setuptools>=67.6.1"]
+build-backend = "poetry.core.masonry.api"
