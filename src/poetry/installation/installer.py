@@ -20,7 +20,6 @@ if TYPE_CHECKING:
 
     from cleo.io.io import IO
     from packaging.utils import NormalizedName
-    from poetry.core.packages.path_dependency import PathDependency
     from poetry.core.packages.project_package import ProjectPackage
 
     from poetry.config.config import Config
@@ -287,6 +286,7 @@ class Installer:
             self._installed_repository.packages,
             locked_repository.packages,
             NullIO(),
+            active_root_extras=self._extras,
         )
         # Everything is resolved at this point, so we no longer need
         # to load deferred dependencies (i.e. VCS, URL and path dependencies)

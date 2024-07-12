@@ -7,7 +7,7 @@ import time
 
 from collections import defaultdict
 from contextlib import contextmanager
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from typing import ClassVar
 from typing import cast
 
@@ -117,6 +117,7 @@ class Provider:
         *,
         installed: list[Package] | None = None,
         locked: list[Package] | None = None,
+        active_root_extras: Collection[NormalizedName] | None = None,
     ) -> None:
         self._package = package
         self._pool = pool
@@ -133,6 +134,7 @@ class Provider:
         self._direct_origin_packages: dict[str, Package] = {}
         self._locked: dict[NormalizedName, list[DependencyPackage]] = defaultdict(list)
         self._use_latest: Collection[NormalizedName] = []
+        self._active_root_extras = frozenset(active_root_extras) if active_root_extras is not None else frozenset()
 
         self._explicit_sources: dict[str, str] = {}
         for package in locked or []:
@@ -457,7 +459,12 @@ class Provider:
             for dep in dependencies
             if dep.name not in self.UNSAFE_PACKAGES
             and self._python_constraint.allows_any(dep.python_constraint)
-            and (not self._env or dep.marker.validate(self._env.marker_env))
+            and (not self._env or dep.marker.validate(
+                self._marker_values(
+                    self._active_root_extras if dependency_package.package.is_root()
+                    else dependency_package.dependency.extras)
+                )
+            )
         ]
         dependencies = self._get_dependencies_with_overrides(_dependencies, package)
 
@@ -541,7 +548,8 @@ class Provider:
             if dep.name in self.UNSAFE_PACKAGES:
                 continue
 
-            if self._env and not dep.marker.validate(self._env.marker_env):
+            active_extras = self._active_root_extras if package.is_root() else dependency.extras
+            if self._env and not dep.marker.validate(self._marker_values(active_extras)):
                 continue
 
             if not package.is_root() and (
@@ -601,7 +609,7 @@ class Provider:
 
             # For dependency resolution, markers of duplicate dependencies must be
             # mutually exclusive.
-            active_extras = None if package.is_root() else dependency.extras
+            active_extras = self._active_root_extras if package.is_root() else dependency.extras
             deps = self._resolve_overlapping_markers(package, deps, active_extras)
 
             if len(deps) == 1:
@@ -860,7 +868,7 @@ class Provider:
                 get_python_constraint_from_marker(marker)
             )
             and (active_extras is None or marker.validate({"extra": active_extras}))
-            and (not self._env or marker.validate(self._env.marker_env))
+            and (not self._env or marker.validate(self._marker_values(active_extras)))
         )
 
     def _resolve_overlapping_markers(
@@ -953,3 +961,17 @@ class Provider:
         # dependencies by constraint again. After overlapping markers were
         # resolved, there might be new dependencies with the same constraint.
         return self._merge_dependencies_by_constraint(new_dependencies)
+
+    def _marker_values(self, extras: set[NormalizedName] | None = None) -> dict[str, Any]:
+        """
+        Marker values, per:
+        1. marker_env of `self._env`
+        2. 'extras' will be added to the 'extra' marker if not already present
+        """
+        result = self._env.marker_env.copy()
+        if extras is not None:
+            if 'extra' not in result.keys():
+                result['extra'] = extras
+            else:
+                result['extra'] = set(result['extra']).union(extras)
+        return result
