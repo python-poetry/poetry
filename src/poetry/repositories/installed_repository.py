@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 from packaging.utils import canonicalize_name
 from poetry.core.packages.package import Package
+from poetry.core.packages.utils.utils import is_python_project
 from poetry.core.packages.utils.utils import url_to_path
 from poetry.core.utils.helpers import module_name
 
@@ -150,8 +151,7 @@ class InstalledRepository(Repository):
             ) = cls.get_package_vcs_properties_from_path(
                 env.path / "src" / canonicalize_name(distribution.metadata["name"])
             )
-        else:
-            # If not, it's a path dependency
+        elif is_python_project(path.parent):
             source_type = "directory"
             source_url = str(path.parent)
 
