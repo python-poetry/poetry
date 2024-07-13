@@ -14,6 +14,7 @@ from poetry.core.constraints.version import parse_constraint
 from poetry.core.packages.package import Package
 from poetry.core.packages.vcs_dependency import VCSDependency
 
+from poetry.__version__ import __version__
 from poetry.exceptions import PoetryError
 from poetry.factory import Factory
 from poetry.plugins.plugin import Plugin
@@ -228,6 +229,23 @@ def test_create_poetry_non_package_mode(fixture_dir: FixtureDirGetter) -> None:
     poetry = Factory().create_poetry(fixture_dir("non_package_mode"))
 
     assert not poetry.is_package_mode
+
+
+def test_create_poetry_version_ok(fixture_dir: FixtureDirGetter) -> None:
+    io = BufferedIO()
+    Factory().create_poetry(fixture_dir("self_version_ok"), io=io)
+
+    assert io.fetch_output() == ""
+    assert io.fetch_error() == ""
+
+
+def test_create_poetry_version_not_ok(fixture_dir: FixtureDirGetter) -> None:
+    with pytest.raises(PoetryError) as e:
+        Factory().create_poetry(fixture_dir("self_version_not_ok"))
+    assert (
+        str(e.value)
+        == f"This project requires Poetry <1.2, but you are using Poetry {__version__}"
+    )
 
 
 @pytest.mark.parametrize(

@@ -1,0 +1,6 @@
+[tool.poetry]
+package-mode = false
+requires-poetry = "<1.2"
+
+[tool.poetry.dependencies]
+python = "^3.8"

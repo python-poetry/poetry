@@ -39,6 +39,14 @@ def test_self_valid() -> None:
     assert Factory.validate(toml) == {"errors": [], "warnings": []}
 
 
+def test_self_invalid_version() -> None:
+    toml: dict[str, Any] = TOMLFile(FIXTURE_DIR / "self_invalid_version.toml").read()
+    assert Factory.validate(toml) == {
+        "errors": ["data.requires-poetry must be string"],
+        "warnings": [],
+    }
+
+
 def test_self_invalid_plugin() -> None:
     toml: dict[str, Any] = TOMLFile(FIXTURE_DIR / "self_invalid_plugin.toml").read()
     assert Factory.validate(toml) == {

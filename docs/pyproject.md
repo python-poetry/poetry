@@ -843,6 +843,17 @@ any custom url in the `urls` section.
 
 If you publish your package on PyPI, they will appear in the `Project Links` section.
 
+## `requires-poetry`
+
+A constraint for the Poetry version that is required for this project.
+If you are using a Poetry version that is not allowed by this constraint,
+an error will be raised.
+
+```toml
+[tool.poetry]
+requires-poetry = ">=2.0"
+```
+
 ## `requires-plugins`
 
 In this section, you can specify that certain plugins are required for your project:
