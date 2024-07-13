@@ -4,6 +4,11 @@
   "type": "object",
   "required": [],
   "properties": {
+    "requires-poetry": {
+      "type": "string",
+      "description": "The version constraint for Poetry itself.",
+      "$ref": "#/definitions/dependency"
+    },
     "requires-plugins": {
       "type": "object",
       "description": "Poetry plugins that are required for this project.",
