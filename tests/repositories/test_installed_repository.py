@@ -423,3 +423,30 @@ def test_system_site_packages_source_type(
         package.name: package.source_type for package in installed_repository.packages
     }
     assert source_types == {"cleo": None, "directory-pep-610": "directory"}
+
+
+def test_pipx_shared_lib_site_packages(
+    tmp_path: Path,
+    poetry: Poetry,
+    site_purelib: Path,
+    caplog: LogCaptureFixture,
+) -> None:
+    """
+    Simulate pipx shared/lib/site-packages which is not relative to the venv path.
+    """
+    venv_path = tmp_path / "venv"
+    shared_lib_site_path = tmp_path / "site"
+    env = MockEnv(
+        path=venv_path, sys_path=[str(venv_path / "purelib"), str(shared_lib_site_path)]
+    )
+    dist_info = "cleo-0.7.6.dist-info"
+    shutil.copytree(site_purelib / dist_info, shared_lib_site_path / dist_info)
+    installed_repository = InstalledRepository.load(env)
+
+    assert len(installed_repository.packages) == 1
+    cleo_package = installed_repository.packages[0]
+    cleo_package.to_dependency()
+    # There must not be a warning
+    # that the package does not seem to be a valid Python package.
+    assert caplog.messages == []
+    assert cleo_package.source_type is None
