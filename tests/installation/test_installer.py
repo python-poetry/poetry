@@ -1059,6 +1059,51 @@ def test_run_with_exclusive_extras(
     assert locker.written_data == expected
 
 
+def test_run_with_dependencies_different_extras(
+    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
+) -> None:
+    demo = get_package("demo", "1.0.0")
+    dep_one = get_package("transitive-dep-one", "1.1.0")
+    dep_two = get_package("transitive-dep-two", "1.2.0")
+    demo.extras = {
+        canonicalize_name("demo-extra-one"): [get_dependency("transitive-dep-one")],
+        canonicalize_name("demo-extra-two"): [get_dependency("transitive-dep-two")],
+    }
+    demo.add_dependency(
+        Factory.create_dependency("transitive-dep-one", {"version": "1.1.0", "optional": True})
+    )
+    demo.add_dependency(
+        Factory.create_dependency("transitive-dep-two", {"version": "1.2.0", "optional": True})
+    )
+
+    repo.add_package(demo)
+    repo.add_package(dep_one)
+    repo.add_package(dep_two)
+
+    package.add_dependency(Factory.create_dependency(
+        "demo",
+        {
+            "version": "1.0.0",
+            "markers": "extra == 'extra-one' and extra != 'extra-two'",
+            "extras": ["demo-extra-one"],
+        })
+    )
+    package.add_dependency(Factory.create_dependency(
+        "demo",
+        {
+            "version": "1.0.0",
+            "markers": "extra != 'extra-one' and extra == 'extra-two'",
+            "extras": ["demo-extra-two"],
+        })
+    )
+
+    result = installer.run()
+    assert result == 0
+
+    expected = fixture("with-dependencies-differing-extras")
+    assert locker.written_data == expected
+
+
 @pytest.mark.parametrize("is_locked", [False, True])
 @pytest.mark.parametrize("is_installed", [False, True])
 @pytest.mark.parametrize("with_extras", [False, True])
@@ -2786,6 +2831,74 @@ def test_installer_distinguishes_locked_packages_with_same_version_by_source(
         source_url=source_url,
         source_reference=source_reference,
     )
+
+
+@pytest.mark.parametrize("extra", [None, "extra-one", "extra-two"])
+def test_installer_distinguishes_locked_packages_with_local_version_by_extra(
+    pool: RepositoryPool,
+    locker: Locker,
+    installed: CustomInstalledRepository,
+    config: Config,
+    repo: Repository,
+    package: ProjectPackage,
+    extra: str | None,
+) -> None:
+    """https://github.com/python-poetry/poetry/issues/834"""
+    # 'demo' with extra 'one' when package has 'extra-one' extra and with extra 'two' when 'extra-two'
+    extra_one_dep = Factory.create_dependency(
+            "demo",
+            {
+                "version": "1.0.0",
+                "markers": "extra == 'extra-one' and extra != 'extra-two'",
+                "extras": ["demo-extra-one"]
+            },
+        )
+    extra_two_dep = Factory.create_dependency(
+        "demo",
+        {
+            "version": "1.0.0",
+            "markers": "extra != 'extra-one' and extra == 'extra-two'",
+            "extras": ["demo-extra-two"]
+        },
+    )
+    package.add_dependency(extra_one_dep)
+    package.add_dependency(extra_two_dep)
+    # We don't want to cheat by only including the correct dependency in the 'extra' mapping
+    package.extras = {
+        "extra-one": [extra_one_dep, extra_two_dep],
+        "extra-two": [extra_one_dep, extra_two_dep],
+    }
+
+    # Locking finds packages from extra deps
+    locker.locked(True)
+    locker.mock_lock_data(dict(fixture("with-dependencies-differing-extras")))
+
+    installer = Installer(
+        NullIO(),
+        MockEnv(),
+        package,
+        locker,
+        pool,
+        config,
+        installed=installed,
+        executor=Executor(
+            MockEnv(),
+            pool,
+            config,
+            NullIO(),
+        ),
+    )
+    if extra is not None:
+        installer.extras([extra])
+    result = installer.run()
+    assert result == 0
+
+    # Results of installation are consistent with the 'extra' input
+    assert isinstance(installer.executor, Executor)
+    if extra is None:
+        assert len(installer.executor.installations) == 0
+    else:
+        assert len(installer.executor.installations) == 2
 
 
 @pytest.mark.parametrize("env_platform", ["darwin", "linux"])
