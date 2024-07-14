@@ -1027,6 +1027,38 @@ def test_run_with_dependencies_nested_extras(
     assert locker.written_data == expected
 
 
+def test_run_with_exclusive_extras(
+    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
+) -> None:
+    """https://github.com/python-poetry/poetry/issues/6409; https://github.com/python-poetry/poetry/issues/6419"""
+    torch_cpu = get_package("torch", "1.11.0+cpu")
+    torch_cuda = get_package("torch", "1.11.0+cuda")
+
+    repo.add_package(torch_cpu)
+    repo.add_package(torch_cuda)
+
+    package.add_dependency(Factory.create_dependency(
+        "torch",
+        {
+            "version": "1.11.0+cpu",
+            "markers": "extra == 'cpu' and extra != 'cuda'",
+        })
+    )
+    package.add_dependency(Factory.create_dependency(
+        "torch",
+        {
+            "version": "1.11.0+cuda",
+            "markers": "extra != 'cpu' and extra == 'cuda'",
+        })
+    )
+
+    result = installer.run()
+    assert result == 0
+
+    expected = fixture("with-exclusive-extras")
+    assert locker.written_data == expected
+
+
 @pytest.mark.parametrize("is_locked", [False, True])
 @pytest.mark.parametrize("is_installed", [False, True])
 @pytest.mark.parametrize("with_extras", [False, True])
