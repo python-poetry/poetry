@@ -142,7 +142,10 @@ class InstalledRepository(Repository):
                         # TODO: handle multiple source directories?
                         if is_editable_package:
                             source_type = "directory"
-                            source_url = paths.pop().as_posix()
+                            path = paths.pop()
+                            if path.name == "src":
+                                path = path.parent
+                            source_url = path.as_posix()
         elif cls.is_vcs_package(path, env):
             (
                 source_type,

@@ -70,6 +70,7 @@ def installed_results(
         ),
         metadata.PathDistribution(site_purelib / "standard-1.2.3.dist-info"),
         metadata.PathDistribution(site_purelib / "editable-2.3.4.dist-info"),
+        metadata.PathDistribution(site_purelib / "editable-src-dir-2.3.4.dist-info"),
         metadata.PathDistribution(
             site_purelib / "editable-with-import-2.3.4.dist-info"
         ),
@@ -282,6 +283,18 @@ def test_load_editable_package(
     editable = get_package_from_repository("editable", repository)
     assert editable is not None
     assert editable.name == "editable"
+    assert editable.version.text == "2.3.4"
+    assert editable.source_type == "directory"
+    assert editable.source_url == editable_source_directory_path
+
+
+def test_load_editable_src_dir_package(
+    repository: InstalledRepository, editable_source_directory_path: str
+) -> None:
+    # test editable package with src layout with text .pth file
+    editable = get_package_from_repository("editable-src-dir", repository)
+    assert editable is not None
+    assert editable.name == "editable-src-dir"
     assert editable.version.text == "2.3.4"
     assert editable.source_type == "directory"
     assert editable.source_url == editable_source_directory_path
