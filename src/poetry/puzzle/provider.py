@@ -134,7 +134,7 @@ class Provider:
         self._direct_origin_packages: dict[str, Package] = {}
         self._locked: dict[NormalizedName, list[DependencyPackage]] = defaultdict(list)
         self._use_latest: Collection[NormalizedName] = []
-        self._active_root_extras = frozenset(active_root_extras) if active_root_extras is not None else frozenset()
+        self._active_root_extras = frozenset(active_root_extras) if active_root_extras is not None else None
 
         self._explicit_sources: dict[str, str] = {}
         for package in locked or []:
