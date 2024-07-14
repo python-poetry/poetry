@@ -1,0 +1,36 @@
+[[package]]
+name = "demo"
+version = "1.0.0"
+description = ""
+optional = true
+python-versions = "*"
+files = []
+
+[package.extras]
+demo-extra-one = ["transitive-dep-one"]
+demo-extra-two = ["transitive-dep-two"]
+
+[package.dependencies]
+transitive-dep-one = {version = "1.1.0", optional = true}
+transitive-dep-two = {version = "1.2.0", optional = true}
+
+[[package]]
+name = "transitive-dep-one"
+version = "1.1.0"
+description = ""
+optional = true
+python-versions = "*"
+files = []
+
+[[package]]
+name = "transitive-dep-two"
+version = "1.2.0"
+description = ""
+optional = true
+python-versions = "*"
+files = []
+
+[metadata]
+python-versions = "*"
+lock-version = "2.0"
+content-hash = "123456789"
