@@ -962,16 +962,16 @@ class Provider:
         # resolved, there might be new dependencies with the same constraint.
         return self._merge_dependencies_by_constraint(new_dependencies)
 
-    def _marker_values(self, extras: set[NormalizedName] | None = None) -> dict[str, Any]:
+    def _marker_values(self, extras: Collection[NormalizedName] | None = None) -> dict[str, Any]:
         """
         Marker values, per:
         1. marker_env of `self._env`
         2. 'extras' will be added to the 'extra' marker if not already present
         """
-        result = self._env.marker_env.copy()
+        result = self._env.marker_env.copy() if self._env is not None else {}
         if extras is not None:
             if 'extra' not in result.keys():
-                result['extra'] = extras
+                result['extra'] = set(extras)
             else:
                 result['extra'] = set(result['extra']).union(extras)
         return result
