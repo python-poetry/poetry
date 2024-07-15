@@ -1957,7 +1957,7 @@ This release **must** be downloaded via the `get-poetry.py` script and not via t
 ### Fixed
 
 - Fixed `add` command picking up prereleases by default.
-- Fixed dependendency resolution on Windows when unpacking distributions.
+- Fixed dependency resolution on Windows when unpacking distributions.
 - Fixed dependency resolution with post releases.
 - Fixed dependencies being installed even if not necessary for current system.
 
