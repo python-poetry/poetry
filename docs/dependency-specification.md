@@ -484,21 +484,20 @@ You'll also need to [define the `paths` extra in your project](./pyproject.md#ex
 
 #### Exclusive extras
 
-Keep in mind that all combinations of extras available in your project need to be compatible with each other. This 
-means that in order to use differing or incompatible versions across different extras, you need to make your extra 
-markers *exclusive*. For example, the following installs PyTorch from one source repository with CPU versions when 
-the `cpu` extra is specified, while the other installs from another repository with a separate version set for GPUs
-when the `cuda` extra is specified:
+Keep in mind that all combinations of possible extras available in your project need to be compatible with each other. 
+This means that in order to use differing or incompatible versions across different combinations, you need to make your 
+extra markers *exclusive*. For example, the following installs PyTorch from one source repository with CPU versions 
+when the `cuda` extra is *not* specified, while the other installs from another repository with a separate version set 
+for GPUs when the `cuda` extra *is* specified:
 
 ```toml
 [tool.poetry.dependencies]
 torch = [
-    { markers = "extra == 'cpu' and extra != 'cuda'", version = "2.3.1+cpu", source = "pytorch-cpu", optional = true},
-    { markers = "extra != 'cpu' and extra == 'cuda'", version = "2.3.1+cu118", source = "pytorch-cu118", optional = true},
+    { markers = "extra != 'cuda'", version = "2.3.1+cpu", source = "pytorch-cpu", optional = true},
+    { markers = "extra == 'cuda'", version = "2.3.1+cu118", source = "pytorch-cu118", optional = true},
  ]
 
 [tool.poetry.extras]
-cpu = ["torch"]
 cuda = ["torch"]
 
 [[tool.poetry.source]]
@@ -512,9 +511,12 @@ url = "https://download.pytorch.org/whl/cu118"
 priority = "explicit"
 ```
 
-For the `cpu` extra marker, we have to specify `"extra == 'cpu' and extra != 'cuda'"` and vice-versa for the `cuda` 
-extra marker. There is no version that satisfies both constraints, so installing with `--extras cpu --extras gpu` 
-would match no cases and not install `torch`.
+For the CPU case, we have to specify `"extra != 'cuda'"` because the version specified is not compatible with the 
+GPU (`cuda`) version.
+
+This same logic applies when you want either-or extras. If a dependency for `extra-one` and 
+`extra-two` conflict, they will need to be restricted using `markers = "extra == 'extra-one' and extra != 'extra-two'"` 
+and vice versa.
 
 ## Multiple constraints dependencies
 
