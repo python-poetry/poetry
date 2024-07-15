@@ -471,6 +471,51 @@ dependencies = [
 ]
 ```
 
+### `extra` environment marker
+
+Poetry populates the `extra` marker with each of the selected extras for the parent declaring the dependency. For 
+example, consider the following dependency in your root package:
+```toml
+[tool.poetry.dependencies]
+pathlib2 = { version = "^2.2", markers = "extra == 'paths' and sys_platform == 'win32'", optional = true}
+```
+`pathlib2` will be installed when you install your package with `--extras paths` on a `win32` machine. 
+You'll also need to [define the `paths` extra in your project](./pyproject.md#extras).
+
+#### Exclusive extras
+
+Keep in mind that all combinations of extras available in your project need to be compatible with each other. This 
+means that in order to use differing or incompatible versions across different extras, you need to make your extra 
+markers *exclusive*. For example, the following installs PyTorch from one source repository with CPU versions when 
+the `cpu` extra is specified, while the other installs from another repository with a separate version set for GPUs
+when the `cuda` extra is specified:
+
+```toml
+[tool.poetry.dependencies]
+torch = [
+    { markers = "extra == 'cpu' and extra != 'cuda'", version = "2.3.1+cpu", source = "pytorch-cpu", optional = true},
+    { markers = "extra != 'cpu' and extra == 'cuda'", version = "2.3.1+cu118", source = "pytorch-cu118", optional = true},
+ ]
+
+[tool.poetry.extras]
+cpu = ["torch"]
+cuda = ["torch"]
+
+[[tool.poetry.source]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+priority = "explicit"
+
+[[tool.poetry.source]]
+name = "pytorch-cu118"
+url = "https://download.pytorch.org/whl/cu118"
+priority = "explicit"
+```
+
+For the `cpu` extra marker, we have to specify `"extra == 'cpu' and extra != 'cuda'"` and vice-versa for the `cuda` 
+extra marker. There is no version that satisfies both constraints, so installing with `--extras cpu --extras gpu` 
+would match no cases and not install `torch`.
+
 ## Multiple constraints dependencies
 
 Sometimes, one of your dependency may have different version ranges depending
