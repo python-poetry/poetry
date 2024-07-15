@@ -39,7 +39,7 @@ class Solver:
         installed: list[Package],
         locked: list[Package],
         io: IO,
-        active_root_extras: Collection[NormalizedName] | None = None
+        active_root_extras: Collection[NormalizedName] | None = None,
     ) -> None:
         self._package = package
         self._pool = pool
