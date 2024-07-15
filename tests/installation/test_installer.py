@@ -1189,8 +1189,8 @@ def test_run_with_different_dependency_extras(
     package.add_dependency(extra_two_dep)
     # We don't want to cheat by only including the correct dependency in the 'extra' mapping
     package.extras = {
-        "extra-one": [extra_one_dep, extra_two_dep],
-        "extra-two": [extra_one_dep, extra_two_dep],
+        canonicalize_name("extra-one"): [extra_one_dep, extra_two_dep],
+        canonicalize_name("extra-two"): [extra_one_dep, extra_two_dep],
     }
 
     locker.locked(locked)
