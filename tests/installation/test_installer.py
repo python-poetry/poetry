@@ -5,7 +5,7 @@ import re
 import shutil
 
 from pathlib import Path
-from typing import TYPE_CHECKING, IO
+from typing import TYPE_CHECKING
 from typing import Any
 
 import pytest
@@ -1049,7 +1049,7 @@ def test_run_with_exclusive_extras_different_sources(
     pool = RepositoryPool()
     pool.add_repository(cpu_repo)
     pool.add_repository(cuda_repo)
-    config.config['repositories'] = {
+    config.config["repositories"] = {
         "pytorch-cpu": {"url": "https://download.pytorch.org/whl/cpu"},
         "pytorch-cuda": {"url": "https://download.pytorch.org/whl/cuda"},
     }
@@ -1073,14 +1073,16 @@ def test_run_with_exclusive_extras_different_sources(
             "version": "1.11.0+cpu",
             "markers": "extra == 'cpu' and extra != 'cuda'",
             "source": "pytorch-cpu",
-        })
+        },
+    )
     torch_cuda_dep = Factory.create_dependency(
         "torch",
         {
             "version": "1.11.0+cuda",
             "markers": "extra != 'cpu' and extra == 'cuda'",
             "source": "pytorch-cuda",
-        })
+        },
+    )
     package.add_dependency(torch_cpu_dep)
     package.add_dependency(torch_cuda_dep)
     # We don't want to cheat by only including the correct dependency in the 'extra' mapping
@@ -1147,7 +1149,7 @@ def test_run_with_different_dependency_extras(
     config: Config,
     package: ProjectPackage,
     extra: str | None,
-    locked: bool
+    locked: bool,
 ) -> None:
     """https://github.com/python-poetry/poetry/issues/834"""
     # Demo package with two optional transitive dependencies, one for each extra
@@ -1159,10 +1161,14 @@ def test_run_with_different_dependency_extras(
         canonicalize_name("demo-extra-two"): [get_dependency("transitive-dep-two")],
     }
     demo_pkg.add_dependency(
-        Factory.create_dependency("transitive-dep-one", {"version": "1.1.0", "optional": True})
+        Factory.create_dependency(
+            "transitive-dep-one", {"version": "1.1.0", "optional": True}
+        )
     )
     demo_pkg.add_dependency(
-        Factory.create_dependency("transitive-dep-two", {"version": "1.2.0", "optional": True})
+        Factory.create_dependency(
+            "transitive-dep-two", {"version": "1.2.0", "optional": True}
+        )
     )
     repo.add_package(demo_pkg)
     repo.add_package(transitive_dep_one)
@@ -1174,7 +1180,7 @@ def test_run_with_different_dependency_extras(
         {
             "version": "1.0.0",
             "markers": "extra == 'extra-one' and extra != 'extra-two'",
-            "extras": ["demo-extra-one"]
+            "extras": ["demo-extra-one"],
         },
     )
     extra_two_dep = Factory.create_dependency(
@@ -1182,7 +1188,7 @@ def test_run_with_different_dependency_extras(
         {
             "version": "1.0.0",
             "markers": "extra != 'extra-one' and extra == 'extra-two'",
-            "extras": ["demo-extra-two"]
+            "extras": ["demo-extra-two"],
         },
     )
     package.add_dependency(extra_one_dep)
@@ -1227,6 +1233,7 @@ def test_run_with_different_dependency_extras(
         assert len(installer.executor.installations) == 0
     else:
         assert len(installer.executor.installations) == 2
+
 
 @pytest.mark.parametrize("is_locked", [False, True])
 @pytest.mark.parametrize("is_installed", [False, True])
