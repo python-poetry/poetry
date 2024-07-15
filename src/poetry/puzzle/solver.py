@@ -48,8 +48,12 @@ class Solver:
         self._io = io
 
         self._provider = Provider(
-            self._package, self._pool, self._io, installed=installed, locked=locked,
-            active_root_extras=active_root_extras
+            self._package,
+            self._pool,
+            self._io,
+            installed=installed,
+            locked=locked,
+            active_root_extras=active_root_extras,
         )
         self._overrides: list[dict[Package, dict[str, Dependency]]] = []
 
