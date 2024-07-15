@@ -40,6 +40,10 @@ WINDOWS_CMD_TEMPLATE = """\
 @echo off\r\n"{python}" "%~dp0\\{script}" %*\r\n
 """
 
+WINDOWS_GUI_CMD_TEMPLATE = """\
+@echo off\r\n start "" "{python}" "%~dp0{script}" %*\r\n
+"""
+
 
 class EditableBuilder(Builder):
     def __init__(self, poetry: Poetry, env: Env, io: IO) -> None:
@@ -154,6 +158,8 @@ class EditableBuilder(Builder):
             return []
 
         scripts = entry_points.get("console_scripts", [])
+        gui_scripts = entry_points.get("gui_scripts", [])
+        scripts.extend(gui_scripts)
         for script in scripts:
             name, script_with_extras = script.split(" = ")
             script_without_extras = script_with_extras.split("[")[0]
@@ -200,7 +206,15 @@ class EditableBuilder(Builder):
 
             if WINDOWS:
                 cmd_script = script_file.with_suffix(".cmd")
-                cmd = WINDOWS_CMD_TEMPLATE.format(python=self._env.python, script=name)
+                if script in gui_scripts:
+                    path_list = str(self._env.python).split("\\")
+                    path_list[-1] = path_list[-1].replace("python", "pythonw")
+                    pythonw = "\\".join(path_list)
+                    cmd = WINDOWS_GUI_CMD_TEMPLATE.format(python=pythonw, script=name)
+                else:
+                    cmd = WINDOWS_CMD_TEMPLATE.format(
+                        python=self._env.python, script=name
+                    )
                 self._debug(
                     f"  - Adding the <c2>{cmd_script.name}</c2> script wrapper to"
                     f" <b>{scripts_path}</b>"

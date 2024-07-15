@@ -366,10 +366,24 @@ This section describes the scripts or executables that will be installed when in
 
 ```toml
 [tool.poetry.scripts]
-my_package_cli = 'my_package.console:run'
+my_package_cli = {reference='my_package.console:run', type='console'}
+my_pachkage_gui = {reference='my_package.gui:run', type='gui'}
 ```
 
 Here, we will have the `my_package_cli` script installed which will execute the `run` function in the `console` module in the `my_package` package.
+
+valid script types:
+
+* console. Usable as a command in a system shell after the package is installed
+* gui. Differs only on windows, where they can be started without a console window, using pythonw instead of python, this means they cannot use standard streams unless application code redirects them. On non windows platforms they are treated as console scripts.
+
+{{% warning %}}
+string defined scripts are deprecated:
+```toml
+[tool.poetry.scripts]
+my_package_cli = 'my_package.console:run'
+```
+{{% /warning %}}
 
 {{% note %}}
 When a script is added or updated, run `poetry install` to make them available in the project's virtualenv.
