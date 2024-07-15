@@ -1027,82 +1027,206 @@ def test_run_with_dependencies_nested_extras(
     assert locker.written_data == expected
 
 
-def test_run_with_exclusive_extras(
-    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
+@pytest.mark.parametrize("locked", [True, False])
+@pytest.mark.parametrize("extra", [None, "cpu", "cuda"])
+def test_run_with_exclusive_extras_different_sources(
+    installer: Installer,
+    locker: Locker,
+    installed: CustomInstalledRepository,
+    config: Config,
+    package: ProjectPackage,
+    extra: str | None,
+    locked: bool,
 ) -> None:
-    """https://github.com/python-poetry/poetry/issues/6409; https://github.com/python-poetry/poetry/issues/6419"""
-    torch_cpu = get_package("torch", "1.11.0+cpu")
-    torch_cuda = get_package("torch", "1.11.0+cuda")
+    """
+    - https://github.com/python-poetry/poetry/issues/6409
+    - https://github.com/python-poetry/poetry/issues/6419
+    - https://github.com/python-poetry/poetry/issues/7748
+    """
+    # Setup repo for each of our sources
+    cpu_repo = Repository("pytorch-cpu")
+    cuda_repo = Repository("pytorch-cuda")
+    pool = RepositoryPool()
+    pool.add_repository(cpu_repo)
+    pool.add_repository(cuda_repo)
+    config.config['repositories'] = {
+        "pytorch-cpu": {"url": "https://download.pytorch.org/whl/cpu"},
+        "pytorch-cuda": {"url": "https://download.pytorch.org/whl/cuda"},
+    }
 
-    repo.add_package(torch_cpu)
-    repo.add_package(torch_cuda)
+    # Configure packages that read from each of the different sources
+    torch_cpu_pkg = get_package("torch", "1.11.0+cpu")
+    torch_cpu_pkg._source_reference = "pytorch-cpu"
+    torch_cpu_pkg._source_type = "legacy"
+    torch_cpu_pkg._source_url = "https://download.pytorch.org/whl/cpu"
+    torch_cuda_pkg = get_package("torch", "1.11.0+cuda")
+    torch_cuda_pkg._source_reference = "pytorch-cuda"
+    torch_cuda_pkg._source_type = "legacy"
+    torch_cuda_pkg._source_url = "https://download.pytorch.org/whl/cuda"
+    cpu_repo.add_package(torch_cpu_pkg)
+    cuda_repo.add_package(torch_cuda_pkg)
 
-    package.add_dependency(Factory.create_dependency(
+    # Depend on each package based on exclusive extras
+    torch_cpu_dep = Factory.create_dependency(
         "torch",
         {
             "version": "1.11.0+cpu",
             "markers": "extra == 'cpu' and extra != 'cuda'",
+            "source": "pytorch-cpu",
         })
-    )
-    package.add_dependency(Factory.create_dependency(
+    torch_cuda_dep = Factory.create_dependency(
         "torch",
         {
             "version": "1.11.0+cuda",
             "markers": "extra != 'cpu' and extra == 'cuda'",
+            "source": "pytorch-cuda",
         })
-    )
+    package.add_dependency(torch_cpu_dep)
+    package.add_dependency(torch_cuda_dep)
+    # We don't want to cheat by only including the correct dependency in the 'extra' mapping
+    package.extras = {
+        canonicalize_name("cpu"): [torch_cpu_dep, torch_cuda_dep],
+        canonicalize_name("cuda"): [torch_cpu_dep, torch_cuda_dep],
+    }
 
+    # Set locker state
+    locker.locked(locked)
+    if locked:
+        locker.mock_lock_data(dict(fixture("with-exclusive-extras")))
+
+    # Perform install
+    installer = Installer(
+        NullIO(),
+        MockEnv(),
+        package,
+        locker,
+        pool,
+        config,
+        installed=installed,
+        executor=Executor(
+            MockEnv(),
+            pool,
+            config,
+            NullIO(),
+        ),
+    )
+    if extra is not None:
+        installer.extras([extra])
     result = installer.run()
     assert result == 0
 
-    expected = fixture("with-exclusive-extras")
-    assert locker.written_data == expected
+    # Results of locking are expected and installation are consistent with the 'extra' input
+    if not locked:
+        expected = fixture("with-exclusive-extras")
+        assert locker.written_data == expected
+    assert isinstance(installer.executor, Executor)
+    if extra is None:
+        assert len(installer.executor.installations) == 0
+    else:
+        assert len(installer.executor.installations) == 1
+        version = f"1.11.0+{extra}"
+        source_url = f"https://download.pytorch.org/whl/{extra}"
+        source_reference = f"pytorch-{extra}"
+        assert installer.executor.installations[0] == Package(
+            "torch",
+            version,
+            source_type="legacy",
+            source_url=source_url,
+            source_reference=source_reference,
+        )
 
 
-def test_run_with_dependencies_different_extras(
-    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
+@pytest.mark.parametrize("locked", [True, False])
+@pytest.mark.parametrize("extra", [None, "extra-one", "extra-two"])
+def test_run_with_different_dependency_extras(
+    installer: Installer,
+    pool: RepositoryPool,
+    locker: Locker,
+    installed: CustomInstalledRepository,
+    repo: Repository,
+    config: Config,
+    package: ProjectPackage,
+    extra: str | None,
+    locked: bool
 ) -> None:
-    demo = get_package("demo", "1.0.0")
-    dep_one = get_package("transitive-dep-one", "1.1.0")
-    dep_two = get_package("transitive-dep-two", "1.2.0")
-    demo.extras = {
+    """https://github.com/python-poetry/poetry/issues/834"""
+    # Demo package with two optional transitive dependencies, one for each extra
+    demo_pkg = get_package("demo", "1.0.0")
+    transitive_dep_one = get_package("transitive-dep-one", "1.1.0")
+    transitive_dep_two = get_package("transitive-dep-two", "1.2.0")
+    demo_pkg.extras = {
         canonicalize_name("demo-extra-one"): [get_dependency("transitive-dep-one")],
         canonicalize_name("demo-extra-two"): [get_dependency("transitive-dep-two")],
     }
-    demo.add_dependency(
+    demo_pkg.add_dependency(
         Factory.create_dependency("transitive-dep-one", {"version": "1.1.0", "optional": True})
     )
-    demo.add_dependency(
+    demo_pkg.add_dependency(
         Factory.create_dependency("transitive-dep-two", {"version": "1.2.0", "optional": True})
     )
+    repo.add_package(demo_pkg)
+    repo.add_package(transitive_dep_one)
+    repo.add_package(transitive_dep_two)
 
-    repo.add_package(demo)
-    repo.add_package(dep_one)
-    repo.add_package(dep_two)
-
-    package.add_dependency(Factory.create_dependency(
+    # 'demo' with extra 'one' when package has 'extra-one' extra and with extra 'two' when 'extra-two'
+    extra_one_dep = Factory.create_dependency(
         "demo",
         {
             "version": "1.0.0",
             "markers": "extra == 'extra-one' and extra != 'extra-two'",
-            "extras": ["demo-extra-one"],
-        })
+            "extras": ["demo-extra-one"]
+        },
     )
-    package.add_dependency(Factory.create_dependency(
+    extra_two_dep = Factory.create_dependency(
         "demo",
         {
             "version": "1.0.0",
             "markers": "extra != 'extra-one' and extra == 'extra-two'",
-            "extras": ["demo-extra-two"],
-        })
+            "extras": ["demo-extra-two"]
+        },
     )
+    package.add_dependency(extra_one_dep)
+    package.add_dependency(extra_two_dep)
+    # We don't want to cheat by only including the correct dependency in the 'extra' mapping
+    package.extras = {
+        "extra-one": [extra_one_dep, extra_two_dep],
+        "extra-two": [extra_one_dep, extra_two_dep],
+    }
 
+    locker.locked(locked)
+    if locked:
+        locker.mock_lock_data(dict(fixture("with-dependencies-differing-extras")))
+
+    installer = Installer(
+        NullIO(),
+        MockEnv(),
+        package,
+        locker,
+        pool,
+        config,
+        installed=installed,
+        executor=Executor(
+            MockEnv(),
+            pool,
+            config,
+            NullIO(),
+        ),
+    )
+    if extra is not None:
+        installer.extras([extra])
     result = installer.run()
     assert result == 0
 
-    expected = fixture("with-dependencies-differing-extras")
-    assert locker.written_data == expected
+    if not locked:
+        expected = fixture("with-dependencies-differing-extras")
+        assert locker.written_data == expected
 
+    # Results of installation are consistent with the 'extra' input
+    assert isinstance(installer.executor, Executor)
+    if extra is None:
+        assert len(installer.executor.installations) == 0
+    else:
+        assert len(installer.executor.installations) == 2
 
 @pytest.mark.parametrize("is_locked", [False, True])
 @pytest.mark.parametrize("is_installed", [False, True])
@@ -2613,122 +2737,6 @@ def test_installer_distinguishes_locked_packages_with_local_version_by_source(
     )
 
 
-@pytest.mark.parametrize("extra", [None, "cpu", "cuda"])
-def test_installer_distinguishes_locked_packages_with_local_version_by_extra(
-    pool: RepositoryPool,
-    locker: Locker,
-    installed: CustomInstalledRepository,
-    config: Config,
-    repo: Repository,
-    package: ProjectPackage,
-    extra: str | None,
-) -> None:
-    """https://github.com/python-poetry/poetry/issues/6409; https://github.com/python-poetry/poetry/issues/6419"""
-    # Require 1.11.0+cpu from pytorch for when extra is 'cpu', or 1.11.0+cuda when extra is 'cuda'
-    cpu_dep = Factory.create_dependency(
-            "torch",
-            {
-                "version": "1.11.0+cpu",
-                "markers": "extra == 'cpu' and extra != 'cuda'",
-                "source": "pytorch-cpu",
-            },
-        )
-    cuda_dep = Factory.create_dependency(
-        "torch",
-        {
-            "version": "1.11.0+cuda",
-            "markers": "extra != 'cpu' and extra == 'cuda'",
-            "source": "pytorch-cuda",
-        },
-    )
-    package.add_dependency(cpu_dep)
-    package.add_dependency(cuda_dep)
-    # We don't want to cheat by only including the correct dependency in the 'extra' mapping
-    package.extras = {
-        "cpu": [cpu_dep, cuda_dep],
-        "cuda": [cpu_dep, cuda_dep],
-    }
-
-    # Locking finds packages from each pytorch repository
-    locker.locked(True)
-    locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "torch",
-                    "version": "1.11.0+cpu",
-                    "optional": True,
-                    "files": [],
-                    "python-versions": "*",
-                    "source": {
-                        "type": "legacy",
-                        "url": "https://download.pytorch.org/whl/cpu",
-                        "reference": "pytorch-cpu",
-                    },
-                },
-                {
-                    "name": "torch",
-                    "version": "1.11.0+cuda",
-                    "optional": True,
-                    "files": [],
-                    "python-versions": "*",
-                    "source": {
-                        "type": "legacy",
-                        "url": "https://download.pytorch.org/whl/cuda",
-                        "reference": "pytorch-cuda",
-                    },
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
-                "platform": "*",
-                "content-hash": "123456789",
-            },
-            "extras": {
-                "cpu": ["torch"],
-                "cuda": ["torch"],
-            }
-        }
-    )
-
-    installer = Installer(
-        NullIO(),
-        MockEnv(),
-        package,
-        locker,
-        pool,
-        config,
-        installed=installed,
-        executor=Executor(
-            MockEnv(),
-            pool,
-            config,
-            NullIO(),
-        ),
-    )
-    if extra is not None:
-        installer.extras([extra])
-    result = installer.run()
-    assert result == 0
-
-    # Results of installation are consistent with the 'extra' input
-    assert isinstance(installer.executor, Executor)
-    if extra is None:
-        assert len(installer.executor.installations) == 0
-    else:
-        assert len(installer.executor.installations) == 1
-        version = f"1.11.0+{extra}"
-        source_url = f"https://download.pytorch.org/whl/{extra}"
-        source_reference = f"pytorch-{extra}"
-        assert installer.executor.installations[0] == Package(
-            "torch",
-            version,
-            source_type="legacy",
-            source_url=source_url,
-            source_reference=source_reference,
-        )
-
-
 @pytest.mark.parametrize("env_platform_machine", ["aarch64", "amd64"])
 def test_installer_distinguishes_locked_packages_with_same_version_by_source(
     pool: RepositoryPool,
@@ -2831,74 +2839,6 @@ def test_installer_distinguishes_locked_packages_with_same_version_by_source(
         source_url=source_url,
         source_reference=source_reference,
     )
-
-
-@pytest.mark.parametrize("extra", [None, "extra-one", "extra-two"])
-def test_installer_distinguishes_locked_packages_with_local_version_by_extra(
-    pool: RepositoryPool,
-    locker: Locker,
-    installed: CustomInstalledRepository,
-    config: Config,
-    repo: Repository,
-    package: ProjectPackage,
-    extra: str | None,
-) -> None:
-    """https://github.com/python-poetry/poetry/issues/834"""
-    # 'demo' with extra 'one' when package has 'extra-one' extra and with extra 'two' when 'extra-two'
-    extra_one_dep = Factory.create_dependency(
-            "demo",
-            {
-                "version": "1.0.0",
-                "markers": "extra == 'extra-one' and extra != 'extra-two'",
-                "extras": ["demo-extra-one"]
-            },
-        )
-    extra_two_dep = Factory.create_dependency(
-        "demo",
-        {
-            "version": "1.0.0",
-            "markers": "extra != 'extra-one' and extra == 'extra-two'",
-            "extras": ["demo-extra-two"]
-        },
-    )
-    package.add_dependency(extra_one_dep)
-    package.add_dependency(extra_two_dep)
-    # We don't want to cheat by only including the correct dependency in the 'extra' mapping
-    package.extras = {
-        "extra-one": [extra_one_dep, extra_two_dep],
-        "extra-two": [extra_one_dep, extra_two_dep],
-    }
-
-    # Locking finds packages from extra deps
-    locker.locked(True)
-    locker.mock_lock_data(dict(fixture("with-dependencies-differing-extras")))
-
-    installer = Installer(
-        NullIO(),
-        MockEnv(),
-        package,
-        locker,
-        pool,
-        config,
-        installed=installed,
-        executor=Executor(
-            MockEnv(),
-            pool,
-            config,
-            NullIO(),
-        ),
-    )
-    if extra is not None:
-        installer.extras([extra])
-    result = installer.run()
-    assert result == 0
-
-    # Results of installation are consistent with the 'extra' input
-    assert isinstance(installer.executor, Executor)
-    if extra is None:
-        assert len(installer.executor.installations) == 0
-    else:
-        assert len(installer.executor.installations) == 2
 
 
 @pytest.mark.parametrize("env_platform", ["darwin", "linux"])

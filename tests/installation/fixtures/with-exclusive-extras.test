@@ -6,6 +6,11 @@ optional = true
 python-versions = "*"
 files = []
 
+[package.source]
+reference = "pytorch-cpu"
+type = "legacy"
+url = "https://download.pytorch.org/whl/cpu"
+
 [[package]]
 name = "torch"
 version = "1.11.0+cuda"
@@ -13,6 +18,15 @@ description = ""
 optional = true
 python-versions = "*"
 files = []
+
+[package.source]
+reference = "pytorch-cuda"
+type = "legacy"
+url = "https://download.pytorch.org/whl/cuda"
+
+[extras]
+cpu = ["torch", "torch"]
+cuda = ["torch", "torch"]
 
 [metadata]
 python-versions = "*"
