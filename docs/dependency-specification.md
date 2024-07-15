@@ -473,21 +473,21 @@ dependencies = [
 
 ### `extra` environment marker
 
-Poetry populates the `extra` marker with each of the selected extras for the parent declaring the dependency. For 
+Poetry populates the `extra` marker with each of the selected extras for the parent declaring the dependency. For
 example, consider the following dependency in your root package:
 ```toml
 [tool.poetry.dependencies]
 pathlib2 = { version = "^2.2", markers = "extra == 'paths' and sys_platform == 'win32'", optional = true}
 ```
-`pathlib2` will be installed when you install your package with `--extras paths` on a `win32` machine. 
+`pathlib2` will be installed when you install your package with `--extras paths` on a `win32` machine.
 You'll also need to [define the `paths` extra in your project](./pyproject.md#extras).
 
 #### Exclusive extras
 
-Keep in mind that all combinations of possible extras available in your project need to be compatible with each other. 
-This means that in order to use differing or incompatible versions across different combinations, you need to make your 
-extra markers *exclusive*. For example, the following installs PyTorch from one source repository with CPU versions 
-when the `cuda` extra is *not* specified, while the other installs from another repository with a separate version set 
+Keep in mind that all combinations of possible extras available in your project need to be compatible with each other.
+This means that in order to use differing or incompatible versions across different combinations, you need to make your
+extra markers *exclusive*. For example, the following installs PyTorch from one source repository with CPU versions
+when the `cuda` extra is *not* specified, while the other installs from another repository with a separate version set
 for GPUs when the `cuda` extra *is* specified:
 
 ```toml
@@ -511,11 +511,11 @@ url = "https://download.pytorch.org/whl/cu118"
 priority = "explicit"
 ```
 
-For the CPU case, we have to specify `"extra != 'cuda'"` because the version specified is not compatible with the 
+For the CPU case, we have to specify `"extra != 'cuda'"` because the version specified is not compatible with the
 GPU (`cuda`) version.
 
-This same logic applies when you want either-or extras. If a dependency for `extra-one` and 
-`extra-two` conflict, they will need to be restricted using `markers = "extra == 'extra-one' and extra != 'extra-two'"` 
+This same logic applies when you want either-or extras. If a dependency for `extra-one` and
+`extra-two` conflict, they will need to be restricted using `markers = "extra == 'extra-one' and extra != 'extra-two'"`
 and vice versa.
 
 ## Multiple constraints dependencies
