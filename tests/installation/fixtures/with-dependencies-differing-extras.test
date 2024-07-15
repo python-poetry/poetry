@@ -30,6 +30,10 @@ optional = true
 python-versions = "*"
 files = []
 
+[extras]
+extra-one = ["demo", "demo"]
+extra-two = ["demo", "demo"]
+
 [metadata]
 python-versions = "*"
 lock-version = "2.0"
