@@ -985,7 +985,7 @@ class Provider:
         """
         result = self._env.marker_env.copy() if self._env is not None else {}
         if extras is not None:
-            if "extra" not in result.keys():
+            if "extra" not in result:
                 result["extra"] = set(extras)
             else:
                 result["extra"] = set(result["extra"]).union(extras)
