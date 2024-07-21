@@ -56,7 +56,6 @@ def test_list_displays_default_value_if_not_set(
     expected = f"""cache-dir = {cache_dir}
 experimental.system-git-client = false
 installer.max-workers = null
-installer.modern-installation = true
 installer.no-binary = null
 installer.only-binary = null
 installer.parallel = true
@@ -89,7 +88,6 @@ def test_list_displays_set_get_setting(
     expected = f"""cache-dir = {cache_dir}
 experimental.system-git-client = false
 installer.max-workers = null
-installer.modern-installation = true
 installer.no-binary = null
 installer.only-binary = null
 installer.parallel = true
@@ -143,7 +141,6 @@ def test_unset_setting(
     expected = f"""cache-dir = {cache_dir}
 experimental.system-git-client = false
 installer.max-workers = null
-installer.modern-installation = true
 installer.no-binary = null
 installer.only-binary = null
 installer.parallel = true
@@ -175,7 +172,6 @@ def test_unset_repo_setting(
     expected = f"""cache-dir = {cache_dir}
 experimental.system-git-client = false
 installer.max-workers = null
-installer.modern-installation = true
 installer.no-binary = null
 installer.only-binary = null
 installer.parallel = true
@@ -305,7 +301,6 @@ def test_list_displays_set_get_local_setting(
     expected = f"""cache-dir = {cache_dir}
 experimental.system-git-client = false
 installer.max-workers = null
-installer.modern-installation = true
 installer.no-binary = null
 installer.only-binary = null
 installer.parallel = true
@@ -345,7 +340,6 @@ def test_list_must_not_display_sources_from_pyproject_toml(
     expected = f"""cache-dir = {cache_dir}
 experimental.system-git-client = false
 installer.max-workers = null
-installer.modern-installation = true
 installer.no-binary = null
 installer.only-binary = null
 installer.parallel = true
