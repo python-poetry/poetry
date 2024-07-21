@@ -225,7 +225,7 @@ def test_respect_prefer_active_on_new(
 
     expected = f"""\
 [tool.poetry.dependencies]
-python = "^{python}"
+python = ">={python}"
 """
 
     assert expected in pyproject_file.read_text()

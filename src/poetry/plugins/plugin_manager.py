@@ -73,7 +73,7 @@ class PluginManager:
     def _load_plugin_entry_point(self, ep: metadata.EntryPoint) -> None:
         logger.debug("Loading the %s plugin", ep.name)
 
-        plugin = ep.load()  # type: ignore[no-untyped-call]
+        plugin = ep.load()
 
         if not issubclass(plugin, (Plugin, ApplicationPlugin)):
             raise ValueError(

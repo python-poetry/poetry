@@ -18,7 +18,6 @@ from poetry.core.constraints.version import Version
 from poetry.core.constraints.version import parse_constraint
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
-from poetry.core.version.markers import parse_marker
 from poetry.core.version.requirements import InvalidRequirement
 from tomlkit import array
 from tomlkit import comment
@@ -205,22 +204,6 @@ class Locker:
 
             package.extras = package_extras
 
-            if "marker" in info:
-                package.marker = parse_marker(info["marker"])
-            else:
-                # Compatibility for old locks
-                if "requirements" in info:
-                    dep = Dependency("foo", "0.0.0")
-                    for name, value in info["requirements"].items():
-                        if name == "python":
-                            dep.python_versions = value
-                        elif name == "platform":
-                            dep.platform = value
-
-                    split_dep = dep.to_pep_508(False).split(";")
-                    if len(split_dep) > 1:
-                        package.marker = parse_marker(split_dep[1].strip())
-
             for dep_name, constraint in info.get("dependencies", {}).items():
                 root_dir = self.lock.parent
                 if package.source_type == "directory":
@@ -348,7 +331,12 @@ class Locker:
             )
 
         metadata = lock_data["metadata"]
-        lock_version = Version.parse(metadata.get("lock-version", "1.0"))
+        if "lock-version" not in metadata:
+            raise RuntimeError(
+                "The lock file is not compatible with the current version of Poetry.\n"
+                "Regenerate the lock file with the `poetry lock` command."
+            )
+        lock_version = Version.parse(metadata["lock-version"])
         current_version = Version.parse(self._VERSION)
         accepted_versions = parse_constraint(self._READ_VERSION_RANGE)
         lock_version_allowed = accepted_versions.allows(lock_version)

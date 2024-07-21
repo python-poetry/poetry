@@ -173,7 +173,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         if not python:
             config = Config.create()
             python = (
-                "^"
+                ">="
                 + EnvManager.get_python_version(
                     precision=2,
                     prefer_active_python=config.get("virtualenvs.prefer-active-python"),

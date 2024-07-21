@@ -62,7 +62,7 @@ def installed_results(
         metadata.PathDistribution(src_dir / "pendulum" / "pendulum.egg-info"),
         metadata.PathDistribution(
             zipfile.Path(  # type: ignore[arg-type]
-                str(site_purelib / "foo-0.1.0-py3.8.egg"),
+                site_purelib / "foo-0.1.0-py3.8.egg",
                 "EGG-INFO",
             )
         ),

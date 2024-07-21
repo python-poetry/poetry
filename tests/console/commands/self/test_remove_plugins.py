@@ -48,14 +48,13 @@ def install_plugin(installed: Repository) -> None:
                 "optional": False,
                 "platform": "*",
                 "python-versions": "*",
-                "checksum": [],
+                "files": [],
             },
         ],
         "metadata": {
+            "lock-version": "2.0",
             "python-versions": "^3.6",
-            "platform": "*",
             "content-hash": "123456789",
-            "files": {"poetry-plugin": []},
         },
     }
     system_pyproject_file.parent.joinpath("poetry.lock").write_text(
