@@ -6,6 +6,8 @@ import itertools
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Literal
+from typing import overload
 
 from poetry.utils._compat import metadata
 from poetry.utils.helpers import is_dir_writable
@@ -153,6 +155,28 @@ class SitePackages:
 
         return paths
 
+    @overload
+    def _path_method_wrapper(
+        self,
+        path: Path,
+        method: str,
+        *args: Any,
+        return_first: Literal[False],
+        writable_only: bool = False,
+        **kwargs: Any,
+    ) -> list[tuple[Path, Any]]: ...
+
+    @overload
+    def _path_method_wrapper(
+        self,
+        path: Path,
+        method: str,
+        *args: Any,
+        return_first: bool = True,
+        writable_only: bool = False,
+        **kwargs: Any,
+    ) -> tuple[Path, Any]: ...
+
     def _path_method_wrapper(
         self,
         path: Path,
@@ -181,13 +205,15 @@ class SitePackages:
         raise OSError(f"Unable to access any of {paths_csv(candidates)}")
 
     def write_text(self, path: Path, *args: Any, **kwargs: Any) -> Path:
-        paths = self._path_method_wrapper(path, "write_text", *args, **kwargs)
-        assert isinstance(paths, tuple)
+        paths: tuple[Path, Any] = self._path_method_wrapper(
+            path, "write_text", *args, **kwargs
+        )
         return paths[0]
 
     def mkdir(self, path: Path, *args: Any, **kwargs: Any) -> Path:
-        paths = self._path_method_wrapper(path, "mkdir", *args, **kwargs)
-        assert isinstance(paths, tuple)
+        paths: tuple[Path, Any] = self._path_method_wrapper(
+            path, "mkdir", *args, **kwargs
+        )
         return paths[0]
 
     def exists(self, path: Path) -> bool:
