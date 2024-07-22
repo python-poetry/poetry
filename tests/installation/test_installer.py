@@ -100,6 +100,7 @@ class Locker(BaseLocker):
         self._fresh = True
         self._lock_data = None
         self._content_hash = self._get_content_hash()
+        self._contains_credential = False
 
     @property
     def written_data(self) -> dict[str, Any]:

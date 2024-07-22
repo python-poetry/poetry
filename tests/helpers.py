@@ -182,6 +182,7 @@ class TestLocker(Locker):
         super().__init__(lock, pyproject_data)
         self._locked = False
         self._write = False
+        self._contains_credential = False
 
     def write(self, write: bool = True) -> None:
         self._write = write
