@@ -375,6 +375,15 @@ Here, we will have the `my_package_cli` script installed which will execute the 
 When a script is added or updated, run `poetry install` to make them available in the project's virtualenv.
 {{% /note %}}
 
+```toml
+[tool.poetry.scripts]
+my_executable = { reference = "some_binary.exe", type = "file" }
+```
+
+With this configuration, the file `some_binary.exe` is looked for in the directory of the active `pyproject.toml` and copied into the installation folder.
+On Windows, the `.exe` extension is added to the file and the file will be placed in the `Scripts/` directory.
+On Linux no extension is added and the destination is `bin/`.
+
 ## `extras`
 
 Poetry supports extras to allow expression of:
