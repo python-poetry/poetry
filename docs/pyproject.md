@@ -737,7 +737,17 @@ Here, we will have the `my_package_cli` script installed which will execute the 
 When a script is added or updated, run `poetry install` to make them available in the project's virtualenv.
 {{% /note %}}
 
-### extras
+```toml
+[tool.poetry.scripts]
+my_executable = { reference = "some_binary.exe", type = "file" }
+```
+
+With this configuration, Poetry will look for the referenced file in the active project and then copy it to the OS installation directory.
+
+* On Windows the file is placed in the `Scripts/` directory.
+* On *nix system the file is placed in the `bin/` directory.
+
+## `extras`
 
 **Deprecated**: Use `project.optional-dependencies` instead.
 
