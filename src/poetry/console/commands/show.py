@@ -307,7 +307,8 @@ lists all packages available."""
                     )
 
         if self.option("no-truncate"):
-            write_version = write_latest = write_why = write_description = True
+            write_version = write_latest = write_description = True
+            write_why = self.option("why")
         else:
             write_version = name_length + version_length + 3 <= width
             write_latest = name_length + version_length + latest_length + 3 <= width
