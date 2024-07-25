@@ -64,6 +64,11 @@ class ShowCommand(GroupCommand, EnvCommand):
             "Show all packages (even those not compatible with current system).",
         ),
         option("top-level", "T", "Show only top-level dependencies."),
+        option(
+            "no-truncate",
+            None,
+            "Do not truncate the output based on the terminal width.",
+        ),
     ]
 
     help = """The show command displays detailed information about a package, or
@@ -301,14 +306,17 @@ lists all packages available."""
                         required_by_length, len(" from " + ",".join(required_by.keys()))
                     )
 
-        write_version = name_length + version_length + 3 <= width
-        write_latest = name_length + version_length + latest_length + 3 <= width
+        if self.option("no-truncate"):
+            write_version = write_latest = write_why = write_description = True
+        else:
+            write_version = name_length + version_length + 3 <= width
+            write_latest = name_length + version_length + latest_length + 3 <= width
 
-        why_end_column = (
-            name_length + version_length + latest_length + required_by_length
-        )
-        write_why = self.option("why") and (why_end_column + 3) <= width
-        write_description = (why_end_column + 24) <= width
+            why_end_column = (
+                name_length + version_length + latest_length + required_by_length
+            )
+            write_why = self.option("why") and (why_end_column + 3) <= width
+            write_description = (why_end_column + 24) <= width
 
         requires = root.all_requires
 
@@ -386,7 +394,9 @@ lists all packages available."""
                 if show_latest:
                     remaining -= latest_length
 
-                if len(locked.description) > remaining:
+                if len(locked.description) > remaining and not self.option(
+                    "no-truncate"
+                ):
                     description = description[: remaining - 3] + "..."
 
                 line += " " + description
