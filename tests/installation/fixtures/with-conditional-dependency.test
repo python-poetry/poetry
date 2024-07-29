@@ -4,6 +4,7 @@ version = "1.0.0"
 description = ""
 optional = false
 python-versions = ">=3.5"
+groups = ["main"]
 files = []
 
 [package.requirements]
@@ -15,6 +16,7 @@ version = "1.0.1"
 description = ""
 optional = false
 python-versions = ">=3.6"
+groups = ["main"]
 files = []
 
 [package.requirements]
@@ -22,5 +24,5 @@ python = ">=3.6,<4.0"
 
 [metadata]
 python-versions = "~2.7 || ^3.4"
-lock-version = "2.0"
+lock-version = "2.1"
 content-hash = "123456789"
