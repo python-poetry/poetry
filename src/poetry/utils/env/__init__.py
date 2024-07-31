@@ -67,7 +67,7 @@ def build_environment(
     if not env or poetry.package.build_script:
         with ephemeral_environment(
             executable=env.python if env else None,
-            flags={"no-pip": True, "no-setuptools": True, "no-wheel": True},
+            flags={"no-pip": True},
         ) as venv:
             if io:
                 requires = [
