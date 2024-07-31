@@ -456,7 +456,7 @@ about dependency groups.
 * `--dev (-D)`: Add package as development dependency. (**Deprecated**, use `-G dev` instead)
 * `--editable (-e)`: Add vcs/path dependencies as editable.
 * `--extras (-E)`: Extras to activate for the dependency. (multiple values allowed)
-* `--optional`: Add as an optional dependency.
+* `--optional`: Add as an optional dependency to an extra.
 * `--python`: Python version for which the dependency must be installed.
 * `--platform`: Platforms for which the dependency must be installed.
 * `--source`: Name of the source to use to install the package.
