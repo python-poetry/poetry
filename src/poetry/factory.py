@@ -10,9 +10,12 @@ from typing import cast
 
 from cleo.io.null_io import NullIO
 from packaging.utils import canonicalize_name
+from poetry.core.constraints.version import Version
+from poetry.core.constraints.version import parse_constraint
 from poetry.core.factory import Factory as BaseFactory
 from poetry.core.packages.dependency_group import MAIN_GROUP
 
+from poetry.__version__ import __version__
 from poetry.config.config import Config
 from poetry.exceptions import PoetryException
 from poetry.json import validate_object
@@ -55,6 +58,15 @@ class Factory(BaseFactory):
             io = NullIO()
 
         base_poetry = super().create_poetry(cwd=cwd, with_groups=with_groups)
+
+        if version_str := base_poetry.pyproject.poetry_config.get("requires-poetry"):
+            version_constraint = parse_constraint(version_str)
+            version = Version.parse(__version__)
+            if not version_constraint.allows(version):
+                raise PoetryException(
+                    f"This project requires Poetry {version_constraint},"
+                    f" but you are using Poetry {version}"
+                )
 
         poetry_file = base_poetry.pyproject_path
         locker = Locker(poetry_file.parent / "poetry.lock", base_poetry.pyproject.data)
@@ -99,9 +111,10 @@ class Factory(BaseFactory):
             )
         )
 
-        plugin_manager = PluginManager(Plugin.group, disable_plugins=disable_plugins)
-        plugin_manager.load_plugins()
-        plugin_manager.activate(poetry, io)
+        if not disable_plugins:
+            plugin_manager = PluginManager(Plugin.group)
+            plugin_manager.load_plugins()
+            plugin_manager.activate(poetry, io)
 
         return poetry
 

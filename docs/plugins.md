@@ -255,6 +255,28 @@ You can also list all currently installed plugins by running:
 poetry self show plugins
 ```
 
+### Project plugins
+
+You can also specify that a plugin is required for your project
+in the `tool.poetry.requires-plugins` section of the pyproject.toml file:
+
+```toml
+[tool.poetry.requires-plugins]
+my-application-plugin = ">1.0"
+```
+
+If the plugin is not installed in Poetry's own environment when running `poetry install`,
+it will be installed only for the current project under `.poetry/plugins`
+in the project's directory.
+
+The syntax to specify `plugins` is the same as for [dependencies]({{< relref "managing-dependencies" >}}).
+
+{{% warning %}}
+You can even overwrite a plugin in Poetry's own environment with another version.
+However, if a plugin's dependencies are not compatible with packages in Poetry's own
+environment, installation will fail.
+{{% /warning %}}
+
 
 ## Maintaining a plugin
 

@@ -4,7 +4,9 @@ import logging
 import re
 
 from contextlib import suppress
+from functools import cached_property
 from importlib import import_module
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import cast
 
@@ -111,20 +113,13 @@ class Application(BaseApplication):
 
     @property
     def poetry(self) -> Poetry:
-        from pathlib import Path
-
         from poetry.factory import Factory
 
         if self._poetry is not None:
             return self._poetry
 
-        project_path = Path.cwd()
-
-        if self._io and self._io.input.option("directory"):
-            project_path = Path(self._io.input.option("directory")).absolute()
-
         self._poetry = Factory().create_poetry(
-            cwd=project_path,
+            cwd=self._directory,
             io=self._io,
             disable_plugins=self._disable_plugins,
             disable_cache=self._disable_cache,
@@ -340,6 +335,7 @@ class Application(BaseApplication):
             from poetry.plugins.application_plugin import ApplicationPlugin
             from poetry.plugins.plugin_manager import PluginManager
 
+            PluginManager.add_project_plugin_path(self._directory)
             manager = PluginManager(ApplicationPlugin.group)
             manager.load_plugins()
             manager.activate(self)
@@ -381,6 +377,12 @@ class Application(BaseApplication):
         )
 
         return definition
+
+    @cached_property
+    def _directory(self) -> Path:
+        if self._io and self._io.input.option("directory"):
+            return Path(self._io.input.option("directory")).absolute()
+        return Path.cwd()
 
 
 def main() -> int:
