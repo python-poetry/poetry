@@ -243,7 +243,7 @@ def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
     pip_install.assert_called_once_with(
         extended_poetry.pyproject.file.path.parent, env, upgrade=True, editable=True
     )
-    assert [] == env.executed
+    assert env.executed == []
 
 
 @pytest.mark.network

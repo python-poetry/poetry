@@ -3,7 +3,7 @@ ci:
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v4.6.0
     hooks:
       - id: trailing-whitespace
         exclude: tests/repositories/fixtures/pypi.org/metadata/.*\.metadata
@@ -22,12 +22,12 @@ repos:
       - id: check-docstring-first
 
   - repo: https://github.com/pre-commit/pre-commit
-    rev: v3.6.2
+    rev: v3.7.1
     hooks:
       - id: validate_manifest
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.3.3
+    rev: v0.5.4
     hooks:
       - id: ruff
       - id: ruff-format
