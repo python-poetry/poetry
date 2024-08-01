@@ -136,7 +136,7 @@ class VirtualEnv(Env):
         return pyvenv_cfg.exists() and (
             re.search(
                 r"^\s*include-system-site-packages\s*=\s*true\s*$",
-                pyvenv_cfg.read_text(),
+                pyvenv_cfg.read_text(encoding="utf-8"),
                 re.IGNORECASE | re.MULTILINE,
             )
             is not None

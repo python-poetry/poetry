@@ -45,7 +45,7 @@ def test_self_install(
     assert isinstance(command, SelfInstallCommand)
     pyproject_path = command.system_pyproject
     if pyproject_content:
-        pyproject_path.write_text(pyproject_content)
+        pyproject_path.write_text(pyproject_content, encoding="utf-8")
     else:
         assert not pyproject_path.exists()
 

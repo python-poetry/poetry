@@ -228,7 +228,7 @@ def test_respect_prefer_active_on_new(
 python = ">={python}"
 """
 
-    assert expected in pyproject_file.read_text()
+    assert expected in pyproject_file.read_text(encoding="utf-8")
 
 
 def test_basic_interactive_new(
