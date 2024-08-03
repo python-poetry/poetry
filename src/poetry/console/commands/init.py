@@ -459,7 +459,8 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             # TODO: find similar
             raise ValueError(f"Could not find a matching version of package {name}")
 
-        return package.pretty_name, f"^{package.version.to_string()}"
+        version = package.version.without_local()
+        return package.pretty_name, f"^{version.to_string()}"
 
     def _parse_requirements(self, requirements: list[str]) -> list[dict[str, Any]]:
         from poetry.core.pyproject.exceptions import PyProjectException
