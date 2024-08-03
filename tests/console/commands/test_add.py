@@ -103,6 +103,7 @@ def repo_add_default_packages(repo: TestRepository) -> None:
     repo.add_package(get_package("tomlkit", "0.5.5"))
     repo.add_package(get_package("pyyaml", "3.13"))
     repo.add_package(get_package("pyyaml", "4.2b2"))
+    repo.add_package(get_package("torch", "2.4.0+cpu"))
 
 
 def test_add_no_constraint(app: PoetryTestApplication, tester: CommandTester) -> None:
@@ -131,6 +132,33 @@ Writing lock file
 
     assert "cachy" in content["dependencies"]
     assert content["dependencies"]["cachy"] == "^0.2.0"
+
+
+def test_add_local_version(app: PoetryTestApplication, tester: CommandTester) -> None:
+    tester.execute("torch")
+
+    expected = """\
+Using version ^2.4.0 for torch
+
+Updating dependencies
+Resolving dependencies...
+
+Package operations: 1 install, 0 updates, 0 removals
+
+  - Installing torch (2.4.0+cpu)
+
+Writing lock file
+"""
+
+    assert tester.io.fetch_output() == expected
+    assert isinstance(tester.command, InstallerCommand)
+    assert tester.command.installer.executor.installations_count == 1
+
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    content = pyproject["tool"]["poetry"]
+
+    assert "torch" in content["dependencies"]
+    assert content["dependencies"]["torch"] == "^2.4.0"
 
 
 def test_add_non_package_mode_no_name(
