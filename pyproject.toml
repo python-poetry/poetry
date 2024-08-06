@@ -193,13 +193,14 @@ ignore_missing_imports = true
 
 
 [tool.pytest.ini_options]
-addopts = "-n logical"
+addopts = [ "-n logical", "--strict-config" ]
 testpaths = ["tests"]
 markers = [
     "network: mark tests that require internet access",
 ]
 log_cli_level = "INFO"
 xfail_strict = true
+
 
 [tool.coverage.report]
 exclude_also = [
