@@ -153,7 +153,6 @@ files = "src, tests"
 mypy_path = "src"
 namespace_packages = true
 explicit_package_bases = true
-show_error_codes = true
 strict = true
 enable_error_code = [
     "ignore-without-code",
