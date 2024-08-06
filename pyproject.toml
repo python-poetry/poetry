@@ -199,6 +199,7 @@ markers = [
     "network: mark tests that require internet access",
 ]
 log_cli_level = "INFO"
+xfail_strict = true
 
 [tool.coverage.report]
 exclude_also = [
