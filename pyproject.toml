@@ -198,7 +198,7 @@ testpaths = ["tests"]
 markers = [
     "network: mark tests that require internet access",
 ]
-
+log_cli_level = "INFO"
 
 [tool.coverage.report]
 exclude_also = [
