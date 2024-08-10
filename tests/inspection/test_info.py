@@ -12,7 +12,7 @@ import pytest
 from build import BuildBackendException
 from build import ProjectBuilder
 from packaging.metadata import parse_email
-from pkginfo.distribution import NewMetadataVersion  # type: ignore[attr-defined]
+from pkginfo.distribution import NewMetadataVersion
 
 from poetry.inspection.info import PackageInfo
 from poetry.inspection.info import PackageInfoError

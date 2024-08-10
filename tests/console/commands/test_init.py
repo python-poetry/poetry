@@ -216,7 +216,7 @@ authors = ["Your Name <you@example.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^{python}"
+python = ">={python}"
 """
     assert expected in tester.io.fetch_output()
 
@@ -1066,7 +1066,7 @@ def test_respect_prefer_active_on_init(
 
     expected = f"""\
 [tool.poetry.dependencies]
-python = "^{python}"
+python = ">={python}"
 """
 
     assert expected in pyproject_file.read_text()
