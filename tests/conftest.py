@@ -19,6 +19,7 @@ import pytest
 from jaraco.classes import properties
 from keyring.backend import KeyringBackend
 from keyring.backends.fail import Keyring as FailKeyring
+from keyring.credentials import SimpleCredential
 from keyring.errors import KeyringError
 from keyring.errors import KeyringLocked
 
@@ -51,6 +52,7 @@ if TYPE_CHECKING:
     from _pytest.config import Config as PyTestConfig
     from _pytest.config.argparsing import Parser
     from _pytest.tmpdir import TempPathFactory
+    from keyring.credentials import Credential
     from pytest_mock import MockerFixture
 
     from poetry.poetry import Poetry
@@ -110,24 +112,42 @@ class Config(BaseConfig):
 
 class DummyBackend(KeyringBackend):
     def __init__(self) -> None:
-        self._passwords: dict[str, dict[str | None, str | None]] = {}
+        self._passwords: dict[str, dict[str, str]] = {}
+        self._service_defaults: dict[str, Credential] = {}
 
     @properties.classproperty
     def priority(self) -> float:
         return 42
 
-    def set_password(self, service: str, username: str | None, password: Any) -> None:
+    def set_password(self, service: str, username: str, password: str) -> None:
         self._passwords[service] = {username: password}
 
-    def get_password(self, service: str, username: str | None) -> Any:
+    def get_password(self, service: str, username: str) -> str | None:
         return self._passwords.get(service, {}).get(username)
 
-    def get_credential(self, service: str, username: str | None) -> Any:
-        return self._passwords.get(service, {}).get(username)
+    def get_credential(
+        self,
+        service: str,
+        username: str | None,
+    ) -> Credential | None:
+        if username is None:
+            credential = self._service_defaults.get(service)
+            return credential
 
-    def delete_password(self, service: str, username: str | None) -> None:
+        password = self.get_password(service, username)
+        if password is None:
+            return None
+
+        return SimpleCredential(username, password)  # type: ignore[no-untyped-call]
+
+    def delete_password(self, service: str, username: str) -> None:
         if service in self._passwords and username in self._passwords[service]:
             del self._passwords[service][username]
+
+    def set_default_service_credential(
+        self, service: str, credential: Credential
+    ) -> None:
+        self._service_defaults[service] = credential
 
 
 class LockedBackend(KeyringBackend):
@@ -135,16 +155,20 @@ class LockedBackend(KeyringBackend):
     def priority(self) -> float:
         return 42
 
-    def set_password(self, service: str, username: str | None, password: Any) -> None:
+    def set_password(self, service: str, username: str, password: str) -> None:
         raise KeyringLocked()
 
-    def get_password(self, service: str, username: str | None) -> Any:
+    def get_password(self, service: str, username: str) -> str | None:
         raise KeyringLocked()
 
-    def get_credential(self, service: str, username: str | None) -> Any:
+    def get_credential(
+        self,
+        service: str,
+        username: str | None,
+    ) -> Credential | None:
         raise KeyringLocked()
 
-    def delete_password(self, service: str, username: str | None) -> None:
+    def delete_password(self, service: str, username: str) -> None:
         raise KeyringLocked()
 
 
@@ -153,7 +177,11 @@ class ErroneousBackend(FailKeyring):
     def priority(self) -> float:
         return 42
 
-    def get_credential(self, service: str, username: str | None) -> Any:
+    def get_credential(
+        self,
+        service: str,
+        username: str | None,
+    ) -> Credential | None:
         raise KeyringError()
 
 
