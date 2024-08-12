@@ -199,6 +199,7 @@ markers = [
 ]
 log_cli_level = "INFO"
 xfail_strict = true
+filterwarnings = ["error"]
 
 
 [tool.coverage.report]
