@@ -51,6 +51,7 @@ class Layout:
         python: str = "*",
         dependencies: Mapping[str, str | Mapping[str, Any]] | None = None,
         dev_dependencies: Mapping[str, str | Mapping[str, Any]] | None = None,
+        package_mode: bool = True,
     ) -> None:
         self._project = canonicalize_name(project)
         self._package_path_relative = Path(
@@ -64,6 +65,7 @@ class Layout:
 
         self._license = license
         self._python = python
+        self._package_mode = package_mode
         self._dependencies = dependencies or {}
         self._dev_dependencies = dev_dependencies or {}
 
@@ -134,6 +136,10 @@ class Layout:
             poetry_content.remove("license")
 
         poetry_content["readme"] = f"README.{self._readme_format}"
+
+        if not self._package_mode:
+            poetry_content["package-mode"] = self._package_mode
+
         packages = self.get_package_include()
         if packages:
             poetry_content["packages"].append(packages)

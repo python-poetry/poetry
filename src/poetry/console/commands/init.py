@@ -57,6 +57,13 @@ class InitCommand(Command):
             multiple=True,
         ),
         option("license", "l", "License of the package.", flag=False),
+        option(
+            "package-mode",
+            None,
+            "Operating mode of the project.",
+            flag=False,
+            default="true",
+        ),
     ]
 
     help = """\
@@ -144,6 +151,8 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                 f"Version [<comment>{version}</comment>]: ", default=version
             )
             version = self.ask(question)
+
+        package_mode = self.option("package-mode", default="true").lower() != "false"
 
         description = self.option("description") or ""
         if not description and is_interactive:
@@ -248,6 +257,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             python=python,
             dependencies=requirements,
             dev_dependencies=dev_requirements,
+            package_mode=package_mode,
         )
 
         create_layout = not project_path.exists()

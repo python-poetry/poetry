@@ -116,6 +116,10 @@ Therefore, it is not possible to build a distribution or publish the project to 
 Further, when running `poetry install`, Poetry does not try to install the project itself,
 but only its dependencies (same as `poetry install --no-root`).
 
+
+You can also create a new project or 'initialise' a pre-populated directory in **non-package mode**
+using the option `--package-mode false` when running `poetry new` or `poetry init` commands
+
 {{% note %}}
 In the [pyproject section]({{< relref "pyproject" >}}) you can see which fields are required in package mode.
 {{% /note %}}
