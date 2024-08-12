@@ -205,3 +205,22 @@ xfail_strict = true
 exclude_also = [
     "if TYPE_CHECKING:"
 ]
+
+
+[tool.repo-review]
+ignore = [
+    "PY007",
+    "PP302",
+    "PP309",
+    "GH101",
+    "GH212",
+    "PC111",
+    "PC140",
+    "PC160",
+    "PC170",
+    "PC180",
+    "PC180",
+    "PC901",
+    "MY103",
+    "RTD100",
+]

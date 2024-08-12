@@ -31,3 +31,8 @@ repos:
     hooks:
       - id: ruff
       - id: ruff-format
+
+  - repo: https://github.com/scientific-python/cookie
+    rev: 2024.04.23
+    hooks:
+      - id: sp-repo-review
