@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import os
 
-from tests.helpers import flatten_dict, isolated_environment
+from tests.helpers import flatten_dict
+from tests.helpers import isolated_environment
 
 
 def test_flatten_dict() -> None:
