@@ -13,6 +13,7 @@ import pytest
 
 from cleo.testers.command_tester import CommandTester
 from packaging.utils import canonicalize_name
+from poetry.core.utils.helpers import module_name
 
 from poetry.console.application import Application
 from poetry.console.commands.init import InitCommand
@@ -86,7 +87,6 @@ description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -169,7 +169,6 @@ description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -218,7 +217,6 @@ description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -249,7 +247,6 @@ version = "1.2.3"
 description = ""
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
-packages = [{{include = "my_package"}}]
 
 [tool.poetry.dependencies]
 python = "^{python}"
@@ -290,7 +287,6 @@ description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -383,7 +379,6 @@ description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -429,7 +424,6 @@ description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -481,7 +475,6 @@ description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -532,7 +525,6 @@ description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -584,7 +576,6 @@ description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -629,7 +620,6 @@ description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -664,7 +654,6 @@ description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -697,7 +686,6 @@ description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -739,7 +727,6 @@ description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -775,7 +762,6 @@ description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -819,7 +805,6 @@ description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -868,7 +853,6 @@ description = "This is a description"
 authors = ["Foo Bar <foo@example.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -963,7 +947,6 @@ version = "0.1.0"
 description = ""
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
-packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "^3.6"
@@ -1047,7 +1030,9 @@ def test_package_include(
         ),
     )
 
-    packages = "" if include is None else f'packages = [{{include = "{include}"}}]\n'
+    packages = ""
+    if include and module_name(package_name) != include:
+        packages = f'packages = [{{include = "{include}"}}]\n'
 
     expected = (
         f"[tool.poetry]\n"
