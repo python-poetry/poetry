@@ -153,7 +153,6 @@ files = "src, tests"
 mypy_path = "src"
 namespace_packages = true
 explicit_package_bases = true
-show_error_codes = true
 strict = true
 enable_error_code = [
     "ignore-without-code",
@@ -193,14 +192,35 @@ ignore_missing_imports = true
 
 
 [tool.pytest.ini_options]
-addopts = "-n logical"
+addopts = [ "-n", "logical", "-ra", "--strict-config", "--strict-markers" ]
 testpaths = ["tests"]
 markers = [
     "network: mark tests that require internet access",
 ]
+log_cli_level = "INFO"
+xfail_strict = true
 
 
 [tool.coverage.report]
 exclude_also = [
     "if TYPE_CHECKING:"
+]
+
+
+[tool.repo-review]
+ignore = [
+    "PY007",
+    "PP302",
+    "PP309",
+    "GH101",
+    "GH212",
+    "PC111",
+    "PC140",
+    "PC160",
+    "PC170",
+    "PC180",
+    "PC180",
+    "PC901",
+    "MY103",
+    "RTD100",
 ]
