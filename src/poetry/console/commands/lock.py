@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from cleo.helpers import option
 
 from poetry.console.commands.installer_command import InstallerCommand
-from poetry.installation.installer import Strategy
+from poetry.installation import Strategy
 
 if TYPE_CHECKING:
     from cleo.io.inputs.option import Option

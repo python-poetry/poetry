@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from enum import Enum
 from typing import TYPE_CHECKING
 from typing import cast
 
@@ -10,6 +9,7 @@ from packaging.utils import canonicalize_name
 from poetry.installation.executor import Executor
 from poetry.installation.operations import Uninstall
 from poetry.installation.operations import Update
+from poetry.installation.strategy import Strategy
 from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
 from poetry.repositories.installed_repository import InstalledRepository
@@ -26,18 +26,6 @@ if TYPE_CHECKING:
     from poetry.installation.operations.operation import Operation
     from poetry.packages import Locker
     from poetry.utils.env import Env
-
-
-class Strategy(Enum):
-    LATEST = "latest"
-    LOWEST = "lowest"
-
-    @classmethod
-    def is_using_lowest(cls, other: Strategy | str) -> bool:
-        if isinstance(other, cls):
-            return other == cls.LOWEST
-        else:
-            return other == "lowest"
 
 
 class Installer:
