@@ -1,6 +1,6 @@
-from enum import Enum
+from __future__ import annotations
 
-from typing_extensions import Self
+from enum import Enum
 
 
 class Strategy(Enum):
@@ -8,7 +8,7 @@ class Strategy(Enum):
     LOWEST = "lowest"
 
     @classmethod
-    def is_using_lowest(cls, other: Self | str) -> bool:
+    def is_using_lowest(cls, other: Strategy | str) -> bool:
         if isinstance(other, cls):
             return other == cls.LOWEST
         else:

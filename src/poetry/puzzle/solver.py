@@ -51,7 +51,12 @@ class Solver:
         self._lowest = use_lowest
 
         self._provider = Provider(
-            self._package, self._pool, self._io, installed=installed, locked=locked, use_lowest=self._lowest
+            self._package,
+            self._pool,
+            self._io,
+            installed=installed,
+            locked=locked,
+            use_lowest=self._lowest,
         )
         self._overrides: list[dict[Package, dict[str, Dependency]]] = []
 

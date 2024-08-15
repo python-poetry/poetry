@@ -15,6 +15,7 @@ from poetry.repositories import RepositoryPool
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.repositories.lockfile_repository import LockfileRepository
 
+
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
@@ -30,17 +31,17 @@ if TYPE_CHECKING:
 
 class Installer:
     def __init__(
-            self,
-            io: IO,
-            env: Env,
-            package: ProjectPackage,
-            locker: Locker,
-            pool: RepositoryPool,
-            config: Config,
-            installed: Repository | None = None,
-            executor: Executor | None = None,
-            disable_cache: bool = False,
-            strategy: Strategy = Strategy.LATEST,
+        self,
+        io: IO,
+        env: Env,
+        package: ProjectPackage,
+        locker: Locker,
+        pool: RepositoryPool,
+        config: Config,
+        installed: Repository | None = None,
+        executor: Executor | None = None,
+        disable_cache: bool = False,
+        strategy: Strategy = Strategy.LATEST,
     ) -> None:
         self._io = io
         self._env = env
@@ -112,7 +113,7 @@ class Installer:
         return self._dry_run
 
     def requires_synchronization(
-            self, requires_synchronization: bool = True
+        self, requires_synchronization: bool = True
     ) -> Installer:
         self._requires_synchronization = requires_synchronization
 
@@ -186,7 +187,7 @@ class Installer:
             locked_repository.packages,
             locked_repository.packages,
             self._io,
-            Strategy.is_using_lowest(self.strategy)
+            Strategy.is_using_lowest(self.strategy),
         )
 
         # Always re-solve directory dependencies, otherwise we can't determine
@@ -196,7 +197,7 @@ class Installer:
         ]
 
         with solver.provider.use_source_root(
-                source_root=self._env.path.joinpath("src")
+            source_root=self._env.path.joinpath("src")
         ):
             ops = solver.solve(use_latest=use_latest).calculate_operations()
 
@@ -237,7 +238,7 @@ class Installer:
             )
 
             with solver.provider.use_source_root(
-                    source_root=self._env.path.joinpath("src")
+                source_root=self._env.path.joinpath("src")
             ):
                 ops = solver.solve(use_latest=self._whitelist).calculate_operations()
 
@@ -308,7 +309,7 @@ class Installer:
         for op in ops:
             dep = op.package.to_dependency()
             if dep.is_file() or dep.is_directory():
-                dep = cast("PathDependency", dep)
+                dep = cast("PathDependency", dep)  # noqa: F821
                 dep.validate(raise_error=not op.skipped)
 
         # Execute operations
@@ -332,7 +333,7 @@ class Installer:
         return self._executor.execute(operations)
 
     def _populate_lockfile_repo(
-            self, repo: LockfileRepository, ops: Iterable[Operation]
+        self, repo: LockfileRepository, ops: Iterable[Operation]
     ) -> None:
         for op in ops:
             if isinstance(op, Uninstall):

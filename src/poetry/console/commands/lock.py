@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from typing import ClassVar
 from typing import TYPE_CHECKING
+from typing import ClassVar
 
 from cleo.helpers import option
 
 from poetry.console.commands.installer_command import InstallerCommand
 from poetry.installation import Strategy
+
 
 if TYPE_CHECKING:
     from cleo.io.inputs.option import Option
@@ -28,9 +29,13 @@ class LockCommand(InstallerCommand):
             " <comment>poetry check --lock</> instead.",
         ),
         option(
-            "strategy", None, "Lock dependencies using a dependency resolution strategy.", value_required=True,
-            default="latest", flag=False
-        )
+            "strategy",
+            None,
+            "Lock dependencies using a dependency resolution strategy.",
+            value_required=True,
+            default="latest",
+            flag=False,
+        ),
     ]
 
     help = """
