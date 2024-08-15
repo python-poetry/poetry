@@ -105,8 +105,11 @@ class EnvManager:
             return None
 
         try:
+            encoding = "locale" if sys.version_info >= (3, 10) else None
             executable = subprocess.check_output(
-                [path_python, "-c", "import sys; print(sys.executable)"], text=True
+                [path_python, "-c", "import sys; print(sys.executable)"],
+                text=True,
+                encoding=encoding,
             ).strip()
             return Path(executable)
 
@@ -147,8 +150,11 @@ class EnvManager:
             executable = EnvManager._detect_active_python(io)
 
             if executable:
+                encoding = "locale" if sys.version_info >= (3, 10) else None
                 python_patch = subprocess.check_output(
-                    [executable, "-c", GET_PYTHON_VERSION_ONELINER], text=True
+                    [executable, "-c", GET_PYTHON_VERSION_ONELINER],
+                    text=True,
+                    encoding=encoding,
                 ).strip()
 
                 version = ".".join(str(v) for v in python_patch.split(".")[:precision])
@@ -188,8 +194,11 @@ class EnvManager:
             raise PythonVersionNotFound(python)
 
         try:
+            encoding = "locale" if sys.version_info >= (3, 10) else None
             python_version_string = subprocess.check_output(
-                [python_path, "-c", GET_PYTHON_VERSION_ONELINER], text=True
+                [python_path, "-c", GET_PYTHON_VERSION_ONELINER],
+                text=True,
+                encoding=encoding,
             )
         except CalledProcessError as e:
             raise EnvCommandError(e)
@@ -354,8 +363,9 @@ class EnvManager:
         if python_path.is_file():
             # Validate env name if provided env is a full path to python
             try:
+                encoding = "locale" if sys.version_info >= (3, 10) else None
                 env_dir = subprocess.check_output(
-                    [python, "-c", GET_ENV_PATH_ONELINER], text=True
+                    [python, "-c", GET_ENV_PATH_ONELINER], text=True, encoding=encoding
                 ).strip("\n")
                 env_name = Path(env_dir).name
                 if not self.check_env_is_for_current_project(
@@ -398,8 +408,11 @@ class EnvManager:
             pass
 
         try:
+            encoding = "locale" if sys.version_info >= (3, 10) else None
             python_version_string = subprocess.check_output(
-                [python, "-c", GET_PYTHON_VERSION_ONELINER], text=True
+                [python, "-c", GET_PYTHON_VERSION_ONELINER],
+                text=True,
+                encoding=encoding,
             )
         except CalledProcessError as e:
             raise EnvCommandError(e)
@@ -481,8 +494,11 @@ class EnvManager:
         python_patch = ".".join([str(v) for v in sys.version_info[:3]])
         python_minor = ".".join([str(v) for v in sys.version_info[:2]])
         if executable:
+            encoding = "locale" if sys.version_info >= (3, 10) else None
             python_patch = subprocess.check_output(
-                [executable, "-c", GET_PYTHON_VERSION_ONELINER], text=True
+                [executable, "-c", GET_PYTHON_VERSION_ONELINER],
+                text=True,
+                encoding=encoding,
             ).strip()
             python_minor = ".".join(python_patch.split(".")[:2])
 
@@ -527,10 +543,12 @@ class EnvManager:
                     continue
 
                 try:
+                    encoding = "locale" if sys.version_info >= (3, 10) else None
                     python_patch = subprocess.check_output(
                         [python, "-c", GET_PYTHON_VERSION_ONELINER],
                         stderr=subprocess.STDOUT,
                         text=True,
+                        encoding=encoding,
                     ).strip()
                 except CalledProcessError:
                     continue

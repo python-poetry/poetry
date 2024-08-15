@@ -527,7 +527,8 @@ def test_detect_active_python_with_bat(poetry: Poetry, tmp_path: Path) -> None:
     """On Windows pyenv uses batch files for python management."""
     python_wrapper = tmp_path / "python.bat"
     wrapped_python = Path(r"C:\SpecialPython\python.exe")
-    with python_wrapper.open("w") as f:
+    encoding = "locale" if sys.version_info >= (3, 10) else None
+    with python_wrapper.open("w", encoding=encoding) as f:
         f.write(f"@echo {wrapped_python}")
     os.environ["PATH"] = str(python_wrapper.parent) + os.pathsep + os.environ["PATH"]
 
