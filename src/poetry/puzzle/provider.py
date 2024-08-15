@@ -117,6 +117,7 @@ class Provider:
         *,
         installed: list[Package] | None = None,
         locked: list[Package] | None = None,
+        use_lowest: bool = False,
     ) -> None:
         self._package = package
         self._pool = pool
@@ -133,6 +134,7 @@ class Provider:
         self._direct_origin_packages: dict[str, Package] = {}
         self._locked: dict[NormalizedName, list[DependencyPackage]] = defaultdict(list)
         self._use_latest: Collection[NormalizedName] = []
+        self._use_lowest = use_lowest
 
         self._explicit_sources: dict[str, str] = {}
         for package in locked or []:
@@ -140,9 +142,10 @@ class Provider:
                 DependencyPackage(package.to_dependency(), package)
             )
         for dependency_packages in self._locked.values():
+            # prioritize resolving by lowest versions if use_lowest is True
             dependency_packages.sort(
                 key=lambda p: p.package.version,
-                reverse=True,
+                reverse=not use_lowest,
             )
 
     @property

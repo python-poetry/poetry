@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from enum import Enum
 from typing import TYPE_CHECKING
 from typing import cast
 
@@ -14,13 +15,11 @@ from poetry.repositories import RepositoryPool
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.repositories.lockfile_repository import LockfileRepository
 
-
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from cleo.io.io import IO
     from packaging.utils import NormalizedName
-    from poetry.core.packages.path_dependency import PathDependency
     from poetry.core.packages.project_package import ProjectPackage
 
     from poetry.config.config import Config
@@ -29,18 +28,31 @@ if TYPE_CHECKING:
     from poetry.utils.env import Env
 
 
+class Strategy(Enum):
+    LATEST = "latest"
+    LOWEST = "lowest"
+
+    @classmethod
+    def is_using_lowest(cls, other: Strategy | str) -> bool:
+        if isinstance(other, cls):
+            return other == cls.LOWEST
+        else:
+            return other == "lowest"
+
+
 class Installer:
     def __init__(
-        self,
-        io: IO,
-        env: Env,
-        package: ProjectPackage,
-        locker: Locker,
-        pool: RepositoryPool,
-        config: Config,
-        installed: Repository | None = None,
-        executor: Executor | None = None,
-        disable_cache: bool = False,
+            self,
+            io: IO,
+            env: Env,
+            package: ProjectPackage,
+            locker: Locker,
+            pool: RepositoryPool,
+            config: Config,
+            installed: Repository | None = None,
+            executor: Executor | None = None,
+            disable_cache: bool = False,
+            strategy: Strategy = Strategy.LATEST,
     ) -> None:
         self._io = io
         self._env = env
@@ -48,6 +60,7 @@ class Installer:
         self._locker = locker
         self._pool = pool
         self._config = config
+        self.strategy = strategy
 
         self._dry_run = False
         self._requires_synchronization = False
@@ -111,7 +124,7 @@ class Installer:
         return self._dry_run
 
     def requires_synchronization(
-        self, requires_synchronization: bool = True
+            self, requires_synchronization: bool = True
     ) -> Installer:
         self._requires_synchronization = requires_synchronization
 
@@ -185,6 +198,7 @@ class Installer:
             locked_repository.packages,
             locked_repository.packages,
             self._io,
+            Strategy.is_using_lowest(self.strategy)
         )
 
         # Always re-solve directory dependencies, otherwise we can't determine
@@ -194,7 +208,7 @@ class Installer:
         ]
 
         with solver.provider.use_source_root(
-            source_root=self._env.path.joinpath("src")
+                source_root=self._env.path.joinpath("src")
         ):
             ops = solver.solve(use_latest=use_latest).calculate_operations()
 
@@ -231,10 +245,11 @@ class Installer:
                 self._installed_repository.packages,
                 locked_repository.packages,
                 self._io,
+                Strategy.is_using_lowest(self.strategy),
             )
 
             with solver.provider.use_source_root(
-                source_root=self._env.path.joinpath("src")
+                    source_root=self._env.path.joinpath("src")
             ):
                 ops = solver.solve(use_latest=self._whitelist).calculate_operations()
 
@@ -287,6 +302,7 @@ class Installer:
             self._installed_repository.packages,
             locked_repository.packages,
             NullIO(),
+            Strategy.is_using_lowest(self.strategy),
         )
         # Everything is resolved at this point, so we no longer need
         # to load deferred dependencies (i.e. VCS, URL and path dependencies)
@@ -328,7 +344,7 @@ class Installer:
         return self._executor.execute(operations)
 
     def _populate_lockfile_repo(
-        self, repo: LockfileRepository, ops: Iterable[Operation]
+            self, repo: LockfileRepository, ops: Iterable[Operation]
     ) -> None:
         for op in ops:
             if isinstance(op, Uninstall):

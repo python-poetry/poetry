@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "poetry"
-version = "1.9.0.dev0"
+version = "1.9.0.dev1"
 description = "Python dependency management and packaging made easy."
 authors = ["Sébastien Eustace <sebastien@eustace.io>"]
 maintainers = [

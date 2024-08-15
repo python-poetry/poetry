@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 from typing import ClassVar
+from typing import TYPE_CHECKING
 
 from cleo.helpers import option
 
 from poetry.console.commands.installer_command import InstallerCommand
-
+from poetry.installation.installer import Strategy
 
 if TYPE_CHECKING:
     from cleo.io.inputs.option import Option
@@ -27,6 +27,10 @@ class LockCommand(InstallerCommand):
             " version of <comment>pyproject.toml</>. (<warning>Deprecated</>) Use"
             " <comment>poetry check --lock</> instead.",
         ),
+        option(
+            "strategy", None, "Lock dependencies using a dependency resolution strategy.", value_required=True,
+            default="latest", flag=False
+        )
     ]
 
     help = """
@@ -57,6 +61,15 @@ file.
             )
             return 1
 
+        if strategy := self.option("strategy"):
+            if strategy not in [s.value for s in Strategy]:
+                self.line_error(
+                    f"<error> Invalid strategy '{strategy}'. Valid strategies are: "
+                    f"{', '.join([s.value for s in Strategy])}"
+                    "</error>"
+                )
+                return 1
+            self.installer.strategy = strategy
         self.installer.lock(update=not self.option("no-update"))
 
         return self.installer.run()
