@@ -186,7 +186,8 @@ def test_call_does_not_block_on_full_pipe(
 import sys
 for i in range(10000):
     print('just print a lot of text to fill the buffer', file={out})
-"""
+""",
+        encoding="utf-8",
     )
 
     def target(result: list[int]) -> None:
@@ -276,7 +277,7 @@ def test_env_system_packages(
 
     assert (
         f"include-system-site-packages = {str(with_system_site_packages).lower()}"
-        in pyvenv_cfg.read_text()
+        in pyvenv_cfg.read_text(encoding="utf-8")
     )
     assert env.includes_system_site_packages is with_system_site_packages
 
@@ -526,7 +527,8 @@ def test_detect_active_python_with_bat(poetry: Poetry, tmp_path: Path) -> None:
     """On Windows pyenv uses batch files for python management."""
     python_wrapper = tmp_path / "python.bat"
     wrapped_python = Path(r"C:\SpecialPython\python.exe")
-    with python_wrapper.open("w") as f:
+    encoding = "locale" if sys.version_info >= (3, 10) else None
+    with python_wrapper.open("w", encoding=encoding) as f:
         f.write(f"@echo {wrapped_python}")
     os.environ["PATH"] = str(python_wrapper.parent) + os.pathsep + os.environ["PATH"]
 

@@ -29,9 +29,11 @@ def test_generate_system_pyproject_trailing_newline(
     example_system_pyproject: str,
 ) -> None:
     cmd = SelfCommand()
-    cmd.system_pyproject.write_text(example_system_pyproject + "\n" * existing_newlines)
+    cmd.system_pyproject.write_text(
+        example_system_pyproject + "\n" * existing_newlines, encoding="utf-8"
+    )
     cmd.generate_system_pyproject()
-    generated = cmd.system_pyproject.read_text()
+    generated = cmd.system_pyproject.read_text(encoding="utf-8")
 
     assert len(generated) - len(generated.rstrip("\n")) == existing_newlines
 
@@ -40,10 +42,12 @@ def test_generate_system_pyproject_carriage_returns(
     example_system_pyproject: str,
 ) -> None:
     cmd = SelfCommand()
-    cmd.system_pyproject.write_text(example_system_pyproject + "\n")
+    cmd.system_pyproject.write_text(example_system_pyproject + "\n", encoding="utf-8")
     cmd.generate_system_pyproject()
 
-    with open(cmd.system_pyproject, newline="") as f:  # do not translate newlines
+    with open(
+        cmd.system_pyproject, newline="", encoding="utf-8"
+    ) as f:  # do not translate newlines
         generated = f.read()
 
     assert "\r\r" not in generated
