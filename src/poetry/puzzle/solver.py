@@ -179,16 +179,14 @@ class Solver:
                             if _package.name == dep.name:
                                 continue
 
-                            try:
-                                index = _package.requires.index(dep)
-                            except ValueError:
-                                _package.add_dependency(dep)
-                            else:
-                                _dep = _package.requires[index]
-                                if _dep.marker != dep.marker:
-                                    # marker of feature package is more accurate
-                                    # because it includes relevant extras
-                                    _dep.marker = dep.marker
+                            # Avoid duplication.
+                            if any(
+                                _dep == dep and _dep.marker == dep.marker
+                                for _dep in _package.requires
+                            ):
+                                continue
+
+                            _package.add_dependency(dep)
             else:
                 final_packages.append(package)
                 depths.append(results[package])
