@@ -924,17 +924,13 @@ def test_create_venv_finds_no_python_executable(
     manager: EnvManager,
     poetry: Poetry,
     config: Config,
-    mocker: MockerFixture,
     config_virtualenvs_path: Path,
     venv_name: str,
 ) -> None:
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
-    poetry.package.python_versions = "^3.6"
-
-    mocker.patch("sys.version_info", (3, 4, 5))
-    mocker.patch("shutil.which", return_value=None)
+    poetry.package.python_versions = "^999"
 
     with pytest.raises(NoCompatiblePythonVersionFound) as e:
         manager.create_venv()

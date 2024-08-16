@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 def test_pyproject_toml_file_invalid(pyproject_toml: Path) -> None:
-    with pyproject_toml.open(mode="a") as f:
+    with pyproject_toml.open(mode="a", encoding="utf-8") as f:
         f.write("<<<<<<<<<<<")
 
     with pytest.raises(PoetryCoreException) as excval:

@@ -5,7 +5,6 @@ import logging
 import re
 import uuid
 
-from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -15,6 +14,7 @@ import pytest
 import requests
 
 from cleo.io.null_io import NullIO
+from keyring.credentials import SimpleCredential
 
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.authenticator import RepositoryCertificateConfig
@@ -27,12 +27,6 @@ if TYPE_CHECKING:
 
     from tests.conftest import Config
     from tests.conftest import DummyBackend
-
-
-@dataclass
-class SimpleCredential:
-    username: str
-    password: str
 
 
 @pytest.fixture()
@@ -194,8 +188,9 @@ def test_authenticator_falls_back_to_keyring_url(
         }
     )
 
-    dummy_keyring.set_password(
-        "https://foo.bar/simple/", None, SimpleCredential("foo", "bar")
+    dummy_keyring.set_default_service_credential(
+        "https://foo.bar/simple/",
+        SimpleCredential("foo", "bar"),  # type: ignore[no-untyped-call]
     )
 
     authenticator = Authenticator(config, NullIO())
@@ -220,7 +215,10 @@ def test_authenticator_falls_back_to_keyring_netloc(
         }
     )
 
-    dummy_keyring.set_password("foo.bar", None, SimpleCredential("foo", "bar"))
+    dummy_keyring.set_default_service_credential(
+        "foo.bar",
+        SimpleCredential("foo", "bar"),  # type: ignore[no-untyped-call]
+    )
 
     authenticator = Authenticator(config, NullIO())
     authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
@@ -483,11 +481,13 @@ def test_authenticator_falls_back_to_keyring_url_matched_by_path(
         }
     )
 
-    dummy_keyring.set_password(
-        "https://foo.bar/alpha/files/simple/", None, SimpleCredential("foo", "bar")
+    dummy_keyring.set_default_service_credential(
+        "https://foo.bar/alpha/files/simple/",
+        SimpleCredential("foo", "bar"),  # type: ignore[no-untyped-call]
     )
-    dummy_keyring.set_password(
-        "https://foo.bar/beta/files/simple/", None, SimpleCredential("foo", "baz")
+    dummy_keyring.set_default_service_credential(
+        "https://foo.bar/beta/files/simple/",
+        SimpleCredential("foo", "baz"),  # type: ignore[no-untyped-call]
     )
 
     authenticator = Authenticator(config, NullIO())

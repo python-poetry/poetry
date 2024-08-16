@@ -12,6 +12,7 @@ from typing import NamedTuple
 import pytest
 
 from poetry.repositories.installed_repository import InstalledRepository
+from poetry.utils._compat import getencoding
 from poetry.utils._compat import metadata
 from poetry.utils.env import EnvManager
 from poetry.utils.env import MockEnv
@@ -168,7 +169,7 @@ def fix_editable_path_for_windows(
     # to give inconsistent results at different phases of the test suite execution; additionally
     # this represents a more realistic scenario
     editable_pth_file = site_purelib / "editable.pth"
-    editable_pth_file.write_text(editable_source_directory_path)
+    editable_pth_file.write_text(editable_source_directory_path, encoding=getencoding())
 
 
 def test_load_successful(

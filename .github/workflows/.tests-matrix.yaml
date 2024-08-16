@@ -22,6 +22,9 @@ defaults:
   run:
     shell: bash
 
+env:
+  PYTHONWARNDEFAULTENCODING: 'true'
+
 jobs:
   mypy:
     name: mypy

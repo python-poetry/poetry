@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 
 from typing import TYPE_CHECKING
 
@@ -116,7 +117,8 @@ def test_run_console_scripts_of_editable_dependencies_on_windows(
 
     cmd_script_file = tmp_venv._bin_dir / "quix.cmd"
     # `/b` ensures we only exit the script instead of any cmd.exe proc that called it
-    cmd_script_file.write_text("exit /b 123")
+    encoding = "locale" if sys.version_info >= (3, 10) else None
+    cmd_script_file.write_text("exit /b 123", encoding=encoding)
     # We prove that the CMD script executed successfully by verifying the exit code
     # matches what we wrote in the script
     assert tester.execute("quix") == 123
