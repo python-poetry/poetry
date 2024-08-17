@@ -105,8 +105,8 @@ description = ""
 optional = false
 python-versions = "*"
 files = [
-    {{file = "bar", hash = "123"}},
-    {{file = "foo", hash = "456"}},
+    {{ file = "bar", hash = "123" }},
+    {{ file = "foo", hash = "456" }},
 ]
 
 [package.dependencies]
@@ -119,7 +119,7 @@ description = ""
 optional = false
 python-versions = "*"
 files = [
-    {{file = "baz", hash = "345"}},
+    {{ file = "baz", hash = "345" }},
 ]
 
 [[package]]
@@ -569,12 +569,14 @@ files = []
 
 [package.dependencies]
 B = [
-    {{version = "^1.0.0"}},
-    {{version = ">=1.0.0", optional = true}},
+    {{ version = "^1.0.0" }},
+    {{ version = ">=1.0.0", optional = true }},
 ]
 
 [package.extras]
-foo = ["B (>=1.0.0)"]
+foo = [
+    "B (>=1.0.0)",
+]
 
 [metadata]
 lock-version = "2.0"
@@ -780,11 +782,20 @@ def test_root_extras_dependencies_are_ordered(
 
     expected = f"""\
 # {GENERATED_COMMENT}
+
 package = []
 
 [extras]
-b = ["first", "second", "third"]
-c = ["first", "second", "third"]
+b = [
+    "first",
+    "second",
+    "third",
+]
+c = [
+    "first",
+    "second",
+    "third",
+]
 
 [metadata]
 lock-version = "2.0"
@@ -820,8 +831,14 @@ optional = false
 python-versions = "*"
 files = []
 
-[package.dependencies]
-B = {{version = "^1.0.0", extras = ["a", "b", "c"], optional = true}}
+[package.dependencies.B]
+version = "^1.0.0"
+extras = [
+    "a",
+    "b",
+    "c",
+]
+optional = true
 
 [metadata]
 lock-version = "2.0"
@@ -926,15 +943,34 @@ optional = false
 python-versions = "*"
 files = []
 
-[package.dependencies]
-B = {{path = "project_with_extras", develop = true}}
-C = {{path = "directory/project_with_transitive_directory_dependencies"}}
-D = {{path = "distributions/demo-0.1.0.tar.gz"}}
-E = {{url = "https://files.pythonhosted.org/poetry-1.2.0.tar.gz"}}
-F = {{git = "https://github.com/python-poetry/poetry.git", branch = "foo"}}
-G = {{git = "https://github.com/python-poetry/poetry.git", subdirectory = "bar"}}
-H = {{git = "https://github.com/python-poetry/poetry.git", tag = "baz"}}
-I = {{git = "https://github.com/python-poetry/poetry.git", rev = "spam"}}
+[package.dependencies.B]
+path = "project_with_extras"
+develop = true
+
+[package.dependencies.C]
+path = "directory/project_with_transitive_directory_dependencies"
+
+[package.dependencies.D]
+path = "distributions/demo-0.1.0.tar.gz"
+
+[package.dependencies.E]
+url = "https://files.pythonhosted.org/poetry-1.2.0.tar.gz"
+
+[package.dependencies.F]
+git = "https://github.com/python-poetry/poetry.git"
+branch = "foo"
+
+[package.dependencies.G]
+git = "https://github.com/python-poetry/poetry.git"
+subdirectory = "bar"
+
+[package.dependencies.H]
+git = "https://github.com/python-poetry/poetry.git"
+tag = "baz"
+
+[package.dependencies.I]
+git = "https://github.com/python-poetry/poetry.git"
+rev = "spam"
 
 [metadata]
 lock-version = "2.0"
@@ -1021,8 +1057,16 @@ python-versions = "*"
 files = []
 
 [package.extras]
-b = ["first (==1.0.0)", "second (==1.0.0)", "third (==1.0.0)"]
-c = ["first (==1.0.0)", "second (==1.0.0)", "third (==1.0.0)"]
+b = [
+    "first (==1.0.0)",
+    "second (==1.0.0)",
+    "third (==1.0.0)",
+]
+c = [
+    "first (==1.0.0)",
+    "second (==1.0.0)",
+    "third (==1.0.0)",
+]
 
 [metadata]
 lock-version = "2.0"

@@ -13,20 +13,16 @@ from typing import Any
 from typing import ClassVar
 from typing import cast
 
+import tomli_w
+
 from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import Version
 from poetry.core.constraints.version import parse_constraint
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.version.requirements import InvalidRequirement
-from tomlkit import array
-from tomlkit import comment
-from tomlkit import document
-from tomlkit import inline_table
-from tomlkit import table
 
 from poetry.__version__ import __version__
-from poetry.toml.file import TOMLFile
 from poetry.utils._compat import tomllib
 
 
@@ -36,7 +32,6 @@ if TYPE_CHECKING:
     from poetry.core.packages.file_dependency import FileDependency
     from poetry.core.packages.url_dependency import URLDependency
     from poetry.core.packages.vcs_dependency import VCSDependency
-    from tomlkit.toml_document import TOMLDocument
 
     from poetry.repositories.lockfile_repository import LockfileRepository
 
@@ -243,24 +238,14 @@ class Locker:
 
     def _compute_lock_data(
         self, root: Package, packages: list[Package]
-    ) -> TOMLDocument:
+    ) -> dict[str, Any]:
         package_specs = self._lock_packages(packages)
+
         # Retrieving hashes
         for package in package_specs:
-            files = array()
+            package["files"] = [dict(sorted(f.items())) for f in package["files"]]
 
-            for f in package["files"]:
-                file_metadata = inline_table()
-                for k, v in sorted(f.items()):
-                    file_metadata[k] = v
-
-                files.append(file_metadata)
-
-            package["files"] = files.multiline(True)
-
-        lock = document()
-        lock.add(comment(GENERATED_COMMENT))
-        lock["package"] = package_specs
+        lock: dict[str, Any] = {"package": package_specs}
 
         if root.extras:
             lock["extras"] = {
@@ -276,7 +261,7 @@ class Locker:
 
         return lock
 
-    def _should_write(self, lock: TOMLDocument) -> bool:
+    def _should_write(self, lock: dict[str, Any]) -> bool:
         # if lock file exists: compare with existing lock data
         do_write = True
         if self.is_locked():
@@ -289,9 +274,10 @@ class Locker:
                 do_write = lock != lock_data
         return do_write
 
-    def _write_lock_data(self, data: TOMLDocument) -> None:
-        lockfile = TOMLFile(self.lock)
-        lockfile.write(data)
+    def _write_lock_data(self, data: dict[str, Any]) -> None:
+        with self.lock.open("wb") as f:
+            f.write(f"# {GENERATED_COMMENT}\n\n".encode())
+            tomli_w.dump(data, f)
 
         self._lock_data = None
 
@@ -385,7 +371,7 @@ class Locker:
         ):
             dependencies.setdefault(dependency.pretty_name, [])
 
-            constraint = inline_table()
+            constraint: dict[str, Any] = {}
 
             if dependency.is_directory():
                 dependency = cast("DirectoryDependency", dependency)
@@ -451,14 +437,12 @@ class Locker:
         }
 
         if dependencies:
-            data["dependencies"] = table()
+            data["dependencies"] = {}
             for k, constraints in dependencies.items():
                 if len(constraints) == 1:
                     data["dependencies"][k] = constraints[0]
                 else:
-                    data["dependencies"][k] = array().multiline(True)
-                    for constraint in constraints:
-                        data["dependencies"][k].append(constraint)
+                    data["dependencies"][k] = constraints
 
         if package.extras:
             extras = {}

@@ -51,6 +51,7 @@ requests = "^2.26"
 requests-toolbelt = "^1.0.0"
 shellingham = "^1.5"
 tomli = { version = "^2.0.1", python = "<3.11" }
+tomli-w = "^1.0.0"
 tomlkit = ">=0.11.4,<1.0.0"
 # trove-classifiers uses calver, so version is unclamped
 trove-classifiers = ">=2022.5.19"
