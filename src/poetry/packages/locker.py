@@ -292,6 +292,8 @@ class Locker:
         return do_write
 
     def _write_lock_data(self, data: TOMLDocument) -> None:
+        lockfile = TOMLFile(self.lock)
+
         if self.lock.exists():
             # The following code is roughly equivalent to
             # • lockfile = TOMLFile(self.lock)
@@ -317,9 +319,7 @@ class Locker:
                 f.write(content)
 
         else:
-            lockfile = TOMLFile(self.lock)
             lockfile.write(data)
-        lockfile.write(data)
 
         self._lock_data = None
 
