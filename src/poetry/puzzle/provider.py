@@ -29,6 +29,7 @@ from poetry.packages.package_collection import PackageCollection
 from poetry.puzzle.exceptions import OverrideNeeded
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.utils.helpers import get_file_hash
+from poetry.utils import pause_indicator
 
 
 if TYPE_CHECKING:
@@ -104,6 +105,11 @@ class Indicator(ProgressIndicator):
         elapsed = time.time() - self._start_time
 
         return f"{elapsed:.1f}s"
+
+    def _display(self, *args, **kwargs):
+        if pause_indicator.is_paused():
+            return
+        super()._display(*args, **kwargs)
 
 
 class Provider:
