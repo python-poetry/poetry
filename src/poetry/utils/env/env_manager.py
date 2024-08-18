@@ -681,7 +681,7 @@ class EnvManager:
         args = [
             "--no-download",
             "--no-periodic-update",
-            "--python",
+            "--try-first-with",
             executable_str or sys.executable,
         ]
 

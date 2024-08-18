@@ -273,6 +273,19 @@ values, usage instructions and warnings.
 
 Use parallel execution when using the new (`>=1.1.0`) installer.
 
+### `requests.max-retries`
+
+**Type**: `int`
+
+**Default**: `0`
+
+**Environment Variable**: `POETRY_REQUESTS_MAX_RETRIES`
+
+*Introduced in 1.9.0*
+
+Set the maximum number of retries in an unstable network.
+This setting has no effect if the server does not support HTTP range requests.
+
 ### `solver.lazy-wheel`
 
 **Type**: `boolean`
