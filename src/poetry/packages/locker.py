@@ -290,8 +290,33 @@ class Locker:
         return do_write
 
     def _write_lock_data(self, data: TOMLDocument) -> None:
-        lockfile = TOMLFile(self.lock)
-        lockfile.write(data)
+        if self.lock.exists():
+            # The following code is roughly equivalent to
+            # • lockfile = TOMLFile(self.lock)
+            # • lockfile.read()
+            # • lockfile.write(data)
+            # However, lockfile.read() takes more than half a second even
+            # for a modestly sized project like Poetry itself and the only reason
+            # for reading the lockfile is to determine the line endings. Thus,
+            # we do that part for ourselves here, which only takes about 10 ms.
+
+            # get original line endings
+            with open(self.lock, encoding="utf-8", newline="") as f:
+                line = f.readline()
+            linesep = "\r\n" if line.endswith("\r\n") else "\n"
+
+            # enforce original line endings
+            content = data.as_string()
+            if linesep == "\n":
+                content = content.replace("\r\n", "\n")
+            elif linesep == "\r\n":
+                content = re.sub(r"(?<!\r)\n", "\r\n", content)
+            with open(self.lock, "w", encoding="utf-8", newline="") as f:
+                f.write(content)
+
+        else:
+            lockfile = TOMLFile(self.lock)
+            lockfile.write(data)
 
         self._lock_data = None
 
