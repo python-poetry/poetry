@@ -30,9 +30,9 @@ from poetry.utils.env import ephemeral_environment
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
-    from tests.types import FixtureDirGetter
 
     from poetry.poetry import Poetry
+    from tests.types import FixtureDirGetter
 
 
 @pytest.fixture()
