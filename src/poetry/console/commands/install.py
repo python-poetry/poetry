@@ -202,7 +202,7 @@ you can set the "package-mode" to false in your pyproject.toml file.
                 " but not for packaging, you can disable package mode by setting"
                 " <c1>package-mode = false</> in your pyproject.toml file.\n"
                 "If you did intend install the current project please make sure"
-                " you set the packages setting your pyproject.toml file."
+                " you set the packages setting your pyproject.toml file.\n"
                 "In a future version of Poetry this warning will become an error!",
                 style="warning",
             )
