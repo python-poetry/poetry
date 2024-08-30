@@ -139,6 +139,8 @@ class Executor:
         self._sections = {}
         self._yanked_warnings = []
 
+        git_repositories_to_clone = set()
+
         # We group operations by priority
         groups = itertools.groupby(operations, key=lambda o: -o.priority)
         for _, group in groups:
@@ -147,6 +149,19 @@ class Executor:
             for operation in group:
                 if self._shutdown:
                     break
+
+                # It's not safe to clone the same git repository multiple times in parallel
+                if operation.package.source_type == "git" and not operation.skipped:
+                    # If this is the first operation cloning this repository,
+                    # allow it to be executed in parallel
+                    if operation.package.source_url not in git_repositories_to_clone:
+                        git_repositories_to_clone.add(operation.package.source_url)
+
+                    # If another operation is already cloning this repository,
+                    # it must be executed serially
+                    else:
+                        serial_operations.append(operation)
+                        continue
 
                 # Some operations are unsafe, we must execute them serially in a group
                 # https://github.com/python-poetry/poetry/issues/3086
