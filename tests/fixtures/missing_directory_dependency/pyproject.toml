@@ -9,5 +9,5 @@ packages = []
 [tool.poetry.dependencies]
 python = "*"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 missing = { path = "./missing" }

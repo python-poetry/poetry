@@ -10,4 +10,4 @@ python = "*"
 project-with-extras = {path = "../../project_with_extras/"}
 project-with-transitive-file-dependencies = {path = "../project_with_transitive_file_dependencies/"}
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
