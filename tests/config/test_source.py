@@ -8,7 +8,6 @@ from tomlkit.items import Trivia
 
 from poetry.config.source import Source
 from poetry.repositories.repository_pool import Priority
-from poetry.utils.source import source_to_table
 
 
 @pytest.mark.parametrize(
@@ -36,7 +35,7 @@ def test_source_to_table(source: Source, table_body: dict[str, str | bool]) -> N
     table = Table(Container(), Trivia(), False)
     table._value = table_body  # type: ignore[assignment]
 
-    assert source_to_table(source) == table
+    assert source.to_toml_table() == table
 
 
 def test_source_default_is_primary() -> None:
