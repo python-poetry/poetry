@@ -43,7 +43,7 @@ simple-project = { path = "../simple_project/" }
 [tool.poetry.extras]
 db = [ "orator" ]
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "~3.4"
 
 

@@ -10,4 +10,4 @@ python = "*"
 demo = {path = "../../distributions/demo-0.1.0-py2.py3-none-any.whl"}
 inner-directory-project = {path = "./inner-directory-project"}
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]

@@ -14,5 +14,5 @@ tomlkit = {version = "*", optional = true}
 foo = ["cleo"]
 bar = ["tomlkit"]
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^3.0"
