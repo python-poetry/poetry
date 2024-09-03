@@ -61,7 +61,6 @@ class SourceAddCommand(Command):
 
     def handle(self) -> int:
         from poetry.factory import Factory
-        from poetry.utils.source import source_to_table
 
         name: str = self.argument("name")
         lower_name = name.lower()
@@ -147,11 +146,11 @@ class SourceAddCommand(Command):
                 source = new_source
                 is_new_source = False
 
-            sources.append(source_to_table(source))
+            sources.append(source.to_toml_table())
 
         if is_new_source:
             self.line(f"Adding source with name <c1>{name}</c1>.")
-            sources.append(source_to_table(new_source))
+            sources.append(new_source.to_toml_table())
         else:
             self.line(f"Source with name <c1>{name}</c1> already exists. Updating.")
 

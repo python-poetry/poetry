@@ -3,7 +3,13 @@ from __future__ import annotations
 import dataclasses
 import warnings
 
+from typing import TYPE_CHECKING
+
 from poetry.repositories.repository_pool import Priority
+
+
+if TYPE_CHECKING:
+    from tomlkit.items import Table
 
 
 @dataclasses.dataclass(order=True, eq=True)
@@ -41,3 +47,13 @@ class Source:
                 if v
             },
         )
+
+    def to_toml_table(self) -> Table:
+        from tomlkit import nl
+        from tomlkit import table
+
+        source_table: Table = table()
+        for key, value in self.to_dict().items():
+            source_table.add(key, value)
+        source_table.add(nl())
+        return source_table
