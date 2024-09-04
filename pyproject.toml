@@ -105,7 +105,6 @@ extend-exclude = [
 ]
 fix = true
 line-length = 88
-src = ["src"]
 target-version = "py38"
 
 [tool.ruff.lint]
