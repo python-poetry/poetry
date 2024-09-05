@@ -629,6 +629,37 @@ python = "~2.7 || ^3.6"
     assert expected in tester.io.fetch_output()
 
 
+def test_package_mode_option(tester: CommandTester) -> None:
+    inputs = [
+        "my-package",  # Package name
+        "1.2.3",  # Version
+        "This is a description",  # Description
+        "n",  # Author
+        "MIT",  # License
+        "^3.8",  # Python
+        "n",  # Interactive packages
+        "n",  # Interactive dev packages
+        "\n",  # Generate
+    ]
+    tester.execute("--package-mode false", inputs="\n".join(inputs))
+
+    expected = """\
+[tool.poetry]
+name = "my-package"
+version = "1.2.3"
+description = "This is a description"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.8"
+"""
+
+    assert expected in tester.io.fetch_output()
+
+
 def test_predefined_dependency(tester: CommandTester, repo: TestRepository) -> None:
     repo.add_package(get_package("pendulum", "2.0.0"))
 

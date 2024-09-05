@@ -47,6 +47,7 @@ class NewCommand(InitCommand):
                 "dependency",
                 "dev-dependency",
                 "license",
+                "package-mode",
             }
         ],
     ]
