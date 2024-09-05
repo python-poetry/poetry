@@ -9,6 +9,7 @@ from packaging.utils import canonicalize_name
 from poetry.installation.executor import Executor
 from poetry.installation.operations import Uninstall
 from poetry.installation.operations import Update
+from poetry.installation.strategy import Strategy
 from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
 from poetry.repositories.installed_repository import InstalledRepository
@@ -20,7 +21,6 @@ if TYPE_CHECKING:
 
     from cleo.io.io import IO
     from packaging.utils import NormalizedName
-    from poetry.core.packages.path_dependency import PathDependency
     from poetry.core.packages.project_package import ProjectPackage
 
     from poetry.config.config import Config
@@ -41,6 +41,7 @@ class Installer:
         installed: Repository | None = None,
         executor: Executor | None = None,
         disable_cache: bool = False,
+        strategy: Strategy = Strategy.LATEST,
     ) -> None:
         self._io = io
         self._env = env
@@ -48,6 +49,7 @@ class Installer:
         self._locker = locker
         self._pool = pool
         self._config = config
+        self.strategy = strategy
 
         self._dry_run = False
         self._requires_synchronization = False
@@ -185,6 +187,7 @@ class Installer:
             locked_repository.packages,
             locked_repository.packages,
             self._io,
+            Strategy.is_using_lowest(self.strategy),
         )
 
         # Always re-solve directory dependencies, otherwise we can't determine
@@ -231,6 +234,7 @@ class Installer:
                 self._installed_repository.packages,
                 locked_repository.packages,
                 self._io,
+                Strategy.is_using_lowest(self.strategy),
             )
 
             with solver.provider.use_source_root(
@@ -287,6 +291,7 @@ class Installer:
             self._installed_repository.packages,
             locked_repository.packages,
             NullIO(),
+            Strategy.is_using_lowest(self.strategy),
         )
         # Everything is resolved at this point, so we no longer need
         # to load deferred dependencies (i.e. VCS, URL and path dependencies)
@@ -304,7 +309,7 @@ class Installer:
         for op in ops:
             dep = op.package.to_dependency()
             if dep.is_file() or dep.is_directory():
-                dep = cast("PathDependency", dep)
+                dep = cast("PathDependency", dep)  # noqa: F821
                 dep.validate(raise_error=not op.skipped)
 
         # Execute operations
