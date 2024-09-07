@@ -138,7 +138,7 @@ class DummyBackend(KeyringBackend):
         if password is None:
             return None
 
-        return SimpleCredential(username, password)  # type: ignore[no-untyped-call]
+        return SimpleCredential(username, password)
 
     def delete_password(self, service: str, username: str) -> None:
         if service in self._passwords and username in self._passwords[service]:
