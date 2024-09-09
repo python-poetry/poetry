@@ -6,6 +6,7 @@ import itertools
 import json
 import threading
 
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import wait
 from pathlib import Path
@@ -144,23 +145,10 @@ class Executor:
         for _, group in groups:
             tasks = []
             serial_operations = []
-            git_repositories_to_clone = set()
+            serial_git_operations = defaultdict(list)
             for operation in group:
                 if self._shutdown:
                     break
-
-                # It's not safe to clone the same git repository multiple times in parallel
-                if operation.package.source_type == "git" and not operation.skipped:
-                    # If this is the first operation cloning this repository,
-                    # allow it to be executed in parallel
-                    if operation.package.source_url not in git_repositories_to_clone:
-                        git_repositories_to_clone.add(operation.package.source_url)
-
-                    # If another operation is already cloning this repository,
-                    # it must be executed serially
-                    else:
-                        serial_operations.append(operation)
-                        continue
 
                 # Some operations are unsafe, we must execute them serially in a group
                 # https://github.com/python-poetry/poetry/issues/3086
@@ -172,11 +160,41 @@ class Executor:
                     operation.package.develop
                     and operation.package.source_type in {"directory", "git"}
                 )
-                if not operation.skipped and is_parallel_unsafe:
-                    serial_operations.append(operation)
-                    continue
 
-                tasks.append(self._executor.submit(self._execute_operation, operation))
+                if operation.skipped:
+                    # Skipped operations are safe to execute in parallel
+                    tasks.append(
+                        self._executor.submit(self._execute_operation, operation)
+                    )
+                elif is_parallel_unsafe:
+                    serial_operations.append(operation)
+                elif operation.package.source_type == "git":
+                    # Git operations on the same repository should be executed serially
+                    serial_git_operations[operation.package.source_url].append(
+                        operation
+                    )
+                else:
+                    tasks.append(
+                        self._executor.submit(self._execute_operation, operation)
+                    )
+
+            # For each git repository, execute all operations serially
+            for repository_git_operations in serial_git_operations.values():
+
+                def _serialize(
+                    repository_serial_operations: list[Operation],
+                ) -> None:
+                    for operation in repository_serial_operations:
+                        self._execute_operation(operation)
+
+                tasks.append(
+                    self._executor.submit(
+                        functools.partial(
+                            _serialize,
+                            repository_serial_operations=repository_git_operations,
+                        )
+                    )
+                )
 
             try:
                 wait(tasks)
