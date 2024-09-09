@@ -139,13 +139,12 @@ class Executor:
         self._sections = {}
         self._yanked_warnings = []
 
-        git_repositories_to_clone = set()
-
         # We group operations by priority
         groups = itertools.groupby(operations, key=lambda o: -o.priority)
         for _, group in groups:
             tasks = []
             serial_operations = []
+            git_repositories_to_clone = set()
             for operation in group:
                 if self._shutdown:
                     break
