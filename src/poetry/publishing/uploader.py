@@ -18,6 +18,7 @@ from poetry.__version__ import __version__
 from poetry.publishing.hash_manager import HashManager
 from poetry.utils.constants import REQUESTS_TIMEOUT
 from poetry.utils.patterns import wheel_file_re
+from poetry.utils.truststore import WithTrustStoreAdapter
 
 
 if TYPE_CHECKING:
@@ -88,6 +89,9 @@ class Uploader:
 
     def make_session(self) -> requests.Session:
         session = requests.Session()
+        adapter = WithTrustStoreAdapter()
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
         auth = self.get_auth()
         if auth is not None:
             session.auth = auth

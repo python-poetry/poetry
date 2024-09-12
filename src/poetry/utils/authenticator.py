@@ -16,7 +16,6 @@ import requests.adapters
 import requests.auth
 import requests.exceptions
 
-from cachecontrol import CacheControlAdapter
 from cachecontrol.caches import FileCache
 from requests_toolbelt import user_agent
 
@@ -28,6 +27,7 @@ from poetry.utils.constants import RETRY_AFTER_HEADER
 from poetry.utils.constants import STATUS_FORCELIST
 from poetry.utils.password_manager import HTTPAuthCredential
 from poetry.utils.password_manager import PasswordManager
+from poetry.utils.truststore import CacheControlWithTrustStoreAdapter
 
 
 if TYPE_CHECKING:
@@ -137,7 +137,7 @@ class Authenticator:
         if self._cache_control is None:
             return session
 
-        adapter = CacheControlAdapter(
+        adapter = CacheControlWithTrustStoreAdapter(
             cache=self._cache_control,
             pool_maxsize=self._pool_size,
         )

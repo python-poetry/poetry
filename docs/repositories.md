@@ -569,6 +569,11 @@ poetry config -- http-basic.pypi myUsername -myPasswordStartingWithDash
 
 ## Certificates
 
+### OS Truststore
+
+Poetry access the system truststore by default and retrieve the root certificates appropriately on Linux, Windows, and MacOS.
+In addition to your OS root certificates, we still load the authorities provided by `certifi` as before.
+
 ### Custom certificate authority and mutual TLS authentication
 
 Poetry supports repositories that are secured by a custom certificate authority as well as those that require
