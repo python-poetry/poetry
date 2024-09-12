@@ -11,8 +11,12 @@ from urllib.parse import urljoin
 from urllib.parse import urlparse
 from urllib.parse import urlunparse
 
+import certifi
+import wassima
+
 from dulwich import porcelain
 from dulwich.client import HTTPUnauthorized
+from dulwich.client import default_urllib3_manager
 from dulwich.client import get_transport_and_path
 from dulwich.config import ConfigFile
 from dulwich.config import parse_submodules
@@ -204,6 +208,19 @@ class Git:
             kwargs["password"] = credentials.password
 
         config = local.get_config_stack()
+
+        # we want to inject the system root CA if the transport is urllib3 (aka. http)
+        # so that our users won't need the "system" git.
+        # we combine the system trust store with the certifi bundle.
+        pool_manager = default_urllib3_manager(
+            config,
+            ca_certs=certifi.where(),
+            ca_cert_data=wassima.generate_ca_bundle()
+            if wassima.RUSTLS_LOADED
+            else None,
+        )
+        kwargs["pool_manager"] = pool_manager
+
         client, path = get_transport_and_path(url, config=config, **kwargs)
 
         with local:
