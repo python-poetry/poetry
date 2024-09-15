@@ -168,7 +168,7 @@ class Executor:
                 wait(tasks)
 
                 for operation in serial_operations:
-                    wait([self._executor.submit(self._execute_operation, operation)])
+                    self._execute_operation(operation)
 
             except KeyboardInterrupt:
                 self._shutdown = True
