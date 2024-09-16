@@ -56,7 +56,6 @@ virtualenvs.create = true
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = true
 virtualenvs.options.no-pip = false
-virtualenvs.options.no-setuptools = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = "{cache-dir}/virtualenvs"  # /path/to/cache/directory/virtualenvs
 virtualenvs.prefer-active-python = false
@@ -389,34 +388,9 @@ Poetry, for its internal operations, uses the `pip` wheel embedded in the `virtu
 in Poetry's runtime environment. If a user runs `poetry run pip` when this option is set to `true`, the `pip` the
 embedded instance of `pip` is used.
 
-You can safely set this, along with `no-setuptools`, to `true`, if you desire a virtual environment with no additional
-packages. This is desirable for production environments.
+You can safely set this to `true`, if you desire a virtual environment with no additional packages.
+This is desirable for production environments.
 {{% /note %}}
-
-### `virtualenvs.options.no-setuptools`
-
-**Type**: `boolean`
-
-**Default**: `false`
-
-**Environment Variable**: `POETRY_VIRTUALENVS_OPTIONS_NO_SETUPTOOLS`
-
-*Introduced in 1.2.0*
-
-If set to `true` the `--no-setuptools` parameter is passed to `virtualenv` on creation of the virtual environment. This
-means when a new virtual environment is created, `setuptools` will not be installed in the environment. Poetry, for its
-internal operations, does not require `setuptools` and this can safely be set to `true`.
-
-For environments using python 3.12 or later, `virtualenv` defaults to not
-installing `setuptools` when creating a virtual environment.
-In such environments this poetry configuration option therefore has no effect:
-`setuptools` is not installed either way.
-If your project relies on `setuptools`, you should declare it as a dependency.
-
-{{% warning %}}
-Some development tools like IDEs, make an assumption that `setuptools` (and other) packages are always present and
-available within a virtual environment. This can cause some features in these tools to not work as expected.
-{{% /warning %}}
 
 ### `virtualenvs.options.system-site-packages`
 

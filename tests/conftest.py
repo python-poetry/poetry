@@ -534,7 +534,6 @@ def venv_flags_default() -> dict[str, bool]:
         "always-copy": False,
         "system-site-packages": False,
         "no-pip": False,
-        "no-setuptools": False,
     }
 
 

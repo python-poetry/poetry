@@ -77,7 +77,6 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
             "always-copy": False,
             "system-site-packages": False,
             "no-pip": False,
-            "no-setuptools": False,
         },
         prompt="simple-project-py3.7",
     )

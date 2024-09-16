@@ -150,7 +150,6 @@ def test_activate_in_project_venv_no_explicit_config(
             "always-copy": False,
             "system-site-packages": False,
             "no-pip": False,
-            "no-setuptools": False,
         },
         prompt="simple-project-py3.7",
     )
@@ -1179,7 +1178,6 @@ def test_create_venv_project_name_empty_sets_correct_prompt(
             "always-copy": False,
             "system-site-packages": False,
             "no-pip": False,
-            "no-setuptools": False,
         },
         prompt="non-package-mode-py3.7",
     )
@@ -1229,7 +1227,6 @@ def test_create_venv_accepts_fallback_version_w_nonzero_patchlevel(
             "always-copy": False,
             "system-site-packages": False,
             "no-pip": False,
-            "no-setuptools": False,
         },
         prompt="simple-project-py3.5",
     )
