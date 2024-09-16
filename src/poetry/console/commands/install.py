@@ -167,13 +167,13 @@ you can set the "package-mode" to false in your pyproject.toml file.
             return 0
 
         log_install = (
-            "<b>Installing</> the current project:"
+            "<b>{verb}</> the current project:"
             f" <c1>{self.poetry.package.pretty_name}</c1>"
             f" (<{{tag}}>{self.poetry.package.pretty_version}</>)"
         )
         overwrite = self.io.output.is_decorated() and not self.io.is_debug()
         self.line("")
-        self.write(log_install.format(tag="c2"))
+        self.write(log_install.format(verb="Installing", tag="c2"))
         if not overwrite:
             self.line("")
 
@@ -206,7 +206,7 @@ you can set the "package-mode" to false in your pyproject.toml file.
             return 1
 
         if overwrite:
-            self.overwrite(log_install.format(tag="success"))
+            self.overwrite(log_install.format(verb="Installed", tag="success"))
             self.line("")
 
         return 0

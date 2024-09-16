@@ -147,7 +147,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
   - Installing torch (2.4.0+cpu)
 
-Writing lock file
+Lock file written
 """
 
     assert tester.io.fetch_output() == expected
@@ -197,7 +197,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing msgpack-python (0.5.6)
   - Installing cachy (0.2.0)
 
-Writing lock file
+Lock file written
 """
     assert tester.io.fetch_output() == expected
     assert isinstance(tester.command, InstallerCommand)
@@ -218,7 +218,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
   - Installing cachy (0.1.0)
 
-Writing lock file
+Lock file written
 """
     assert tester.io.fetch_output() == expected
 
@@ -264,7 +264,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
   - Installing cachy (0.1.0)
 
-Writing lock file
+Lock file written
 """
 
     assert tester.io.fetch_output() == expected
@@ -285,7 +285,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing msgpack-python (0.5.6)
   - Installing cachy (0.2.0)
 
-Writing lock file
+Lock file written
 """
 
     assert tester.io.fetch_output() == expected
@@ -310,7 +310,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing msgpack-python (0.5.6)
   - Installing cachy (0.1.0)
 
-Writing lock file
+Lock file written
 """
 
     assert tester.io.fetch_output() == expected
@@ -331,7 +331,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing msgpack-python (0.5.6)
   - Installing cachy (0.2.0)
 
-Writing lock file
+Lock file written
 """
 
     assert tester.io.fetch_output() == expected
@@ -359,7 +359,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing pendulum (1.4.4)
   - Installing demo (0.1.2 9cf87a2)
 
-Writing lock file
+Lock file written
 """
 
     assert tester.io.fetch_output() == expected
@@ -393,7 +393,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing pendulum (1.4.4)
   - Installing demo (0.1.2 9cf87a2)
 
-Writing lock file
+Lock file written
 """
 
     assert tester.io.fetch_output() == expected
@@ -424,7 +424,7 @@ Package operations: 4 installs, 0 updates, 0 removals
   - Installing tomlkit (0.5.5)
   - Installing demo (0.1.2 9cf87a2)
 
-Writing lock file
+Lock file written
 """
 
     assert tester.io.fetch_output().strip() == expected.strip()
@@ -466,7 +466,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
   - Installing two (2.0.0 9cf87a2)
 
-Writing lock file
+Lock file written
 """
     assert tester.io.fetch_output().strip() == expected.strip()
     assert isinstance(tester.command, InstallerCommand)
@@ -510,7 +510,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing pendulum (1.4.4)
   - Installing demo (0.1.2 9cf87a2)
 
-Writing lock file
+Lock file written
 """
 
     assert tester.io.fetch_output() == expected
@@ -555,7 +555,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing pendulum (1.4.4)
   - Installing demo (0.1.2 {demo_path})
 
-Writing lock file
+Lock file written
 """
 
     assert tester.io.fetch_output() == expected
@@ -596,7 +596,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing pendulum (1.4.4)
   - Installing demo (0.1.2 {demo_path})
 
-Writing lock file
+Lock file written
 """
 
     assert tester.io.fetch_output() == expected
@@ -626,7 +626,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing pendulum (1.4.4)
   - Installing demo (0.1.0 {demo_path})
 
-Writing lock file
+Lock file written
 """
 
     assert tester.io.fetch_output() == expected
@@ -662,7 +662,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing pendulum (1.4.4)
   - Installing demo (0.1.0 {demo_path})
 
-Writing lock file
+Lock file written
 """
 
     assert tester.io.fetch_output() == expected
@@ -694,7 +694,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing msgpack-python (0.5.6)
   - Installing cachy (0.2.0)
 
-Writing lock file
+Lock file written
 """
 
     assert tester.io.fetch_output() == expected
@@ -734,7 +734,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing demo\
  (0.1.0 https://files.pythonhosted.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
 
-Writing lock file
+Lock file written
 """
 
     assert tester.io.fetch_output() == expected
@@ -774,7 +774,7 @@ Package operations: 4 installs, 0 updates, 0 removals
   - Installing demo\
  (0.1.0 https://files.pythonhosted.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
 
-Writing lock file
+Lock file written
 """
     # Order might be different, split into lines and compare the overall output.
     expected_lines = set(expected.splitlines())
@@ -836,7 +836,7 @@ Resolving dependencies...
 
 No dependencies to install or update
 
-Writing lock file
+Lock file written
 """
 
     assert tester.io.fetch_output() == expected
@@ -891,7 +891,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing msgpack-python (0.5.6)
   - Installing cachy (0.2.0)
 
-Writing lock file
+Lock file written
 """
 
     assert tester.io.fetch_output() == expected
@@ -925,7 +925,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing msgpack-python (0.5.6)
   - Installing cachy (0.2.0)
 
-Writing lock file
+Lock file written
 """
 
     assert tester.io.fetch_output() == expected
@@ -973,7 +973,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
   - Installing cachy (0.2.0)
 
-Writing lock file
+Lock file written
 """
 
     assert tester.io.fetch_output() == expected
@@ -1035,7 +1035,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing msgpack-python (0.5.6)
   - Installing cachy (0.2.0)
 
-Writing lock file
+Lock file written
 """
 
     assert tester.io.fetch_output() == expected
@@ -1111,7 +1111,7 @@ Package operations: 2 installs, 0 updates, 0 removals
   - Installing msgpack-python (0.5.6)
   - Installing cachy (0.2.0)
 
-Writing lock file
+Lock file written
 """
 
     assert tester.io.fetch_error() == warning
@@ -1141,7 +1141,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
   - Installing pyyaml (3.13)
 
-Writing lock file
+Lock file written
 """
 
     assert tester.io.fetch_output() == expected
@@ -1314,7 +1314,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
   - Installing foo (1.1.2)
 
-Writing lock file
+Lock file written
 """
 
     assert expected in tester.io.fetch_output()
@@ -1350,7 +1350,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
   - Installing foo (1.2.3b1)
 
-Writing lock file
+Lock file written
 """
     assert expected in tester.io.fetch_output()
 
@@ -1373,7 +1373,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
   - Installing foo (1.2.3)
 
-Writing lock file
+Lock file written
 """
 
     assert expected in tester.io.fetch_output()
@@ -1390,7 +1390,7 @@ Using version ^0.2.0 for cachy
 Updating dependencies
 Resolving dependencies...
 
-Writing lock file
+Lock file written
 """
 
     assert tester.io.fetch_output() == expected
@@ -1521,7 +1521,7 @@ Package operations: 3 installs, 0 updates, 0 removals
   - Installing redis (3.4.0)
   - Installing cleo (0.6.5)
 
-Writing lock file
+Lock file written
 """
 
     assert tester.io.fetch_output() == expected

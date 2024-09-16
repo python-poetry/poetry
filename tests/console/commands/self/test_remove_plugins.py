@@ -75,7 +75,7 @@ Package operations: 0 installs, 0 updates, 1 removal
 
   - Removing poetry-plugin (1.2.3)
 
-Writing lock file
+Lock file written
 """
     assert tester.io.fetch_output() == expected
 

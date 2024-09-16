@@ -5,6 +5,7 @@ import functools
 import itertools
 import json
 import threading
+import warnings
 
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import wait
@@ -213,7 +214,7 @@ class Executor:
 
     def _execute_operation(self, operation: Operation) -> None:
         try:
-            op_message = self.get_operation_message(operation)
+            op_message = operation.get_message()
             if self.supports_fancy_output():
                 if id(operation) not in self._sections and self._should_write_operation(
                     operation
@@ -259,9 +260,10 @@ class Executor:
                 if not self.supports_fancy_output():
                     io = self._io
                 else:
+                    operation.error = True
                     message = (
                         "  <error>-</error>"
-                        f" {self.get_operation_message(operation, error=True)}:"
+                        f" {operation.get_message()}:"
                         " <error>Failed</error>"
                     )
                     self._write(operation, message)
@@ -315,9 +317,10 @@ class Executor:
 
         except KeyboardInterrupt:
             try:
+                operation.warning = True
                 message = (
                     "  <warning>-</warning>"
-                    f" {self.get_operation_message(operation, warning=True)}:"
+                    f" {operation.get_message()}:"
                     " <warning>Cancelled</warning>"
                 )
                 if not self.supports_fancy_output():
@@ -331,7 +334,7 @@ class Executor:
     def _do_execute_operation(self, operation: Operation) -> int:
         method = operation.job_type
 
-        operation_message = self.get_operation_message(operation)
+        operation_message = operation.get_message()
         if operation.skipped:
             if self.supports_fancy_output():
                 self._write(
@@ -354,8 +357,8 @@ class Executor:
         if result != 0:
             return result
 
-        operation_message = self.get_operation_message(operation, done=True)
-        message = f"  <fg=green;options=bold>-</> {operation_message}"
+        operation.done = True
+        message = f"  <fg=green;options=bold>-</> {operation.get_message()}"
         self._write(operation, message)
 
         self._increment_operations_count(operation, True)
@@ -391,53 +394,19 @@ class Executor:
         error: bool = False,
         warning: bool = False,
     ) -> str:
-        base_tag = "fg=default"
-        operation_color = "c2"
-        source_operation_color = "c2"
-        package_color = "c1"
-
-        if error:
-            operation_color = "error"
-        elif warning:
-            operation_color = "warning"
-        elif done:
-            operation_color = "success"
-
-        if operation.skipped:
-            base_tag = "fg=default;options=dark"
-            operation_color += "_dark"
-            source_operation_color += "_dark"
-            package_color += "_dark"
-
-        if isinstance(operation, Install):
-            return (
-                f"<{base_tag}>Installing"
-                f" <{package_color}>{operation.package.name}</{package_color}>"
-                f" (<{operation_color}>{operation.package.full_pretty_version}</>)</>"
-            )
-
-        if isinstance(operation, Uninstall):
-            return (
-                f"<{base_tag}>Removing"
-                f" <{package_color}>{operation.package.name}</{package_color}>"
-                f" (<{operation_color}>{operation.package.full_pretty_version}</>)</>"
-            )
-
-        if isinstance(operation, Update):
-            initial_version = (initial_pkg := operation.initial_package).version
-            target_version = (target_pkg := operation.target_package).version
-            update_kind = (
-                "Updating" if target_version >= initial_version else "Downgrading"
-            )
-            return (
-                f"<{base_tag}>{update_kind}"
-                f" <{package_color}>{initial_pkg.name}</{package_color}> "
-                f"(<{source_operation_color}>"
-                f"{initial_pkg.full_pretty_version}"
-                f"</{source_operation_color}> -> <{operation_color}>"
-                f"{target_pkg.full_pretty_version}</>)</>"
-            )
-        return ""
+        warnings.warn(
+            "'Executor.get_operation_message()' and its boolean parameters "
+            "are deprecated, please use 'Operation.get_message()' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        new_state = {"done": done, "error": error, "warning": warning}
+        old_state = {attr: getattr(operation, attr) for attr in new_state}
+        op_state = vars(operation)
+        op_state.update(new_state)
+        message = operation.get_message()
+        op_state.update(old_state)
+        return message
 
     def _display_summary(self, operations: list[Operation]) -> None:
         installs = 0
@@ -487,8 +456,8 @@ class Executor:
         return status_code
 
     def _execute_uninstall(self, operation: Uninstall) -> int:
-        op_msg = self.get_operation_message(operation)
-        message = f"  <fg=blue;options=bold>-</> {op_msg}: <info>Removing...</info>"
+        op_msg = operation.get_message()
+        message = f"  <fg=blue;options=bold>-</> {op_msg}: <info>In progress...</info>"
         self._write(operation, message)
 
         return self._remove(operation.package)
@@ -511,10 +480,10 @@ class Executor:
         else:
             archive = self._download(operation)
 
-        operation_message = self.get_operation_message(operation)
+        operation_message = operation.get_message()
         message = (
             f"  <fg=blue;options=bold>-</> {operation_message}:"
-            " <info>Installing...</info>"
+            " <info>In progress...</info>"
         )
         self._write(operation, message)
 
@@ -555,7 +524,7 @@ class Executor:
         self, operation: Install | Update, *, output_dir: Path | None = None
     ) -> Path:
         package = operation.package
-        operation_message = self.get_operation_message(operation)
+        operation_message = operation.get_message()
 
         message = (
             f"  <fg=blue;options=bold>-</> {operation_message}:"
@@ -594,7 +563,7 @@ class Executor:
             if cached_archive is not None:
                 return cached_archive
 
-        operation_message = self.get_operation_message(operation)
+        operation_message = operation.get_message()
 
         message = (
             f"  <fg=blue;options=bold>-</> {operation_message}: <info>Cloning...</info>"
@@ -675,7 +644,7 @@ class Executor:
 
         if archive.suffix != ".whl":
             message = (
-                f"  <fg=blue;options=bold>-</> {self.get_operation_message(operation)}:"
+                f"  <fg=blue;options=bold>-</> {operation.get_message()}:"
                 " <info>Preparing...</info>"
             )
             self._write(operation, message)
@@ -725,7 +694,7 @@ class Executor:
         )
         wheel_size = downloader.total_size
 
-        operation_message = self.get_operation_message(operation)
+        operation_message = operation.get_message()
         message = (
             f"  <fg=blue;options=bold>-</> {operation_message}: <info>Downloading...</>"
         )

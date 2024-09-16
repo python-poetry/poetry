@@ -25,9 +25,21 @@ class Install(Operation):
     def job_type(self) -> str:
         return "install"
 
+    @property
+    def message_verb(self) -> str:
+        return "Installed" if self.done else "Installing"
+
+    def get_message(self) -> str:
+        return (
+            f"<{self._message_base_tag}>{self.message_verb} "
+            f"<{self._message_package_color}>{self.package.name}"
+            f"</{self._message_package_color}> "
+            f"(<{self._message_color}>{self.package.full_pretty_version}</>)</>"
+        )
+
     def __str__(self) -> str:
         return (
-            "Installing"
+            f"{self.message_verb}"
             f" {self.package.pretty_name} ({self.format_version(self.package)})"
         )
 
