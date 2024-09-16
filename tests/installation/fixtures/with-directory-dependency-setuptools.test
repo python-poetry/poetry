@@ -4,6 +4,7 @@ version = "0.2.0"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = []
 
 [[package]]
@@ -12,6 +13,7 @@ version = "1.4.4"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = []
 
 [[package]]
@@ -21,6 +23,7 @@ develop = false
 description = "Demo project."
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = []
 
 [package.source]
@@ -33,5 +36,5 @@ pendulum = ">=1.4.4"
 
 [metadata]
 python-versions = "*"
-lock-version = "2.0"
+lock-version = "2.1"
 content-hash = "123456789"
