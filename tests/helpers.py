@@ -24,8 +24,8 @@ from poetry.utils._compat import metadata
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from collections.abc import Mapping
     from typing import Any
-    from typing import Mapping
 
     import httpretty
 
