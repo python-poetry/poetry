@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from poetry.utils.cache import ArtifactCache
 
 
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def _get_package_from_git(
     url: str,
     branch: str | None = None,

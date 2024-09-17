@@ -9,8 +9,6 @@ import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Mapping
-from typing import Sequence
 
 import pkginfo
 
@@ -31,6 +29,8 @@ from poetry.utils.isolated_build import isolated_builder
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from collections.abc import Mapping
+    from collections.abc import Sequence
 
     from packaging.metadata import RawMetadata
     from packaging.utils import NormalizedName
@@ -523,7 +523,7 @@ class PackageInfo:
             return cls.from_sdist(path=path)
 
 
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def get_pep517_metadata(path: Path) -> PackageInfo:
     """
     Helper method to use PEP-517 library to build and read package metadata.

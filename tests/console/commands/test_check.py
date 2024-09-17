@@ -10,7 +10,7 @@ from poetry.toml import TOMLFile
 
 
 if TYPE_CHECKING:
-    from typing import Iterator
+    from collections.abc import Iterator
 
     from cleo.testers.command_tester import CommandTester
     from pytest_mock import MockerFixture
