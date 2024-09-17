@@ -6,8 +6,6 @@ import re
 from functools import cached_property
 from typing import TYPE_CHECKING
 from typing import ClassVar
-from typing import DefaultDict
-from typing import List
 
 from poetry.core.constraints.version import Version
 from poetry.core.packages.package import Package
@@ -18,12 +16,13 @@ from poetry.utils.patterns import wheel_file_re
 
 
 if TYPE_CHECKING:
+    from collections import defaultdict
     from collections.abc import Iterator
 
     from packaging.utils import NormalizedName
     from poetry.core.packages.utils.link import Link
 
-    LinkCache = DefaultDict[NormalizedName, DefaultDict[Version, List[Link]]]
+    LinkCache = defaultdict[NormalizedName, defaultdict[Version, list[Link]]]
 
 
 logger = logging.getLogger(__name__)

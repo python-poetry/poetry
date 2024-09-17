@@ -4,7 +4,6 @@ import shutil
 
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
-from typing import Iterator
 from zipfile import ZipFile
 
 import pytest
@@ -20,6 +19,7 @@ from poetry.utils.env import VirtualEnv
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from pathlib import Path
 
     from packaging.metadata import RawMetadata

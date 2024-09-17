@@ -9,7 +9,6 @@ import sys
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Sequence
 
 import tomlkit
 
@@ -30,6 +29,7 @@ from poetry.utils.env import EnvManager
 
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
     from typing import Any
 
     from cleo.io.io import IO
