@@ -119,8 +119,6 @@ priority  : primary
     "source_str",
     (
         "source_primary",
-        "source_default",
-        "source_secondary",
         "source_supplemental",
         "source_explicit",
     ),

@@ -16,7 +16,7 @@ python = "^3.6"
 [[tool.poetry.source]]
 name = "foo"
 url = "https://foo.bar/simple/"
-secondary = true
+priority = "supplemental"
 
 [[tool.poetry.source]]
 name = "bar"

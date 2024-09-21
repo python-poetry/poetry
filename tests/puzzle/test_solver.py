@@ -3179,7 +3179,7 @@ def test_solver_chooses_from_correct_repository_if_forced_and_transitive_depende
     assert ops[1].package.source_url is None
 
 
-def test_solver_does_not_choose_from_secondary_repository_by_default(
+def test_solver_does_not_choose_from_supplemental_repository_by_default(
     package: ProjectPackage,
     io: NullIO,
     legacy_repository: LegacyRepository,
@@ -3189,7 +3189,7 @@ def test_solver_does_not_choose_from_secondary_repository_by_default(
     package.add_dependency(Factory.create_dependency("clikit", {"version": "^0.2.0"}))
 
     pool = RepositoryPool()
-    pool.add_repository(pypi_repository, priority=Priority.SECONDARY)
+    pool.add_repository(pypi_repository, priority=Priority.SUPPLEMENTAL)
     pool.add_repository(legacy_repository)
 
     solver = Solver(package, pool, [], [], io)
@@ -3229,7 +3229,7 @@ def test_solver_does_not_choose_from_secondary_repository_by_default(
     assert ops[2].package.source_url == legacy_repository.url
 
 
-def test_solver_chooses_from_secondary_if_explicit(
+def test_solver_chooses_from_supplemental_if_explicit(
     package: ProjectPackage,
     io: NullIO,
     legacy_repository: LegacyRepository,
@@ -3241,7 +3241,7 @@ def test_solver_chooses_from_secondary_if_explicit(
     )
 
     pool = RepositoryPool()
-    pool.add_repository(pypi_repository, priority=Priority.SECONDARY)
+    pool.add_repository(pypi_repository, priority=Priority.SUPPLEMENTAL)
     pool.add_repository(legacy_repository)
 
     solver = Solver(package, pool, [], [], io)

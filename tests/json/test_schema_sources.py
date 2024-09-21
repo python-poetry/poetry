@@ -10,11 +10,6 @@ from poetry.toml import TOMLFile
 FIXTURE_DIR = Path(__file__).parent / "fixtures" / "source"
 
 
-def test_pyproject_toml_valid_legacy() -> None:
-    toml: dict[str, Any] = TOMLFile(FIXTURE_DIR / "complete_valid_legacy.toml").read()
-    assert Factory.validate(toml) == {"errors": [], "warnings": []}
-
-
 def test_pyproject_toml_valid() -> None:
     toml: dict[str, Any] = TOMLFile(FIXTURE_DIR / "complete_valid.toml").read()
     assert Factory.validate(toml) == {"errors": [], "warnings": []}
@@ -26,18 +21,8 @@ def test_pyproject_toml_invalid_priority() -> None:
     ).read()
     assert Factory.validate(toml) == {
         "errors": [
-            "data.source[0].priority must be one of ['primary', 'default', "
-            "'secondary', 'supplemental', 'explicit']"
+            "data.source[0].priority must be one of ['primary',"
+            " 'supplemental', 'explicit']"
         ],
-        "warnings": [],
-    }
-
-
-def test_pyproject_toml_invalid_priority_legacy_and_new() -> None:
-    toml: dict[str, Any] = TOMLFile(
-        FIXTURE_DIR / "complete_invalid_priority_legacy_and_new.toml"
-    ).read()
-    assert Factory.validate(toml) == {
-        "errors": ["data.source[0] must NOT match a disallowed definition"],
         "warnings": [],
     }

@@ -328,7 +328,7 @@ def test_list_must_not_display_sources_from_pyproject_toml(
     command_tester_factory: CommandTesterFactory,
     config_cache_dir: Path,
 ) -> None:
-    source = fixture_dir("with_non_default_source_implicit")
+    source = fixture_dir("with_primary_source_implicit")
     pyproject_content = (source / "pyproject.toml").read_text(encoding="utf-8")
     poetry = project_factory("foo", pyproject_content=pyproject_content)
     tester = command_tester_factory("config", poetry=poetry)

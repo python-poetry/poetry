@@ -130,46 +130,12 @@ class Factory(BaseFactory):
                 source, config, disable_cache=disable_cache
             )
             priority = Priority[source.get("priority", Priority.PRIMARY.name).upper()]
-            if "default" in source or "secondary" in source:
-                warning = (
-                    "Found deprecated key 'default' or 'secondary' in"
-                    " pyproject.toml configuration for source"
-                    f" {source.get('name')}. Please provide the key 'priority'"
-                    " instead. Accepted values are:"
-                    f" {', '.join(repr(p.name.lower()) for p in Priority)}."
-                )
-                io.write_error_line(f"<warning>Warning: {warning}</warning>")
-                if source.get("default"):
-                    priority = Priority.DEFAULT
-                elif source.get("secondary"):
-                    priority = Priority.SECONDARY
-
-            if priority is Priority.SECONDARY:
-                allowed_prios = (p for p in Priority if p is not Priority.SECONDARY)
-                warning = (
-                    "Found deprecated priority 'secondary' for source"
-                    f" '{source.get('name')}' in pyproject.toml. Consider changing the"
-                    " priority to one of the non-deprecated values:"
-                    f" {', '.join(repr(p.name.lower()) for p in allowed_prios)}."
-                )
-                io.write_error_line(f"<warning>Warning: {warning}</warning>")
-            elif priority is Priority.DEFAULT:
-                warning = (
-                    "Found deprecated priority 'default' for source"
-                    f" '{source.get('name')}' in pyproject.toml. You can achieve"
-                    " the same effect by changing the priority to 'primary' and putting"
-                    " the source first."
-                )
-                io.write_error_line(f"<warning>Warning: {warning}</warning>")
 
             if io.is_debug():
-                message = f"Adding repository {repository.name} ({repository.url})"
-                if priority is Priority.DEFAULT:
-                    message += " and setting it as the default one"
-                else:
-                    message += f" and setting it as {priority.name.lower()}"
-
-                io.write_line(message)
+                io.write_line(
+                    f"Adding repository {repository.name} ({repository.url})"
+                    f" and setting it as {priority.name.lower()}"
+                )
 
             pool.add_repository(repository, priority=priority)
             if repository.name.lower() == "pypi":
@@ -177,7 +143,7 @@ class Factory(BaseFactory):
 
         # Only add PyPI if no default repository is configured
         if not explicit_pypi:
-            if pool.has_default() or pool.has_primary_repositories():
+            if pool.has_primary_repositories():
                 if io.is_debug():
                     io.write_line("Deactivating the PyPI repository")
             else:

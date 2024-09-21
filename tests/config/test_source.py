@@ -44,28 +44,10 @@ def test_source_default_is_primary() -> None:
 
 
 @pytest.mark.parametrize(
-    ("default", "secondary", "expected_priority"),
-    [
-        (False, True, Priority.SECONDARY),
-        (True, False, Priority.DEFAULT),
-        (True, True, Priority.DEFAULT),
-    ],
-)
-def test_source_legacy_handling(
-    default: bool, secondary: bool, expected_priority: Priority
-) -> None:
-    with pytest.warns(DeprecationWarning):
-        source = Source(
-            "foo", "https://example.com", default=default, secondary=secondary
-        )
-    assert source.priority == expected_priority
-
-
-@pytest.mark.parametrize(
     ("priority", "expected_priority"),
     [
-        ("secondary", Priority.SECONDARY),
-        ("SECONDARY", Priority.SECONDARY),
+        ("supplemental", Priority.SUPPLEMENTAL),
+        ("SUPPLEMENTAL", Priority.SUPPLEMENTAL),
     ],
 )
 def test_source_priority_as_string(priority: str, expected_priority: Priority) -> None:
@@ -74,4 +56,4 @@ def test_source_priority_as_string(priority: str, expected_priority: Priority) -
         "https://example.com",
         priority=priority,  # type: ignore[arg-type]
     )
-    assert source.priority == Priority.SECONDARY
+    assert source.priority == Priority.SUPPLEMENTAL
