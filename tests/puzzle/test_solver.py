@@ -3811,20 +3811,6 @@ def test_solver_synchronize_single(
     )
 
 
-@pytest.mark.skip(reason="Poetry no longer has critical package requirements")
-def test_solver_with_synchronization_keeps_critical_package(
-    package: ProjectPackage,
-    pool: RepositoryPool,
-    io: NullIO,
-) -> None:
-    package_pip = get_package("setuptools", "1.0")
-
-    solver = Solver(package, pool, [package_pip], [], io)
-    transaction = solver.solve()
-
-    check_solver_result(transaction, [])
-
-
 def test_solver_cannot_choose_another_version_for_directory_dependencies(
     solver: Solver,
     repo: Repository,
