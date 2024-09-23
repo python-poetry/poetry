@@ -42,7 +42,6 @@ installer = "^0.7.0"
 keyring = "^25.1.0"
 # packaging uses calver, so version is unclamped
 packaging = ">=24.0"
-pexpect = "^4.7.0"
 pkginfo = "^1.10"
 platformdirs = ">=3.0.0,<5"
 pyproject-hooks = "^1.0.0"
@@ -179,7 +178,6 @@ module = [
     'deepdiff.*',
     'fastjsonschema.*',
     'httpretty.*',
-    'pexpect.*',
     'requests_toolbelt.*',
     'shellingham.*',
     'virtualenv.*',
