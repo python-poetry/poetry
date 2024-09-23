@@ -74,11 +74,11 @@ def test_get_preferred_python_use_poetry_python_disabled_fallback(
     config: Config, mocker: MockerFixture
 ) -> None:
     config.config["virtualenvs"]["use-poetry-python"] = False
-    with mocker.patch(
+    mocker.patch(
         "subprocess.check_output",
         side_effect=subprocess.CalledProcessError(1, "some command"),
-    ):
-        python = Python.get_preferred_python(config)
+    )
+    python = Python.get_preferred_python(config)
 
     assert python.executable == Path(sys.executable)
 
