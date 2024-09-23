@@ -1113,7 +1113,10 @@ def test_respect_prefer_active_on_init(
         return result
 
     mocker.patch("subprocess.check_output", side_effect=mock_check_output)
-
+    mocker.patch(
+        "poetry.utils.env.python_manager.Python._full_python_path",
+        return_value=Path(f"/usr/bin/python{python}"),
+    )
     config.config["virtualenvs"]["prefer-active-python"] = prefer_active
     pyproject_file = source_dir / "pyproject.toml"
 

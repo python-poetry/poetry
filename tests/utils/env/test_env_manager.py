@@ -992,7 +992,10 @@ def test_create_venv_fails_if_no_compatible_python_version_could_be_found(
 
     poetry.package.python_versions = "^4.8"
 
-    mocker.patch("subprocess.check_output", side_effect=[sys.base_prefix])
+    mocker.patch(
+        "subprocess.check_output",
+        side_effect=[sys.base_prefix, "/usr/bin/python", "3.9.0"],
+    )
     m = mocker.patch(
         "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
     )
@@ -1067,7 +1070,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility(
 
     m.assert_called_with(
         config_virtualenvs_path / f"{venv_name}-py{version.major}.{version.minor}",
-        executable=None,
+        executable=Path(sys.executable),
         flags=venv_flags_default,
         prompt=f"simple-project-py{version.major}.{version.minor}",
     )

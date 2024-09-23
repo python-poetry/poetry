@@ -492,35 +492,6 @@ def test_build_environment_not_called_without_build_script_specified(
         assert not env.executed  # type: ignore[attr-defined]
 
 
-def test_fallback_on_detect_active_python(
-    poetry: Poetry, mocker: MockerFixture
-) -> None:
-    m = mocker.patch(
-        "subprocess.check_output",
-        side_effect=subprocess.CalledProcessError(1, "some command"),
-    )
-    env_manager = EnvManager(poetry)
-    active_python = env_manager._detect_active_python()
-
-    assert active_python is None
-    assert m.call_count == 1
-
-
-@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
-def test_detect_active_python_with_bat(poetry: Poetry, tmp_path: Path) -> None:
-    """On Windows pyenv uses batch files for python management."""
-    python_wrapper = tmp_path / "python.bat"
-    wrapped_python = Path(r"C:\SpecialPython\python.exe")
-    encoding = "locale" if sys.version_info >= (3, 10) else None
-    with python_wrapper.open("w", encoding=encoding) as f:
-        f.write(f"@echo {wrapped_python}")
-    os.environ["PATH"] = str(python_wrapper.parent) + os.pathsep + os.environ["PATH"]
-
-    active_python = EnvManager(poetry)._detect_active_python()
-
-    assert active_python == wrapped_python
-
-
 def test_command_from_bin_preserves_relative_path(manager: EnvManager) -> None:
     # https://github.com/python-poetry/poetry/issues/7959
     env = manager.get()
