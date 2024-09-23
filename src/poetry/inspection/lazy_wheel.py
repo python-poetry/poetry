@@ -45,20 +45,20 @@ class LazyWheelUnsupportedError(Exception):
     """Raised when a lazy wheel is unsupported."""
 
 
-class HTTPRangeRequestUnsupported(LazyWheelUnsupportedError):
+class HTTPRangeRequestUnsupportedError(LazyWheelUnsupportedError):
     """Raised when the remote server appears unable to support byte ranges."""
 
 
-class HTTPRangeRequestNotRespected(LazyWheelUnsupportedError):
+class HTTPRangeRequestNotRespectedError(LazyWheelUnsupportedError):
     """Raised when the remote server tells us that it supports byte ranges
     but does not respect a respective request."""
 
 
-class UnsupportedWheel(LazyWheelUnsupportedError):
+class UnsupportedWheelError(LazyWheelUnsupportedError):
     """Unsupported wheel."""
 
 
-class InvalidWheel(LazyWheelUnsupportedError):
+class InvalidWheelError(LazyWheelUnsupportedError):
     """Invalid (e.g. corrupt) wheel."""
 
     def __init__(self, location: str, name: str) -> None:
@@ -77,8 +77,8 @@ def metadata_from_wheel_url(
     This uses HTTP range requests to only fetch the portion of the wheel
     containing metadata, just enough for the object to be constructed.
 
-    :raises HTTPRangeRequestUnsupported: if range requests are unsupported for ``url``.
-    :raises InvalidWheel: if the zip file contents could not be parsed.
+    :raises HTTPRangeRequestUnsupportedError: if range requests are unsupported for ``url``.
+    :raises InvalidWheelError: if the zip file contents could not be parsed.
     """
     try:
         # After context manager exit, wheel.name will point to a deleted file path.
@@ -89,11 +89,11 @@ def metadata_from_wheel_url(
         metadata, _ = parse_email(metadata_bytes)
         return metadata
 
-    except (BadZipFile, UnsupportedWheel):
+    except (BadZipFile, UnsupportedWheelError):
         # We assume that these errors have occurred because the wheel contents
         # themselves are invalid, not because we've messed up our bookkeeping
         # and produced an invalid file.
-        raise InvalidWheel(url, name)
+        raise InvalidWheelError(url, name)
     except Exception as e:
         if isinstance(e, LazyWheelUnsupportedError):
             # this is expected when the code handles issues with lazy wheel metadata retrieval correctly
@@ -288,7 +288,7 @@ class LazyFileOverHTTP(ReadOnlyIOWrapper):
 
     This uses HTTP range requests to lazily fetch the file's content into a temporary
     file. If such requests are not supported by the server, raises
-    ``HTTPRangeRequestUnsupported`` in the ``__enter__`` method."""
+    ``HTTPRangeRequestUnsupportedError`` in the ``__enter__`` method."""
 
     def __init__(
         self,
@@ -401,7 +401,7 @@ class LazyFileOverHTTP(ReadOnlyIOWrapper):
     def _content_length_from_head(self) -> int:
         """Performs a HEAD request to extract the Content-Length.
 
-        :raises HTTPRangeRequestUnsupported: if the response fails to indicate support
+        :raises HTTPRangeRequestUnsupportedError: if the response fails to indicate support
                                              for "bytes" ranges."""
         self._request_count += 1
         head = self._session.head(
@@ -411,7 +411,7 @@ class LazyFileOverHTTP(ReadOnlyIOWrapper):
         assert head.status_code == codes.ok
         accepted_range = head.headers.get("Accept-Ranges", None)
         if accepted_range != "bytes":
-            raise HTTPRangeRequestUnsupported(
+            raise HTTPRangeRequestUnsupportedError(
                 f"server does not support byte ranges: header was '{accepted_range}'"
             )
         return int(head.headers["Content-Length"])
@@ -431,7 +431,7 @@ class LazyFileOverHTTP(ReadOnlyIOWrapper):
         response = self._session.get(self._url, headers=headers, stream=True)
         response.raise_for_status()
         if int(response.headers["Content-Length"]) != (end - start + 1):
-            raise HTTPRangeRequestNotRespected(
+            raise HTTPRangeRequestNotRespectedError(
                 f"server did not respect byte range request: "
                 f"requested {end - start + 1} bytes, got "
                 f"{response.headers['Content-Length']} bytes"
@@ -584,7 +584,9 @@ class LazyWheelOverHTTP(LazyFileOverHTTP):
         """
         m = re.match(r"bytes [^/]+/([0-9]+)", arg)
         if m is None:
-            raise HTTPRangeRequestUnsupported(f"could not parse Content-Range: '{arg}'")
+            raise HTTPRangeRequestUnsupportedError(
+                f"could not parse Content-Range: '{arg}'"
+            )
         return int(m.group(1))
 
     def _try_initial_chunk_request(
@@ -614,7 +616,7 @@ class LazyWheelOverHTTP(LazyFileOverHTTP):
                 if accept_ranges == "bytes" and content_length <= initial_chunk_size:
                     return content_length, tail
 
-            raise HTTPRangeRequestUnsupported(
+            raise HTTPRangeRequestUnsupportedError(
                 f"did not receive partial content: got code {code}"
             )
 
@@ -716,7 +718,7 @@ class LazyWheelOverHTTP(LazyFileOverHTTP):
                     end = info.header_offset
                     break
         if start is None:
-            raise UnsupportedWheel(
+            raise UnsupportedWheelError(
                 f"no {self._metadata_regex!r} found for {name} in {self.name}"
             )
         # If it is the last entry of the zip, then give us everything

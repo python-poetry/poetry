@@ -12,7 +12,7 @@ from poetry.core.utils.helpers import parse_requires
 from requests.exceptions import ChunkedEncodingError
 
 from poetry.utils.helpers import Downloader
-from poetry.utils.helpers import HTTPRangeRequestSupported
+from poetry.utils.helpers import HTTPRangeRequestSupportedError
 from poetry.utils.helpers import download_file
 from poetry.utils.helpers import get_file_hash
 from poetry.utils.helpers import get_highest_priority_hash_type
@@ -261,7 +261,7 @@ def test_download_file_raise_accepts_ranges(
     dest = tmp_path / filename
 
     if accepts_ranges and raise_accepts_ranges:
-        with pytest.raises(HTTPRangeRequestSupported):
+        with pytest.raises(HTTPRangeRequestSupportedError):
             download_file(url, dest, raise_accepts_ranges=raise_accepts_ranges)
         assert not dest.exists()
     else:

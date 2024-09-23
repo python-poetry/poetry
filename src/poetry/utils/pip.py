@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from poetry.exceptions import PoetryException
+from poetry.exceptions import PoetryError
 from poetry.utils.env import EnvCommandError
 
 
@@ -45,7 +45,7 @@ def pip_install(
 
     if editable:
         if not path.is_dir():
-            raise PoetryException(
+            raise PoetryError(
                 "Cannot install non directory dependencies in editable mode"
             )
         args.append("-e")
@@ -55,4 +55,4 @@ def pip_install(
     try:
         return environment.run_pip(*args)
     except EnvCommandError as e:
-        raise PoetryException(f"Failed to install {path}") from e
+        raise PoetryError(f"Failed to install {path}") from e

@@ -6,7 +6,7 @@ from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.url_dependency import URLDependency
 
 from poetry.mixology.incompatibility import Incompatibility
-from poetry.mixology.incompatibility_cause import DependencyCause
+from poetry.mixology.incompatibility_cause import DependencyCauseError
 from poetry.mixology.term import Term
 
 
@@ -45,6 +45,6 @@ def test_str_dependency_cause(
     dependency1: Dependency, dependency2: Dependency, expected: str
 ) -> None:
     incompatibility = Incompatibility(
-        [Term(dependency1, True), Term(dependency2, False)], DependencyCause()
+        [Term(dependency1, True), Term(dependency2, False)], DependencyCauseError()
     )
     assert str(incompatibility) == expected

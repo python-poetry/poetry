@@ -14,7 +14,7 @@ from poetry.core.constraints.version import Version
 from poetry.core.constraints.version import parse_constraint
 
 from poetry.utils._compat import decode
-from poetry.utils.env.exceptions import NoCompatiblePythonVersionFound
+from poetry.utils.env.exceptions import NoCompatiblePythonVersionFoundError
 from poetry.utils.env.script_strings import GET_PYTHON_VERSION_ONELINER
 
 
@@ -162,6 +162,6 @@ class Python:
                 break
 
         if not python:
-            raise NoCompatiblePythonVersionFound(poetry.package.python_versions)
+            raise NoCompatiblePythonVersionFoundError(poetry.package.python_versions)
 
         return python

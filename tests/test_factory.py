@@ -14,7 +14,7 @@ from poetry.core.constraints.version import parse_constraint
 from poetry.core.packages.package import Package
 from poetry.core.packages.vcs_dependency import VCSDependency
 
-from poetry.exceptions import PoetryException
+from poetry.exceptions import PoetryError
 from poetry.factory import Factory
 from poetry.plugins.plugin import Plugin
 from poetry.repositories.exceptions import InvalidSourceError
@@ -350,7 +350,7 @@ def test_poetry_with_explicit_pypi_and_other(
 def test_poetry_with_pypi_explicit_only(
     project: str, fixture_dir: FixtureDirGetter, with_simple_keyring: None
 ) -> None:
-    with pytest.raises(PoetryException) as e:
+    with pytest.raises(PoetryError) as e:
         Factory().create_poetry(fixture_dir(project))
     assert str(e.value) == "At least one source must not be configured as 'explicit'."
 

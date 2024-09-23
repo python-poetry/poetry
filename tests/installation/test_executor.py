@@ -1342,7 +1342,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
   - Installing {package_name} ({package_version} {package_url})
 
-  SolveFailure
+  SolveFailureError
 
   Because -root- depends on poetry-core (0.999) which doesn't match any versions,\
  version solving failed.

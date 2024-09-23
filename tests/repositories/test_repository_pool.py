@@ -6,7 +6,7 @@ from poetry.core.constraints.version import Version
 
 from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
-from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.repository_pool import Priority
 from tests.helpers import get_dependency
@@ -209,7 +209,7 @@ def test_pool_no_package_from_any_repository_raises_package_not_found() -> None:
     pool = RepositoryPool()
     pool.add_repository(Repository("repo"))
 
-    with pytest.raises(PackageNotFound):
+    with pytest.raises(PackageNotFoundError):
         pool.package("foo", Version.parse("1.0.0"))
 
 
@@ -219,7 +219,7 @@ def test_pool_no_package_from_specified_repository_raises_package_not_found() ->
     repo2 = Repository("repo2", [package])
     pool = RepositoryPool([repo1, repo2])
 
-    with pytest.raises(PackageNotFound):
+    with pytest.raises(PackageNotFoundError):
         pool.package("foo", Version.parse("1.0.0"), repository_name="repo1")
 
 

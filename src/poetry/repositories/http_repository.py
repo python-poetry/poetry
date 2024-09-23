@@ -24,12 +24,12 @@ from poetry.inspection.info import PackageInfo
 from poetry.inspection.lazy_wheel import LazyWheelUnsupportedError
 from poetry.inspection.lazy_wheel import metadata_from_wheel_url
 from poetry.repositories.cached_repository import CachedRepository
-from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.repositories.exceptions import RepositoryError
 from poetry.repositories.link_sources.html import HTMLPage
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.constants import REQUESTS_TIMEOUT
-from poetry.utils.helpers import HTTPRangeRequestSupported
+from poetry.utils.helpers import HTTPRangeRequestSupportedError
 from poetry.utils.helpers import download_file
 from poetry.utils.helpers import get_highest_priority_hash_type
 from poetry.utils.patterns import wheel_file_re
@@ -146,7 +146,7 @@ class HTTPRepository(CachedRepository):
                 link, raise_accepts_ranges=raise_accepts_ranges
             ) as filepath:
                 return PackageInfo.from_wheel(filepath)
-        except HTTPRangeRequestSupported:
+        except HTTPRangeRequestSupportedError:
             # The domain did not support range requests for the first URL(s) we tried,
             # but supports it for some URLs (especially the current URL),
             # so we abort the download, update _supports_range_requests to try
@@ -336,7 +336,7 @@ class HTTPRepository(CachedRepository):
 
     def _links_to_data(self, links: list[Link], data: PackageInfo) -> dict[str, Any]:
         if not links:
-            raise PackageNotFound(
+            raise PackageNotFoundError(
                 f'No valid distribution links found for package: "{data.name}" version:'
                 f' "{data.version}"'
             )
@@ -429,5 +429,5 @@ class HTTPRepository(CachedRepository):
     def _get_page(self, name: NormalizedName) -> LinkSource:
         response = self._get_response(f"/{name}/")
         if not response:
-            raise PackageNotFound(f"Package [{name}] not found.")
+            raise PackageNotFoundError(f"Package [{name}] not found.")
         return HTMLPage(response.url, response.text)

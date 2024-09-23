@@ -22,7 +22,7 @@ from requests_toolbelt import user_agent
 
 from poetry.__version__ import __version__
 from poetry.config.config import Config
-from poetry.exceptions import PoetryException
+from poetry.exceptions import PoetryError
 from poetry.utils.constants import REQUESTS_TIMEOUT
 from poetry.utils.constants import RETRY_AFTER_HEADER
 from poetry.utils.constants import STATUS_FORCELIST
@@ -247,7 +247,7 @@ class Authenticator:
                 continue
 
         # this should never really be hit under any sane circumstance
-        raise PoetryException("Failed HTTP {} request", method.upper())
+        raise PoetryError("Failed HTTP {} request", method.upper())
 
     def _get_backoff(self, response: requests.Response | None, attempt: int) -> float:
         if response is not None:
