@@ -189,10 +189,8 @@ class Executor:
 
                 tasks.append(
                     self._executor.submit(
-                        functools.partial(
-                            _serialize,
-                            repository_serial_operations=repository_git_operations,
-                        )
+                        _serialize,
+                        repository_serial_operations=repository_git_operations,
                     )
                 )
 
