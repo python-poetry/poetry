@@ -271,3 +271,50 @@ The two key options we are using here are `--no-root` (skips installing the proj
 Poetry's default HTTP request timeout is 15 seconds, the same as `pip`.
 Similar to `PIP_REQUESTS_TIMEOUT`, the **experimental** environment variable `POETRY_REQUESTS_TIMEOUT`
 can be set to alter this value.
+
+### How to debug the main script of your project using Poetry, VS Code and `launch.json`
+
+To debug a project that is managed by `poetry` and has a main script, you need to install `poetry` as a development dependency and use the `poetry run` command to execute the script via the `launch.json` file, and configure `poetry` to create the virtual environment in the project directory.
+
+Make sure that `poetry` creates the virtual environment in your project directory. If that is not your case, you will have to recreate your virtual environment after the configuration options is changed.
+
+```bash
+poetry config virtualenvs.in-project true
+```
+
+Given that your `pyproject.toml` has the following entry:
+
+```toml
+[tool.poetry.scripts]
+my_program = "my_package.my_program:main"
+```
+
+Add `poetry` as a development dependency:
+
+```bash
+poetry add --group dev poetry
+```
+
+Then, create a `launch.json` file (if it does not exists already) in the `.vscode` directory of your project with the following content:
+
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Debug my_program",
+            "type": "python",
+            "request": "launch",
+            "console": "integratedTerminal",
+            "module": "poetry",
+            "args": [
+                "run",
+                "my_program",
+                // Add other arguments for your program here if the are required
+            ]
+        }
+    ]
+}
+```
+
+Now you can start the debugger in VS Code and it will run starting from the main script of your project.
