@@ -155,10 +155,10 @@ repositories [will not be implemented](https://github.com/pre-commit/pre-commit/
 
 ### Are there any alternatives to `pre-commit autoupdate`?
 
-You may use [pre-commit-update](https://pypi.org/project/pre-commit-update/) as an alternative to 
+You may use [pre-commit-update](https://pypi.org/project/pre-commit-update/) as an alternative to
 `pre-commit autoupdate`.
 
-Since `pre-commit-update` can be used as a pre-commit hook itself, the easiest way 
+Since `pre-commit-update` can be used as a pre-commit hook itself, the easiest way
 to make use of it would be to include it inside `.pre-commit-config.yaml`:
 
 ```yaml
