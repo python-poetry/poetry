@@ -160,13 +160,11 @@ class Executor:
                     operation.package.develop
                     and operation.package.source_type in {"directory", "git"}
                 )
-
+                # Skipped operations are safe to execute in parallel
                 if operation.skipped:
-                    # Skipped operations are safe to execute in parallel
-                    tasks.append(
-                        self._executor.submit(self._execute_operation, operation)
-                    )
-                elif is_parallel_unsafe:
+                    is_parallel_unsafe = False
+
+                if is_parallel_unsafe:
                     serial_operations.append(operation)
                 elif operation.package.source_type == "git":
                     # Git operations on the same repository should be executed serially
