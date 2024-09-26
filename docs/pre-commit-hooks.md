@@ -152,3 +152,30 @@ Thus, `pre-commit autoupdate` is not usable for the hooks described here.
 You can avoid changing the `rev` to an unexpected value by using the `--repo` parameter (may be specified multiple
 times), to explicitly list repositories that should be updated. An option to explicitly exclude
 repositories [will not be implemented](https://github.com/pre-commit/pre-commit/issues/1959) into `pre-commit`.
+
+### Are there any alternatives to `pre-commit autoupdate`?
+
+You may use [pre-commit-update](https://pypi.org/project/pre-commit-update/) as an alternative to 
+`pre-commit autoupdate`.
+
+Since `pre-commit-update` can be used as a pre-commit hook itself, the easiest way 
+to make use of it would be to include it inside `.pre-commit-config.yaml`:
+
+```yaml
+repos:
+-   repo: https://gitlab.com/vojko.pribudic.foss/pre-commit-update
+    rev: v0.5.1post1
+    hooks:
+    -   id: pre-commit-update
+-   repo: https://github.com/python-poetry/poetry
+    rev: 1.8.3
+    hooks:
+    -   id: poetry-check
+    -   id: poetry-lock
+    -   id: poetry-export
+    -   id: poetry-install
+```
+
+Your `.pre-commit-config.yaml` repos will be checked and updated every time pre-commit hooks run.
+
+For more advanced configuration, please check the `pre-commit-update` documentation.
