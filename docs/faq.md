@@ -274,28 +274,19 @@ can be set to alter this value.
 
 ### How to debug the main script of your project using Poetry, VS Code and `launch.json`
 
-To debug a project that is managed by `poetry` and has a main script, you need to install `poetry` as a development dependency and use the `poetry run` command to execute the script via the `launch.json` file, and configure `poetry` to create the virtual environment in the project directory.
+Make sure that VS Code is using the `venv` created by `poetry` as the Python interpreter. You can obtain this information running `poetry env info` in the terminal.
 
-Make sure that `poetry` creates the virtual environment in your project directory. If that is not your case, you will have to recreate your virtual environment after the configuration options is changed.
+Given that your entry point is located at `src/my_package/my_program.py` and it looks like:
 
-```bash
-poetry config virtualenvs.in-project true
+```python
+def main():
+    print("Hello, World!")
+
+if __name__ == "__main__":
+    main()
 ```
 
-Given that your `pyproject.toml` has the following entry:
-
-```toml
-[tool.poetry.scripts]
-my_program = "my_package.my_program:main"
-```
-
-Add `poetry` as a development dependency:
-
-```bash
-poetry add --group dev poetry
-```
-
-Then, create a `launch.json` file (if it does not exists already) in the `.vscode` directory of your project with the following content:
+Create a `launch.json` file in the `.vscode` directory of your project with the following content:
 
 ```json
 {
@@ -303,15 +294,14 @@ Then, create a `launch.json` file (if it does not exists already) in the `.vscod
     "configurations": [
         {
             "name": "Python: Debug my_program",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
-            "console": "integratedTerminal",
-            "module": "poetry",
-            "args": [
-                "run",
-                "my_program",
-                // Add other arguments for your program here if the are required
-            ]
+            "cwd": "${workspaceFolder}",
+            // Remember to adjust this setting
+            "module": "my_package.my_program",
+            "justMyCode": false,
+            // You can include other arguments for your program here if they are required
+            "args": []
         }
     ]
 }
