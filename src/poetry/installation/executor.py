@@ -176,15 +176,14 @@ class Executor:
                         self._executor.submit(self._execute_operation, operation)
                     )
 
+            def _serialize(
+                repository_serial_operations: list[Operation],
+            ) -> None:
+                for operation in repository_serial_operations:
+                    self._execute_operation(operation)
+
             # For each git repository, execute all operations serially
             for repository_git_operations in serial_git_operations.values():
-
-                def _serialize(
-                    repository_serial_operations: list[Operation],
-                ) -> None:
-                    for operation in repository_serial_operations:
-                        self._execute_operation(operation)
-
                 tasks.append(
                     self._executor.submit(
                         _serialize,
