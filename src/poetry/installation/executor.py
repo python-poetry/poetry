@@ -178,10 +178,17 @@ class Executor:
 
             # For each git repository, execute all operations serially
             for repository_git_operations in serial_git_operations.values():
+
+                def _serialize(
+                    repository_serial_operations: list[Operation],
+                ) -> None:
+                    for operation in repository_serial_operations:
+                        self._execute_operation(operation)
+
                 tasks.append(
                     self._executor.submit(
-                        self._serialize_operations,
-                        serial_operations=repository_git_operations,
+                        _serialize,
+                        repository_serial_operations=repository_git_operations,
                     )
                 )
 
@@ -876,11 +883,3 @@ class Executor:
             archive_info["hashes"] = {algorithm: value}
 
         return archive_info
-
-    def _serialize_operations(
-        self,
-        serial_operations: list[Operation],
-    ) -> None:
-        """Execute operations serialy"""
-        for operation in serial_operations:
-            self._execute_operation(operation)
