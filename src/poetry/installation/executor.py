@@ -7,6 +7,7 @@ import itertools
 import json
 import threading
 
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import wait
 from pathlib import Path
@@ -187,6 +188,7 @@ class Executor:
         for _, group in groups:
             tasks = []
             serial_operations = []
+            serial_git_operations = defaultdict(list)
             for operation in group:
                 if self._shutdown:
                     break
@@ -201,11 +203,36 @@ class Executor:
                     operation.package.develop
                     and operation.package.source_type in {"directory", "git"}
                 )
-                if not operation.skipped and is_parallel_unsafe:
-                    serial_operations.append(operation)
-                    continue
+                # Skipped operations are safe to execute in parallel
+                if operation.skipped:
+                    is_parallel_unsafe = False
 
-                tasks.append(self._executor.submit(self._execute_operation, operation))
+                if is_parallel_unsafe:
+                    serial_operations.append(operation)
+                elif operation.package.source_type == "git":
+                    # Git operations on the same repository should be executed serially
+                    serial_git_operations[operation.package.source_url].append(
+                        operation
+                    )
+                else:
+                    tasks.append(
+                        self._executor.submit(self._execute_operation, operation)
+                    )
+
+            def _serialize(
+                repository_serial_operations: list[Operation],
+            ) -> None:
+                for operation in repository_serial_operations:
+                    self._execute_operation(operation)
+
+            # For each git repository, execute all operations serially
+            for repository_git_operations in serial_git_operations.values():
+                tasks.append(
+                    self._executor.submit(
+                        _serialize,
+                        repository_serial_operations=repository_git_operations,
+                    )
+                )
 
             try:
                 wait(tasks)
