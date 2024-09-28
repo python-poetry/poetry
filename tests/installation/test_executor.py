@@ -1137,6 +1137,49 @@ def test_executor_should_install_multiple_packages_from_same_git_repository(
     assert archive_arg == tmp_venv.path / "src/demo/subdirectories/package_b"
 
 
+@pytest.mark.xfail
+def test_executor_should_install_multiple_packages_from_forked_git_repository(
+    mocker: MockerFixture,
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    config: Config,
+    artifact_cache: ArtifactCache,
+    io: BufferedIO,
+    wheel: Path,
+) -> None:
+    package_a = Package(
+        "one",
+        "1.0.0",
+        source_type="git",
+        source_reference="master",
+        source_resolved_reference="123456",
+        source_url="https://github.com/demo/subdirectories.git",
+        source_subdirectory="one",
+    )
+    package_b = Package(
+        "two",
+        "2.0.0",
+        source_type="git",
+        source_reference="master",
+        source_resolved_reference="123456",
+        source_url="https://github.com/forked_demo/subdirectories.git",
+        source_subdirectory="two",
+    )
+
+    chef = Chef(artifact_cache, tmp_venv, Factory.create_pool(config))
+    chef.set_directory_wheel(wheel)
+    prepare_spy = mocker.spy(chef, "prepare")
+
+    executor = Executor(tmp_venv, pool, config, io)
+    executor._chef = chef
+    executor.execute([Install(package_a), Install(package_b)])
+
+    # Verify that the repo for package_a is not re-used for package_b.
+    # both repos must be cloned serially into separate directories.
+    # If so, executor.prepare() will be called twice.
+    assert prepare_spy.call_count == 2
+
+
 def test_executor_should_write_pep610_url_references_for_git_with_subdirectories(
     tmp_venv: VirtualEnv,
     pool: RepositoryPool,
