@@ -1089,7 +1089,6 @@ def test_executor_should_install_multiple_packages_from_same_git_repository(
     assert spy.call_count == 2
 
 
-@pytest.mark.xfail
 def test_executor_should_install_multiple_packages_from_forked_git_repository(
     mocker: MockerFixture,
     tmp_venv: VirtualEnv,
