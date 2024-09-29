@@ -663,6 +663,63 @@ def test_solver_returns_extras_when_multiple_extras_use_same_dependency(
     assert ops[0].package.marker.is_any()
 
 
+def test_solver_locks_all_extras_when_multiple_extras_require_same_dependency(
+    solver: Solver,
+    repo: Repository,
+    package: ProjectPackage,
+) -> None:
+    """
+    - root depends on A[extra-b1] and C
+    - C depends on A[extra-b2]
+    - B is required by both extras
+    -> the locked dependency A on B must have both extra markers
+    """
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.0")
+    package_c = get_package("C", "1.0")
+
+    dep_b1 = get_dependency("B", "*", optional=True)
+    dep_b1.marker = parse_marker("extra == 'extra-b1'")
+
+    dep_b2 = get_dependency("B", "*", optional=True)
+    dep_b2.marker = parse_marker("extra == 'extra-b2'")
+
+    package_a.extras = {
+        canonicalize_name("extra-b1"): [dep_b1],
+        canonicalize_name("extra-b2"): [dep_b2],
+    }
+    package_a.add_dependency(dep_b1)
+    package_a.add_dependency(dep_b2)
+
+    package.add_dependency(
+        get_dependency("A", {"version": "*", "extras": ["extra-b1"]})
+    )
+    package.add_dependency(get_dependency("C", "*"))
+    package_c.add_dependency(
+        get_dependency("A", {"version": "*", "extras": ["extra-b2"]})
+    )
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+
+    transaction = solver.solve()
+
+    expected = [
+        {"job": "install", "package": package_b},
+        {"job": "install", "package": package_a},
+        {"job": "install", "package": package_c},
+    ]
+
+    ops = check_solver_result(transaction, expected)
+    locked_a_requires = ops[1].package.requires
+    assert len(locked_a_requires) == 2
+    assert {str(r.marker) for r in locked_a_requires} == {
+        'extra == "extra-b1"',
+        'extra == "extra-b2"',
+    }
+
+
 @pytest.mark.parametrize("enabled_extra", ["one", "two", None])
 def test_solver_returns_extras_only_requested_nested(
     solver: Solver,
