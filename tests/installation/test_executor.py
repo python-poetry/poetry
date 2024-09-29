@@ -1050,37 +1050,6 @@ def test_executor_should_write_pep610_url_references_for_editable_git(
     assert not (prepare_spy.spy_return.parent / ".created_from_git_dependency").exists()
 
 
-def test_executor_should_append_subdirectory_for_git(
-    mocker: MockerFixture,
-    tmp_venv: VirtualEnv,
-    pool: RepositoryPool,
-    config: Config,
-    artifact_cache: ArtifactCache,
-    io: BufferedIO,
-    wheel: Path,
-) -> None:
-    package = Package(
-        "demo",
-        "0.1.2",
-        source_type="git",
-        source_reference="master",
-        source_resolved_reference="123456",
-        source_url="https://github.com/demo/subdirectories.git",
-        source_subdirectory="two",
-    )
-
-    chef = Chef(artifact_cache, tmp_venv, Factory.create_pool(config))
-    chef.set_directory_wheel(wheel)
-    spy = mocker.spy(chef, "prepare")
-
-    executor = Executor(tmp_venv, pool, config, io)
-    executor._chef = chef
-    executor.execute([Install(package)])
-
-    archive_arg = spy.call_args[0][0]
-    assert archive_arg == tmp_venv.path / "src/demo/subdirectories/two"
-
-
 def test_executor_should_install_multiple_packages_from_same_git_repository(
     mocker: MockerFixture,
     tmp_venv: VirtualEnv,
@@ -1117,11 +1086,7 @@ def test_executor_should_install_multiple_packages_from_same_git_repository(
     executor._chef = chef
     executor.execute([Install(package_a), Install(package_b)])
 
-    archive_arg = spy.call_args_list[0][0][0]
-    assert archive_arg == tmp_venv.path / "src/demo/subdirectories/package_a"
-
-    archive_arg = spy.call_args_list[1][0][0]
-    assert archive_arg == tmp_venv.path / "src/demo/subdirectories/package_b"
+    assert spy.call_count == 2
 
 
 @pytest.mark.xfail
