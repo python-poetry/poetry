@@ -1091,7 +1091,7 @@ def test_executor_should_append_subdirectory_for_git(
     executor.execute([Install(package)])
 
     archive_arg = spy.call_args[0][0]
-    assert archive_arg == tmp_venv.path / "src/demo/subdirectories/two"
+    assert archive_arg == tmp_venv.path / "src/subdirectories/two"
 
 
 def test_executor_should_install_multiple_packages_from_same_git_repository(
@@ -1131,10 +1131,10 @@ def test_executor_should_install_multiple_packages_from_same_git_repository(
     executor.execute([Install(package_a), Install(package_b)])
 
     archive_arg = spy.call_args_list[0][0][0]
-    assert archive_arg == tmp_venv.path / "src/demo/subdirectories/package_a"
+    assert archive_arg == tmp_venv.path / "src/subdirectories/package_a"
 
     archive_arg = spy.call_args_list[1][0][0]
-    assert archive_arg == tmp_venv.path / "src/demo/subdirectories/package_b"
+    assert archive_arg == tmp_venv.path / "src/subdirectories/package_b"
 
 
 @pytest.mark.xfail

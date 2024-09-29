@@ -113,7 +113,8 @@ def mock_clone(
     if not source_root:
         source_root = Path(Config.create().get("cache-dir")) / "src"
 
-    dest = source_root / path
+    assert parsed.name is not None
+    dest = source_root / parsed.name
     dest.mkdir(parents=True, exist_ok=True)
 
     copy_path(folder, dest)
