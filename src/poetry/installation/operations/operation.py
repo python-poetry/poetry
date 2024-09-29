@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from abc import ABC
+from abc import abstractmethod
 from typing import TYPE_CHECKING
 
 
@@ -8,7 +10,7 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
 
-class Operation:
+class Operation(ABC):
     def __init__(self, reason: str | None = None, priority: float = 0) -> None:
         self._reason = reason
 
@@ -17,8 +19,8 @@ class Operation:
         self._priority = priority
 
     @property
-    def job_type(self) -> str:
-        raise NotImplementedError
+    @abstractmethod
+    def job_type(self) -> str: ...
 
     @property
     def reason(self) -> str | None:
@@ -37,8 +39,8 @@ class Operation:
         return self._priority
 
     @property
-    def package(self) -> Package:
-        raise NotImplementedError()
+    @abstractmethod
+    def package(self) -> Package: ...
 
     def format_version(self, package: Package) -> str:
         version: str = package.full_pretty_version
