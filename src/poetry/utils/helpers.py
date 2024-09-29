@@ -125,7 +125,7 @@ def merge_dicts(d1: dict[str, Any], d2: dict[str, Any]) -> None:
             d1[k] = d2[k]
 
 
-class HTTPRangeRequestSupported(Exception):
+class HTTPRangeRequestSupportedError(Exception):
     """Raised when server unexpectedly supports byte ranges."""
 
 
@@ -143,7 +143,7 @@ def download_file(
     downloader = Downloader(url, dest, session, max_retries=max_retries)
 
     if raise_accepts_ranges and downloader.accepts_ranges:
-        raise HTTPRangeRequestSupported(f"URL {url} supports range requests.")
+        raise HTTPRangeRequestSupportedError(f"URL {url} supports range requests.")
 
     set_indicator = False
     with Indicator.context() as update_context:

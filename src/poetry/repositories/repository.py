@@ -8,7 +8,7 @@ from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import Version
 
 from poetry.repositories.abstract_repository import AbstractRepository
-from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.exceptions import PackageNotFoundError
 
 
 if TYPE_CHECKING:
@@ -105,4 +105,4 @@ class Repository(AbstractRepository):
             if canonicalized_name == package.name and package.version == version:
                 return package
 
-        raise PackageNotFound(f"Package {name} ({version}) not found.")
+        raise PackageNotFoundError(f"Package {name} ({version}) not found.")

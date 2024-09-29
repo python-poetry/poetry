@@ -14,7 +14,7 @@ from poetry.core.factory import Factory as BaseFactory
 from poetry.core.packages.dependency_group import MAIN_GROUP
 
 from poetry.config.config import Config
-from poetry.exceptions import PoetryException
+from poetry.exceptions import PoetryError
 from poetry.json import validate_object
 from poetry.packages.locker import Locker
 from poetry.plugins.plugin import Plugin
@@ -155,7 +155,7 @@ class Factory(BaseFactory):
                 )
 
         if not pool.repositories:
-            raise PoetryException(
+            raise PoetryError(
                 "At least one source must not be configured as 'explicit'."
             )
 

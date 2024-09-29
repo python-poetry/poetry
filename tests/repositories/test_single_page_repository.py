@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from poetry.core.packages.dependency import Dependency
 
-from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.repositories.link_sources.html import HTMLPage
 from poetry.repositories.single_page_repository import SinglePageRepository
 
@@ -30,7 +30,7 @@ class MockSinglePageRepository(SinglePageRepository):
     def _get_page(self, name: NormalizedName) -> HTMLPage:
         fixture = self.FIXTURES / self.url.rsplit("/", 1)[-1]
         if not fixture.exists():
-            raise PackageNotFound(f"Package [{name}] not found.")
+            raise PackageNotFoundError(f"Package [{name}] not found.")
 
         with fixture.open(encoding="utf-8") as f:
             return HTMLPage(self._url, f.read())

@@ -126,7 +126,6 @@ extend-select = [
 ignore = [
     "B904", # use 'raise ... from err'
     "B905", # use explicit 'strict=' parameter with 'zip()'
-    "N818", #  Exception name should be named with an Error suffix
 ]
 extend-safe-fixes = [
     "TCH", # move import from and to TYPE_CHECKING blocks

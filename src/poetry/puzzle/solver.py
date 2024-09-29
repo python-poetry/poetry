@@ -9,8 +9,8 @@ from typing import FrozenSet
 from typing import Tuple
 
 from poetry.mixology import resolve_version
-from poetry.mixology.failure import SolveFailure
-from poetry.puzzle.exceptions import OverrideNeeded
+from poetry.mixology.failure import SolveFailureError
+from poetry.puzzle.exceptions import OverrideNeededError
 from poetry.puzzle.exceptions import SolverProblemError
 from poetry.puzzle.provider import Indicator
 from poetry.puzzle.provider import Provider
@@ -155,9 +155,9 @@ class Solver:
             result = resolve_version(self._package, self._provider)
 
             packages = result.packages
-        except OverrideNeeded as e:
+        except OverrideNeededError as e:
             return self._solve_in_compatibility_mode(e.overrides)
-        except SolveFailure as e:
+        except SolveFailureError as e:
             raise SolverProblemError(e)
 
         combined_nodes = depth_first_search(PackageNode(self._package, packages))

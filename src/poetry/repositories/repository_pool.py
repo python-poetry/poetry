@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 from poetry.config.config import Config
 from poetry.repositories.abstract_repository import AbstractRepository
-from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.repositories.repository import Repository
 from poetry.utils.cache import ArtifactCache
 
@@ -179,9 +179,9 @@ class RepositoryPool(AbstractRepository):
         for repo in self.repositories:
             try:
                 return repo.package(name, version, extras=extras)
-            except PackageNotFound:
+            except PackageNotFoundError:
                 continue
-        raise PackageNotFound(f"Package {name} ({version}) not found.")
+        raise PackageNotFoundError(f"Package {name} ({version}) not found.")
 
     def find_packages(self, dependency: Dependency) -> list[Package]:
         repository_name = dependency.source_name

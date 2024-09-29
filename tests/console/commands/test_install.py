@@ -10,7 +10,7 @@ from poetry.core.masonry.utils.module import ModuleOrPackageNotFound
 from poetry.core.packages.dependency_group import MAIN_GROUP
 
 from poetry.console.commands.installer_command import InstallerCommand
-from poetry.console.exceptions import GroupNotFound
+from poetry.console.exceptions import GroupNotFoundError
 from tests.helpers import TestLocker
 
 
@@ -324,7 +324,7 @@ def test_invalid_groups_with_without_only(
         tester.execute(cmd_args)
         assert tester.status_code == 1
     else:
-        with pytest.raises(GroupNotFound, match=r"^Group\(s\) not found:") as e:
+        with pytest.raises(GroupNotFoundError, match=r"^Group\(s\) not found:") as e:
             tester.execute(cmd_args)
         assert tester.status_code is None
         for opt, groups in options.items():

@@ -1,5 +1,5 @@
 from __future__ import annotations
 
 
-class PoetryException(Exception):
+class PoetryError(Exception):
     pass

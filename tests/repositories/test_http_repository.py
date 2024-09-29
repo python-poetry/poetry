@@ -14,9 +14,9 @@ from packaging.metadata import parse_email
 from poetry.core.packages.utils.link import Link
 
 from poetry.inspection.info import PackageInfoError
-from poetry.inspection.lazy_wheel import HTTPRangeRequestUnsupported
+from poetry.inspection.lazy_wheel import HTTPRangeRequestUnsupportedError
 from poetry.repositories.http_repository import HTTPRepository
-from poetry.utils.helpers import HTTPRangeRequestSupported
+from poetry.utils.helpers import HTTPRangeRequestSupportedError
 
 
 if TYPE_CHECKING:
@@ -121,7 +121,7 @@ def test_get_info_from_wheel_state_sequence(mocker: MockerFixture) -> None:
     repo = MockRepository()
 
     # 1. range request and download
-    mock_metadata_from_wheel_url.side_effect = HTTPRangeRequestUnsupported
+    mock_metadata_from_wheel_url.side_effect = HTTPRangeRequestUnsupportedError
 
     with contextlib.suppress(PackageInfoError):
         repo._get_info_from_wheel(link)
@@ -140,7 +140,7 @@ def test_get_info_from_wheel_state_sequence(mocker: MockerFixture) -> None:
 
     # 3. download and range request
     mock_metadata_from_wheel_url.side_effect = None
-    mock_download.side_effect = HTTPRangeRequestSupported
+    mock_download.side_effect = HTTPRangeRequestSupportedError
 
     with contextlib.suppress(PackageInfoError):
         repo._get_info_from_wheel(link)
@@ -157,7 +157,7 @@ def test_get_info_from_wheel_state_sequence(mocker: MockerFixture) -> None:
     assert mock_download.call_count == 3
 
     # 5. range request and download
-    mock_metadata_from_wheel_url.side_effect = HTTPRangeRequestUnsupported
+    mock_metadata_from_wheel_url.side_effect = HTTPRangeRequestUnsupportedError
     mock_download.side_effect = None
 
     with contextlib.suppress(PackageInfoError):

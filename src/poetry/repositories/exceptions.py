@@ -5,7 +5,7 @@ class RepositoryError(Exception):
     pass
 
 
-class PackageNotFound(Exception):
+class PackageNotFoundError(Exception):
     pass
 
 

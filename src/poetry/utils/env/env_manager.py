@@ -25,8 +25,8 @@ from poetry.utils._compat import encode
 from poetry.utils.env.exceptions import EnvCommandError
 from poetry.utils.env.exceptions import IncorrectEnvError
 from poetry.utils.env.exceptions import InvalidCurrentPythonVersionError
-from poetry.utils.env.exceptions import NoCompatiblePythonVersionFound
-from poetry.utils.env.exceptions import PythonVersionNotFound
+from poetry.utils.env.exceptions import NoCompatiblePythonVersionFoundError
+from poetry.utils.env.exceptions import PythonVersionNotFoundError
 from poetry.utils.env.generic_env import GenericEnv
 from poetry.utils.env.python_manager import Python
 from poetry.utils.env.script_strings import GET_ENV_PATH_ONELINER
@@ -125,7 +125,7 @@ class EnvManager:
 
         python_ = Python.get_by_name(python)
         if python_ is None:
-            raise PythonVersionNotFound(python)
+            raise PythonVersionNotFoundError(python)
 
         create = False
         # If we are required to create the virtual environment in the project directory,
@@ -425,7 +425,7 @@ class EnvManager:
             # and notify the user of the incompatibility.
             # Otherwise, we try to find a compatible Python version.
             if executable and not prefer_active_python:
-                raise NoCompatiblePythonVersionFound(
+                raise NoCompatiblePythonVersionFoundError(
                     self._poetry.package.python_versions,
                     python.patch_version.to_string(),
                 )
