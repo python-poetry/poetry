@@ -152,6 +152,14 @@ poetry install
 poetry run pytest
 ```
 
+{{% note %}}
+If you want to see the coverage stats after the tests are complete, use:
+
+```bash
+poetry run pytest --cov=src/poetry --cov-report term
+```
+{{% /note %}}
+
 When you contribute to Poetry, automated tools will be run to make sure your code is suitable to be merged. Besides
 pytest, you will need to make sure your code typechecks properly using [mypy](http://mypy-lang.org/):
 
