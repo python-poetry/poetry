@@ -459,12 +459,12 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         return package.pretty_name, f"^{version.to_string()}"
 
     def _parse_requirements(self, requirements: list[str]) -> list[dict[str, Any]]:
-        from poetry.core.pyproject.exceptions import PyProjectException
+        from poetry.core.pyproject.exceptions import PyProjectError
 
         try:
             cwd = self.poetry.file.path.parent
             artifact_cache = self.poetry.pool.artifact_cache
-        except (PyProjectException, RuntimeError):
+        except (PyProjectError, RuntimeError):
             cwd = Path.cwd()
             artifact_cache = self._get_pool().artifact_cache
 

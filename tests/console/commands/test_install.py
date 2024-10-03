@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from poetry.core.masonry.utils.module import ModuleOrPackageNotFound
+from poetry.core.masonry.utils.module import ModuleOrPackageNotFoundError
 from poetry.core.packages.dependency_group import MAIN_GROUP
 
 from poetry.console.commands.installer_command import InstallerCommand
@@ -128,7 +128,7 @@ def test_group_options_are_passed_to_the_installer(
     mocker.patch.object(tester.command.installer, "run", return_value=0)
     editable_builder_mock = mocker.patch(
         "poetry.masonry.builders.editable.EditableBuilder",
-        side_effect=ModuleOrPackageNotFound(),
+        side_effect=ModuleOrPackageNotFoundError(),
     )
 
     if not with_root:

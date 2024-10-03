@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from deepdiff import DeepDiff
-from poetry.core.pyproject.exceptions import PyProjectException
+from poetry.core.pyproject.exceptions import PyProjectError
 
 from poetry.config.config_source import ConfigSource
 from poetry.console.commands.install import InstallCommand
@@ -39,7 +39,7 @@ def test_show_config_with_local_config_file_empty(
 ) -> None:
     mocker.patch(
         "poetry.factory.Factory.create_poetry",
-        side_effect=PyProjectException("[tool.poetry] section not found"),
+        side_effect=PyProjectError("[tool.poetry] section not found"),
     )
     tester.execute()
 
