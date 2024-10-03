@@ -201,12 +201,11 @@ you can set the "package-mode" to false in your pyproject.toml file.
                 "If you want to use Poetry only for dependency management"
                 " but not for packaging, you can disable package mode by setting"
                 " <c1>package-mode = false</> in your pyproject.toml file.\n"
-                "If you did intend to install the current project you may need"
-                " to set `packages` in your pyproject.toml file.\n"
-                "In a future version of Poetry this warning will become an error!",
-                style="warning",
+                "If you did intend to install the current project, you may need"
+                " to set `packages` in your pyproject.toml file.\n",
+                style="error",
             )
-            return 0
+            return 1
 
         if overwrite:
             self.overwrite(log_install.format(tag="success"))

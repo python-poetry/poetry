@@ -43,7 +43,7 @@ def test_publish_publishes_to_pypi_by_default(
     ]
 
 
-@pytest.mark.parametrize("fixture_name", ["sample_project", "with_default_source"])
+@pytest.mark.parametrize("fixture_name", ["sample_project", "with_source"])
 def test_publish_can_publish_to_given_repository(
     fixture_dir: FixtureDirGetter,
     mocker: MockerFixture,

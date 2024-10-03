@@ -13,7 +13,7 @@ from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
 from poetry.core.version.exceptions import InvalidVersion
 
-from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.repositories.http_repository import HTTPRepository
 from poetry.repositories.link_sources.json import SimpleJsonPage
 from poetry.repositories.parsers.pypi_search_parser import SearchResultParser
@@ -90,7 +90,7 @@ class PyPiRepository(HTTPRepository):
         """
         try:
             json_page = self.get_page(name)
-        except PackageNotFound:
+        except PackageNotFoundError:
             self._log(f"No packages found for {name}", level="debug")
             return []
 
@@ -106,7 +106,7 @@ class PyPiRepository(HTTPRepository):
         headers = {"Accept": "application/vnd.pypi.simple.v1+json"}
         info = self._get(f"simple/{name}/", headers=headers)
         if info is None:
-            raise PackageNotFound(f"Package [{name}] not found.")
+            raise PackageNotFoundError(f"Package [{name}] not found.")
 
         return info
 
@@ -132,7 +132,7 @@ class PyPiRepository(HTTPRepository):
 
         json_data = self._get(f"pypi/{name}/{version}/json")
         if json_data is None:
-            raise PackageNotFound(f"Package [{name}] not found.")
+            raise PackageNotFoundError(f"Package [{name}] not found.")
 
         info = json_data["info"]
 

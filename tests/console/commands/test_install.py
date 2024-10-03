@@ -10,7 +10,7 @@ from poetry.core.masonry.utils.module import ModuleOrPackageNotFound
 from poetry.core.packages.dependency_group import MAIN_GROUP
 
 from poetry.console.commands.installer_command import InstallerCommand
-from poetry.console.exceptions import GroupNotFound
+from poetry.console.exceptions import GroupNotFoundError
 from tests.helpers import TestLocker
 
 
@@ -136,7 +136,7 @@ def test_group_options_are_passed_to_the_installer(
 
     status_code = tester.execute(options)
 
-    if options == "--no-root --only-root":
+    if options == "--no-root --only-root" or with_root:
         assert status_code == 1
         return
     else:
@@ -322,9 +322,9 @@ def test_invalid_groups_with_without_only(
 
     if not should_raise:
         tester.execute(cmd_args)
-        assert tester.status_code == 0
+        assert tester.status_code == 1
     else:
-        with pytest.raises(GroupNotFound, match=r"^Group\(s\) not found:") as e:
+        with pytest.raises(GroupNotFoundError, match=r"^Group\(s\) not found:") as e:
             tester.execute(cmd_args)
         assert tester.status_code is None
         for opt, groups in options.items():
@@ -345,7 +345,7 @@ def test_remove_untracked_outputs_deprecation_warning(
 
     tester.execute("--remove-untracked")
 
-    assert tester.status_code == 0
+    assert tester.status_code == 1
     assert (
         "The `--remove-untracked` option is deprecated, use the `--sync` option"
         " instead.\n" in tester.io.fetch_error()
@@ -440,7 +440,11 @@ authors = []
     tester = command_tester_factory("install", poetry=poetry)
     tester.execute("" if with_root else "--no-root")
 
-    assert tester.status_code == 0
+    if error and with_root:
+        assert tester.status_code == 1
+    else:
+        assert tester.status_code == 0
+
     if with_root and error:
         assert "The current project could not be installed: " in tester.io.fetch_error()
     else:

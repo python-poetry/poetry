@@ -321,8 +321,9 @@ poetry add requests pendulum
 ```
 
 {{% note %}}
-A package is looked up, by default, only from the [Default Package Source]({{< relref "repositories/#default-package-source" >}}).
-You can modify the default source (PyPI); or add and use [Supplemental Package Sources]({{< relref "repositories/#supplemental-package-sources" >}})
+A package is looked up, by default, only from [PyPI](https://pypi.org).
+You can modify the default source (PyPI);
+or add and use [Supplemental Package Sources]({{< relref "repositories/#supplemental-package-sources" >}})
 or [Explicit Package Sources]({{< relref "repositories/#explicit-package-sources" >}}).
 
 For more information, refer to the [Package Sources]({{< relref "repositories/#package-sources" >}}) documentation.
@@ -456,7 +457,7 @@ about dependency groups.
 * `--dev (-D)`: Add package as development dependency. (**Deprecated**, use `-G dev` instead)
 * `--editable (-e)`: Add vcs/path dependencies as editable.
 * `--extras (-E)`: Extras to activate for the dependency. (multiple values allowed)
-* `--optional`: Add as an optional dependency.
+* `--optional`: Add as an optional dependency to an extra.
 * `--python`: Python version for which the dependency must be installed.
 * `--platform`: Platforms for which the dependency must be installed.
 * `--source`: Name of the source to use to install the package.
@@ -865,13 +866,7 @@ poetry source add --priority=explicit pypi
 
 #### Options
 
-* `--default`: Set this source as the [default]({{< relref "repositories#default-package-source" >}}) (disable PyPI). Deprecated in favor of `--priority`.
-* `--secondary`: Set this source as a [secondary]({{< relref "repositories#secondary-package-sources" >}}) source. Deprecated in favor of `--priority`.
-* `--priority`: Set the priority of this source. Accepted values are: [`default`]({{< relref "repositories#default-package-source" >}}), [`secondary`]({{< relref "repositories#secondary-package-sources" >}}), [`supplemental`]({{< relref "repositories#supplemental-package-sources" >}}), and [`explicit`]({{< relref "repositories#explicit-package-sources" >}}). Refer to the dedicated sections in [Repositories]({{< relref "repositories" >}}) for more information.
-
-{{% note %}}
-At most one of the options above can be provided. See [package sources]({{< relref "repositories#package-sources" >}}) for more information.
-{{% /note %}}
+* `--priority`: Set the priority of this source. Accepted values are: [`supplemental`]({{< relref "repositories#supplemental-package-sources" >}}), and [`explicit`]({{< relref "repositories#explicit-package-sources" >}}). Refer to the dedicated sections in [Repositories]({{< relref "repositories" >}}) for more information.
 
 ### source show
 

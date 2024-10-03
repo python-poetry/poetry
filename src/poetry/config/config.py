@@ -114,12 +114,7 @@ class Config:
             "options": {
                 "always-copy": False,
                 "system-site-packages": False,
-                # we default to False here in order to prevent development environment
-                # breakages for IDEs etc. as when working in these environments
-                # assumptions are often made about virtual environments having pip and
-                # setuptools.
                 "no-pip": False,
-                "no-setuptools": False,
             },
             "prefer-active-python": False,
             "prompt": "{project_name}-py{python_version}",
@@ -305,7 +300,6 @@ class Config:
             "virtualenvs.in-project",
             "virtualenvs.options.always-copy",
             "virtualenvs.options.no-pip",
-            "virtualenvs.options.no-setuptools",
             "virtualenvs.options.system-site-packages",
             "virtualenvs.options.prefer-active-python",
             "experimental.system-git-client",

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "poetry"
-version = "1.9.0.dev0"
+version = "2.0.0.dev0"
 description = "Python dependency management and packaging made easy."
 authors = ["Sébastien Eustace <sebastien@eustace.io>"]
 maintainers = [
@@ -31,7 +31,7 @@ Changelog = "https://python-poetry.org/history/"
 [tool.poetry.dependencies]
 python = "^3.8"
 
-poetry-core = "1.9.0"
+poetry-core = { git = "https://github.com/python-poetry/poetry-core.git", branch = "main" }
 poetry-plugin-export = "^1.8.0"
 build = "^1.2.1"
 cachecontrol = { version = "^0.14.0", extras = ["filecache"] }
@@ -105,7 +105,6 @@ extend-exclude = [
 ]
 fix = true
 line-length = 88
-src = ["src"]
 target-version = "py38"
 
 [tool.ruff.lint]
@@ -127,7 +126,6 @@ extend-select = [
 ignore = [
     "B904", # use 'raise ... from err'
     "B905", # use explicit 'strict=' parameter with 'zip()'
-    "N818", #  Exception name should be named with an Error suffix
 ]
 extend-safe-fixes = [
     "TCH", # move import from and to TYPE_CHECKING blocks

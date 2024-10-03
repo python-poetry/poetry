@@ -31,10 +31,20 @@ jobs:
         with:
           repository: python-poetry/website
 
+      # use .github from pull request target instead of pull_request.head
+      # for pull_request_target trigger to avoid arbitrary code execution
       - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
         with:
-          path: poetry
+          path: poetry-github
+          sparse-checkout: .github
+
+      # only checkout docs from pull_request.head to not use something else by accident
+      # for pull_request_target trigger (security)
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        with:
+          path: poetry-docs
           ref: ${{ github.event.pull_request.head.sha }}
+          sparse-checkout: docs
 
       - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
@@ -44,16 +54,16 @@ jobs:
         with:
           hugo-version: '0.83.1'
 
-      - uses: ./poetry/.github/actions/bootstrap-poetry
+      - uses: ./poetry-github/.github/actions/bootstrap-poetry
 
-      - uses: ./poetry/.github/actions/poetry-install
+      - uses: ./poetry-github/.github/actions/poetry-install
         with:
           args: --no-root --only main
 
       - name: website-build
         run: |
           # Rebuild the docs files from the PR checkout.
-          poetry run python bin/website build --local ./poetry
+          poetry run python bin/website build --local ./poetry-docs
           # Build website assets (CSS/JS).
           npm ci && npm run prod
           # Build the static website.

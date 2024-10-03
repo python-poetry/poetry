@@ -19,8 +19,8 @@ from poetry.utils.env import GET_PYTHON_VERSION_ONELINER
 from poetry.utils.env import EnvManager
 from poetry.utils.env import IncorrectEnvError
 from poetry.utils.env import InvalidCurrentPythonVersionError
-from poetry.utils.env import NoCompatiblePythonVersionFound
-from poetry.utils.env import PythonVersionNotFound
+from poetry.utils.env import NoCompatiblePythonVersionFoundError
+from poetry.utils.env import PythonVersionNotFoundError
 from poetry.utils.env.env_manager import EnvsFile
 from poetry.utils.helpers import remove_directory
 
@@ -150,7 +150,6 @@ def test_activate_in_project_venv_no_explicit_config(
             "always-copy": False,
             "system-site-packages": False,
             "no-pip": False,
-            "no-setuptools": False,
         },
         prompt="simple-project-py3.7",
     )
@@ -217,7 +216,7 @@ def test_activate_fails_when_python_cannot_be_found(
 
     mocker.patch("shutil.which", return_value=None)
 
-    with pytest.raises(PythonVersionNotFound) as e:
+    with pytest.raises(PythonVersionNotFoundError) as e:
         manager.activate("python3.7")
 
     expected_message = "Could not find the python executable python3.7"
@@ -932,7 +931,7 @@ def test_create_venv_finds_no_python_executable(
 
     poetry.package.python_versions = "^999"
 
-    with pytest.raises(NoCompatiblePythonVersionFound) as e:
+    with pytest.raises(NoCompatiblePythonVersionFoundError) as e:
         manager.create_venv()
 
     expected_message = (
@@ -993,12 +992,15 @@ def test_create_venv_fails_if_no_compatible_python_version_could_be_found(
 
     poetry.package.python_versions = "^4.8"
 
-    mocker.patch("subprocess.check_output", side_effect=[sys.base_prefix])
+    mocker.patch(
+        "subprocess.check_output",
+        side_effect=[sys.base_prefix, "/usr/bin/python", "3.9.0"],
+    )
     m = mocker.patch(
         "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
     )
 
-    with pytest.raises(NoCompatiblePythonVersionFound) as e:
+    with pytest.raises(NoCompatiblePythonVersionFoundError) as e:
         manager.create_venv()
 
     expected_message = (
@@ -1024,7 +1026,7 @@ def test_create_venv_does_not_try_to_find_compatible_versions_with_executable(
         "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
     )
 
-    with pytest.raises(NoCompatiblePythonVersionFound) as e:
+    with pytest.raises(NoCompatiblePythonVersionFoundError) as e:
         manager.create_venv(executable=Path("python3.8"))
 
     expected_message = (
@@ -1068,7 +1070,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility(
 
     m.assert_called_with(
         config_virtualenvs_path / f"{venv_name}-py{version.major}.{version.minor}",
-        executable=None,
+        executable=Path(sys.executable),
         flags=venv_flags_default,
         prompt=f"simple-project-py{version.major}.{version.minor}",
     )
@@ -1156,7 +1158,9 @@ def test_create_venv_project_name_empty_sets_correct_prompt(
     manager = EnvManager(poetry)
 
     poetry.package.python_versions = "^3.7"
-    venv_name = manager.generate_env_name("", str(poetry.file.path.parent))
+    venv_name = manager.generate_env_name(
+        "non-package-mode", str(poetry.file.path.parent)
+    )
 
     mocker.patch("sys.version_info", (2, 7, 16))
     mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
@@ -1177,9 +1181,8 @@ def test_create_venv_project_name_empty_sets_correct_prompt(
             "always-copy": False,
             "system-site-packages": False,
             "no-pip": False,
-            "no-setuptools": False,
         },
-        prompt="virtualenv-py3.7",
+        prompt="non-package-mode-py3.7",
     )
 
 
@@ -1227,7 +1230,6 @@ def test_create_venv_accepts_fallback_version_w_nonzero_patchlevel(
             "always-copy": False,
             "system-site-packages": False,
             "no-pip": False,
-            "no-setuptools": False,
         },
         prompt="simple-project-py3.5",
     )

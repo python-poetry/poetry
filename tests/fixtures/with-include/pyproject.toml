@@ -44,7 +44,7 @@ cachy = { version = "^0.2.0", extras = ["msgpack"] }
 
 pendulum = { version = "^1.4", optional = true }
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "~3.4"
 
 [tool.poetry.extras]

@@ -190,7 +190,7 @@ def test_authenticator_falls_back_to_keyring_url(
 
     dummy_keyring.set_default_service_credential(
         "https://foo.bar/simple/",
-        SimpleCredential("foo", "bar"),  # type: ignore[no-untyped-call]
+        SimpleCredential("foo", "bar"),
     )
 
     authenticator = Authenticator(config, NullIO())
@@ -217,7 +217,7 @@ def test_authenticator_falls_back_to_keyring_netloc(
 
     dummy_keyring.set_default_service_credential(
         "foo.bar",
-        SimpleCredential("foo", "bar"),  # type: ignore[no-untyped-call]
+        SimpleCredential("foo", "bar"),
     )
 
     authenticator = Authenticator(config, NullIO())
@@ -483,11 +483,11 @@ def test_authenticator_falls_back_to_keyring_url_matched_by_path(
 
     dummy_keyring.set_default_service_credential(
         "https://foo.bar/alpha/files/simple/",
-        SimpleCredential("foo", "bar"),  # type: ignore[no-untyped-call]
+        SimpleCredential("foo", "bar"),
     )
     dummy_keyring.set_default_service_credential(
         "https://foo.bar/beta/files/simple/",
-        SimpleCredential("foo", "baz"),  # type: ignore[no-untyped-call]
+        SimpleCredential("foo", "baz"),
     )
 
     authenticator = Authenticator(config, NullIO())

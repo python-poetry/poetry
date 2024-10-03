@@ -1791,9 +1791,6 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock_upda
     assert installer.executor.removals_count == 0
 
 
-@pytest.mark.skip(
-    "This is not working at the moment due to limitations in the resolver"
-)
 def test_installer_test_solver_finds_compatible_package_for_dependency_python_not_fully_compatible_with_package_python(
     installer: Installer,
     locker: Locker,

@@ -30,9 +30,9 @@ from poetry.utils.env import ephemeral_environment
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
-    from tests.types import FixtureDirGetter
 
     from poetry.poetry import Poetry
+    from tests.types import FixtureDirGetter
 
 
 @pytest.fixture()
@@ -108,9 +108,19 @@ def expected_metadata_version() -> str:
     return metadata.metadata_version
 
 
+@pytest.mark.parametrize("project", ("simple_project", "simple_project_legacy"))
 def test_builder_installs_proper_files_for_standard_packages(
-    simple_poetry: Poetry, tmp_venv: VirtualEnv
+    project: str,
+    simple_poetry: Poetry,
+    tmp_path: Path,
+    fixture_dir: FixtureDirGetter,
 ) -> None:
+    simple_poetry = Factory().create_poetry(fixture_dir(project))
+    env_manager = EnvManager(simple_poetry)
+    venv_path = tmp_path / "venv"
+    env_manager.build_venv(venv_path)
+    tmp_venv = VirtualEnv(venv_path)
+
     builder = EditableBuilder(simple_poetry, tmp_venv, NullIO())
 
     builder.build()
@@ -262,7 +272,7 @@ def test_builder_setup_generation_runs_with_pip_editable(
     poetry = Factory().create_poetry(extended_project)
 
     # we need a venv with pip and setuptools since we are verifying setup.py builds
-    with ephemeral_environment(flags={"no-setuptools": False, "no-pip": False}) as venv:
+    with ephemeral_environment(flags={"no-pip": False}) as venv:
         builder = EditableBuilder(poetry, venv, NullIO())
         builder.build()
 

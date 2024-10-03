@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.link_sources.html import HTMLPage
 
@@ -18,5 +18,5 @@ class SinglePageRepository(LegacyRepository):
         """
         response = self._get_response("")
         if not response:
-            raise PackageNotFound(f"Package [{name}] not found.")
+            raise PackageNotFoundError(f"Package [{name}] not found.")
         return HTMLPage(response.url, response.text)

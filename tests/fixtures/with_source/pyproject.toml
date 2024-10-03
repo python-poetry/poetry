@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "with-default-source-pypi"
+name = "with-source"
 version = "1.2.3"
 description = "Some description."
 authors = [
@@ -43,12 +43,12 @@ simple-project = { path = "../simple_project/" }
 [tool.poetry.extras]
 db = [ "orator" ]
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "~3.4"
 
 
 [tool.poetry.scripts]
-my-script = "my_package:main"
+my-script = "with_default_source:main"
 
 
 [tool.poetry.plugins."blogtool.parsers"]
@@ -56,5 +56,5 @@ my-script = "my_package:main"
 
 
 [[tool.poetry.source]]
-name = "PyPI"
-priority = "default"
+name = "foo"
+url = "https://foo.bar/simple/"

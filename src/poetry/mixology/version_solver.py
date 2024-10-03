@@ -10,11 +10,11 @@ from typing import Tuple
 
 from poetry.core.packages.dependency import Dependency
 
-from poetry.mixology.failure import SolveFailure
+from poetry.mixology.failure import SolveFailureError
 from poetry.mixology.incompatibility import Incompatibility
-from poetry.mixology.incompatibility_cause import ConflictCause
-from poetry.mixology.incompatibility_cause import NoVersionsCause
-from poetry.mixology.incompatibility_cause import RootCause
+from poetry.mixology.incompatibility_cause import ConflictCauseError
+from poetry.mixology.incompatibility_cause import NoVersionsCauseError
+from poetry.mixology.incompatibility_cause import RootCauseError
 from poetry.mixology.partial_solution import PartialSolution
 from poetry.mixology.result import SolverResult
 from poetry.mixology.set_relation import SetRelation
@@ -165,7 +165,7 @@ class VersionSolver:
         root_dependency.is_root = True
 
         self._add_incompatibility(
-            Incompatibility([Term(root_dependency, False)], RootCause())
+            Incompatibility([Term(root_dependency, False)], RootCauseError())
         )
 
         try:
@@ -412,7 +412,8 @@ class VersionSolver:
                     new_terms.append(inverse)
 
             incompatibility = Incompatibility(
-                new_terms, ConflictCause(incompatibility, most_recent_satisfier.cause)
+                new_terms,
+                ConflictCauseError(incompatibility, most_recent_satisfier.cause),
             )
             new_incompatibility = True
 
@@ -424,7 +425,7 @@ class VersionSolver:
             self._log(f'! which is caused by "{most_recent_satisfier.cause}"')
             self._log(f"! thus: {incompatibility}")
 
-        raise SolveFailure(incompatibility)
+        raise SolveFailureError(incompatibility)
 
     def _choose_package_version(self) -> str | None:
         """
@@ -503,7 +504,7 @@ class VersionSolver:
                 # If there are no versions that satisfy the constraint,
                 # add an incompatibility that indicates that.
                 self._add_incompatibility(
-                    Incompatibility([Term(dependency, True)], NoVersionsCause())
+                    Incompatibility([Term(dependency, True)], NoVersionsCauseError())
                 )
 
                 complete_name = dependency.complete_name
