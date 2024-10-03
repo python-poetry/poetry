@@ -3,10 +3,10 @@ from __future__ import annotations
 import tempfile
 
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
 
 from build import BuildBackendException
-from poetry.core.utils.helpers import temporary_directory
 
 from poetry.utils._compat import decode
 from poetry.utils.helpers import extractall
@@ -87,7 +87,7 @@ class Chef:
         suffix = archive.suffix
         zip = suffix == ".zip"
 
-        with temporary_directory() as tmp_dir:
+        with TemporaryDirectory(ignore_cleanup_errors=True) as tmp_dir:
             archive_dir = Path(tmp_dir)
             extractall(source=archive, dest=archive_dir, zip=zip)
 
