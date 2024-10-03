@@ -16,6 +16,7 @@ from tomlkit import inline_table
 from poetry.console.commands.command import Command
 from poetry.console.commands.env_command import EnvCommand
 from poetry.utils.dependency_specification import RequirementsParser
+from poetry.utils.env.python_manager import Python
 
 
 if TYPE_CHECKING:
@@ -96,7 +97,6 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         from poetry.config.config import Config
         from poetry.layouts import layout
         from poetry.pyproject.toml import PyProjectTOML
-        from poetry.utils.env import EnvManager
 
         is_interactive = self.io.is_interactive() and allow_interactive
 
@@ -105,8 +105,8 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         if pyproject.file.exists():
             if pyproject.is_poetry_project():
                 self.line_error(
-                    "<error>A pyproject.toml file with a poetry section already"
-                    " exists.</error>"
+                    "<error>A pyproject.toml file with a project and/or"
+                    " a poetry section already exists.</error>"
                 )
                 return 1
 
@@ -173,12 +173,8 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         if not python:
             config = Config.create()
             python = (
-                "^"
-                + EnvManager.get_python_version(
-                    precision=2,
-                    prefer_active_python=config.get("virtualenvs.prefer-active-python"),
-                    io=self.io,
-                ).to_string()
+                ">="
+                + Python.get_preferred_python(config, self.io).minor_version.to_string()
             )
 
             if is_interactive:
@@ -255,7 +251,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         if create_layout:
             layout_.create(project_path, with_pyproject=False)
 
-        content = layout_.generate_poetry_content()
+        content = layout_.generate_project_content()
         for section, item in content.items():
             pyproject.data.append(section, item)
 
@@ -459,15 +455,16 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             # TODO: find similar
             raise ValueError(f"Could not find a matching version of package {name}")
 
-        return package.pretty_name, f"^{package.version.to_string()}"
+        version = package.version.without_local()
+        return package.pretty_name, f"^{version.to_string()}"
 
     def _parse_requirements(self, requirements: list[str]) -> list[dict[str, Any]]:
-        from poetry.core.pyproject.exceptions import PyProjectException
+        from poetry.core.pyproject.exceptions import PyProjectError
 
         try:
             cwd = self.poetry.file.path.parent
             artifact_cache = self.poetry.pool.artifact_cache
-        except (PyProjectException, RuntimeError):
+        except (PyProjectError, RuntimeError):
             cwd = Path.cwd()
             artifact_cache = self._get_pool().artifact_cache
 

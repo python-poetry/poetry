@@ -1,0 +1,50 @@
+name: Poetry Install
+description: Run `poetry install` with optional artifact and metadata caching
+
+inputs:
+  args:
+    description: Arguments for `poetry install`
+  cache:
+    description: Enable transparent Poetry artifact and metadata caching
+    default: 'true'
+
+outputs:
+  cache-hit:
+    description: Whether an exact cache hit occured
+    value: ${{ steps.cache.outputs.cache-hit }}
+
+runs:
+  using: composite
+  steps:
+    - run: printf 'cache-dir=%s\n' "$(poetry config cache-dir)" >> $GITHUB_OUTPUT
+      id: poetry-config
+      shell: bash
+
+    # Bust the cache every 24 hours to prevent it from expanding over time.
+    - run: printf 'date=%s\n' "$(date -I)" >> $GITHUB_OUTPUT
+      id: get-date
+      if: inputs.cache == 'true'
+      shell: bash
+
+    - uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4
+      id: cache
+      if: inputs.cache == 'true'
+      with:
+        path: |
+          ${{ steps.poetry-config.outputs.cache-dir }}/artifacts
+          ${{ steps.poetry-config.outputs.cache-dir }}/cache
+        key: poetry-${{ steps.get-date.outputs.date }}-${{ runner.os }}-${{ hashFiles('pyproject.toml', 'poetry.lock') }}
+        # The cache is cross-platform, and other platforms are used to seed cache misses.
+        restore-keys: |
+          poetry-${{ steps.get-date.outputs.date }}-${{ runner.os }}-
+          poetry-${{ steps.get-date.outputs.date }}-
+        enableCrossOsArchive: true
+
+    - run: poetry install ${{ inputs.args }}
+      shell: bash
+
+    - run: poetry env info
+      shell: bash
+
+    - run: poetry show
+      shell: bash

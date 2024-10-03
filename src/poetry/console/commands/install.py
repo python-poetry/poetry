@@ -6,6 +6,7 @@ from typing import ClassVar
 from cleo.helpers import option
 
 from poetry.console.commands.installer_command import InstallerCommand
+from poetry.plugins.plugin_manager import PluginManager
 
 
 if TYPE_CHECKING:
@@ -65,9 +66,7 @@ class InstallCommand(InstallerCommand):
         option(
             "compile",
             None,
-            "Compile Python source files to bytecode."
-            " (This option has no effect if modern-installation is disabled"
-            " because the old installer always compiles.)",
+            "Compile Python source files to bytecode.",
         ),
     ]
 
@@ -102,9 +101,11 @@ you can set the "package-mode" to false in your pyproject.toml file.
             return super().activated_groups
 
     def handle(self) -> int:
-        from poetry.core.masonry.utils.module import ModuleOrPackageNotFound
+        from poetry.core.masonry.utils.module import ModuleOrPackageNotFoundError
 
         from poetry.masonry.builders.editable import EditableBuilder
+
+        PluginManager.ensure_project_plugins(self.poetry, self.io)
 
         if self.option("extras") and self.option("all-extras"):
             self.line_error(
@@ -191,7 +192,7 @@ you can set the "package-mode" to false in your pyproject.toml file.
         try:
             builder = EditableBuilder(self.poetry, self.env, self.io)
             builder.build()
-        except (ModuleOrPackageNotFound, FileNotFoundError) as e:
+        except (ModuleOrPackageNotFoundError, FileNotFoundError) as e:
             # This is likely due to the fact that the project is an application
             # not following the structure expected by Poetry.
             # No need for an editable install in this case.
@@ -203,10 +204,11 @@ you can set the "package-mode" to false in your pyproject.toml file.
                 "If you want to use Poetry only for dependency management"
                 " but not for packaging, you can disable package mode by setting"
                 " <c1>package-mode = false</> in your pyproject.toml file.\n"
-                "In a future version of Poetry this warning will become an error!",
-                style="warning",
+                "If you did intend to install the current project, you may need"
+                " to set `packages` in your pyproject.toml file.\n",
+                style="error",
             )
-            return 0
+            return 1
 
         if overwrite:
             self.overwrite(log_install.format(tag="success"))

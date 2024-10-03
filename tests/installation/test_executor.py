@@ -1081,6 +1081,49 @@ def test_executor_should_append_subdirectory_for_git(
     assert archive_arg == tmp_venv.path / "src/demo/subdirectories/two"
 
 
+def test_executor_should_install_multiple_packages_from_same_git_repository(
+    mocker: MockerFixture,
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    config: Config,
+    artifact_cache: ArtifactCache,
+    io: BufferedIO,
+    wheel: Path,
+) -> None:
+    package_a = Package(
+        "package_a",
+        "0.1.2",
+        source_type="git",
+        source_reference="master",
+        source_resolved_reference="123456",
+        source_url="https://github.com/demo/subdirectories.git",
+        source_subdirectory="package_a",
+    )
+    package_b = Package(
+        "package_b",
+        "0.1.2",
+        source_type="git",
+        source_reference="master",
+        source_resolved_reference="123456",
+        source_url="https://github.com/demo/subdirectories.git",
+        source_subdirectory="package_b",
+    )
+
+    chef = Chef(artifact_cache, tmp_venv, Factory.create_pool(config))
+    chef.set_directory_wheel(wheel)
+    spy = mocker.spy(chef, "prepare")
+
+    executor = Executor(tmp_venv, pool, config, io)
+    executor._chef = chef
+    executor.execute([Install(package_a), Install(package_b)])
+
+    archive_arg = spy.call_args_list[0][0][0]
+    assert archive_arg == tmp_venv.path / "src/demo/subdirectories/package_a"
+
+    archive_arg = spy.call_args_list[1][0][0]
+    assert archive_arg == tmp_venv.path / "src/demo/subdirectories/package_b"
+
+
 def test_executor_should_write_pep610_url_references_for_git_with_subdirectories(
     tmp_venv: VirtualEnv,
     pool: RepositoryPool,
@@ -1149,70 +1192,6 @@ def test_executor_should_be_initialized_with_correct_workers(
     executor = Executor(tmp_venv, pool, config, io)
 
     assert executor._max_workers == expected_workers
-
-
-def test_executor_fallback_on_poetry_create_error_without_wheel_installer(
-    mocker: MockerFixture,
-    config: Config,
-    pool: RepositoryPool,
-    io: BufferedIO,
-    tmp_path: Path,
-    env: MockEnv,
-    fixture_dir: FixtureDirGetter,
-) -> None:
-    mock_pip_install = mocker.patch("poetry.installation.executor.pip_install")
-    mock_sdist_builder = mocker.patch("poetry.core.masonry.builders.sdist.SdistBuilder")
-    mock_editable_builder = mocker.patch(
-        "poetry.masonry.builders.editable.EditableBuilder"
-    )
-    mock_create_poetry = mocker.patch(
-        "poetry.factory.Factory.create_poetry", side_effect=RuntimeError
-    )
-
-    config.merge(
-        {
-            "cache-dir": str(tmp_path),
-            "installer": {"modern-installation": False},
-        }
-    )
-
-    executor = Executor(env, pool, config, io)
-    warning_lines = io.fetch_output().splitlines()
-    assert warning_lines == [
-        "Warning: Setting `installer.modern-installation` to `false` is deprecated.",
-        "The pip-based installer will be removed in a future release.",
-        "See https://github.com/python-poetry/poetry/issues/8987.",
-    ]
-
-    directory_package = Package(
-        "simple-project",
-        "1.2.3",
-        source_type="directory",
-        source_url=fixture_dir("simple_project").resolve().as_posix(),
-    )
-
-    return_code = executor.execute(
-        [
-            Install(directory_package),
-        ]
-    )
-
-    expected = f"""
-Package operations: 1 install, 0 updates, 0 removals
-
-  - Installing simple-project (1.2.3 {directory_package.source_url})
-"""
-
-    expected_lines = set(expected.splitlines())
-    output_lines = set(io.fetch_output().splitlines())
-    assert output_lines == expected_lines
-    assert return_code == 0
-    assert mock_create_poetry.call_count == 1
-    assert mock_sdist_builder.call_count == 0
-    assert mock_editable_builder.call_count == 0
-    assert mock_pip_install.call_count == 1
-    assert mock_pip_install.call_args[1].get("upgrade") is True
-    assert mock_pip_install.call_args[1].get("editable") is False
 
 
 @pytest.mark.parametrize("failing_method", ["build", "get_requires_for_build"])
@@ -1363,7 +1342,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
   - Installing {package_name} ({package_version} {package_url})
 
-  SolveFailure
+  SolveFailureError
 
   Because -root- depends on poetry-core (0.999) which doesn't match any versions,\
  version solving failed.

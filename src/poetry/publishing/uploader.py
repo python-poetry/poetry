@@ -8,8 +8,6 @@ import requests
 
 from poetry.core.masonry.metadata import Metadata
 from poetry.core.masonry.utils.helpers import distribution_name
-from requests.exceptions import ConnectionError
-from requests.exceptions import HTTPError
 from requests_toolbelt import user_agent
 from requests_toolbelt.multipart import MultipartEncoder
 from requests_toolbelt.multipart import MultipartEncoderMonitor
@@ -27,23 +25,7 @@ if TYPE_CHECKING:
 
 
 class UploadError(Exception):
-    def __init__(self, error: ConnectionError | HTTPError | str) -> None:
-        if isinstance(error, HTTPError):
-            if error.response is None:
-                message = "HTTP Error connecting to the repository"
-            else:
-                message = (
-                    f"HTTP Error {error.response.status_code}: "
-                    f"{error.response.reason} | {error.response.content!r}"
-                )
-        elif isinstance(error, ConnectionError):
-            message = (
-                "Connection Error: We were unable to connect to the repository, "
-                "ensure the url is correct and can be reached."
-            )
-        else:
-            message = error
-        super().__init__(message)
+    pass
 
 
 class Uploader:
@@ -268,12 +250,22 @@ class Uploader:
                     bar.display()
                 else:
                     resp.raise_for_status()
-            except (requests.ConnectionError, requests.HTTPError) as e:
+
+            except requests.RequestException as e:
                 if self._io.output.is_decorated():
                     self._io.overwrite(
                         f" - Uploading <c1>{file.name}</c1> <error>FAILED</>"
                     )
-                raise UploadError(e)
+
+                if e.response is not None:
+                    message = (
+                        f"HTTP Error {e.response.status_code}: "
+                        f"{e.response.reason} | {e.response.content!r}"
+                    )
+                    raise UploadError(message) from e
+
+                raise UploadError("Error connecting to repository") from e
+
             finally:
                 self._io.write_line("")
 

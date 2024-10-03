@@ -32,7 +32,7 @@ pendulum = { version = "^1.4", optional = true }
 [tool.poetry.extras]
 time = [ "pendulum" ]
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^3.0"
 pytest-cov = "^2.4"
 

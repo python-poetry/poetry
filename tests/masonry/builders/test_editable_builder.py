@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import csv
 import json
-import locale
 import os
 import shutil
 
@@ -21,6 +20,7 @@ from poetry.core.packages.package import Package
 from poetry.factory import Factory
 from poetry.masonry.builders.editable import EditableBuilder
 from poetry.repositories.installed_repository import InstalledRepository
+from poetry.utils._compat import getencoding
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import EnvManager
 from poetry.utils.env import MockEnv
@@ -30,9 +30,9 @@ from poetry.utils.env import ephemeral_environment
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
-    from tests.types import FixtureDirGetter
 
     from poetry.poetry import Poetry
+    from tests.types import FixtureDirGetter
 
 
 @pytest.fixture()
@@ -108,9 +108,19 @@ def expected_metadata_version() -> str:
     return metadata.metadata_version
 
 
+@pytest.mark.parametrize("project", ("simple_project", "simple_project_legacy"))
 def test_builder_installs_proper_files_for_standard_packages(
-    simple_poetry: Poetry, tmp_venv: VirtualEnv
+    project: str,
+    simple_poetry: Poetry,
+    tmp_path: Path,
+    fixture_dir: FixtureDirGetter,
 ) -> None:
+    simple_poetry = Factory().create_poetry(fixture_dir(project))
+    env_manager = EnvManager(simple_poetry)
+    venv_path = tmp_path / "venv"
+    env_manager.build_venv(venv_path)
+    tmp_venv = VirtualEnv(venv_path)
+
     builder = EditableBuilder(simple_poetry, tmp_venv, NullIO())
 
     builder.build()
@@ -120,7 +130,9 @@ def test_builder_installs_proper_files_for_standard_packages(
     assert tmp_venv.site_packages.exists(pth_file)
     assert (
         simple_poetry.file.path.parent.resolve().as_posix()
-        == tmp_venv.site_packages.find(pth_file)[0].read_text().strip(os.linesep)
+        == tmp_venv.site_packages.find(pth_file)[0]
+        .read_text(encoding="utf-8")
+        .strip(os.linesep)
     )
 
     dist_info = Path("simple_project-1.2.3.dist-info")
@@ -139,12 +151,12 @@ def test_builder_installs_proper_files_for_standard_packages(
             "dir_info": {"editable": True},
             "url": simple_poetry.file.path.parent.as_uri(),
         },
-        json.loads(dist_info.joinpath("direct_url.json").read_text()),
+        json.loads(dist_info.joinpath("direct_url.json").read_text(encoding="utf-8")),
     )
 
-    assert dist_info.joinpath("INSTALLER").read_text() == "poetry"
+    assert dist_info.joinpath("INSTALLER").read_text(encoding="utf-8") == "poetry"
     assert (
-        dist_info.joinpath("entry_points.txt").read_text()
+        dist_info.joinpath("entry_points.txt").read_text(encoding="utf-8")
         == "[console_scripts]\nbaz=bar:baz.boom.bim\nfoo=foo:bar\n"
         "fox=fuz.foo:bar.baz\n\n"
     )
@@ -207,7 +219,7 @@ if __name__ == '__main__':
     sys.exit(baz.boom.bim())
 """
 
-    assert baz_script == tmp_venv._bin_dir.joinpath("baz").read_text()
+    assert baz_script == tmp_venv._bin_dir.joinpath("baz").read_text(encoding="utf-8")
 
     foo_script = f"""\
 #!{tmp_venv.python}
@@ -218,7 +230,7 @@ if __name__ == '__main__':
     sys.exit(bar())
 """
 
-    assert foo_script == tmp_venv._bin_dir.joinpath("foo").read_text()
+    assert foo_script == tmp_venv._bin_dir.joinpath("foo").read_text(encoding="utf-8")
 
     fox_script = f"""\
 #!{tmp_venv.python}
@@ -229,7 +241,7 @@ if __name__ == '__main__':
     sys.exit(bar.baz())
 """
 
-    assert fox_script == tmp_venv._bin_dir.joinpath("fox").read_text()
+    assert fox_script == tmp_venv._bin_dir.joinpath("fox").read_text(encoding="utf-8")
 
 
 def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
@@ -243,7 +255,7 @@ def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
     pip_install.assert_called_once_with(
         extended_poetry.pyproject.file.path.parent, env, upgrade=True, editable=True
     )
-    assert [] == env.executed
+    assert env.executed == []
 
 
 @pytest.mark.network
@@ -260,7 +272,7 @@ def test_builder_setup_generation_runs_with_pip_editable(
     poetry = Factory().create_poetry(extended_project)
 
     # we need a venv with pip and setuptools since we are verifying setup.py builds
-    with ephemeral_environment(flags={"no-setuptools": False, "no-pip": False}) as venv:
+    with ephemeral_environment(flags={"no-pip": False}) as venv:
         builder = EditableBuilder(poetry, venv, NullIO())
         builder.build()
 
@@ -297,7 +309,7 @@ def test_builder_installs_proper_files_when_packages_configured(
     pth_file = tmp_venv.site_packages.find(pth_file)[0]
 
     paths = set()
-    with pth_file.open(encoding=locale.getpreferredencoding()) as f:
+    with pth_file.open(encoding=getencoding()) as f:
         for line in f.readlines():
             line = line.strip(os.linesep)
             if line:

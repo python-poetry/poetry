@@ -13,6 +13,8 @@ from cleo.io.buffered_io import BufferedIO
 from cleo.io.null_io import NullIO
 from packaging.utils import canonicalize_name
 from poetry.core.packages.dependency import Dependency
+from poetry.core.packages.dependency_group import MAIN_GROUP
+from poetry.core.packages.dependency_group import DependencyGroup
 from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.packages.vcs_dependency import VCSDependency
@@ -659,6 +661,63 @@ def test_solver_returns_extras_when_multiple_extras_use_same_dependency(
 
     assert ops[-1].package.marker.is_any()
     assert ops[0].package.marker.is_any()
+
+
+def test_solver_locks_all_extras_when_multiple_extras_require_same_dependency(
+    solver: Solver,
+    repo: Repository,
+    package: ProjectPackage,
+) -> None:
+    """
+    - root depends on A[extra-b1] and C
+    - C depends on A[extra-b2]
+    - B is required by both extras
+    -> the locked dependency A on B must have both extra markers
+    """
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.0")
+    package_c = get_package("C", "1.0")
+
+    dep_b1 = get_dependency("B", "*", optional=True)
+    dep_b1.marker = parse_marker("extra == 'extra-b1'")
+
+    dep_b2 = get_dependency("B", "*", optional=True)
+    dep_b2.marker = parse_marker("extra == 'extra-b2'")
+
+    package_a.extras = {
+        canonicalize_name("extra-b1"): [dep_b1],
+        canonicalize_name("extra-b2"): [dep_b2],
+    }
+    package_a.add_dependency(dep_b1)
+    package_a.add_dependency(dep_b2)
+
+    package.add_dependency(
+        get_dependency("A", {"version": "*", "extras": ["extra-b1"]})
+    )
+    package.add_dependency(get_dependency("C", "*"))
+    package_c.add_dependency(
+        get_dependency("A", {"version": "*", "extras": ["extra-b2"]})
+    )
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+
+    transaction = solver.solve()
+
+    expected = [
+        {"job": "install", "package": package_b},
+        {"job": "install", "package": package_a},
+        {"job": "install", "package": package_c},
+    ]
+
+    ops = check_solver_result(transaction, expected)
+    locked_a_requires = ops[1].package.requires
+    assert len(locked_a_requires) == 2
+    assert {str(r.marker) for r in locked_a_requires} == {
+        'extra == "extra-b1"',
+        'extra == "extra-b2"',
+    }
 
 
 @pytest.mark.parametrize("enabled_extra", ["one", "two", None])
@@ -1792,7 +1851,7 @@ def test_solver_duplicate_dependencies_ignore_overrides_with_empty_marker_inters
     solver: Solver, repo: Repository, package: ProjectPackage
 ) -> None:
     """
-    Empty intersection between top level dependency and transient dependency.
+    Empty intersection between top level dependency and transitive dependency.
     """
     package.add_dependency(Factory.create_dependency("A", {"version": "1.0"}))
     package.add_dependency(
@@ -3118,17 +3177,30 @@ def test_solver_chooses_from_correct_repository_if_forced(
     assert ops[0].package.source_url == legacy_repository.url
 
 
+@pytest.mark.parametrize("project_dependencies", [True, False])
 def test_solver_chooses_from_correct_repository_if_forced_and_transitive_dependency(
     package: ProjectPackage,
     io: NullIO,
     legacy_repository: LegacyRepository,
     pypi_repository: PyPiRepository,
+    project_dependencies: bool,
 ) -> None:
     package.python_versions = "^3.7"
-    package.add_dependency(Factory.create_dependency("foo", "^1.0"))
-    package.add_dependency(
-        Factory.create_dependency("tomlkit", {"version": "^0.5", "source": "legacy"})
-    )
+    if project_dependencies:
+        main_group = DependencyGroup(MAIN_GROUP)
+        package.add_dependency_group(main_group)
+        main_group.add_dependency(Factory.create_dependency("foo", "^1.0"))
+        main_group.add_dependency(Factory.create_dependency("tomlkit", "^0.5"))
+        main_group.add_poetry_dependency(
+            Factory.create_dependency("tomlkit", {"source": "legacy"})
+        )
+    else:
+        package.add_dependency(Factory.create_dependency("foo", "^1.0"))
+        package.add_dependency(
+            Factory.create_dependency(
+                "tomlkit", {"version": "^0.5", "source": "legacy"}
+            )
+        )
 
     repo = Repository("repo")
     foo = get_package("foo", "1.0.0")
@@ -3164,7 +3236,7 @@ def test_solver_chooses_from_correct_repository_if_forced_and_transitive_depende
     assert ops[1].package.source_url is None
 
 
-def test_solver_does_not_choose_from_secondary_repository_by_default(
+def test_solver_does_not_choose_from_supplemental_repository_by_default(
     package: ProjectPackage,
     io: NullIO,
     legacy_repository: LegacyRepository,
@@ -3174,7 +3246,7 @@ def test_solver_does_not_choose_from_secondary_repository_by_default(
     package.add_dependency(Factory.create_dependency("clikit", {"version": "^0.2.0"}))
 
     pool = RepositoryPool()
-    pool.add_repository(pypi_repository, priority=Priority.SECONDARY)
+    pool.add_repository(pypi_repository, priority=Priority.SUPPLEMENTAL)
     pool.add_repository(legacy_repository)
 
     solver = Solver(package, pool, [], [], io)
@@ -3214,7 +3286,7 @@ def test_solver_does_not_choose_from_secondary_repository_by_default(
     assert ops[2].package.source_url == legacy_repository.url
 
 
-def test_solver_chooses_from_secondary_if_explicit(
+def test_solver_chooses_from_supplemental_if_explicit(
     package: ProjectPackage,
     io: NullIO,
     legacy_repository: LegacyRepository,
@@ -3226,7 +3298,7 @@ def test_solver_chooses_from_secondary_if_explicit(
     )
 
     pool = RepositoryPool()
-    pool.add_repository(pypi_repository, priority=Priority.SECONDARY)
+    pool.add_repository(pypi_repository, priority=Priority.SUPPLEMENTAL)
     pool.add_repository(legacy_repository)
 
     solver = Solver(package, pool, [], [], io)
@@ -3307,7 +3379,7 @@ def test_solver_chooses_direct_dependency_from_explicit_if_explicit(
     assert ops[0].package.source_url is None
 
 
-def test_solver_ignores_explicit_repo_for_transient_dependencies(
+def test_solver_ignores_explicit_repo_for_transitive_dependencies(
     package: ProjectPackage,
     io: NullIO,
     legacy_repository: LegacyRepository,
@@ -3794,20 +3866,6 @@ def test_solver_synchronize_single(
     check_solver_result(
         transaction, [{"job": "remove", "package": package_a}], synchronize=True
     )
-
-
-@pytest.mark.skip(reason="Poetry no longer has critical package requirements")
-def test_solver_with_synchronization_keeps_critical_package(
-    package: ProjectPackage,
-    pool: RepositoryPool,
-    io: NullIO,
-) -> None:
-    package_pip = get_package("setuptools", "1.0")
-
-    solver = Solver(package, pool, [package_pip], [], io)
-    transaction = solver.solve()
-
-    check_solver_result(transaction, [])
 
 
 def test_solver_cannot_choose_another_version_for_directory_dependencies(
@@ -4358,7 +4416,7 @@ def test_solver_does_not_update_ref_of_locked_vcs_package(
         Factory.create_dependency("demo", {"git": "https://github.com/demo/demo.git"})
     )
 
-    # transient dependencies of demo
+    # transitive dependencies of demo
     pendulum = get_package("pendulum", "2.0.3")
     repo.add_package(pendulum)
 
@@ -4404,7 +4462,7 @@ def test_solver_does_not_fetch_locked_vcs_package_with_ref(
         Factory.create_dependency("demo", {"git": "https://github.com/demo/demo.git"})
     )
 
-    # transient dependencies of demo
+    # transitive dependencies of demo
     pendulum = get_package("pendulum", "2.0.3")
     repo.add_package(pendulum)
 

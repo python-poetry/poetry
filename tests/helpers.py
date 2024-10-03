@@ -18,7 +18,7 @@ from poetry.factory import Factory
 from poetry.installation.executor import Executor
 from poetry.packages import Locker
 from poetry.repositories import Repository
-from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.utils._compat import metadata
 
 
@@ -215,7 +215,7 @@ class TestRepository(Repository):
     def find_packages(self, dependency: Dependency) -> list[Package]:
         packages = super().find_packages(dependency)
         if len(packages) == 0:
-            raise PackageNotFound(f"Package [{dependency.name}] not found.")
+            raise PackageNotFoundError(f"Package [{dependency.name}] not found.")
 
         return packages
 
@@ -333,16 +333,13 @@ def switch_working_directory(path: Path, remove: bool = False) -> Iterator[Path]
     original_cwd = Path.cwd()
     os.chdir(path)
 
-    with contextlib.suppress(Exception) as exception:
+    try:
         yield path
+    finally:
+        os.chdir(original_cwd)
 
-    os.chdir(original_cwd)
-
-    if remove:
-        shutil.rmtree(path, ignore_errors=True)
-
-    if exception is not None:
-        raise exception
+        if remove:
+            shutil.rmtree(path, ignore_errors=True)
 
 
 @contextlib.contextmanager

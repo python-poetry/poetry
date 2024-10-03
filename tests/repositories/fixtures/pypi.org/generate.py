@@ -53,14 +53,14 @@ from typing import Iterator
 from packaging.metadata import parse_email
 from poetry.core.masonry.builders.sdist import SdistBuilder
 from poetry.core.packages.package import Package
+
+from poetry.repositories.pypi_repository import PyPiRepository
 from tests.helpers import FIXTURE_PATH
 from tests.helpers import FIXTURE_PATH_DISTRIBUTIONS
 from tests.helpers import FIXTURE_PATH_INSTALLATION
 from tests.helpers import FIXTURE_PATH_REPOSITORIES
 from tests.helpers import FIXTURE_PATH_REPOSITORIES_LEGACY
 from tests.helpers import FIXTURE_PATH_REPOSITORIES_PYPI
-
-from poetry.repositories.pypi_repository import PyPiRepository
 
 
 if TYPE_CHECKING:

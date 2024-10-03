@@ -25,9 +25,6 @@ class Command(BaseCommand):
 
         return self._poetry
 
-    def set_poetry(self, poetry: Poetry) -> None:
-        self._poetry = poetry
-
     def get_application(self) -> Application:
         from poetry.console.application import Application
 

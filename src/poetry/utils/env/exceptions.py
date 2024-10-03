@@ -33,12 +33,12 @@ class EnvCommandError(EnvError):
         super().__init__("\n\n".join(message_parts))
 
 
-class PythonVersionNotFound(EnvError):
+class PythonVersionNotFoundError(EnvError):
     def __init__(self, expected: str) -> None:
         super().__init__(f"Could not find the python executable {expected}")
 
 
-class NoCompatiblePythonVersionFound(EnvError):
+class NoCompatiblePythonVersionFoundError(EnvError):
     def __init__(self, expected: str, given: str | None = None) -> None:
         if given:
             message = (

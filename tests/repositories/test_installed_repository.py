@@ -4,6 +4,7 @@ import os
 import shutil
 import zipfile
 
+from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Iterator
@@ -12,6 +13,7 @@ from typing import NamedTuple
 import pytest
 
 from poetry.repositories.installed_repository import InstalledRepository
+from poetry.utils._compat import getencoding
 from poetry.utils._compat import metadata
 from poetry.utils.env import EnvManager
 from poetry.utils.env import MockEnv
@@ -62,12 +64,13 @@ def installed_results(
         metadata.PathDistribution(src_dir / "pendulum" / "pendulum.egg-info"),
         metadata.PathDistribution(
             zipfile.Path(  # type: ignore[arg-type]
-                str(site_purelib / "foo-0.1.0-py3.8.egg"),
+                site_purelib / "foo-0.1.0-py3.8.egg",
                 "EGG-INFO",
             )
         ),
         metadata.PathDistribution(site_purelib / "standard-1.2.3.dist-info"),
         metadata.PathDistribution(site_purelib / "editable-2.3.4.dist-info"),
+        metadata.PathDistribution(site_purelib / "editable-src-dir-2.3.4.dist-info"),
         metadata.PathDistribution(
             site_purelib / "editable-with-import-2.3.4.dist-info"
         ),
@@ -94,7 +97,7 @@ def env(
     env_dir: Path, site_purelib: Path, site_platlib: Path, src_dir: Path
 ) -> MockEnv:
     class _MockEnv(MockEnv):
-        @property
+        @cached_property
         def paths(self) -> dict[str, str]:
             return {
                 "purelib": site_purelib.as_posix(),
@@ -168,7 +171,7 @@ def fix_editable_path_for_windows(
     # to give inconsistent results at different phases of the test suite execution; additionally
     # this represents a more realistic scenario
     editable_pth_file = site_purelib / "editable.pth"
-    editable_pth_file.write_text(editable_source_directory_path)
+    editable_pth_file.write_text(editable_source_directory_path, encoding=getencoding())
 
 
 def test_load_successful(
@@ -198,6 +201,30 @@ def test_load_successful_with_invalid_distribution(
     message = caplog.messages[0]
     assert message.startswith("Project environment contains an invalid distribution")
     assert str(invalid_dist_info) in message
+
+
+def test_loads_in_correct_sys_path_order(
+    tmp_path: Path, current_python: tuple[int, int, int], fixture_dir: FixtureDirGetter
+) -> None:
+    path1 = tmp_path / "path1"
+    path1.mkdir()
+    path2 = tmp_path / "path2"
+    path2.mkdir()
+    env = MockEnv(path=tmp_path, sys_path=[str(path1), str(path2)])
+    fixtures = fixture_dir("project_plugins")
+    dist_info_1 = "my_application_plugin-1.0.dist-info"
+    dist_info_2 = "my_application_plugin-2.0.dist-info"
+    dist_info_other = "my_other_plugin-1.0.dist-info"
+    shutil.copytree(fixtures / dist_info_1, path1 / dist_info_1)
+    shutil.copytree(fixtures / dist_info_2, path2 / dist_info_2)
+    shutil.copytree(fixtures / dist_info_other, path2 / dist_info_other)
+
+    repo = InstalledRepository.load(env)
+
+    assert {f"{p.name} {p.version}" for p in repo.packages} == {
+        "my-application-plugin 1.0",
+        "my-other-plugin 1.0",
+    }
 
 
 def test_load_ensure_isolation(repository: InstalledRepository) -> None:
@@ -256,6 +283,18 @@ def test_load_editable_package(
     editable = get_package_from_repository("editable", repository)
     assert editable is not None
     assert editable.name == "editable"
+    assert editable.version.text == "2.3.4"
+    assert editable.source_type == "directory"
+    assert editable.source_url == editable_source_directory_path
+
+
+def test_load_editable_src_dir_package(
+    repository: InstalledRepository, editable_source_directory_path: str
+) -> None:
+    # test editable package with src layout with text .pth file
+    editable = get_package_from_repository("editable-src-dir", repository)
+    assert editable is not None
+    assert editable.name == "editable-src-dir"
     assert editable.version.text == "2.3.4"
     assert editable.source_type == "directory"
     assert editable.source_url == editable_source_directory_path
@@ -397,3 +436,30 @@ def test_system_site_packages_source_type(
         package.name: package.source_type for package in installed_repository.packages
     }
     assert source_types == {"cleo": None, "directory-pep-610": "directory"}
+
+
+def test_pipx_shared_lib_site_packages(
+    tmp_path: Path,
+    poetry: Poetry,
+    site_purelib: Path,
+    caplog: LogCaptureFixture,
+) -> None:
+    """
+    Simulate pipx shared/lib/site-packages which is not relative to the venv path.
+    """
+    venv_path = tmp_path / "venv"
+    shared_lib_site_path = tmp_path / "site"
+    env = MockEnv(
+        path=venv_path, sys_path=[str(venv_path / "purelib"), str(shared_lib_site_path)]
+    )
+    dist_info = "cleo-0.7.6.dist-info"
+    shutil.copytree(site_purelib / dist_info, shared_lib_site_path / dist_info)
+    installed_repository = InstalledRepository.load(env)
+
+    assert len(installed_repository.packages) == 1
+    cleo_package = installed_repository.packages[0]
+    cleo_package.to_dependency()
+    # There must not be a warning
+    # that the package does not seem to be a valid Python package.
+    assert caplog.messages == []
+    assert cleo_package.source_type is None

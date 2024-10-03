@@ -7,25 +7,25 @@ if TYPE_CHECKING:
     from poetry.mixology.incompatibility import Incompatibility
 
 
-class IncompatibilityCause(Exception):
+class IncompatibilityCauseError(Exception):
     """
     The reason and Incompatibility's terms are incompatible.
     """
 
 
-class RootCause(IncompatibilityCause):
+class RootCauseError(IncompatibilityCauseError):
     pass
 
 
-class NoVersionsCause(IncompatibilityCause):
+class NoVersionsCauseError(IncompatibilityCauseError):
     pass
 
 
-class DependencyCause(IncompatibilityCause):
+class DependencyCauseError(IncompatibilityCauseError):
     pass
 
 
-class ConflictCause(IncompatibilityCause):
+class ConflictCauseError(IncompatibilityCauseError):
     """
     The incompatibility was derived from two existing incompatibilities
     during conflict resolution.
@@ -47,7 +47,7 @@ class ConflictCause(IncompatibilityCause):
         return str(self._conflict)
 
 
-class PythonCause(IncompatibilityCause):
+class PythonCauseError(IncompatibilityCauseError):
     """
     The incompatibility represents a package's python constraint
     (Python versions) being incompatible
@@ -67,7 +67,7 @@ class PythonCause(IncompatibilityCause):
         return self._root_python_version
 
 
-class PlatformCause(IncompatibilityCause):
+class PlatformCauseError(IncompatibilityCauseError):
     """
     The incompatibility represents a package's platform constraint
     (OS most likely) being incompatible with the current platform.

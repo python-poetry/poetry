@@ -6,20 +6,6 @@ optional = false
 python-versions = ">=3.5"
 files = []
 
-[package.requirements]
-python = ">=3.5,<4.0"
-
-[[package]]
-name = "A"
-version = "1.0.1"
-description = ""
-optional = false
-python-versions = ">=3.6"
-files = []
-
-[package.requirements]
-python = ">=3.6,<4.0"
-
 [metadata]
 python-versions = "~2.7 || ^3.4"
 lock-version = "2.0"

@@ -11,7 +11,7 @@ from typing import List
 
 from poetry.core.constraints.version import Version
 from poetry.core.packages.package import Package
-from poetry.core.version.exceptions import InvalidVersion
+from poetry.core.version.exceptions import InvalidVersionError
 
 from poetry.utils.patterns import sdist_file_re
 from poetry.utils.patterns import wheel_file_re
@@ -86,7 +86,7 @@ class LinkSource:
         if version_string:
             try:
                 version = Version.parse(version_string)
-            except InvalidVersion:
+            except InvalidVersionError:
                 logger.debug(
                     "Skipping url (%s) due to invalid version (%s)", link.url, version
                 )

@@ -10,9 +10,9 @@ import requests.adapters
 from poetry.core.packages.package import Package
 
 from poetry.inspection.info import PackageInfo
-from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.repositories.http_repository import HTTPRepository
-from poetry.repositories.link_sources.html import SimpleRepositoryPage
+from poetry.repositories.link_sources.html import HTMLPage
 from poetry.repositories.link_sources.html import SimpleRepositoryRootPage
 
 
@@ -68,7 +68,7 @@ class LegacyRepository(HTTPRepository):
     def find_links_for_package(self, package: Package) -> list[Link]:
         try:
             page = self.get_page(package.name)
-        except PackageNotFound:
+        except PackageNotFoundError:
             return []
 
         return list(page.links_for_version(package.name, package.version))
@@ -81,7 +81,7 @@ class LegacyRepository(HTTPRepository):
         """
         try:
             page = self.get_page(name)
-        except PackageNotFound:
+        except PackageNotFoundError:
             self._log(f"No packages found for {name}", level="debug")
             return []
 
@@ -125,10 +125,10 @@ class LegacyRepository(HTTPRepository):
             ),
         )
 
-    def _get_page(self, name: NormalizedName) -> SimpleRepositoryPage:
+    def _get_page(self, name: NormalizedName) -> HTMLPage:
         if not (response := self._get_response(f"/{name}/")):
-            raise PackageNotFound(f"Package [{name}] not found.")
-        return SimpleRepositoryPage(response.url, response.text)
+            raise PackageNotFoundError(f"Package [{name}] not found.")
+        return HTMLPage(response.url, response.text)
 
     @cached_property
     def root_page(self) -> SimpleRepositoryRootPage:
@@ -145,7 +145,7 @@ class LegacyRepository(HTTPRepository):
         results: list[Package] = []
 
         for candidate in self.root_page.search(query):
-            with suppress(PackageNotFound):
+            with suppress(PackageNotFoundError):
                 page = self.get_page(candidate)
 
                 for package in page.packages:

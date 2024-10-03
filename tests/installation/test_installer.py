@@ -1089,7 +1089,7 @@ def test_run_installs_extras_with_deps_if_requested(
         expected_installations_count = 0 if is_installed else 2
         # We only want to uninstall extras if we do a "poetry install" without extras,
         # not if we do a "poetry update" or "poetry add".
-        expected_removals_count = 2 if is_installed and is_locked else 0
+        expected_removals_count = 2 if is_installed else 0
 
     assert installer.executor.installations_count == expected_installations_count
     assert installer.executor.removals_count == expected_removals_count
@@ -1625,7 +1625,7 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock(
     assert installer.executor.removals_count == 0
 
 
-def test_run_update_uninstalls_after_removal_transient_dependency(
+def test_run_update_uninstalls_after_removal_transitive_dependency(
     installer: Installer,
     locker: Locker,
     repo: Repository,
@@ -1791,9 +1791,6 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock_upda
     assert installer.executor.removals_count == 0
 
 
-@pytest.mark.skip(
-    "This is not working at the moment due to limitations in the resolver"
-)
 def test_installer_test_solver_finds_compatible_package_for_dependency_python_not_fully_compatible_with_package_python(
     installer: Installer,
     locker: Locker,
@@ -2232,80 +2229,6 @@ def test_installer_uses_prereleases_if_they_are_compatible(
     assert result == 0
 
     assert installer.executor.installations_count == 2
-
-
-def test_installer_can_handle_old_lock_files(
-    locker: Locker,
-    package: ProjectPackage,
-    repo: Repository,
-    installed: CustomInstalledRepository,
-    config: Config,
-    pypi_repository: PyPiRepository,
-) -> None:
-    pool = RepositoryPool()
-    pool.add_repository(pypi_repository)
-
-    package.add_dependency(Factory.create_dependency("pytest", "^3.5", groups=["dev"]))
-
-    locker.locked()
-    locker.mock_lock_data(fixture("old-lock"))
-
-    installer = Installer(
-        NullIO(),
-        MockEnv(),
-        package,
-        locker,
-        pool,
-        config,
-        installed=installed,
-        executor=Executor(MockEnv(), pool, config, NullIO()),
-    )
-    result = installer.run()
-    assert result == 0
-
-    assert installer.executor.installations_count == 6
-
-    installer = Installer(
-        NullIO(),
-        MockEnv(version_info=(2, 7, 18)),
-        package,
-        locker,
-        pool,
-        config,
-        installed=installed,
-        executor=Executor(
-            MockEnv(version_info=(2, 7, 18)),
-            pool,
-            config,
-            NullIO(),
-        ),
-    )
-    result = installer.run()
-    assert result == 0
-
-    # funcsigs will be added
-    assert installer.executor.installations_count == 7
-
-    installer = Installer(
-        NullIO(),
-        MockEnv(version_info=(2, 7, 18), platform="win32"),
-        package,
-        locker,
-        pool,
-        config,
-        installed=installed,
-        executor=Executor(
-            MockEnv(version_info=(2, 7, 18), platform="win32"),
-            pool,
-            config,
-            NullIO(),
-        ),
-    )
-    result = installer.run()
-    assert result == 0
-
-    # colorama will be added
-    assert installer.executor.installations_count == 8
 
 
 def test_installer_does_not_write_lock_file_when_installation_fails(

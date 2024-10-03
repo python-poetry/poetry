@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "poetry"
-version = "1.9.0.dev0"
+version = "2.0.0.dev0"
 description = "Python dependency management and packaging made easy."
 authors = ["Sébastien Eustace <sebastien@eustace.io>"]
 maintainers = [
@@ -31,18 +31,18 @@ Changelog = "https://python-poetry.org/history/"
 [tool.poetry.dependencies]
 python = "^3.8"
 
-poetry-core = "1.9.0"
-poetry-plugin-export = "^1.7.0"
-build = "^1.1.1"
+poetry-core = { git = "https://github.com/python-poetry/poetry-core.git", branch = "main" }
+poetry-plugin-export = "^1.8.0"
+build = "^1.2.1"
 cachecontrol = { version = "^0.14.0", extras = ["filecache"] }
 cleo = "^2.1.0"
-dulwich = "^0.21.2"
+dulwich = "^0.22.1"
 fastjsonschema = "^2.18.0"
 importlib-metadata = { version = ">=4.4", python = "<3.10" }
 installer = "^0.7.0"
-keyring = "^24.3.1"
+keyring = "^25.1.0"
 # packaging uses calver, so version is unclamped
-packaging = ">=23.1"
+packaging = ">=24.0"
 pexpect = "^4.7.0"
 pkginfo = "^1.10"
 platformdirs = ">=3.0.0,<5"
@@ -59,17 +59,21 @@ xattr = { version = "^1.0.0", markers = "sys_platform == 'darwin'" }
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = ">=2.10"
+# add setuptools for PyCharm
+# see https://youtrack.jetbrains.com/issue/PY-48909
+# and https://github.com/JetBrains/intellij-community/commit/3f37786ec0bf5066e4527690d1068b5a00680ea3
+setuptools = { version = ">=60", python = "<3.10" }
 
 [tool.poetry.group.test.dependencies]
 coverage = ">=7.2.0"
-deepdiff = "^6.3"
-httpretty = "^1.1"
-jaraco-classes = "^3.3.1"
-pytest = "^8.0"
-pytest-cov = "^4.0"
-pytest-mock = "^3.9"
-pytest-randomly = "^3.12"
-pytest-xdist = { version = "^3.1", extras = ["psutil"] }
+deepdiff = ">=6.3"
+httpretty = ">=1.1"
+jaraco-classes = ">=3.3.1"
+pytest = ">=8.0"
+pytest-cov = ">=4.0"
+pytest-mock = ">=3.9"
+pytest-randomly = ">=3.12"
+pytest-xdist = { version = ">=3.1", extras = ["psutil"] }
 
 [tool.poetry.group.typing.dependencies]
 mypy = ">=1.8.0"
@@ -101,7 +105,6 @@ extend-exclude = [
 ]
 fix = true
 line-length = 88
-src = ["src"]
 target-version = "py38"
 
 [tool.ruff.lint]
@@ -123,7 +126,6 @@ extend-select = [
 ignore = [
     "B904", # use 'raise ... from err'
     "B905", # use explicit 'strict=' parameter with 'zip()'
-    "N818", #  Exception name should be named with an Error suffix
 ]
 extend-safe-fixes = [
     "TCH", # move import from and to TYPE_CHECKING blocks
@@ -149,7 +151,6 @@ files = "src, tests"
 mypy_path = "src"
 namespace_packages = true
 explicit_package_bases = true
-show_error_codes = true
 strict = true
 enable_error_code = [
     "ignore-without-code",
@@ -167,9 +168,9 @@ exclude = [
 # python versions.
 [[tool.mypy.overrides]]
 module = [
-    'poetry.plugins.plugin_manager',
     'poetry.repositories.installed_repository',
     'tests.console.commands.self.test_show_plugins',
+    'tests.repositories.test_installed_repository',
     'tests.helpers',
 ]
 warn_unused_ignores = false
@@ -189,14 +190,35 @@ ignore_missing_imports = true
 
 
 [tool.pytest.ini_options]
-addopts = "-n auto"
+addopts = [ "-n", "logical", "-ra", "--strict-config", "--strict-markers" ]
 testpaths = ["tests"]
 markers = [
     "network: mark tests that require internet access",
 ]
+log_cli_level = "INFO"
+xfail_strict = true
 
 
 [tool.coverage.report]
 exclude_also = [
     "if TYPE_CHECKING:"
+]
+
+
+[tool.repo-review]
+ignore = [
+    "PY007",
+    "PP302",
+    "PP309",
+    "GH101",
+    "GH212",
+    "PC111",
+    "PC140",
+    "PC160",
+    "PC170",
+    "PC180",
+    "PC180",
+    "PC901",
+    "MY103",
+    "RTD100",
 ]

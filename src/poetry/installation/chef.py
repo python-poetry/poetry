@@ -15,6 +15,8 @@ from poetry.utils.isolated_build import isolated_builder
 
 
 if TYPE_CHECKING:
+    from build import DistributionType
+
     from poetry.repositories import RepositoryPool
     from poetry.utils.cache import ArtifactCache
     from poetry.utils.env import Env
@@ -48,7 +50,7 @@ class Chef:
     ) -> Path:
         from subprocess import CalledProcessError
 
-        distribution = "wheel" if not editable else "editable"
+        distribution: DistributionType = "editable" if editable else "wheel"
         error: Exception | None = None
 
         try:

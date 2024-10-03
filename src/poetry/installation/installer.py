@@ -7,14 +7,12 @@ from cleo.io.null_io import NullIO
 from packaging.utils import canonicalize_name
 
 from poetry.installation.executor import Executor
-from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
 from poetry.installation.operations import Update
 from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.repositories.lockfile_repository import LockfileRepository
-from poetry.utils.extras import get_extra_package_names
 
 
 if TYPE_CHECKING:
@@ -239,15 +237,17 @@ class Installer:
                 source_root=self._env.path.joinpath("src")
             ):
                 ops = solver.solve(use_latest=self._whitelist).calculate_operations()
+
+            lockfile_repo = LockfileRepository()
+            self._populate_lockfile_repo(lockfile_repo, ops)
+
         else:
             self._io.write_line("<info>Installing dependencies from lock file</>")
 
-            locked_repository = self._locker.locked_repository()
-
             if not self._locker.is_fresh():
                 raise ValueError(
-                    "pyproject.toml changed significantly since poetry.lock was last generated. "
-                    "Run `poetry lock [--no-update]` to fix the lock file."
+                    "pyproject.toml changed significantly since poetry.lock was last"
+                    " generated. Run `poetry lock [--no-update]` to fix the lock file."
                 )
 
             locker_extras = {
@@ -258,29 +258,24 @@ class Installer:
                 if extra not in locker_extras:
                     raise ValueError(f"Extra [{extra}] is not specified.")
 
-            # If we are installing from lock
-            # Filter the operations by comparing it with what is
-            # currently installed
-            ops = self._get_operations_from_lock(locked_repository)
-
-        lockfile_repo = LockfileRepository()
-        uninstalls = self._populate_lockfile_repo(lockfile_repo, ops)
+            locked_repository = self._locker.locked_repository()
+            lockfile_repo = locked_repository
 
         if not self.executor.enabled:
             # If we are only in lock mode, no need to go any further
             self._write_lock_file(lockfile_repo)
             return 0
 
-        if self._groups is not None:
-            root = self._package.with_dependency_groups(list(self._groups), only=True)
-        else:
-            root = self._package.without_optional_dependency_groups()
-
         if self._io.is_verbose():
             self._io.write_line("")
             self._io.write_line(
                 "<info>Finding the necessary packages for the current system</>"
             )
+
+        if self._groups is not None:
+            root = self._package.with_dependency_groups(list(self._groups), only=True)
+        else:
+            root = self._package.without_optional_dependency_groups()
 
         # We resolve again by only using the lock file
         packages = lockfile_repo.packages + locked_repository.packages
@@ -299,35 +294,11 @@ class Installer:
 
         with solver.use_environment(self._env):
             ops = solver.solve(use_latest=self._whitelist).calculate_operations(
-                with_uninstalls=self._requires_synchronization,
+                with_uninstalls=self._requires_synchronization or self._update,
                 synchronize=self._requires_synchronization,
                 skip_directory=self._skip_directory,
+                extras=set(self._extras),
             )
-
-        if not self._requires_synchronization:
-            # If no packages synchronisation has been requested we need
-            # to calculate the uninstall operations
-            from poetry.puzzle.transaction import Transaction
-
-            transaction = Transaction(
-                locked_repository.packages,
-                [(package, 0) for package in lockfile_repo.packages],
-                installed_packages=self._installed_repository.packages,
-                root_package=root,
-            )
-
-            ops = [
-                op
-                for op in transaction.calculate_operations(with_uninstalls=True)
-                if op.job_type == "uninstall"
-            ] + ops
-        else:
-            ops = uninstalls + ops
-
-        # We need to filter operations so that packages
-        # not compatible with the current system,
-        # or optional and not requested, are dropped
-        self._filter_operations(ops, lockfile_repo)
 
         # Validate the dependencies
         for op in ops:
@@ -358,86 +329,14 @@ class Installer:
 
     def _populate_lockfile_repo(
         self, repo: LockfileRepository, ops: Iterable[Operation]
-    ) -> list[Uninstall]:
-        uninstalls = []
+    ) -> None:
         for op in ops:
             if isinstance(op, Uninstall):
-                uninstalls.append(op)
                 continue
 
             package = op.target_package if isinstance(op, Update) else op.package
             if not repo.has_package(package):
                 repo.add_package(package)
-
-        return uninstalls
-
-    def _get_operations_from_lock(
-        self, locked_repository: Repository
-    ) -> list[Operation]:
-        installed_repo = self._installed_repository
-        ops: list[Operation] = []
-
-        extra_packages = self._get_extra_packages(locked_repository)
-        for locked in locked_repository.packages:
-            is_installed = False
-            for installed in installed_repo.packages:
-                if locked.name == installed.name:
-                    is_installed = True
-                    if locked.optional and locked.name not in extra_packages:
-                        # Installed but optional and not requested in extras
-                        ops.append(Uninstall(locked))
-                    elif locked.version != installed.version:
-                        ops.append(Update(installed, locked))
-
-            # If it's optional and not in required extras
-            # we do not install
-            if locked.optional and locked.name not in extra_packages:
-                continue
-
-            op = Install(locked)
-            if is_installed:
-                op.skip("Already installed")
-
-            ops.append(op)
-
-        return ops
-
-    def _filter_operations(self, ops: Iterable[Operation], repo: Repository) -> None:
-        extra_packages = self._get_extra_packages(repo)
-        for op in ops:
-            package = op.target_package if isinstance(op, Update) else op.package
-
-            if op.job_type == "uninstall":
-                continue
-
-            if not self._env.is_valid_for_marker(package.marker):
-                op.skip("Not needed for the current environment")
-                continue
-
-            # If a package is optional and not requested
-            # in any extra we skip it
-            if package.optional and package.name not in extra_packages:
-                op.skip("Not required")
-
-    def _get_extra_packages(self, repo: Repository) -> set[NormalizedName]:
-        """
-        Returns all package names required by extras.
-
-        Maybe we just let the solver handle it?
-        """
-        extras: dict[NormalizedName, list[NormalizedName]]
-        if self._update:
-            extras = {k: [d.name for d in v] for k, v in self._package.extras.items()}
-        else:
-            raw_extras = self._locker.lock_data.get("extras", {})
-            extras = {
-                canonicalize_name(extra): [
-                    canonicalize_name(dependency) for dependency in dependencies
-                ]
-                for extra, dependencies in raw_extras.items()
-            }
-
-        return get_extra_package_names(repo.packages, extras, self._extras)
 
     def _get_installed(self) -> InstalledRepository:
         return InstalledRepository.load(self._env)

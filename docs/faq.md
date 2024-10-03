@@ -211,6 +211,18 @@ Usually you will want to match the supported Python range of your project with t
 Alternatively you can tell Poetry to install this dependency [only for a specific range of Python versions]({{< relref "dependency-specification#multiple-constraints-dependencies" >}}),
 if you know that it's not needed in all versions.
 
+If you do not want to set an upper bound in the metadata when building your project,
+you can omit it in the `project` section and only set it in `tool.poetry.dependencies`:
+
+```toml
+[project]
+# ...
+requires-python = ">=3.7"  # used for metadata when building the project
+
+[tool.poetry.dependencies]
+python = ">=3.7,<3.11"  # used for locking dependencies
+```
+
 
 ### Why does Poetry enforce PEP 440 versions?
 

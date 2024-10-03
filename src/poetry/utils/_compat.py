@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import locale
 import sys
 
 from contextlib import suppress
@@ -10,14 +11,11 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-# TODO: use try/except ImportError when
-# https://github.com/python/mypy/issues/1393 is fixed
-
 if sys.version_info < (3, 11):
     # compatibility for python <3.11
     import tomli as tomllib
 else:
-    import tomllib  # nopycln: import
+    import tomllib
 
 
 if sys.version_info < (3, 10):
@@ -55,6 +53,13 @@ def encode(string: str, encodings: list[str] | None = None) -> bytes:
     return string.encode(encodings[0], errors="ignore")
 
 
+def getencoding() -> str:
+    if sys.version_info < (3, 11):
+        return locale.getpreferredencoding()
+    else:
+        return locale.getencoding()
+
+
 def is_relative_to(this: Path, other: Path) -> bool:
     """
     Return whether `this` path is relative to the `other` path. This is compatibility wrapper around
@@ -75,6 +80,7 @@ __all__ = [
     "WINDOWS",
     "decode",
     "encode",
+    "getencoding",
     "is_relative_to",
     "metadata",
     "tomllib",

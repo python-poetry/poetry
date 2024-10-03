@@ -1,11 +1,11 @@
-name: "Documentation Preview"
+name: Documentation Preview
 
 on:
   pull_request:
     # allow repository maintainers to modify and test workflow
     paths-ignore:
       - "**"
-      - "!.github/workflows/docs.yml"
+      - "!.github/workflows/docs.yaml"
   pull_request_target:
     # enable runs for this workflow when labeled as documentation only
     # prevent execution when the workflow itself is modified from a fork
@@ -16,62 +16,60 @@ on:
       - "**"
       - "!docs/**"
 
-permissions:
-  contents: read
-  pull-requests: write
-
 jobs:
   deploy:
     name: Build & Deploy
     runs-on: ubuntu-latest
-    if: |
+    if: >
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'impact/docs'))
       || (github.event_name != 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
-      - name: Checkout Website Source
-        uses: actions/checkout@v4
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
         with:
           repository: python-poetry/website
 
-      - name: Bootstrap poetry
-        run: pipx install poetry
-
-      - name: Checkout Poetry Source
-        uses: actions/checkout@v4
+      # use .github from pull request target instead of pull_request.head
+      # for pull_request_target trigger to avoid arbitrary code execution
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
         with:
-          path: poetry
+          path: poetry-github
+          sparse-checkout: .github
+
+      # only checkout docs from pull_request.head to not use something else by accident
+      # for pull_request_target trigger (security)
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        with:
+          path: poetry-docs
           ref: ${{ github.event.pull_request.head.sha }}
+          sparse-checkout: docs
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: poetry
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
           node-version: "18"
 
-      - name: Build Assets
-        run: npm ci && npm run prod
-
-      - name: Fetch Documentation
-        run: |
-          poetry install --no-root --only main
-          poetry run python bin/website build --local ./poetry
-
-      - name: Install Hugo
-        uses: peaceiris/actions-hugo@v2
+      - uses: peaceiris/actions-hugo@16361eb4acea8698b220b76c0d4e84e1fd22c61d # v2.6.0
         with:
           hugo-version: '0.83.1'
 
-      - name: Build
-        run: hugo -v --minify
+      - uses: ./poetry-github/.github/actions/bootstrap-poetry
 
-      - name: Deploy
-        uses: amondnet/vercel-action@v25
-        id: vercel-action
+      - uses: ./poetry-github/.github/actions/poetry-install
+        with:
+          args: --no-root --only main
+
+      - name: website-build
+        run: |
+          # Rebuild the docs files from the PR checkout.
+          poetry run python bin/website build --local ./poetry-docs
+          # Build website assets (CSS/JS).
+          npm ci && npm run prod
+          # Build the static website.
+          hugo -v --minify
+
+      - uses: amondnet/vercel-action@16e87c0a08142b0d0d33b76aeaf20823c381b9b9 # v25.2.0
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}

@@ -1,44 +1,58 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - '*.*.*'
+  release:
+    types: [published]
 
 jobs:
-  release:
-    name: Release
+  build:
+    name: Build
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
 
-      - name: Install Poetry
-        run: pipx install poetry
+      - run: pipx run build
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+      - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         with:
-          python-version: "3.12"
-          cache: poetry
+          name: distfiles
+          path: dist/
+          if-no-files-found: error
 
-      - name: Build project for distribution
-        run: poetry build
+  upload-github:
+    name: Upload (GitHub)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    needs: build
+    steps:
+      # We need to be in a git repo for gh to work.
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
 
-      - name: Check Version
-        id: check-version
-        run: |
-          [[ "$(poetry version --short)" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || echo prerelease=true >> $GITHUB_OUTPUT
-
-      - name: Create Release
-        uses: ncipollo/release-action@v1
+      - uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
         with:
-          artifacts: "dist/*"
-          token: ${{ secrets.GITHUB_TOKEN }}
-          draft: false
-          prerelease: ${{ steps.check-version.outputs.prerelease == 'true' }}
+          name: distfiles
+          path: dist/
 
-      - name: Publish to PyPI
+      - run: gh release upload ${{ github.event.release.tag_name }} dist/*.{tar.gz,whl}
         env:
-          POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
-        run: poetry publish
+          GH_TOKEN: ${{ github.token }}
+
+  upload-pypi:
+    name: Upload (PyPI)
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/poetry/
+    permissions:
+      id-token: write
+    needs: build
+    steps:
+      - uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
+        with:
+          name: distfiles
+          path: dist/
+
+      - uses: pypa/gh-action-pypi-publish@81e9d935c883d0b210363ab89cf05f3894778450 # v1.8.14
+        with:
+          print-hash: true

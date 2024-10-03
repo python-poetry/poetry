@@ -54,7 +54,7 @@ def test_default_installation_dist_info_dir_content(default_installation: Path) 
 
 def test_installer_file_contains_valid_version(default_installation: Path) -> None:
     installer_file = default_installation / "demo-0.1.0.dist-info" / "INSTALLER"
-    with open(installer_file) as f:
+    with open(installer_file, encoding="utf-8") as f:
         installer_content = f.read()
     match = re.match(r"Poetry (?P<version>.*)", installer_content)
     assert match

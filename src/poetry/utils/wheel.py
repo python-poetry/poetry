@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class InvalidWheelName(Exception):
+class InvalidWheelNameError(Exception):
     pass
 
 
@@ -24,7 +24,7 @@ class Wheel:
     def __init__(self, filename: str) -> None:
         wheel_info = wheel_file_re.match(filename)
         if not wheel_info:
-            raise InvalidWheelName(f"{filename} is not a valid wheel filename.")
+            raise InvalidWheelNameError(f"{filename} is not a valid wheel filename.")
 
         self.filename = filename
         self.name = wheel_info.group("name").replace("_", "-")

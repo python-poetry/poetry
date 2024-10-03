@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING
 
 from poetry.core.packages.dependency import Dependency
 
-from poetry.repositories.exceptions import PackageNotFound
-from poetry.repositories.link_sources.html import SimpleRepositoryPage
+from poetry.repositories.exceptions import PackageNotFoundError
+from poetry.repositories.link_sources.html import HTMLPage
 from poetry.repositories.single_page_repository import SinglePageRepository
 
 
@@ -22,18 +22,18 @@ class MockSinglePageRepository(SinglePageRepository):
     def __init__(self, page: str) -> None:
         super().__init__(
             "single-page",
-            url=f"http://single-page.foo.bar/{page}.html",
+            url=f"http://single-page.foo.bar/single/page/repo/{page}.html",
             disable_cache=True,
         )
         self._lazy_wheel = False
 
-    def _get_page(self, name: NormalizedName) -> SimpleRepositoryPage:
+    def _get_page(self, name: NormalizedName) -> HTMLPage:
         fixture = self.FIXTURES / self.url.rsplit("/", 1)[-1]
         if not fixture.exists():
-            raise PackageNotFound(f"Package [{name}] not found.")
+            raise PackageNotFoundError(f"Package [{name}] not found.")
 
         with fixture.open(encoding="utf-8") as f:
-            return SimpleRepositoryPage(self._url, f.read())
+            return HTMLPage(self._url, f.read())
 
     def _download(
         self, url: str, dest: Path, *, raise_accepts_ranges: bool = False
@@ -67,3 +67,13 @@ def test_single_page_repository_find_packages() -> None:
     package = packages[0]
     assert package.name == dep.name
     assert package.to_dependency().to_pep_508() == dep.to_pep_508()
+
+
+def test_single_page_repository_get_page_with_relative_links() -> None:
+    repo = MockSinglePageRepository("mmcv_torch_releases")
+
+    base_path = Path("/single/page/torch1.12.0")
+    page = repo.get_page("mmcv")
+    for link in page.links:
+        path = Path(link.path)
+        assert path.parent == base_path

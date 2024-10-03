@@ -295,11 +295,11 @@ def test_show_basic_with_installed_packages_single(
 
     tester.execute("cachy")
 
-    assert [
+    assert [line.strip() for line in tester.io.fetch_output().splitlines()] == [
         "name         : cachy",
         "version      : 0.1.0",
         "description  : Cachy package",
-    ] == [line.strip() for line in tester.io.fetch_output().splitlines()]
+    ]
 
 
 def test_show_basic_with_installed_packages_single_canonicalized(
@@ -337,11 +337,11 @@ def test_show_basic_with_installed_packages_single_canonicalized(
 
     tester.execute("Foo_Bar")
 
-    assert [
+    assert [line.strip() for line in tester.io.fetch_output().splitlines()] == [
         "name         : foo-bar",
         "version      : 0.1.0",
         "description  : Foobar package",
-    ] == [line.strip() for line in tester.io.fetch_output().splitlines()]
+    ]
 
 
 def test_show_basic_with_not_installed_packages_non_decorated(
@@ -2169,7 +2169,7 @@ def test_show_top_level(
     assert tester.io.fetch_output() == expected
 
 
-def test_show_top_level_with_explicitly_defined_depenancy(
+def test_show_top_level_with_explicitly_defined_dependency(
     tester: CommandTester, poetry: Poetry, installed: Repository
 ) -> None:
     poetry.package.add_dependency(Factory.create_dependency("a", "^0.1.0"))

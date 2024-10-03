@@ -19,6 +19,7 @@ from poetry.utils.env import ephemeral_environment
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from build import DistributionType
     from build import ProjectBuilder
 
     from poetry.repositories import RepositoryPool
@@ -107,12 +108,12 @@ class IsolatedEnv(BaseIsolatedEnv):
 @contextmanager
 def isolated_builder(
     source: Path,
-    distribution: str = "wheel",
+    distribution: DistributionType = "wheel",
     python_executable: Path | None = None,
     pool: RepositoryPool | None = None,
 ) -> Iterator[ProjectBuilder]:
     from build import ProjectBuilder
-    from pyproject_hooks import quiet_subprocess_runner  # type: ignore[import-untyped]
+    from pyproject_hooks import quiet_subprocess_runner
 
     from poetry.factory import Factory
 
@@ -135,7 +136,7 @@ def isolated_builder(
 
     with ephemeral_environment(
         executable=python_executable,
-        flags={"no-pip": True, "no-setuptools": True, "no-wheel": True},
+        flags={"no-pip": True},
     ) as venv:
         env = IsolatedEnv(venv, pool)
         stdout = StringIO()

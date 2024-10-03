@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 
 from typing import TYPE_CHECKING
 
@@ -47,7 +48,7 @@ def poetry_with_scripts(
 
 def test_run_passes_all_args(app_tester: ApplicationTester, env: MockEnv) -> None:
     app_tester.execute("run python -V")
-    assert [["python", "-V"]] == env.executed
+    assert env.executed == [["python", "-V"]]
 
 
 def test_run_keeps_options_passed_before_command(
@@ -59,7 +60,7 @@ def test_run_keeps_options_passed_before_command(
     assert app_tester.io.fetch_output() == app_tester.io.remove_format(
         app_tester.application.long_version + "\n"
     )
-    assert [] == env.executed
+    assert env.executed == []
 
 
 def test_run_has_helpful_error_when_command_not_found(
@@ -116,7 +117,8 @@ def test_run_console_scripts_of_editable_dependencies_on_windows(
 
     cmd_script_file = tmp_venv._bin_dir / "quix.cmd"
     # `/b` ensures we only exit the script instead of any cmd.exe proc that called it
-    cmd_script_file.write_text("exit /b 123")
+    encoding = "locale" if sys.version_info >= (3, 10) else None
+    cmd_script_file.write_text("exit /b 123", encoding=encoding)
     # We prove that the CMD script executed successfully by verifying the exit code
     # matches what we wrote in the script
     assert tester.execute("quix") == 123

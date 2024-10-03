@@ -12,6 +12,7 @@ import pytest
 from build import BuildBackendException
 from build import ProjectBuilder
 from packaging.metadata import parse_email
+from pkginfo.distribution import NewMetadataVersion
 
 from poetry.inspection.info import PackageInfo
 from poetry.inspection.info import PackageInfoError
@@ -59,7 +60,8 @@ def demo_setup(source_dir: Path) -> Path:
         "from setuptools import setup; "
         'setup(name="demo", '
         'version="0.1.0", '
-        'install_requires=["package"])'
+        'install_requires=["package"])',
+        encoding="utf-8",
     )
     return source_dir
 
@@ -76,7 +78,8 @@ def demo_setup_cfg(source_dir: Path) -> Path:
                 "[options]",
                 "install_requires = package",
             ]
-        )
+        ),
+        encoding="utf-8",
     )
     return source_dir
 
@@ -88,7 +91,8 @@ def demo_setup_complex(source_dir: Path) -> Path:
         "from setuptools import setup; "
         'setup(name="demo", '
         'version="0.1.0", '
-        'install_requires=[i for i in ["package"]])'
+        'install_requires=[i for i in ["package"]])',
+        encoding="utf-8",
     )
     return source_dir
 
@@ -96,7 +100,9 @@ def demo_setup_complex(source_dir: Path) -> Path:
 @pytest.fixture
 def demo_setup_complex_pep517_legacy(demo_setup_complex: Path) -> Path:
     pyproject_toml = demo_setup_complex / "pyproject.toml"
-    pyproject_toml.write_text('[build-system]\nrequires = ["setuptools", "wheel"]')
+    pyproject_toml.write_text(
+        '[build-system]\nrequires = ["setuptools", "wheel"]', encoding="utf-8"
+    )
     return demo_setup_complex
 
 
@@ -114,7 +120,8 @@ def demo_setup_complex_calls_script(
     [build-system]
     requires = ["setuptools", "scripts @ {scripts_dir.as_uri()}"]
     build-backend = "setuptools.build_meta:__legacy__"
-"""
+""",
+        encoding="utf-8",
     )
 
     setup_py = source_dir / "setup.py"
@@ -125,7 +132,8 @@ from setuptools import setup
 if subprocess.call(["exit-code"]) != 42:
     raise RuntimeError("Wrong exit code.")
 setup(name="demo", version="0.1.0", install_requires=[i for i in ["package"]])
-"""
+""",
+        encoding="utf-8",
     )
 
     return source_dir
@@ -212,7 +220,7 @@ def test_info_from_wheel_metadata_version_unknown(
         / "demo_metadata_version_unknown-0.1.0-py2.py3-none-any.whl"
     )
 
-    with pytest.raises(PackageInfoError) as e:
+    with pytest.warns(NewMetadataVersion), pytest.raises(PackageInfoError) as e:
         PackageInfo.from_wheel(path)
 
     assert "Unknown metadata version: 999.3" in str(e.value)
@@ -311,7 +319,7 @@ def test_info_no_setup_pkg_info_no_deps_dynamic(fixture_dir: FixtureDirGetter) -
 def test_info_setup_simple(mocker: MockerFixture, demo_setup: Path) -> None:
     spy = mocker.spy(VirtualEnv, "run")
     info = PackageInfo.from_directory(demo_setup)
-    assert spy.call_count == 5
+    assert spy.call_count == 4
     demo_check_info(info, requires_dist={"package"})
 
 
@@ -358,7 +366,7 @@ def test_info_setup_missing_mandatory_should_trigger_pep517(
     setup += ")"
 
     setup_py = source_dir / "setup.py"
-    setup_py.write_text(setup)
+    setup_py.write_text(setup, encoding="utf-8")
 
     spy = mocker.spy(ProjectBuilder, "from_isolated_env")
     _ = PackageInfo.from_directory(source_dir)

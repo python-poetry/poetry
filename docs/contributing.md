@@ -109,7 +109,7 @@ constantly evolving, and this means that sometimes our documentation has gaps. Y
 editing the existing content to be more accessible, or creating new content such as tutorials, FAQs, etc.
 
 {{% note %}}
-Github [Discussions](https://github.com/python-poetry/poetry/discussions) and the
+GitHub [Discussions](https://github.com/python-poetry/poetry/discussions) and the
 [kind/question label](https://github.com/python-poetry/poetry/labels/kind/question) are excellent sources for FAQ
 candidates.
 {{% /note %}}
@@ -151,6 +151,14 @@ Next, you should install Poetry's dependencies, and run the test suite to make s
 poetry install
 poetry run pytest
 ```
+
+{{% note %}}
+If you want to see the coverage stats after the tests are complete, use:
+
+```bash
+poetry run pytest --cov=src/poetry --cov-report term
+```
+{{% /note %}}
 
 When you contribute to Poetry, automated tools will be run to make sure your code is suitable to be merged. Besides
 pytest, you will need to make sure your code typechecks properly using [mypy](http://mypy-lang.org/):
