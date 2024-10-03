@@ -100,7 +100,7 @@ you can set the "package-mode" to false in your pyproject.toml file.
             return super().activated_groups
 
     def handle(self) -> int:
-        from poetry.core.masonry.utils.module import ModuleOrPackageNotFound
+        from poetry.core.masonry.utils.module import ModuleOrPackageNotFoundError
 
         from poetry.masonry.builders.editable import EditableBuilder
 
@@ -189,7 +189,7 @@ you can set the "package-mode" to false in your pyproject.toml file.
         try:
             builder = EditableBuilder(self.poetry, self.env, self.io)
             builder.build()
-        except (ModuleOrPackageNotFound, FileNotFoundError) as e:
+        except (ModuleOrPackageNotFoundError, FileNotFoundError) as e:
             # This is likely due to the fact that the project is an application
             # not following the structure expected by Poetry.
             # No need for an editable install in this case.

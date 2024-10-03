@@ -18,7 +18,7 @@ from poetry.core.constraints.version import Version
 from poetry.core.constraints.version import parse_constraint
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
-from poetry.core.version.requirements import InvalidRequirement
+from poetry.core.version.requirements import InvalidRequirementError
 from tomlkit import array
 from tomlkit import comment
 from tomlkit import document
@@ -194,7 +194,7 @@ class Locker:
                     for dep in deps:
                         try:
                             dependency = Dependency.create_from_pep_508(dep)
-                        except InvalidRequirement:
+                        except InvalidRequirementError:
                             # handle lock files with invalid PEP 508
                             m = re.match(r"^(.+?)(?:\[(.+?)])?(?:\s+\((.+)\))?$", dep)
                             if not m:

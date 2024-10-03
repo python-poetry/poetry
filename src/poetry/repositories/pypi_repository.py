@@ -11,7 +11,7 @@ import requests.adapters
 from cachecontrol.controller import logger as cache_control_logger
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
-from poetry.core.version.exceptions import InvalidVersion
+from poetry.core.version.exceptions import InvalidVersionError
 
 from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.repositories.http_repository import HTTPRepository
@@ -64,7 +64,7 @@ class PyPiRepository(HTTPRepository):
                 package = Package(result.name, result.version)
                 package.description = result.description.strip()
                 results.append(package)
-            except InvalidVersion:
+            except InvalidVersionError:
                 self._log(
                     f'Unable to parse version "{result.version}" for the'
                     f" {result.name} package, skipping",

@@ -91,7 +91,7 @@ To remove a repository (repo is a short alias for repositories):
     def handle(self) -> int:
         from pathlib import Path
 
-        from poetry.core.pyproject.exceptions import PyProjectException
+        from poetry.core.pyproject.exceptions import PyProjectError
 
         from poetry.config.config import Config
         from poetry.config.file_config_source import FileConfigSource
@@ -105,7 +105,7 @@ To remove a repository (repo is a short alias for repositories):
             local_config_file = TOMLFile(self.poetry.file.path.parent / "poetry.toml")
             if local_config_file.exists():
                 config.merge(local_config_file.read())
-        except (RuntimeError, PyProjectException):
+        except (RuntimeError, PyProjectError):
             local_config_file = TOMLFile(Path.cwd() / "poetry.toml")
 
         if self.option("local"):
