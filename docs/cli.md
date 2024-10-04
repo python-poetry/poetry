@@ -771,6 +771,20 @@ The option `--next-phase` allows the increment of prerelease phase versions.
 
 ## export
 
+{{% warning %}}
+This command is provided by the [Export Poetry Plugin](https://github.com/python-poetry/poetry-plugin-export).
+The plugin is no longer installed by default with Poetry 2.0.
+
+See [Using plugins]({{< relref "plugins#using-plugins" >}}) for information on how to install a plugin.
+As described in [Project plugins]({{< relref "plugins#project-plugins" >}}),
+you can also define in your `pyproject.toml` that the plugin is required for the development of your project:
+
+```toml
+[tool.poetry.requires-plugins]
+poetry-plugin-export = ">1.8"
+```
+{{% /warning %}}
+
 This command exports the lock file to other formats.
 
 ```bash
@@ -778,8 +792,8 @@ poetry export -f requirements.txt --output requirements.txt
 ```
 
 {{% note %}}
-This command is provided by the [Export Poetry Plugin](https://github.com/python-poetry/poetry-plugin-export)
-and is also available as a pre-commit hook. See [pre-commit hooks]({{< relref "pre-commit-hooks#poetry-export" >}}) for more information.
+The `export` command is also available as a pre-commit hook.
+See [pre-commit hooks]({{< relref "pre-commit-hooks#poetry-export" >}}) for more information.
 {{% /note %}}
 
 {{% note %}}
