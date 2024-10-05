@@ -44,11 +44,6 @@ class ShowCommand(GroupCommand, EnvCommand):
     ]
     options: ClassVar[list[Option]] = [
         *GroupCommand._group_dependency_options(),
-        option(
-            "no-dev",
-            None,
-            "Do not list the development dependencies. (<warning>Deprecated</warning>)",
-        ),
         option("tree", "t", "List the dependencies as a tree."),
         option(
             "why",

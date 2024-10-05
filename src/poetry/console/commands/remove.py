@@ -29,13 +29,6 @@ class RemoveCommand(InstallerCommand):
     options: ClassVar[list[Option]] = [
         option("group", "G", "The group to remove the dependency from.", flag=False),
         option(
-            "dev",
-            "D",
-            "Remove a package from the development dependencies."
-            " (<warning>Deprecated</warning>)"
-            " Use --group=dev instead.",
-        ),
-        option(
             "dry-run",
             None,
             "Output the operations but do not execute anything "
@@ -56,15 +49,7 @@ list of installed packages
 
     def handle(self) -> int:
         packages = self.argument("packages")
-
-        if self.option("dev"):
-            self.line_error(
-                "<warning>The --dev option is deprecated, "
-                "use the `--group dev` notation instead.</warning>"
-            )
-            group = "dev"
-        else:
-            group = self.option("group", self.default_group)
+        group = self.option("group", self.default_group)
 
         content: dict[str, Any] = self.poetry.file.read()
         project_content = content.get("project", {})
