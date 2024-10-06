@@ -27,9 +27,9 @@ from poetry.vcs.git.backend import GitRefSpec
 
 
 if TYPE_CHECKING:
-    from _pytest.tmpdir import TempPathFactory
     from dulwich.client import FetchPackResult
     from dulwich.client import GitClient
+    from pytest import TempPathFactory
     from pytest_mock import MockerFixture
 
     from tests.conftest import Config
