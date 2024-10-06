@@ -24,11 +24,10 @@ tests_task:
         PYTHON_VERSION: 3.11
         PYTHON_PACKAGE: python311
         SQLITE_PACKAGE: py311-sqlite3
-      # FIXME: Python 3.12 is not available in Ports.
-      # - PYTHON: python3.12
-      #   PYTHON_VERSION: 3.12
-      #   PYTHON_PACKAGE: python312
-      #   SQLITE_PACKAGE: py312-sqlite3
+      - PYTHON: python3.12
+        PYTHON_VERSION: 3.12
+        PYTHON_PACKAGE: python312
+        SQLITE_PACKAGE: py312-sqlite3
     # FIXME: use pipx for install. pipx is currently broken in Ports.
     POETRY_HOME: /opt/poetry
     # SHELL is not set by default, and we have tests that depend on it.
