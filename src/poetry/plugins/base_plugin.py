@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from abc import ABC
 from abc import abstractmethod
 
 
-class BasePlugin:
+class BasePlugin(ABC):
     """
     Base class for all plugin types
 
@@ -18,4 +19,3 @@ class BasePlugin:
         """
         Name of entrypoint group the plugin belongs to.
         """
-        raise NotImplementedError()

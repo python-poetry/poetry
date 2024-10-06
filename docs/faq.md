@@ -171,14 +171,21 @@ dependencies specified in `poetry.lock` into [Nox](https://nox.thea.codes/en/sta
 ### I don't want Poetry to manage my virtual environments. Can I disable it?
 
 While Poetry automatically creates virtual environments to always work isolated
-from the global Python installation, there are valid reasons why it's not necessary
-and is an overhead, like when working with containers.
+from the global Python installation, there are rare scenarios where the use a Poetry managed
+virtual environment is not possible or preferred.
 
 In this case, you can disable this feature by setting the `virtualenvs.create` setting to `false`:
 
 ```bash
 poetry config virtualenvs.create false
 ```
+
+{{% warning %}}
+The recommended best practice, including when installing an application within a container, is to make
+use of a virtual environment. This can also be managed by another tool.
+
+The Poetry team strongly encourages the use of a virtual environment.
+{{% /warning %}}
 
 ### Why is Poetry telling me that the current project's supported Python range is not compatible with one or more packages' Python requirements?
 
@@ -203,6 +210,18 @@ The current project's supported Python range (>=3.7.0,<4.0.0) is not compatible 
 Usually you will want to match the supported Python range of your project with the upper bound of the failing dependency.
 Alternatively you can tell Poetry to install this dependency [only for a specific range of Python versions]({{< relref "dependency-specification#multiple-constraints-dependencies" >}}),
 if you know that it's not needed in all versions.
+
+If you do not want to set an upper bound in the metadata when building your project,
+you can omit it in the `project` section and only set it in `tool.poetry.dependencies`:
+
+```toml
+[project]
+# ...
+requires-python = ">=3.7"  # used for metadata when building the project
+
+[tool.poetry.dependencies]
+python = ">=3.7,<3.11"  # used for locking dependencies
+```
 
 
 ### Why does Poetry enforce PEP 440 versions?

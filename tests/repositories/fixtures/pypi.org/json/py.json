@@ -1,25 +1,45 @@
 {
-  "name": "py",
+  "alternate-locations": [],
   "files": [
     {
+      "core-metadata": {
+        "sha256": "6922e816d9a839c9735c50ad24e50bdc0e42c3727cf742f5121e3d6bf58d79e2"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "6922e816d9a839c9735c50ad24e50bdc0e42c3727cf742f5121e3d6bf58d79e2"
+      },
       "filename": "py-1.5.3-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/67/a5/f77982214dd4c8fd104b066f249adea2c49e25e8703d284382eb5e9ab35a/py-1.5.3-py2.py3-none-any.whl",
       "hashes": {
-        "md5": "3184fb17d224b073117a25336040d7c7",
-        "sha256": "983f77f3331356039fdd792e9220b7b8ee1aa6bd2b25f567a963ff1de5a64f6a"
-      }
+        "md5": "98652ecee6fc3bb5393a17828f93e1fb",
+        "sha256": "43ee6c7f95e0ec6a906de49906b79d138d89728fff17109d49f086abc2fdd985"
+      },
+      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+      "size": 84903,
+      "upload-time": "2018-03-22T10:06:50.318783Z",
+      "url": "https://files.pythonhosted.org/packages/67/a5/f77982214dd4c8fd104b066f249adea2c49e25e8703d284382eb5e9ab35a/py-1.5.3-py2.py3-none-any.whl",
+      "yanked": false
     },
     {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
       "filename": "py-1.5.3.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/f7/84/b4c6e84672c4ceb94f727f3da8344037b62cee960d80e999b1cd9b832d83/py-1.5.3.tar.gz",
       "hashes": {
-        "md5": "667d37a148ad9fb81266492903f2d880",
-        "sha256": "29c9fab495d7528e80ba1e343b958684f4ace687327e6f789a94bf3d1915f881"
-      }
+        "md5": "623e80cfc06df930414a9ce4bf0fd6c9",
+        "sha256": "2df2c513c3af11de15f58189ba5539ddc4768c6f33816dc5c03950c8bd6180fa"
+      },
+      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+      "size": 202335,
+      "upload-time": "2018-03-22T10:06:52.627078Z",
+      "url": "https://files.pythonhosted.org/packages/f7/84/b4c6e84672c4ceb94f727f3da8344037b62cee960d80e999b1cd9b832d83/py-1.5.3.tar.gz",
+      "yanked": false
     }
   ],
   "meta": {
-    "api-version": "1.0",
-    "_last-serial": 3694828
-  }
+    "_last-serial": 0,
+    "api-version": "1.2"
+  },
+  "name": "py",
+  "versions": [
+    "1.5.3"
+  ]
 }

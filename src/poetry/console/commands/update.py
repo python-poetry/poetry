@@ -1,9 +1,17 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+from typing import ClassVar
+
 from cleo.helpers import argument
 from cleo.helpers import option
 
 from poetry.console.commands.installer_command import InstallerCommand
+
+
+if TYPE_CHECKING:
+    from cleo.io.inputs.argument import Argument
+    from cleo.io.inputs.option import Option
 
 
 class UpdateCommand(InstallerCommand):
@@ -12,10 +20,10 @@ class UpdateCommand(InstallerCommand):
         "Update the dependencies as according to the <comment>pyproject.toml</> file."
     )
 
-    arguments = [
+    arguments: ClassVar[list[Argument]] = [
         argument("packages", "The packages to update", optional=True, multiple=True)
     ]
-    options = [
+    options: ClassVar[list[Option]] = [
         *InstallerCommand._group_dependency_options(),
         option(
             "no-dev",
@@ -38,7 +46,7 @@ class UpdateCommand(InstallerCommand):
         option("lock", None, "Do not perform operations (only update the lockfile)."),
     ]
 
-    loggers = ["poetry.repositories.pypi_repository"]
+    loggers: ClassVar[list[str]] = ["poetry.repositories.pypi_repository"]
 
     def handle(self) -> int:
         packages = self.argument("packages")

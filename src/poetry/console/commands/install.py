@@ -1,15 +1,23 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+from typing import ClassVar
+
 from cleo.helpers import option
 
 from poetry.console.commands.installer_command import InstallerCommand
+from poetry.plugins.plugin_manager import PluginManager
+
+
+if TYPE_CHECKING:
+    from cleo.io.inputs.option import Option
 
 
 class InstallCommand(InstallerCommand):
     name = "install"
     description = "Installs the project dependencies."
 
-    options = [
+    options: ClassVar[list[Option]] = [
         *InstallerCommand._group_dependency_options(),
         option(
             "no-dev",
@@ -58,9 +66,7 @@ class InstallCommand(InstallerCommand):
         option(
             "compile",
             None,
-            "Compile Python source files to bytecode."
-            " (This option has no effect if modern-installation is disabled"
-            " because the old installer always compiles.)",
+            "Compile Python source files to bytecode.",
         ),
     ]
 
@@ -82,7 +88,10 @@ If you want to use Poetry only for dependency management but not for packaging,
 you can set the "package-mode" to false in your pyproject.toml file.
 """
 
-    _loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
+    _loggers: ClassVar[list[str]] = [
+        "poetry.repositories.pypi_repository",
+        "poetry.inspection.info",
+    ]
 
     @property
     def activated_groups(self) -> set[str]:
@@ -92,9 +101,11 @@ you can set the "package-mode" to false in your pyproject.toml file.
             return super().activated_groups
 
     def handle(self) -> int:
-        from poetry.core.masonry.utils.module import ModuleOrPackageNotFound
+        from poetry.core.masonry.utils.module import ModuleOrPackageNotFoundError
 
         from poetry.masonry.builders.editable import EditableBuilder
+
+        PluginManager.ensure_project_plugins(self.poetry, self.io)
 
         if self.option("extras") and self.option("all-extras"):
             self.line_error(
@@ -181,7 +192,7 @@ you can set the "package-mode" to false in your pyproject.toml file.
         try:
             builder = EditableBuilder(self.poetry, self.env, self.io)
             builder.build()
-        except (ModuleOrPackageNotFound, FileNotFoundError) as e:
+        except (ModuleOrPackageNotFoundError, FileNotFoundError) as e:
             # This is likely due to the fact that the project is an application
             # not following the structure expected by Poetry.
             # No need for an editable install in this case.
@@ -191,12 +202,13 @@ you can set the "package-mode" to false in your pyproject.toml file.
                 "If you do not want to install the current project"
                 " use <c1>--no-root</c1>.\n"
                 "If you want to use Poetry only for dependency management"
-                " but not for packaging, you can set the operating mode to "
-                '"non-package" in your pyproject.toml file.\n'
-                "In a future version of Poetry this warning will become an error!",
-                style="warning",
+                " but not for packaging, you can disable package mode by setting"
+                " <c1>package-mode = false</> in your pyproject.toml file.\n"
+                "If you did intend to install the current project, you may need"
+                " to set `packages` in your pyproject.toml file.\n",
+                style="error",
             )
-            return 0
+            return 1
 
         if overwrite:
             self.overwrite(log_install.format(tag="success"))

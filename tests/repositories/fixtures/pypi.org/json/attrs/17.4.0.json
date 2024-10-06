@@ -21,6 +21,7 @@
       "Topic :: Software Development :: Libraries :: Python Modules"
     ],
     "description": "",
+    "description_content_type": null,
     "docs_url": null,
     "download_url": "",
     "downloads": {
@@ -28,6 +29,7 @@
       "last_month": -1,
       "last_week": -1
     },
+    "dynamic": null,
     "home_page": "http://www.attrs.org/",
     "keywords": "class,attribute,boilerplate",
     "license": "MIT",
@@ -37,6 +39,10 @@
     "package_url": "https://pypi.org/project/attrs/",
     "platform": "",
     "project_url": "https://pypi.org/project/attrs/",
+    "project_urls": {
+      "Homepage": "http://www.attrs.org/"
+    },
+    "provides_extra": null,
     "release_url": "https://pypi.org/project/attrs/17.4.0/",
     "requires_dist": [
       "coverage; extra == 'dev'",
@@ -58,41 +64,52 @@
     ],
     "requires_python": "",
     "summary": "Classes Without Boilerplate",
-    "version": "17.4.0"
+    "version": "17.4.0",
+    "yanked": false,
+    "yanked_reason": null
   },
-  "last_serial": 3451237,
+  "last_serial": 0,
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "md5": "5835a573b3f0316e1602dac3fd9c1daf",
-        "sha256": "a17a9573a6f475c99b551c0e0a812707ddda1ec9653bed04c13841404ed6f450"
+        "md5": "9d32f2b5a93343e01f54d87740f2da60",
+        "sha256": "d38e57f381e891928357c68e300d28d3d4dcddc50486d5f8dfaf743d40477619"
       },
       "downloads": -1,
       "filename": "attrs-17.4.0-py2.py3-none-any.whl",
-      "has_sig": true,
-      "md5_digest": "5835a573b3f0316e1602dac3fd9c1daf",
+      "has_sig": false,
+      "md5_digest": "9d32f2b5a93343e01f54d87740f2da60",
       "packagetype": "bdist_wheel",
       "python_version": "py2.py3",
+      "requires_python": null,
       "size": 31658,
       "upload_time": "2017-12-30T08:20:05",
-      "url": "https://files.pythonhosted.org/packages/b5/60/4e178c1e790fd60f1229a9b3cb2f8bc2f4cc6ff2c8838054c142c70b5adc/attrs-17.4.0-py2.py3-none-any.whl"
+      "upload_time_iso_8601": "2017-12-30T08:20:05.582456Z",
+      "url": "https://files.pythonhosted.org/packages/b5/60/4e178c1e790fd60f1229a9b3cb2f8bc2f4cc6ff2c8838054c142c70b5adc/attrs-17.4.0-py2.py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
-        "md5": "d7a89063b2e0fd36bd82389c4d82821d",
-        "sha256": "1c7960ccfd6a005cd9f7ba884e6316b5e430a3f1a6c37c5f87d8b43f83b54ec9"
+        "md5": "c03e5b3608d9071fbd098850d8922668",
+        "sha256": "eb7536a1e6928190b3008c5b350bdf9850d619fff212341cd096f87a27a5e564"
       },
       "downloads": -1,
       "filename": "attrs-17.4.0.tar.gz",
-      "has_sig": true,
-      "md5_digest": "d7a89063b2e0fd36bd82389c4d82821d",
+      "has_sig": false,
+      "md5_digest": "c03e5b3608d9071fbd098850d8922668",
       "packagetype": "sdist",
       "python_version": "source",
+      "requires_python": null,
       "size": 97071,
       "upload_time": "2017-12-30T08:20:08",
-      "url": "https://files.pythonhosted.org/packages/8b/0b/a06cfcb69d0cb004fde8bc6f0fd192d96d565d1b8aa2829f0f20adb796e5/attrs-17.4.0.tar.gz"
+      "upload_time_iso_8601": "2017-12-30T08:20:08.575620Z",
+      "url": "https://files.pythonhosted.org/packages/8b/0b/a06cfcb69d0cb004fde8bc6f0fd192d96d565d1b8aa2829f0f20adb796e5/attrs-17.4.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
     }
-  ]
+  ],
+  "vulnerabilities": []
 }

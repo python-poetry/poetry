@@ -4,7 +4,7 @@
   entry: poetry check
   language: python
   pass_filenames: false
-  files: ^(.*/)?pyproject\.toml$
+  files: ^(.*/)?(poetry\.lock|pyproject\.toml)$
 
 - id: poetry-lock
   name: poetry-lock
@@ -13,15 +13,6 @@
   language: python
   pass_filenames: false
   files: ^(.*/)?(poetry\.lock|pyproject\.toml)$
-
-- id: poetry-export
-  name: poetry-export
-  description: run poetry export to sync lock file with requirements.txt
-  entry: poetry export
-  language: python
-  pass_filenames: false
-  files: ^(.*/)?poetry\.lock$
-  args: ["-f", "requirements.txt", "-o", "requirements.txt"]
 
 - id: poetry-install
   name: poetry-install

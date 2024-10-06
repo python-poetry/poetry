@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import ClassVar
 
 from cleo.helpers import option
 
@@ -8,6 +9,8 @@ from poetry.console.commands.command import Command
 
 
 if TYPE_CHECKING:
+    from cleo.io.inputs.option import Option
+
     from poetry.utils.env import Env
 
 
@@ -15,7 +18,7 @@ class EnvInfoCommand(Command):
     name = "env info"
     description = "Displays information about the current environment."
 
-    options = [
+    options: ClassVar[list[Option]] = [
         option("path", "p", "Only display the environment's path."),
         option(
             "executable", "e", "Only display the environment's python executable path."
@@ -75,11 +78,13 @@ class EnvInfoCommand(Command):
         python = ".".join(str(v) for v in base_env.version_info[:3])
         self.line("<b>Base</b>")
         self.line(
-            "\n".join([
-                f"<info>Platform</info>:   <comment>{env.platform}</>",
-                f"<info>OS</info>:         <comment>{env.os}</>",
-                f"<info>Python</info>:     <comment>{python}</>",
-                f"<info>Path</info>:       <comment>{base_env.path}</>",
-                f"<info>Executable</info>: <comment>{base_env.python}</>",
-            ])
+            "\n".join(
+                [
+                    f"<info>Platform</info>:   <comment>{env.platform}</>",
+                    f"<info>OS</info>:         <comment>{env.os}</>",
+                    f"<info>Python</info>:     <comment>{python}</>",
+                    f"<info>Path</info>:       <comment>{base_env.path}</>",
+                    f"<info>Executable</info>: <comment>{base_env.python}</>",
+                ]
+            )
         )

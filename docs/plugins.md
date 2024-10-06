@@ -32,16 +32,16 @@ The plugin package must depend on Poetry
 and declare a proper [plugin]({{< relref "pyproject#plugins" >}}) in the `pyproject.toml` file.
 
 ```toml
-[tool.poetry]
+[project]
 name = "my-poetry-plugin"
 version = "1.0.0"
-
 # ...
-[tool.poetry.dependencies]
-python = "^3.7"
-poetry = "^1.2"
+requires-python = ">=3.7"
+dependencies = [
+    "poetry (>=1.2,<2.0)",
+]
 
-[tool.poetry.plugins."poetry.plugin"]
+[project.entry-points."poetry.plugin"]
 demo = "poetry_demo_plugin.plugin:MyPlugin"
 ```
 
@@ -202,7 +202,9 @@ pipx inject poetry poetry-plugin
 If you want to uninstall a plugin, you can run:
 
 ```shell
-pipx runpip poetry uninstall poetry-plugin
+pipx uninject poetry poetry-plugin          # For pipx versions >= 1.2.0
+
+pipx runpip poetry uninstall poetry-plugin  # For pipx versions  < 1.2.0
 ```
 
 ### With `pip`
@@ -253,6 +255,28 @@ You can also list all currently installed plugins by running:
 poetry self show plugins
 ```
 
+### Project plugins
+
+You can also specify that a plugin is required for your project
+in the `tool.poetry.requires-plugins` section of the pyproject.toml file:
+
+```toml
+[tool.poetry.requires-plugins]
+my-application-plugin = ">1.0"
+```
+
+If the plugin is not installed in Poetry's own environment when running `poetry install`,
+it will be installed only for the current project under `.poetry/plugins`
+in the project's directory.
+
+The syntax to specify `plugins` is the same as for [dependencies]({{< relref "managing-dependencies" >}}).
+
+{{% warning %}}
+You can even overwrite a plugin in Poetry's own environment with another version.
+However, if a plugin's dependencies are not compatible with packages in Poetry's own
+environment, installation will fail.
+{{% /warning %}}
+
 
 ## Maintaining a plugin
 
@@ -263,7 +287,7 @@ removing them, sometimes the signature of an internal method has to be changed.
 As the author of a plugin, you are probably testing your plugin
 against the latest release of Poetry.
 Additionally, you should consider testing against the latest release branch and the
-master branch of Poetry and schedule a CI job that runs regularly even if you did not
+main branch of Poetry and schedule a CI job that runs regularly even if you did not
 make any changes to your plugin.
 This way, you will notice internal changes that break your plugin immediately
 and can prepare for the next Poetry release.

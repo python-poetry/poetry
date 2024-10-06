@@ -167,9 +167,12 @@ def test_detect_corrupted_cache_key_file(
 
     # original content: 9999999999"value"
 
-    write_modes = {str: "w", bytes: "wb"}
-    with open(key1_path, write_modes[type(corrupt_payload)]) as f:
-        f.write(corrupt_payload)  # write corrupt data
+    if isinstance(corrupt_payload, str):
+        with open(key1_path, "w", encoding="utf-8") as f:
+            f.write(corrupt_payload)  # write corrupt data
+    else:
+        with open(key1_path, "wb") as f:
+            f.write(corrupt_payload)  # write corrupt data
 
     assert poetry_file_cache.get("key1") is None
 
@@ -177,12 +180,12 @@ def test_detect_corrupted_cache_key_file(
 def test_get_cache_directory_for_link(tmp_path: Path) -> None:
     cache = ArtifactCache(cache_dir=tmp_path)
     directory = cache.get_cache_directory_for_link(
-        Link("https://files.python-poetry.org/poetry-1.1.0.tar.gz")
+        Link("https://files.pythonhosted.org/poetry-1.1.0.tar.gz")
     )
 
     expected = Path(
-        f"{tmp_path.as_posix()}/11/4f/a8/"
-        "1c89d75547e4967082d30a28360401c82c83b964ddacee292201bf85f2"
+        f"{tmp_path.as_posix()}/41/9c/6e/"
+        "ef83f08fcf4dac7cd78d843e7974d601a19c90e4bb90bb76b4a7a61548"
     )
 
     assert directory == expected
@@ -225,7 +228,7 @@ def test_get_cached_archives(fixture_dir: FixtureDirGetter) -> None:
     ("link", "strict", "available_packages"),
     [
         (
-            "https://files.python-poetry.org/demo-0.1.0.tar.gz",
+            "https://files.pythonhosted.org/demo-0.1.0.tar.gz",
             True,
             [
                 Path("/cache/demo-0.1.0-py2.py3-none-any"),
@@ -271,7 +274,7 @@ def test_get_not_found_cached_archive_for_link(
     ("link", "cached", "strict"),
     [
         (
-            "https://files.python-poetry.org/demo-0.1.0.tar.gz",
+            "https://files.pythonhosted.org/demo-0.1.0.tar.gz",
             "/cache/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl",
             False,
         ),
@@ -281,7 +284,7 @@ def test_get_not_found_cached_archive_for_link(
             False,
         ),
         (
-            "https://files.python-poetry.org/demo-0.1.0.tar.gz",
+            "https://files.pythonhosted.org/demo-0.1.0.tar.gz",
             "/cache/demo-0.1.0.tar.gz",
             True,
         ),
@@ -328,26 +331,26 @@ def test_get_cached_archive_for_link_no_race_condition(
     tmp_path: Path, mocker: MockerFixture
 ) -> None:
     cache = ArtifactCache(cache_dir=tmp_path)
-    link = Link("https://files.python-poetry.org/demo-0.1.0.tar.gz")
+    link = Link("https://files.pythonhosted.org/demo-0.1.0.tar.gz")
 
     def replace_file(_: str, dest: Path) -> None:
         dest.unlink(missing_ok=True)
         # write some data (so it takes a while) to provoke possible race conditions
-        dest.write_text("a" * 2**20)
+        dest.write_text("a" * 2**20, encoding="utf-8")
 
     download_mock = mocker.Mock(side_effect=replace_file)
+
+    def get_archive(link: Link) -> Path:
+        path: Path = cache.get_cached_archive_for_link(
+            link, strict=True, download_func=download_mock
+        )
+        return path
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         tasks = []
         for _ in range(4):
-            tasks.append(
-                executor.submit(
-                    cache.get_cached_archive_for_link,
-                    link,
-                    strict=True,
-                    download_func=download_mock,
-                )
-            )
+            tasks.append(executor.submit(get_archive, link))
+
         concurrent.futures.wait(tasks)
         results = set()
         for task in tasks:

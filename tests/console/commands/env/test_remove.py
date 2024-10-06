@@ -76,13 +76,18 @@ def test_remove_all(
     if envs_file == "empty":
         envs_file_path.touch()
     elif envs_file == "self":
-        envs_file_path.write_text(f'[{venv_name}]\nminor = "3.9"\npatch = "3.9.1"\n')
+        envs_file_path.write_text(
+            f'[{venv_name}]\nminor = "3.9"\npatch = "3.9.1"\n', encoding="utf-8"
+        )
     elif envs_file == "other":
-        envs_file_path.write_text('[other-abcdefgh]\nminor = "3.9"\npatch = "3.9.1"\n')
+        envs_file_path.write_text(
+            '[other-abcdefgh]\nminor = "3.9"\npatch = "3.9.1"\n', encoding="utf-8"
+        )
     elif envs_file == "self_and_other":
         envs_file_path.write_text(
             f'[{venv_name}]\nminor = "3.9"\npatch = "3.9.1"\n'
-            '[other-abcdefgh]\nminor = "3.9"\npatch = "3.9.1"\n'
+            '[other-abcdefgh]\nminor = "3.9"\npatch = "3.9.1"\n',
+            encoding="utf-8",
         )
     else:
         # no envs file -> nothing to prepare
@@ -97,7 +102,7 @@ def test_remove_all(
 
     if envs_file is not None:
         assert envs_file_path.exists()
-        envs_file_content = envs_file_path.read_text()
+        envs_file_content = envs_file_path.read_text(encoding="utf-8")
         assert venv_name not in envs_file_content
         if "other" in envs_file:
             assert "other-abcdefgh" in envs_file_content
@@ -137,3 +142,27 @@ def test_remove_multiple(
     for name in remaining_envs:
         assert (venv_cache / name).exists()
     assert set(tester.io.fetch_output().split("\n")) == expected
+
+
+def test_remove_in_project(tester: CommandTester, venvs_in_project_dir: Path) -> None:
+    assert venvs_in_project_dir.exists()
+
+    tester.execute()
+
+    assert not venvs_in_project_dir.exists()
+
+    expected = f"Deleted virtualenv: {venvs_in_project_dir}\n"
+    assert tester.io.fetch_output() == expected
+
+
+def test_remove_in_project_all(
+    tester: CommandTester, venvs_in_project_dir: Path
+) -> None:
+    assert venvs_in_project_dir.exists()
+
+    tester.execute("--all")
+
+    assert not venvs_in_project_dir.exists()
+
+    expected = f"Deleted virtualenv: {venvs_in_project_dir}\n"
+    assert tester.io.fetch_output() == expected

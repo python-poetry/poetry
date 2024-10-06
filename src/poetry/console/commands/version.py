@@ -2,16 +2,19 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import ClassVar
 
 from cleo.helpers import argument
 from cleo.helpers import option
-from poetry.core.version.exceptions import InvalidVersion
+from poetry.core.version.exceptions import InvalidVersionError
 from tomlkit.toml_document import TOMLDocument
 
 from poetry.console.commands.command import Command
 
 
 if TYPE_CHECKING:
+    from cleo.io.inputs.argument import Argument
+    from cleo.io.inputs.option import Option
     from poetry.core.constraints.version import Version
 
 
@@ -22,14 +25,14 @@ class VersionCommand(Command):
         "bump rule is provided."
     )
 
-    arguments = [
+    arguments: ClassVar[list[Argument]] = [
         argument(
             "version",
             "The version number or the rule to update the version.",
             optional=True,
         ),
     ]
-    options = [
+    options: ClassVar[list[Option]] = [
         option("short", "s", "Output the version number only"),
         option(
             "dry-run",
@@ -47,16 +50,6 @@ bump rule is provided.
 The new version should ideally be a valid semver string or a valid bump rule:
 patch, minor, major, prepatch, preminor, premajor, prerelease.
 """
-
-    RESERVED = {
-        "major",
-        "minor",
-        "patch",
-        "premajor",
-        "preminor",
-        "prepatch",
-        "prerelease",
-    }
 
     def handle(self) -> int:
         version = self.argument("version")
@@ -76,8 +69,12 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
 
             if not self.option("dry-run"):
                 content: dict[str, Any] = self.poetry.file.read()
-                poetry_content = content["tool"]["poetry"]
-                poetry_content["version"] = version.text
+                project_content = content.get("project", {})
+                if "version" in project_content:
+                    project_content["version"] = version.text
+                poetry_content = content.get("tool", {}).get("poetry", {})
+                if "version" in poetry_content:
+                    poetry_content["version"] = version.text
 
                 assert isinstance(content, TOMLDocument)
                 self.poetry.file.write(content)
@@ -99,7 +96,7 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
 
         try:
             parsed = Version.parse(version)
-        except InvalidVersion:
+        except InvalidVersionError:
             raise ValueError("The project's version doesn't seem to follow semver")
 
         if rule in {"major", "premajor"}:

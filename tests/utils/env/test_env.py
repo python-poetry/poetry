@@ -24,14 +24,17 @@ from poetry.utils.env import MockEnv
 from poetry.utils.env import SystemEnv
 from poetry.utils.env import VirtualEnv
 from poetry.utils.env import build_environment
+from poetry.utils.env import ephemeral_environment
 
 
 if TYPE_CHECKING:
+    from typing import Iterator
 
     from pytest_mock import MockerFixture
 
     from poetry.poetry import Poetry
     from tests.types import FixtureDirGetter
+    from tests.types import SetProjectContext
 
 MINIMAL_SCRIPT = """\
 
@@ -183,7 +186,8 @@ def test_call_does_not_block_on_full_pipe(
 import sys
 for i in range(10000):
     print('just print a lot of text to fill the buffer', file={out})
-"""
+""",
+        encoding="utf-8",
     )
 
     def target(result: list[int]) -> None:
@@ -273,7 +277,7 @@ def test_env_system_packages(
 
     assert (
         f"include-system-site-packages = {str(with_system_site_packages).lower()}"
-        in pyvenv_cfg.read_text()
+        in pyvenv_cfg.read_text(encoding="utf-8")
     )
     assert env.includes_system_site_packages is with_system_site_packages
 
@@ -309,15 +313,7 @@ def test_env_system_packages_are_relative_to_lib(
     ("flags", "packages"),
     [
         ({"no-pip": False}, {"pip"}),
-        ({"no-pip": False, "no-wheel": True}, {"pip"}),
-        ({"no-pip": False, "no-wheel": False}, {"pip", "wheel"}),
         ({"no-pip": True}, set()),
-        ({"no-setuptools": False}, {"setuptools"}),
-        ({"no-setuptools": True}, set()),
-        ({"setuptools": "bundle"}, {"setuptools"}),
-        ({"no-pip": True, "no-setuptools": False}, {"setuptools"}),
-        ({"no-wheel": False}, {"wheel"}),
-        ({"wheel": "bundle"}, {"wheel"}),
         ({}, set()),
     ],
 )
@@ -334,14 +330,6 @@ def test_env_no_pip(
         # workaround for BSD test environments
         if package.name != "sqlite3"
     }
-
-    # For python >= 3.12, virtualenv defaults to "--no-setuptools" and "--no-wheel"
-    # behaviour, so setting these values to False becomes meaningless.
-    if sys.version_info >= (3, 12):
-        if not flags.get("no-setuptools", True):
-            packages.discard("setuptools")
-        if not flags.get("no-wheel", True):
-            packages.discard("wheel")
 
     assert installed_packages == packages
 
@@ -464,33 +452,29 @@ def test_env_finds_fallback_executables_for_generic_env(
 
 
 @pytest.fixture
-def extended_without_setup_poetry(fixture_dir: FixtureDirGetter) -> Poetry:
-    poetry = Factory().create_poetry(fixture_dir("extended_project_without_setup"))
-
-    return poetry
+def extended_without_setup_poetry(
+    fixture_dir: FixtureDirGetter, set_project_context: SetProjectContext
+) -> Iterator[Poetry]:
+    with set_project_context("extended_project_without_setup") as cwd:
+        yield Factory().create_poetry(cwd)
 
 
 def test_build_environment_called_build_script_specified(
-    mocker: MockerFixture, extended_without_setup_poetry: Poetry, tmp_path: Path
+    mocker: MockerFixture,
+    extended_without_setup_poetry: Poetry,
 ) -> None:
-    project_env = MockEnv(path=tmp_path / "project")
-    ephemeral_env = MockEnv(path=tmp_path / "ephemeral")
+    patched_install = mocker.patch("poetry.utils.isolated_build.IsolatedEnv.install")
 
-    mocker.patch(
-        "poetry.utils.env.ephemeral_environment"
-    ).return_value.__enter__.return_value = ephemeral_env
+    with ephemeral_environment() as project_env:
+        import poetry.utils.env
 
-    with build_environment(extended_without_setup_poetry, project_env) as env:
-        assert env == ephemeral_env
-        assert env.executed == [[  # type: ignore[attr-defined]
-            str(sys.executable),
-            str(env.pip_embedded),
-            "install",
-            "--disable-pip-version-check",
-            "--ignore-installed",
-            "--no-input",
-            *extended_without_setup_poetry.pyproject.build_system.requires,
-        ]]
+        spy = mocker.spy(poetry.utils.env, "ephemeral_environment")
+
+        with build_environment(extended_without_setup_poetry, project_env):
+            assert patched_install.call_count == 1
+            assert patched_install.call_args == mocker.call(["poetry-core", "cython"])
+
+        assert spy.call_count == 1
 
 
 def test_build_environment_not_called_without_build_script_specified(
@@ -506,34 +490,6 @@ def test_build_environment_not_called_without_build_script_specified(
     with build_environment(poetry, project_env) as env:
         assert env == project_env
         assert not env.executed  # type: ignore[attr-defined]
-
-
-def test_fallback_on_detect_active_python(
-    poetry: Poetry, mocker: MockerFixture
-) -> None:
-    m = mocker.patch(
-        "subprocess.check_output",
-        side_effect=subprocess.CalledProcessError(1, "some command"),
-    )
-    env_manager = EnvManager(poetry)
-    active_python = env_manager._detect_active_python()
-
-    assert active_python is None
-    assert m.call_count == 1
-
-
-@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
-def test_detect_active_python_with_bat(poetry: Poetry, tmp_path: Path) -> None:
-    """On Windows pyenv uses batch files for python management."""
-    python_wrapper = tmp_path / "python.bat"
-    wrapped_python = Path(r"C:\SpecialPython\python.exe")
-    with python_wrapper.open("w") as f:
-        f.write(f"@echo {wrapped_python}")
-    os.environ["PATH"] = str(python_wrapper.parent) + os.pathsep + os.environ["PATH"]
-
-    active_python = EnvManager(poetry)._detect_active_python()
-
-    assert active_python == wrapped_python
 
 
 def test_command_from_bin_preserves_relative_path(manager: EnvManager) -> None:

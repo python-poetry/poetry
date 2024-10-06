@@ -7,5 +7,5 @@ class PoetryConsoleError(CleoError):
     pass
 
 
-class GroupNotFound(PoetryConsoleError):
+class GroupNotFoundError(PoetryConsoleError):
     pass

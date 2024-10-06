@@ -10,7 +10,7 @@ static PyMethodDef module_methods[] = {
     {
         "hello",
         (PyCFunction) hello,
-        NULL,
+        METH_NOARGS,
         PyDoc_STR("Say hello.")
     },
     {NULL}

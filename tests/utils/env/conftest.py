@@ -8,7 +8,6 @@ from poetry.utils.env import EnvManager
 
 
 if TYPE_CHECKING:
-
     from poetry.poetry import Poetry
     from tests.types import FixtureDirGetter
     from tests.types import ProjectFactory

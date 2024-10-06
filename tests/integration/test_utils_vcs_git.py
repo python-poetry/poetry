@@ -8,6 +8,7 @@ from hashlib import sha1
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Iterator
+from typing import TypedDict
 from urllib.parse import urlparse
 from urllib.parse import urlunparse
 
@@ -37,6 +38,15 @@ if TYPE_CHECKING:
 # these tests are integration as they rely on an external repository
 # see `source_url` fixture
 pytestmark = pytest.mark.integration
+
+
+class GitCloneKwargs(TypedDict):
+    name: str | None
+    branch: str | None
+    tag: str | None
+    revision: str | None
+    source_root: Path | None
+    clean: bool
 
 
 @pytest.fixture(autouse=True)
@@ -133,7 +143,11 @@ def test_git_local_info(
         assert info.revision == remote_refs.refs[remote_default_ref].decode("utf-8")
 
 
+@pytest.mark.parametrize(
+    "specification", [{}, {"revision": "HEAD"}, {"branch": "HEAD"}]
+)
 def test_git_clone_default_branch_head(
+    specification: GitCloneKwargs,
     source_url: str,
     remote_refs: FetchPackResult,
     remote_default_ref: bytes,
@@ -142,7 +156,7 @@ def test_git_clone_default_branch_head(
     spy = mocker.spy(Git, "_clone")
     spy_legacy = mocker.spy(Git, "_clone_legacy")
 
-    with Git.clone(url=source_url) as repo:
+    with Git.clone(url=source_url, **specification) as repo:
         assert remote_refs.refs[remote_default_ref] == repo.head()
 
     spy_legacy.assert_not_called()
@@ -310,15 +324,17 @@ def test_configured_repository_http_auth(
     spy_clone_legacy = mocker.spy(Git, "_clone_legacy")
     spy_get_transport_and_path = mocker.spy(backend, "get_transport_and_path")
 
-    config.merge({
-        "repositories": {"git-repo": {"url": source_url}},
-        "http-basic": {
-            "git-repo": {
-                "username": GIT_USERNAME,
-                "password": GIT_PASSWORD,
-            }
-        },
-    })
+    config.merge(
+        {
+            "repositories": {"git-repo": {"url": source_url}},
+            "http-basic": {
+                "git-repo": {
+                    "username": GIT_USERNAME,
+                    "password": GIT_PASSWORD,
+                }
+            },
+        }
+    )
 
     dummy_git_config = ConfigFile()
     mocker.patch(

@@ -68,8 +68,35 @@ class HTMLPage(LinkSource):
         return links
 
 
-class SimpleRepositoryPage(HTMLPage):
-    def __init__(self, url: str, content: str) -> None:
-        if not url.endswith("/"):
-            url += "/"
-        super().__init__(url=url, content=content)
+class SimpleRepositoryRootPage:
+    """
+    This class represents the parsed content of a "simple" repository's root page. This follows the
+    specification laid out in PEP 503.
+
+    See: https://peps.python.org/pep-0503/
+    """
+
+    def __init__(self, content: str | None = None) -> None:
+        parser = HTMLPageParser()
+        parser.feed(content or "")
+        self._parsed = parser.anchors
+
+    def search(self, query: str) -> list[str]:
+        results: list[str] = []
+
+        for anchor in self._parsed:
+            href = anchor.get("href")
+            if href and query in href:
+                results.append(href.rstrip("/"))
+
+        return results
+
+    @cached_property
+    def package_names(self) -> list[str]:
+        results: list[str] = []
+
+        for anchor in self._parsed:
+            if href := anchor.get("href"):
+                results.append(href.rstrip("/"))
+
+        return results

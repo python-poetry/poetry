@@ -7,7 +7,12 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from cleo.testers.application_tester import ApplicationTester
+
+from poetry.console.application import Application
 from poetry.factory import Factory
+from poetry.utils.helpers import remove_directory
+from tests.helpers import with_working_directory
 
 
 if TYPE_CHECKING:
@@ -41,8 +46,13 @@ def tmp_tester(
     return command_tester_factory("build", tmp_poetry)
 
 
-def get_package_glob(poetry: Poetry) -> str:
-    return f"{poetry.package.name.replace('-', '_')}-{poetry.package.version}*"
+def get_package_glob(poetry: Poetry, local_version: str | None = None) -> str:
+    version = poetry.package.version
+
+    if local_version:
+        version = version.replace(local=local_version)
+
+    return f"{poetry.package.name.replace('-', '_')}-{version}*"
 
 
 def test_build_format_is_not_valid(tmp_tester: CommandTester) -> None:
@@ -54,11 +64,57 @@ def test_build_format_is_not_valid(tmp_tester: CommandTester) -> None:
 def test_build_creates_packages_in_dist_directory_if_no_output_is_specified(
     tmp_tester: CommandTester, tmp_project_path: Path, tmp_poetry: Poetry, format: str
 ) -> None:
+    shutil.rmtree(tmp_project_path / "dist")
     tmp_tester.execute(f"--format {format}")
     build_artifacts = tuple(
         (tmp_project_path / "dist").glob(get_package_glob(tmp_poetry))
     )
     assert len(build_artifacts) > 0
+    assert all(archive.exists() for archive in build_artifacts)
+
+
+def test_build_with_local_version_label(
+    tmp_tester: CommandTester, tmp_project_path: Path, tmp_poetry: Poetry
+) -> None:
+    shutil.rmtree(tmp_project_path / "dist")
+    local_version_label = "local-version"
+    tmp_tester.execute(f"--local-version {local_version_label}")
+    build_artifacts = tuple(
+        (tmp_project_path / "dist").glob(
+            get_package_glob(tmp_poetry, local_version=local_version_label)
+        )
+    )
+
+    assert len(build_artifacts) > 0
+    assert all(archive.exists() for archive in build_artifacts)
+
+
+@pytest.mark.parametrize("clean", [True, False])
+def test_build_with_clean(
+    tmp_tester: CommandTester, tmp_project_path: Path, tmp_poetry: Poetry, clean: bool
+) -> None:
+    dist_dir = tmp_project_path.joinpath("dist")
+    dist_dir.joinpath("hello").touch(exist_ok=True)
+
+    tmp_tester.execute("--clean" if clean else "")
+    build_artifacts = tuple(dist_dir.glob("*"))
+
+    assert len(build_artifacts) == 2 if clean else 3
+    assert all(archive.exists() for archive in build_artifacts)
+
+
+def test_build_with_clean_non_existing_output(
+    tmp_tester: CommandTester, tmp_project_path: Path, tmp_poetry: Poetry
+) -> None:
+    dist_dir = tmp_project_path.joinpath("dist")
+
+    remove_directory(dist_dir, force=True)
+    assert not dist_dir.exists()
+
+    tmp_tester.execute("--clean")
+    build_artifacts = tuple(dist_dir.glob("*"))
+
+    assert len(build_artifacts) == 2
     assert all(archive.exists() for archive in build_artifacts)
 
 
@@ -119,6 +175,7 @@ def test_build_output_option(
     tmp_poetry: Poetry,
     output_dir: str,
 ) -> None:
+    shutil.rmtree(tmp_project_path / "dist")
     if output_dir is None:
         tmp_tester.execute()
         build_dir = tmp_project_path / "dist"
@@ -132,3 +189,25 @@ def test_build_output_option(
     build_artifacts = tuple(build_dir.glob(get_package_glob(tmp_poetry)))
     assert len(build_artifacts) > 0
     assert all(archive.exists() for archive in build_artifacts)
+
+
+def test_build_relative_directory_src_layout(
+    tmp_path: Path, fixture_dir: FixtureDirGetter
+) -> None:
+    tmp_project_path = tmp_path / "project"
+    with with_working_directory(fixture_dir("simple_project"), tmp_project_path):
+        shutil.rmtree(tmp_project_path / "dist")
+        (tmp_project_path / "src").mkdir()
+        (tmp_project_path / "simple_project").rename(
+            tmp_project_path / "src" / "simple_project"
+        )
+
+        # We have to use ApplicationTester because CommandTester
+        # initializes Poetry before passing the directory.
+        app = Application()
+        tester = ApplicationTester(app)
+        tester.execute("build --directory .")
+
+        build_dir = tmp_project_path / "dist"
+
+        assert len(list(build_dir.iterdir())) == 2

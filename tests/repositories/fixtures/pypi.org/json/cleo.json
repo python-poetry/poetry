@@ -1,0 +1,45 @@
+{
+  "alternate-locations": [],
+  "files": [
+    {
+      "core-metadata": {
+        "sha256": "5627f48cfca57f878bf73ea222fa8ca2f24ad248061a2f0151f22219386838f9"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "5627f48cfca57f878bf73ea222fa8ca2f24ad248061a2f0151f22219386838f9"
+      },
+      "filename": "cleo-1.0.0a5-py3-none-any.whl",
+      "hashes": {
+        "md5": "eaf14b3f99b2b88c0846ecc9a5a18af4",
+        "sha256": "20dbd69ed5c27e2889a2d428b9b01771f6073e4a1483a731e3c14c07a666aa9f"
+      },
+      "requires-python": ">=3.7,<4.0",
+      "size": 78701,
+      "upload-time": "2022-06-03T20:16:19.386916Z",
+      "url": "https://files.pythonhosted.org/packages/45/0c/3825603bf62f360829b1eea29a43dadce30829067e288170b3bf738aafd0/cleo-1.0.0a5-py3-none-any.whl",
+      "yanked": false
+    },
+    {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
+      "filename": "cleo-1.0.0a5.tar.gz",
+      "hashes": {
+        "md5": "92e181952976e09b9d1c583da6c3e2fc",
+        "sha256": "88f0a4275a17f2ab4d013786b8b9522d4c60bd37d8fc9b3def0fb27f4ac1e694"
+      },
+      "requires-python": ">=3.7,<4.0",
+      "size": 61431,
+      "upload-time": "2022-06-03T20:16:21.133890Z",
+      "url": "https://files.pythonhosted.org/packages/2f/16/1c1902b225756745f9860451a44a2e2a3c26ee91c72295e83c63df605ed1/cleo-1.0.0a5.tar.gz",
+      "yanked": false
+    }
+  ],
+  "meta": {
+    "_last-serial": 0,
+    "api-version": "1.2"
+  },
+  "name": "cleo",
+  "versions": [
+    "1.0.0a5"
+  ]
+}

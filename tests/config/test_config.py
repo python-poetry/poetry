@@ -34,7 +34,12 @@ def get_options_based_on_normalizer(normalizer: Normalizer) -> Iterator[str]:
 
 
 @pytest.mark.parametrize(
-    ("name", "value"), [("installer.parallel", True), ("virtualenvs.create", True)]
+    ("name", "value"),
+    [
+        ("installer.parallel", True),
+        ("virtualenvs.create", True),
+        ("requests.max-retries", 0),
+    ],
 )
 def test_config_get_default_value(config: Config, name: str, value: bool) -> None:
     assert config.get(name) is value
@@ -73,6 +78,23 @@ def test_config_get_from_environment_variable(
 ) -> None:
     os.environ[env_var] = env_value
     assert config.get(name) is value
+
+
+def test_config_get_from_environment_variable_nested(
+    config: Config,
+    environ: Iterator[None],
+) -> None:
+    options = config.default_config["virtualenvs"]["options"]
+    expected = {}
+
+    for k, v in options.items():
+        if isinstance(v, bool):
+            expected[k] = not v
+            os.environ[f"POETRY_VIRTUALENVS_OPTIONS_{k.upper().replace('-', '_')}"] = (
+                "true" if expected[k] else "false"
+            )
+
+    assert config.get("virtualenvs.options") == expected
 
 
 @pytest.mark.parametrize(

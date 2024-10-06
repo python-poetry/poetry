@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 
+from functools import cached_property
 from pathlib import Path
 from typing import Any
 
@@ -20,16 +21,14 @@ class NullEnv(SystemEnv):
         self._execute = execute
         self.executed: list[list[str]] = []
 
-    @property
+    @cached_property
     def paths(self) -> dict[str, str]:
-        if self._paths is None:
-            self._paths = self.get_paths()
-            self._paths["platlib"] = str(self._path / "platlib")
-            self._paths["purelib"] = str(self._path / "purelib")
-            self._paths["scripts"] = str(self._path / "scripts")
-            self._paths["data"] = str(self._path / "data")
-
-        return self._paths
+        paths = self.get_paths()
+        paths["platlib"] = str(self._path / "platlib")
+        paths["purelib"] = str(self._path / "purelib")
+        paths["scripts"] = str(self._path / "scripts")
+        paths["data"] = str(self._path / "data")
+        return paths
 
     def _run(self, cmd: list[str], **kwargs: Any) -> str:
         self.executed.append(cmd)

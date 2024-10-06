@@ -56,7 +56,6 @@ virtualenvs.create = true
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = true
 virtualenvs.options.no-pip = false
-virtualenvs.options.no-setuptools = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = "{cache-dir}/virtualenvs"  # /path/to/cache/directory/virtualenvs
 virtualenvs.prefer-active-python = false
@@ -123,7 +122,7 @@ Poetry uses the following default directories:
 
 - Linux: `$XDG_CONFIG_HOME/pypoetry` or `~/.config/pypoetry`
 - Windows: `%APPDATA%\pypoetry`
-- MacOS: `~/Library/Application Support/pypoetry`
+- macOS: `~/Library/Application Support/pypoetry`
 
 You can override the Config directory by setting the `POETRY_CONFIG_DIR` environment variable.
 
@@ -131,7 +130,7 @@ You can override the Config directory by setting the `POETRY_CONFIG_DIR` environ
 
 - Linux: `$XDG_DATA_HOME/pypoetry` or `~/.local/share/pypoetry`
 - Windows: `%APPDATA%\pypoetry`
-- MacOS: `~/Library/Application Support/pypoetry`
+- macOS: `~/Library/Application Support/pypoetry`
 
 You can override the Data directory by setting the `POETRY_DATA_DIR` or `POETRY_HOME` environment variables. If `POETRY_HOME` is set, it will be given higher priority.
 
@@ -139,7 +138,7 @@ You can override the Data directory by setting the `POETRY_DATA_DIR` or `POETRY_
 
 - Linux: `$XDG_CACHE_HOME/pypoetry` or `~/.cache/pypoetry`
 - Windows: `%LOCALAPPDATA%\pypoetry`
-- MacOS: `~/Library/Caches/pypoetry`
+- macOS: `~/Library/Caches/pypoetry`
 
 You can override the Cache directory by setting the `POETRY_CACHE_DIR` environment variable.
 
@@ -196,21 +195,6 @@ the number of maximum workers is still limited at `number_of_cores + 4`.
 This configuration is ignored when `installer.parallel` is set to `false`.
 {{% /note %}}
 
-### `installer.modern-installation`
-
-**Type**: `boolean`
-
-**Default**: `true`
-
-**Environment Variable**: `POETRY_INSTALLER_MODERN_INSTALLATION`
-
-*Introduced in 1.4.0*
-
-Use a more modern and faster method for package installation.
-
-If this causes issues, you can disable it by setting it to `false` and report the problems
-you encounter on the [issue tracker](https://github.com/python-poetry/poetry/issues).
-
 ### `installer.no-binary`
 
 **Type**: `string | boolean`
@@ -221,8 +205,7 @@ you encounter on the [issue tracker](https://github.com/python-poetry/poetry/iss
 
 *Introduced in 1.2.0*
 
-When set this configuration allows users to configure package distribution format policy for all or
-specific packages.
+When set, this configuration allows users to disallow the use of binary distribution format for all, none or specific packages.
 
 | Configuration          | Description                                                |
 |------------------------|------------------------------------------------------------|
@@ -259,6 +242,24 @@ Unless this is required system-wide, if configured globally, you could encounter
 across all your projects if incorrectly set.
 {{% /warning %}}
 
+### `installer.only-binary`
+
+**Type**: `string | boolean`
+
+**Default**: `false`
+
+**Environment Variable**: `POETRY_INSTALLER_ONLY_BINARY`
+
+*Introduced in 1.9.0*
+
+When set, this configuration allows users to enforce the use of binary distribution format for all, none or
+specific packages.
+
+{{% note %}}
+Please refer to [`installer.no-binary`]({{< relref "configuration#installerno-binary" >}}) for information on allowed
+values, usage instructions and warnings.
+{{% /note %}}
+
 ### `installer.parallel`
 
 **Type**: `boolean`
@@ -270,6 +271,19 @@ across all your projects if incorrectly set.
 *Introduced in 1.1.4*
 
 Use parallel execution when using the new (`>=1.1.0`) installer.
+
+### `requests.max-retries`
+
+**Type**: `int`
+
+**Default**: `0`
+
+**Environment Variable**: `POETRY_REQUESTS_MAX_RETRIES`
+
+*Introduced in 1.9.0*
+
+Set the maximum number of retries in an unstable network.
+This setting has no effect if the server does not support HTTP range requests.
 
 ### `solver.lazy-wheel`
 
@@ -374,34 +388,9 @@ Poetry, for its internal operations, uses the `pip` wheel embedded in the `virtu
 in Poetry's runtime environment. If a user runs `poetry run pip` when this option is set to `true`, the `pip` the
 embedded instance of `pip` is used.
 
-You can safely set this, along with `no-setuptools`, to `true`, if you desire a virtual environment with no additional
-packages. This is desirable for production environments.
+You can safely set this to `true`, if you desire a virtual environment with no additional packages.
+This is desirable for production environments.
 {{% /note %}}
-
-### `virtualenvs.options.no-setuptools`
-
-**Type**: `boolean`
-
-**Default**: `false`
-
-**Environment Variable**: `POETRY_VIRTUALENVS_OPTIONS_NO_SETUPTOOLS`
-
-*Introduced in 1.2.0*
-
-If set to `true` the `--no-setuptools` parameter is passed to `virtualenv` on creation of the virtual environment. This
-means when a new virtual environment is created, `setuptools` will not be installed in the environment. Poetry, for its
-internal operations, does not require `setuptools` and this can safely be set to `true`.
-
-For environments using python 3.12 or later, `virtualenv` defaults to not
-installing `setuptools` when creating a virtual environment.
-In such environments this poetry configuration option therefore has no effect:
-`setuptools` is not installed either way.
-If your project relies on `setuptools`, you should declare it as a dependency.
-
-{{% warning %}}
-Some development tools like IDEs, make an assumption that `setuptools` (and other) packages are always present and
-available within a virtual environment. This can cause some features in these tools to not work as expected.
-{{% /warning %}}
 
 ### `virtualenvs.options.system-site-packages`
 

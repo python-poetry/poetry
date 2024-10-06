@@ -14,7 +14,6 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import BinaryIO
 from typing import ClassVar
-from typing import TypeVar
 from typing import cast
 from urllib.parse import urlparse
 from zipfile import BadZipFile
@@ -34,6 +33,7 @@ if TYPE_CHECKING:
 
     from packaging.metadata import RawMetadata
     from requests import Session
+    from typing_extensions import Self
 
     from poetry.utils.authenticator import Authenticator
 
@@ -41,15 +41,24 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class HTTPRangeRequestUnsupported(Exception):
+class LazyWheelUnsupportedError(Exception):
+    """Raised when a lazy wheel is unsupported."""
+
+
+class HTTPRangeRequestUnsupportedError(LazyWheelUnsupportedError):
     """Raised when the remote server appears unable to support byte ranges."""
 
 
-class UnsupportedWheel(Exception):
+class HTTPRangeRequestNotRespectedError(LazyWheelUnsupportedError):
+    """Raised when the remote server tells us that it supports byte ranges
+    but does not respect a respective request."""
+
+
+class UnsupportedWheelError(LazyWheelUnsupportedError):
     """Unsupported wheel."""
 
 
-class InvalidWheel(Exception):
+class InvalidWheelError(LazyWheelUnsupportedError):
     """Invalid (e.g. corrupt) wheel."""
 
     def __init__(self, location: str, name: str) -> None:
@@ -68,8 +77,8 @@ def metadata_from_wheel_url(
     This uses HTTP range requests to only fetch the portion of the wheel
     containing metadata, just enough for the object to be constructed.
 
-    :raises HTTPRangeRequestUnsupported: if range requests are unsupported for ``url``.
-    :raises InvalidWheel: if the zip file contents could not be parsed.
+    :raises HTTPRangeRequestUnsupportedError: if range requests are unsupported for ``url``.
+    :raises InvalidWheelError: if the zip file contents could not be parsed.
     """
     try:
         # After context manager exit, wheel.name will point to a deleted file path.
@@ -80,11 +89,29 @@ def metadata_from_wheel_url(
         metadata, _ = parse_email(metadata_bytes)
         return metadata
 
-    except (BadZipFile, UnsupportedWheel):
+    except (BadZipFile, UnsupportedWheelError):
         # We assume that these errors have occurred because the wheel contents
         # themselves are invalid, not because we've messed up our bookkeeping
         # and produced an invalid file.
-        raise InvalidWheel(url, name)
+        raise InvalidWheelError(url, name)
+    except Exception as e:
+        if isinstance(e, LazyWheelUnsupportedError):
+            # this is expected when the code handles issues with lazy wheel metadata retrieval correctly
+            raise e
+
+        logger.debug(
+            "There was an unexpected %s when handling lazy wheel metadata retrieval for %s from %s: %s",
+            type(e).__name__,
+            name,
+            url,
+            e,
+        )
+
+        # Catch all exception to handle any issues that may have occurred during
+        # attempts to use Lazy Wheel.
+        raise LazyWheelUnsupportedError(
+            f"Attempts to use lazy wheel metadata retrieval for {name} from {url} failed"
+        ) from e
 
 
 class MergeIntervals:
@@ -141,9 +168,6 @@ class MergeIntervals:
         yield from self._merge(start, end, left, right)
 
 
-T = TypeVar("T", bound="ReadOnlyIOWrapper")
-
-
 class ReadOnlyIOWrapper(BinaryIO):
     """Implement read-side ``BinaryIO`` methods wrapping an inner ``BinaryIO``.
 
@@ -154,7 +178,7 @@ class ReadOnlyIOWrapper(BinaryIO):
     def __init__(self, inner: BinaryIO) -> None:
         self._file = inner
 
-    def __enter__(self: T) -> T:
+    def __enter__(self) -> Self:
         self._file.__enter__()
         return self
 
@@ -259,15 +283,12 @@ class ReadOnlyIOWrapper(BinaryIO):
         raise NotImplementedError
 
 
-U = TypeVar("U", bound="LazyFileOverHTTP")
-
-
 class LazyFileOverHTTP(ReadOnlyIOWrapper):
     """File-like object representing a fixed-length file over HTTP.
 
     This uses HTTP range requests to lazily fetch the file's content into a temporary
     file. If such requests are not supported by the server, raises
-    ``HTTPRangeRequestUnsupported`` in the ``__enter__`` method."""
+    ``HTTPRangeRequestUnsupportedError`` in the ``__enter__`` method."""
 
     def __init__(
         self,
@@ -284,7 +305,7 @@ class LazyFileOverHTTP(ReadOnlyIOWrapper):
         self._session = session
         self._url = url
 
-    def __enter__(self: U) -> U:
+    def __enter__(self) -> Self:
         super().__enter__()
         self._setup_content()
         return self
@@ -380,15 +401,17 @@ class LazyFileOverHTTP(ReadOnlyIOWrapper):
     def _content_length_from_head(self) -> int:
         """Performs a HEAD request to extract the Content-Length.
 
-        :raises HTTPRangeRequestUnsupported: if the response fails to indicate support
+        :raises HTTPRangeRequestUnsupportedError: if the response fails to indicate support
                                              for "bytes" ranges."""
         self._request_count += 1
-        head = self._session.head(self._url, headers=self._uncached_headers())
+        head = self._session.head(
+            self._url, headers=self._uncached_headers(), allow_redirects=True
+        )
         head.raise_for_status()
         assert head.status_code == codes.ok
         accepted_range = head.headers.get("Accept-Ranges", None)
         if accepted_range != "bytes":
-            raise HTTPRangeRequestUnsupported(
+            raise HTTPRangeRequestUnsupportedError(
                 f"server does not support byte ranges: header was '{accepted_range}'"
             )
         return int(head.headers["Content-Length"])
@@ -407,7 +430,12 @@ class LazyFileOverHTTP(ReadOnlyIOWrapper):
         self._request_count += 1
         response = self._session.get(self._url, headers=headers, stream=True)
         response.raise_for_status()
-        assert int(response.headers["Content-Length"]) == (end - start + 1)
+        if int(response.headers["Content-Length"]) != (end - start + 1):
+            raise HTTPRangeRequestNotRespectedError(
+                f"server did not respect byte range request: "
+                f"requested {end - start + 1} bytes, got "
+                f"{response.headers['Content-Length']} bytes"
+            )
         return response
 
     def _fetch_content_range(self, start: int, end: int) -> Iterator[bytes]:
@@ -556,7 +584,9 @@ class LazyWheelOverHTTP(LazyFileOverHTTP):
         """
         m = re.match(r"bytes [^/]+/([0-9]+)", arg)
         if m is None:
-            raise HTTPRangeRequestUnsupported(f"could not parse Content-Range: '{arg}'")
+            raise HTTPRangeRequestUnsupportedError(
+                f"could not parse Content-Range: '{arg}'"
+            )
         return int(m.group(1))
 
     def _try_initial_chunk_request(
@@ -586,8 +616,14 @@ class LazyWheelOverHTTP(LazyFileOverHTTP):
                 if accept_ranges == "bytes" and content_length <= initial_chunk_size:
                     return content_length, tail
 
-            raise HTTPRangeRequestUnsupported(
+            raise HTTPRangeRequestUnsupportedError(
                 f"did not receive partial content: got code {code}"
+            )
+
+        if "Content-Range" not in tail.headers:
+            raise LazyWheelUnsupportedError(
+                f"file length cannot be determined for {self._url}, "
+                f"did not receive content range header from server"
             )
 
         file_length = self._parse_full_length_from_content_range(
@@ -608,43 +644,45 @@ class LazyWheelOverHTTP(LazyFileOverHTTP):
             # Initial range request for just the end of the file.
             file_length, tail = self._try_initial_chunk_request(initial_chunk_size)
         except HTTPError as e:
+            # Our initial request using a negative byte range was not supported.
             resp = e.response
             code = resp.status_code if resp is not None else None
-            # Our initial request using a negative byte range was not supported.
-            if code in [codes.not_implemented, codes.method_not_allowed]:
-                # pypi notably does not support negative byte ranges: see
-                # https://github.com/pypi/warehouse/issues/12823.
-                logger.debug(
-                    "Negative byte range not supported for domain '%s': "
-                    "using HEAD request before lazy wheel from now on",
-                    domain,
-                )
-                # Avoid trying a negative byte range request against this domain for the
-                # rest of the resolve.
-                self._domains_without_negative_range.add(domain)
-                # Apply a HEAD request to get the real size, and nothing else for now.
-                return (self._content_length_from_head(), None)
+
             # This indicates that the requested range from the end was larger than the
             # actual file size: https://www.rfc-editor.org/rfc/rfc9110#status.416.
-            if code == codes.requested_range_not_satisfiable:
+            if (
+                code == codes.requested_range_not_satisfiable
+                and resp is not None
+                and "Content-Range" in resp.headers
+            ):
                 # In this case, we don't have any file content yet, but we do know the
                 # size the file will be, so we can return that and exit here.
-                assert resp is not None
                 file_length = self._parse_full_length_from_content_range(
                     resp.headers["Content-Range"]
                 )
-                return (file_length, None)
-            # If we get some other error, then we expect that non-range requests will
-            # also fail, so we error out here and let the user figure it out.
-            raise
+                return file_length, None
+
+            # pypi notably does not support negative byte ranges: see
+            # https://github.com/pypi/warehouse/issues/12823.
+            logger.debug(
+                "Negative byte range not supported for domain '%s': "
+                "using HEAD request before lazy wheel from now on (code: %s)",
+                domain,
+                code,
+            )
+            # Avoid trying a negative byte range request against this domain for the
+            # rest of the resolve.
+            self._domains_without_negative_range.add(domain)
+            # Apply a HEAD request to get the real size, and nothing else for now.
+            return self._content_length_from_head(), None
 
         # Some servers that do not support negative offsets,
-        # handle a negative offset like "-10" as "0-10".
-        if int(
-            tail.headers["Content-Length"]
-        ) == initial_chunk_size + 1 and tail.headers["Content-Range"].startswith(
-            f"bytes 0-{initial_chunk_size}"
-        ):
+        # handle a negative offset like "-10" as "0-10"...
+        # ... or behave even more strangely, see
+        # https://github.com/python-poetry/poetry/issues/9056#issuecomment-1973273721
+        if int(tail.headers["Content-Length"]) > initial_chunk_size or tail.headers.get(
+            "Content-Range", ""
+        ).startswith("bytes -"):
             tail = None
             self._domains_without_negative_range.add(domain)
         return file_length, tail
@@ -680,7 +718,7 @@ class LazyWheelOverHTTP(LazyFileOverHTTP):
                     end = info.header_offset
                     break
         if start is None:
-            raise UnsupportedWheel(
+            raise UnsupportedWheelError(
                 f"no {self._metadata_regex!r} found for {name} in {self.name}"
             )
         # If it is the last entry of the zip, then give us everything

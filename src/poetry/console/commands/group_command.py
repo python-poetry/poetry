@@ -7,7 +7,7 @@ from cleo.helpers import option
 from poetry.core.packages.dependency_group import MAIN_GROUP
 
 from poetry.console.commands.command import Command
-from poetry.console.exceptions import GroupNotFound
+from poetry.console.exceptions import GroupNotFoundError
 
 
 if TYPE_CHECKING:
@@ -128,4 +128,4 @@ class GroupCommand(Command):
                     for opt in sorted(invalid_options[group])
                 )
                 message_parts.append(f"{group} (via {opts})")
-            raise GroupNotFound(f"Group(s) not found: {', '.join(message_parts)}")
+            raise GroupNotFoundError(f"Group(s) not found: {', '.join(message_parts)}")

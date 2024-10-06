@@ -1,19 +1,37 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
+from typing import ClassVar
 
 from cleo.helpers import option
 
 from poetry.console.commands.env_command import EnvCommand
 from poetry.utils.env import build_environment
+from poetry.utils.helpers import remove_directory
+
+
+if TYPE_CHECKING:
+    from cleo.io.inputs.option import Option
 
 
 class BuildCommand(EnvCommand):
     name = "build"
     description = "Builds a package, as a tarball and a wheel by default."
 
-    options = [
+    options: ClassVar[list[Option]] = [
         option("format", "f", "Limit the format to either sdist or wheel.", flag=False),
+        option(
+            "clean",
+            "Clean output directory before building.",
+            flag=True,
+        ),
+        option(
+            "local-version",
+            "l",
+            "Add or replace a local version label to the build.",
+            flag=False,
+        ),
         option(
             "output",
             "o",
@@ -23,7 +41,7 @@ class BuildCommand(EnvCommand):
         ),
     ]
 
-    loggers = [
+    loggers: ClassVar[list[str]] = [
         "poetry.core.masonry.builders.builder",
         "poetry.core.masonry.builders.sdist",
         "poetry.core.masonry.builders.wheel",
@@ -45,6 +63,11 @@ class BuildCommand(EnvCommand):
         else:
             raise ValueError(f"Invalid format: {fmt}")
 
+        if local_version_label := self.option("local-version"):
+            self.poetry.package.version = self.poetry.package.version.replace(
+                local=local_version_label
+            )
+
         for builder in builders:
             builder(self.poetry, executable=executable).build(target_dir)
 
@@ -63,6 +86,10 @@ class BuildCommand(EnvCommand):
 
             if not dist_dir.is_absolute():
                 dist_dir = self.poetry.pyproject_path.parent / dist_dir
+
+            if self.option("clean"):
+                remove_directory(path=dist_dir, force=True)
+
             self._build(fmt, executable=env.python, target_dir=dist_dir)
 
         return 0

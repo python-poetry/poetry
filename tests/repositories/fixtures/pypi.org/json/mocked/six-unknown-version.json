@@ -1,0 +1,40 @@
+{
+  "files": [
+    {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
+      "filename": "six_unknown_version-1.11.0.tar.gz",
+      "hashes": {
+        "md5": "b126a063c665f4c66f23bfd8dc6ebff5",
+        "sha256": "1d9f63b87ee9f0aee49e9d9f8d7883319836bc43f17321b488bc38933827d2c0"
+      },
+      "requires-python": null,
+      "size": 29860,
+      "upload-time": "2017-09-17T18:46:54.492027Z",
+      "url": "https://files.pythonhosted.org/packages/16/d8/bc6316cf98419719bd59c91742194c111b6f2e85abac88e496adefaf7afe/six_unknown_version-1.11.0.tar.gz",
+      "yanked": false
+    },
+    {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
+      "filename": "six_unknown_version-unknown.tar.gz",
+      "hashes": {
+        "md5": "25d3568604f921dd23532b88a0ce17e7",
+        "sha256": "268a4ccb159c1a2d2c79336b02e75058387b0cdbb4cea2f07846a758f48a356d"
+      },
+      "requires-python": null,
+      "size": 29860,
+      "upload-time": "2017-09-17T18:46:54.492027Z",
+      "url": "https://files.pythonhosted.org/packages/16/d8/bc6316cf98419719bd59c91742194c111b6f2e85abac88e496adefaf7afe/six_unknown_version-unknown.tar.gz",
+      "yanked": false
+    }
+  ],
+  "meta": {
+    "_last-serial": 0,
+    "api-version": "1.1"
+  },
+  "name": "six-unknown-version",
+  "versions": [
+    "1.11.0"
+  ]
+}

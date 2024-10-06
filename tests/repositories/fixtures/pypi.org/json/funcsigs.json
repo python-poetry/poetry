@@ -1,25 +1,43 @@
 {
-  "name": "funcsigs",
+  "alternate-locations": [],
   "files": [
     {
+      "core-metadata": {
+        "sha256": "4288c421dc872125cc7bcfef2cbb953584a95dfc8fb21b766ac038af980559fe"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "4288c421dc872125cc7bcfef2cbb953584a95dfc8fb21b766ac038af980559fe"
+      },
       "filename": "funcsigs-1.0.2-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/69/cb/f5be453359271714c01b9bd06126eaf2e368f1fddfff30818754b5ac2328/funcsigs-1.0.2-py2.py3-none-any.whl",
       "hashes": {
-        "md5": "701d58358171f34b6d1197de2923a35a",
         "sha256": "330cc27ccbf7f1e992e69fef78261dc7c6569012cf397db8d3de0234e6c937ca"
-      }
+      },
+      "requires-python": null,
+      "size": 17697,
+      "upload-time": "2016-04-25T22:22:05.222685Z",
+      "url": "https://files.pythonhosted.org/packages/69/cb/f5be453359271714c01b9bd06126eaf2e368f1fddfff30818754b5ac2328/funcsigs-1.0.2-py2.py3-none-any.whl",
+      "yanked": false
     },
     {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
       "filename": "funcsigs-1.0.2.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/94/4a/db842e7a0545de1cdb0439bb80e6e42dfe82aaeaadd4072f2263a4fbed23/funcsigs-1.0.2.tar.gz",
       "hashes": {
-        "md5": "7e583285b1fb8a76305d6d68f4ccc14e",
         "sha256": "a7bb0f2cf3a3fd1ab2732cb49eba4252c2af4240442415b4abce3b87022a8f50"
-      }
+      },
+      "requires-python": null,
+      "size": 27947,
+      "upload-time": "2016-04-25T22:22:33.882246Z",
+      "url": "https://files.pythonhosted.org/packages/94/4a/db842e7a0545de1cdb0439bb80e6e42dfe82aaeaadd4072f2263a4fbed23/funcsigs-1.0.2.tar.gz",
+      "yanked": false
     }
   ],
   "meta": {
-    "api-version": "1.0",
-    "_last-serial": 2083703
-  }
+    "_last-serial": 0,
+    "api-version": "1.2"
+  },
+  "name": "funcsigs",
+  "versions": [
+    "1.0.2"
+  ]
 }

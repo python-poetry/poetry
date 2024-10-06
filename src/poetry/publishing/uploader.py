@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import hashlib
-import io
-
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -11,13 +8,12 @@ import requests
 
 from poetry.core.masonry.metadata import Metadata
 from poetry.core.masonry.utils.helpers import distribution_name
-from requests.exceptions import ConnectionError
-from requests.exceptions import HTTPError
 from requests_toolbelt import user_agent
 from requests_toolbelt.multipart import MultipartEncoder
 from requests_toolbelt.multipart import MultipartEncoderMonitor
 
 from poetry.__version__ import __version__
+from poetry.publishing.hash_manager import HashManager
 from poetry.utils.constants import REQUESTS_TIMEOUT
 from poetry.utils.patterns import wheel_file_re
 
@@ -29,23 +25,7 @@ if TYPE_CHECKING:
 
 
 class UploadError(Exception):
-    def __init__(self, error: ConnectionError | HTTPError | str) -> None:
-        if isinstance(error, HTTPError):
-            if error.response is None:
-                message = "HTTP Error connecting to the repository"
-            else:
-                message = (
-                    f"HTTP Error {error.response.status_code}: "
-                    f"{error.response.reason} | {error.response.content!r}"
-                )
-        elif isinstance(error, ConnectionError):
-            message = (
-                "Connection Error: We were unable to connect to the repository, "
-                "ensure the url is correct and can be reached."
-            )
-        else:
-            message = error
-        super().__init__(message)
+    pass
 
 
 class Uploader:
@@ -126,19 +106,13 @@ class Uploader:
 
         file_type = self._get_type(file)
 
-        blake2_256_hash = hashlib.blake2b(digest_size=256 // 8)
+        hash_manager = HashManager()
+        hash_manager.hash(file)
+        file_hashes = hash_manager.hexdigest()
 
-        md5_hash = hashlib.md5()
-        sha256_hash = hashlib.sha256()
-        with file.open("rb") as fp:
-            for content in iter(lambda: fp.read(io.DEFAULT_BUFFER_SIZE), b""):
-                md5_hash.update(content)
-                sha256_hash.update(content)
-                blake2_256_hash.update(content)
-
-        md5_digest = md5_hash.hexdigest()
-        sha2_digest = sha256_hash.hexdigest()
-        blake2_256_digest = blake2_256_hash.hexdigest()
+        md5_digest = file_hashes.md5
+        sha2_digest = file_hashes.sha256
+        blake2_256_digest = file_hashes.blake2_256
 
         py_version: str | None = None
         if file_type == "bdist_wheel":
@@ -217,11 +191,13 @@ class Uploader:
             raise UploadError(f"Archive ({file}) does not exist")
 
         data = self.post_data(file)
-        data.update({
-            # action
-            ":action": "file_upload",
-            "protocol_version": "1",
-        })
+        data.update(
+            {
+                # action
+                ":action": "file_upload",
+                "protocol_version": "1",
+            }
+        )
 
         data_to_send: list[tuple[str, Any]] = self._prepare_data(data)
 
@@ -274,12 +250,22 @@ class Uploader:
                     bar.display()
                 else:
                     resp.raise_for_status()
-            except (requests.ConnectionError, requests.HTTPError) as e:
+
+            except requests.RequestException as e:
                 if self._io.output.is_decorated():
                     self._io.overwrite(
                         f" - Uploading <c1>{file.name}</c1> <error>FAILED</>"
                     )
-                raise UploadError(e)
+
+                if e.response is not None:
+                    message = (
+                        f"HTTP Error {e.response.status_code}: "
+                        f"{e.response.reason} | {e.response.content!r}"
+                    )
+                    raise UploadError(message) from e
+
+                raise UploadError("Error connecting to repository") from e
+
             finally:
                 self._io.write_line("")
 

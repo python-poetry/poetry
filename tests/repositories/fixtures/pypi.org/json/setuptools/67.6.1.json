@@ -14,7 +14,7 @@
       "Topic :: System :: Systems Administration",
       "Topic :: Utilities"
     ],
-    "description": ".. image:: https://img.shields.io/pypi/v/setuptools.svg\n   :target: https://pypi.org/project/setuptools\n\n.. image:: https://img.shields.io/pypi/pyversions/setuptools.svg\n\n.. image:: https://github.com/pypa/setuptools/workflows/tests/badge.svg\n   :target: https://github.com/pypa/setuptools/actions?query=workflow%3A%22tests%22\n   :alt: tests\n\n.. image:: https://img.shields.io/badge/code%20style-black-000000.svg\n   :target: https://github.com/psf/black\n   :alt: Code style: Black\n\n.. image:: https://img.shields.io/readthedocs/setuptools/latest.svg\n    :target: https://setuptools.pypa.io\n\n.. image:: https://img.shields.io/badge/skeleton-2023-informational\n   :target: https://blog.jaraco.com/skeleton\n\n.. image:: https://img.shields.io/codecov/c/github/pypa/setuptools/master.svg?logo=codecov&logoColor=white\n   :target: https://codecov.io/gh/pypa/setuptools\n\n.. image:: https://tidelift.com/badges/github/pypa/setuptools?style=flat\n   :target: https://tidelift.com/subscription/pkg/pypi-setuptools?utm_source=pypi-setuptools&utm_medium=readme\n\n.. image:: https://img.shields.io/discord/803025117553754132\n   :target: https://discord.com/channels/803025117553754132/815945031150993468\n   :alt: Discord\n\nSee the `Installation Instructions\n<https://packaging.python.org/installing/>`_ in the Python Packaging\nUser's Guide for instructions on installing, upgrading, and uninstalling\nSetuptools.\n\nQuestions and comments should be directed to `GitHub Discussions\n<https://github.com/pypa/setuptools/discussions>`_.\nBug reports and especially tested patches may be\nsubmitted directly to the `bug tracker\n<https://github.com/pypa/setuptools/issues>`_.\n\n\nCode of Conduct\n===============\n\nEveryone interacting in the setuptools project's codebases, issue trackers,\nchat rooms, and fora is expected to follow the\n`PSF Code of Conduct <https://github.com/pypa/.github/blob/main/CODE_OF_CONDUCT.md>`_.\n\n\nFor Enterprise\n==============\n\nAvailable as part of the Tidelift Subscription.\n\nSetuptools and the maintainers of thousands of other packages are working with Tidelift to deliver one enterprise subscription that covers all of the open source you use.\n\n`Learn more <https://tidelift.com/subscription/pkg/pypi-setuptools?utm_source=pypi-setuptools&utm_medium=referral&utm_campaign=github>`_.\n\n\nSecurity Contact\n================\n\nTo report a security vulnerability, please use the\n`Tidelift security contact <https://tidelift.com/security>`_.\nTidelift will coordinate the fix and disclosure.\n",
+    "description": "",
     "description_content_type": "",
     "docs_url": null,
     "download_url": "",
@@ -23,6 +23,7 @@
       "last_month": -1,
       "last_week": -1
     },
+    "dynamic": null,
     "home_page": "https://github.com/pypa/setuptools",
     "keywords": "CPAN PyPI distutils eggs package management",
     "license": "",
@@ -37,6 +38,7 @@
       "Documentation": "https://setuptools.pypa.io/",
       "Homepage": "https://github.com/pypa/setuptools"
     },
+    "provides_extra": null,
     "release_url": "https://pypi.org/project/setuptools/67.6.1/",
     "requires_dist": [
       "sphinx (>=3.5) ; extra == 'docs'",
@@ -91,12 +93,11 @@
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 17478645,
+  "last_serial": 0,
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "0bfc8781442def77b0aa22f63f266d4dadd486ebc0c5371d6290caf4320da4b7",
         "md5": "3b5b846e000da033d54eeaaf7915126e",
         "sha256": "e728ca814a823bf7bf60162daf9db95b93d532948c4c0bea762ce62f60189078"
       },
@@ -117,14 +118,13 @@
     {
       "comment_text": "",
       "digests": {
-        "blake2b_256": "cb4622ec35f286a77e6b94adf81b4f0d59f402ed981d4251df0ba7b992299146",
-        "md5": "a661b7cdf4cf1e914f866506c1022dee",
-        "sha256": "257de92a9d50a60b8e22abfcbb771571fde0dbf3ec234463212027a4eeecbe9a"
+        "md5": "ee2562f783544d1f95022c906dd3cf98",
+        "sha256": "a737d365c957dd3fced9ddd246118e95dce7a62c3dc49f37e7fdd9e93475d785"
       },
       "downloads": -1,
       "filename": "setuptools-67.6.1.tar.gz",
       "has_sig": false,
-      "md5_digest": "a661b7cdf4cf1e914f866506c1022dee",
+      "md5_digest": "ee2562f783544d1f95022c906dd3cf98",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.7",

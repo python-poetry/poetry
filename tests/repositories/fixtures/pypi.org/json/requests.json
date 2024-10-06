@@ -1,1456 +1,200 @@
 {
-  "name": "requests",
+  "alternate-locations": [],
   "files": [
     {
-      "filename": "requests-0.10.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/62/35/0230421b8c4efad6624518028163329ad0c2df9e58e6b3bee013427bf8f6/requests-0.10.0.tar.gz",
-      "hashes": {
-        "md5": "c90a48af18eb4170dbe4832c1104440c",
-        "sha256": "210a82e678c45d433a4ad1f105974b3102a8ab5198872dc0a3238a8750d4c65e"
-      }
-    },
-    {
-      "filename": "requests-0.10.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/b4/56/ba2d803383ec32d70f8faa7df5eb37ee9b3fc662ff68b7ab01ad9740b83a/requests-0.10.1.tar.gz",
-      "hashes": {
-        "md5": "699147d2143bff95238befa58980b912",
-        "sha256": "da6031575a30c7b65ea99465183468349b3645e6bf5322e49d53f565b27ed2b5"
-      }
-    },
-    {
-      "filename": "requests-0.10.2.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/58/1e/6b84552b6553f5beaf7cb0fe15115e7e4673326ed9188ad5338559ee8285/requests-0.10.2.tar.gz",
-      "hashes": {
-        "md5": "47c3cf85a0112d423137b43989663bef",
-        "sha256": "1546ef1e291ae337086369b621096fb0f69f88f6f67f60b1f6b7c18d1ca278e1"
-      }
-    },
-    {
-      "filename": "requests-0.10.3.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/01/44/39988315e036b79fe70428273053617266bf20d1363e91082346fae8450d/requests-0.10.3.tar.gz",
-      "hashes": {
-        "md5": "a055af00593f4828c3becd0ccfab503f",
-        "sha256": "8eeb24328304b015cbd59a49670e2738b77034b225b566729ddb19941899e490"
-      }
-    },
-    {
-      "filename": "requests-0.10.4.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/94/ac/5fa21e435ba8050d14db92ce29763c28196b727d4079dc608d39177fbf9b/requests-0.10.4.tar.gz",
-      "hashes": {
-        "md5": "5e465e9e739bcc9f71935ca4e9706168",
-        "sha256": "2ad4cc51d7595ca6f97373a0d697999e0cbdbbf1ba665d18f0f3dcec12b8be77"
-      }
-    },
-    {
-      "filename": "requests-0.10.6.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/b4/1f/8f5430040fcf4391dc5bd324424a569e2e0d96595952b21eb82403602d98/requests-0.10.6.tar.gz",
-      "hashes": {
-        "md5": "c889401445de3cbbac98509208a73b83",
-        "sha256": "31134b4f35951730dcce59f2af334478b68caa5728902a1d6bd5e115ec677d8b"
-      }
-    },
-    {
-      "filename": "requests-0.10.7.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/c5/cd/0597f9c040db24ca6d23cc74faa102554cb0a93bdbffb855d7749547921f/requests-0.10.7.tar.gz",
-      "hashes": {
-        "md5": "a3ac9d431981dcfd592fd0f35c499e4a",
-        "sha256": "80f32a74bed8cf081a3a25512f8725e09ceda217101ea706efced262bb05aec6"
-      }
-    },
-    {
-      "filename": "requests-0.10.8.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/9a/05/4ab34c6aae63a01aef2fd8be3573a99c197cc76a67f8cee751cb3a7784fb/requests-0.10.8.tar.gz",
-      "hashes": {
-        "md5": "0fc89a30eef76b2393cbc7ebace91750",
-        "sha256": "bec280d924a8be87b3377ee78a976334a6e7c944a8fe09bbd9447e669b984dae"
-      }
-    },
-    {
-      "filename": "requests-0.11.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/d7/ee/6826f31ae3e0e68606cb9086c3904582b3982bbccc73f34d6dc9912b48ad/requests-0.11.1.tar.gz",
-      "hashes": {
-        "md5": "c903c32a0e1f04889e693da8e9c71872",
-        "sha256": "fd4260541d0e559c78e2b3072bd79f36e0f8ef935bcbbadaa8c98cd8b5a62897"
-      }
-    },
-    {
-      "filename": "requests-0.11.2.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/b6/52/ad2911cf5586f2372a296a93a94d0324e4ffdd225975241562c450594795/requests-0.11.2.tar.gz",
-      "hashes": {
-        "md5": "5acd23600c897bf1560dca18005b428c",
-        "sha256": "547bf78a774a6018271d6e5c40613ec554642ba4d6cdf45813e7894145293c57"
-      }
-    },
-    {
-      "filename": "requests-0.12.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/3a/ac/0372d6b7fbde19444d5cc560f296e70b26283d2bac0665b576dd3f5e6b60/requests-0.12.0.tar.gz",
-      "hashes": {
-        "md5": "c38bacf4d6a065f3c47463e63efdfb5a",
-        "sha256": "8a88a291599444be608940c227b6114212220d8126c512af821f1ab207fe5072"
-      }
-    },
-    {
-      "filename": "requests-0.12.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/3a/0a/7c62c06702ddb4d3bc50d27f5b8e094d6e66a3374fc2eedf264742f84805/requests-0.12.1.tar.gz",
-      "hashes": {
-        "md5": "fe9e0515d09733d0eb9e2031c03401b2",
-        "sha256": "9ce56b87180c06728d96ca734055675abf8f5cc3136e0d7712a6260430685589"
-      }
-    },
-    {
-      "filename": "requests-0.13.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/86/1b/88d3753931419a226bb4e4c1d354cd2d40acff3482b37e30dd84ba8a243b/requests-0.13.0.tar.gz",
-      "hashes": {
-        "md5": "7d41e51c273806456faab61370d5147e",
-        "sha256": "03a2001843546147ddb6972d0661e2002b9be4ccbbbd2177ee10f05bd1910109"
-      }
-    },
-    {
-      "filename": "requests-0.13.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/0d/63/0e6c6b817ab38fb3e38a192d6631d698fe78308a68659af3aa523cd736d4/requests-0.13.1.tar.gz",
-      "hashes": {
-        "md5": "31a08091feeefe60817e45122d933219",
-        "sha256": "31f3ae96787fe74a78c7dd9626bf997fd4eabacc040b7b33fbd8632d2c2a97f6"
-      }
-    },
-    {
-      "filename": "requests-0.13.2.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/62/ca/338cf287e172099e4500cfa2cb580d2c9a1874427a8a14324d7a4c9d01b1/requests-0.13.2.tar.gz",
-      "hashes": {
-        "md5": "fac5635391778e2394a411d37e69ae5e",
-        "sha256": "37684324da8aca40e88fa2f7faa526cc116d74e979c2ac5d9119fe6e1bb5ced5"
-      }
-    },
-    {
-      "filename": "requests-0.13.3.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/54/9d/1ee0bd44e9334b6382ed5226d4bc33518d0d0b03ed806af6444d1c80ed83/requests-0.13.3.tar.gz",
-      "hashes": {
-        "md5": "54387d7df6c69580b906dcb5a2bd0724",
-        "sha256": "79503a14a43d6ae0b0b2e92f88ed0b01015528b8a8ab47721c28aa993aa4db2b"
-      }
-    },
-    {
-      "filename": "requests-0.13.4.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/04/75/52e169351e24a9faa8bfac69a07ea3551b845ca6354f22da15c5da3d5100/requests-0.13.4.tar.gz",
-      "hashes": {
-        "md5": "286cd3352509691e81c520accc5b9e48",
-        "sha256": "94672e92c23fefe516c5310b84d97b4ea19ef373003a7ba7af1057102a87f345"
-      }
-    },
-    {
-      "filename": "requests-0.13.5.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/ba/d1/919f6240a37ce5aade82da39809e1f28a5f2899a29a0ca10c381ba70efbb/requests-0.13.5.tar.gz",
-      "hashes": {
-        "md5": "805fd122b4cfd224e15ff2f5288c5ba0",
-        "sha256": "c6abb4b15a3f2aaad18c22b214b9b35d69ec4e2730c5b922f95f17a88981f957"
-      }
-    },
-    {
-      "filename": "requests-0.13.6.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/02/56/a6203485b552f9e8e8f16bd4e576446f94737ccbc563957e7510c8e401e4/requests-0.13.6.tar.gz",
-      "hashes": {
-        "md5": "9ea0f38cc4bf444be5a4c90f127211f2",
-        "sha256": "3cca63908f1b941d2da61ef0e8baf7bf014cc0df6512e172b8d2ac87be82b916"
-      }
-    },
-    {
-      "filename": "requests-0.13.7.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/b4/48/e82ded36a3cee7c0ef9605b44c4615ffe4a37f8b6c8b17fdbc15fae18daa/requests-0.13.7.tar.gz",
-      "hashes": {
-        "md5": "9212044f915d44fe3010cb923c0e08e5",
-        "sha256": "d9c6cf2890a0dc1200407f99130d334ef5ab5270bed3d9b4c14b0bb9c6cc3400"
-      }
-    },
-    {
-      "filename": "requests-0.13.8.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/db/1e/1f37495384a628887e10ecd61d45dba455ceec4b8b5b463512b4700e5b3d/requests-0.13.8.tar.gz",
-      "hashes": {
-        "md5": "d01596bd344db94763b2e4dfaa7bc7b9",
-        "sha256": "3ef37004f6394b111a27f0b6d0a64be83f7e4bccfbbbcdd21455400af5f4fbd4"
-      }
-    },
-    {
-      "filename": "requests-0.13.9.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/01/da/da83c242c5a77c58aa86072d68fd2855aa9b4d3b1a8bac4b402531b25ff1/requests-0.13.9.tar.gz",
-      "hashes": {
-        "md5": "66d52b8f47be517fc91a6e18d6b9ce82",
-        "sha256": "d887bb1c06948a8930d6e73a1f942f9febe9157a299a984994c20c84b2c21e20"
-      }
-    },
-    {
-      "filename": "requests-0.14.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/4e/31/50a12e5b5e585e0b00ce2592c9b45f2ae109575e3707a341afd7550a8d1a/requests-0.14.0.tar.gz",
-      "hashes": {
-        "md5": "a809c747e4f09b92147721ebc3e23dd6",
-        "sha256": "4e690ba0275ab4a8c9a5c7a6eb14e79e1adad0f84331fc638a18d7751f41ac3b"
-      }
-    },
-    {
-      "filename": "requests-0.14.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/40/1d/63a729208e1e93cf2cbda953b9f20ec9b101eb964e3f6205d1c2e294f294/requests-0.14.1.tar.gz",
-      "hashes": {
-        "md5": "3de30600072cbc7214ae342d1d08aa46",
-        "sha256": "4f563b907782b2c95dd2cbaf882a96133e567d46290a0e7aafa0c6f3efad19ba"
-      }
-    },
-    {
-      "filename": "requests-0.14.2.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/fa/d1/0dd60e1146e79e7b193e7b0189d8c13ef100d55cbfe65e1825ac5f03c397/requests-0.14.2.tar.gz",
-      "hashes": {
-        "md5": "488508ba3e8270992ad5b3fb54d364ca",
-        "sha256": "0e3345a8ac0d712bf17bd9d3276415050c5f972265ab62993cd4540a3a1aaaef"
-      }
-    },
-    {
-      "filename": "requests-0.2.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/ba/bb/dfa0141a32d773c47e4dede1a617c59a23b74dd302e449cf85413fc96bc4/requests-0.2.0.tar.gz",
-      "hashes": {
-        "md5": "637ae94cb6f2f1d9ea9020293055964a",
-        "sha256": "813202ace4d9301a3c00740c700e012fb9f3f8c73ddcfe02ab558a8df6f175fd"
-      }
-    },
-    {
-      "filename": "requests-0.2.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/4b/ad/d536b2e572e843fda13e4458c67f937b05ce359722c1e4cdad35ba05b6e3/requests-0.2.1.tar.gz",
-      "hashes": {
-        "md5": "7e9590f3985ece46fc8306e906b458c7",
-        "sha256": "d54eb33499f018fc6bd297613bf866f8d134629c8e02964aab6ef951f460e41e"
-      }
-    },
-    {
-      "filename": "requests-0.2.2.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/82/3c/3b5beca192da920c0c2ba67119d66ba1e4b1e766f40898e5e684d697ca1c/requests-0.2.2.tar.gz",
-      "hashes": {
-        "md5": "a703489b1a4a650698ddcf84857360c6",
-        "sha256": "b3289694b2ddf6adb4f7e1f470b9771330c76125611222b9c702f0e2e9733cbc"
-      }
-    },
-    {
-      "filename": "requests-0.2.3.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/6f/7e/5c2d7d9102c6ab847bd1215f96255e894fbfc81c8abf2c1714ae2a504913/requests-0.2.3.tar.gz",
-      "hashes": {
-        "md5": "102243646fc0cffdc82269f4bb5c6d5d",
-        "sha256": "8e374b75aaae7f85325e9bb126e96cb77a3bfc17e81ee74a0e96916aac1cc2ba"
-      }
-    },
-    {
-      "filename": "requests-0.2.4.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/dc/02/789859c27162bb91ecf6b72ed4ce1af3ed1710255265ad0901c4d4e25666/requests-0.2.4.tar.gz",
-      "hashes": {
-        "md5": "62dbe8cf12bc1ccd03776e74f59e9ef6",
-        "sha256": "ef1bd1a81022e9bf574ecfe69cbd8597e79371b890d29bd3847dd946102c8eed"
-      }
-    },
-    {
-      "filename": "requests-0.3.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/96/2b/88e9d6bf2e9d75cda77bf4fdc03720f4ba262beb532f9510a4a7f3e45660/requests-0.3.0.tar.gz",
-      "hashes": {
-        "md5": "aa1306575a78ba8b5e625dd2645d2ef0",
-        "sha256": "57eed745eb2a2e3c7e1dd935ccd49eb2eac51cfcdace4a97fb44de5da70f0035"
-      }
-    },
-    {
-      "filename": "requests-0.3.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/5e/c0/76fac9445cd8b6394eacae1e098ca0c97767cc0112e45e68521f553df003/requests-0.3.1.tar.gz",
-      "hashes": {
-        "md5": "3f4701e2ab414cd7018804a70328c527",
-        "sha256": "05dddfd656d25b7738778d2b4e8fa72e53b5357a2f80a319e6e1fa59edb03339"
-      }
-    },
-    {
-      "filename": "requests-0.3.2.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/d5/f1/16b57088f11cd5c6c82834bad6475826309cee44edaae860e9f65c084703/requests-0.3.2.tar.gz",
-      "hashes": {
-        "md5": "bde777f4c5b7bbb09033901c443962b3",
-        "sha256": "78ecf812ee865b62be106100a3c6f24058c7901ad995351b8818f18ea97ce848"
-      }
-    },
-    {
-      "filename": "requests-0.3.3.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/f1/64/8a2ba81294381bb90e8fb4b6fa750e0dca3f2d19e8caaeeae5e7bb6b3753/requests-0.3.3.tar.gz",
-      "hashes": {
-        "md5": "84c762c116617ba4dd03c19e2b61eb53",
-        "sha256": "ccbbc41c4c009baecf41e993727048c65c440fefadb217b11e73f63cd0cae09a"
-      }
-    },
-    {
-      "filename": "requests-0.3.4.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/ed/1b/8682a0cfe92f67e30fb9ac7982cb785a1230ca4385dc1353513f5b87b9f4/requests-0.3.4.tar.gz",
-      "hashes": {
-        "md5": "55152cc2b135bc8989dc4fa279295f8b",
-        "sha256": "e72a42a0317f33114b48c972d3056bad3265b92450d4e0e51ad0b384e43bc6d9"
-      }
-    },
-    {
-      "filename": "requests-0.4.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/56/c3/0887d5d6c18a366308b3dc7024210b4c89ff9ae92ae5fb87cf8fe58bcae2/requests-0.4.0.tar.gz",
-      "hashes": {
-        "md5": "77a7a7edd54169c6fa7ace49dcb0b20c",
-        "sha256": "35185852569456de25a654c5f9a43a1b8e4dc18a2a676985bbb9d5e7e5a9703e"
-      }
-    },
-    {
-      "filename": "requests-0.4.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/b3/54/dbc9b89a66a15ab9f3e2595de1b1ebd1da954efcb30a329c98710e014c05/requests-0.4.1.tar.gz",
-      "hashes": {
-        "md5": "812ff0ce63d14f7b940bacd880d54ee0",
-        "sha256": "f978616765803e9e0e9943136b34be0da69d74ba8fbd064cbfcf28f33ca54d8a"
-      }
-    },
-    {
-      "filename": "requests-0.5.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/0c/4d/d67bd4e4b17148aad88e6d75c62763ec27363d18038ed75019239e1516d0/requests-0.5.0.tar.gz",
-      "hashes": {
-        "md5": "6dfdc1688217d774d524e056ec6605a6",
-        "sha256": "747c8c79e9c75ba8608c7628e39d533a0234ff78a80569e40ba64865abc0e521"
-      }
-    },
-    {
-      "filename": "requests-0.5.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/5f/1c/8d145fbdb23986063a8a0c954d484a793024137a99ac7f3da603717fe64a/requests-0.5.1.tar.gz",
-      "hashes": {
-        "md5": "33a6e65d6a4e5b2d91df76256f607b81",
-        "sha256": "cfed662472d48e7bd6bfd8d7f79fe9072fc873b2e372fe3b9178a26daabebccc"
-      }
-    },
-    {
-      "filename": "requests-0.6.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/0b/b8/932de3bc1b8630357de85bc0c794ee1a7d343cb8008b470a0c9d15e84341/requests-0.6.0.tar.gz",
-      "hashes": {
-        "md5": "235e9fb6bfd71a48c0f00c0d5aef8896",
-        "sha256": "2c5036387b75dfb0ff3971604bd1e691cf6a55dc6c397df7adf9fc4804bc7f48"
-      }
-    },
-    {
-      "filename": "requests-0.6.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/a6/1f/f948fb7ba68b69b13a1fbbb70d7706e889c7b7d3e9867b498ca7971126db/requests-0.6.1.tar.gz",
-      "hashes": {
-        "md5": "07770334d48bd69ede1cc28cd0dd7680",
-        "sha256": "2656b23db25398e990e6f5d75dfbd960454a1fe573aeedc651773ddd2a8a3bbc"
-      }
-    },
-    {
-      "filename": "requests-0.6.2.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/55/19/986305b95fae17c58c95e191943a282bce19f82535af4530890c483937ad/requests-0.6.2.tar.gz",
-      "hashes": {
-        "md5": "0583bb5393b9cfcb022dc2aef7d6ffc8",
-        "sha256": "b5419f909fc21b8eb037dc4bade29530c28993610b68213b7f7633bf10bcabbc"
-      }
-    },
-    {
-      "filename": "requests-0.6.3.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/e1/3f/9235f98536b1393ef8a8e2dbd27273588fc3246000b93b0d763325b2e30c/requests-0.6.3.tar.gz",
-      "hashes": {
-        "md5": "35a954ae85b358e498fb0e602f1dce9d",
-        "sha256": "bde3e2ea45f6e47acd24ff55628fc7325cacd75746ee2d2b63c093554131fe41"
-      }
-    },
-    {
-      "filename": "requests-0.6.4.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/97/e0/a2bc7317b13caf227a75c8151b562b62a2e9f5d4ab4ad59694bfdbf5c35c/requests-0.6.4.tar.gz",
-      "hashes": {
-        "md5": "e0eec314178ad9a7bb14f2ec32f35ba3",
-        "sha256": "151f105506913a6b84f6119400ca94732ec39f5b4e0991ca2fc840ddb4e37816"
-      }
-    },
-    {
-      "filename": "requests-0.6.5.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/a8/a6/38b9de830719e4cd62ddf51f240654200658d0315aa9e908eda90ee64879/requests-0.6.5.tar.gz",
-      "hashes": {
-        "md5": "52f8bc956e027c8a0eb2684f6928169d",
-        "sha256": "bb332c171913c2f57cea805d013601af86a46b9aef9b7ef76bdcbed14f939bd7"
-      }
-    },
-    {
-      "filename": "requests-0.6.6.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/df/8d/4b1bb15e8814fefa2cdf8f971a479b459d07f8176094bd59742720f31270/requests-0.6.6.tar.gz",
-      "hashes": {
-        "md5": "2180dacebc0e30ba730d083739907af6",
-        "sha256": "6670aee5fe3bb545e1f7e8bb073a06be65344b467cd698b0ad58e7d7792dc2bb"
-      }
-    },
-    {
-      "filename": "requests-0.7.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/5c/8c/0399c9554b04b2b267d81239773657ddc720799a08565b6c21f7aed652df/requests-0.7.0.tar.gz",
-      "hashes": {
-        "md5": "83a1a7d79218756efd19b254eeb6b1f0",
-        "sha256": "13570c41a218affafe3f3e01db16d1f6cd238d3bd7a1d52cc435bf9de3df099a"
-      }
-    },
-    {
-      "filename": "requests-0.7.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/00/c8/8cf0f078100ce5fe7ff35927d8861e2e36daed9be2db56690f3ad80ccec4/requests-0.7.1.tar.gz",
-      "hashes": {
-        "md5": "4821c6902d8e83c910c69c6492388e5f",
-        "sha256": "6795818f5f46d7ecf53965d96e2ceae66bf652c79703292973b7c56afb88b946"
-      }
-    },
-    {
-      "filename": "requests-0.7.2.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/7c/af/b46199ae37c032801bcdc5dbb1c82a59613883ee690ff4fd2b5dc3140130/requests-0.7.2.tar.gz",
-      "hashes": {
-        "md5": "03eb97ed6aacb4102fd434bbfc13ce17",
-        "sha256": "7e58616c2c943116c7fb7595ebc3b00c5016ede5e6b14cf4bd72a812a5534aef"
-      }
-    },
-    {
-      "filename": "requests-0.7.3.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/3d/54/c4a7dcfccac9e6dd738e9ed86848a9a5b07a4345e5949f8795cfdc0ea95f/requests-0.7.3.tar.gz",
-      "hashes": {
-        "md5": "267f6f7d1109775d24a288f798e3ab4a",
-        "sha256": "2e7a0cb6251da5dd8c185f5d404e110d29e47afec7c8e60d78806436360a40d7"
-      }
-    },
-    {
-      "filename": "requests-0.7.4.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/64/50/219c9ff86e6fecfb89bdfe1093aea523f14882657186f806462887220267/requests-0.7.4.tar.gz",
-      "hashes": {
-        "md5": "c015765399b8c1e309c84ade0d38f07b",
-        "sha256": "3101a857831c6b6ec1f88ccebc8a19d38af6a10372537f437cd978c5775b4286"
-      }
-    },
-    {
-      "filename": "requests-0.7.5.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/2b/9e/1be659005a6bb394b02e12804fcaf8cd85050958a459945708b21e362b32/requests-0.7.5.tar.gz",
-      "hashes": {
-        "md5": "9a12281a811ca25d347d806c456d96f1",
-        "sha256": "ae10f2c5d112768a2e62282dd6b33db230c10ef7a2c3b1cf404806598bacd0b6"
-      }
-    },
-    {
-      "filename": "requests-0.7.6.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/de/f0/8fc024ef4f25ef5690c2121215029f88e1895b60c867c1a39134045b181e/requests-0.7.6.tar.gz",
-      "hashes": {
-        "md5": "728b21bf3914d69a4ff1012c66d9b6ba",
-        "sha256": "667f9c9cc447c9ee09d34d891db488f2695c99d025fae3ec8d02e235eb7eba95"
-      }
-    },
-    {
-      "filename": "requests-0.8.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/6a/85/32d23f3dbc43e54631bb9bd76d34c2448cc2f2f0de29babfb1a6a79b4d60/requests-0.8.0.tar.gz",
-      "hashes": {
-        "md5": "64dc0095cb645aa7f0083957950d524d",
-        "sha256": "62b557533f685c4a0af4e38dddc598c38f5ce0bd8e3b15b20809d1606f3843dd"
-      }
-    },
-    {
-      "filename": "requests-0.8.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/ae/fb/b1d6916b5278c44a1a2beb919d7ab96327051c3d47db9d6ee6978743444e/requests-0.8.1.tar.gz",
-      "hashes": {
-        "md5": "6135f837fbd113fc62904c60dcc5c70d",
-        "sha256": "23756d85cbf7dec36dd624853e76b380c2b538c21769adba1dcced9de0409f68"
-      }
-    },
-    {
-      "filename": "requests-0.8.2.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/65/5d/e69bad1f71d5284113165738d563a997d0d1ac968f939d1375f3df7c59fc/requests-0.8.2.tar.gz",
-      "hashes": {
-        "md5": "bdbbd7f45688e23e87eec52835959943",
-        "sha256": "826244e9612aa9a548d1289bef7bbce07eee4872ca21ca80631094d1c512b121"
-      }
-    },
-    {
-      "filename": "requests-0.8.3.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/f8/17/42ab05005c88e8d301fe0ee9b24e34139422268d0d7b8b11f98107c2a794/requests-0.8.3.tar.gz",
-      "hashes": {
-        "md5": "93e4cd27ab646fb613a926fede1cc4f5",
-        "sha256": "7277ec1fc8b8251bc1ce628651cbfad886704a77aea9f6203dcc042a4f12d214"
-      }
-    },
-    {
-      "filename": "requests-0.8.4.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/aa/a7/ec41790a8fb50f8d359568f82cd37a994af5d0159cccb543d147a7eea751/requests-0.8.4.tar.gz",
-      "hashes": {
-        "md5": "642e5c70250989e4feda9c50be57b100",
-        "sha256": "3ef7efbe083bcb6f7b1144c7665b5b1f6bd4fc7043dc50ccd564edf62b814c2b"
-      }
-    },
-    {
-      "filename": "requests-0.8.5.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/fc/f8/329450760dddd7e437eef0cd16a8d48582405e72495cf79a77a82e2f0047/requests-0.8.5.tar.gz",
-      "hashes": {
-        "md5": "5f2975ee9e57f4ea000e5a3f50fc85d1",
-        "sha256": "1db43116f612b016169d9a994d16aea9c166c55355bac2e05fae75e0ff610f4c"
-      }
-    },
-    {
-      "filename": "requests-0.8.6.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/4e/9b/a78a3bb2913576fad3ec6f18b8d26dd9579268f6b2191d73f4ec40e09490/requests-0.8.6.tar.gz",
-      "hashes": {
-        "md5": "21b03926ab38417a704ebce57972571a",
-        "sha256": "b9ad56ff5971b7a4005598e5a9588584ee1153fbf027ed76a7d13585f71489f7"
-      }
-    },
-    {
-      "filename": "requests-0.8.7.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/a7/83/bb447075090f4a3a60082765051d476b62f375d0f8174ebe9545d4bb8938/requests-0.8.7.tar.gz",
-      "hashes": {
-        "md5": "e4d4ee3a90396908bd04b50bf2136617",
-        "sha256": "2c5b08f7afe8d5ffc1c4f7819e74d5309a52b2f2eb1d78cc144cb57aa10380fe"
-      }
-    },
-    {
-      "filename": "requests-0.8.8.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/b7/1d/5c7973ca22bc95d53eba28a7dab7088f1ded7db0d174ea467afaaf898dfc/requests-0.8.8.tar.gz",
-      "hashes": {
-        "md5": "bfb182cfd3ed839b97744c553b87f502",
-        "sha256": "70352c48f106fe4a15537bdb4a029ebbb80c1ae1b6836a9033f2b3d7e52e01fd"
-      }
-    },
-    {
-      "filename": "requests-0.8.9.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/3a/72/9f39b173ee93645013563df119d28841f47b0ca2ebe04afcefd438e42f30/requests-0.8.9.tar.gz",
-      "hashes": {
-        "md5": "ff5b3bf5bc3ad19930d3f3afe51f182b",
-        "sha256": "870780642a14f5e30a9ef8c419aeb405e5bd4340d4fefbf1e8493dde39225337"
-      }
-    },
-    {
-      "filename": "requests-0.9.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/89/ce/0115444a1f9d833768160e678c21483e271466918966c11212f040b5f2af/requests-0.9.0.tar.gz",
-      "hashes": {
-        "md5": "5f6f03ec76f68a7a3f35120ab5a6c589",
-        "sha256": "43b26edb5c47e0ccf9612d3cf13639a1e7e6c774af5375a684cfa00e747f21b1"
-      }
-    },
-    {
-      "filename": "requests-0.9.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/48/aa/1077a5fef0c4fbdad8ce127166ca474c67788b7609137d26e17ab46ee16d/requests-0.9.1.tar.gz",
-      "hashes": {
-        "md5": "8ed4667edb5d57945b74a9137adbb8bd",
-        "sha256": "0c6fc89ce4f8976dd8ddb1a9e896315a47fb3f1dba95417fd3fa8e626ca9a1e7"
-      }
-    },
-    {
-      "filename": "requests-0.9.2.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/68/a1/fac8e1fa783d167cc49debc5b5328ca57eac9d53b58c34d17ce7592cdc6d/requests-0.9.2.tar.gz",
-      "hashes": {
-        "md5": "65b36d99a4d2f78a22f08c95d2475e33",
-        "sha256": "eb9a3b0031af396fb6825be897655546f4c54e19669fddb5df72a4a688ae0555"
-      }
-    },
-    {
-      "filename": "requests-0.9.3.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/62/12/0840d1bba04e5d60e469610ad78e02e89e6828e776adaef4116413cf5fd0/requests-0.9.3.tar.gz",
-      "hashes": {
-        "md5": "b13b6fbfa8fc3fc3c25bae300748053f",
-        "sha256": "3c0dd7c014474e0cdd00cad661abd74c88c14183d260d0555dfa51fc5b29abc5"
-      }
-    },
-    {
-      "filename": "requests-1.0.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/46/da/94c0fd6ff79b85befc3b528cf3771700def274c52b347bf12eeaa466f34c/requests-1.0.0.tar.gz",
-      "hashes": {
-        "md5": "099c9035c4b30a7ae5484b1beabc7407",
-        "sha256": "f10d8fbcc02a58056ab44f79ff9b3f9fe78e410296527885250bbb36d15be8c6"
-      }
-    },
-    {
-      "filename": "requests-1.0.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/b8/03/fb15922d14fa0b01a0ff4e2920bb8c08546d970ff387454ba892a67d5243/requests-1.0.1.tar.gz",
-      "hashes": {
-        "md5": "2e938f26f2bdf2899862c751bfa7eff5",
-        "sha256": "c69222b7c02a8e46d61c3b986e6a3e766db0539235aaafc056c75b8dcf6f5eec"
-      }
-    },
-    {
-      "filename": "requests-1.0.2.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/32/35/f2908b62b155b1737ab80b1a69142d007522bb0d1b3a0d3f8909595762f5/requests-1.0.2.tar.gz",
-      "hashes": {
-        "md5": "e5c1a5a5472cd61f144743dd25a2a29f",
-        "sha256": "3c81f3ae43916161b8d98d7b329b19533b0d0332b7a774794964e6b08760b0c7"
-      }
-    },
-    {
-      "filename": "requests-1.0.3.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/7f/76/66c01dd9afe4c5062e0c838bbd98ead7fa6b52984c7e26100a42c3eb965a/requests-1.0.3.tar.gz",
-      "hashes": {
-        "md5": "a3169a33973d4b5b51843ead01c5e999",
-        "sha256": "c7b50dc01b751e5ef8785951a74d0c2373bb0f87b45dca75dc2c5477b7e30f44"
-      }
-    },
-    {
-      "filename": "requests-1.0.4.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/5d/e8/f27e0868b9a49946b3f800722e02b19efebde22ae534276df3e5f6cca41d/requests-1.0.4.tar.gz",
-      "hashes": {
-        "md5": "0b7448f9e1a077a7218720575003a1b6",
-        "sha256": "f363690a47dd4d6d6e7605fc686b668097a114cd946dffdf21fe0c6a6a46f9e6"
-      }
-    },
-    {
-      "filename": "requests-1.1.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/e8/ff/d19b7461d84a5804c5cdc29791305530a2b774fe928b497e74ac9b304c79/requests-1.1.0.tar.gz",
-      "hashes": {
-        "md5": "a0158815af244c32041a3147ee09abf3",
-        "sha256": "21a81ddf1a3c2f956524538966ae19c38cae251f5629821588cdc8246a1335f7"
-      }
-    },
-    {
-      "filename": "requests-1.2.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/37/e4/74cb55b3da7777a1dc7cd7985c3cb12e83e213c03b0f9ca20d2c0e92b3c3/requests-1.2.0.tar.gz",
-      "hashes": {
-        "md5": "22af2682233770e5468a986f451c51c0",
-        "sha256": "cfa615644ae38efe8423ce9edb23470a4615a9147fa3cea5026afb47c9bb3913"
-      }
-    },
-    {
-      "filename": "requests-1.2.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/3b/9e/bfa03431335e778854da3d562697e067df40870a78ca81b35089822c6583/requests-1.2.1.tar.gz",
-      "hashes": {
-        "md5": "4d019670b94b17e329007d64e67e045e",
-        "sha256": "946b7c856aa62f4ad31de2b9bb501cfdcdb4afdc882ee76bd4664f57caefaa44"
-      }
-    },
-    {
-      "filename": "requests-1.2.2.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/c0/44/84a4b7a4e9d5fd1b358dbabd03f17e3dd91ce8881fc3446fbd2fd996be88/requests-1.2.2.tar.gz",
-      "hashes": {
-        "md5": "1f655ab7f2aa7447a1657ed69786f436",
-        "sha256": "56929d7b5dec9b37a9a8520f15202bada0ad55d2888a7c3243b9b194f2ef603d"
-      }
-    },
-    {
-      "filename": "requests-1.2.3.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/61/79/efc316760a906763de872d7328c9bf8c5af28708a35fdae57fbb4ee005f7/requests-1.2.3.tar.gz",
-      "hashes": {
-        "md5": "adbd3f18445f7fe5e77f65c502e264fb",
-        "sha256": "156bf3ec27ba9ec7e0cf8fbe02808718099d218de403eb64a714d73ba1a29ab1"
-      }
-    },
-    {
-      "filename": "requests-2.0.0-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/bf/78/be2b4c440ea767336d8448fe671fe1d78ca499e49d77dac90f92191cca0e/requests-2.0.0-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "6af9c16dbddd2fc751ae4f1606d041e8",
-        "sha256": "2ef65639cb9600443f85451df487818c31f993ab288f313d29cc9db4f3cbe6ed"
-      }
-    },
-    {
-      "filename": "requests-2.0.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/8e/88/102742c48605aef8d39fa719d932c67783d789679628fa1433cb4b2c7a2a/requests-2.0.0.tar.gz",
-      "hashes": {
-        "md5": "856fc825c17483e25fd55db115028e3f",
-        "sha256": "78536038f54cff6ade3be6863403146665b5a3923dd61108c98d8b64141f9d70"
-      }
-    },
-    {
-      "filename": "requests-2.0.1-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/8f/ea/140f18072bbcd81885a9490abb171792fd2961fd7f366be58396f4c6d634/requests-2.0.1-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "d524f9a38a29efe1732fd130e5ebe433",
-        "sha256": "f4ebc402e0ea5a87a3d42e300b76c292612d8467024f45f9858a8768f9fb6f6e"
-      }
-    },
-    {
-      "filename": "requests-2.0.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/1c/8e/376c93bb72bdae6a754797b8e31370df1e996e8b7dcc928e66691dbf611a/requests-2.0.1.tar.gz",
-      "hashes": {
-        "md5": "38e61c2856d2ba2782286730241975e6",
-        "sha256": "8cfddb97667c2a9edaf28b506d2479f1b8dc0631cbdcd0ea8c8864def59c698b"
-      }
-    },
-    {
-      "filename": "requests-2.1.0-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/1e/97/f0a8e5e71c75a2abf5ec91438b84ec1a40a5e1b5f985c06721a3ebe57c0a/requests-2.1.0-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "0848cbc0cc7edd150cb8d6ddc25ca906",
-        "sha256": "fcef306d62b1c061eb00b8402cf136ff0ea1daf7a53b60cdef9563a22850072c"
-      }
-    },
-    {
-      "filename": "requests-2.1.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/51/5d/3729c242ed7693f29941fd9d40e936d4994b0aa704dfd0c023312fcce8a3/requests-2.1.0.tar.gz",
-      "hashes": {
-        "md5": "28543001831f46b1ff40686ebc027deb",
-        "sha256": "a57307f3a5f35ec9e1254aaf3e0484063ee3ee6b5f123fb35c5b2673492efa71"
-      }
-    },
-    {
-      "filename": "requests-2.10.0-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/99/b4/63d99ba8e189c47d906b43bae18af4396e336f2b1bfec86af31efe2d2cb8/requests-2.10.0-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "abf5a77de3e8a5973c738cca884502a0",
-        "sha256": "09bc1b5f3a56cd8c48d433213a8cba51a67d12936568f73b5f1793fcb0c0979e"
-      }
-    },
-    {
-      "filename": "requests-2.10.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/49/6f/183063f01aae1e025cf0130772b55848750a2f3a89bfa11b385b35d7329d/requests-2.10.0.tar.gz",
-      "hashes": {
-        "md5": "a36f7a64600f1bfec4d55ae021d232ae",
-        "sha256": "63f1815788157130cee16a933b2ee184038e975f0017306d723ac326b5525b54"
-      }
-    },
-    {
-      "filename": "requests-2.11.0-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/f8/90/42d5e0d9b5c4c3629a3d99823bbc3748fb85616f0f7a45e79ba7908d4642/requests-2.11.0-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "369b7333bf2f710143a1b6678f2f214c",
-        "sha256": "8b9b147f3dff1fc4055ff794ff931f735ed25e87efe667ed7c845a4bafae9b73"
-      }
-    },
-    {
-      "filename": "requests-2.11.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/8d/66/649f861f980c0a168dd4cccc4dd0ed8fa5bd6c1bed3bea9a286434632771/requests-2.11.0.tar.gz",
-      "hashes": {
-        "md5": "147afc07d8967cf46359701551a6cb69",
-        "sha256": "b2ff053e93ef11ea08b0e596a1618487c4e4c5f1006d7a1706e3671c57dea385"
-      }
-    },
-    {
-      "filename": "requests-2.11.1-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/ea/03/92d3278bf8287c5caa07dbd9ea139027d5a3592b0f4d14abf072f890fab2/requests-2.11.1-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "b4269c6fb64b9361288620ba028fd385",
-        "sha256": "545c4855cd9d7c12671444326337013766f4eea6068c3f0307fb2dc2696d580e"
-      }
-    },
-    {
-      "filename": "requests-2.11.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/2e/ad/e627446492cc374c284e82381215dcd9a0a87c4f6e90e9789afefe6da0ad/requests-2.11.1.tar.gz",
-      "hashes": {
-        "md5": "ad5f9c47b5c5dfdb28363ad7546b0763",
-        "sha256": "5acf980358283faba0b897c73959cecf8b841205bb4b2ad3ef545f46eae1a133"
-      }
-    },
-    {
-      "filename": "requests-2.12.0-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/00/93/9c5c04821578c2ee11af83189c5cbd8338724b5e04e1de5dc3643bbc5bbf/requests-2.12.0-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "018b0e512fc0c0c3f30c7fa3c376bb7a",
-        "sha256": "a7d8f8f46603b78f03a925227f33988276fbe6c1f3c8cb20174ba9bfc5114c4d"
-      }
-    },
-    {
-      "filename": "requests-2.12.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/6a/97/7b856a8c8a0efebebb0bbba70c7ee879ee3f9654f28928665b64026ef09a/requests-2.12.0.tar.gz",
-      "hashes": {
-        "md5": "d0d3e5fb81c6b4d87c08ed5cad677337",
-        "sha256": "57b6c314a2c5f014dce634a0e1eeeb1707741b2e30bc7fee9c5b01fa216d57a3"
-      }
-    },
-    {
-      "filename": "requests-2.12.1-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/9b/31/e9925a2b9a06f97c3450bac6107928d3533bfe64ca5615442504104321e8/requests-2.12.1-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "384ec19e410ffeb43951782c11d3223b",
-        "sha256": "3f3f27a9d0f9092935efc78054ef324eb9f8166718270aefe036dfa1e4f68e1e"
-      }
-    },
-    {
-      "filename": "requests-2.12.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/6e/40/7434b2d9fe24107ada25ec90a1fc646e97f346130a2c51aa6a2b1aba28de/requests-2.12.1.tar.gz",
-      "hashes": {
-        "md5": "8c8ff05ea401ea22718038c3a416ea50",
-        "sha256": "2109ecea94df90980be040490ff1d879971b024861539abb00054062388b612e"
-      }
-    },
-    {
-      "filename": "requests-2.12.2-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/59/dc/54d39bef11678853ca78fc6167cc1b57becf491548942246dd2226bf2bd2/requests-2.12.2-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "8c58fa0a054badea1cfbfa54a23299d2",
-        "sha256": "e5a102790b234bde8f949090e50e294490c2be0d81e3d55530fd91f3b5eded63"
-      }
-    },
-    {
-      "filename": "requests-2.12.2.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/18/87/3c46a06df7b29cd3ab51f055cae2a954758ee3dcbd075d7f4c9a4e8aafbc/requests-2.12.2.tar.gz",
-      "hashes": {
-        "md5": "1ec26adca0265ead9afd42919867c370",
-        "sha256": "09dadb7c5c4210ebbc7f1b14a351a754f1191bd7cd5a5b60ee1929b8c7dcbbe6"
-      }
-    },
-    {
-      "filename": "requests-2.12.3-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/84/68/f0acceafe80354aa9ff4ae49de0572d27929b6d262f0c55196424eb86b2f/requests-2.12.3-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "9b4e857c4a27a9c282cb1abb53ebaba2",
-        "sha256": "d92ed9912bab3f5e52d8e231be82c106650f648185e952f83c44ab4f2be55c0c"
-      }
-    },
-    {
-      "filename": "requests-2.12.3.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/d9/03/155b3e67fe35fe5b6f4227a8d9e96a14fda828b18199800d161bcefc1359/requests-2.12.3.tar.gz",
-      "hashes": {
-        "md5": "0cafdecd95a46b081dd5fcfa4978db7a",
-        "sha256": "de5d266953875e9647e37ef7bfe6ef1a46ff8ddfe61b5b3652edf7ea717ee2b2"
-      }
-    },
-    {
-      "filename": "requests-2.12.4-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/ed/9e/60cc074968c095f728f0d8d28370e8d396fa60afb7582735563cccf223dd/requests-2.12.4-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "3989eaeaa2ccad20470afc61710d3498",
-        "sha256": "000748df49e087784441b2621c50fb81046c5c8e80e0d91674ffad65b9e13844"
-      }
-    },
-    {
-      "filename": "requests-2.12.4.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/5b/0b/34be574b1ec997247796e5d516f3a6b6509c4e064f2885a96ed885ce7579/requests-2.12.4.tar.gz",
-      "hashes": {
-        "md5": "acdb48888a9d3c7309da12fc7f83fedb",
-        "sha256": "ed98431a0631e309bb4b63c81d561c1654822cb103de1ac7b47e45c26be7ae34"
-      }
-    },
-    {
-      "filename": "requests-2.12.5-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/bf/99/af6139323bac0ca0c6023eabbdc526579525f5584278d001dd2e169f8300/requests-2.12.5-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "eeb46098018d358d86c45131a8342060",
-        "sha256": "d57dae49f4267e8cb378aff9e426c9304a78794d03e945e39bfc607355715658"
-      }
-    },
-    {
-      "filename": "requests-2.12.5.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/b6/61/7b374462d5b6b1d824977182db287758d549d8680444bad8d530195acba2/requests-2.12.5.tar.gz",
-      "hashes": {
-        "md5": "360bb3af97881a7056ed5bb3d0a3e8a3",
-        "sha256": "d902a54f08d086a7cc6e58c20e2bb225b1ae82c19c35e5925269ee94fb9fce00"
-      }
-    },
-    {
-      "filename": "requests-2.13.0-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/7e/ac/a80ed043485a3764053f59ca92f809cc8a18344692817152b0e8bd3ca891/requests-2.13.0-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "5e432dcf5bd1e3402ea1656700d99365",
-        "sha256": "1a720e8862a41aa22e339373b526f508ef0c8988baf48b84d3fc891a8e237efb"
-      }
-    },
-    {
-      "filename": "requests-2.13.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/16/09/37b69de7c924d318e51ece1c4ceb679bf93be9d05973bb30c35babd596e2/requests-2.13.0.tar.gz",
-      "hashes": {
-        "md5": "921ec6b48f2ddafc8bb6160957baf444",
-        "sha256": "5722cd09762faa01276230270ff16af7acf7c5c45d623868d9ba116f15791ce8"
-      }
-    },
-    {
-      "filename": "requests-2.14.0-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/1b/d3/f2541f2965e78f139bff9f001594d41ed90f4b2ce4b61bca387e60c1d3b4/requests-2.14.0-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "09e9f0852d50bee105ca859095298923",
-        "sha256": "a90555c0be723f5c711de36f256b21a65fc599602274fb3d5c4f83ac23aae3c5"
-      }
-    },
-    {
-      "filename": "requests-2.14.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/0b/ac/ffd3674211bc47ae3bf55c7cd4a8fe484b7289af2ffd9cfed5683708690a/requests-2.14.0.tar.gz",
-      "hashes": {
-        "md5": "09c5b60caced97cbe69064d486d6db53",
-        "sha256": "8c4f778459cb4a6bad7ceff4aa65a75697db28c21a6b41ea9a6c371df2a822c2"
-      }
-    },
-    {
-      "filename": "requests-2.14.1-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/74/ac/789eb98e0f5431d6d1ce36549ead88b2ab3154260f37c7dac9a34fd170b1/requests-2.14.1-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "81754d76f9a71a2d25f8c413fcf86e2c",
-        "sha256": "c5a42004b9cd384e5ad0f868b1cc968a3c2bb0276dccc12e4bdc7330591b5f51"
-      }
-    },
-    {
-      "filename": "requests-2.14.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/8c/ff/78297074b9b4cf102f9bbd71b62508965dd5c1876e016ef131e5b15c16a4/requests-2.14.1.tar.gz",
-      "hashes": {
-        "md5": "e985e49070df0024777a55fd59ceef46",
-        "sha256": "b3b191d677e526c1e512db86bc7387ccb8356e8826bcc7faa07f78f09afe68dd"
-      }
-    },
-    {
-      "filename": "requests-2.14.2-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/e4/b0/286e8a936158e5cc5791d5fa3bc4b1d5a7e1ff4e5b3f3766b63d8e97708a/requests-2.14.2-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "a1b2f02e7ba45dff7c76f621cde042c4",
-        "sha256": "3b39cde35be51762885631cf586f4dc2284951b44d479a4454020758d767cc2f"
-      }
-    },
-    {
-      "filename": "requests-2.14.2.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/72/46/4abc3f5aaf7bf16a52206bb0c68677a26c216c1e6625c78c5aef695b5359/requests-2.14.2.tar.gz",
-      "hashes": {
-        "md5": "4c3c169ed67466088a2a6947784fe444",
-        "sha256": "a274abba399a23e8713ffd2b5706535ae280ebe2b8069ee6a941cb089440d153"
-      }
-    },
-    {
-      "filename": "requests-2.15.1-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/fa/a5/e04c4607dc96e3e6b22dfa13ba8776c64bb65cb97ab90f05a3ee14096a0a/requests-2.15.1-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "bdf7767141594c4a927188f60665705a",
-        "sha256": "ff753b2196cd18b1bbeddc9dcd5c864056599f7a7d9a4fb5677e723efa2b7fb9"
-      }
-    },
-    {
-      "filename": "requests-2.15.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/6d/ed/3adebdc29ca33f11bca00c38c72125cd4a51091e13685375ba4426fb59dc/requests-2.15.1.tar.gz",
-      "hashes": {
-        "md5": "1bcf7a286fa26e40a5a397f06ece00e4",
-        "sha256": "e5659b9315a0610505e050bb7190bf6fa2ccee1ac295f2b760ef9d8a03ebbb2e"
-      }
-    },
-    {
-      "filename": "requests-2.16.0-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/35/b8/8ff3310309beb5fbca033b56504f869b0c65c1f284ae2a7900593b5acd3c/requests-2.16.0-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "f219013c8cacaaae7534ce2373cbeadc",
-        "sha256": "012cddec41f96a1ce4bab4b0a0ed40263ae6b2b03aa4bc4711e00418e7f3157c"
-      }
-    },
-    {
-      "filename": "requests-2.16.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/26/e7/4f1ec439ecbcfe3989bb79a9c323d2482e7beea3d8d453e07443302648ec/requests-2.16.0.tar.gz",
-      "hashes": {
-        "md5": "5ca9eafc020445c86efc0be1f28f602e",
-        "sha256": "88eee720e83bc1dcb009ad5e2a8f1d41e903892121ec2a36eba7bf5a2d3ac2a0"
-      }
-    },
-    {
-      "filename": "requests-2.16.1-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/c7/5d/7711f9fc9b028dc7572f84589e206220f0072e29fd9c7ae3507e7d17d8a6/requests-2.16.1-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "0a825bf34bf2cd89b13a04a3a7800e61",
-        "sha256": "b81b3651a206f02709e374c52071b4ac9bdf463c193701a560ce8e25c9ecc80b"
-      }
-    },
-    {
-      "filename": "requests-2.16.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/4c/54/1d3abddbd4c7544138b88e8329ef5294ffdc6c5d7ea965bf42e3cc4c9c39/requests-2.16.1.tar.gz",
-      "hashes": {
-        "md5": "4acb351824461eb3ae1f74ec3a65ff28",
-        "sha256": "14d663571c66410a7c3634f4cb9040b16a1c083078e37a0f8cc3710eae63411e"
-      }
-    },
-    {
-      "filename": "requests-2.16.2-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/67/91/b3893b0db7c645b9f92aa827ce3db630eef2dd3a2ad3109c2a28cdc9e6b7/requests-2.16.2-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "cc40805ee6f06d148aaa5e76d3e24a07",
-        "sha256": "afebb4fcabd66ba6e3188fd31f09915f5afd213b204014ea02448011eca1e49a"
-      }
-    },
-    {
-      "filename": "requests-2.16.2.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/3c/69/d49fd9a7be23c55278c92e60af6d57336c463d8593afe7260a1665346965/requests-2.16.2.tar.gz",
-      "hashes": {
-        "md5": "e5425e53aa95e27a9a8267a097feafdc",
-        "sha256": "a2956efcf8dd2d526286431fdb0ec78eff25ab8db8a03c4f9d66f5fe6024f168"
-      }
-    },
-    {
-      "filename": "requests-2.16.3-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/76/b6/e3035b7baa98e20d248fe17af2097b882ec7724d9a8ee7ae195ad7110f82/requests-2.16.3-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "0db7fa396a581c66ca4c1b8d02ce1bd4",
-        "sha256": "bcdc06ebfc25f2a198274ae4710c3217fb968c5f9468dc410cd603a59c47bff2"
-      }
-    },
-    {
-      "filename": "requests-2.16.3.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/07/db/3ed266e9cd3e3f69af3af38f56a0b4e21dadf3065521b2860030889284d7/requests-2.16.3.tar.gz",
-      "hashes": {
-        "md5": "c9816b77406fd9f8e9b80ec8a560d4d8",
-        "sha256": "7fda55400281de8fba713dd120b4614eabc10c0b096c22bfc88ccc671227c3d4"
-      }
-    },
-    {
-      "filename": "requests-2.16.4-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/13/52/41fb28aa332ed68cd616cd1fc44d9e9c4bb85aa60c28d275f8857da561e5/requests-2.16.4-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "d1a5f370e6c5236f898f27aa40a84358",
-        "sha256": "784213e164287b403497195cf7f45071ae5eec60ae260cbc9a26368a91445f57"
-      }
-    },
-    {
-      "filename": "requests-2.16.4.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/47/68/4fe8c7e9e95133d15e342b1403a1751909cddb814a5a9cced2ba4c63487d/requests-2.16.4.tar.gz",
-      "hashes": {
-        "md5": "badefd50cfc5bc36926a2693e792d277",
-        "sha256": "14db43bfaa61fd3102eecaf447a593e0650ba0dc261c72597109a973c23091ab"
-      }
-    },
-    {
-      "filename": "requests-2.16.5-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/65/9c/57484d6ac262af20a10b52cd95ebc99843f282342ef008997ef60f9eeb9c/requests-2.16.5-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "d10cd92d383805c5cc5a0683cf231e55",
-        "sha256": "3a27020d547958f5270fd5e9d62250119ee7db7454644599b65fda20cb542ded"
-      }
-    },
-    {
-      "filename": "requests-2.16.5.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/de/4c/7c36954d002030c82df31d000338d40fd91b4a993941a8f3c2dbe523c749/requests-2.16.5.tar.gz",
-      "hashes": {
-        "md5": "cca4f82209373759f5799fc0df6aca23",
-        "sha256": "f717303ebff661099cc5b73ce723ae1246f19ac39faa4c8005be56744d1a1006"
-      }
-    },
-    {
-      "filename": "requests-2.17.0-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/5b/b6/9a18db79553524246aa1b081829e6f977667ec558cef684988895c1092d9/requests-2.17.0-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "6856177470710847da6eb8c5ffb94ed6",
-        "sha256": "73b4088c05f7fb5ca8e68651ed802df3ca40621281acf74bb321b4a8408aab7e"
-      }
-    },
-    {
-      "filename": "requests-2.17.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/7c/84/617aaa311f6504489459c016daff4c66df6bbd54ee35b4cbed3e994f322d/requests-2.17.0.tar.gz",
-      "hashes": {
-        "md5": "60e16f82a83d02ba30f9139310bf5301",
-        "sha256": "eff227db5864238d44270cbadc8ac4133e69b69a2e7092b7b316ed1e4761cbd6"
-      }
-    },
-    {
-      "filename": "requests-2.17.1-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/50/41/f6fdaf24a80c726a72f76b15869a20734b7a527081129a380ddce99ffae0/requests-2.17.1-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "6ef65029dde7091e65fae2561f36305a",
-        "sha256": "02242978c6aaee47953da9e4d20d9d9929a1284a6b3a8a63a243ac1b842bd12c"
-      }
-    },
-    {
-      "filename": "requests-2.17.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/d0/c0/f66d080e64a361382ed665023b9925e274d833f410f8c7282fb878e9c60e/requests-2.17.1.tar.gz",
-      "hashes": {
-        "md5": "53318fe8030b8b234ca672cde82916e4",
-        "sha256": "9cf3698006012c000af2804fe4186042a4d55df0303552dd190a74f5eaafe69b"
-      }
-    },
-    {
-      "filename": "requests-2.17.2-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/9a/0b/7a65b391bde96d7b1749dc3562ce22f9cc86f37bd37122f71162304e3164/requests-2.17.2-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "30bd4d2841ae4c86ffd89db2a2703c75",
-        "sha256": "76d2f962485ebb3b3c380f146d56f5475310e53fd0defd6df0eb1c014187d45c"
-      }
-    },
-    {
-      "filename": "requests-2.17.2.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/23/c2/99fe3c5c15f3d06f0620bc0867bee95ec64074cbd7c9805bb5ad3010411e/requests-2.17.2.tar.gz",
-      "hashes": {
-        "md5": "f28069fe8ef82543387f3dbe152cffa3",
-        "sha256": "3cc7a584aad15e84d193a6d7c9176af0cf49bc6611f24ec2e04be6b05957c96d"
-      }
-    },
-    {
-      "filename": "requests-2.17.3-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/29/b9/d26a6ab2ee178415ab8c0c591d2a1eb782a50c42a417ae390055f86a63c1/requests-2.17.3-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "66a7f010b985631e768485af6f3c61df",
-        "sha256": "baf701b4a9d4cbe40169e8ab77816f7abadbad502ba459c30f7a2bc138e4d612"
-      }
-    },
-    {
-      "filename": "requests-2.17.3.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/27/c7/a45641c83c6e28f4922ba6af3d4ae4d79b41932c2f3d77fed9e0bf878149/requests-2.17.3.tar.gz",
-      "hashes": {
-        "md5": "b1b8e6412e11e00e12adbb7786c3f2a3",
-        "sha256": "8d29f97ed1541709b57caddb77bb20592411d7ca10ec4f03275f49ee8456e225"
-      }
-    },
-    {
+      "core-metadata": {
+        "sha256": "4beb28df7dccdb2c54530560738dda249189e114357a69d5e5e7f06a2a019197"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "4beb28df7dccdb2c54530560738dda249189e114357a69d5e5e7f06a2a019197"
+      },
       "filename": "requests-2.18.0-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/e2/f0/c81405acbf53d0412b984eb3fc578cdd10e347374e1aec074638a500c186/requests-2.18.0-py2.py3-none-any.whl",
       "hashes": {
-        "md5": "6f34e2439fcb3dd1b6e3304903bb6be8",
         "sha256": "5e88d64aa56ac0fda54e77fb9762ebc65879e171b746d5479a33c4082519d6c6"
-      }
+      },
+      "requires-python": null,
+      "size": 563596,
+      "upload-time": "2017-06-14T15:44:35.080617Z",
+      "url": "https://files.pythonhosted.org/packages/e2/f0/c81405acbf53d0412b984eb3fc578cdd10e347374e1aec074638a500c186/requests-2.18.0-py2.py3-none-any.whl",
+      "yanked": false
     },
     {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
       "filename": "requests-2.18.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/e0/97/e2f972b6826c9cfe57b6934e3773d2783733bc2d345d810bafd309df3d15/requests-2.18.0.tar.gz",
       "hashes": {
-        "md5": "b8b333ace1653652ddcce95284577f5c",
         "sha256": "cd0189f962787284bff715fddaad478eb4d9c15aa167bd64e52ea0f661e7ea5c"
-      }
+      },
+      "requires-python": null,
+      "size": 124085,
+      "upload-time": "2017-06-14T15:44:37.484470Z",
+      "url": "https://files.pythonhosted.org/packages/e0/97/e2f972b6826c9cfe57b6934e3773d2783733bc2d345d810bafd309df3d15/requests-2.18.0.tar.gz",
+      "yanked": false
     },
     {
+      "core-metadata": {
+        "sha256": "4e4599f783a6950eb72a9d78fecb2f3438f07237e83708a587beda8a335b5f94"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "4e4599f783a6950eb72a9d78fecb2f3438f07237e83708a587beda8a335b5f94"
+      },
       "filename": "requests-2.18.1-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/5a/58/671011e3ff4a06e2969322267d78dcfda1bf4d1576551df1cce93cd7239d/requests-2.18.1-py2.py3-none-any.whl",
       "hashes": {
-        "md5": "a7fbdc82134a2610b3d0cdc7e59f0bde",
         "sha256": "6afd3371c1f4c1970497cdcace5c5ecbbe58267bf05ca1abd93d99d170803ab7"
-      }
+      },
+      "requires-python": null,
+      "size": 88107,
+      "upload-time": "2017-06-14T17:51:25.096686Z",
+      "url": "https://files.pythonhosted.org/packages/5a/58/671011e3ff4a06e2969322267d78dcfda1bf4d1576551df1cce93cd7239d/requests-2.18.1-py2.py3-none-any.whl",
+      "yanked": false
     },
     {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
       "filename": "requests-2.18.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/2c/b5/2b6e8ef8dd18203b6399e9f28c7d54f6de7b7549853fe36d575bd31e29a7/requests-2.18.1.tar.gz",
       "hashes": {
-        "md5": "40f723ed01dddeaf990d0609d073f021",
         "sha256": "c6f3bdf4a4323ac7b45d01e04a6f6c20e32a052cd04de81e05103abc049ad9b9"
-      }
+      },
+      "requires-python": null,
+      "size": 124229,
+      "upload-time": "2017-06-14T17:51:28.960131Z",
+      "url": "https://files.pythonhosted.org/packages/2c/b5/2b6e8ef8dd18203b6399e9f28c7d54f6de7b7549853fe36d575bd31e29a7/requests-2.18.1.tar.gz",
+      "yanked": false
     },
     {
+      "core-metadata": {
+        "sha256": "2f28a31e586b7d1d382e1b64b48ce26d5ff18781f9eca0fba7654b55d7a76549"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "2f28a31e586b7d1d382e1b64b48ce26d5ff18781f9eca0fba7654b55d7a76549"
+      },
       "filename": "requests-2.18.2-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/cf/fa/31b222e4b44975de1b5ac3e1a725abdfeb00e0d761567ab426ee28a7fc73/requests-2.18.2-py2.py3-none-any.whl",
       "hashes": {
-        "md5": "08026e24839d8bf36d248abfb2b6b674",
         "sha256": "414459f05392835d4d653b57b8e58f98aea9c6ff2782e37de0a1ee92891ce900"
-      }
+      },
+      "requires-python": null,
+      "size": 88342,
+      "upload-time": "2017-07-25T15:23:15.338694Z",
+      "url": "https://files.pythonhosted.org/packages/cf/fa/31b222e4b44975de1b5ac3e1a725abdfeb00e0d761567ab426ee28a7fc73/requests-2.18.2-py2.py3-none-any.whl",
+      "yanked": false
     },
     {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
       "filename": "requests-2.18.2.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/07/2e/81fdfdfac91cf3cb2518fb149ac67caf0e081b485eab68e9aee63396f7e8/requests-2.18.2.tar.gz",
       "hashes": {
-        "md5": "49bd9924d3be341871bc922cde6f372e",
         "sha256": "5b26fcc5e72757a867e4d562333f841eddcef93548908a1bb1a9207260618da9"
-      }
+      },
+      "requires-python": null,
+      "size": 125381,
+      "upload-time": "2017-07-25T15:23:18.103843Z",
+      "url": "https://files.pythonhosted.org/packages/07/2e/81fdfdfac91cf3cb2518fb149ac67caf0e081b485eab68e9aee63396f7e8/requests-2.18.2.tar.gz",
+      "yanked": false
     },
     {
+      "core-metadata": {
+        "sha256": "b486edffe7b597477bf5645377f50ad2cd4db97413c3e74df3051d9b0db41ac4"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "b486edffe7b597477bf5645377f50ad2cd4db97413c3e74df3051d9b0db41ac4"
+      },
       "filename": "requests-2.18.3-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/ba/92/c35ed010e8f96781f08dfa6d9a6a19445a175a9304aceedece77cd48b68f/requests-2.18.3-py2.py3-none-any.whl",
       "hashes": {
-        "md5": "d2d34c959a45f7da592a383485ad8b8c",
         "sha256": "b62be4ec5999c24d10c98d248a136e7db20ca6616a2b65060cd9399417331e8a"
-      }
+      },
+      "requires-python": null,
+      "size": 88626,
+      "upload-time": "2017-08-02T13:23:31.998938Z",
+      "url": "https://files.pythonhosted.org/packages/ba/92/c35ed010e8f96781f08dfa6d9a6a19445a175a9304aceedece77cd48b68f/requests-2.18.3-py2.py3-none-any.whl",
+      "yanked": false
     },
     {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
       "filename": "requests-2.18.3.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/c3/38/d95ddb6cc8558930600be088e174a2152261a1e0708a18bf91b5b8c90b22/requests-2.18.3.tar.gz",
       "hashes": {
-        "md5": "c8f60cf816a35c0c3fef0a40d0e407a6",
         "sha256": "fb68a7baef4965c12d9cd67c0f5a46e6e28be3d8c7b6910c758fbcc99880b518"
-      }
+      },
+      "requires-python": null,
+      "size": 126008,
+      "upload-time": "2017-08-02T13:23:35.599515Z",
+      "url": "https://files.pythonhosted.org/packages/c3/38/d95ddb6cc8558930600be088e174a2152261a1e0708a18bf91b5b8c90b22/requests-2.18.3.tar.gz",
+      "yanked": false
     },
     {
+      "core-metadata": {
+        "sha256": "37a7c01ccfdf63746e53a70d20723cb095be3f8048582ce38673adc640d14dfd"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "37a7c01ccfdf63746e53a70d20723cb095be3f8048582ce38673adc640d14dfd"
+      },
       "filename": "requests-2.18.4-py2.py3-none-any.whl",
+      "hashes": {
+        "md5": "f392c0ab49bf677c6240ef2b1890b079",
+        "sha256": "ce91d39dc2857eeb19fc8bf765df6c14874bcdc724d3ce9c6cd89915618e7023"
+      },
+      "requires-python": null,
+      "size": 88704,
+      "upload-time": "2017-08-15T13:23:43.489631Z",
       "url": "https://files.pythonhosted.org/packages/49/df/50aa1999ab9bde74656c2919d9c0c085fd2b3775fd3eca826012bef76d8c/requests-2.18.4-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "eb9be71cc41fd73a51a7c9cd1adde5de",
-        "sha256": "6a1b267aa90cac58ac3a765d067950e7dbbf75b1da07e895d1f594193a40a38b"
-      }
+      "yanked": false
     },
     {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
       "filename": "requests-2.18.4.tar.gz",
+      "hashes": {
+        "md5": "942a6a383dc94da90cf58f5adcf028a4",
+        "sha256": "ec62f7e0e9d4814656b0172dbd592fea06127c6556ff5651eb5d2c8768671fd4"
+      },
+      "requires-python": null,
+      "size": 126224,
+      "upload-time": "2017-08-15T13:23:46.348325Z",
       "url": "https://files.pythonhosted.org/packages/b0/e1/eab4fc3752e3d240468a8c0b284607899d2fbfb236a56b7377a329aa8d09/requests-2.18.4.tar.gz",
-      "hashes": {
-        "md5": "081412b2ef79bdc48229891af13f4d82",
-        "sha256": "9c443e7324ba5b85070c4a818ade28bfabedf16ea10206da1132edaa6dda237e"
-      }
+      "yanked": false
     },
     {
-      "filename": "requests-2.2.0-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/3b/99/a8acc0c986281232f9476575c27a81ab697afbf089f42f05c196f51892c0/requests-2.2.0-py2.py3-none-any.whl",
+      "core-metadata": {
+        "sha256": "e022ab2bfbbfbf3b77f29b8bc3115eb5b202c651b9b928ec9c0b7ef9a16070f3"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "e022ab2bfbbfbf3b77f29b8bc3115eb5b202c651b9b928ec9c0b7ef9a16070f3"
+      },
+      "filename": "requests-2.19.0-py2.py3-none-any.whl",
       "hashes": {
-        "md5": "8f989615bb0d276d5f3158e7efab494c",
-        "sha256": "889d334044cd3364d07419c37671ba4f213d0f59601109dcb54c8a7ebdde38ee"
-      }
+        "sha256": "421cfc8d9dde7d6aff68196420afd86b88c65d77d8da9cf83f4ecad785d7b9d6"
+      },
+      "requires-python": ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+      "size": 91865,
+      "upload-time": "2018-06-12T14:46:15.289074Z",
+      "url": "https://files.pythonhosted.org/packages/cc/15/e1c318dbc20032ffbe5628837ca0de2d5b116ffd1b849c699634010f6a5d/requests-2.19.0-py2.py3-none-any.whl",
+      "yanked": false
     },
     {
-      "filename": "requests-2.2.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/c9/5a/aa687599abd76de72ae5a554e2e70328fc311d59e0b1e999263fb094baf3/requests-2.2.0.tar.gz",
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
+      "filename": "requests-2.19.0.tar.gz",
       "hashes": {
-        "md5": "4d2e17221d478ece045e2e81cdb177f5",
-        "sha256": "1ff74f88bbfddf94f92aa20bd8473c7d46d3398c95b1842d81b2f3c475d5625d"
-      }
-    },
-    {
-      "filename": "requests-2.2.1-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/7d/15/6efffc6aee666e1456852c2bf1d483b46bf971a2d509b35a98fc3eae1c60/requests-2.2.1-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "1e38addb978e50bd86f62bda53956b03",
-        "sha256": "b5bd2e1b78d28051108ebaa6248750221f9ccef52b4f054cb727de61b0406de0"
-      }
-    },
-    {
-      "filename": "requests-2.2.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/d1/0c/2dc2996268bc64b531a5a2dc6f4ec04552f3a8a2a86e88aeedcb92987741/requests-2.2.1.tar.gz",
-      "hashes": {
-        "md5": "ac27081135f58d1a43e4fb38258d6f4e",
-        "sha256": "1266921f1bed5fbf364cd83cf239b6d7b3ea5c32ccccbc93980d9ba12cdcfd02"
-      }
-    },
-    {
-      "filename": "requests-2.3.0-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/f7/51/7aa1e337862118bee783c0249debd64cb07b8fbdfef154b1e185754b02d5/requests-2.3.0-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "f2d850fd48fc10a93aa03d69b87b96b4",
-        "sha256": "3648802492e955ffeb28f6dab864ad714059f5438bf6798d82f9d477c666aca3"
-      }
-    },
-    {
-      "filename": "requests-2.3.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/ab/f9/4425c8410faf7c7d420dbd64e127f2cfb68cfef869a374b332610b6abc09/requests-2.3.0.tar.gz",
-      "hashes": {
-        "md5": "7449ffdc8ec9ac37bbcd286003c80f00",
-        "sha256": "1c1473875d846fe563d70868acf05b1953a4472f4695b7b3566d1d978957b8fc"
-      }
-    },
-    {
-      "filename": "requests-2.4.0-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/78/14/23cf8ede304c7c8b69b929b17074292073827239c31659ab8c7beb22a059/requests-2.4.0-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "47948d2fb3f2aa04235e6f637814b226",
-        "sha256": "8b2cc9e334b3e66aa5df15f2e4967f2c95b5164a4e6df7e92dd70ca67400912a"
-      }
-    },
-    {
-      "filename": "requests-2.4.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/ef/a0/9863b20b6a87e45cd4353c10277d9674f9ddfd7c28c58e61a339e273a119/requests-2.4.0.tar.gz",
-      "hashes": {
-        "md5": "99b830d1afe2e5920adbea0fe3120948",
-        "sha256": "7007e03cbc73e357b5055c6ea0ad6e447e2afa00f1a1f843cd792a1ebaa3763e"
-      }
-    },
-    {
-      "filename": "requests-2.4.1-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/bf/81/22c8ed95e8088c0a7c022969534c8157930f0bed6ae77e12e86fdc2e855c/requests-2.4.1-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "19d5413dc71309e4fb1f8103b8eb99ce",
-        "sha256": "b9e3c10e5092b444bb4c1b0b337f57e6c3d7680ad7c5192f597e84dd931fb598"
-      }
-    },
-    {
-      "filename": "requests-2.4.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/0f/d0/e80371e64a7a7bafa303ea50465456e5292d9436504ce39b9619b6ba24be/requests-2.4.1.tar.gz",
-      "hashes": {
-        "md5": "931461f761c70708c46ea65b7889da58",
-        "sha256": "35d890b0aaa6e09ec40d49361d823b998ced86cc7673a9ce70bbc4f986e13ad8"
-      }
-    },
-    {
-      "filename": "requests-2.4.2-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/a2/87/afb7990b87f76ec9d11fd15668c2362a8fbe8436e0a780c7fe5aedf1a299/requests-2.4.2-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "f49f34b1fcdef6b557964deea1a80cf3",
-        "sha256": "49df4571ecd49d00a4587237b7d8be9664bb326052e06d2c488255b34f13393d"
-      }
-    },
-    {
-      "filename": "requests-2.4.2.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/f8/25/1599a06d261fdd84256829d88f7a415c80a6e249988f9e17ba5016119b6f/requests-2.4.2.tar.gz",
-      "hashes": {
-        "md5": "a2476d2dd83a0520847f216ce0b5f9d1",
-        "sha256": "b98a76df30e95ef636af5e040ff7c5d0bc0b482899fd7a187b0ae525e41fe8f1"
-      }
-    },
-    {
-      "filename": "requests-2.4.3-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/8a/98/bf72c7bd3ecfaf46dc2de3e59dcda6e61766526d3cf5897e9edd599795fc/requests-2.4.3-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "0a66a9c4c22272680430fbb9fb4ca34f",
-        "sha256": "124890f41723c85aa82dfe0807432aea46d24aeb0dafce340969d2089548c2c3"
-      }
-    },
-    {
-      "filename": "requests-2.4.3.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/f4/ff/34a5a2eb91e35280e65585c48304094b61b58f9966de74ab72673c2fde9d/requests-2.4.3.tar.gz",
-      "hashes": {
-        "md5": "02214b3a179e445545de4b7a98d3dd17",
-        "sha256": "53c68313c5c6149b1a899234c000296e60a8900682accf73d6f0c6d608afc6b1"
-      }
-    },
-    {
-      "filename": "requests-2.5.0-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/32/0e/11cfb3a5e269605d0bbe3bbca9845da9b57aed90e75bd489e5e7e3509c13/requests-2.5.0-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "9d29a8a0210c236d9329bed49277b3fa",
-        "sha256": "66cbb850987e47177a3b4112392490bcb76eb75b37cc53da007e35f3ec894bc1"
-      }
-    },
-    {
-      "filename": "requests-2.5.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/c8/fb/d14d1c5166a8449d36c9a3b2656706c506a2cf261d37a79d16c18c37b646/requests-2.5.0.tar.gz",
-      "hashes": {
-        "md5": "b8bf3ddca75e7ecf1b6776da1e6e3385",
-        "sha256": "d2daef4919fc87262b8b3cb5a9d214cac8ce1e50950f8423bbc1d31c2e63d38e"
-      }
-    },
-    {
-      "filename": "requests-2.5.1-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/54/9a/ee6051b19c62728d5467dead279c532798c287e39c3bc8becb1cfa9f525a/requests-2.5.1-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "11dc91bc96c5c5e0b566ce8f9c9644ab",
-        "sha256": "1f046dcf5ec712ed3be8684b9f33c95b76e28cd1c825db0f5e1557bfd87b3745"
-      }
-    },
-    {
-      "filename": "requests-2.5.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/61/fe/2c0a4ca99c68ea24eec65d3094d6539d54635562678ee7a58420005c12b6/requests-2.5.1.tar.gz",
-      "hashes": {
-        "md5": "c270eb5551a02e8ab7a4cbb83e22af2e",
-        "sha256": "7b7735efd3b1e2323dc9fcef060b380d05f5f18bd0f247f5e9e74a628279de66"
-      }
-    },
-    {
-      "filename": "requests-2.5.2-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/20/fc/53f45b9bdfa8bd5f11b7d60b50052a8e4729346fcc8d5854e0e1449d92b5/requests-2.5.2-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "7e72dfe8ed9d4ce5fd9dd9d799b3add1",
-        "sha256": "b4d1a981c443e19ee3f527b352022d698e16a298913d9b78ea1133f089eeb779"
-      }
-    },
-    {
-      "filename": "requests-2.5.2.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/d6/f7/1a4c1cae7618ad3d9fe5536ef74f47b2cb1028938e12d6dfe0a9806a8e1b/requests-2.5.2.tar.gz",
-      "hashes": {
-        "md5": "424e2469202c9bace4e8bf4642d4217a",
-        "sha256": "306ead91d47a48b6a25d495d2495de99694641bd7d2cac5bcc405a8837c7a612"
-      }
-    },
-    {
-      "filename": "requests-2.5.3-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/95/54/44dc83b5f11c6da06bf9abd18c8a0905e0e297e0a9c3bfbc0c6ee4bdd33d/requests-2.5.3-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "233249f4627ac5481c948e494d2a090e",
-        "sha256": "3e66d7ba78e7a6a8eccd2e901079ab8d24e408b5375cf32eb51f291306302418"
-      }
-    },
-    {
-      "filename": "requests-2.5.3.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/a6/36/06a7d4261f91552f21f017fe162d69df95ca7925d1436c8acf73283ee3d0/requests-2.5.3.tar.gz",
-      "hashes": {
-        "md5": "23bf4fcc89ea8d353eb5353bb4a475b1",
-        "sha256": "55d7f5619daae94ec49ee81ed8c865e5a2a47f0bbf8e06cf94636bee103eaf65"
-      }
-    },
-    {
-      "filename": "requests-2.6.0-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/73/63/b0729be549494a3e31316437053bc4e0a8bb71a07a6ee6059434b8f1cd5f/requests-2.6.0-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "3ab1972bbaf2802d94516fb86b9b0d0b",
-        "sha256": "fdb9af60d47ca57a80df0a213336019a34ff6192d8fff361c349f2c8398fe460"
-      }
-    },
-    {
-      "filename": "requests-2.6.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/eb/70/237e11db04807a9409ed39997097118208e7814309d9bc3da7bb98d1fe3d/requests-2.6.0.tar.gz",
-      "hashes": {
-        "md5": "25287278fa3ea106207461112bb37050",
-        "sha256": "1cdbed1f0e236f35ef54e919982c7a338e4fea3786310933d3a7887a04b74d75"
-      }
-    },
-    {
-      "filename": "requests-2.6.1-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/64/74/5bedd762987b5cb4ad5de4901d12942ad7635bffa5ae4f6b5e725d1b2068/requests-2.6.1-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "adb8e91b3367bc0417ef1e4a6dced9b1",
-        "sha256": "79515d60eae4f5d426b8813ffd60ed874169d78b8815844e8e85798ef27a599f"
-      }
-    },
-    {
-      "filename": "requests-2.6.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/08/d5/3dfb95813d697d1e5a3eccb9b88f9d91a233fc35b0ddbb5bc238142f9de0/requests-2.6.1.tar.gz",
-      "hashes": {
-        "md5": "da6e487f89e6a531699b7fd97ff182af",
-        "sha256": "490b111c824d64b84797a899a4c22618bbc45323ac24a0a0bb4b73a8758e943c"
-      }
-    },
-    {
-      "filename": "requests-2.6.2-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/9f/3e/c09023432b822a09d965878640de63f8126d77c948f45c24dcad13d42721/requests-2.6.2-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "36746c275589b2154307bbcc6d28320a",
-        "sha256": "8f0f56813f82d0c27d9578221268ac9af48f076c71ee69693305ceca6ca355bd"
-      }
-    },
-    {
-      "filename": "requests-2.6.2.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/37/b3/d1a5d9768240a1104a620730a1226975ceb9dd3882a8cfd8935b314ee0ca/requests-2.6.2.tar.gz",
-      "hashes": {
-        "md5": "0d703e5be558566e0f8c37f960d95372",
-        "sha256": "0577249d4b6c4b11fd97c28037e98664bfaa0559022fee7bcef6b752a106e505"
-      }
-    },
-    {
-      "filename": "requests-2.7.0-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/26/ff/c71b3943bebdd9f7ceb9e137296370587eb0b33fe2eb3732ae168bc45204/requests-2.7.0-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "564fb256f865a79f977e57b79d31659a",
-        "sha256": "20f976cdce02a42b69ce80e9e03897a51814b36d448b37288546086ebc473146"
-      }
-    },
-    {
-      "filename": "requests-2.7.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/0a/00/8cc925deac3a87046a4148d7846b571cf433515872b5430de4cd9dea83cb/requests-2.7.0.tar.gz",
-      "hashes": {
-        "md5": "29b173fd5fa572ec0764d1fd7b527260",
-        "sha256": "398a3db6d61899d25fd4a06c6ca12051b0ce171d705decd7ed5511517b4bb93d"
-      }
-    },
-    {
-      "filename": "requests-2.8.0-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/5d/a6/90f822c17b4fc905da67aed49b511f110207242ff164aeda926461101dc6/requests-2.8.0-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "52236eb6f886db4d2afba43775c97050",
-        "sha256": "3a34af0dd06fed021286d93da464bbb76dcc0c709d02e7d3cdca195b1341c380"
-      }
-    },
-    {
-      "filename": "requests-2.8.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/1b/92/0632a7eb5e94bfedd300a3a5f4ebbf8505fd9768ba00ab259b5bf786de5f/requests-2.8.0.tar.gz",
-      "hashes": {
-        "md5": "3ec7198fc935d83c3eacff1ed4095ce4",
-        "sha256": "b2f003589b60924909c0acde472590c5ea83906986a7a25b6f7929eb20923b7b"
-      }
-    },
-    {
-      "filename": "requests-2.8.1-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/c0/0f/a911a44c89ba01b23d8fe3defbdfca1e962de6f11a11da32658902cdc2a4/requests-2.8.1-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "46f1d621daa3ab38958a42f51478b1ee",
-        "sha256": "89f1b1f25dcd7b68f514e8d341a5b2eb466f960ae756822eaab480a3c1a81c28"
-      }
-    },
-    {
-      "filename": "requests-2.8.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/38/2d/290d33417c079a5248fcd06b0b8492acdd1851e54e4bdad54c3859dab600/requests-2.8.1.tar.gz",
-      "hashes": {
-        "md5": "a27ea3d72d7822906ddce5e252d6add9",
-        "sha256": "84fe8d5bf4dcdcc49002446c47a146d17ac10facf00d9086659064ac43b6c25b"
-      }
-    },
-    {
-      "filename": "requests-2.9.0-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/bf/b7/c0b5a7fcf561577178ffd65af9af37c412cf6fbb1a2a198b9308b343d63f/requests-2.9.0-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "149560afb69fe9e5048d05322eeb8ada",
-        "sha256": "1f4726bc7636edcbd141ba9c868dd92ecb77dbc869f68a28c32e9e149b070854"
-      }
-    },
-    {
-      "filename": "requests-2.9.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/e4/99/3e33bfe263894278a094c374f87031554406e57fd0b1ad22520357556627/requests-2.9.0.tar.gz",
-      "hashes": {
-        "md5": "2f46fdceaf4f63e5e3665a8cb50d284f",
-        "sha256": "4881966532b5a36c552244fd909de66d1b8c4a26086f56fd5837cfcde63f8eb8"
-      }
-    },
-    {
-      "filename": "requests-2.9.1-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/b8/f7/3bb4d18c234a8ce7044d5ee2e1082b7d72bf6c550afb8d51ae266dea56f1/requests-2.9.1-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "58a444aaa02780ad01983f5f540e67b2",
-        "sha256": "113fbba5531a9e34945b7d36b33a084e8ba5d0664b703c81a7c572d91919a5b8"
-      }
-    },
-    {
-      "filename": "requests-2.9.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/f9/6d/07c44fb1ebe04d069459a189e7dab9e4abfe9432adcd4477367c25332748/requests-2.9.1.tar.gz",
-      "hashes": {
-        "md5": "0b7f480d19012ec52bab78292efd976d",
-        "sha256": "c577815dd00f1394203fc44eb979724b098f88264a9ef898ee45b8e5e9cf587f"
-      }
-    },
-    {
-      "filename": "requests-2.9.2-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/8b/e7/229a428b8eb9a7f925ef16ff09ab25856efe789410d661f10157919f2ae2/requests-2.9.2-py2.py3-none-any.whl",
-      "hashes": {
-        "md5": "afecc76f13f3ae5e5dab18ae64c73c84",
-        "sha256": "22a8c72dfc7fc18db1aca6784e97a638e9d09abe2cd387be473f88bd6dcba22f"
-      }
-    },
-    {
-      "filename": "requests-2.9.2.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/64/20/2133a092a0e87d1c250fe48704974b73a1341b7e4f800edecf40462a825d/requests-2.9.2.tar.gz",
-      "hashes": {
-        "md5": "18d0e51cd5e84c7d8b6dcbdd51551984",
-        "sha256": "d8be941a08cf36e4f424ac76073eb911e5e646a33fcb3402e1642c426bf34682"
-      }
+        "sha256": "cc408268d0e21589bcc2b2c248e42932b8c4d112f499c12c92e99e2178a6134c"
+      },
+      "requires-python": ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+      "size": 130875,
+      "upload-time": "2018-06-12T14:46:17.223245Z",
+      "url": "https://files.pythonhosted.org/packages/75/27/82da3fa4ea7a8c3526c48eaafe427352ff9c931633b917c2251826a43697/requests-2.19.0.tar.gz",
+      "yanked": false
     }
   ],
   "meta": {
-    "api-version": "1.0"
-  }
+    "_last-serial": 0,
+    "api-version": "1.2"
+  },
+  "name": "requests",
+  "versions": [
+    "2.18.0",
+    "2.18.1",
+    "2.18.2",
+    "2.18.3",
+    "2.18.4",
+    "2.19.0"
+  ]
 }

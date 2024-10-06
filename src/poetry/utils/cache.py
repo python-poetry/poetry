@@ -19,7 +19,7 @@ from typing import overload
 from poetry.utils._compat import decode
 from poetry.utils._compat import encode
 from poetry.utils.helpers import get_highest_priority_hash_type
-from poetry.utils.wheel import InvalidWheelName
+from poetry.utils.wheel import InvalidWheelNameError
 from poetry.utils.wheel import Wheel
 
 
@@ -198,9 +198,7 @@ class ArtifactCache:
     def get_cache_directory_for_link(self, link: Link) -> Path:
         key_parts = {"url": link.url_without_fragment}
 
-        if hash_name := get_highest_priority_hash_type(
-            set(link.hashes.keys()), link.filename
-        ):
+        if hash_name := get_highest_priority_hash_type(link.hashes, link.filename):
             key_parts[hash_name] = link.hashes[hash_name]
 
         if link.subdirectory_fragment:
@@ -318,7 +316,7 @@ class ArtifactCache:
 
             try:
                 wheel = Wheel(archive.name)
-            except InvalidWheelName:
+            except InvalidWheelNameError:
                 continue
 
             if not wheel.is_supported_by_environment(env):

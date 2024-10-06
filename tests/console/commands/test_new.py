@@ -57,7 +57,7 @@ def verify_project_directory(
     else:
         package_include = {"include": package_path.parts[0]}
 
-    name = poetry.local_config.get("name", "")
+    name = poetry.package.name
     packages = poetry.local_config.get("packages")
 
     if not packages:
@@ -183,7 +183,9 @@ def test_command_new_with_readme(
     tester.execute(" ".join(options))
 
     poetry = verify_project_directory(path, package, package, None)
-    assert poetry.local_config.get("readme") == f"README.{fmt or 'md'}"
+    project_section = poetry.pyproject.data["project"]
+    assert isinstance(project_section, dict)
+    assert project_section["readme"] == f"README.{fmt or 'md'}"
 
 
 @pytest.mark.parametrize(
@@ -213,6 +215,10 @@ def test_respect_prefer_active_on_new(
         return output
 
     mocker.patch("subprocess.check_output", side_effect=mock_check_output)
+    mocker.patch(
+        "poetry.utils.env.python_manager.Python._full_python_path",
+        return_value=Path(f"/usr/bin/python{python}"),
+    )
 
     config.config["virtualenvs"]["prefer-active-python"] = prefer_active
 
@@ -224,8 +230,16 @@ def test_respect_prefer_active_on_new(
     pyproject_file = path / "pyproject.toml"
 
     expected = f"""\
-[tool.poetry.dependencies]
-python = "^{python}"
+requires-python = ">={python}"
 """
 
-    assert expected in pyproject_file.read_text()
+    assert expected in pyproject_file.read_text(encoding="utf-8")
+
+
+def test_basic_interactive_new(
+    tester: CommandTester, tmp_path: Path, init_basic_inputs: str, init_basic_toml: str
+) -> None:
+    path = tmp_path / "somepackage"
+    tester.execute(f"--interactive {path.as_posix()}", inputs=init_basic_inputs)
+    verify_project_directory(path, "my-package", "my_package", None)
+    assert init_basic_toml in tester.io.fetch_output()

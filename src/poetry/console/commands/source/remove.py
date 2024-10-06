@@ -1,16 +1,23 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+from typing import ClassVar
+
 from cleo.helpers import argument
 from tomlkit.items import AoT
 
 from poetry.console.commands.command import Command
 
 
+if TYPE_CHECKING:
+    from cleo.io.inputs.argument import Argument
+
+
 class SourceRemoveCommand(Command):
     name = "source remove"
     description = "Remove source configured for the project."
 
-    arguments = [
+    arguments: ClassVar[list[Argument]] = [
         argument(
             "name",
             "Source repository name.",
@@ -18,8 +25,6 @@ class SourceRemoveCommand(Command):
     ]
 
     def handle(self) -> int:
-        from poetry.utils.source import source_to_table
-
         name = self.argument("name")
         lower_name = name.lower()
 
@@ -31,7 +36,7 @@ class SourceRemoveCommand(Command):
                 self.line(f"Removing source with name <c1>{source.name}</c1>.")
                 removed = True
                 continue
-            sources.append(source_to_table(source))
+            sources.append(source.to_toml_table())
 
         if not removed:
             self.line_error(

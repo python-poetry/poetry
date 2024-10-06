@@ -109,7 +109,7 @@ constantly evolving, and this means that sometimes our documentation has gaps. Y
 editing the existing content to be more accessible, or creating new content such as tutorials, FAQs, etc.
 
 {{% note %}}
-Github [Discussions](https://github.com/python-poetry/poetry/discussions) and the
+GitHub [Discussions](https://github.com/python-poetry/poetry/discussions) and the
 [kind/question label](https://github.com/python-poetry/poetry/labels/kind/question) are excellent sources for FAQ
 candidates.
 {{% /note %}}
@@ -152,6 +152,14 @@ poetry install
 poetry run pytest
 ```
 
+{{% note %}}
+If you want to see the coverage stats after the tests are complete, use:
+
+```bash
+poetry run pytest --cov=src/poetry --cov-report term
+```
+{{% /note %}}
+
 When you contribute to Poetry, automated tools will be run to make sure your code is suitable to be merged. Besides
 pytest, you will need to make sure your code typechecks properly using [mypy](http://mypy-lang.org/):
 
@@ -191,7 +199,7 @@ base branch. A maintainer might ask you to ensure the branch is up-to-date prior
 (especially if there have been CI changes on the base branch), and will also ask you to fix any conflicts.
 {{% /note %}}
 
-All pull requests, unless otherwise instructed, need to be first accepted into the `master` branch. Maintainers will
+All pull requests, unless otherwise instructed, need to be first accepted into the `main` branch. Maintainers will
 generally decide if any backports to other branches are required, and carry them out as needed.
 
 ### Issue triage
@@ -233,15 +241,15 @@ When trying to reproduce issues, you often want to use multiple versions of Poet
 ```sh
 pipx install --suffix @1.2.1 'poetry==1.2.1'
 pipx install --suffix @1.3.0rc1 'poetry==1.3.0rc1'
-pipx install --suffix @master 'poetry @ git+https://github.com/python-poetry/poetry'
+pipx install --suffix @main 'poetry @ git+https://github.com/python-poetry/poetry'
 pipx install --suffix @local '/path/to/local/clone/of/poetry'
 
 # now you can use any of the chosen versions of Poetry with their configured suffix, e.g.
-poetry@master --version
+poetry@main --version
 ```
 
 {{% note %}}
-Do not forget to `pipx upgrade poetry@master` before using it, to make sure you have the latest changes.
+Do not forget to `pipx upgrade poetry@main` before using it, to make sure you have the latest changes.
 {{% /note %}}
 
 {{% note %}}

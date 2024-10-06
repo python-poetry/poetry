@@ -20,6 +20,7 @@
       "last_month": -1,
       "last_week": -1
     },
+    "dynamic": null,
     "home_page": "https://github.com/python-poetry/cleo",
     "keywords": "cli,commands",
     "license": "MIT",
@@ -32,10 +33,11 @@
     "project_urls": {
       "Homepage": "https://github.com/python-poetry/cleo"
     },
+    "provides_extra": null,
     "release_url": "https://pypi.org/project/cleo/1.0.0a5/",
     "requires_dist": [
-      "crashtest (>=0.3.1,<0.4.0)",
-      "pylev (>=1.3.0,<2.0.0)"
+      "pylev (>=1.3.0,<2.0.0)",
+      "crashtest (>=0.3.1,<0.4.0)"
     ],
     "requires_python": ">=3.7,<4.0",
     "summary": "Cleo allows you to create beautiful and testable command-line interfaces.",
@@ -43,18 +45,18 @@
     "yanked": false,
     "yanked_reason": null
   },
-  "last_serial": 14027784,
+  "last_serial": 0,
   "urls": [
     {
       "comment_text": "",
       "digests": {
-        "md5": "4c78006d13e68c0c0796b954b1df0a3f",
-        "sha256": "ff53056589300976e960f75afb792dfbfc9c78dcbb5a448e207a17b643826360"
+        "md5": "eaf14b3f99b2b88c0846ecc9a5a18af4",
+        "sha256": "20dbd69ed5c27e2889a2d428b9b01771f6073e4a1483a731e3c14c07a666aa9f"
       },
       "downloads": -1,
       "filename": "cleo-1.0.0a5-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "4c78006d13e68c0c0796b954b1df0a3f",
+      "md5_digest": "eaf14b3f99b2b88c0846ecc9a5a18af4",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.7,<4.0",
@@ -68,13 +70,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "90e60b2ad117d3534f92a4ce37f9f462",
-        "sha256": "097c9d0e0332fd53cc89fc11eb0a6ba0309e6a3933c08f7b38558555486925d3"
+        "md5": "92e181952976e09b9d1c583da6c3e2fc",
+        "sha256": "88f0a4275a17f2ab4d013786b8b9522d4c60bd37d8fc9b3def0fb27f4ac1e694"
       },
       "downloads": -1,
       "filename": "cleo-1.0.0a5.tar.gz",
       "has_sig": false,
-      "md5_digest": "90e60b2ad117d3534f92a4ce37f9f462",
+      "md5_digest": "92e181952976e09b9d1c583da6c3e2fc",
       "packagetype": "sdist",
       "python_version": "source",
       "requires_python": ">=3.7,<4.0",

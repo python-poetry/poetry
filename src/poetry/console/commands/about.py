@@ -1,12 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from poetry.console.commands.command import Command
-
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
 
 
 class AboutCommand(Command):
@@ -17,16 +11,12 @@ class AboutCommand(Command):
     def handle(self) -> int:
         from poetry.utils._compat import metadata
 
-        # The metadata.version that we import for Python 3.7 is untyped, work around
-        # that.
-        version: Callable[[str], str] = metadata.version
-
         self.line(
             f"""\
 <info>Poetry - Package Management for Python
 
-Version: {version('poetry')}
-Poetry-Core Version: {version('poetry-core')}</info>
+Version: {metadata.version('poetry')}
+Poetry-Core Version: {metadata.version('poetry-core')}</info>
 
 <comment>Poetry is a dependency manager tracking local dependencies of your projects\
  and libraries.

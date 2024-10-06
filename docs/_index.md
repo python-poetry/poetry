@@ -62,6 +62,12 @@ pipx install poetry
 {{< step >}}
 **Install Poetry (advanced)**
 
+{{% note %}}
+You can skip this step, if you simply want the latest version and already installed Poetry as described in the
+previous step. This step details advanced usages of this installation method. For example, installing Poetry from
+source, having multiple versions installed at the same time etc.
+{{% /note %}}
+
 `pipx` can install different versions of Poetry, using the same syntax as pip:
 
 ```bash
@@ -85,7 +91,7 @@ Finally, `pipx` can install any valid [pip requirement spec](https://pip.pypa.io
 allows for installations of the development version from `git`, or even for local testing of pull requests:
 
 ```bash
-pipx install --suffix @master git+https://github.com/python-poetry/poetry.git@master
+pipx install --suffix @main git+https://github.com/python-poetry/poetry.git@main
 pipx install --suffix @pr1234 git+https://github.com/python-poetry/poetry.git@refs/pull/1234/head
 ```
 
@@ -151,9 +157,15 @@ above.
 {{< step >}}
 **Install Poetry (advanced)**
 
+{{% note %}}
+You can skip this step, if you simply want the latest version and already installed Poetry as described in the
+previous step. This step details advanced usages of this installation method. For example, installing Poetry from
+source, using a pre-release build, configuring a different installation location etc.
+{{% /note %}}
+
 By default, Poetry is installed into a platform and user-specific directory:
 
-- `~/Library/Application Support/pypoetry` on MacOS.
+- `~/Library/Application Support/pypoetry` on macOS.
 - `~/.local/share/pypoetry` on Linux/Unix.
 - `%APPDATA%\pypoetry` on Windows.
 
@@ -182,7 +194,7 @@ curl -sSL https://install.python-poetry.org | POETRY_VERSION=1.2.0 python3 -
 You can also install Poetry from a `git` repository by using the `--git` option:
 
 ```bash
-curl -sSL https://install.python-poetry.org | python3 - --git https://github.com/python-poetry/poetry.git@master
+curl -sSL https://install.python-poetry.org | python3 - --git https://github.com/python-poetry/poetry.git@main
 ````
 If you want to install different versions of Poetry in parallel, a good approach is the installation with pipx and suffix.
 
@@ -201,7 +213,7 @@ as `poetry`.
 
 Alternatively, the full path to the `poetry` binary can always be used:
 
-- `~/Library/Application Support/pypoetry/venv/bin/poetry` on MacOS.
+- `~/Library/Application Support/pypoetry/venv/bin/poetry` on macOS.
 - `~/.local/share/pypoetry/venv/bin/poetry` on Linux/Unix.
 - `%APPDATA%\pypoetry\venv\Scripts\poetry` on Windows.
 - `$POETRY_HOME/venv/bin/poetry` if `$POETRY_HOME` is set.
@@ -216,7 +228,7 @@ Once Poetry is installed and in your `$PATH`, you can execute the following:
 poetry --version
 ```
 
-If you see something like `Poetry (version 1.2.0)`, your install is ready to use!
+If you see something like `Poetry (version 1.2.0)`, your installation is ready to use!
 {{< /step >}}
 {{< step >}}
 **Update Poetry**

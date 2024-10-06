@@ -102,11 +102,17 @@ my-package
 
 ### Options
 
+* `--interactive (-i)`: Allow interactive specification of project configuration.
 * `--name`: Set the resulting package name.
 * `--src`: Use the src layout for the project.
 * `--readme`: Specify the readme file extension. Default is `md`. If you intend to publish to PyPI
   keep the [recommendations for a PyPI-friendly README](https://packaging.python.org/en/latest/guides/making-a-pypi-friendly-readme/)
   in mind.
+* `--description`: Description of the package.
+* `--author`: Author of the package.
+* `--python` Compatible Python versions.
+* `--dependency`: Package to require with a version constraint. Should be in format `foo:1.0.0`.
+* `--dev-dependency`: Development requirements, see `--dependency`.
 
 
 ## init
@@ -243,12 +249,6 @@ you can use the `--compile` option:
 poetry install --compile
 ```
 
-{{% note %}}
-The `--compile` option has no effect if `installer.modern-installation`
-is set to `false` because the old installer always compiles source files to bytecode.
-{{% /note %}}
-
-
 ### Options
 
 * `--without`: The dependency groups to ignore.
@@ -319,6 +319,15 @@ poetry will choose a suitable one based on the available package versions.
 ```bash
 poetry add requests pendulum
 ```
+
+{{% note %}}
+A package is looked up, by default, only from [PyPI](https://pypi.org).
+You can modify the default source (PyPI);
+or add and use [Supplemental Package Sources]({{< relref "repositories/#supplemental-package-sources" >}})
+or [Explicit Package Sources]({{< relref "repositories/#explicit-package-sources" >}}).
+
+For more information, refer to the [Package Sources]({{< relref "repositories/#package-sources" >}}) documentation.
+{{% /note %}}
 
 You can also specify a constraint when adding a package:
 
@@ -448,7 +457,7 @@ about dependency groups.
 * `--dev (-D)`: Add package as development dependency. (**Deprecated**, use `-G dev` instead)
 * `--editable (-e)`: Add vcs/path dependencies as editable.
 * `--extras (-E)`: Extras to activate for the dependency. (multiple values allowed)
-* `--optional`: Add as an optional dependency.
+* `--optional`: Add as an optional dependency to an extra.
 * `--python`: Python version for which the dependency must be installed.
 * `--platform`: Platforms for which the dependency must be installed.
 * `--source`: Name of the source to use to install the package.
@@ -540,7 +549,22 @@ Note that, at the moment, only pure python wheels are supported.
 ### Options
 
 * `--format (-f)`: Limit the format to either `wheel` or `sdist`.
+* `--clean`: Clean output directory before building.
+* `--local-version (-l)`: Add or replace a local version label to the build.
 * `--output (-o)`: Set output directory for build artifacts. Default is `dist`.
+
+{{% note %}}
+When using `--local-version`, the identifier must be [PEP 440](https://peps.python.org/pep-0440/#local-version-identifiers)
+compliant. This is useful for adding build numbers, platform specificities etc. for private packages.
+{{% /note %}}
+
+{{% warning %}}
+Local version identifiers SHOULD NOT be used when publishing upstream projects to a public index server, but MAY be
+used to identify private builds created directly from the project source.
+
+See [PEP 440](https://peps.python.org/pep-0440/#local-version-identifiers) for more information.
+{{% /warning %}}
+
 
 ## publish
 
@@ -570,6 +594,10 @@ Should match a repository name set by the [`config`](#config) command.
 * `--build`: Build the package before publishing.
 * `--dry-run`: Perform all actions except upload the package.
 * `--skip-existing`: Ignore errors from files already existing in the repository.
+
+{{% note %}}
+See [Configuring Credentials]({{< relref "repositories/#configuring-credentials" >}}) for more information on how to configure credentials.
+{{% /note %}}
 
 ## config
 
@@ -629,10 +657,13 @@ Note that this command has no option.
 
 ## shell
 
-The `shell` command spawns a shell,
-according to the `$SHELL` environment variable,
-within the virtual environment.
-If one doesn't exist yet, it will be created.
+The shell command spawns a shell within the project's virtual environment.
+
+By default, the current active shell is detected and used. Failing that,
+the shell defined via the environment variable `SHELL` (on *nix) or
+`COMSPEC` (on Windows) is used.
+
+If a virtual environment does not exist, it will be created.
 
 ```bash
 poetry shell
@@ -641,6 +672,11 @@ poetry shell
 Note that this command starts a new shell and activates the virtual environment.
 
 As such, `exit` should be used to properly exit the shell and the virtual environment instead of `deactivate`.
+
+{{% note %}}
+Poetry internally uses the [Shellingham](https://github.com/sarugaku/shellingham) project to detect current
+active shell.
+{{% /note %}}
 
 ## check
 
@@ -673,7 +709,9 @@ poetry search requests pendulum
 This command locks (without installing) the dependencies specified in `pyproject.toml`.
 
 {{% note %}}
-By default, this will lock all dependencies to the latest available compatible versions. To only refresh the lock file, use the `--no-update` option.
+By default, packages that have already been added to the lock file before will not be updated.
+To update all dependencies to the latest available compatible versions, use `poetry update --lock`
+or `poetry lock --regenerate`, which normally produce the same result.
 This command is also available as a pre-commit hook. See [pre-commit hooks]({{< relref "pre-commit-hooks#poetry-lock">}}) for more information.
 {{% /note %}}
 
@@ -684,7 +722,7 @@ poetry lock
 ### Options
 
 * `--check`: Verify that `poetry.lock` is consistent with `pyproject.toml`. (**Deprecated**) Use `poetry check --lock` instead.
-* `--no-update`: Do not update locked versions, only refresh lock file.
+* `--regenerate`: Ignore existing lock file and overwrite it with a new lock file created from scratch.
 
 ## version
 
@@ -733,22 +771,28 @@ The option `--next-phase` allows the increment of prerelease phase versions.
 
 ## export
 
+{{% warning %}}
+This command is provided by the [Export Poetry Plugin](https://github.com/python-poetry/poetry-plugin-export).
+The plugin is no longer installed by default with Poetry 2.0.
+
+See [Using plugins]({{< relref "plugins#using-plugins" >}}) for information on how to install a plugin.
+As described in [Project plugins]({{< relref "plugins#project-plugins" >}}),
+you can also define in your `pyproject.toml` that the plugin is required for the development of your project:
+
+```toml
+[tool.poetry.requires-plugins]
+poetry-plugin-export = ">1.8"
+```
+{{% /warning %}}
+
 This command exports the lock file to other formats.
 
 ```bash
 poetry export -f requirements.txt --output requirements.txt
 ```
 
-{{% warning %}}
-This command is provided by the [Export Poetry Plugin](https://github.com/python-poetry/poetry-plugin-export).
-In a future version of Poetry this plugin will not be installed by default anymore.
-In order to avoid a breaking change and make your automation forward-compatible,
-please install poetry-plugin-export explicitly.
-See [Using plugins]({{< relref "plugins#using-plugins" >}}) for details on how to install a plugin.
-{{% /warning %}}
-
 {{% note %}}
-This command is also available as a pre-commit hook.
+The `export` command is also available as a pre-commit hook.
 See [pre-commit hooks]({{< relref "pre-commit-hooks#poetry-export" >}}) for more information.
 {{% /note %}}
 
@@ -830,13 +874,7 @@ poetry source add --priority=explicit pypi
 
 #### Options
 
-* `--default`: Set this source as the [default]({{< relref "repositories#default-package-source" >}}) (disable PyPI). Deprecated in favor of `--priority`.
-* `--secondary`: Set this source as a [secondary]({{< relref "repositories#secondary-package-sources" >}}) source. Deprecated in favor of `--priority`.
-* `--priority`: Set the priority of this source. Accepted values are: [`default`]({{< relref "repositories#default-package-source" >}}), [`secondary`]({{< relref "repositories#secondary-package-sources" >}}), [`supplemental`]({{< relref "repositories#supplemental-package-sources" >}}), and [`explicit`]({{< relref "repositories#explicit-package-sources" >}}). Refer to the dedicated sections in [Repositories]({{< relref "repositories" >}}) for more information.
-
-{{% note %}}
-At most one of the options above can be provided. See [package sources]({{< relref "repositories#package-sources" >}}) for more information.
-{{% /note %}}
+* `--priority`: Set the priority of this source. Accepted values are: [`supplemental`]({{< relref "repositories#supplemental-package-sources" >}}), and [`explicit`]({{< relref "repositories#explicit-package-sources" >}}). Refer to the dedicated sections in [Repositories]({{< relref "repositories" >}}) for more information.
 
 ### source show
 

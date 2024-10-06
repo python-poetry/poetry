@@ -4,12 +4,13 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from poetry.factory import Factory
 from poetry.packages import Locker
 from poetry.toml import TOMLFile
 
 
 if TYPE_CHECKING:
-    import httpretty
+    from typing import Iterator
 
     from cleo.testers.command_tester import CommandTester
     from pytest_mock import MockerFixture
@@ -17,42 +18,36 @@ if TYPE_CHECKING:
     from poetry.poetry import Poetry
     from tests.types import CommandTesterFactory
     from tests.types import FixtureDirGetter
-    from tests.types import ProjectFactory
+    from tests.types import SetProjectContext
 
 
-@pytest.fixture()
-def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
-    return command_tester_factory("check")
-
-
-def _project_factory(
-    fixture_name: str,
-    project_factory: ProjectFactory,
-    fixture_dir: FixtureDirGetter,
-) -> Poetry:
-    source = fixture_dir(fixture_name)
-    pyproject_content = (source / "pyproject.toml").read_text(encoding="utf-8")
-    poetry_lock_content = (source / "poetry.lock").read_text(encoding="utf-8")
-    return project_factory(
-        name="foobar",
-        pyproject_content=pyproject_content,
-        poetry_lock_content=poetry_lock_content,
-        source=source,
-    )
+@pytest.fixture
+def poetry_simple_project(set_project_context: SetProjectContext) -> Iterator[Poetry]:
+    with set_project_context("simple_project", in_place=False) as cwd:
+        yield Factory().create_poetry(cwd)
 
 
 @pytest.fixture
 def poetry_with_outdated_lockfile(
-    project_factory: ProjectFactory, fixture_dir: FixtureDirGetter
-) -> Poetry:
-    return _project_factory("outdated_lock", project_factory, fixture_dir)
+    set_project_context: SetProjectContext,
+) -> Iterator[Poetry]:
+    with set_project_context("outdated_lock", in_place=False) as cwd:
+        yield Factory().create_poetry(cwd)
 
 
 @pytest.fixture
 def poetry_with_up_to_date_lockfile(
-    project_factory: ProjectFactory, fixture_dir: FixtureDirGetter
-) -> Poetry:
-    return _project_factory("up_to_date_lock", project_factory, fixture_dir)
+    set_project_context: SetProjectContext,
+) -> Iterator[Poetry]:
+    with set_project_context("up_to_date_lock", in_place=False) as cwd:
+        yield Factory().create_poetry(cwd)
+
+
+@pytest.fixture()
+def tester(
+    command_tester_factory: CommandTesterFactory, poetry_simple_project: Poetry
+) -> CommandTester:
+    return command_tester_factory("check", poetry=poetry_simple_project)
 
 
 def test_check_valid(tester: CommandTester) -> None:
@@ -63,6 +58,57 @@ All set!
 """
 
     assert tester.io.fetch_output() == expected
+
+
+def test_check_valid_legacy(
+    mocker: MockerFixture, tester: CommandTester, fixture_dir: FixtureDirGetter
+) -> None:
+    mocker.patch(
+        "poetry.poetry.Poetry.file",
+        return_value=TOMLFile(fixture_dir("simple_project_legacy") / "pyproject.toml"),
+        new_callable=mocker.PropertyMock,
+    )
+    tester.execute()
+
+    expected = (
+        "Warning: [tool.poetry.name] is deprecated. Use [project.name] instead.\n"
+        "Warning: [tool.poetry.version] is set but 'version' is not in "
+        "[project.dynamic]. If it is static use [project.version]. If it is dynamic, "
+        "add 'version' to [project.dynamic].\n"
+        "If you want to set the version dynamically via `poetry build "
+        "--local-version` or you are using a plugin, which sets the version "
+        "dynamically, you should define the version in [tool.poetry] and add "
+        "'version' to [project.dynamic].\n"
+        "Warning: [tool.poetry.description] is deprecated. Use [project.description] "
+        "instead.\n"
+        "Warning: [tool.poetry.readme] is set but 'readme' is not in "
+        "[project.dynamic]. If it is static use [project.readme]. If it is dynamic, "
+        "add 'readme' to [project.dynamic].\n"
+        "If you want to define multiple readmes, you should define them in "
+        "[tool.poetry] and add 'readme' to [project.dynamic].\n"
+        "Warning: [tool.poetry.license] is deprecated. Use [project.license] instead.\n"
+        "Warning: [tool.poetry.authors] is deprecated. Use [project.authors] instead.\n"
+        "Warning: [tool.poetry.keywords] is deprecated. Use [project.keywords] "
+        "instead.\n"
+        "Warning: [tool.poetry.classifiers] is set but 'classifiers' is not in "
+        "[project.dynamic]. If it is static use [project.classifiers]. If it is "
+        "dynamic, add 'classifiers' to [project.dynamic].\n"
+        "ATTENTION: Per default Poetry determines classifiers for supported Python "
+        "versions and license automatically. If you define classifiers in [project], "
+        "you disable the automatic enrichment. In other words, you have to define all "
+        "classifiers manually. If you want to use Poetry's automatic enrichment of "
+        "classifiers, you should define them in [tool.poetry] and add 'classifiers' "
+        "to [project.dynamic].\n"
+        "Warning: [tool.poetry.homepage] is deprecated. Use [project.urls] instead.\n"
+        "Warning: [tool.poetry.repository] is deprecated. Use [project.urls] instead.\n"
+        "Warning: [tool.poetry.documentation] is deprecated. Use [project.urls] "
+        "instead.\n"
+        "Warning: Defining console scripts in [tool.poetry.scripts] is deprecated. "
+        "Use [project.scripts] instead. ([tool.poetry.scripts] should only be used "
+        "for scripts of type 'file').\n"
+    )
+
+    assert tester.io.fetch_error() == expected
 
 
 def test_check_invalid(
@@ -76,10 +122,7 @@ def test_check_invalid(
 
     tester.execute("--lock")
 
-    fastjsonschema_error = "data must contain ['description'] properties"
-    custom_error = "The fields ['description'] are required in package mode."
-    expected_template = """\
-Error: {schema_error}
+    expected = """\
 Error: Project name (invalid) is same as one of its dependencies
 Error: Unrecognized classifiers: ['Intended Audience :: Clowns'].
 Error: Declared README file does not exist: never/exists.md
@@ -96,12 +139,8 @@ Warning: Deprecated classifier\
  'Topic :: Communications :: Chat :: AOL Instant Messenger'.\
  Must be removed.
 """
-    expected = {
-        expected_template.format(schema_error=schema_error)
-        for schema_error in (fastjsonschema_error, custom_error)
-    }
 
-    assert tester.io.fetch_error() in expected
+    assert tester.io.fetch_error() == expected
 
 
 def test_check_private(
@@ -175,14 +214,11 @@ def test_check_lock_missing(
 def test_check_lock_outdated(
     command_tester_factory: CommandTesterFactory,
     poetry_with_outdated_lockfile: Poetry,
-    http: type[httpretty.httpretty],
     options: str,
 ) -> None:
-    http.disable()
-
     locker = Locker(
         lock=poetry_with_outdated_lockfile.pyproject.file.path.parent / "poetry.lock",
-        local_config=poetry_with_outdated_lockfile.locker._local_config,
+        pyproject_data=poetry_with_outdated_lockfile.locker._pyproject_data,
     )
     poetry_with_outdated_lockfile.set_locker(locker)
 
@@ -203,14 +239,11 @@ def test_check_lock_outdated(
 def test_check_lock_up_to_date(
     command_tester_factory: CommandTesterFactory,
     poetry_with_up_to_date_lockfile: Poetry,
-    http: type[httpretty.httpretty],
     options: str,
 ) -> None:
-    http.disable()
-
     locker = Locker(
         lock=poetry_with_up_to_date_lockfile.pyproject.file.path.parent / "poetry.lock",
-        local_config=poetry_with_up_to_date_lockfile.locker._local_config,
+        pyproject_data=poetry_with_up_to_date_lockfile.locker._pyproject_data,
     )
     poetry_with_up_to_date_lockfile.set_locker(locker)
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -32,16 +33,14 @@ from poetry.utils.env import NullEnv
 from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.helpers import get_dependency
 from tests.helpers import get_package
-from tests.repositories.test_legacy_repository import (
-    MockRepository as MockLegacyRepository,
-)
-from tests.repositories.test_pypi_repository import MockRepository
 
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from poetry.installation.operations.operation import Operation
+    from poetry.repositories.legacy_repository import LegacyRepository
+    from poetry.repositories.pypi_repository import PyPiRepository
     from poetry.utils.env import Env
     from tests.conftest import Config
     from tests.types import FixtureDirGetter
@@ -253,40 +252,42 @@ def test_run_update_after_removing_dependencies(
     installed: CustomInstalledRepository,
 ) -> None:
     locker.locked(True)
-    locker.mock_lock_data({
-        "package": [
-            {
-                "name": "A",
-                "version": "1.0",
-                "optional": False,
-                "platform": "*",
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "A",
+                    "version": "1.0",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "B",
+                    "version": "1.1",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "C",
+                    "version": "1.2",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
                 "python-versions": "*",
-                "checksum": [],
-            },
-            {
-                "name": "B",
-                "version": "1.1",
-                "optional": False,
                 "platform": "*",
-                "python-versions": "*",
-                "checksum": [],
+                "content-hash": "123456789",
+                "files": {"A": [], "B": [], "C": []},
             },
-            {
-                "name": "C",
-                "version": "1.2",
-                "optional": False,
-                "platform": "*",
-                "python-versions": "*",
-                "checksum": [],
-            },
-        ],
-        "metadata": {
-            "python-versions": "*",
-            "platform": "*",
-            "content-hash": "123456789",
-            "files": {"A": [], "B": [], "C": []},
-        },
-    })
+        }
+    )
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.1")
     package_c = get_package("C", "1.2")
@@ -325,40 +326,42 @@ def _configure_run_install_dev(
     Perform common test setup for `test_run_install_*dev*()` methods.
     """
     locker.locked(True)
-    locker.mock_lock_data({
-        "package": [
-            {
-                "name": "A",
-                "version": "1.0",
-                "optional": False,
-                "platform": "*",
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "A",
+                    "version": "1.0",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "B",
+                    "version": "1.1",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "C",
+                    "version": "1.2",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
                 "python-versions": "*",
-                "checksum": [],
-            },
-            {
-                "name": "B",
-                "version": "1.1",
-                "optional": False,
                 "platform": "*",
-                "python-versions": "*",
-                "checksum": [],
+                "content-hash": "123456789",
+                "files": {"A": [], "B": [], "C": []},
             },
-            {
-                "name": "C",
-                "version": "1.2",
-                "optional": False,
-                "platform": "*",
-                "python-versions": "*",
-                "checksum": [],
-            },
-        ],
-        "metadata": {
-            "python-versions": "*",
-            "platform": "*",
-            "content-hash": "123456789",
-            "files": {"A": [], "B": [], "C": []},
-        },
-    })
+        }
+    )
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.1")
     package_c = get_package("C", "1.2")
@@ -452,40 +455,42 @@ def test_run_install_does_not_remove_locked_packages_if_installed_but_not_requir
     )
 
     locker.locked(True)
-    locker.mock_lock_data({
-        "package": [
-            {
-                "name": package_a.name,
-                "version": package_a.version.text,
-                "optional": False,
-                "platform": "*",
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": package_a.name,
+                    "version": package_a.version.text,
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": package_b.name,
+                    "version": package_b.version.text,
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": package_c.name,
+                    "version": package_c.version.text,
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
                 "python-versions": "*",
-                "checksum": [],
-            },
-            {
-                "name": package_b.name,
-                "version": package_b.version.text,
-                "optional": False,
                 "platform": "*",
-                "python-versions": "*",
-                "checksum": [],
+                "content-hash": "123456789",
+                "files": {package_a.name: [], package_b.name: [], package_c.name: []},
             },
-            {
-                "name": package_c.name,
-                "version": package_c.version.text,
-                "optional": False,
-                "platform": "*",
-                "python-versions": "*",
-                "checksum": [],
-            },
-        ],
-        "metadata": {
-            "python-versions": "*",
-            "platform": "*",
-            "content-hash": "123456789",
-            "files": {package_a.name: [], package_b.name: [], package_c.name: []},
-        },
-    })
+        }
+    )
 
     result = installer.run()
     assert result == 0
@@ -520,40 +525,42 @@ def test_run_install_removes_locked_packages_if_installed_and_synchronization_is
     )
 
     locker.locked(True)
-    locker.mock_lock_data({
-        "package": [
-            {
-                "name": package_a.name,
-                "version": package_a.version.text,
-                "optional": False,
-                "platform": "*",
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": package_a.name,
+                    "version": package_a.version.text,
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": package_b.name,
+                    "version": package_b.version.text,
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": package_c.name,
+                    "version": package_c.version.text,
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
                 "python-versions": "*",
-                "checksum": [],
-            },
-            {
-                "name": package_b.name,
-                "version": package_b.version.text,
-                "optional": False,
                 "platform": "*",
-                "python-versions": "*",
-                "checksum": [],
+                "content-hash": "123456789",
+                "files": {package_a.name: [], package_b.name: [], package_c.name: []},
             },
-            {
-                "name": package_c.name,
-                "version": package_c.version.text,
-                "optional": False,
-                "platform": "*",
-                "python-versions": "*",
-                "checksum": [],
-            },
-        ],
-        "metadata": {
-            "python-versions": "*",
-            "platform": "*",
-            "content-hash": "123456789",
-            "files": {package_a.name: [], package_b.name: [], package_c.name: []},
-        },
-    })
+        }
+    )
 
     installer.requires_synchronization(True)
     installer.run()
@@ -588,40 +595,42 @@ def test_run_install_removes_no_longer_locked_packages_if_installed(
     )
 
     locker.locked(True)
-    locker.mock_lock_data({
-        "package": [
-            {
-                "name": package_a.name,
-                "version": package_a.version.text,
-                "optional": False,
-                "platform": "*",
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": package_a.name,
+                    "version": package_a.version.text,
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": package_b.name,
+                    "version": package_b.version.text,
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": package_c.name,
+                    "version": package_c.version.text,
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
                 "python-versions": "*",
-                "checksum": [],
-            },
-            {
-                "name": package_b.name,
-                "version": package_b.version.text,
-                "optional": False,
                 "platform": "*",
-                "python-versions": "*",
-                "checksum": [],
+                "content-hash": "123456789",
+                "files": {package_a.name: [], package_b.name: [], package_c.name: []},
             },
-            {
-                "name": package_c.name,
-                "version": package_c.version.text,
-                "optional": False,
-                "platform": "*",
-                "python-versions": "*",
-                "checksum": [],
-            },
-        ],
-        "metadata": {
-            "python-versions": "*",
-            "platform": "*",
-            "content-hash": "123456789",
-            "files": {package_a.name: [], package_b.name: [], package_c.name: []},
-        },
-    })
+        }
+    )
 
     installer.update(True)
     result = installer.run()
@@ -672,25 +681,27 @@ def test_run_install_with_synchronization(
     )
 
     locker.locked(True)
-    locker.mock_lock_data({
-        "package": [
-            {
-                "name": pkg.name,
-                "version": pkg.version,
-                "optional": False,
-                "platform": "*",
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": pkg.name,
+                    "version": pkg.version,
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                }
+                for pkg in locked_packages
+            ],
+            "metadata": {
                 "python-versions": "*",
-                "checksum": [],
-            }
-            for pkg in locked_packages
-        ],
-        "metadata": {
-            "python-versions": "*",
-            "platform": "*",
-            "content-hash": "123456789",
-            "files": {pkg.name: [] for pkg in locked_packages},
-        },
-    })
+                "platform": "*",
+                "content-hash": "123456789",
+                "files": {pkg.name: [] for pkg in locked_packages},
+            },
+        }
+    )
 
     installer.requires_synchronization(True)
     result = installer.run()
@@ -714,22 +725,26 @@ def test_run_whitelist_add(
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ) -> None:
     locker.locked(True)
-    locker.mock_lock_data({
-        "package": [{
-            "name": "A",
-            "version": "1.0",
-            "optional": False,
-            "platform": "*",
-            "python-versions": "*",
-            "checksum": [],
-        }],
-        "metadata": {
-            "python-versions": "*",
-            "platform": "*",
-            "content-hash": "123456789",
-            "files": {"A": []},
-        },
-    })
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "A",
+                    "version": "1.0",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                }
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "files": {"A": []},
+            },
+        }
+    )
     package_a = get_package("A", "1.0")
     package_a_new = get_package("A", "1.1")
     package_b = get_package("B", "1.1")
@@ -758,32 +773,34 @@ def test_run_whitelist_remove(
     installed: CustomInstalledRepository,
 ) -> None:
     locker.locked(True)
-    locker.mock_lock_data({
-        "package": [
-            {
-                "name": "A",
-                "version": "1.0",
-                "optional": False,
-                "platform": "*",
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "A",
+                    "version": "1.0",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "B",
+                    "version": "1.1",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
                 "python-versions": "*",
-                "checksum": [],
-            },
-            {
-                "name": "B",
-                "version": "1.1",
-                "optional": False,
                 "platform": "*",
-                "python-versions": "*",
-                "checksum": [],
+                "content-hash": "123456789",
+                "files": {"A": [], "B": []},
             },
-        ],
-        "metadata": {
-            "python-versions": "*",
-            "platform": "*",
-            "content-hash": "123456789",
-            "files": {"A": [], "B": []},
-        },
-    })
+        }
+    )
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.1")
     repo.add_package(package_a)
@@ -1072,22 +1089,22 @@ def test_run_installs_extras_with_deps_if_requested(
         expected_installations_count = 0 if is_installed else 2
         # We only want to uninstall extras if we do a "poetry install" without extras,
         # not if we do a "poetry update" or "poetry add".
-        expected_removals_count = 2 if is_installed and is_locked else 0
+        expected_removals_count = 2 if is_installed else 0
 
     assert installer.executor.installations_count == expected_installations_count
     assert installer.executor.removals_count == expected_removals_count
 
 
-@pytest.mark.network
 def test_installer_with_pypi_repository(
     package: ProjectPackage,
     locker: Locker,
     installed: CustomInstalledRepository,
     config: Config,
     env: NullEnv,
+    pypi_repository: PyPiRepository,
 ) -> None:
     pool = RepositoryPool()
-    pool.add_repository(MockRepository())
+    pool.add_repository(pypi_repository)
 
     installer = Installer(
         NullIO(), env, package, locker, pool, config, installed=installed
@@ -1099,7 +1116,6 @@ def test_installer_with_pypi_repository(
     assert result == 0
 
     expected = fixture("with-pypi-repository")
-
     assert expected == locker.written_data
 
 
@@ -1280,13 +1296,13 @@ def test_run_installs_with_local_setuptools_directory(
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
-    tmpdir: Path,
+    tmp_path: Path,
     fixture_dir: FixtureDirGetter,
 ) -> None:
-    root_dir = Path(__file__).parent.parent.parent
+    root_dir = tmp_path / "root"
     package.root_dir = root_dir
     locker.set_lock_path(root_dir)
-    file_path = fixture_dir("project_with_setup/")
+    file_path = shutil.copytree(fixture_dir("project_with_setup"), root_dir / "project")
     package.add_dependency(
         Factory.create_dependency(
             "project-with-setup",
@@ -1311,22 +1327,26 @@ def test_run_with_prereleases(
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ) -> None:
     locker.locked(True)
-    locker.mock_lock_data({
-        "package": [{
-            "name": "A",
-            "version": "1.0a2",
-            "optional": False,
-            "platform": "*",
-            "python-versions": "*",
-            "checksum": [],
-        }],
-        "metadata": {
-            "python-versions": "*",
-            "platform": "*",
-            "content-hash": "123456789",
-            "files": {"A": []},
-        },
-    })
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "A",
+                    "version": "1.0a2",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                }
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "files": {"A": []},
+            },
+        }
+    )
     package_a = get_package("A", "1.0a2")
     package_b = get_package("B", "1.1")
     repo.add_package(package_a)
@@ -1351,22 +1371,26 @@ def test_run_update_all_with_lock(
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ) -> None:
     locker.locked(True)
-    locker.mock_lock_data({
-        "package": [{
-            "name": "A",
-            "version": "1.0",
-            "optional": True,
-            "platform": "*",
-            "python-versions": "*",
-            "checksum": [],
-        }],
-        "metadata": {
-            "python-versions": "*",
-            "platform": "*",
-            "content-hash": "123456789",
-            "files": {"A": []},
-        },
-    })
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "A",
+                    "version": "1.0",
+                    "optional": True,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                }
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "files": {"A": []},
+            },
+        }
+    )
     package_a = get_package("A", "1.1")
     repo.add_package(get_package("A", "1.0"))
     repo.add_package(package_a)
@@ -1386,42 +1410,44 @@ def test_run_update_with_locked_extras(
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ) -> None:
     locker.locked(True)
-    locker.mock_lock_data({
-        "package": [
-            {
-                "name": "A",
-                "version": "1.0",
-                "optional": False,
-                "platform": "*",
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "A",
+                    "version": "1.0",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {"B": "^1.0", "C": "^1.0"},
+                },
+                {
+                    "name": "B",
+                    "version": "1.0",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "C",
+                    "version": "1.1",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "requirements": {"python": "~2.7"},
+                },
+            ],
+            "metadata": {
                 "python-versions": "*",
-                "checksum": [],
-                "dependencies": {"B": "^1.0", "C": "^1.0"},
-            },
-            {
-                "name": "B",
-                "version": "1.0",
-                "optional": False,
                 "platform": "*",
-                "python-versions": "*",
-                "checksum": [],
+                "content-hash": "123456789",
+                "files": {"A": [], "B": [], "C": []},
             },
-            {
-                "name": "C",
-                "version": "1.1",
-                "optional": False,
-                "platform": "*",
-                "python-versions": "*",
-                "checksum": [],
-                "requirements": {"python": "~2.7"},
-            },
-        ],
-        "metadata": {
-            "python-versions": "*",
-            "platform": "*",
-            "content-hash": "123456789",
-            "files": {"A": [], "B": [], "C": []},
-        },
-    })
+        }
+    )
     package_a = get_package("A", "1.0")
     package_a.extras = {canonicalize_name("foo"): [get_dependency("B")]}
     b_dependency = get_dependency("B", "^1.0", optional=True)
@@ -1500,66 +1526,68 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock(
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ) -> None:
     locker.locked(True)
-    locker.mock_lock_data({
-        "package": [
-            {
-                "name": "A",
-                "version": "1.0",
-                "optional": False,
-                "platform": "*",
-                "python-versions": "*",
-                "checksum": [],
-                "dependencies": {
-                    "B": [
-                        {"version": "^1.0", "python": "<4.0"},
-                        {"version": "^2.0", "python": ">=4.0"},
-                    ]
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "A",
+                    "version": "1.0",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {
+                        "B": [
+                            {"version": "^1.0", "python": "<4.0"},
+                            {"version": "^2.0", "python": ">=4.0"},
+                        ]
+                    },
                 },
-            },
-            {
-                "name": "B",
-                "version": "1.0",
-                "optional": False,
-                "platform": "*",
+                {
+                    "name": "B",
+                    "version": "1.0",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {"C": "1.2"},
+                    "requirements": {"python": "<4.0"},
+                },
+                {
+                    "name": "B",
+                    "version": "2.0",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {"C": "1.5"},
+                    "requirements": {"python": ">=4.0"},
+                },
+                {
+                    "name": "C",
+                    "version": "1.2",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "C",
+                    "version": "1.5",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
                 "python-versions": "*",
-                "checksum": [],
-                "dependencies": {"C": "1.2"},
-                "requirements": {"python": "<4.0"},
-            },
-            {
-                "name": "B",
-                "version": "2.0",
-                "optional": False,
                 "platform": "*",
-                "python-versions": "*",
-                "checksum": [],
-                "dependencies": {"C": "1.5"},
-                "requirements": {"python": ">=4.0"},
+                "content-hash": "123456789",
+                "files": {"A": [], "B": [], "C": []},
             },
-            {
-                "name": "C",
-                "version": "1.2",
-                "optional": False,
-                "platform": "*",
-                "python-versions": "*",
-                "checksum": [],
-            },
-            {
-                "name": "C",
-                "version": "1.5",
-                "optional": False,
-                "platform": "*",
-                "python-versions": "*",
-                "checksum": [],
-            },
-        ],
-        "metadata": {
-            "python-versions": "*",
-            "platform": "*",
-            "content-hash": "123456789",
-            "files": {"A": [], "B": [], "C": []},
-        },
-    })
+        }
+    )
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.0")
@@ -1597,7 +1625,7 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock(
     assert installer.executor.removals_count == 0
 
 
-def test_run_update_uninstalls_after_removal_transient_dependency(
+def test_run_update_uninstalls_after_removal_transitive_dependency(
     installer: Installer,
     locker: Locker,
     repo: Repository,
@@ -1605,33 +1633,35 @@ def test_run_update_uninstalls_after_removal_transient_dependency(
     installed: CustomInstalledRepository,
 ) -> None:
     locker.locked(True)
-    locker.mock_lock_data({
-        "package": [
-            {
-                "name": "A",
-                "version": "1.0",
-                "optional": False,
-                "platform": "*",
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "A",
+                    "version": "1.0",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {"B": {"version": "^1.0", "python": "<2.0"}},
+                },
+                {
+                    "name": "B",
+                    "version": "1.0",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
                 "python-versions": "*",
-                "checksum": [],
-                "dependencies": {"B": {"version": "^1.0", "python": "<2.0"}},
-            },
-            {
-                "name": "B",
-                "version": "1.0",
-                "optional": False,
                 "platform": "*",
-                "python-versions": "*",
-                "checksum": [],
+                "content-hash": "123456789",
+                "files": {"A": [], "B": []},
             },
-        ],
-        "metadata": {
-            "python-versions": "*",
-            "platform": "*",
-            "content-hash": "123456789",
-            "files": {"A": [], "B": []},
-        },
-    })
+        }
+    )
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.0")
@@ -1664,66 +1694,68 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock_upda
     installed: CustomInstalledRepository,
 ) -> None:
     locker.locked(True)
-    locker.mock_lock_data({
-        "package": [
-            {
-                "name": "A",
-                "version": "1.0",
-                "optional": False,
-                "platform": "*",
-                "python-versions": "*",
-                "checksum": [],
-                "dependencies": {
-                    "B": [
-                        {"version": "^1.0", "python": "<2.7"},
-                        {"version": "^2.0", "python": ">=2.7"},
-                    ]
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "A",
+                    "version": "1.0",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {
+                        "B": [
+                            {"version": "^1.0", "python": "<2.7"},
+                            {"version": "^2.0", "python": ">=2.7"},
+                        ]
+                    },
                 },
-            },
-            {
-                "name": "B",
-                "version": "1.0",
-                "optional": False,
-                "platform": "*",
+                {
+                    "name": "B",
+                    "version": "1.0",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {"C": "1.2"},
+                    "requirements": {"python": "<2.7"},
+                },
+                {
+                    "name": "B",
+                    "version": "2.0",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {"C": "1.5"},
+                    "requirements": {"python": ">=2.7"},
+                },
+                {
+                    "name": "C",
+                    "version": "1.2",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "C",
+                    "version": "1.5",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
                 "python-versions": "*",
-                "checksum": [],
-                "dependencies": {"C": "1.2"},
-                "requirements": {"python": "<2.7"},
-            },
-            {
-                "name": "B",
-                "version": "2.0",
-                "optional": False,
                 "platform": "*",
-                "python-versions": "*",
-                "checksum": [],
-                "dependencies": {"C": "1.5"},
-                "requirements": {"python": ">=2.7"},
+                "content-hash": "123456789",
+                "files": {"A": [], "B": [], "C": []},
             },
-            {
-                "name": "C",
-                "version": "1.2",
-                "optional": False,
-                "platform": "*",
-                "python-versions": "*",
-                "checksum": [],
-            },
-            {
-                "name": "C",
-                "version": "1.5",
-                "optional": False,
-                "platform": "*",
-                "python-versions": "*",
-                "checksum": [],
-            },
-        ],
-        "metadata": {
-            "python-versions": "*",
-            "platform": "*",
-            "content-hash": "123456789",
-            "files": {"A": [], "B": [], "C": []},
-        },
-    })
+        }
+    )
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.1")
@@ -1759,9 +1791,6 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock_upda
     assert installer.executor.removals_count == 0
 
 
-@pytest.mark.skip(
-    "This is not working at the moment due to limitations in the resolver"
-)
 def test_installer_test_solver_finds_compatible_package_for_dependency_python_not_fully_compatible_with_package_python(
     installer: Installer,
     locker: Locker,
@@ -1866,11 +1895,12 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
     env: NullEnv,
     mocker: MockerFixture,
     config: Config,
+    pypi_repository: PyPiRepository,
 ) -> None:
     mocker.patch("sys.platform", "darwin")
 
     pool = RepositoryPool()
-    pool.add_repository(MockRepository())
+    pool.add_repository(pypi_repository)
 
     installer = Installer(
         NullIO(),
@@ -1883,7 +1913,11 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
         executor=Executor(env, pool, config, NullIO()),
     )
 
-    package.add_dependency(Factory.create_dependency("poetry", {"version": "^0.12.0"}))
+    package.add_dependency(
+        Factory.create_dependency(
+            "with-transitive-extra-dependency", {"version": "^0.12"}
+        )
+    )
 
     installer.update(True)
     result = installer.run()
@@ -1929,9 +1963,10 @@ def test_installer_required_extras_should_be_installed(
     installed: CustomInstalledRepository,
     env: NullEnv,
     config: Config,
+    pypi_repository: PyPiRepository,
 ) -> None:
     pool = RepositoryPool()
-    pool.add_repository(MockRepository())
+    pool.add_repository(pypi_repository)
 
     installer = Installer(
         NullIO(),
@@ -1945,7 +1980,7 @@ def test_installer_required_extras_should_be_installed(
     )
     package.add_dependency(
         Factory.create_dependency(
-            "cachecontrol", {"version": "^0.12.5", "extras": ["filecache"]}
+            "with-extra-dependency", {"version": "^0.12", "extras": ["filecache"]}
         )
     )
 
@@ -1983,34 +2018,36 @@ def test_update_multiple_times_with_split_dependencies_is_idempotent(
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ) -> None:
     locker.locked(True)
-    locker.mock_lock_data({
-        "package": [
-            {
-                "name": "A",
-                "version": "1.0",
-                "optional": False,
-                "platform": "*",
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "A",
+                    "version": "1.0",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {"B": ">=1.0"},
+                },
+                {
+                    "name": "B",
+                    "version": "1.0.1",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*",
+                    "checksum": [],
+                    "dependencies": {},
+                },
+            ],
+            "metadata": {
                 "python-versions": "*",
-                "checksum": [],
-                "dependencies": {"B": ">=1.0"},
-            },
-            {
-                "name": "B",
-                "version": "1.0.1",
-                "optional": False,
                 "platform": "*",
-                "python-versions": ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*",
-                "checksum": [],
-                "dependencies": {},
+                "content-hash": "123456789",
+                "files": {"A": [], "B": []},
             },
-        ],
-        "metadata": {
-            "python-versions": "*",
-            "platform": "*",
-            "content-hash": "123456789",
-            "files": {"A": [], "B": []},
-        },
-    })
+        }
+    )
 
     package.python_versions = "~2.7 || ^3.4"
     package.add_dependency(Factory.create_dependency("A", "^1.0"))
@@ -2063,6 +2100,8 @@ def test_installer_can_install_dependencies_from_forced_source(
     installed: CustomInstalledRepository,
     env: NullEnv,
     config: Config,
+    legacy_repository: LegacyRepository,
+    pypi_repository: PyPiRepository,
 ) -> None:
     package.python_versions = "^3.7"
     package.add_dependency(
@@ -2070,8 +2109,8 @@ def test_installer_can_install_dependencies_from_forced_source(
     )
 
     pool = RepositoryPool()
-    pool.add_repository(MockLegacyRepository())
-    pool.add_repository(MockRepository())
+    pool.add_repository(legacy_repository)
+    pool.add_repository(pypi_repository)
 
     installer = Installer(
         NullIO(),
@@ -2095,7 +2134,7 @@ def test_installer_can_install_dependencies_from_forced_source(
 def test_run_installs_with_url_file(
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ) -> None:
-    url = "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+    url = "https://files.pythonhosted.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
     package.add_dependency(Factory.create_dependency("demo", {"url": url}))
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -2121,9 +2160,9 @@ def test_run_installs_with_same_version_url_files(
     env_platform: str,
 ) -> None:
     urls = {
-        "linux": "https://python-poetry.org/distributions/demo-0.1.0.tar.gz",
+        "linux": "https://files.pythonhosted.org/distributions/demo-0.1.0.tar.gz",
         "win32": (
-            "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+            "https://files.pythonhosted.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
         ),
     }
     for platform, url in urls.items():
@@ -2192,79 +2231,6 @@ def test_installer_uses_prereleases_if_they_are_compatible(
     assert installer.executor.installations_count == 2
 
 
-def test_installer_can_handle_old_lock_files(
-    locker: Locker,
-    package: ProjectPackage,
-    repo: Repository,
-    installed: CustomInstalledRepository,
-    config: Config,
-) -> None:
-    pool = RepositoryPool()
-    pool.add_repository(MockRepository())
-
-    package.add_dependency(Factory.create_dependency("pytest", "^3.5", groups=["dev"]))
-
-    locker.locked()
-    locker.mock_lock_data(fixture("old-lock"))
-
-    installer = Installer(
-        NullIO(),
-        MockEnv(),
-        package,
-        locker,
-        pool,
-        config,
-        installed=installed,
-        executor=Executor(MockEnv(), pool, config, NullIO()),
-    )
-    result = installer.run()
-    assert result == 0
-
-    assert installer.executor.installations_count == 6
-
-    installer = Installer(
-        NullIO(),
-        MockEnv(version_info=(2, 7, 18)),
-        package,
-        locker,
-        pool,
-        config,
-        installed=installed,
-        executor=Executor(
-            MockEnv(version_info=(2, 7, 18)),
-            pool,
-            config,
-            NullIO(),
-        ),
-    )
-    result = installer.run()
-    assert result == 0
-
-    # funcsigs will be added
-    assert installer.executor.installations_count == 7
-
-    installer = Installer(
-        NullIO(),
-        MockEnv(version_info=(2, 7, 18), platform="win32"),
-        package,
-        locker,
-        pool,
-        config,
-        installed=installed,
-        executor=Executor(
-            MockEnv(version_info=(2, 7, 18), platform="win32"),
-            pool,
-            config,
-            NullIO(),
-        ),
-    )
-    result = installer.run()
-    assert result == 0
-
-    # colorama will be added
-    assert installer.executor.installations_count == 8
-
-
 def test_installer_does_not_write_lock_file_when_installation_fails(
     installer: Installer,
     locker: Locker,
@@ -2324,40 +2290,42 @@ def test_installer_should_use_the_locked_version_of_git_dependencies(
     installer: Installer, locker: Locker, package: ProjectPackage, repo: Repository
 ) -> None:
     locker.locked(True)
-    locker.mock_lock_data({
-        "package": [
-            {
-                "name": "demo",
-                "version": "0.1.1",
-                "optional": False,
-                "platform": "*",
-                "python-versions": "*",
-                "checksum": [],
-                "dependencies": {"pendulum": ">=1.4.4"},
-                "source": {
-                    "type": "git",
-                    "url": "https://github.com/demo/demo.git",
-                    "reference": "master",
-                    "resolved_reference": "123456",
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "demo",
+                    "version": "0.1.1",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {"pendulum": ">=1.4.4"},
+                    "source": {
+                        "type": "git",
+                        "url": "https://github.com/demo/demo.git",
+                        "reference": "master",
+                        "resolved_reference": "123456",
+                    },
                 },
-            },
-            {
-                "name": "pendulum",
-                "version": "1.4.4",
-                "optional": False,
-                "platform": "*",
+                {
+                    "name": "pendulum",
+                    "version": "1.4.4",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {},
+                },
+            ],
+            "metadata": {
                 "python-versions": "*",
-                "checksum": [],
-                "dependencies": {},
+                "platform": "*",
+                "content-hash": "123456789",
+                "files": {"demo": [], "pendulum": []},
             },
-        ],
-        "metadata": {
-            "python-versions": "*",
-            "platform": "*",
-            "content-hash": "123456789",
-            "files": {"demo": [], "pendulum": []},
-        },
-    })
+        }
+    )
 
     package.add_dependency(
         Factory.create_dependency(
@@ -2501,34 +2469,36 @@ def test_installer_distinguishes_locked_packages_with_local_version_by_source(
 
     # Locking finds both the pypi and the pytorch packages.
     locker.locked(True)
-    locker.mock_lock_data({
-        "package": [
-            {
-                "name": "torch",
-                "version": "1.11.0",
-                "optional": False,
-                "files": [],
-                "python-versions": "*",
-            },
-            {
-                "name": "torch",
-                "version": "1.11.0+cpu",
-                "optional": False,
-                "files": [],
-                "python-versions": "*",
-                "source": {
-                    "type": "legacy",
-                    "url": "https://download.pytorch.org/whl",
-                    "reference": "pytorch",
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "torch",
+                    "version": "1.11.0",
+                    "optional": False,
+                    "files": [],
+                    "python-versions": "*",
                 },
+                {
+                    "name": "torch",
+                    "version": "1.11.0+cpu",
+                    "optional": False,
+                    "files": [],
+                    "python-versions": "*",
+                    "source": {
+                        "type": "legacy",
+                        "url": "https://download.pytorch.org/whl",
+                        "reference": "pytorch",
+                    },
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
             },
-        ],
-        "metadata": {
-            "python-versions": "*",
-            "platform": "*",
-            "content-hash": "123456789",
-        },
-    })
+        }
+    )
     installer = Installer(
         NullIO(),
         MockEnv(platform=env_platform),
@@ -2600,34 +2570,36 @@ def test_installer_distinguishes_locked_packages_with_same_version_by_source(
 
     # Locking finds both the pypi and the pyhweels packages.
     locker.locked(True)
-    locker.mock_lock_data({
-        "package": [
-            {
-                "name": "kivy",
-                "version": "2.2.1",
-                "optional": False,
-                "files": [],
-                "python-versions": "*",
-            },
-            {
-                "name": "kivy",
-                "version": "2.2.1",
-                "optional": False,
-                "files": [],
-                "python-versions": "*",
-                "source": {
-                    "type": "legacy",
-                    "url": "https://www.piwheels.org/simple",
-                    "reference": "pywheels",
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "kivy",
+                    "version": "2.2.1",
+                    "optional": False,
+                    "files": [],
+                    "python-versions": "*",
                 },
+                {
+                    "name": "kivy",
+                    "version": "2.2.1",
+                    "optional": False,
+                    "files": [],
+                    "python-versions": "*",
+                    "source": {
+                        "type": "legacy",
+                        "url": "https://www.piwheels.org/simple",
+                        "reference": "pywheels",
+                    },
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
             },
-        ],
-        "metadata": {
-            "python-versions": "*",
-            "platform": "*",
-            "content-hash": "123456789",
-        },
-    })
+        }
+    )
     installer = Installer(
         NullIO(),
         MockEnv(platform_machine=env_platform_machine),
@@ -2682,7 +2654,9 @@ def test_explicit_source_dependency_with_direct_origin_dependency(
     A dependency with explicit source should not be satisfied by
     a direct origin dependency even if there is a version match.
     """
-    demo_url = "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+    demo_url = (
+        "https://files.pythonhosted.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+    )
     package.add_dependency(
         Factory.create_dependency(
             "demo",
@@ -2708,46 +2682,48 @@ def test_explicit_source_dependency_with_direct_origin_dependency(
 
     # Locking finds both the direct origin and the explicit source packages.
     locker.locked(True)
-    locker.mock_lock_data({
-        "package": [
-            {
-                "name": "demo",
-                "version": "0.1.0",
-                "optional": False,
-                "files": [],
-                "python-versions": "*",
-                "dependencies": {"pendulum": ">=1.4.4"},
-                "source": {
-                    "type": "url",
-                    "url": demo_url,
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "demo",
+                    "version": "0.1.0",
+                    "optional": False,
+                    "files": [],
+                    "python-versions": "*",
+                    "dependencies": {"pendulum": ">=1.4.4"},
+                    "source": {
+                        "type": "url",
+                        "url": demo_url,
+                    },
                 },
-            },
-            {
-                "name": "demo",
-                "version": "0.1.0",
-                "optional": False,
-                "files": [],
-                "python-versions": "*",
-                "source": {
-                    "type": "legacy",
-                    "url": "https://www.demo.org/simple",
-                    "reference": "repo",
+                {
+                    "name": "demo",
+                    "version": "0.1.0",
+                    "optional": False,
+                    "files": [],
+                    "python-versions": "*",
+                    "source": {
+                        "type": "legacy",
+                        "url": "https://www.demo.org/simple",
+                        "reference": "repo",
+                    },
                 },
-            },
-            {
-                "name": "pendulum",
-                "version": "1.4.4",
-                "optional": False,
-                "files": [],
+                {
+                    "name": "pendulum",
+                    "version": "1.4.4",
+                    "optional": False,
+                    "files": [],
+                    "python-versions": "*",
+                },
+            ],
+            "metadata": {
                 "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
             },
-        ],
-        "metadata": {
-            "python-versions": "*",
-            "platform": "*",
-            "content-hash": "123456789",
-        },
-    })
+        }
+    )
     installer = Installer(
         NullIO(),
         MockEnv(platform=env_platform),

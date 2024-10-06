@@ -9,5 +9,5 @@ packages = []
 [tool.poetry.dependencies]
 python = "*"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 missing = { file = "missing-0.1.0-py2.py3-none-any.whl" }

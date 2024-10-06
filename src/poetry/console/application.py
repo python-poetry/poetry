@@ -4,7 +4,9 @@ import logging
 import re
 
 from contextlib import suppress
+from functools import cached_property
 from importlib import import_module
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import cast
 
@@ -30,9 +32,6 @@ if TYPE_CHECKING:
     from cleo.io.inputs.input import Input
     from cleo.io.io import IO
     from cleo.io.outputs.output import Output
-    from crashtest.solution_providers.solution_provider_repository import (
-        SolutionProviderRepository,
-    )
 
     from poetry.console.commands.installer_command import InstallerCommand
     from poetry.poetry import Poetry
@@ -114,20 +113,13 @@ class Application(BaseApplication):
 
     @property
     def poetry(self) -> Poetry:
-        from pathlib import Path
-
         from poetry.factory import Factory
 
         if self._poetry is not None:
             return self._poetry
 
-        project_path = Path.cwd()
-
-        if self._io and self._io.input.option("directory"):
-            project_path = self._io.input.option("directory")
-
         self._poetry = Factory().create_poetry(
-            cwd=project_path,
+            cwd=self._directory,
             io=self._io,
             disable_plugins=self._disable_plugins,
             disable_cache=self._disable_cache,
@@ -173,13 +165,6 @@ class Application(BaseApplication):
         self._io = io
 
         return io
-
-    def render_error(self, error: Exception, io: IO) -> None:
-        # We set the solution provider repository here to load providers
-        # only when an error occurs
-        self.set_solution_provider_repository(self._get_solution_provider_repository())
-
-        super().render_error(error, io)
 
     def _run(self, io: IO) -> int:
         self._disable_plugins = io.input.parameter_option("--no-plugins")
@@ -350,15 +335,10 @@ class Application(BaseApplication):
             from poetry.plugins.application_plugin import ApplicationPlugin
             from poetry.plugins.plugin_manager import PluginManager
 
+            PluginManager.add_project_plugin_path(self._directory)
             manager = PluginManager(ApplicationPlugin.group)
             manager.load_plugins()
             manager.activate(self)
-
-            # We have to override the command from poetry-plugin-export
-            # with the wrapper.
-            if self.command_loader.has("export"):
-                del self.command_loader._factories["export"]
-            self.command_loader._factories["export"] = load_command("export")
 
         self._plugins_loaded = True
 
@@ -392,19 +372,11 @@ class Application(BaseApplication):
 
         return definition
 
-    def _get_solution_provider_repository(self) -> SolutionProviderRepository:
-        from crashtest.solution_providers.solution_provider_repository import (
-            SolutionProviderRepository,
-        )
-
-        from poetry.mixology.solutions.providers.python_requirement_solution_provider import (
-            PythonRequirementSolutionProvider,
-        )
-
-        repository = SolutionProviderRepository()
-        repository.register_solution_providers([PythonRequirementSolutionProvider])
-
-        return repository
+    @cached_property
+    def _directory(self) -> Path:
+        if self._io and self._io.input.option("directory"):
+            return Path(self._io.input.option("directory")).absolute()
+        return Path.cwd()
 
 
 def main() -> int:
