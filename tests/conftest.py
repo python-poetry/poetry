@@ -49,10 +49,10 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
     from collections.abc import Mapping
 
-    from _pytest.config import Config as PyTestConfig
-    from _pytest.config.argparsing import Parser
-    from _pytest.tmpdir import TempPathFactory
     from keyring.credentials import Credential
+    from pytest import Config as PyTestConfig
+    from pytest import Parser
+    from pytest import TempPathFactory
     from pytest_mock import MockerFixture
 
     from poetry.poetry import Poetry

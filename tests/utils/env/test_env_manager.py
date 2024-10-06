@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import Iterator
 
-    from _pytest.logging import LogCaptureFixture
+    from pytest import LogCaptureFixture
     from pytest_mock import MockerFixture
 
     from poetry.poetry import Poetry

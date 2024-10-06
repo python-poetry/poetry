@@ -27,7 +27,7 @@ from tests.helpers import get_package
 
 
 if TYPE_CHECKING:
-    from _pytest.logging import LogCaptureFixture
+    from pytest import LogCaptureFixture
     from pytest_mock import MockerFixture
 
 

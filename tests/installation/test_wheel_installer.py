@@ -14,7 +14,7 @@ from poetry.utils.env import MockEnv
 
 
 if TYPE_CHECKING:
-    from _pytest.tmpdir import TempPathFactory
+    from pytest import TempPathFactory
 
     from tests.types import FixtureDirGetter
 

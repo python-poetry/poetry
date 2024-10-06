@@ -22,8 +22,8 @@ from tests.helpers import with_working_directory
 
 
 if TYPE_CHECKING:
-    from _pytest.logging import LogCaptureFixture
     from poetry.core.packages.package import Package
+    from pytest import LogCaptureFixture
     from pytest_mock.plugin import MockerFixture
 
     from poetry.poetry import Poetry
