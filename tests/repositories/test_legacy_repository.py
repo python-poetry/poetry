@@ -22,7 +22,7 @@ from poetry.repositories.legacy_repository import LegacyRepository
 if TYPE_CHECKING:
     import httpretty
 
-    from _pytest.monkeypatch import MonkeyPatch
+    from pytest import MonkeyPatch
     from pytest_mock import MockerFixture
 
     from poetry.config.config import Config

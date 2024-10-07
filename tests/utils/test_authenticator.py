@@ -21,8 +21,8 @@ from poetry.utils.authenticator import RepositoryCertificateConfig
 
 
 if TYPE_CHECKING:
-    from _pytest.logging import LogCaptureFixture
-    from _pytest.monkeypatch import MonkeyPatch
+    from pytest import LogCaptureFixture
+    from pytest import MonkeyPatch
     from pytest_mock import MockerFixture
 
     from tests.conftest import Config
