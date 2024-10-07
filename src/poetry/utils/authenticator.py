@@ -193,9 +193,10 @@ class Authenticator:
         credential = self.get_credentials_for_url(url)
 
         if credential.username is not None or credential.password is not None:
-            request = requests.auth.HTTPBasicAuth(
+            request.auth = requests.auth.HTTPBasicAuth(
                 credential.username or "", credential.password or ""
-            )(request)
+            )
+            request.auth(request)
 
         session = self.get_session(url=url)
         prepared_request = session.prepare_request(request)
