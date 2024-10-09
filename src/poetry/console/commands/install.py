@@ -20,12 +20,6 @@ class InstallCommand(InstallerCommand):
     options: ClassVar[list[Option]] = [
         *InstallerCommand._group_dependency_options(),
         option(
-            "no-dev",
-            None,
-            "Do not install the development dependencies."
-            " (<warning>Deprecated</warning>)",
-        ),
-        option(
             "sync",
             None,
             "Synchronize the environment with the locked packages and the specified"
@@ -47,12 +41,6 @@ class InstallCommand(InstallerCommand):
             None,
             "Output the operations but do not execute anything "
             "(implicitly enables --verbose).",
-        ),
-        option(
-            "remove-untracked",
-            None,
-            "Removes packages not present in the lock file."
-            " (<warning>Deprecated</warning>)",
         ),
         option(
             "extras",
@@ -145,14 +133,6 @@ you can set the "package-mode" to false in your pyproject.toml file.
         self.installer.extras(extras)
 
         with_synchronization = self.option("sync")
-        if self.option("remove-untracked"):
-            self.line_error(
-                "<warning>The `<fg=yellow;options=bold>--remove-untracked</>` option is"
-                " deprecated, use the `<fg=yellow;options=bold>--sync</>` option"
-                " instead.</warning>"
-            )
-
-            with_synchronization = True
 
         self.installer.only_groups(self.activated_groups)
         self.installer.skip_directory(self.option("no-directory"))

@@ -21,9 +21,3 @@ def test_pyproject_toml_file_invalid(pyproject_toml: Path) -> None:
         _ = TOMLFile(pyproject_toml).read()
 
     assert f"Invalid TOML file {pyproject_toml.as_posix()}" in str(excval.value)
-
-
-def test_pyproject_toml_file_getattr(tmp_path: Path, pyproject_toml: Path) -> None:
-    file = TOMLFile(pyproject_toml)
-    with pytest.warns(DeprecationWarning):
-        assert file.parent == tmp_path
