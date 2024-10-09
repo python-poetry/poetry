@@ -126,7 +126,6 @@ def io_not_decorated() -> BufferedIO:
 def pool(pypi_repository: PyPiRepository) -> RepositoryPool:
     pool = RepositoryPool()
 
-    pypi_repository._fallback = True
     pool.add_repository(pypi_repository)
 
     return pool
