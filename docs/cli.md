@@ -168,6 +168,12 @@ You can also select optional dependency groups with the `--with` option.
 poetry install --with test,docs
 ```
 
+To install all dependency groups including the optional groups, use the ``--all-groups`` flag.
+
+```bash
+poetry install --all-groups
+```
+
 It's also possible to only install specific dependency groups by using the `only` option.
 
 ```bash
@@ -261,12 +267,14 @@ poetry install --compile
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
 * `--extras (-E)`: Features to install (multiple values allowed).
 * `--all-extras`: Install all extra features (conflicts with --extras).
+* `--all-groups`: Install dependencies from all groups (conflicts with --only).
 * `--compile`: Compile Python source files to bytecode.
 * `--no-dev`: Do not install dev dependencies. (**Deprecated**, use `--only main` or `--without dev` instead)
 * `--remove-untracked`: Remove dependencies not presented in the lock file. (**Deprecated**, use `--sync` instead)
 
 {{% note %}}
 When `--only` is specified, `--with` and `--without` options are ignored.
+When `--all-groups` is specified, the `--with` option is ignored.
 {{% /note %}}
 
 
