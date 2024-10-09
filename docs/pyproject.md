@@ -622,24 +622,26 @@ Poetry is clever enough to detect Python subpackages.
 Thus, you only have to specify the directory where your root package resides.
 {{% /note %}}
 
-### include and exclude
+### exclude and include
 
-A list of patterns that will be included in the final package.
+A list of patterns that will be excluded or included in the final package.
+
+```toml
+[tool.poetry]
+# ...
+exclude = ["my_package/excluded.py"]
+include = ["my_package/data.txt"]
+```
 
 You can explicitly specify to Poetry that a set of globs should be ignored or included for the purposes of packaging.
 The globs specified in the exclude field identify a set of files that are not included when a package is built.
+`include` has priority over `exclude`.
 
 If a VCS is being used for a package, the exclude field will be seeded with the VCS’ ignore settings (`.gitignore` for git for example).
 
 {{% note %}}
 Explicitly declaring entries in `include` will negate VCS' ignore settings.
 {{% /note %}}
-
-```toml
-[tool.poetry]
-# ...
-include = ["CHANGELOG.md"]
-```
 
 You can also specify the formats for which these patterns have to be included, as shown here:
 
@@ -648,17 +650,18 @@ You can also specify the formats for which these patterns have to be included, a
 # ...
 include = [
     { path = "tests", format = "sdist" },
-    { path = "for_wheel.txt", format = ["sdist", "wheel"] }
+    { path = "my_package/for_sdist_and_wheel.txt", format = ["sdist", "wheel"] }
 ]
 ```
 
-If no format is specified, `include` defaults to only `sdist`.
+If no format is specified, it will default to include both `sdist` and `wheel`.
 
-In contrast, `exclude` defaults to both `sdist` and `wheel`.
+{{% warning %}}
+When a wheel is installed, its includes are unpacked straight into the `site-packages` directory.
+Pay attention to include top level files and directories with common names like
+`CHANGELOG.md`, `LICENSE`, `tests` or `docs` only in sdists and **not** in wheels.
+{{% /warning %}}
 
-```toml
-exclude = ["my_package/excluded.py"]
-```
 
 ### dependencies and dependency groups
 
