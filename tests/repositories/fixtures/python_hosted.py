@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import re
 
+from collections.abc import Iterator
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Iterator
 from urllib.parse import urlparse
 
 import pytest
