@@ -494,13 +494,39 @@ about dependency groups.
 
 ## show
 
-To list all the available packages, you can use the `show` command.
+This command provides details of packages, or a single package, specified in the lock file.
+
+### Packages:
 
 ```bash
 poetry show
+
+build              1.2.2              A simple, correct Python build frontend
+cachecontrol       0.14.0             httplib2 caching for requests
+certifi            2024.7.4           Python package for providing Mozilla's CA Bundle.
+cffi               1.16.0             Foreign Function Interface for Python calling C code.
+cfgv               3.4.0              Validate configuration and produce human readable error messages.
 ```
 
-If you want to see the details of a certain package, you can pass the package name.
+If the terminal supports coloured text, packages that aren't installed are shown with their names in red.
+
+If the terminal doesn't support coloured text, packages that aren't installed are shown with their version prefixed
+with `(!)`. 
+
+####  Options
+
+* `--with`: Dependency groups to include.
+* `--without`: Dependency groups to ignore.
+* `--only`: Only show packages in specified dependency groups. If used, `--with` and `--without` options are ignored.
+* `--all (-a)`: Show all packages (even those not compatible with current system).
+* `--top-level (-T)`: Only show explicitly defined packages.
+* `--no-dev`: Do not list dev dependencies. (**Deprecated**, use `--only main` or `--without dev` instead)
+* `--latest (-l)`: Adds a column with the latest version.
+* `--outdated (-o)`: Adds a column with the latest version, but only for packages that are outdated.
+* `--why`: Adds a column indicating if the package is required by other packages. Not compatible with `--tree`.
+* `--tree`: Show packages as a dependency tree. Not compatible with `--why`.
+
+### Single package:
 
 ```bash
 poetry show pendulum
@@ -517,24 +543,9 @@ dependencies
 required by
  - calendar >=1.4.0
 ```
+####  Options
 
-### Options
-
-* `--without`: The dependency groups to ignore.
-* `--why`: When showing the full list, or a `--tree` for a single package, display whether they are a direct dependency or required by other packages.
-* `--with`: The optional dependency groups to include.
-* `--only`: The only dependency groups to include.
-* `--no-dev`: Do not list the dev dependencies. (**Deprecated**, use `--only main` or `--without dev` instead)
-* `--tree`: List the dependencies as a tree.
-* `--latest (-l)`: Show the latest version.
-* `--outdated (-o)`: Show the latest version but only for packages that are outdated.
-* `--all (-a)`: Show all packages (even those not compatible with current system).
-* `--top-level (-T)`: Only show explicitly defined packages.
-
-{{% note %}}
-When `--only` is specified, `--with` and `--without` options are ignored.
-{{% /note %}}
-
+* `--tree --why`: Show package in a dependency tree, and indicate whether a direct dependency or required by other
 
 ## build
 
