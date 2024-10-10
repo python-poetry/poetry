@@ -200,7 +200,9 @@ lists all packages available."""
             self.line("")
             self.line("<info>required by</info>")
             for parent, requires_version in required_by.items():
-                self.line(f" - <c1>{parent}</c1> requires {package} <b>{requires_version}</b>")
+                self.line(
+                    f" - <c1>{parent}</c1> requires {package} <b>{requires_version}</b>"
+                )
 
         return 0
 
