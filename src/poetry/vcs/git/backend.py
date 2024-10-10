@@ -18,6 +18,7 @@ from dulwich.config import ConfigFile
 from dulwich.config import parse_submodules
 from dulwich.errors import NotGitRepository
 from dulwich.index import IndexEntry
+from dulwich.objects import Commit
 from dulwich.refs import ANNOTATED_TAG_SUFFIX
 from dulwich.repo import Repo
 
@@ -313,20 +314,46 @@ class Git:
             if isinstance(e, AssertionError) and "Invalid object name" not in str(e):
                 raise
 
-            logger.debug(
-                "\nRequested ref (<c2>%s</c2>) was not fetched to local copy and"
-                " cannot be used. The following error was"
-                " raised:\n\n\t<warning>%s</>",
-                refspec.key,
-                e,
-            )
+            short_ref_found = False
 
-            raise PoetryConsoleError(
-                f"Failed to clone {url} at '{refspec.key}', verify ref exists on"
-                " remote."
-            )
+            if refspec.is_sha_short:
+                commit = cls._find_object_by_sha_prefix(local, refspec.key.encode())
+                if commit is not None:
+                    logger.debug(
+                        "\nResolved short SHA <c2>%s</c2> as <c2>%s</c2>",
+                        refspec.key,
+                        commit.id,
+                    )
+                    local.refs[b"HEAD"] = commit.id
+                    try:
+                        with local:
+                            local.reset_index()
+                        short_ref_found = True
+                    except (AssertionError, KeyError) as e:
+                        logger.debug(
+                            "\nRequested ref (<c2>%s</c2>) was not fetched to local copy and"
+                            " cannot be used. The following error was"
+                            " raised:\n\n\t<warning>%s</>",
+                            refspec.key,
+                            e,
+                        )
+
+            if not short_ref_found:
+                raise PoetryConsoleError(
+                    f"Failed to clone {url} at '{refspec.key}', verify ref exists on"
+                    " remote."
+                )
 
         return local
+
+    @classmethod
+    def _find_object_by_sha_prefix(cls, repo: Repo, sha_prefix: bytes) -> Commit | None:
+        for sha in repo.object_store:
+            if sha.startswith(sha_prefix):
+                obj = repo.object_store[sha]
+                if isinstance(obj, Commit):
+                    return obj
+        return None
 
     @classmethod
     def _clone_submodules(cls, repo: Repo) -> None:
