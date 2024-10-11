@@ -881,7 +881,7 @@ class Provider:
                 get_python_constraint_from_marker(marker)
             )
             and (active_extras is None or marker.validate({"extra": active_extras}))
-            and (not self._env or marker.validate(self._marker_values(active_extras)))
+            and (not self._env or marker.validate(self._env.marker_env))
         )
 
     def _resolve_overlapping_markers(
@@ -979,14 +979,12 @@ class Provider:
         self, extras: Collection[NormalizedName] | None = None
     ) -> dict[str, Any]:
         """
-        Marker values, per:
-        1. marker_env of `self._env`
-        2. 'extras' will be added to the 'extra' marker if not already present
+        Marker values, from `self._env` if present plus the supplied extras
+
+        :param extras: the values to add to the 'extra' marker value
         """
         result = self._env.marker_env.copy() if self._env is not None else {}
         if extras is not None:
-            if "extra" not in result:
-                result["extra"] = set(extras)
-            else:
-                result["extra"] = set(result["extra"]).union(extras)
+            assert "extra" not in result, "'extra' marker key is already present in environment"
+            result["extra"] = set(extras)
         return result
