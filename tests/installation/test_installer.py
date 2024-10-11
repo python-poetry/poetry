@@ -1027,6 +1027,110 @@ def test_run_with_dependencies_nested_extras(
     assert locker.written_data == expected
 
 
+@pytest.mark.parametrize("locked", [False])  # TODO: lock data
+@pytest.mark.parametrize("extra", [None, "extra-one", "extra-two"])
+def test_run_with_conflicting_dependency_extras(
+    installer: Installer,
+    pool: RepositoryPool,
+    locker: Locker,
+    installed: CustomInstalledRepository,
+    repo: Repository,
+    config: Config,
+    package: ProjectPackage,
+    extra: str | None,
+    locked: bool,
+) -> None:
+    """https://github.com/python-poetry/poetry/issues/834
+
+    Tests resolution of extras in both root ('extra-one', 'extra-two') and transitive
+    ('demo-extra-one', 'demo-extra-two') dependencies
+    """
+    # Demo package with two optional transitive dependencies, one for each extra
+    demo_pkg = get_package("demo", "1.0.0")
+    transitive_dep_one = get_package("transitive-dep", "1.1.0")
+    transitive_dep_two = get_package("transitive-dep", "1.2.0")
+    demo_pkg.extras = {
+        canonicalize_name("demo-extra-one"): [
+            get_dependency("transitive-dep", constraint={"version": "1.1.0", "optional": True})
+        ],
+        canonicalize_name("demo-extra-two"): [
+            get_dependency("transitive-dep", constraint={"version": "1.2.0", "optional": True})
+        ],
+    }
+    demo_pkg.add_dependency(
+        Factory.create_dependency(
+            "transitive-dep",
+            {
+                "version": "1.1.0",
+                "markers": "extra == 'demo-extra-one' and extra != 'demo-extra-two'",
+                "optional": True,
+            }
+        )
+    )
+    demo_pkg.add_dependency(
+        Factory.create_dependency(
+            "transitive-dep",
+            {
+                "version": "1.2.0",
+                "markers": "extra != 'demo-extra-one' and extra == 'demo-extra-two'",
+                "optional": True,
+            }
+        )
+    )
+    repo.add_package(demo_pkg)
+    repo.add_package(transitive_dep_one)
+    repo.add_package(transitive_dep_two)
+
+    # 'demo' with extra 'demo-extra-one' when package has 'extra-one' extra
+    #  and with extra 'demo-extra-two' when 'extra-two'
+    extra_one_dep = Factory.create_dependency(
+        "demo",
+        {
+            "version": "1.0.0",
+            "markers": "extra == 'extra-one' and extra != 'extra-two'",
+            "extras": ["demo-extra-one"],
+            "optional": True,
+        },
+    )
+    extra_two_dep = Factory.create_dependency(
+        "demo",
+        {
+            "version": "1.0.0",
+            "markers": "extra != 'extra-one' and extra == 'extra-two'",
+            "extras": ["demo-extra-two"],
+            "optional": True,
+        },
+    )
+    package.add_dependency(extra_one_dep)
+    package.add_dependency(extra_two_dep)
+    package.extras = {
+        canonicalize_name("extra-one"): [extra_one_dep],
+        canonicalize_name("extra-two"): [extra_two_dep],
+    }
+
+    locker.locked(locked)
+    if locked:
+        raise ValueError("no lock data for this test yet")
+        locker.mock_lock_data(dict(fixture("TODO")))
+
+    if extra is not None:
+        installer.extras([extra])
+    result = installer.run()
+    assert result == 0
+
+    if not locked:
+        raise ValueError("no lock data for this test yet")
+        expected = fixture("TODO")
+        assert locker.written_data == expected
+
+    # Results of installation are consistent with the 'extra' input
+    assert isinstance(installer.executor, Executor)
+    if extra is None:
+        assert len(installer.executor.installations) == 0
+    else:
+        assert len(installer.executor.installations) == 2
+
+
 @pytest.mark.parametrize("locked", [True, False])
 @pytest.mark.parametrize("extra", [None, "cpu", "cuda"])
 def test_run_with_exclusive_extras_different_sources(
