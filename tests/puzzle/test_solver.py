@@ -4765,6 +4765,47 @@ def test_solver_resolves_duplicate_dependency_in_extra(
     )
 
 
+@pytest.mark.parametrize("with_extra", [False, True])
+def test_solver_resolves_duplicate_dependency_in_root_extra(
+    package: ProjectPackage,
+    pool: RepositoryPool,
+    repo: Repository,
+    io: NullIO,
+    with_extra: bool,
+) -> None:
+    """
+    Without extras, a newer version of A can be chosen than with root extras.
+    """
+    constraint: dict[str, Any] = {"version": "*"}
+    if with_extra:
+        constraint["extras"] = ["foo"]
+    package_a1 = get_package("A", "1.0")
+    package_a2 = get_package("A", "2.0")
+
+    dep = get_dependency("A", ">=1.0")
+    package.add_dependency(dep)
+
+    dep_extra = get_dependency("A", "^1.0", optional=True)
+    dep_extra.marker = parse_marker("extra == 'foo'")
+    package.extras = {canonicalize_name("foo"): [dep_extra]}
+    package.add_dependency(dep_extra)
+
+    repo.add_package(package_a1)
+    repo.add_package(package_a2)
+
+    solver = Solver(package, pool, [], [], io)
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        (
+            [
+                {"job": "install", "package": package_a1 if with_extra else package_a2},
+            ]
+        ),
+    )
+
+
 def test_solver_resolves_duplicate_dependencies_with_restricted_extras(
     package: ProjectPackage,
     pool: RepositoryPool,
