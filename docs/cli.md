@@ -448,6 +448,7 @@ about dependency groups.
 ### Options
 
 * `--group (-G)`: The group to add the dependency to.
+* `--dev (-D)`: Add package as development dependency. (shortcut for `-G dev`)
 * `--editable (-e)`: Add vcs/path dependencies as editable.
 * `--extras (-E)`: Extras to activate for the dependency. (multiple values allowed)
 * `--optional`: Add as an optional dependency to an extra.
@@ -480,6 +481,7 @@ about dependency groups.
 ### Options
 
 * `--group (-G)`: The group to remove the dependency from.
+* `--dev (-D)`: Removes a package from the development dependencies. (shortcut for `-G dev`)
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
 * `--lock`: Do not perform operations (only update the lockfile).
 

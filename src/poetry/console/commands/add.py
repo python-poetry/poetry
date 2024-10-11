@@ -40,6 +40,11 @@ class AddCommand(InstallerCommand, InitCommand):
             flag=False,
             default=MAIN_GROUP,
         ),
+        option(
+            "dev",
+            "D",
+            "Add as a development dependency. (shortcut for '-G dev')",
+        ),
         option("editable", "e", "Add vcs/path dependencies as editable."),
         option(
             "extras",
@@ -122,7 +127,10 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
         from poetry.factory import Factory
 
         packages = self.argument("name")
-        group = self.option("group", self.default_group or MAIN_GROUP)
+        if self.option("dev"):
+            group = "dev"
+        else:
+            group = self.option("group", self.default_group or MAIN_GROUP)
 
         if self.option("extras") and len(packages) > 1:
             raise ValueError(

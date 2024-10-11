@@ -29,6 +29,12 @@ class RemoveCommand(InstallerCommand):
     options: ClassVar[list[Option]] = [
         option("group", "G", "The group to remove the dependency from.", flag=False),
         option(
+            "dev",
+            "D",
+            "Remove a package from the development dependencies."
+            " (shortcut for '-G dev')",
+        ),
+        option(
             "dry-run",
             None,
             "Output the operations but do not execute anything "
@@ -49,7 +55,11 @@ list of installed packages
 
     def handle(self) -> int:
         packages = self.argument("packages")
-        group = self.option("group", self.default_group)
+
+        if self.option("dev"):
+            group = "dev"
+        else:
+            group = self.option("group", self.default_group)
 
         content: dict[str, Any] = self.poetry.file.read()
         project_content = content.get("project", {})

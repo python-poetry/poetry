@@ -1099,6 +1099,35 @@ def test_add_creating_poetry_section_does_not_remove_existing_tools(
     assert pyproject["tool"]["foo"]["key"] == "value"
 
 
+def test_add_to_dev_section(app: PoetryTestApplication, tester: CommandTester) -> None:
+    tester.execute("cachy --dev")
+
+    expected = """\
+Using version ^0.2.0 for cachy
+
+Updating dependencies
+Resolving dependencies...
+
+Package operations: 2 installs, 0 updates, 0 removals
+
+  - Installing msgpack-python (0.5.6)
+  - Installing cachy (0.2.0)
+
+Writing lock file
+"""
+
+    assert tester.io.fetch_error() == ""
+    assert tester.io.fetch_output() == expected
+    assert isinstance(tester.command, InstallerCommand)
+    assert tester.command.installer.executor.installations_count == 2
+
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    content = pyproject["tool"]["poetry"]
+
+    assert "cachy" in content["group"]["dev"]["dependencies"]
+    assert content["group"]["dev"]["dependencies"]["cachy"] == "^0.2.0"
+
+
 def test_add_should_not_select_prereleases(
     app: PoetryTestApplication, tester: CommandTester
 ) -> None:
