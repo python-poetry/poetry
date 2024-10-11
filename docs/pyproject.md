@@ -630,7 +630,7 @@ A list of patterns that will be excluded or included in the final package.
 [tool.poetry]
 # ...
 exclude = ["my_package/excluded.py"]
-include = ["my_package/data.txt"]
+include = ["CHANGELOG.md"]
 ```
 
 You can explicitly specify to Poetry that a set of globs should be ignored or included for the purposes of packaging.
@@ -654,7 +654,9 @@ include = [
 ]
 ```
 
-If no format is specified, it will default to include both `sdist` and `wheel`.
+If no format is specified, `include` defaults to only `sdist`.
+
+In contrast, `exclude` defaults to both `sdist` and `wheel`.
 
 {{% warning %}}
 When a wheel is installed, its includes are unpacked straight into the `site-packages` directory.
