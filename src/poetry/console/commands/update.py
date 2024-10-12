@@ -26,12 +26,6 @@ class UpdateCommand(InstallerCommand):
     options: ClassVar[list[Option]] = [
         *InstallerCommand._group_dependency_options(),
         option(
-            "no-dev",
-            None,
-            "Do not update the development dependencies."
-            " (<warning>Deprecated</warning>)",
-        ),
-        option(
             "sync",
             None,
             "Synchronize the environment with the locked packages and the specified"
