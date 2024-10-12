@@ -11,15 +11,6 @@ menu:
 
 # Docker Best Practices
 
-- [Best Practices](#best-practices)
-- [Imags examples and use cases](#imags-examples-and-use-cases)
-  - [Minimum-poetry](#minimum-poetry)
-    - [Specifics](#specifics)
-    - [Use cases](#use-cases)
-  - [Poetry-multistage](#poetry-multistage)
-    - [Specifics](#specifics-1)
-    - [Use cases](#use-cases-1)
-
 Poetry is a very valuable tool for increasing the robustness and reproducibility of a virtual environment on which your python code is based. When integrating Poetry into a Docker image, adopting some best practices will help improve build efficiency, container security, and help achieve lighter images. In this section, we will explore best practices for creating optimized and secure Docker images for projects managed with Poetry.
 This section is a developing project, so you are warmly invited to contribute new suggestions.
 
