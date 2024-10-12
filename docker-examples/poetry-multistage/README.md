@@ -8,7 +8,7 @@ Expected size: ~130MB, virtual env layer excluded.
 
 ## Use cases
 
-This image is especially useful when ...
+The usefulness of this image lies in the Dockerfile that shows an example of how to build a multistage image, to optimize the construction of the virtual environment. Always use it as a starting point for your images that you want to optimize in size.
 
 ## How to use it
 
