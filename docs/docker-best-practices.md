@@ -1,6 +1,6 @@
 ---
 title: "Docker Best Practices"
-draft: true
+draft: false
 type: docs
 layout: "docs"
 
