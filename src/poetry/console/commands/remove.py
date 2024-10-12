@@ -32,8 +32,7 @@ class RemoveCommand(InstallerCommand):
             "dev",
             "D",
             "Remove a package from the development dependencies."
-            " (<warning>Deprecated</warning>)"
-            " Use --group=dev instead.",
+            " (shortcut for '-G dev')",
         ),
         option(
             "dry-run",
@@ -58,10 +57,6 @@ list of installed packages
         packages = self.argument("packages")
 
         if self.option("dev"):
-            self.line_error(
-                "<warning>The --dev option is deprecated, "
-                "use the `--group dev` notation instead.</warning>"
-            )
             group = "dev"
         else:
             group = self.option("group", self.default_group)

@@ -23,13 +23,6 @@ class LockCommand(InstallerCommand):
             "Ignore existing lock file"
             " and overwrite it with a new lock file created from scratch.",
         ),
-        option(
-            "check",
-            None,
-            "Check that the <comment>poetry.lock</> file corresponds to the current"
-            " version of <comment>pyproject.toml</>. (<warning>Deprecated</>) Use"
-            " <comment>poetry check --lock</> instead.",
-        ),
     ]
 
     help = """
@@ -46,22 +39,6 @@ will not be updated.
     loggers: ClassVar[list[str]] = ["poetry.repositories.pypi_repository"]
 
     def handle(self) -> int:
-        if self.option("check"):
-            self.line_error(
-                "<warning>poetry lock --check is deprecated, use `poetry"
-                " check --lock` instead.</warning>"
-            )
-            if self.poetry.locker.is_locked() and self.poetry.locker.is_fresh():
-                self.line("poetry.lock is consistent with pyproject.toml.")
-                return 0
-            self.line_error(
-                "<error>"
-                "Error: pyproject.toml changed significantly since poetry.lock was last generated. "
-                "Run `poetry lock [--no-update]` to fix the lock file."
-                "</error>"
-            )
-            return 1
-
         self.installer.lock(update=self.option("regenerate"))
 
         return self.installer.run()
