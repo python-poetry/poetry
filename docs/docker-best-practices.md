@@ -20,7 +20,7 @@ The following best practices should be kept in mind
 
 - [optional] Set the latest python version, in order to get the latest security patch.
   - CAVEAT: It might reduce the reproducibility of the code, between one image build and another, since some function might change from one version of python to another.
-- [highly suggested] Use `pip` to install poetry (see https://python-poetry.org/docs/#ci-recommendations).
+- [highly suggested] Use `pip` to install poetry (see [CI recommendations]({{< relref "#ci-recommendations" >}})).
 - [highly suggested] Clear Poetry cache after the installation.
 - [critical] Never hardcode credentials to private sources.
 - [optional] Install Poetry in a dedicated venv
@@ -29,7 +29,7 @@ The following best practices should be kept in mind
   - https://docs.docker.com/build/cache/
   - https://pythonspeed.com/docker/
 - [highly suggested] copy source code only after `poetry install`. For more info see:
-  - https://python-poetry.org/docs/faq/#poetry-busts-my-docker-cache-because-it-requires-me-to-copy-my-source-files-in-before-installing-3rd-party-dependencies
+  - [FAQ]({{< relref "faq/#poetry-busts-my-docker-cache-because-it-requires-me-to-copy-my-source-files-in-before-installing-3rd-party-dependencies" >}})
 
 ## Imags examples and use cases
 
