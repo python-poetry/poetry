@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import signal
 import subprocess
 import sys
@@ -11,7 +12,6 @@ from typing import Any
 
 import pexpect
 
-from cleo.terminal import Terminal
 from shellingham import ShellDetectionFailure
 from shellingham import detect_shell
 
@@ -70,37 +70,72 @@ class Shell:
 
     def activate(self, env: VirtualEnv) -> int | None:
         activate_script = self._get_activate_script()
-        bin_dir = "Scripts" if WINDOWS else "bin"
+        if WINDOWS:
+            bin_path = env.path / "Scripts"
+            # Python innstalled via msys2 on Windows might produce a POSIX-like venv
+            # See https://github.com/python-poetry/poetry/issues/8638
+            bin_dir = "Scripts" if bin_path.exists() else "bin"
+        else:
+            bin_dir = "bin"
         activate_path = env.path / bin_dir / activate_script
 
         # mypy requires using sys.platform instead of WINDOWS constant
         # in if statements to properly type check on Windows
         if sys.platform == "win32":
+            args = None
             if self._name in ("powershell", "pwsh"):
                 args = ["-NoExit", "-File", str(activate_path)]
-            else:
+            elif self._name == "cmd":
                 # /K will execute the bat file and
                 # keep the cmd process from terminating
                 args = ["/K", str(activate_path)]
-            completed_proc = subprocess.run([self.path, *args])
-            return completed_proc.returncode
+
+            if args:
+                completed_proc = subprocess.run([self.path, *args])
+                return completed_proc.returncode
+            else:
+                # If no args are set, execute the shell within the venv
+                # This activates it, but there could be some features missing:
+                # deactivate command might not work
+                # shell prompt will not be modified.
+                return env.execute(self._path)
 
         import shlex
 
-        terminal = Terminal()
+        terminal = shutil.get_terminal_size()
+        cmd = f"{self._get_source_command()} {shlex.quote(str(activate_path))}"
+
         with env.temp_environ():
+            if self._name == "nu":
+                args = ["-e", cmd]
+            elif self._name == "fish":
+                args = ["-i", "--init-command", cmd]
+            else:
+                args = ["-i"]
+
             c = pexpect.spawn(
-                self._path, ["-i"], dimensions=(terminal.height, terminal.width)
+                self._path, args, dimensions=(terminal.lines, terminal.columns)
             )
 
-        if self._name == "zsh":
+        if self._name in ["zsh"]:
             c.setecho(False)
 
-        c.sendline(f"{self._get_source_command()} {shlex.quote(str(activate_path))}")
+        if self._name == "zsh":
+            # Under ZSH the source command should be invoked in zsh's bash emulator
+            quoted_activate_path = shlex.quote(str(activate_path))
+            c.sendline(f"emulate bash -c {shlex.quote(f'. {quoted_activate_path}')}")
+        elif self._name == "xonsh":
+            c.sendline(f"vox activate {shlex.quote(str(env.path))}")
+        elif self._name in ["nu", "fish"]:
+            # If this is nu or fish, we don't want to send the activation command to the
+            # command line since we already ran it via the shell's invocation.
+            pass
+        else:
+            c.sendline(cmd)
 
         def resize(sig: Any, data: Any) -> None:
-            terminal = Terminal()
-            c.setwinsize(terminal.height, terminal.width)
+            terminal = shutil.get_terminal_size()
+            c.setwinsize(terminal.lines, terminal.columns)
 
         signal.signal(signal.SIGWINCH, resize)
 
@@ -119,6 +154,8 @@ class Shell:
             suffix = ".ps1"
         elif self._name == "cmd":
             suffix = ".bat"
+        elif self._name == "nu":
+            suffix = ".nu"
         else:
             suffix = ""
 
@@ -127,6 +164,8 @@ class Shell:
     def _get_source_command(self) -> str:
         if self._name in ("fish", "csh", "tcsh"):
             return "source"
+        elif self._name == "nu":
+            return "overlay use"
         return "."
 
     def __repr__(self) -> str:

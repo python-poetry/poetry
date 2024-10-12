@@ -1,0 +1,30 @@
+{
+  "files": [
+    {
+      "core-metadata": {
+        "sha256": "2e0d683c7b4e771e915184e69ed28e4ce7c239ca89b9025f7e74d63b37c656b6"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "2e0d683c7b4e771e915184e69ed28e4ce7c239ca89b9025f7e74d63b37c656b6"
+      },
+      "filename": "with_transitive_extra_dependency-0.12.4-py3-none-any.whl",
+      "hashes": {
+        "md5": "632fcf45cc28aed4a4dce1324d1bd1d1",
+        "sha256": "d88b34efa115392ee42c55d6f82cdf5e5e08221ef2e18a16ae696a80008c3499"
+      },
+      "requires-python": null,
+      "size": 6718,
+      "upload-time": "2017-02-01T23:26:20.148511Z",
+      "url": "https://files.pythonhosted.org/packages/9b/7e/7d701686013c0d7dae62e0977467232a6adc2e562c23878eb3cd4f97d02e/with_transitive_extra_dependency-0.12.4-py3-none-any.whl",
+      "yanked": false
+    }
+  ],
+  "meta": {
+    "_last-serial": 0,
+    "api-version": "1.1"
+  },
+  "name": "with-transitive-extra-dependency",
+  "versions": [
+    "0.12.4"
+  ]
+}

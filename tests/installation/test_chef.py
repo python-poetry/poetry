@@ -1,92 +1,171 @@
 from __future__ import annotations
 
+import os
+import shutil
+import tempfile
+
 from pathlib import Path
 from typing import TYPE_CHECKING
+from zipfile import ZipFile
 
-from packaging.tags import Tag
+import pytest
+
+from build import ProjectBuilder
 from poetry.core.packages.utils.link import Link
 
+from poetry.factory import Factory
 from poetry.installation.chef import Chef
-from poetry.utils.env import MockEnv
+from poetry.repositories import RepositoryPool
+from poetry.utils.env import EnvManager
 
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
+    from poetry.repositories.pypi_repository import PyPiRepository
+    from poetry.utils.cache import ArtifactCache
     from tests.conftest import Config
+    from tests.types import FixtureDirGetter
 
 
-def test_get_cached_archive_for_link(config: Config, mocker: MockerFixture):
+@pytest.fixture()
+def pool(pypi_repository: PyPiRepository) -> RepositoryPool:
+    pool = RepositoryPool()
+
+    pool.add_repository(pypi_repository)
+
+    return pool
+
+
+@pytest.fixture(autouse=True)
+def setup(mocker: MockerFixture, pool: RepositoryPool) -> None:
+    mocker.patch.object(Factory, "create_pool", return_value=pool)
+
+
+def test_prepare_sdist(
+    config: Config,
+    config_cache_dir: Path,
+    artifact_cache: ArtifactCache,
+    fixture_dir: FixtureDirGetter,
+) -> None:
     chef = Chef(
-        config,
-        MockEnv(
-            version_info=(3, 8, 3),
-            marker_env={"interpreter_name": "cpython", "interpreter_version": "3.8.3"},
-            supported_tags=[
-                Tag("cp38", "cp38", "macosx_10_15_x86_64"),
-                Tag("py3", "none", "any"),
-            ],
-        ),
+        artifact_cache, EnvManager.get_system_env(), Factory.create_pool(config)
     )
+    archive = (fixture_dir("distributions") / "demo-0.1.0.tar.gz").resolve()
+    destination = artifact_cache.get_cache_directory_for_link(Link(archive.as_uri()))
 
-    mocker.patch.object(
-        chef,
-        "get_cached_archives_for_link",
-        return_value=[
-            Link("file:///foo/demo-0.1.0-py2.py3-none-any"),
-            Link("file:///foo/demo-0.1.0.tar.gz"),
-            Link("file:///foo/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl"),
-            Link("file:///foo/demo-0.1.0-cp37-cp37-macosx_10_15_x86_64.whl"),
-        ],
-    )
+    wheel = chef.prepare(archive)
 
-    archive = chef.get_cached_archive_for_link(
-        Link("https://files.python-poetry.org/demo-0.1.0.tar.gz")
-    )
-
-    assert Link("file:///foo/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl") == archive
+    assert wheel.parent == destination
+    assert wheel.name == "demo-0.1.0-py3-none-any.whl"
 
 
-def test_get_cached_archives_for_link(config: Config, mocker: MockerFixture):
+def test_prepare_directory(
+    config: Config,
+    config_cache_dir: Path,
+    artifact_cache: ArtifactCache,
+    fixture_dir: FixtureDirGetter,
+) -> None:
     chef = Chef(
-        config,
-        MockEnv(
-            marker_env={"interpreter_name": "cpython", "interpreter_version": "3.8.3"}
-        ),
+        artifact_cache, EnvManager.get_system_env(), Factory.create_pool(config)
+    )
+    archive = fixture_dir("simple_project_legacy").resolve()
+
+    wheel = chef.prepare(archive)
+
+    assert wheel.name == "simple_project-1.2.3-py2.py3-none-any.whl"
+
+    assert wheel.parent.parent == Path(tempfile.gettempdir())
+    # cleanup generated tmp dir artifact
+    os.unlink(wheel)
+
+
+def test_prepare_directory_with_extensions(
+    config: Config,
+    config_cache_dir: Path,
+    artifact_cache: ArtifactCache,
+    fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
+) -> None:
+    env = EnvManager.get_system_env()
+    chef = Chef(artifact_cache, env, Factory.create_pool(config))
+    archive = shutil.copytree(
+        fixture_dir("extended_with_no_setup").resolve(), tmp_path / "project"
     )
 
-    distributions = Path(__file__).parent.parent.joinpath("fixtures/distributions")
-    mocker.patch.object(
-        chef,
-        "get_cache_directory_for_link",
-        return_value=distributions,
-    )
+    wheel = chef.prepare(archive)
 
-    archives = chef.get_cached_archives_for_link(
-        Link("https://files.python-poetry.org/demo-0.1.0.tar.gz")
-    )
+    assert wheel.parent.parent == Path(tempfile.gettempdir())
+    assert wheel.name == f"extended-0.1-{env.supported_tags[0]}.whl"
 
-    assert archives
-    assert set(archives) == {
-        Link(path.as_uri()) for path in distributions.glob("demo-0.1.0*")
-    }
+    # cleanup generated tmp dir artifact
+    os.unlink(wheel)
 
 
-def test_get_cache_directory_for_link(config: Config, config_cache_dir: Path):
+def test_prepare_directory_editable(
+    config: Config,
+    config_cache_dir: Path,
+    artifact_cache: ArtifactCache,
+    fixture_dir: FixtureDirGetter,
+) -> None:
     chef = Chef(
-        config,
-        MockEnv(
-            marker_env={"interpreter_name": "cpython", "interpreter_version": "3.8.3"}
-        ),
+        artifact_cache, EnvManager.get_system_env(), Factory.create_pool(config)
     )
+    archive = fixture_dir("simple_project_legacy").resolve()
 
-    directory = chef.get_cache_directory_for_link(
-        Link("https://files.python-poetry.org/poetry-1.1.0.tar.gz")
+    wheel = chef.prepare(archive, editable=True)
+
+    assert wheel.parent.parent == Path(tempfile.gettempdir())
+    assert wheel.name == "simple_project-1.2.3-py2.py3-none-any.whl"
+
+    with ZipFile(wheel) as z:
+        assert "simple_project.pth" in z.namelist()
+
+    # cleanup generated tmp dir artifact
+    os.unlink(wheel)
+
+
+def test_prepare_directory_script(
+    config: Config,
+    config_cache_dir: Path,
+    artifact_cache: ArtifactCache,
+    fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
+    mocker: MockerFixture,
+) -> None:
+    """
+    Building a project that requires calling a script from its build_requires.
+    """
+    # make sure the scripts project is on the same drive (for Windows tests in CI)
+    scripts_dir = tmp_path / "scripts"
+    shutil.copytree(fixture_dir("scripts"), scripts_dir)
+
+    orig_build_system_requires = ProjectBuilder.build_system_requires
+
+    class CustomPropertyMock:
+        def __get__(
+            self, obj: ProjectBuilder, obj_type: type[ProjectBuilder] | None = None
+        ) -> set[str]:
+            assert isinstance(obj, ProjectBuilder)
+            return {
+                req.replace("<scripts>", f"scripts @ {scripts_dir.as_uri()}")
+                for req in orig_build_system_requires.fget(obj)  # type: ignore[attr-defined]
+            }
+
+    mocker.patch(
+        "build.ProjectBuilder.build_system_requires",
+        new_callable=CustomPropertyMock,
     )
-
-    expected = Path(
-        f"{config_cache_dir.as_posix()}/artifacts/ba/63/13/"
-        "283a3b3b7f95f05e9e6f84182d276f7bb0951d5b0cc24422b33f7a4648"
+    chef = Chef(
+        artifact_cache, EnvManager.get_system_env(), Factory.create_pool(config)
     )
+    archive = shutil.copytree(
+        fixture_dir("project_with_setup_calls_script").resolve(), tmp_path / "project"
+    )
+    wheel = chef.prepare(archive)
 
-    assert directory == expected
+    assert wheel.name == "project_with_setup_calls_script-0.1.2-py3-none-any.whl"
+
+    assert wheel.parent.parent == Path(tempfile.gettempdir())
+    # cleanup generated tmp dir artifact
+    os.unlink(wheel)

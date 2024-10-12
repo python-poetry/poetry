@@ -1,16 +1,13 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from typing import TYPE_CHECKING
 
 from cleo.helpers import option
+from poetry.core.packages.dependency_group import MAIN_GROUP
 
-
-try:
-    from poetry.core.packages.dependency_group import MAIN_GROUP
-except ImportError:
-    MAIN_GROUP = "default"
-
-from poetry.console.commands.env_command import EnvCommand
+from poetry.console.commands.command import Command
+from poetry.console.exceptions import GroupNotFoundError
 
 
 if TYPE_CHECKING:
@@ -18,7 +15,7 @@ if TYPE_CHECKING:
     from poetry.core.packages.project_package import ProjectPackage
 
 
-class GroupCommand(EnvCommand):
+class GroupCommand(Command):
     @staticmethod
     def _group_dependency_options() -> list[Option]:
         return [
@@ -35,11 +32,6 @@ class GroupCommand(EnvCommand):
                 "The optional dependency groups to include.",
                 flag=False,
                 multiple=True,
-            ),
-            option(
-                "default",
-                None,
-                "Only include the main dependencies. (<warning>Deprecated</warning>)",
             ),
             option(
                 "only",
@@ -85,15 +77,14 @@ class GroupCommand(EnvCommand):
         for key in {"with", "without", "only"}:
             groups[key] = {
                 group.strip()
-                for groups in self.option(key)
+                for groups in self.option(key, "")
                 for group in groups.split(",")
             }
+        self._validate_group_options(groups)
 
         for opt, new, group in [
-            ("default", "only", MAIN_GROUP),
             ("no-dev", "only", MAIN_GROUP),
             ("dev", "with", "dev"),
-            ("dev-only", "without", MAIN_GROUP),
         ]:
             if self.io.input.has_option(opt) and self.option(opt):
                 self.line_error(
@@ -119,3 +110,22 @@ class GroupCommand(EnvCommand):
         return self.poetry.package.with_dependency_groups(
             list(self.activated_groups), only=True
         )
+
+    def _validate_group_options(self, group_options: dict[str, set[str]]) -> None:
+        """
+        Raises an error if it detects that a group is not part of pyproject.toml
+        """
+        invalid_options = defaultdict(set)
+        for opt, groups in group_options.items():
+            for group in groups:
+                if not self.poetry.package.has_dependency_group(group):
+                    invalid_options[group].add(opt)
+        if invalid_options:
+            message_parts = []
+            for group in sorted(invalid_options):
+                opts = ", ".join(
+                    f"<fg=yellow;options=bold>--{opt}</>"
+                    for opt in sorted(invalid_options[group])
+                )
+                message_parts.append(f"{group} (via {opts})")
+            raise GroupNotFoundError(f"Group(s) not found: {', '.join(message_parts)}")

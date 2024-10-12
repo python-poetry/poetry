@@ -6,37 +6,30 @@ from collections import defaultdict
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 from typing import FrozenSet
-from typing import Iterator
 from typing import Tuple
-from typing import TypeVar
-
-
-try:
-    from poetry.core.packages.dependency_group import MAIN_GROUP
-except ImportError:
-    MAIN_GROUP = "default"
 
 from poetry.mixology import resolve_version
-from poetry.mixology.failure import SolveFailure
-from poetry.packages import DependencyPackage
-from poetry.puzzle.exceptions import OverrideNeeded
+from poetry.mixology.failure import SolveFailureError
+from poetry.puzzle.exceptions import OverrideNeededError
 from poetry.puzzle.exceptions import SolverProblemError
+from poetry.puzzle.provider import Indicator
 from poetry.puzzle.provider import Provider
 
 
 if TYPE_CHECKING:
+    from collections.abc import Collection
+    from collections.abc import Iterator
+    from collections.abc import Sequence
+
     from cleo.io.io import IO
+    from packaging.utils import NormalizedName
     from poetry.core.packages.dependency import Dependency
-    from poetry.core.packages.directory_dependency import DirectoryDependency
-    from poetry.core.packages.file_dependency import FileDependency
     from poetry.core.packages.package import Package
     from poetry.core.packages.project_package import ProjectPackage
-    from poetry.core.packages.url_dependency import URLDependency
-    from poetry.core.packages.vcs_dependency import VCSDependency
+    from typing_extensions import Self
 
     from poetry.puzzle.transaction import Transaction
-    from poetry.repositories import Pool
-    from poetry.repositories import Repository
+    from poetry.repositories import RepositoryPool
     from poetry.utils.env import Env
 
 
@@ -44,23 +37,21 @@ class Solver:
     def __init__(
         self,
         package: ProjectPackage,
-        pool: Pool,
-        installed: Repository,
-        locked: Repository,
+        pool: RepositoryPool,
+        installed: list[Package],
+        locked: list[Package],
         io: IO,
-        provider: Provider | None = None,
     ) -> None:
         self._package = package
         self._pool = pool
-        self._installed = installed
-        self._locked = locked
+        self._installed_packages = installed
+        self._locked_packages = locked
         self._io = io
 
-        if provider is None:
-            provider = Provider(self._package, self._pool, self._io)
-
-        self._provider = provider
-        self._overrides: list[dict[DependencyPackage, dict[str, Dependency]]] = []
+        self._provider = Provider(
+            self._package, self._pool, self._io, installed=installed, locked=locked
+        )
+        self._overrides: list[dict[Package, dict[str, Dependency]]] = []
 
     @property
     def provider(self) -> Provider:
@@ -71,46 +62,75 @@ class Solver:
         with self.provider.use_environment(env):
             yield
 
-    def solve(self, use_latest: list[str] | None = None) -> Transaction:
+    def solve(
+        self, use_latest: Collection[NormalizedName] | None = None
+    ) -> Transaction:
         from poetry.puzzle.transaction import Transaction
 
-        with self._provider.progress():
+        with self._progress(), self._provider.use_latest_for(use_latest or []):
             start = time.time()
-            packages, depths = self._solve(use_latest=use_latest)
+            packages, depths = self._solve()
             end = time.time()
 
             if len(self._overrides) > 1:
                 self._provider.debug(
-                    f"Complete version solving took {end - start:.3f} seconds with"
-                    f" {len(self._overrides)} overrides"
+                    # ignore the warning as provider does not do interpolation
+                    f"Complete version solving took {end - start:.3f}"
+                    f" seconds with {len(self._overrides)} overrides"
                 )
                 self._provider.debug(
+                    # ignore the warning as provider does not do interpolation
                     "Resolved with overrides:"
                     f" {', '.join(f'({b})' for b in self._overrides)}"
                 )
 
+        for p in packages:
+            if p.yanked:
+                message = (
+                    f"The locked version {p.pretty_version} for {p.pretty_name} is a"
+                    " yanked version."
+                )
+                if p.yanked_reason:
+                    message += f" Reason for being yanked: {p.yanked_reason}"
+                self._io.write_error_line(f"<warning>Warning: {message}</warning>")
+
         return Transaction(
-            self._locked.packages,
+            self._locked_packages,
             list(zip(packages, depths)),
-            installed_packages=self._installed.packages,
+            installed_packages=self._installed_packages,
             root_package=self._package,
         )
 
-    def solve_in_compatibility_mode(
-        self,
-        overrides: tuple[dict[DependencyPackage, dict[str, Dependency]], ...],
-        use_latest: list[str] | None = None,
-    ) -> tuple[list[Package], list[int]]:
+    @contextmanager
+    def _progress(self) -> Iterator[None]:
+        if not self._io.output.is_decorated() or self._provider.is_debugging():
+            self._io.write_line("Resolving dependencies...")
+            yield
+        else:
+            indicator = Indicator(
+                self._io, "{message}{context}<debug>({elapsed:2s})</debug>"
+            )
 
+            with indicator.auto(
+                "<info>Resolving dependencies...</info>",
+                "<info>Resolving dependencies...</info>",
+            ):
+                yield
+
+    def _solve_in_compatibility_mode(
+        self,
+        overrides: tuple[dict[Package, dict[str, Dependency]], ...],
+    ) -> tuple[list[Package], list[int]]:
         packages = []
         depths = []
         for override in overrides:
             self._provider.debug(
+                # ignore the warning as provider does not do interpolation
                 "<comment>Retrying dependency resolution "
                 f"with the following overrides ({override}).</comment>"
             )
             self._provider.set_overrides(override)
-            _packages, _depths = self._solve(use_latest=use_latest)
+            _packages, _depths = self._solve()
             for index, package in enumerate(_packages):
                 if package not in packages:
                     packages.append(package)
@@ -127,32 +147,17 @@ class Solver:
 
         return packages, depths
 
-    def _solve(
-        self, use_latest: list[str] | None = None
-    ) -> tuple[list[Package], list[int]]:
+    def _solve(self) -> tuple[list[Package], list[int]]:
         if self._provider._overrides:
             self._overrides.append(self._provider._overrides)
 
-        locked: dict[str, list[DependencyPackage]] = defaultdict(list)
-        for package in self._locked.packages:
-            locked[package.name].append(
-                DependencyPackage(package.to_dependency(), package)
-            )
-        for dependency_packages in locked.values():
-            dependency_packages.sort(
-                key=lambda p: p.package.version,  # type: ignore[no-any-return]
-                reverse=True,
-            )
-
         try:
-            result = resolve_version(
-                self._package, self._provider, locked=locked, use_latest=use_latest
-            )
+            result = resolve_version(self._package, self._provider)
 
             packages = result.packages
-        except OverrideNeeded as e:
-            return self.solve_in_compatibility_mode(e.overrides, use_latest=use_latest)
-        except SolveFailure as e:
+        except OverrideNeededError as e:
+            return self._solve_in_compatibility_mode(e.overrides)
+        except SolveFailureError as e:
             raise SolverProblemError(e)
 
         combined_nodes = depth_first_search(PackageNode(self._package, packages))
@@ -165,29 +170,32 @@ class Solver:
             if package.features:
                 for _package in packages:
                     if (
-                        _package.name == package.name
-                        and not _package.is_same_package_as(package)
+                        not _package.features
+                        and _package.name == package.name
                         and _package.version == package.version
                     ):
                         for dep in package.requires:
-                            if dep.is_same_package_as(_package):
+                            # Prevent adding base package as a dependency to itself
+                            if _package.name == dep.name:
                                 continue
 
-                            if dep not in _package.requires:
-                                _package.add_dependency(dep)
+                            # Avoid duplication.
+                            if any(
+                                _dep == dep and _dep.marker == dep.marker
+                                for _dep in _package.requires
+                            ):
+                                continue
 
-                continue
-
-            final_packages.append(package)
-            depths.append(results[package])
+                            _package.add_dependency(dep)
+            else:
+                final_packages.append(package)
+                depths.append(results[package])
 
         # Return the packages in their original order with associated depths
         return final_packages, depths
 
 
 DFSNodeID = Tuple[str, FrozenSet[str], bool]
-
-T = TypeVar("T", bound="DFSNode")
 
 
 class DFSNode:
@@ -196,7 +204,7 @@ class DFSNode:
         self.name = name
         self.base_name = base_name
 
-    def reachable(self: T) -> list[T]:
+    def reachable(self) -> Sequence[Self]:
         return []
 
     def visit(self, parents: list[PackageNode]) -> None:
@@ -250,37 +258,18 @@ class PackageNode(DFSNode):
         package: Package,
         packages: list[Package],
         previous: PackageNode | None = None,
-        previous_dep: None
-        | (
-            DirectoryDependency
-            | FileDependency
-            | URLDependency
-            | VCSDependency
-            | Dependency
-        ) = None,
-        dep: None
-        | (
-            DirectoryDependency
-            | FileDependency
-            | URLDependency
-            | VCSDependency
-            | Dependency
-        ) = None,
+        dep: Dependency | None = None,
     ) -> None:
         self.package = package
         self.packages = packages
 
-        self.previous = previous
-        self.previous_dep = previous_dep
         self.dep = dep
         self.depth = -1
 
         if not previous:
-            self.category = "dev"
             self.groups: frozenset[str] = frozenset()
             self.optional = True
         elif dep:
-            self.category = "main" if MAIN_GROUP in dep.groups else "dev"
             self.groups = dep.groups
             self.optional = dep.is_optional()
         else:
@@ -292,47 +281,19 @@ class PackageNode(DFSNode):
             package.name,
         )
 
-    def reachable(self) -> list[PackageNode]:
+    def reachable(self) -> Sequence[PackageNode]:
         children: list[PackageNode] = []
 
-        if (
-            self.dep
-            and self.previous_dep
-            and self.previous_dep is not self.dep
-            and self.previous_dep.name == self.dep.name
-        ):
-            return []
-
         for dependency in self.package.all_requires:
-            if self.previous and self.previous.name == dependency.name:
-                # We have a circular dependency.
-                # Since the dependencies are resolved we can
-                # simply skip it because we already have it
-                # N.B. this only catches cycles of length 2;
-                # dependency cycles in general are handled by the DFS traversal
-                continue
-
             for pkg in self.packages:
-                if (
-                    pkg.complete_name == dependency.complete_name
-                    and (
-                        dependency.constraint.allows(pkg.version)
-                        or dependency.allows_prereleases()
-                        and pkg.version.is_unstable()
-                        and dependency.constraint.allows(pkg.version.stable)
-                    )
-                    and not any(
-                        child.package.complete_name == pkg.complete_name
-                        and child.groups == dependency.groups
-                        for child in children
-                    )
+                if pkg.complete_name == dependency.complete_name and (
+                    dependency.constraint.allows(pkg.version)
                 ):
                     children.append(
                         PackageNode(
                             pkg,
                             self.packages,
                             self,
-                            dependency,
                             self.dep or dependency,
                         )
                     )
@@ -358,14 +319,11 @@ def aggregate_package_nodes(nodes: list[PackageNode]) -> tuple[Package, int]:
     for node in nodes:
         groups.extend(node.groups)
 
-    category = "main" if any(MAIN_GROUP in node.groups for node in nodes) else "dev"
     optional = all(node.optional for node in nodes)
     for node in nodes:
         node.depth = depth
-        node.category = category
         node.optional = optional
 
-    package.category = category
     package.optional = optional
 
     return package, depth

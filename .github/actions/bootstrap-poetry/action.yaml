@@ -1,0 +1,45 @@
+name: Bootstrap Poetry
+description: Configure the environment with the specified Python and Poetry version.
+
+inputs:
+  python-version:
+    description: Desired node-semver compatible Python version expression (or 'default')
+    default: 'default'
+  python-latest:
+    description: Use an uncached Python if a newer match is available
+    default: 'false'
+  poetry-spec:
+    description: pip-compatible installation specification to use for Poetry
+    default: 'poetry'
+
+outputs:
+  python-path:
+    description: Path to the installed Python interpreter
+    value: ${{ steps.setup-python.outputs.python-path }}
+  python-version:
+    description: Version of the installed Python interpreter
+    value: ${{ steps.setup-python.outputs.python-version }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5
+      id: setup-python
+      if: inputs.python-version != 'default'
+      with:
+        python-version: ${{ inputs.python-version }}
+        check-latest: ${{ inputs.python-latest == 'true' }}
+        allow-prereleases: true
+        update-environment: false
+
+    - run: >
+        pipx install \
+          ${{ inputs.python-version != 'default' && format('--python "{0}"', steps.setup-python.outputs.python-path) || '' }} \
+          '${{ inputs.poetry-spec }}'
+      shell: bash
+
+    # Enable handling long path names (+260 char) on the Windows platform
+    # https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file#maximum-path-length-limitation
+    - run: git config --system core.longpaths true
+      if: runner.os == 'Windows'
+      shell: pwsh

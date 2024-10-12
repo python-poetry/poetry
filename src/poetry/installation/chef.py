@@ -1,110 +1,120 @@
 from __future__ import annotations
 
-import hashlib
-import json
+import tempfile
 
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from poetry.core.packages.utils.link import Link
+from build import BuildBackendException
+from poetry.core.utils.helpers import temporary_directory
 
-from poetry.installation.chooser import InvalidWheelName
-from poetry.installation.chooser import Wheel
+from poetry.utils._compat import decode
+from poetry.utils.helpers import extractall
+from poetry.utils.isolated_build import IsolatedBuildError
+from poetry.utils.isolated_build import isolated_builder
 
 
 if TYPE_CHECKING:
+    from build import DistributionType
 
-    from poetry.config.config import Config
+    from poetry.repositories import RepositoryPool
+    from poetry.utils.cache import ArtifactCache
     from poetry.utils.env import Env
 
 
+class ChefError(Exception): ...
+
+
 class Chef:
-    def __init__(self, config: Config, env: Env) -> None:
-        self._config = config
+    def __init__(
+        self, artifact_cache: ArtifactCache, env: Env, pool: RepositoryPool
+    ) -> None:
         self._env = env
-        self._cache_dir = (
-            Path(config.get("cache-dir")).expanduser().joinpath("artifacts")
-        )
+        self._pool = pool
+        self._artifact_cache = artifact_cache
 
-    def prepare(self, archive: Path) -> Path:
-        return archive
+    def prepare(
+        self, archive: Path, output_dir: Path | None = None, *, editable: bool = False
+    ) -> Path:
+        if not self._should_prepare(archive):
+            return archive
 
-    def prepare_sdist(self, archive: Path) -> Path:
-        return archive
+        if archive.is_dir():
+            destination = output_dir or Path(tempfile.mkdtemp(prefix="poetry-chef-"))
+            return self._prepare(archive, destination=destination, editable=editable)
 
-    def prepare_wheel(self, archive: Path) -> Path:
-        return archive
+        return self._prepare_sdist(archive, destination=output_dir)
 
-    def should_prepare(self, archive: Path) -> bool:
-        return not self.is_wheel(archive)
+    def _prepare(
+        self, directory: Path, destination: Path, *, editable: bool = False
+    ) -> Path:
+        from subprocess import CalledProcessError
 
-    def is_wheel(self, archive: Path) -> bool:
-        return archive.suffix == ".whl"
+        distribution: DistributionType = "editable" if editable else "wheel"
+        error: Exception | None = None
 
-    def get_cached_archive_for_link(self, link: Link) -> Link | None:
-        # If the archive is already a wheel, there is no need to cache it.
-        if link.is_wheel:
-            return link
+        try:
+            with isolated_builder(
+                source=directory,
+                distribution=distribution,
+                python_executable=self._env.python,
+                pool=self._pool,
+            ) as builder:
+                return Path(
+                    builder.build(
+                        distribution,
+                        destination.as_posix(),
+                    )
+                )
+        except BuildBackendException as e:
+            message_parts = [str(e)]
 
-        archives = self.get_cached_archives_for_link(link)
+            if isinstance(e.exception, CalledProcessError):
+                text = e.exception.stderr or e.exception.stdout
+                if text is not None:
+                    message_parts.append(decode(text))
+            else:
+                message_parts.append(str(e.exception))
 
-        if not archives:
-            return link
+            error = IsolatedBuildError("\n\n".join(message_parts))
 
-        candidates = []
-        for archive in archives:
-            if not archive.is_wheel:
-                candidates.append((float("inf"), archive))
-                continue
+        if error is not None:
+            raise error from None
 
-            try:
-                wheel = Wheel(archive.filename)
-            except InvalidWheelName:
-                continue
+    def _prepare_sdist(self, archive: Path, destination: Path | None = None) -> Path:
+        from poetry.core.packages.utils.link import Link
 
-            if not wheel.is_supported_by_environment(self._env):
-                continue
+        suffix = archive.suffix
+        zip = suffix == ".zip"
 
-            candidates.append(
-                (wheel.get_minimum_supported_index(self._env.supported_tags), archive),
+        with temporary_directory() as tmp_dir:
+            archive_dir = Path(tmp_dir)
+            extractall(source=archive, dest=archive_dir, zip=zip)
+
+            elements = list(archive_dir.glob("*"))
+
+            if len(elements) == 1 and elements[0].is_dir():
+                sdist_dir = elements[0]
+            else:
+                sdist_dir = archive_dir / archive.name.rstrip(suffix)
+                if not sdist_dir.is_dir():
+                    sdist_dir = archive_dir
+
+            if destination is None:
+                destination = self._artifact_cache.get_cache_directory_for_link(
+                    Link(archive.as_uri())
+                )
+
+            destination.mkdir(parents=True, exist_ok=True)
+
+            return self._prepare(
+                sdist_dir,
+                destination,
             )
 
-        if not candidates:
-            return link
+    def _should_prepare(self, archive: Path) -> bool:
+        return archive.is_dir() or not self._is_wheel(archive)
 
-        return min(candidates)[1]
-
-    def get_cached_archives_for_link(self, link: Link) -> list[Link]:
-        cache_dir = self.get_cache_directory_for_link(link)
-
-        archive_types = ["whl", "tar.gz", "tar.bz2", "bz2", "zip"]
-        links = []
-        for archive_type in archive_types:
-            for archive in cache_dir.glob(f"*.{archive_type}"):
-                links.append(Link(archive.as_uri()))
-
-        return links
-
-    def get_cache_directory_for_link(self, link: Link) -> Path:
-        key_parts = {"url": link.url_without_fragment}
-
-        if link.hash_name is not None and link.hash is not None:
-            key_parts[link.hash_name] = link.hash
-
-        if link.subdirectory_fragment:
-            key_parts["subdirectory"] = link.subdirectory_fragment
-
-        key_parts["interpreter_name"] = self._env.marker_env["interpreter_name"]
-        key_parts["interpreter_version"] = "".join(
-            self._env.marker_env["interpreter_version"].split(".")[:2]
-        )
-
-        key = hashlib.sha256(
-            json.dumps(
-                key_parts, sort_keys=True, separators=(",", ":"), ensure_ascii=True
-            ).encode("ascii")
-        ).hexdigest()
-
-        split_key = [key[:2], key[2:4], key[4:6], key[6:]]
-
-        return self._cache_dir.joinpath(*split_key)
+    @classmethod
+    def _is_wheel(cls, archive: Path) -> bool:
+        return archive.suffix == ".whl"

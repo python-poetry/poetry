@@ -1,17 +1,17 @@
 from __future__ import annotations
 
+from abc import ABC
+from abc import abstractmethod
 from typing import TYPE_CHECKING
-from typing import TypeVar
 
 
 if TYPE_CHECKING:
     from poetry.core.packages.package import Package
+    from typing_extensions import Self
 
-T = TypeVar("T", bound="Operation")
 
-
-class Operation:
-    def __init__(self, reason: str | None = None, priority: int | float = 0) -> None:
+class Operation(ABC):
+    def __init__(self, reason: str | None = None, priority: float = 0) -> None:
         self._reason = reason
 
         self._skipped = False
@@ -19,8 +19,8 @@ class Operation:
         self._priority = priority
 
     @property
-    def job_type(self) -> str:
-        raise NotImplementedError
+    @abstractmethod
+    def job_type(self) -> str: ...
 
     @property
     def reason(self) -> str | None:
@@ -35,25 +35,19 @@ class Operation:
         return self._skip_reason
 
     @property
-    def priority(self) -> float | int:
+    def priority(self) -> float:
         return self._priority
 
     @property
-    def package(self) -> Package:
-        raise NotImplementedError()
+    @abstractmethod
+    def package(self) -> Package: ...
 
     def format_version(self, package: Package) -> str:
         version: str = package.full_pretty_version
         return version
 
-    def skip(self: T, reason: str) -> T:
+    def skip(self, reason: str) -> Self:
         self._skipped = True
         self._skip_reason = reason
-
-        return self
-
-    def unskip(self: T) -> T:
-        self._skipped = False
-        self._skip_reason = None
 
         return self

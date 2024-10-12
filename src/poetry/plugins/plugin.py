@@ -20,5 +20,4 @@ class Plugin(BasePlugin):
     group = "poetry.plugin"
 
     @abstractmethod
-    def activate(self, poetry: Poetry, io: IO) -> None:
-        raise NotImplementedError()
+    def activate(self, poetry: Poetry, io: IO) -> None: ...

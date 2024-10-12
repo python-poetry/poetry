@@ -3,7 +3,6 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Iterator
 
 from tomlkit import document
 from tomlkit import table
@@ -12,14 +11,16 @@ from poetry.config.config_source import ConfigSource
 
 
 if TYPE_CHECKING:
-    from poetry.core.toml.file import TOMLFile
+    from collections.abc import Iterator
+
     from tomlkit.toml_document import TOMLDocument
+
+    from poetry.toml.file import TOMLFile
 
 
 class FileConfigSource(ConfigSource):
-    def __init__(self, file: TOMLFile, auth_config: bool = False) -> None:
+    def __init__(self, file: TOMLFile) -> None:
         self._file = file
-        self._auth_config = auth_config
 
     @property
     def name(self) -> str:
@@ -80,7 +81,7 @@ class FileConfigSource(ConfigSource):
             mode = 0o600
 
             if new_file:
-                self.file.touch(mode=mode)
+                self.file.path.touch(mode=mode)
 
             self.file.write(config)
         except Exception:

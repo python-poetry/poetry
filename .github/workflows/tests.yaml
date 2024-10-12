@@ -1,0 +1,145 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+  merge_group:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  changes:
+    name: Detect changed files
+    runs-on: ubuntu-latest
+    outputs:
+      project: ${{ steps.changes.outputs.project }}
+      fixtures-pypi: ${{ steps.changes.outputs.fixtures-pypi }}
+      src: ${{ steps.changes.outputs.src }}
+      tests: ${{ steps.changes.outputs.tests }}
+    steps:
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        id: changes
+        with:
+          filters: |
+            workflow: &workflow
+              - '.github/actions/**'
+              - '.github/workflows/tests.yaml'
+              - '.github/workflows/.tests-matrix.yaml'
+            project: &project
+              - *workflow
+              - 'poetry.lock'
+              - 'pyproject.toml'
+            fixtures-pypi:
+              - *workflow
+              - 'tests/repositories/fixtures/pypi.org/**'
+            src:
+              - *project
+              - 'src/**/*.py'
+            tests:
+              - *project
+              - 'src/**/*.py'
+              - 'tests/**'
+
+  lockfile:
+    name: Check poetry.lock
+    runs-on: ubuntu-latest
+    if: needs.changes.outputs.project == 'true'
+    needs: changes
+    steps:
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+
+      - uses: ./.github/actions/bootstrap-poetry
+
+      - run: poetry check --lock
+
+  smoke:
+    name: Smoke-test build and install
+    runs-on: ubuntu-latest
+    if: needs.changes.outputs.project == 'true'
+    needs: lockfile
+    steps:
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+
+      - run: pipx run build
+
+      - run: pipx run twine check --strict dist/*
+
+      - run: pipx install --suffix=@build dist/*.whl
+
+      - uses: ./.github/actions/bootstrap-poetry
+
+      # Smoke test: confirm the version of the installed wheel matches the project.
+      - run: poetry@build --version | grep $(poetry version --short)
+
+  fixtures-pypi:
+    name: Check fixtures (PyPI)
+    runs-on: ubuntu-latest
+    if: needs.changes.outputs.fixtures-pypi == 'true'
+    needs: changes
+    steps:
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+
+      - uses: ./.github/actions/bootstrap-poetry
+
+      - uses: ./.github/actions/poetry-install
+        with:
+          args: --only main,test
+
+      - run: poetry run env PYTHONPATH="$GITHUB_WORKSPACE" python tests/repositories/fixtures/pypi.org/generate.py
+
+      - run: git diff --exit-code --stat HEAD tests/repositories/fixtures/pypi.org
+
+  tests-matrix:
+    # Use this matrix with multiple jobs defined in a reusable workflow:
+    uses: ./.github/workflows/.tests-matrix.yaml
+    name: "${{ matrix.os.name }} (Python ${{ matrix.python-version }})"
+    if: '!failure()'
+    needs:
+      - lockfile
+      - changes
+    with:
+      runner: ${{ matrix.os.image }}
+      python-version: ${{ matrix.python-version }}
+      run-mypy: ${{ needs.changes.outputs.tests == 'true' }}
+      run-pytest: ${{ needs.changes.outputs.tests == 'true' }}
+      run-pytest-export: ${{ needs.changes.outputs.src == 'true' }}
+    secrets: inherit
+    strategy:
+      matrix:
+        os:
+          - name: Ubuntu
+            image: ubuntu-22.04
+          - name: macOS x86_64
+            image: macos-13
+          - name: Windows
+            image: windows-2022
+          - name: macOS aarch64
+            image: macos-14
+        python-version:
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
+      fail-fast: false
+
+  status:
+    name: Status
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - lockfile
+      - smoke
+      - fixtures-pypi
+      - tests-matrix
+    steps:
+      - run: ${{ (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')) && 'false' || 'true' }}

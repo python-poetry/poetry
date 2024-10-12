@@ -1,0 +1,47 @@
+Metadata-Version: 2.1
+Name: discord.py
+Version: 2.0.0
+Summary: A Python wrapper for the Discord API
+Home-page: https://github.com/Rapptz/discord.py
+Author: Rapptz
+License: MIT
+Project-URL: Documentation, https://discordpy.readthedocs.io/en/latest/
+Project-URL: Issue tracker, https://github.com/Rapptz/discord.py/issues
+Platform: UNKNOWN
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Intended Audience :: Developers
+Classifier: Natural Language :: English
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Topic :: Internet
+Classifier: Topic :: Software Development :: Libraries
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Utilities
+Classifier: Typing :: Typed
+Requires-Python: >=3.8.0
+Description-Content-Type: text/x-rst
+License-File: LICENSE
+Requires-Dist: aiohttp (<4,>=3.7.4)
+Provides-Extra: docs
+Requires-Dist: sphinx (==4.4.0) ; extra == 'docs'
+Requires-Dist: sphinxcontrib-trio (==1.1.2) ; extra == 'docs'
+Requires-Dist: sphinxcontrib-websupport ; extra == 'docs'
+Requires-Dist: typing-extensions (<5,>=4.3) ; extra == 'docs'
+Provides-Extra: speed
+Requires-Dist: orjson (>=3.5.4) ; extra == 'speed'
+Requires-Dist: aiodns (>=1.1) ; extra == 'speed'
+Requires-Dist: Brotli ; extra == 'speed'
+Requires-Dist: cchardet ; extra == 'speed'
+Provides-Extra: test
+Requires-Dist: coverage[toml] ; extra == 'test'
+Requires-Dist: pytest ; extra == 'test'
+Requires-Dist: pytest-asyncio ; extra == 'test'
+Requires-Dist: pytest-cov ; extra == 'test'
+Requires-Dist: pytest-mock ; extra == 'test'
+Requires-Dist: typing-extensions (<5,>=4.3) ; extra == 'test'
+Provides-Extra: voice
+Requires-Dist: PyNaCl (<1.6,>=1.3.0) ; extra == 'voice'
+

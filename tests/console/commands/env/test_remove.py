@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from poetry.core.semver.version import Version
+from poetry.core.constraints.version import Version
 
 from tests.console.commands.env.helpers import check_output_wrapper
 
@@ -29,7 +29,7 @@ def test_remove_by_python_version(
     venvs_in_cache_dirs: list[str],
     venv_name: str,
     venv_cache: Path,
-):
+) -> None:
     check_output = mocker.patch(
         "subprocess.check_output",
         side_effect=check_output_wrapper(Version.parse("3.6.6")),
@@ -49,7 +49,7 @@ def test_remove_by_name(
     venvs_in_cache_dirs: list[str],
     venv_name: str,
     venv_cache: Path,
-):
+) -> None:
     expected = ""
 
     for name in venvs_in_cache_dirs:
@@ -62,12 +62,37 @@ def test_remove_by_name(
     assert tester.io.fetch_output() == expected
 
 
+@pytest.mark.parametrize(
+    "envs_file", [None, "empty", "self", "other", "self_and_other"]
+)
 def test_remove_all(
     tester: CommandTester,
     venvs_in_cache_dirs: list[str],
     venv_name: str,
     venv_cache: Path,
-):
+    envs_file: str | None,
+) -> None:
+    envs_file_path = venv_cache / "envs.toml"
+    if envs_file == "empty":
+        envs_file_path.touch()
+    elif envs_file == "self":
+        envs_file_path.write_text(
+            f'[{venv_name}]\nminor = "3.9"\npatch = "3.9.1"\n', encoding="utf-8"
+        )
+    elif envs_file == "other":
+        envs_file_path.write_text(
+            '[other-abcdefgh]\nminor = "3.9"\npatch = "3.9.1"\n', encoding="utf-8"
+        )
+    elif envs_file == "self_and_other":
+        envs_file_path.write_text(
+            f'[{venv_name}]\nminor = "3.9"\npatch = "3.9.1"\n'
+            '[other-abcdefgh]\nminor = "3.9"\npatch = "3.9.1"\n',
+            encoding="utf-8",
+        )
+    else:
+        # no envs file -> nothing to prepare
+        assert envs_file is None
+
     expected = {""}
     tester.execute("--all")
     for name in venvs_in_cache_dirs:
@@ -75,13 +100,24 @@ def test_remove_all(
         expected.add(f"Deleted virtualenv: {venv_cache / name}")
     assert set(tester.io.fetch_output().split("\n")) == expected
 
+    if envs_file is not None:
+        assert envs_file_path.exists()
+        envs_file_content = envs_file_path.read_text(encoding="utf-8")
+        assert venv_name not in envs_file_content
+        if "other" in envs_file:
+            assert "other-abcdefgh" in envs_file_content
+        else:
+            assert envs_file_content == ""
+    else:
+        assert not envs_file_path.exists()
+
 
 def test_remove_all_and_version(
     tester: CommandTester,
     venvs_in_cache_dirs: list[str],
     venv_name: str,
     venv_cache: Path,
-):
+) -> None:
     expected = {""}
     tester.execute(f"--all {venvs_in_cache_dirs[0]}")
     for name in venvs_in_cache_dirs:
@@ -95,7 +131,7 @@ def test_remove_multiple(
     venvs_in_cache_dirs: list[str],
     venv_name: str,
     venv_cache: Path,
-):
+) -> None:
     expected = {""}
     removed_envs = venvs_in_cache_dirs[0:2]
     remaining_envs = venvs_in_cache_dirs[2:]
@@ -106,3 +142,27 @@ def test_remove_multiple(
     for name in remaining_envs:
         assert (venv_cache / name).exists()
     assert set(tester.io.fetch_output().split("\n")) == expected
+
+
+def test_remove_in_project(tester: CommandTester, venvs_in_project_dir: Path) -> None:
+    assert venvs_in_project_dir.exists()
+
+    tester.execute()
+
+    assert not venvs_in_project_dir.exists()
+
+    expected = f"Deleted virtualenv: {venvs_in_project_dir}\n"
+    assert tester.io.fetch_output() == expected
+
+
+def test_remove_in_project_all(
+    tester: CommandTester, venvs_in_project_dir: Path
+) -> None:
+    assert venvs_in_project_dir.exists()
+
+    tester.execute("--all")
+
+    assert not venvs_in_project_dir.exists()
+
+    expected = f"Deleted virtualenv: {venvs_in_project_dir}\n"
+    assert tester.io.fetch_output() == expected

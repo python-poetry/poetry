@@ -1,8 +1,11 @@
 from __future__ import annotations
 
-from cleo.exceptions import CleoSimpleException
+from cleo.exceptions import CleoError
 
 
-class PoetrySimpleConsoleException(CleoSimpleException):  # type: ignore[misc]
+class PoetryConsoleError(CleoError):
+    pass
 
+
+class GroupNotFoundError(PoetryConsoleError):
     pass

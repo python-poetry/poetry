@@ -1,0 +1,7 @@
+[tool.poetry]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.8"
+cleo = "^0.6"
+pendulum = { git = "https://github.com/sdispater/pendulum.git", branch = "2.0" }

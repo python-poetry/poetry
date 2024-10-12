@@ -1,0 +1,28 @@
+Metadata-Version: 2.0
+Name: isort-metadata
+Version: 4.3.4
+Summary: A Python utility / library to sort Python imports.
+Home-page: https://github.com/timothycrosley/isort
+Author: Timothy Crosley
+Author-email: timothy.crosley@gmail.com
+License: MIT
+Keywords: Refactor,Python,Python2,Python3,Refactoring,Imports,Sort,Clean
+Platform: UNKNOWN
+Classifier: Development Status :: 6 - Mature
+Classifier: Intended Audience :: Developers
+Classifier: Natural Language :: English
+Classifier: Environment :: Console
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Programming Language :: Python :: Implementation :: PyPy
+Classifier: Topic :: Software Development :: Libraries
+Classifier: Topic :: Utilities
+Requires-Python: >=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*
+Requires-Dist: futures; python_version=="2.7"

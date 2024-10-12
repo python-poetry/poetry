@@ -1,21 +1,10 @@
 *.pyc
 
 # Packages
-*.egg
-!/tests/**/*.egg
-/*.egg-info
 /dist/*
-build
-_build
-.cache
-*.so
-
-# Installer logs
-pip-log.txt
 
 # Unit test / coverage reports
 .coverage
-.tox
 .pytest_cache
 
 .DS_Store
@@ -23,20 +12,8 @@ pip-log.txt
 .python-version
 .vscode/*
 
-/test.py
-/test_*.*
-
-/setup.cfg
-MANIFEST.in
-/setup.py
 /docs/site/*
-/tests/fixtures/simple_project/setup.py
-/tests/fixtures/project_with_extras/setup.py
 .mypy_cache
 
 .venv
-/releases/*
-pip-wheel-metadata
 /poetry.toml
-
-poetry/core/*

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
+import functools
 import logging
 
 from contextlib import suppress
@@ -8,18 +9,14 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
+    from keyring.backend import KeyringBackend
+
     from poetry.config.config import Config
 
 logger = logging.getLogger(__name__)
 
 
-class PasswordManagerError(Exception):
-
-    pass
-
-
-class KeyRingError(Exception):
-
+class PoetryKeyringError(Exception):
     pass
 
 
@@ -29,39 +26,35 @@ class HTTPAuthCredential:
     password: str | None = dataclasses.field(default=None)
 
 
-class KeyRing:
+class PoetryKeyring:
     def __init__(self, namespace: str) -> None:
         self._namespace = namespace
-        self._is_available = True
-
-        self._check()
-
-    def is_available(self) -> bool:
-        return self._is_available
 
     def get_credential(
         self, *names: str, username: str | None = None
     ) -> HTTPAuthCredential:
-        default = HTTPAuthCredential(username=username, password=None)
-
-        if not self.is_available():
-            return default
-
         import keyring
 
+        from keyring.errors import KeyringError
+        from keyring.errors import KeyringLocked
+
         for name in names:
-            credential = keyring.get_credential(name, username)
+            credential = None
+            try:
+                credential = keyring.get_credential(name, username)
+            except KeyringLocked:
+                logger.debug("Keyring %s is locked", name)
+            except (KeyringError, RuntimeError):
+                logger.debug("Accessing keyring %s failed", name, exc_info=True)
+
             if credential:
                 return HTTPAuthCredential(
                     username=credential.username, password=credential.password
                 )
 
-        return default
+        return HTTPAuthCredential(username=username, password=None)
 
     def get_password(self, name: str, username: str) -> str | None:
-        if not self.is_available():
-            return None
-
         import keyring
         import keyring.errors
 
@@ -70,14 +63,11 @@ class KeyRing:
         try:
             return keyring.get_password(name, username)
         except (RuntimeError, keyring.errors.KeyringError):
-            raise KeyRingError(
+            raise PoetryKeyringError(
                 f"Unable to retrieve the password for {name} from the key ring"
             )
 
     def set_password(self, name: str, username: str, password: str) -> None:
-        if not self.is_available():
-            return
-
         import keyring
         import keyring.errors
 
@@ -86,15 +76,11 @@ class KeyRing:
         try:
             keyring.set_password(name, username, password)
         except (RuntimeError, keyring.errors.KeyringError) as e:
-            raise KeyRingError(
+            raise PoetryKeyringError(
                 f"Unable to store the password for {name} in the key ring: {e}"
             )
 
     def delete_password(self, name: str, username: str) -> None:
-        if not self.is_available():
-            return
-
-        import keyring
         import keyring.errors
 
         name = self.get_entry_name(name)
@@ -102,112 +88,140 @@ class KeyRing:
         try:
             keyring.delete_password(name, username)
         except (RuntimeError, keyring.errors.KeyringError):
-            raise KeyRingError(
+            raise PoetryKeyringError(
                 f"Unable to delete the password for {name} from the key ring"
             )
 
     def get_entry_name(self, name: str) -> str:
         return f"{self._namespace}-{name}"
 
-    def _check(self) -> None:
+    @classmethod
+    def is_available(cls) -> bool:
+        logger.debug("Checking if keyring is available")
         try:
             import keyring
-        except Exception as e:
-            logger.debug(f"An error occurred while importing keyring: {e!s}")
-            self._is_available = False
+            import keyring.backend
+        except ImportError as e:
+            logger.debug("An error occurred while importing keyring: %s", e)
+            return False
 
-            return
+        def backend_name(backend: KeyringBackend) -> str:
+            name: str = backend.name
+            return name.split(" ")[0]
+
+        def backend_is_valid(backend: KeyringBackend) -> bool:
+            name = backend_name(backend)
+            if name in ("chainer", "fail", "null"):
+                logger.debug(f"Backend {backend.name!r} is not suitable")
+                return False
+            elif "plaintext" in backend.name.lower():
+                logger.debug(f"Not using plaintext keyring backend {backend.name!r}")
+                return False
+
+            return True
 
         backend = keyring.get_keyring()
-        name = backend.name.split(" ")[0]
-        if name in ("fail", "null"):
-            logger.debug("No suitable keyring backend found")
-            self._is_available = False
-        elif "plaintext" in backend.name.lower():
-            logger.debug("Only a plaintext keyring backend is available. Not using it.")
-            self._is_available = False
-        elif name == "chainer":
-            try:
-                import keyring.backend
+        if backend_name(backend) == "chainer":
+            backends = keyring.backend.get_all_keyring()
+            valid_backend = next((b for b in backends if backend_is_valid(b)), None)
+        else:
+            valid_backend = backend if backend_is_valid(backend) else None
 
-                backends = keyring.backend.get_all_keyring()
-
-                self._is_available = any(
-                    b.name.split(" ")[0] not in ["chainer", "fail", "null"]
-                    and "plaintext" not in b.name.lower()
-                    for b in backends
-                )
-            except Exception:
-                self._is_available = False
-
-        if not self._is_available:
-            logger.warning("No suitable keyring backends were found")
+        if valid_backend is None:
+            logger.debug("No valid keyring backend was found")
+            return False
+        else:
+            logger.debug(f"Using keyring backend {backend.name!r}")
+            return True
 
 
 class PasswordManager:
     def __init__(self, config: Config) -> None:
         self._config = config
-        self._keyring: KeyRing | None = None
 
-    @property
-    def keyring(self) -> KeyRing:
-        if self._keyring is None:
-            self._keyring = KeyRing("poetry-repository")
-            if not self._keyring.is_available():
-                logger.warning(
-                    "Using a plaintext file to store and retrieve credentials"
-                )
+    @functools.cached_property
+    def use_keyring(self) -> bool:
+        return self._config.get("keyring.enabled") and PoetryKeyring.is_available()
 
-        return self._keyring
+    @functools.cached_property
+    def keyring(self) -> PoetryKeyring:
+        if not self.use_keyring:
+            raise PoetryKeyringError(
+                "Access to keyring was requested, but it is not available"
+            )
 
-    def set_pypi_token(self, name: str, token: str) -> None:
-        if not self.keyring.is_available():
-            self._config.auth_config_source.add_property(f"pypi-token.{name}", token)
+        return PoetryKeyring("poetry-repository")
+
+    @staticmethod
+    def warn_plaintext_credentials_stored() -> None:
+        logger.warning("Using a plaintext file to store credentials")
+
+    def set_pypi_token(self, repo_name: str, token: str) -> None:
+        if not self.use_keyring:
+            self.warn_plaintext_credentials_stored()
+            self._config.auth_config_source.add_property(
+                f"pypi-token.{repo_name}", token
+            )
         else:
-            self.keyring.set_password(name, "__token__", token)
+            self.keyring.set_password(repo_name, "__token__", token)
 
-    def get_pypi_token(self, name: str) -> str | None:
-        if not self.keyring.is_available():
-            token: str | None = self._config.get(f"pypi-token.{name}")
+    def get_pypi_token(self, repo_name: str) -> str | None:
+        """Get PyPi token.
+
+        First checks the environment variables for a token,
+        then the configured username/password and the
+        available keyring.
+
+        :param repo_name:  Name of repository.
+        :return: Returns a token as a string if found, otherwise None.
+        """
+        token: str | None = self._config.get(f"pypi-token.{repo_name}")
+        if token:
             return token
 
-        return self.keyring.get_password(name, "__token__")
-
-    def delete_pypi_token(self, name: str) -> None:
-        if not self.keyring.is_available():
-            return self._config.auth_config_source.remove_property(f"pypi-token.{name}")
-
-        self.keyring.delete_password(name, "__token__")
-
-    def get_http_auth(self, name: str) -> dict[str, str | None] | None:
-        auth = self._config.get(f"http-basic.{name}")
-        if not auth:
-            username = self._config.get(f"http-basic.{name}.username")
-            password = self._config.get(f"http-basic.{name}.password")
-            if not username and not password:
-                return None
+        if self.use_keyring:
+            return self.keyring.get_password(repo_name, "__token__")
         else:
-            username, password = auth["username"], auth.get("password")
-            if password is None:
-                password = self.keyring.get_password(name, username)
+            return None
+
+    def delete_pypi_token(self, repo_name: str) -> None:
+        if not self.use_keyring:
+            return self._config.auth_config_source.remove_property(
+                f"pypi-token.{repo_name}"
+            )
+
+        self.keyring.delete_password(repo_name, "__token__")
+
+    def get_http_auth(self, repo_name: str) -> dict[str, str | None] | None:
+        username = self._config.get(f"http-basic.{repo_name}.username")
+        password = self._config.get(f"http-basic.{repo_name}.password")
+        if not username and not password:
+            return None
+
+        if not password:
+            if self.use_keyring:
+                password = self.keyring.get_password(repo_name, username)
+            else:
+                return None
 
         return {
             "username": username,
             "password": password,
         }
 
-    def set_http_password(self, name: str, username: str, password: str) -> None:
+    def set_http_password(self, repo_name: str, username: str, password: str) -> None:
         auth = {"username": username}
 
-        if not self.keyring.is_available():
+        if not self.use_keyring:
+            self.warn_plaintext_credentials_stored()
             auth["password"] = password
         else:
-            self.keyring.set_password(name, username, password)
+            self.keyring.set_password(repo_name, username, password)
 
-        self._config.auth_config_source.add_property(f"http-basic.{name}", auth)
+        self._config.auth_config_source.add_property(f"http-basic.{repo_name}", auth)
 
-    def delete_http_password(self, name: str) -> None:
-        auth = self.get_http_auth(name)
+    def delete_http_password(self, repo_name: str) -> None:
+        auth = self.get_http_auth(repo_name)
         if not auth:
             return
 
@@ -215,7 +229,15 @@ class PasswordManager:
         if username is None:
             return
 
-        with suppress(KeyRingError):
-            self.keyring.delete_password(name, username)
+        with suppress(PoetryKeyringError):
+            self.keyring.delete_password(repo_name, username)
 
-        self._config.auth_config_source.remove_property(f"http-basic.{name}")
+        self._config.auth_config_source.remove_property(f"http-basic.{repo_name}")
+
+    def get_credential(
+        self, *names: str, username: str | None = None
+    ) -> HTTPAuthCredential:
+        if self.use_keyring:
+            return self.keyring.get_credential(*names, username=username)
+        else:
+            return HTTPAuthCredential(username=username, password=None)

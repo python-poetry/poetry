@@ -1,151 +1,223 @@
 [tool.poetry]
 name = "poetry"
-version = "1.2.0-beta.2.dev0"
+version = "2.0.0.dev0"
 description = "Python dependency management and packaging made easy."
-authors = [
-    "Sébastien Eustace <sebastien@eustace.io>"
+authors = ["Sébastien Eustace <sebastien@eustace.io>"]
+maintainers = [
+    "Arun Babu Neelicattu <arun.neelicattu@gmail.com>",
+    "Bjorn Neergaard <bjorn@neersighted.com>",
+    "Branch Vincent <branchevincent@gmail.com>",
+    "Randy Döring <radoering.poetry@gmail.com>",
+    "Steph Samson <hello@stephsamson.com>",
+    "finswimmer <finswimmer77@gmail.com>",
+    "Secrus <b.sokorski@gmail.com>",
 ]
 license = "MIT"
-
 readme = "README.md"
-
-packages = [
-    { include = "poetry", from = "src" }
-]
-include = [
-    { path = "tests", format = "sdist" }
-]
-
+include = [{ path = "tests", format = "sdist" }]
 homepage = "https://python-poetry.org/"
 repository = "https://github.com/python-poetry/poetry"
 documentation = "https://python-poetry.org/docs"
-
 keywords = ["packaging", "dependency", "poetry"]
-
 classifiers = [
     "Topic :: Software Development :: Build Tools",
-    "Topic :: Software Development :: Libraries :: Python Modules"
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
-[tool.poetry.build]
-generate-setup-file = false
+[tool.poetry.urls]
+Changelog = "https://python-poetry.org/history/"
 
 # Requirements
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.8"
 
-poetry-core = "^1.1.0a7"
-poetry-plugin-export = "^1.0.2"
-cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
-cachy = "^0.3.0"
-cleo = "^1.0.0a4"
-crashtest = "^0.3.0"
-entrypoints = "^0.3"
-html5lib = "^1.0"
-importlib-metadata = { version = ">=1.6.0", python = "<3.8" }
-# keyring uses calver, so version is unclamped
-keyring = ">=21.2.0"
+poetry-core = { git = "https://github.com/python-poetry/poetry-core.git", branch = "main" }
+build = "^1.2.1"
+cachecontrol = { version = "^0.14.0", extras = ["filecache"] }
+cleo = "^2.1.0"
+dulwich = "^0.22.1"
+fastjsonschema = "^2.18.0"
+importlib-metadata = { version = ">=4.4", python = "<3.10" }
+installer = "^0.7.0"
+keyring = "^25.1.0"
 # packaging uses calver, so version is unclamped
-packaging = ">=20.4"
+packaging = ">=24.0"
 pexpect = "^4.7.0"
-pkginfo = "^1.5"
-platformdirs = "^2.5.2"
-requests = "^2.18"
-requests-toolbelt = "^0.9.1"
-shellingham = "^1.1"
-tomlkit = ">=0.7.0,<1.0.0"
-# exclude 20.4.5 - 20.4.6 due to https://github.com/pypa/pip/issues/9953
-virtualenv = "(>=20.4.3,<20.4.5 || >=20.4.7)"
-urllib3 = "^1.26.0"
-dulwich = "^0.20.35"
+pkginfo = "^1.10"
+platformdirs = ">=3.0.0,<5"
+pyproject-hooks = "^1.0.0"
+requests = "^2.26"
+requests-toolbelt = "^1.0.0"
+shellingham = "^1.5"
+tomli = { version = "^2.0.1", python = "<3.11" }
+tomlkit = ">=0.11.4,<1.0.0"
+# trove-classifiers uses calver, so version is unclamped
+trove-classifiers = ">=2022.5.19"
+virtualenv = "^20.26.6"
+xattr = { version = "^1.0.0", markers = "sys_platform == 'darwin'" }
 
-[tool.poetry.dev-dependencies]
-tox = "^3.18"
-pytest = "^6.2"
-pytest-cov = "^2.8"
-pytest-mock = "^3.5"
-pytest-sugar = "^0.9"
-pre-commit = "^2.6"
-deepdiff = "^5.0"
-httpretty = "^1.0"
-typing-extensions = { version = "^4.0.0", python = "<3.8" }
-zipp = { version = "^3.4", python = "<3.8" }
-flatdict = "^4.0.1"
-mypy = ">=0.950"
-types-requests = ">=2.27.11"
+[tool.poetry.group.dev.dependencies]
+pre-commit = ">=2.10"
+# add setuptools for PyCharm
+# see https://youtrack.jetbrains.com/issue/PY-48909
+# and https://github.com/JetBrains/intellij-community/commit/3f37786ec0bf5066e4527690d1068b5a00680ea3
+setuptools = { version = ">=60", python = "<3.10" }
+
+[tool.poetry.group.test.dependencies]
+coverage = ">=7.2.0"
+deepdiff = ">=6.3"
+httpretty = ">=1.1"
+jaraco-classes = ">=3.3.1"
+pytest = ">=8.0"
+pytest-cov = ">=4.0"
+pytest-mock = ">=3.9"
+pytest-randomly = ">=3.12"
+pytest-xdist = { version = ">=3.1", extras = ["psutil"] }
+
+[tool.poetry.group.typing.dependencies]
+mypy = ">=1.8.0"
+types-requests = ">=2.28.8"
+
+# only used in github actions
+[tool.poetry.group.github-actions]
+optional = true
+[tool.poetry.group.github-actions.dependencies]
+pytest-github-actions-annotate-failures = "^0.1.7"
 
 [tool.poetry.scripts]
 poetry = "poetry.console.application:main"
 
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=1.5.0"]
 build-backend = "poetry.core.masonry.api"
 
 
-[tool.isort]
-py_version = 37
-profile = "black"
-force_single_line = true
-combine_as_imports = true
-lines_between_types = 1
-lines_after_imports = 2
-src_paths = ["src", "tests"]
-extend_skip = ["setup.py"]
+[tool.ruff]
+extend-exclude = [
+    "docs/*",
+    # External to the project's coding standards
+    "tests/fixtures/git/*",
+    "tests/fixtures/project_with_setup*/*",
+    "tests/masonry/builders/fixtures/pep_561_stub_only*/*",
+    "tests/utils/fixtures/setups/*",
+]
+fix = true
+line-length = 88
+target-version = "py38"
 
+[tool.ruff.lint]
+extend-select = [
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "ERA", # flake8-eradicate/eradicate
+    "I",   # isort
+    "N",   # pep8-naming
+    "PIE", # flake8-pie
+    "PGH", # pygrep
+    "RUF", # ruff checks
+    "SIM", # flake8-simplify
+    "T20", # flake8-print
+    "TCH", # flake8-type-checking
+    "TID", # flake8-tidy-imports
+    "UP",  # pyupgrade
+]
+ignore = [
+    "B904", # use 'raise ... from err'
+    "B905", # use explicit 'strict=' parameter with 'zip()'
+]
+extend-safe-fixes = [
+    "TCH", # move import from and to TYPE_CHECKING blocks
+]
+unfixable = [
+    "ERA", # do not autoremove commented out code
+]
 
-[tool.black]
-target-version = ['py37']
-preview = true
-force-exclude = '''
-.*/setup\.py$
-'''
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.lint.isort]
+force-single-line = true
+lines-between-types = 1
+lines-after-imports = 2
+known-first-party = ["poetry"]
+known-third-party = ["poetry.core"]
+required-imports = ["from __future__ import annotations"]
 
 
 [tool.mypy]
-files = "src"
-show_error_codes = true
+files = "src, tests"
+mypy_path = "src"
+namespace_packages = true
+explicit_package_bases = true
 strict = true
-enable_error_code = ["ignore-without-code"]
-
-# The following whitelist is used to allow for incremental adoption
-# of Mypy. Modules should be removed from this whitelist as and when
-# their respective type errors have been addressed. No new modules
-# should be added to this whitelist.
-# see https://github.com/python-poetry/poetry/pull/4510.
-
-[[tool.mypy.overrides]]
-module = [
-  'poetry.console.commands.init',
-  'poetry.inspection.info',
-  'poetry.installation.chef',
-  'poetry.installation.chooser',
-  'poetry.installation.executor',
-  'poetry.installation.installer',
-  'poetry.installation.pip_installer',
-  'poetry.repositories.installed_repository',
-  'poetry.utils.env',
+enable_error_code = [
+    "ignore-without-code",
+    "redundant-expr",
+    "truthy-bool",
 ]
-ignore_errors = true
+exclude = [
+    "tests/fixtures",
+    "tests/masonry/builders/fixtures",
+    "tests/utils/fixtures",
+]
+
+# use of importlib-metadata backport makes it impossible to satisfy mypy
+# without some ignores: but we get different sets of ignores at different
+# python versions.
+[[tool.mypy.overrides]]
+module = [
+    'poetry.repositories.installed_repository',
+    'tests.console.commands.self.test_show_plugins',
+    'tests.repositories.test_installed_repository',
+    'tests.helpers',
+]
+warn_unused_ignores = false
 
 [[tool.mypy.overrides]]
 module = [
-  'cachecontrol.*',
-  'cachy.*',
-  'cleo.*',
-  'crashtest.*',
-  'entrypoints.*',
-  'html5lib.*',
-  'jsonschema.*',
-  'pexpect.*',
-  'poetry.core.*',
-  'requests_toolbelt.*',
-  'shellingham.*',
+    'deepdiff.*',
+    'fastjsonschema.*',
+    'httpretty.*',
+    'pexpect.*',
+    'requests_toolbelt.*',
+    'shellingham.*',
+    'virtualenv.*',
+    'xattr.*',
 ]
 ignore_missing_imports = true
 
+
+[tool.pytest.ini_options]
+addopts = [ "-n", "logical", "-ra", "--strict-config", "--strict-markers" ]
+testpaths = ["tests"]
+markers = [
+    "network: mark tests that require internet access",
+]
+log_cli_level = "INFO"
+xfail_strict = true
+
+
 [tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
+exclude_also = [
     "if TYPE_CHECKING:"
+]
+
+
+[tool.repo-review]
+ignore = [
+    "PY007",
+    "PP302",
+    "PP309",
+    "GH101",
+    "GH212",
+    "PC111",
+    "PC140",
+    "PC160",
+    "PC170",
+    "PC180",
+    "PC180",
+    "PC901",
+    "MY103",
+    "RTD100",
 ]

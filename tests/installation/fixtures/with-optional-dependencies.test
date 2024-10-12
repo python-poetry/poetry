@@ -2,17 +2,17 @@
 name = "A"
 version = "1.0"
 description = ""
-category = "main"
 optional = true
 python-versions = "*"
+files = []
 
 [[package]]
 name = "C"
 version = "1.3"
 description = ""
-category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [package.dependencies]
 D = "^1.2"
@@ -21,19 +21,14 @@ D = "^1.2"
 name = "D"
 version = "1.4"
 description = ""
-category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [extras]
 foo = ["A"]
 
 [metadata]
 python-versions = "~2.7 || ^3.4"
-lock-version = "1.1"
+lock-version = "2.0"
 content-hash = "123456789"
-
-[metadata.files]
-A = []
-C = []
-D = []

@@ -1,0 +1,108 @@
+{
+  "info": {
+    "author": "Russell Keith-Magee",
+    "author_email": "russell@keith-magee.com",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 4 - Beta",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: BSD License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.8",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Software Development",
+      "Topic :: Software Development :: User Interfaces",
+      "Topic :: Software Development :: Widget Sets"
+    ],
+    "description": "",
+    "description_content_type": "text/x-rst; charset=UTF-8",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": null,
+    "home_page": "https://beeware.org/project/projects/libraries/toga/",
+    "keywords": "gui,widget,cross-platform,desktop,mobile,web,macOS,cocoa,iOS,android,windows,winforms,linux,freeBSD,gtk",
+    "license": "New BSD",
+    "maintainer": "BeeWare Team",
+    "maintainer_email": "team@beeware.org",
+    "name": "toga",
+    "package_url": "https://pypi.org/project/toga/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/toga/",
+    "project_urls": {
+      "Documentation": "http://toga.readthedocs.io/en/latest/",
+      "Funding": "https://beeware.org/contributing/membership/",
+      "Homepage": "https://beeware.org/project/projects/libraries/toga/",
+      "Source": "https://github.com/beeware/toga",
+      "Tracker": "https://github.com/beeware/toga/issues"
+    },
+    "provides_extra": null,
+    "release_url": "https://pypi.org/project/toga/0.4.0/",
+    "requires_dist": [
+      "toga-gtk ==0.4.0 ; \"freebsd\" in sys_platform",
+      "toga-cocoa ==0.4.0 ; sys_platform==\"darwin\"",
+      "toga-gtk ==0.4.0 ; sys_platform==\"linux\"",
+      "toga-winforms ==0.4.0 ; sys_platform==\"win32\""
+    ],
+    "requires_python": ">=3.8",
+    "summary": "A Python native, OS native GUI toolkit.",
+    "version": "0.4.0",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 0,
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "blake2b_256": "365342de9ed8de0d256b785076ac7cf82eaa088f50df8ed2a8ab1011313e8f04",
+        "md5": "8a4f02f7c8a0353f3205801eadf3e3c9",
+        "sha256": "cd2e47bb19ad7dfe0447f1379d4a7e8d9849a25ab8db62d41358185dcb4e4636"
+      },
+      "downloads": -1,
+      "filename": "toga-0.4.0-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "8a4f02f7c8a0353f3205801eadf3e3c9",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.8",
+      "size": 2270,
+      "upload_time": "2023-11-03T04:09:37",
+      "upload_time_iso_8601": "2023-11-03T04:09:37.311582Z",
+      "url": "https://files.pythonhosted.org/packages/36/53/42de9ed8de0d256b785076ac7cf82eaa088f50df8ed2a8ab1011313e8f04/toga-0.4.0-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "blake2b_256": "55607dc01b43f991228fd73679e40dc000e4c28a76b8b27b4d155e5bf716ff06",
+        "md5": "bd31edb40d9176b268250a6808b24d56",
+        "sha256": "5ced4a0c85399a52e7c2397e7326f787a04da748bc1e9fc37037bde8e1cf4d54"
+      },
+      "downloads": -1,
+      "filename": "toga-0.4.0.tar.gz",
+      "has_sig": false,
+      "md5_digest": "bd31edb40d9176b268250a6808b24d56",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.8",
+      "size": 3815,
+      "upload_time": "2023-11-03T04:09:40",
+      "upload_time_iso_8601": "2023-11-03T04:09:40.090279Z",
+      "url": "https://files.pythonhosted.org/packages/55/60/7dc01b43f991228fd73679e40dc000e4c28a76b8b27b4d155e5bf716ff06/toga-0.4.0.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

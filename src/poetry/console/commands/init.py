@@ -1,26 +1,33 @@
 from __future__ import annotations
 
-import sys
-
+from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import ClassVar
+from typing import Dict
 from typing import Mapping
+from typing import Union
 
 from cleo.helpers import option
+from packaging.utils import canonicalize_name
 from tomlkit import inline_table
 
 from poetry.console.commands.command import Command
 from poetry.console.commands.env_command import EnvCommand
-from poetry.utils.dependency_specification import parse_dependency_specification
-from poetry.utils.helpers import canonicalize_name
+from poetry.utils.dependency_specification import RequirementsParser
+from poetry.utils.env.python_manager import Python
 
 
 if TYPE_CHECKING:
+    from cleo.io.inputs.option import Option
+    from packaging.utils import NormalizedName
     from poetry.core.packages.package import Package
     from tomlkit.items import InlineTable
 
-    from poetry.repositories import Pool
+    from poetry.repositories import RepositoryPool
+
+Requirements = Dict[str, Union[str, Mapping[str, Any]]]
 
 
 class InitCommand(Command):
@@ -29,7 +36,7 @@ class InitCommand(Command):
         "Creates a basic <comment>pyproject.toml</> file in the current directory."
     )
 
-    options = [
+    options: ClassVar[list[Option]] = [
         option("name", None, "Name of the package.", flag=False),
         option("description", None, "Description of the package.", flag=False),
         option("author", None, "Author name of the package.", flag=False),
@@ -45,8 +52,8 @@ class InitCommand(Command):
         option(
             "dev-dependency",
             None,
-            "Package to require for development, with an optional version constraint, "
-            "e.g. requests:^2.10.0 or requests=2.11.1.",
+            "Package to require for development, with an optional version"
+            " constraint, e.g. requests:^2.10.0 or requests=2.11.1.",
             flag=False,
             multiple=True,
         ),
@@ -61,24 +68,45 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
     def __init__(self) -> None:
         super().__init__()
 
-        self._pool: Pool | None = None
+        self._pool: RepositoryPool | None = None
 
     def handle(self) -> int:
         from pathlib import Path
 
-        from poetry.core.pyproject.toml import PyProjectTOML
+        project_path = Path.cwd()
+
+        if self.io.input.option("directory"):
+            project_path = Path(self.io.input.option("directory"))
+            if not project_path.exists() or not project_path.is_dir():
+                self.line_error(
+                    "<error>The --directory path is not a directory.</error>"
+                )
+                return 1
+
+        return self._init_pyproject(project_path=project_path)
+
+    def _init_pyproject(
+        self,
+        project_path: Path,
+        allow_interactive: bool = True,
+        layout_name: str = "standard",
+        readme_format: str = "md",
+    ) -> int:
         from poetry.core.vcs.git import GitConfig
 
+        from poetry.config.config import Config
         from poetry.layouts import layout
-        from poetry.utils.env import SystemEnv
+        from poetry.pyproject.toml import PyProjectTOML
 
-        pyproject = PyProjectTOML(Path.cwd() / "pyproject.toml")
+        is_interactive = self.io.is_interactive() and allow_interactive
+
+        pyproject = PyProjectTOML(project_path / "pyproject.toml")
 
         if pyproject.file.exists():
             if pyproject.is_poetry_project():
                 self.line_error(
-                    "<error>A pyproject.toml file with a poetry section already"
-                    " exists.</error>"
+                    "<error>A pyproject.toml file with a project and/or"
+                    " a poetry section already exists.</error>"
                 )
                 return 1
 
@@ -91,7 +119,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         vcs_config = GitConfig()
 
-        if self.io.is_interactive():
+        if is_interactive:
             self.line("")
             self.line(
                 "This command will guide you through creating your"
@@ -101,146 +129,160 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         name = self.option("name")
         if not name:
-            name = Path.cwd().name.lower()
+            name = project_path.name.lower()
 
-            question = self.create_question(
-                f"Package name [<comment>{name}</comment>]: ", default=name
-            )
-            name = self.ask(question)
+            if is_interactive:
+                question = self.create_question(
+                    f"Package name [<comment>{name}</comment>]: ", default=name
+                )
+                name = self.ask(question)
 
         version = "0.1.0"
-        question = self.create_question(
-            f"Version [<comment>{version}</comment>]: ", default=version
-        )
-        version = self.ask(question)
+
+        if is_interactive:
+            question = self.create_question(
+                f"Version [<comment>{version}</comment>]: ", default=version
+            )
+            version = self.ask(question)
 
         description = self.option("description") or ""
-        question = self.create_question(
-            f"Description [<comment>{description}</comment>]: ",
-            default=description,
-        )
-        description = self.ask(question)
+        if not description and is_interactive:
+            description = self.ask(self.create_question("Description []: ", default=""))
 
         author = self.option("author")
-        if not author and vcs_config and vcs_config.get("user.name"):
+        if not author and vcs_config.get("user.name"):
             author = vcs_config["user.name"]
             author_email = vcs_config.get("user.email")
             if author_email:
                 author += f" <{author_email}>"
 
-        question = self.create_question(
-            f"Author [<comment>{author}</comment>, n to skip]: ", default=author
-        )
-        question.set_validator(lambda v: self._validate_author(v, author))
-        author = self.ask(question)
+        if is_interactive:
+            question = self.create_question(
+                f"Author [<comment>{author}</comment>, n to skip]: ", default=author
+            )
+            question.set_validator(lambda v: self._validate_author(v, author))
+            author = self.ask(question)
 
-        if not author:
-            authors = []
-        else:
-            authors = [author]
+        authors = [author] if author else []
 
-        license = self.option("license") or ""
-
-        question = self.create_question(
-            f"License [<comment>{license}</comment>]: ", default=license
-        )
-        question.set_validator(self._validate_license)
-        license = self.ask(question)
+        license_name = self.option("license")
+        if not license_name and is_interactive:
+            license_name = self.ask(self.create_question("License []: ", default=""))
 
         python = self.option("python")
         if not python:
-            current_env = SystemEnv(Path(sys.executable))
-            default_python = "^" + ".".join(
-                str(v) for v in current_env.version_info[:2]
+            config = Config.create()
+            python = (
+                ">="
+                + Python.get_preferred_python(config, self.io).minor_version.to_string()
             )
-            question = self.create_question(
-                f"Compatible Python versions [<comment>{default_python}</comment>]: ",
-                default=default_python,
-            )
-            python = self.ask(question)
 
-        if self.io.is_interactive():
+            if is_interactive:
+                question = self.create_question(
+                    f"Compatible Python versions [<comment>{python}</comment>]: ",
+                    default=python,
+                )
+                python = self.ask(question)
+
+        if is_interactive:
             self.line("")
 
-        requirements = {}
+        requirements: Requirements = {}
         if self.option("dependency"):
             requirements = self._format_requirements(
                 self._determine_requirements(self.option("dependency"))
             )
 
-        question = "Would you like to define your main dependencies interactively?"
+        question_text = "Would you like to define your main dependencies interactively?"
         help_message = """\
-You can specify a package in the following forms:
-  - A single name (<b>requests</b>)
-  - A name and a constraint (<b>requests@^2.23.0</b>)
-  - A git url (<b>git+https://github.com/python-poetry/poetry.git</b>)
-  - A git url with a revision\
- (<b>git+https://github.com/python-poetry/poetry.git#develop</b>)
-  - A file path (<b>../my-package/my-package.whl</b>)
-  - A directory (<b>../my-package/</b>)
-  - A url (<b>https://example.com/packages/my-package-0.1.0.tar.gz</b>)
-"""
+        You can specify a package in the following forms:
+          - A single name (<b>requests</b>): this will search for matches on PyPI
+          - A name and a constraint (<b>requests@^2.23.0</b>)
+          - A git url (<b>git+https://github.com/python-poetry/poetry.git</b>)
+          - A git url with a revision\
+         (<b>git+https://github.com/python-poetry/poetry.git#develop</b>)
+          - A file path (<b>../my-package/my-package.whl</b>)
+          - A directory (<b>../my-package/</b>)
+          - A url (<b>https://example.com/packages/my-package-0.1.0.tar.gz</b>)
+        """
 
         help_displayed = False
-        if self.confirm(question, True):
-            if self.io.is_interactive():
-                self.line(help_message)
-                help_displayed = True
+        if is_interactive and self.confirm(question_text, True):
+            self.line(help_message)
+            help_displayed = True
             requirements.update(
                 self._format_requirements(self._determine_requirements([]))
             )
-            if self.io.is_interactive():
-                self.line("")
+            self.line("")
 
-        dev_requirements: dict[str, str] = {}
+        dev_requirements: Requirements = {}
         if self.option("dev-dependency"):
             dev_requirements = self._format_requirements(
                 self._determine_requirements(self.option("dev-dependency"))
             )
 
-        question = (
+        question_text = (
             "Would you like to define your development dependencies interactively?"
         )
-        if self.confirm(question, True):
-            if self.io.is_interactive() and not help_displayed:
+        if is_interactive and self.confirm(question_text, True):
+            if not help_displayed:
                 self.line(help_message)
 
             dev_requirements.update(
                 self._format_requirements(self._determine_requirements([]))
             )
-            if self.io.is_interactive():
-                self.line("")
 
-        layout_ = layout("standard")(
+            self.line("")
+
+        layout_ = layout(layout_name)(
             name,
             version,
             description=description,
             author=authors[0] if authors else None,
-            license=license,
+            readme_format=readme_format,
+            license=license_name,
             python=python,
             dependencies=requirements,
             dev_dependencies=dev_requirements,
         )
 
-        content = layout_.generate_poetry_content(original=pyproject)
-        if self.io.is_interactive():
+        create_layout = not project_path.exists()
+
+        if create_layout:
+            layout_.create(project_path, with_pyproject=False)
+
+        content = layout_.generate_project_content()
+        for section, item in content.items():
+            pyproject.data.append(section, item)
+
+        if is_interactive:
             self.line("<info>Generated file</info>")
             self.line("")
-            self.line(content)
+            self.line(pyproject.data.as_string().replace("\r\n", "\n"))
             self.line("")
 
-        if not self.confirm("Do you confirm generation?", True):
+        if is_interactive and not self.confirm("Do you confirm generation?", True):
             self.line_error("<error>Command aborted</error>")
 
             return 1
 
-        with (Path.cwd() / "pyproject.toml").open("w", encoding="utf-8") as f:
-            f.write(content)
+        pyproject.save()
+
+        if create_layout:
+            path = project_path.resolve()
+
+            with suppress(ValueError):
+                path = path.relative_to(Path.cwd())
+
+            self.line(
+                f"Created package <info>{layout_._package_name}</> in"
+                f" <fg=blue>{path.as_posix()}</>"
+            )
 
         return 0
 
     def _generate_choice_list(
-        self, matches: list[Package], canonicalized_name: str
+        self, matches: list[Package], canonicalized_name: NormalizedName
     ) -> list[str]:
         choices = []
         matches_names = [p.name for p in matches]
@@ -264,13 +306,25 @@ You can specify a package in the following forms:
         requires: list[str],
         allow_prereleases: bool = False,
         source: str | None = None,
-    ) -> list[dict[str, str | list[str]]]:
-        if not requires:
-            requires = []
+        is_interactive: bool | None = None,
+    ) -> list[dict[str, Any]]:
+        if is_interactive is None:
+            is_interactive = self.io.is_interactive()
 
-            package = self.ask(
-                "Search for package to add (or leave blank to continue):"
+        if not requires:
+            result = []
+
+            question = self.create_question(
+                "Package to add or search for (leave blank to skip):"
             )
+            question.set_validator(self._validate_package)
+
+            follow_up_question = self.create_question(
+                "\nAdd a package (leave blank to skip):"
+            )
+            follow_up_question.set_validator(self._validate_package)
+
+            package = self.ask(question)
             while package:
                 constraint = self._parse_requirements([package])[0]
                 if (
@@ -280,8 +334,8 @@ You can specify a package in the following forms:
                     or "version" in constraint
                 ):
                     self.line(f"Adding <info>{package}</info>")
-                    requires.append(constraint)
-                    package = self.ask("\nAdd a package:")
+                    result.append(constraint)
+                    package = self.ask(follow_up_question)
                     continue
 
                 canonicalized_name = canonicalize_name(constraint["name"])
@@ -302,25 +356,32 @@ You can specify a package in the following forms:
 
                     self.line(info_string)
 
+                    # Default to an empty value to signal no package was selected
+                    choices.append("")
+
                     package = self.choice(
-                        "\nEnter package # to add, or the complete package name if it"
-                        " is not listed",
+                        "\nEnter package # to add, or the complete package name if"
+                        " it is not listed",
                         choices,
                         attempts=3,
+                        default=len(choices) - 1,
                     )
 
+                    if not package:
+                        self.line("<warning>No package selected</warning>")
+
                     # package selected by user, set constraint name to package name
-                    if package is not False:
+                    if package:
                         constraint["name"] = package
 
                 # no constraint yet, determine the best version automatically
-                if package is not False and "version" not in constraint:
+                if package and "version" not in constraint:
                     question = self.create_question(
                         "Enter the version constraint to require "
                         "(or leave blank to use the latest version):"
                     )
-                    question.attempts = 3
-                    question.validator = lambda x: (x or "").strip() or False
+                    question.set_max_attempts(3)
+                    question.set_validator(lambda x: (x or "").strip() or None)
 
                     package_constraint = self.ask(question)
 
@@ -336,17 +397,16 @@ You can specify a package in the following forms:
 
                     constraint["version"] = package_constraint
 
-                if package is not False:
-                    requires.append(constraint)
+                if package:
+                    result.append(constraint)
 
-                if self.io.is_interactive():
-                    package = self.ask("\nAdd a package:")
+                if is_interactive:
+                    package = self.ask(follow_up_question)
 
-            return requires
+            return result
 
-        requires = self._parse_requirements(requires)
         result = []
-        for requirement in requires:
+        for requirement in self._parse_requirements(requires):
             if "git" in requirement or "url" in requirement or "path" in requirement:
                 result.append(requirement)
                 continue
@@ -395,29 +455,28 @@ You can specify a package in the following forms:
             # TODO: find similar
             raise ValueError(f"Could not find a matching version of package {name}")
 
-        return package.pretty_name, selector.find_recommended_require_version(package)
+        version = package.version.without_local()
+        return package.pretty_name, f"^{version.to_string()}"
 
     def _parse_requirements(self, requirements: list[str]) -> list[dict[str, Any]]:
-        from poetry.core.pyproject.exceptions import PyProjectException
+        from poetry.core.pyproject.exceptions import PyProjectError
 
         try:
-            cwd = self.poetry.file.parent
-        except (PyProjectException, RuntimeError):
+            cwd = self.poetry.file.path.parent
+            artifact_cache = self.poetry.pool.artifact_cache
+        except (PyProjectError, RuntimeError):
             cwd = Path.cwd()
+            artifact_cache = self._get_pool().artifact_cache
 
-        return [
-            parse_dependency_specification(
-                requirement=requirement,
-                env=self.env if isinstance(self, EnvCommand) and self.env else None,
-                cwd=cwd,
-            )
-            for requirement in requirements
-        ]
+        parser = RequirementsParser(
+            artifact_cache=artifact_cache,
+            env=self.env if isinstance(self, EnvCommand) else None,
+            cwd=cwd,
+        )
+        return [parser.parse(requirement) for requirement in requirements]
 
-    def _format_requirements(
-        self, requirements: list[dict[str, str]]
-    ) -> Mapping[str, str | Mapping[str, str]]:
-        requires = {}
+    def _format_requirements(self, requirements: list[dict[str, str]]) -> Requirements:
+        requires: Requirements = {}
         for requirement in requirements:
             name = requirement.pop("name")
             constraint: str | InlineTable
@@ -432,10 +491,12 @@ You can specify a package in the following forms:
 
         return requires
 
-    def _validate_author(self, author: str, default: str) -> str | None:
+    @staticmethod
+    def _validate_author(author: str, default: str) -> str | None:
         from poetry.core.packages.package import AUTHOR_REGEX
+        from poetry.core.utils.helpers import combine_unicode
 
-        author = author or default
+        author = combine_unicode(author or default)
 
         if author in ["n", "no"]:
             return None
@@ -449,23 +510,24 @@ You can specify a package in the following forms:
 
         return author
 
-    def _validate_license(self, license: str) -> str:
-        from poetry.core.spdx.helpers import license_by_id
+    @staticmethod
+    def _validate_package(package: str | None) -> str | None:
+        if package and len(package.split()) > 2:
+            raise ValueError("Invalid package definition.")
 
-        if license:
-            license_by_id(license)
+        return package
 
-        return license
-
-    def _get_pool(self) -> Pool:
-        from poetry.repositories import Pool
+    def _get_pool(self) -> RepositoryPool:
+        from poetry.config.config import Config
+        from poetry.repositories import RepositoryPool
         from poetry.repositories.pypi_repository import PyPiRepository
 
         if isinstance(self, EnvCommand):
             return self.poetry.pool
 
         if self._pool is None:
-            self._pool = Pool()
-            self._pool.add_repository(PyPiRepository())
+            self._pool = RepositoryPool()
+            pool_size = Config.create().installer_max_workers
+            self._pool.add_repository(PyPiRepository(pool_size=pool_size))
 
         return self._pool

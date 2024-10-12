@@ -19,18 +19,12 @@ FIXTURES_DIRECTORY = (
 )
 
 
-@pytest.fixture(autouse=True)
-def mock_search_http_response(http: type[httpretty.httpretty]) -> None:
-    with FIXTURES_DIRECTORY.joinpath("search.html").open(encoding="utf-8") as f:
-        http.register_uri("GET", "https://pypi.org/search", f.read())
-
-
 @pytest.fixture
 def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("search")
 
 
-def test_search(tester: CommandTester, http: type[httpretty.httpretty]):
+def test_search(tester: CommandTester, http: type[httpretty.httpretty]) -> None:
     tester.execute("sqlalchemy")
 
     expected = """
@@ -96,9 +90,6 @@ sqlalchemy-sqlany (1.0.3)
  SAP Sybase SQL Anywhere dialect for SQLAlchemy
 """
 
-    # TODO remove this when https://github.com/python-poetry/poetry-core/pull/328
-    # reaches a published version of poetry-core.
     output = tester.io.fetch_output()
-    output = output.replace("transmogrify.sqlalchemy", "transmogrify-sqlalchemy")
 
     assert output == expected

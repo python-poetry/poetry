@@ -11,6 +11,14 @@ type: docs
 
 # Managing dependencies
 
+{{% note %}}
+Since Poetry 2.0, main dependencies can be specified in `project.dependencies`
+instead of `tool.poetry.dependencies`.
+See [Dependency specification]({{< relref "dependency-specification" >}}) for more information.
+Only main dependencies can be specified in the `project` section.
+Other groups must still be specified in the `tool.poetry` section.
+{{% /note %}}
+
 ## Dependency groups
 
 Poetry provides a way to **organize** your dependencies by **groups**. For instance, you might have
@@ -37,7 +45,22 @@ the dependencies logically.
 {{% /note %}}
 
 {{% note %}}
-The dependencies declared in `tool.poetry.dependencies` are part of an implicit `main` group.
+The dependencies declared in `project.dependencies` respectively `tool.poetry.dependencies`
+are part of an implicit `main` group.
+{{% /note %}}
+
+```toml
+[project]
+# ...
+dependencies = [  # main dependency group
+    "httpx",
+    "pendulum",
+]
+
+[tool.poetry.group.test.dependencies]
+pytest = "^6.0.0"
+pytest-mock = "*"
+```
 
 ```toml
 [tool.poetry.dependencies]  # main dependency group
@@ -48,22 +71,34 @@ pendulum = "*"
 pytest = "^6.0.0"
 pytest-mock = "*"
 ```
+
+{{% note %}}
+Dependency groups, other than the implicit `main` group, must only contain dependencies you need in your development
+process. Installing them is only possible by using Poetry.
+
+To declare a set of dependencies, which add additional functionality to the project during runtime,
+use [extras]({{< relref "pyproject#extras" >}}) instead. Extras can be installed by the end user using `pip`.
 {{% /note %}}
 
 {{% note %}}
-**A note about the `dev-dependencies` section**
+**A note about defining a `dev` dependencies group**
 
-Any dependency declared in the `dev-dependencies` section will automatically be added to a `dev` group.
-So the two following notations are equivalent:
+The proper way to define a `dev` dependencies group since Poetry 1.2.0 is the following:
 
 ```toml
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^6.0.0"
 pytest-mock = "*"
 ```
 
+This group notation is preferred since Poetry 1.2.0 and not usable in earlier versions.
+For backwards compatibility with older versions of Poetry,
+any dependency declared in the `dev-dependencies` section will automatically be added to the `dev` group.
+So the above and following notations are equivalent:
+
 ```toml
-[tool.poetry.group.dev.dependencies]
+# Poetry pre-1.2.x style, understood by Poetry 1.0–1.2
+[tool.poetry.dev-dependencies]
 pytest = "^6.0.0"
 pytest-mock = "*"
 ```
@@ -134,10 +169,10 @@ poetry install --with docs
 
 {{% warning %}}
 When used together, `--without` takes precedence over `--with`. For example, the following command
-will only install the dependencies specified in the `test` group.
+will only install the dependencies specified in the optional `test` group.
 
 ```bash
-poetry install --with docs --without test,docs
+poetry install --with test,docs --without docs
 ```
 {{% /warning %}}
 
@@ -150,11 +185,20 @@ poetry install --only docs
 ```
 
 {{% note %}}
-If you only want to install the project's runtime dependencies, you can do so  with the
+If you only want to install the project's runtime dependencies, you can do so with the
 `--only main` notation:
 
 ```bash
 poetry install --only main
+```
+{{% /note %}}
+
+{{% note %}}
+If you want to install the project root, and no other dependencies, you can use
+the `--only-root` option.
+
+```bash
+poetry install --only-root
 ```
 {{% /note %}}
 
@@ -167,10 +211,9 @@ to remove packages from a specific group:
 poetry remove mkdocs --group docs
 ```
 
-
 ## Synchronizing dependencies
 
-Poetry supports what's called dependency synchronization. What this does is ensuring
+Poetry supports what's called dependency synchronization. Dependency synchronization ensures
 that the locked dependencies in the `poetry.lock` file are the only ones present
 in the environment, removing anything that's not necessary.
 
@@ -181,7 +224,8 @@ poetry install --sync
 ```
 
 The `--sync` option can be combined with any [dependency groups]({{< relref "#dependency-groups" >}}) related options
-to synchronize the environment with specific groups.
+to synchronize the environment with specific groups. Note that extras are separate.  Any
+extras not selected for install are always removed, regardless of `--sync`.
 
 ```bash
 poetry install --without dev --sync
@@ -192,3 +236,9 @@ poetry install --only dev
 {{% note %}}
 The `--sync` option replaces the `--remove-untracked` option which is now deprecated.
 {{% /note %}}
+
+## Layering optional groups
+
+When you omit the `--sync` option, you can install any subset of optional groups without removing
+those that are already installed.  This is very useful, for example, in multi-stage
+Docker builds, where you run `poetry install` multiple times in different build stages.

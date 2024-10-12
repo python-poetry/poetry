@@ -1,0 +1,26 @@
+Metadata-Version: 2.0
+Name: funcsigs
+Version: 1.0.2
+Summary: Python function signatures from PEP362 for Python 2.6, 2.7 and 3.2+
+Home-page: http://funcsigs.readthedocs.org
+Author: Testing Cabal
+Author-email: testing-in-python@lists.idyll.org
+License: ASL
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.6
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Programming Language :: Python :: Implementation :: PyPy
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Dist: ordereddict; python_version<"2.7"
+

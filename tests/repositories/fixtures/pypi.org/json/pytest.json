@@ -1,127 +1,78 @@
 {
-  "info": {
-    "author": "Holger Krekel, Bruno Oliveira, Ronny Pfannschmidt, Floris Bruynooghe, Brianna Laugher, Florian Bruhin and others",
-    "author_email": "",
-    "bugtrack_url": "https://github.com/pytest-dev/pytest/issues",
-    "classifiers": [
-      "Development Status :: 6 - Mature",
-      "Intended Audience :: Developers",
-      "License :: OSI Approved :: MIT License",
-      "Operating System :: MacOS :: MacOS X",
-      "Operating System :: Microsoft :: Windows",
-      "Operating System :: POSIX",
-      "Programming Language :: Python :: 2",
-      "Programming Language :: Python :: 2.7",
-      "Programming Language :: Python :: 3",
-      "Programming Language :: Python :: 3.4",
-      "Programming Language :: Python :: 3.5",
-      "Programming Language :: Python :: 3.6",
-      "Programming Language :: Python :: 3.7",
-      "Topic :: Software Development :: Libraries",
-      "Topic :: Software Development :: Testing",
-      "Topic :: Utilities"
-    ],
-    "description": ".. image:: http://docs.pytest.org/en/latest/_static/pytest1.png\n   :target: http://docs.pytest.org\n   :align: center\n   :alt: pytest\n\n------\n\n.. image:: https://img.shields.io/pypi/v/pytest.svg\n    :target: https://pypi.python.org/pypi/pytest\n\n.. image:: https://anaconda.org/conda-forge/pytest/badges/version.svg\n    :target: https://anaconda.org/conda-forge/pytest\n\n.. image:: https://img.shields.io/pypi/pyversions/pytest.svg\n    :target: https://pypi.python.org/pypi/pytest\n\n.. image:: https://img.shields.io/coveralls/pytest-dev/pytest/master.svg\n    :target: https://coveralls.io/r/pytest-dev/pytest\n\n.. image:: https://travis-ci.org/pytest-dev/pytest.svg?branch=master\n    :target: https://travis-ci.org/pytest-dev/pytest\n\n.. image:: https://ci.appveyor.com/api/projects/status/mrgbjaua7t33pg6b?svg=true\n    :target: https://ci.appveyor.com/project/pytestbot/pytest\n\n.. image:: https://www.codetriage.com/pytest-dev/pytest/badges/users.svg\n    :target: https://www.codetriage.com/pytest-dev/pytest\n\nThe ``pytest`` framework makes it easy to write small tests, yet\nscales to support complex functional testing for applications and libraries.\n\nAn example of a simple test:\n\n.. code-block:: python\n\n    # content of test_sample.py\n    def inc(x):\n        return x + 1\n\n    def test_answer():\n        assert inc(3) == 5\n\n\nTo execute it::\n\n    $ pytest\n    ============================= test session starts =============================\n    collected 1 items\n\n    test_sample.py F\n\n    ================================== FAILURES ===================================\n    _________________________________ test_answer _________________________________\n\n        def test_answer():\n    >       assert inc(3) == 5\n    E       assert 4 == 5\n    E        +  where 4 = inc(3)\n\n    test_sample.py:5: AssertionError\n    ========================== 1 failed in 0.04 seconds ===========================\n\n\nDue to ``pytest``'s detailed assertion introspection, only plain ``assert`` statements are used. See `getting-started <http://docs.pytest.org/en/latest/getting-started.html#our-first-test-run>`_ for more examples.\n\n\nFeatures\n--------\n\n- Detailed info on failing `assert statements <http://docs.pytest.org/en/latest/assert.html>`_ (no need to remember ``self.assert*`` names);\n\n- `Auto-discovery\n  <http://docs.pytest.org/en/latest/goodpractices.html#python-test-discovery>`_\n  of test modules and functions;\n\n- `Modular fixtures <http://docs.pytest.org/en/latest/fixture.html>`_ for\n  managing small or parametrized long-lived test resources;\n\n- Can run `unittest <http://docs.pytest.org/en/latest/unittest.html>`_ (or trial),\n  `nose <http://docs.pytest.org/en/latest/nose.html>`_ test suites out of the box;\n\n- Python 2.7, Python 3.4+, PyPy 2.3, Jython 2.5 (untested);\n\n- Rich plugin architecture, with over 315+ `external plugins <http://plugincompat.herokuapp.com>`_ and thriving community;\n\n\nDocumentation\n-------------\n\nFor full documentation, including installation, tutorials and PDF documents, please see http://docs.pytest.org.\n\n\nBugs/Requests\n-------------\n\nPlease use the `GitHub issue tracker <https://github.com/pytest-dev/pytest/issues>`_ to submit bugs or request features.\n\n\nChangelog\n---------\n\nConsult the `Changelog <http://docs.pytest.org/en/latest/changelog.html>`__ page for fixes and enhancements of each version.\n\n\nLicense\n-------\n\nCopyright Holger Krekel and others, 2004-2017.\n\nDistributed under the terms of the `MIT`_ license, pytest is free and open source software.\n\n.. _`MIT`: https://github.com/pytest-dev/pytest/blob/master/LICENSE\n\n\n",
-    "docs_url": null,
-    "download_url": "",
-    "downloads": {
-      "last_day": -1,
-      "last_month": -1,
-      "last_week": -1
-    },
-    "home_page": "http://pytest.org",
-    "keywords": "test unittest",
-    "license": "MIT license",
-    "maintainer": "",
-    "maintainer_email": "",
-    "name": "pytest",
-    "package_url": "https://pypi.org/project/pytest/",
-    "platform": "unix",
-    "project_url": "https://pypi.org/project/pytest/",
-    "release_url": "https://pypi.org/project/pytest/3.5.0/",
-    "requires_dist": [
-      "py (>=1.5.0)",
-      "six (>=1.10.0)",
-      "setuptools",
-      "attrs (>=17.4.0)",
-      "more-itertools (>=4.0.0)",
-      "pluggy (<0.7,>=0.5)",
-      "funcsigs; python_version < \"3.0\"",
-      "colorama; sys_platform == \"win32\""
-    ],
-    "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
-    "summary": "pytest: simple powerful testing with Python",
-    "version": "3.5.0"
-  },
-  "last_serial": 3697219,
-  "releases": {
-    "3.5.0": [
-      {
-        "comment_text": "",
-        "digests": {
-          "md5": "c0b6697b7130c495aba71cdfcf939cc9",
-          "sha256": "6266f87ab64692112e5477eba395cfedda53b1933ccd29478e671e73b420c19c"
-        },
-        "downloads": -1,
-        "filename": "pytest-3.5.0-py2.py3-none-any.whl",
-        "has_sig": false,
-        "md5_digest": "c0b6697b7130c495aba71cdfcf939cc9",
-        "packagetype": "bdist_wheel",
-        "python_version": "py2.py3",
-        "size": 194247,
-        "upload_time": "2018-03-22T23:47:54",
-        "url": "https://files.pythonhosted.org/packages/ed/96/271c93f75212c06e2a7ec3e2fa8a9c90acee0a4838dc05bf379ea09aae31/pytest-3.5.0-py2.py3-none-any.whl"
-      },
-      {
-        "comment_text": "",
-        "digests": {
-          "md5": "b8e13a4091f07ff1fda081cf40ff99f1",
-          "sha256": "fae491d1874f199537fd5872b5e1f0e74a009b979df9d53d1553fd03da1703e1"
-        },
-        "downloads": -1,
-        "filename": "pytest-3.5.0.tar.gz",
-        "has_sig": false,
-        "md5_digest": "b8e13a4091f07ff1fda081cf40ff99f1",
-        "packagetype": "sdist",
-        "python_version": "source",
-        "size": 830816,
-        "upload_time": "2018-03-22T23:47:56",
-        "url": "https://files.pythonhosted.org/packages/2d/56/6019153cdd743300c5688ab3b07702355283e53c83fbf922242c053ffb7b/pytest-3.5.0.tar.gz"
-      }
-    ]
-  },
-  "urls": [
+  "alternate-locations": [],
+  "files": [
     {
-      "comment_text": "",
-      "digests": {
-        "md5": "c0b6697b7130c495aba71cdfcf939cc9",
-        "sha256": "6266f87ab64692112e5477eba395cfedda53b1933ccd29478e671e73b420c19c"
+      "core-metadata": {
+        "sha256": "3825a201ef8accd23ae8e728ac48c8f06fdf04cbdf2aa5f0729cbcab5d06a833"
       },
-      "downloads": -1,
+      "data-dist-info-metadata": {
+        "sha256": "3825a201ef8accd23ae8e728ac48c8f06fdf04cbdf2aa5f0729cbcab5d06a833"
+      },
       "filename": "pytest-3.5.0-py2.py3-none-any.whl",
-      "has_sig": false,
-      "md5_digest": "c0b6697b7130c495aba71cdfcf939cc9",
-      "packagetype": "bdist_wheel",
-      "python_version": "py2.py3",
+      "hashes": {
+        "md5": "d3b1e9aea9e5b9e7a226d8b08aa43662",
+        "sha256": "28e4d9c2ae3196d74805c2eba24f350ae4c791a5b9b397c79b41506a48dc64ca"
+      },
+      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
       "size": 194247,
-      "upload_time": "2018-03-22T23:47:54",
-      "url": "https://files.pythonhosted.org/packages/ed/96/271c93f75212c06e2a7ec3e2fa8a9c90acee0a4838dc05bf379ea09aae31/pytest-3.5.0-py2.py3-none-any.whl"
+      "upload-time": "2018-03-22T23:47:54.595523Z",
+      "url": "https://files.pythonhosted.org/packages/ed/96/271c93f75212c06e2a7ec3e2fa8a9c90acee0a4838dc05bf379ea09aae31/pytest-3.5.0-py2.py3-none-any.whl",
+      "yanked": false
     },
     {
-      "comment_text": "",
-      "digests": {
-        "md5": "b8e13a4091f07ff1fda081cf40ff99f1",
-        "sha256": "fae491d1874f199537fd5872b5e1f0e74a009b979df9d53d1553fd03da1703e1"
-      },
-      "downloads": -1,
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
       "filename": "pytest-3.5.0.tar.gz",
-      "has_sig": false,
-      "md5_digest": "b8e13a4091f07ff1fda081cf40ff99f1",
-      "packagetype": "sdist",
-      "python_version": "source",
+      "hashes": {
+        "md5": "ccd78dac54112045f561c4df86631f19",
+        "sha256": "677b1d6decd29c041fe64276f29f79fbe66e40c59e445eb251366b4a8ab8bf68"
+      },
+      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
       "size": 830816,
-      "upload_time": "2018-03-22T23:47:56",
-      "url": "https://files.pythonhosted.org/packages/2d/56/6019153cdd743300c5688ab3b07702355283e53c83fbf922242c053ffb7b/pytest-3.5.0.tar.gz"
+      "upload-time": "2018-03-22T23:47:56.511852Z",
+      "url": "https://files.pythonhosted.org/packages/2d/56/6019153cdd743300c5688ab3b07702355283e53c83fbf922242c053ffb7b/pytest-3.5.0.tar.gz",
+      "yanked": false
+    },
+    {
+      "core-metadata": {
+        "sha256": "8a80e51c143666a2d213dc466ec5be4ab558c6d84457173f4ed079f4331ebb71"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "8a80e51c143666a2d213dc466ec5be4ab558c6d84457173f4ed079f4331ebb71"
+      },
+      "filename": "pytest-3.5.1-py2.py3-none-any.whl",
+      "hashes": {
+        "md5": "f1de372a436700e3a785e85c11d15821",
+        "sha256": "6d3e83b1c1697d220137e436980e73b3ca674f643e666d7c24b0321cb57b76a4"
+      },
+      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+      "size": 192143,
+      "upload-time": "2018-04-24T21:37:43.104462Z",
+      "url": "https://files.pythonhosted.org/packages/76/52/fc48d02492d9e6070cb672d9133382e83084f567f88eff1c27bd2c6c27a8/pytest-3.5.1-py2.py3-none-any.whl",
+      "yanked": false
+    },
+    {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
+      "filename": "pytest-3.5.1.tar.gz",
+      "hashes": {
+        "md5": "961104636090457187851ccb9ef0f677",
+        "sha256": "b8fe151f3e181801dd38583a1c03818fbc662a8fce96c9063a0af624613e78f8"
+      },
+      "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+      "size": 830571,
+      "upload-time": "2018-04-24T21:37:44.492084Z",
+      "url": "https://files.pythonhosted.org/packages/b2/85/24954df0ea8156599563b753de54383a5d702081093b7953334e4701b8d8/pytest-3.5.1.tar.gz",
+      "yanked": false
     }
+  ],
+  "meta": {
+    "_last-serial": 0,
+    "api-version": "1.2"
+  },
+  "name": "pytest",
+  "versions": [
+    "3.5.0",
+    "3.5.1"
   ]
 }

@@ -2,30 +2,30 @@
 name = "cachy"
 version = "0.2.0"
 description = ""
-category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [[package]]
 name = "pendulum"
 version = "1.4.4"
 description = ""
-category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [[package]]
 name = "project-with-setup"
 version = "0.1.2"
 develop = false
 description = "Demo project."
-category = "main"
 optional = false
 python-versions = "*"
+files = []
 
 [package.source]
 type = "directory"
-url = "tests/fixtures/project_with_setup"
+url = "project"
 
 [package.dependencies]
 cachy = {version = ">=0.2.0", extras = ["msgpack"]}
@@ -33,10 +33,5 @@ pendulum = ">=1.4.4"
 
 [metadata]
 python-versions = "*"
-lock-version = "1.1"
+lock-version = "2.0"
 content-hash = "123456789"
-
-[metadata.files]
-cachy = []
-project-with-setup = []
-pendulum = []

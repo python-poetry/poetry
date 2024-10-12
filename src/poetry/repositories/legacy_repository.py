@@ -1,20 +1,25 @@
 from __future__ import annotations
 
+from contextlib import suppress
+from functools import cached_property
 from typing import TYPE_CHECKING
 from typing import Any
 
+import requests.adapters
+
 from poetry.core.packages.package import Package
-from poetry.core.semver.version import Version
 
 from poetry.inspection.info import PackageInfo
-from poetry.repositories.exceptions import PackageNotFound
-from poetry.repositories.http import HTTPRepository
-from poetry.repositories.link_sources.html import SimpleRepositoryPage
-from poetry.utils.helpers import canonicalize_name
+from poetry.repositories.exceptions import PackageNotFoundError
+from poetry.repositories.http_repository import HTTPRepository
+from poetry.repositories.link_sources.html import HTMLPage
+from poetry.repositories.link_sources.html import SimpleRepositoryRootPage
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages.dependency import Dependency
+    from packaging.utils import NormalizedName
+    from poetry.core.constraints.version import Version
+    from poetry.core.constraints.version import VersionConstraint
     from poetry.core.packages.utils.link import Link
 
     from poetry.config.config import Config
@@ -27,69 +32,15 @@ class LegacyRepository(HTTPRepository):
         url: str,
         config: Config | None = None,
         disable_cache: bool = False,
+        pool_size: int = requests.adapters.DEFAULT_POOLSIZE,
     ) -> None:
         if name == "pypi":
             raise ValueError("The name [pypi] is reserved for repositories")
 
-        super().__init__(name, url.rstrip("/"), config, disable_cache)
-
-    def find_packages(self, dependency: Dependency) -> list[Package]:
-        packages = []
-        constraint, allow_prereleases = self._get_constraints_from_dependency(
-            dependency
-        )
-
-        key = dependency.name
-        if not constraint.is_any():
-            key = f"{key}:{constraint!s}"
-
-        ignored_pre_release_versions = []
-
-        if self._cache.store("matches").has(key):
-            versions = self._cache.store("matches").get(key)
-        else:
-            page = self._get_page(f"/{dependency.name.replace('.', '-')}/")
-            if page is None:
-                return []
-
-            versions = []
-            for version in page.versions(dependency.name):
-                if version.is_unstable() and not allow_prereleases:
-                    if constraint.is_any():
-                        # we need this when all versions of the package are pre-releases
-                        ignored_pre_release_versions.append(version)
-                    continue
-
-                if constraint.allows(version):
-                    versions.append(version)
-
-            self._cache.store("matches").put(key, versions, 5)
-
-        for package_versions in (versions, ignored_pre_release_versions):
-            for version in package_versions:
-                package = Package(
-                    dependency.name,
-                    version,
-                    source_type="legacy",
-                    source_reference=self.name,
-                    source_url=self._url,
-                )
-
-                packages.append(package)
-
-            self._log(
-                f"{len(packages)} packages found for {dependency.name} {constraint!s}",
-                level="debug",
-            )
-
-            if packages or not constraint.is_any():
-                # we have matching packages, or constraint is not (*)
-                break
-
-        return packages
+        super().__init__(name, url.rstrip("/"), config, disable_cache, pool_size)
 
     def package(
-        self, name: str, version: str, extras: list[str] | None = None
+        self, name: str, version: Version, extras: list[str] | None = None
     ) -> Package:
         """
         Retrieve the release information.
@@ -103,7 +54,7 @@ class LegacyRepository(HTTPRepository):
         should be much faster.
         """
         try:
-            index = self._packages.index(Package(name, version, version))
+            index = self._packages.index(Package(name, version))
 
             return self._packages[index]
         except ValueError:
@@ -115,35 +66,89 @@ class LegacyRepository(HTTPRepository):
             return package
 
     def find_links_for_package(self, package: Package) -> list[Link]:
-        page = self._get_page(f"/{package.name.replace('.', '-')}/")
-        if page is None:
+        try:
+            page = self.get_page(package.name)
+        except PackageNotFoundError:
             return []
 
         return list(page.links_for_version(package.name, package.version))
 
-    def _get_release_info(self, name: str, version: str) -> dict[str, Any]:
-        page = self._get_page(f"/{canonicalize_name(name).replace('.', '-')}/")
-        if page is None:
-            raise PackageNotFound(f'No package named "{name}"')
+    def _find_packages(
+        self, name: NormalizedName, constraint: VersionConstraint
+    ) -> list[Package]:
+        """
+        Find packages on the remote server.
+        """
+        try:
+            page = self.get_page(name)
+        except PackageNotFoundError:
+            self._log(f"No packages found for {name}", level="debug")
+            return []
 
-        links = list(page.links_for_version(name, Version.parse(version)))
+        versions = [
+            (version, page.yanked(name, version))
+            for version in page.versions(name)
+            if constraint.allows(version)
+        ]
+
+        return [
+            Package(
+                name,
+                version,
+                source_type="legacy",
+                source_reference=self.name,
+                source_url=self._url,
+                yanked=yanked,
+            )
+            for version, yanked in versions
+        ]
+
+    def _get_release_info(
+        self, name: NormalizedName, version: Version
+    ) -> dict[str, Any]:
+        page = self.get_page(name)
+
+        links = list(page.links_for_version(name, version))
+        yanked = page.yanked(name, version)
 
         return self._links_to_data(
             links,
             PackageInfo(
                 name=name,
-                version=version,
+                version=version.text,
                 summary="",
-                platform=None,
                 requires_dist=[],
                 requires_python=None,
                 files=[],
+                yanked=yanked,
                 cache_version=str(self.CACHE_VERSION),
             ),
         )
 
-    def _get_page(self, endpoint: str) -> SimpleRepositoryPage | None:
-        response = self._get_response(endpoint)
-        if not response:
-            return None
-        return SimpleRepositoryPage(response.url, response.text)
+    def _get_page(self, name: NormalizedName) -> HTMLPage:
+        if not (response := self._get_response(f"/{name}/")):
+            raise PackageNotFoundError(f"Package [{name}] not found.")
+        return HTMLPage(response.url, response.text)
+
+    @cached_property
+    def root_page(self) -> SimpleRepositoryRootPage:
+        if not (response := self._get_response("/")):
+            self._log(
+                f"Unable to retrieve package listing from package source {self.name}",
+                level="error",
+            )
+            return SimpleRepositoryRootPage()
+
+        return SimpleRepositoryRootPage(response.text)
+
+    def search(self, query: str) -> list[Package]:
+        results: list[Package] = []
+
+        for candidate in self.root_page.search(query):
+            with suppress(PackageNotFoundError):
+                page = self.get_page(candidate)
+
+                for package in page.packages:
+                    results.append(package)
+
+        return results

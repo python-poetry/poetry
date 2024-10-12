@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "my-package"
+name = "local-config"
 version = "1.2.3"
 description = "Some description."
 authors = [
@@ -43,12 +43,12 @@ simple-project = { path = "../simple_project/" }
 [tool.poetry.extras]
 db = [ "orator" ]
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "~3.4"
 
 
 [tool.poetry.scripts]
-my-script = "my_package:main"
+my-script = "local_config:main"
 
 
 [tool.poetry.plugins."blogtool.parsers"]

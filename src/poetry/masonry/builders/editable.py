@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import csv
 import hashlib
+import json
 import os
-import shutil
 
 from base64 import urlsafe_b64encode
 from pathlib import Path
@@ -11,10 +12,10 @@ from typing import TYPE_CHECKING
 from poetry.core.masonry.builders.builder import Builder
 from poetry.core.masonry.builders.sdist import SdistBuilder
 from poetry.core.masonry.utils.package_include import PackageInclude
-from poetry.core.semver.version import Version
 
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import decode
+from poetry.utils._compat import getencoding
 from poetry.utils.env import build_environment
 from poetry.utils.helpers import is_dir_writable
 from poetry.utils.pip import pip_install
@@ -40,14 +41,15 @@ WINDOWS_CMD_TEMPLATE = """\
 """
 
 
-class EditableBuilder(Builder):  # type: ignore[misc]
+class EditableBuilder(Builder):
     def __init__(self, poetry: Poetry, env: Env, io: IO) -> None:
+        self._poetry: Poetry
         super().__init__(poetry)
 
         self._env = env
         self._io = io
 
-    def build(self) -> None:
+    def build(self, target_dir: Path | None = None) -> Path:
         self._debug(
             f"  - Building package <c1>{self._package.name}</c1> in"
             " <info>editable</info> mode"
@@ -58,7 +60,8 @@ class EditableBuilder(Builder):  # type: ignore[misc]
                 self._debug(
                     "  - <warning>Falling back on using a <b>setup.py</b></warning>"
                 )
-                return self._setup_build()
+                self._setup_build()
+                return self._path
 
             self._run_build_script(self._package.build_script)
 
@@ -74,6 +77,8 @@ class EditableBuilder(Builder):  # type: ignore[misc]
         added_files += self._add_pth()
         added_files += self._add_scripts()
         self._add_dist_info(added_files)
+
+        return self._path
 
     def _run_build_script(self, build_script: str) -> None:
         with build_environment(poetry=self._poetry, env=self._env, io=self._io) as env:
@@ -94,23 +99,10 @@ class EditableBuilder(Builder):  # type: ignore[misc]
                 f.write(decode(builder.build_setup()))
 
         try:
-            if self._env.pip_version < Version.from_parts(19, 0):
-                pip_install(self._path, self._env, upgrade=True, editable=True)
-            else:
-                # Temporarily rename pyproject.toml
-                shutil.move(
-                    str(self._poetry.file), str(self._poetry.file.with_suffix(".tmp"))
-                )
-                try:
-                    pip_install(self._path, self._env, upgrade=True, editable=True)
-                finally:
-                    shutil.move(
-                        str(self._poetry.file.with_suffix(".tmp")),
-                        str(self._poetry.file),
-                    )
+            pip_install(self._path, self._env, upgrade=True, editable=True)
         finally:
             if not has_setup:
-                os.remove(str(setup))
+                os.remove(setup)
 
     def _add_pth(self) -> list[Path]:
         paths = {
@@ -127,26 +119,23 @@ class EditableBuilder(Builder):  # type: ignore[misc]
         for file in self._env.site_packages.find(path=pth_file, writable_only=True):
             self._debug(
                 f"  - Removing existing <c2>{file.name}</c2> from <b>{file.parent}</b>"
-                f" for {self._poetry.file.parent}"
+                f" for {self._poetry.file.path.parent}"
             )
-            # We can't use unlink(missing_ok=True) because it's not always available
-            if file.exists():
-                file.unlink()
+            file.unlink(missing_ok=True)
 
         try:
             pth_file = self._env.site_packages.write_text(
-                pth_file, content, encoding="utf-8"
+                pth_file, content, encoding=getencoding()
             )
             self._debug(
                 f"  - Adding <c2>{pth_file.name}</c2> to <b>{pth_file.parent}</b> for"
-                f" {self._poetry.file.parent}"
+                f" {self._poetry.file.path.parent}"
             )
             return [pth_file]
-        except OSError:
-            # TODO: Replace with PermissionError
+        except PermissionError:
             self._io.write_error_line(
                 f"  - Failed to create <c2>{pth_file.name}</c2> for"
-                f" {self._poetry.file.parent}"
+                f" {self._poetry.file.path.parent}"
             )
             return []
 
@@ -160,14 +149,33 @@ class EditableBuilder(Builder):  # type: ignore[misc]
         else:
             self._io.write_error_line(
                 "  - Failed to find a suitable script installation directory for"
-                f" {self._poetry.file.parent}"
+                f" {self._poetry.file.path.parent}"
             )
             return []
 
         scripts = entry_points.get("console_scripts", [])
         for script in scripts:
-            name, script = script.split(" = ")
-            module, callable_ = script.split(":")
+            name, script_with_extras = script.split(" = ")
+            script_without_extras = script_with_extras.split("[")[0]
+            try:
+                module, callable_ = script_without_extras.split(":")
+            except ValueError as exc:
+                msg = (
+                    f"Bad script ({name}): script needs to specify a function within a"
+                    " module like: module(.submodule):function\nInstead got:"
+                    f" {script_with_extras}"
+                )
+                if "not enough values" in str(exc):
+                    msg += (
+                        "\nHint: If the script depends on module-level code, try"
+                        " wrapping it in a main() function and modifying your script"
+                        f' like:\n{name} = "{script_with_extras}:main"'
+                    )
+                elif "too many values" in str(exc):
+                    msg += '\nToo many ":" found!'
+
+                raise ValueError(msg)
+
             callable_holder = callable_.split(".", 1)[0]
 
             script_file = scripts_path.joinpath(name)
@@ -236,15 +244,29 @@ class EditableBuilder(Builder):  # type: ignore[misc]
 
             added_files.append(dist_info.joinpath("entry_points.txt"))
 
+        # write PEP 610 metadata
+        direct_url_json = dist_info.joinpath("direct_url.json")
+        direct_url_json.write_text(
+            json.dumps(
+                {
+                    "dir_info": {"editable": True},
+                    "url": self._poetry.file.path.parent.absolute().as_uri(),
+                }
+            ),
+            encoding="utf-8",
+        )
+        added_files.append(direct_url_json)
+
         record = dist_info.joinpath("RECORD")
-        with record.open("w", encoding="utf-8") as f:
+        with record.open("w", encoding="utf-8", newline="") as f:
+            csv_writer = csv.writer(f)
             for path in added_files:
                 hash = self._get_file_hash(path)
                 size = path.stat().st_size
-                f.write(f"{path!s},sha256={hash},{size}\n")
+                csv_writer.writerow((path, f"sha256={hash}", size))
 
             # RECORD itself is recorded with no hash or size
-            f.write(f"{record},,\n")
+            csv_writer.writerow((record, "", ""))
 
     def _get_file_hash(self, filepath: Path) -> str:
         hashsum = hashlib.sha256()

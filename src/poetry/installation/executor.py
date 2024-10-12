@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import csv
+import functools
 import itertools
 import json
-import os
 import threading
 
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import wait
 from pathlib import Path
@@ -13,32 +14,35 @@ from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
 
-from cleo.io.null_io import NullIO
-from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.utils.link import Link
-from poetry.core.packages.utils.utils import url_to_path
-from poetry.core.pyproject.toml import PyProjectTOML
 
 from poetry.installation.chef import Chef
 from poetry.installation.chooser import Chooser
+from poetry.installation.operations import Install
+from poetry.installation.operations import Uninstall
+from poetry.installation.operations import Update
+from poetry.installation.wheel_installer import WheelInstaller
+from poetry.puzzle.exceptions import SolverProblemError
 from poetry.utils._compat import decode
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.env import EnvCommandError
+from poetry.utils.helpers import Downloader
+from poetry.utils.helpers import get_file_hash
+from poetry.utils.helpers import get_highest_priority_hash_type
 from poetry.utils.helpers import pluralize
 from poetry.utils.helpers import remove_directory
-from poetry.utils.pip import pip_install
+from poetry.utils.isolated_build import IsolatedBuildError
+from poetry.utils.isolated_build import IsolatedBuildInstallError
 
 
 if TYPE_CHECKING:
     from cleo.io.io import IO
+    from cleo.io.outputs.section_output import SectionOutput
     from poetry.core.packages.package import Package
 
     from poetry.config.config import Config
-    from poetry.installation.operations import Install
-    from poetry.installation.operations import Uninstall
-    from poetry.installation.operations import Update
     from poetry.installation.operations.operation import Operation
-    from poetry.repositories import Pool
+    from poetry.repositories import RepositoryPool
     from poetry.utils.env import Env
 
 
@@ -46,39 +50,47 @@ class Executor:
     def __init__(
         self,
         env: Env,
-        pool: Pool,
+        pool: RepositoryPool,
         config: Config,
         io: IO,
-        parallel: bool = None,
+        parallel: bool | None = None,
+        disable_cache: bool = False,
     ) -> None:
         self._env = env
         self._io = io
         self._dry_run = False
         self._enabled = True
         self._verbose = False
-        self._authenticator = Authenticator(config, self._io)
-        self._chef = Chef(config, self._env)
-        self._chooser = Chooser(pool, self._env)
+        self._wheel_installer = WheelInstaller(self._env)
 
         if parallel is None:
             parallel = config.get("installer.parallel", True)
 
         if parallel:
-            self._max_workers = self._get_max_workers(
-                desired_max_workers=config.get("installer.max-workers")
-            )
+            self._max_workers = config.installer_max_workers
         else:
             self._max_workers = 1
 
+        self._artifact_cache = pool.artifact_cache
+        self._authenticator = Authenticator(
+            config, self._io, disable_cache=disable_cache, pool_size=self._max_workers
+        )
+        self._chef = Chef(self._artifact_cache, self._env, pool)
+        self._chooser = Chooser(pool, self._env, config)
+
         self._executor = ThreadPoolExecutor(max_workers=self._max_workers)
-        self._total_operations = 0
-        self._executed_operations = 0
         self._executed = {"install": 0, "update": 0, "uninstall": 0}
         self._skipped = {"install": 0, "update": 0, "uninstall": 0}
-        self._sections = {}
+        self._sections: dict[int, SectionOutput] = {}
+        self._yanked_warnings: list[str] = []
         self._lock = threading.Lock()
         self._shutdown = False
         self._hashes: dict[str, str] = {}
+
+        # Cache whether decorated output is supported.
+        # https://github.com/python-poetry/cleo/issues/423
+        self._decorated_output: bool = self._io.output.is_decorated()
+        self._max_retries = config.get("requests.max-retries", 0)
 
     @property
     def installations_count(self) -> int:
@@ -92,8 +104,12 @@ class Executor:
     def removals_count(self) -> int:
         return self._executed["uninstall"]
 
+    @property
+    def enabled(self) -> bool:
+        return self._enabled
+
     def supports_fancy_output(self) -> bool:
-        return self._io.output.is_decorated() and not self._dry_run
+        return self._decorated_output and not self._dry_run
 
     def disable(self) -> Executor:
         self._enabled = False
@@ -110,24 +126,10 @@ class Executor:
 
         return self
 
-    def pip_install(
-        self, req: Path | Link, upgrade: bool = False, editable: bool = False
-    ) -> int:
-        try:
-            pip_install(req, self._env, upgrade=upgrade, editable=editable)
-        except EnvCommandError as e:
-            output = decode(e.e.output)
-            if (
-                "KeyboardInterrupt" in output
-                or "ERROR: Operation cancelled by user" in output
-            ):
-                return -2
-            raise
-
-        return 0
+    def enable_bytecode_compilation(self, enable: bool = True) -> None:
+        self._wheel_installer.enable_bytecode_compilation(enable)
 
     def execute(self, operations: list[Operation]) -> int:
-        self._total_operations = len(operations)
         for job_type in self._executed:
             self._executed[job_type] = 0
             self._skipped[job_type] = 0
@@ -135,12 +137,15 @@ class Executor:
         if operations and (self._enabled or self._dry_run):
             self._display_summary(operations)
 
+        self._sections = {}
+        self._yanked_warnings = []
+
         # We group operations by priority
         groups = itertools.groupby(operations, key=lambda o: -o.priority)
-        self._sections = {}
         for _, group in groups:
             tasks = []
             serial_operations = []
+            serial_git_operations = defaultdict(list)
             for operation in group:
                 if self._shutdown:
                     break
@@ -155,17 +160,42 @@ class Executor:
                     operation.package.develop
                     and operation.package.source_type in {"directory", "git"}
                 )
-                if not operation.skipped and is_parallel_unsafe:
-                    serial_operations.append(operation)
-                    continue
+                # Skipped operations are safe to execute in parallel
+                if operation.skipped:
+                    is_parallel_unsafe = False
 
-                tasks.append(self._executor.submit(self._execute_operation, operation))
+                if is_parallel_unsafe:
+                    serial_operations.append(operation)
+                elif operation.package.source_type == "git":
+                    # Git operations on the same repository should be executed serially
+                    serial_git_operations[operation.package.source_url].append(
+                        operation
+                    )
+                else:
+                    tasks.append(
+                        self._executor.submit(self._execute_operation, operation)
+                    )
+
+            def _serialize(
+                repository_serial_operations: list[Operation],
+            ) -> None:
+                for operation in repository_serial_operations:
+                    self._execute_operation(operation)
+
+            # For each git repository, execute all operations serially
+            for repository_git_operations in serial_git_operations.values():
+                tasks.append(
+                    self._executor.submit(
+                        _serialize,
+                        repository_serial_operations=repository_git_operations,
+                    )
+                )
 
             try:
                 wait(tasks)
 
                 for operation in serial_operations:
-                    wait([self._executor.submit(self._execute_operation, operation)])
+                    self._execute_operation(operation)
 
             except KeyboardInterrupt:
                 self._shutdown = True
@@ -177,22 +207,18 @@ class Executor:
 
                 break
 
+        for warning in self._yanked_warnings:
+            self._io.write_error_line(f"<warning>Warning: {warning}</warning>")
+        for path, issues in self._wheel_installer.invalid_wheels.items():
+            formatted_issues = "\n".join(issues)
+            warning = (
+                f"Validation of the RECORD file of {path.name} failed."
+                " Please report to the maintainers of that package so they can fix"
+                f" their build process. Details:\n{formatted_issues}\n"
+            )
+            self._io.write_error_line(f"<warning>Warning: {warning}</warning>")
+
         return 1 if self._shutdown else 0
-
-    @staticmethod
-    def _get_max_workers(desired_max_workers: int | None = None) -> int:
-        # This should be directly handled by ThreadPoolExecutor
-        # however, on some systems the number of CPUs cannot be determined
-        # (it raises a NotImplementedError), so, in this case, we assume
-        # that the system only has one CPU.
-        try:
-            default_max_workers = os.cpu_count() + 4
-        except NotImplementedError:
-            default_max_workers = 5
-
-        if desired_max_workers is None:
-            return default_max_workers
-        return min(default_max_workers, desired_max_workers)
 
     def _write(self, operation: Operation, line: str) -> None:
         if not self.supports_fancy_output() or not self._should_write_operation(
@@ -222,18 +248,18 @@ class Executor:
                     with self._lock:
                         self._sections[id(operation)] = self._io.section()
                         self._sections[id(operation)].write_line(
-                            f"  <fg=blue;options=bold>•</> {op_message}:"
+                            f"  <fg=blue;options=bold>-</> {op_message}:"
                             " <fg=blue>Pending...</>"
                         )
             else:
                 if self._should_write_operation(operation):
                     if not operation.skipped:
                         self._io.write_line(
-                            f"  <fg=blue;options=bold>•</> {op_message}"
+                            f"  <fg=blue;options=bold>-</> {op_message}"
                         )
                     else:
                         self._io.write_line(
-                            f"  <fg=default;options=bold,dark>•</> {op_message}: "
+                            f"  <fg=default;options=bold,dark>-</> {op_message}: "
                             "<fg=default;options=bold,dark>Skipped</> "
                             "<fg=default;options=dark>for the following reason:</> "
                             f"<fg=default;options=bold,dark>{operation.skip_reason}</>"
@@ -256,11 +282,12 @@ class Executor:
             try:
                 from cleo.ui.exception_trace import ExceptionTrace
 
+                io: IO | SectionOutput
                 if not self.supports_fancy_output():
                     io = self._io
                 else:
                     message = (
-                        "  <error>•</error>"
+                        "  <error>-</error>"
                         f" {self.get_operation_message(operation, error=True)}:"
                         " <error>Failed</error>"
                     )
@@ -270,14 +297,53 @@ class Executor:
                 with self._lock:
                     trace = ExceptionTrace(e)
                     trace.render(io)
+                    pkg = operation.package
+                    if isinstance(e, IsolatedBuildError):
+                        pip_command = "pip wheel --no-cache-dir --use-pep517"
+                        if pkg.develop:
+                            requirement = pkg.source_url
+                            pip_command += " --editable"
+                        else:
+                            requirement = (
+                                pkg.to_dependency().to_pep_508().split(";")[0].strip()
+                            )
+                        message = (
+                            "<info>"
+                            "Note: This error originates from the build backend,"
+                            " and is likely not a problem with poetry"
+                            f" but with {pkg.pretty_name} ({pkg.full_pretty_version})"
+                            " not supporting PEP 517 builds. You can verify this by"
+                            f" running '{pip_command} \"{requirement}\"'."
+                            "</info>"
+                        )
+                    elif isinstance(e, IsolatedBuildInstallError):
+                        message = (
+                            "<error>"
+                            "Cannot install build-system.requires"
+                            f" for {pkg.pretty_name}."
+                            "</error>"
+                        )
+                    elif isinstance(e, SolverProblemError):
+                        message = (
+                            "<error>"
+                            "Cannot resolve build-system.requires"
+                            f" for {pkg.pretty_name}."
+                            "</error>"
+                        )
+                    else:
+                        message = f"<error>Cannot install {pkg.pretty_name}.</error>"
+
+                    io.write_line("")
+                    io.write_line(message)
                     io.write_line("")
             finally:
                 with self._lock:
                     self._shutdown = True
+
         except KeyboardInterrupt:
             try:
                 message = (
-                    "  <warning>•</warning>"
+                    "  <warning>-</warning>"
                     f" {self.get_operation_message(operation, warning=True)}:"
                     " <warning>Cancelled</warning>"
                 )
@@ -297,7 +363,7 @@ class Executor:
             if self.supports_fancy_output():
                 self._write(
                     operation,
-                    f"  <fg=default;options=bold,dark>•</> {operation_message}: "
+                    f"  <fg=default;options=bold,dark>-</> {operation_message}: "
                     "<fg=default;options=bold,dark>Skipped</> "
                     "<fg=default;options=dark>for the following reason:</> "
                     f"<fg=default;options=bold,dark>{operation.skip_reason}</>",
@@ -308,17 +374,15 @@ class Executor:
             return 0
 
         if not self._enabled or self._dry_run:
-            self._io.write_line(f"  <fg=blue;options=bold>•</> {operation_message}")
-
             return 0
 
-        result = getattr(self, f"_execute_{method}")(operation)
+        result: int = getattr(self, f"_execute_{method}")(operation)
 
         if result != 0:
             return result
 
         operation_message = self.get_operation_message(operation, done=True)
-        message = f"  <fg=green;options=bold>•</> {operation_message}"
+        message = f"  <fg=green;options=bold>-</> {operation_message}"
         self._write(operation, message)
 
         self._increment_operations_count(operation, True)
@@ -328,7 +392,6 @@ class Executor:
     def _increment_operations_count(self, operation: Operation, executed: bool) -> None:
         with self._lock:
             if executed:
-                self._executed_operations += 1
                 self._executed[operation.job_type] += 1
             else:
                 self._skipped[operation.job_type] += 1
@@ -373,28 +436,33 @@ class Executor:
             source_operation_color += "_dark"
             package_color += "_dark"
 
-        if operation.job_type == "install":
+        if isinstance(operation, Install):
             return (
                 f"<{base_tag}>Installing"
                 f" <{package_color}>{operation.package.name}</{package_color}>"
                 f" (<{operation_color}>{operation.package.full_pretty_version}</>)</>"
             )
 
-        if operation.job_type == "uninstall":
+        if isinstance(operation, Uninstall):
             return (
                 f"<{base_tag}>Removing"
                 f" <{package_color}>{operation.package.name}</{package_color}>"
                 f" (<{operation_color}>{operation.package.full_pretty_version}</>)</>"
             )
 
-        if operation.job_type == "update":
+        if isinstance(operation, Update):
+            initial_version = (initial_pkg := operation.initial_package).version
+            target_version = (target_pkg := operation.target_package).version
+            update_kind = (
+                "Updating" if target_version >= initial_version else "Downgrading"
+            )
             return (
-                f"<{base_tag}>Updating"
-                f" <{package_color}>{operation.initial_package.name}</{package_color}> "
+                f"<{base_tag}>{update_kind}"
+                f" <{package_color}>{initial_pkg.name}</{package_color}> "
                 f"(<{source_operation_color}>"
-                f"{operation.initial_package.full_pretty_version}"
+                f"{initial_pkg.full_pretty_version}"
                 f"</{source_operation_color}> -> <{operation_color}>"
-                f"{operation.target_package.full_pretty_version}</>)</>"
+                f"{target_pkg.full_pretty_version}</>)</>"
             )
         return ""
 
@@ -447,40 +515,55 @@ class Executor:
 
     def _execute_uninstall(self, operation: Uninstall) -> int:
         op_msg = self.get_operation_message(operation)
-        message = f"  <fg=blue;options=bold>•</> {op_msg}: <info>Removing...</info>"
+        message = f"  <fg=blue;options=bold>-</> {op_msg}: <info>Removing...</info>"
         self._write(operation, message)
 
-        return self._remove(operation)
+        return self._remove(operation.package)
 
     def _install(self, operation: Install | Update) -> int:
         package = operation.package
-        if package.source_type == "directory":
-            return self._install_directory(operation)
 
+        cleanup_archive: bool = False
         if package.source_type == "git":
-            return self._install_git(operation)
-
-        if package.source_type == "file":
-            archive = self._prepare_file(operation)
+            archive = self._prepare_git_archive(operation)
+            cleanup_archive = operation.package.develop
+        elif package.source_type == "file":
+            archive = self._prepare_archive(operation)
+        elif package.source_type == "directory":
+            archive = self._prepare_archive(operation)
+            cleanup_archive = True
         elif package.source_type == "url":
+            assert package.source_url is not None
             archive = self._download_link(operation, Link(package.source_url))
         else:
             archive = self._download(operation)
 
         operation_message = self.get_operation_message(operation)
         message = (
-            f"  <fg=blue;options=bold>•</> {operation_message}:"
+            f"  <fg=blue;options=bold>-</> {operation_message}:"
             " <info>Installing...</info>"
         )
         self._write(operation, message)
-        return self.pip_install(archive, upgrade=operation.job_type == "update")
+
+        try:
+            if operation.job_type == "update":
+                # Uninstall first
+                # TODO: Make an uninstaller and find a way to rollback in case
+                # the new package can't be installed
+                assert isinstance(operation, Update)
+                self._remove(operation.initial_package)
+
+            self._wheel_installer.install(archive)
+        finally:
+            if cleanup_archive:
+                archive.unlink()
+
+        return 0
 
     def _update(self, operation: Install | Update) -> int:
         return self._install(operation)
 
-    def _remove(self, operation: Uninstall) -> int:
-        package = operation.package
-
+    def _remove(self, package: Package) -> int:
         # If we have a VCS package, remove its source directory
         if package.source_type == "git":
             src_dir = self._env.path / "src" / package.name
@@ -495,91 +578,53 @@ class Executor:
 
             raise
 
-    def _prepare_file(self, operation: Install | Update) -> Path:
+    def _prepare_archive(
+        self, operation: Install | Update, *, output_dir: Path | None = None
+    ) -> Path:
         package = operation.package
         operation_message = self.get_operation_message(operation)
 
         message = (
-            f"  <fg=blue;options=bold>•</> {operation_message}:"
+            f"  <fg=blue;options=bold>-</> {operation_message}:"
             " <info>Preparing...</info>"
         )
         self._write(operation, message)
 
+        assert package.source_url is not None
         archive = Path(package.source_url)
+        if package.source_subdirectory:
+            archive = archive / package.source_subdirectory
         if not Path(package.source_url).is_absolute() and package.root_dir:
             archive = package.root_dir / archive
 
-        archive = self._chef.prepare(archive)
+        self._populate_hashes_dict(archive, package)
 
-        return archive
-
-    def _install_directory(self, operation: Install | Update) -> int:
-        from poetry.factory import Factory
-
-        package = operation.package
-        operation_message = self.get_operation_message(operation)
-
-        message = (
-            f"  <fg=blue;options=bold>•</> {operation_message}:"
-            " <info>Building...</info>"
+        return self._chef.prepare(
+            archive, editable=package.develop, output_dir=output_dir
         )
-        self._write(operation, message)
 
-        if package.root_dir:
-            req = package.root_dir / package.source_url
-        else:
-            req = Path(package.source_url).resolve(strict=False)
-
-        pyproject = PyProjectTOML(os.path.join(req, "pyproject.toml"))
-
-        if pyproject.is_poetry_project():
-            # Even if there is a build system specified
-            # some versions of pip (< 19.0.0) don't understand it
-            # so we need to check the version of pip to know
-            # if we can rely on the build system
-            legacy_pip = (
-                self._env.pip_version
-                < self._env.pip_version.__class__.from_parts(19, 0, 0)
-            )
-            package_poetry = Factory().create_poetry(pyproject.file.path.parent)
-
-            if package.develop and not package_poetry.package.build_script:
-                from poetry.masonry.builders.editable import EditableBuilder
-
-                # This is a Poetry package in editable mode
-                # we can use the EditableBuilder without going through pip
-                # to install it, unless it has a build script.
-                builder = EditableBuilder(package_poetry, self._env, NullIO())
-                builder.build()
-
-                return 0
-            elif legacy_pip or package_poetry.package.build_script:
-                from poetry.core.masonry.builders.sdist import SdistBuilder
-
-                # We need to rely on creating a temporary setup.py
-                # file since the version of pip does not support
-                # build-systems
-                # We also need it for non-PEP-517 packages
-                builder = SdistBuilder(package_poetry)
-
-                with builder.setup_py():
-                    if package.develop:
-                        return self.pip_install(req, upgrade=True, editable=True)
-                    return self.pip_install(req, upgrade=True)
-
-        if package.develop:
-            return self.pip_install(req, upgrade=True, editable=True)
-
-        return self.pip_install(req, upgrade=True)
-
-    def _install_git(self, operation: Install | Update) -> int:
+    def _prepare_git_archive(self, operation: Install | Update) -> Path:
         from poetry.vcs.git import Git
 
         package = operation.package
+        assert package.source_url is not None
+
+        if package.source_resolved_reference and not package.develop:
+            # Only cache git archives when we know precise reference hash,
+            # otherwise we might get stale archives
+            cached_archive = self._artifact_cache.get_cached_archive_for_git(
+                package.source_url,
+                package.source_resolved_reference,
+                package.source_subdirectory,
+                env=self._env,
+            )
+            if cached_archive is not None:
+                return cached_archive
+
         operation_message = self.get_operation_message(operation)
 
         message = (
-            f"  <fg=blue;options=bold>•</> {operation_message}: <info>Cloning...</info>"
+            f"  <fg=blue;options=bold>-</> {operation_message}: <info>Cloning...</info>"
         )
         self._write(operation, message)
 
@@ -593,75 +638,123 @@ class Executor:
         original_url = package.source_url
         package._source_url = str(source.path)
 
-        status_code = self._install_directory(operation)
+        output_dir = None
+        if package.source_resolved_reference and not package.develop:
+            output_dir = self._artifact_cache.get_cache_directory_for_git(
+                original_url,
+                package.source_resolved_reference,
+                package.source_subdirectory,
+            )
 
-        package._source_url = original_url
+        archive = self._prepare_archive(operation, output_dir=output_dir)
+        if not package.develop:
+            package._source_url = original_url
 
-        return status_code
-
-    def _download(self, operation: Install | Update) -> Link:
-        link = self._chooser.choose_for(operation.package)
-
-        return self._download_link(operation, link)
-
-    def _download_link(self, operation: Install | Update, link: Link) -> Link:
-        package = operation.package
-
-        archive = self._chef.get_cached_archive_for_link(link)
-        if archive is link:
-            # No cached distributions was found, so we download and prepare it
-            try:
-                archive = self._download_archive(operation, link)
-            except BaseException:
-                cache_directory = self._chef.get_cache_directory_for_link(link)
-                cached_file = cache_directory.joinpath(link.filename)
-                # We can't use unlink(missing_ok=True) because it's not available
-                # prior to Python 3.8
-                if cached_file.exists():
-                    cached_file.unlink()
-
-                raise
-
-            # TODO: Check readability of the created archive
-
-            if not link.is_wheel:
-                archive = self._chef.prepare(archive)
-
-        if package.files:
-            archive_hash = self._validate_archive_hash(archive, package)
-
-            self._hashes[package.name] = archive_hash
+        if output_dir is not None and output_dir.is_dir():
+            # Mark directories with cached git packages, to distinguish from
+            # "normal" cache
+            (output_dir / ".created_from_git_dependency").touch()
 
         return archive
 
+    def _download(self, operation: Install | Update) -> Path:
+        link = self._chooser.choose_for(operation.package)
+
+        if link.yanked:
+            # Store yanked warnings in a list and print after installing, so they can't
+            # be overlooked. Further, printing them in the concerning section would have
+            # the risk of overwriting the warning, so it is only briefly visible.
+            message = (
+                f"The file chosen for install of {operation.package.pretty_name} "
+                f"{operation.package.pretty_version} ({link.show_url}) is yanked."
+            )
+            if link.yanked_reason:
+                message += f" Reason for being yanked: {link.yanked_reason}"
+            self._yanked_warnings.append(message)
+
+        return self._download_link(operation, link)
+
+    def _download_link(self, operation: Install | Update, link: Link) -> Path:
+        package = operation.package
+
+        # Get original package for the link provided
+        download_func = functools.partial(self._download_archive, operation)
+        original_archive = self._artifact_cache.get_cached_archive_for_link(
+            link, strict=True, download_func=download_func
+        )
+
+        # Get potential higher prioritized cached archive, otherwise it will fall back
+        # to the original archive.
+        archive = self._artifact_cache.get_cached_archive_for_link(
+            link,
+            strict=False,
+            env=self._env,
+        )
+        if archive is None:
+            # Since we previously downloaded an archive, we now should have
+            # something cached that we can use here. The only case in which
+            # archive is None is if the original archive is not valid for the
+            # current environment.
+            raise RuntimeError(
+                f"Package {link.url} cannot be installed in the current environment"
+                f" {self._env.marker_env}"
+            )
+
+        if archive.suffix != ".whl":
+            message = (
+                f"  <fg=blue;options=bold>-</> {self.get_operation_message(operation)}:"
+                " <info>Preparing...</info>"
+            )
+            self._write(operation, message)
+
+            archive = self._chef.prepare(archive, output_dir=original_archive.parent)
+
+        # Use the original archive to provide the correct hash.
+        self._populate_hashes_dict(original_archive, package)
+
+        return archive
+
+    def _populate_hashes_dict(self, archive: Path, package: Package) -> None:
+        if package.files and archive.name in {f["file"] for f in package.files}:
+            archive_hash = self._validate_archive_hash(archive, package)
+            self._hashes[package.name] = archive_hash
+
     @staticmethod
-    def _validate_archive_hash(archive: Path | Link, package: Package) -> str:
-        archive_path = (
-            url_to_path(archive.url) if isinstance(archive, Link) else archive
-        )
-        file_dep = FileDependency(
-            package.name,
-            archive_path,
-        )
-        archive_hash = "sha256:" + file_dep.hash()
-        known_hashes = {f["hash"] for f in package.files}
+    def _validate_archive_hash(archive: Path, package: Package) -> str:
+        known_hashes = {f["hash"] for f in package.files if f["file"] == archive.name}
+        hash_types = {t.split(":")[0] for t in known_hashes}
+        hash_type = get_highest_priority_hash_type(hash_types, archive.name)
+
+        if hash_type is None:
+            raise RuntimeError(
+                f"No usable hash type(s) for {package} from archive"
+                f" {archive.name} found (known hashes: {known_hashes!s})"
+            )
+
+        archive_hash = f"{hash_type}:{get_file_hash(archive, hash_type)}"
 
         if archive_hash not in known_hashes:
             raise RuntimeError(
-                f"Hash for {package} from archive {archive_path.name} not found in"
+                f"Hash for {package} from archive {archive.name} not found in"
                 f" known hashes (was: {archive_hash})"
             )
 
         return archive_hash
 
-    def _download_archive(self, operation: Install | Update, link: Link) -> Path:
-        response = self._authenticator.request(
-            "get", link.url, stream=True, io=self._sections.get(id(operation), self._io)
+    def _download_archive(
+        self,
+        operation: Install | Update,
+        url: str,
+        dest: Path,
+    ) -> None:
+        downloader = Downloader(
+            url, dest, self._authenticator, max_retries=self._max_retries
         )
-        wheel_size = response.headers.get("content-length")
+        wheel_size = downloader.total_size
+
         operation_message = self.get_operation_message(operation)
         message = (
-            f"  <fg=blue;options=bold>•</> {operation_message}: <info>Downloading...</>"
+            f"  <fg=blue;options=bold>-</> {operation_message}: <info>Downloading...</>"
         )
         progress = None
         if self.supports_fancy_output():
@@ -680,30 +773,19 @@ class Executor:
                 self._sections[id(operation)].clear()
                 progress.start()
 
-        done = 0
-        archive = self._chef.get_cache_directory_for_link(link) / link.filename
-        archive.parent.mkdir(parents=True, exist_ok=True)
-        with archive.open("wb") as f:
-            for chunk in response.iter_content(chunk_size=4096):
-                if not chunk:
-                    break
-
-                done += len(chunk)
-
-                if progress:
-                    with self._lock:
-                        progress.set_progress(done)
-
-                f.write(chunk)
+        for fetched_size in downloader.download_with_progress(chunk_size=4096):
+            if progress:
+                with self._lock:
+                    progress.set_progress(fetched_size)
 
         if progress:
             with self._lock:
                 progress.finish()
 
-        return archive
-
     def _should_write_operation(self, operation: Operation) -> bool:
-        return not operation.skipped or self._dry_run or self._verbose
+        return (
+            not operation.skipped or self._dry_run or self._verbose or not self._enabled
+        )
 
     def _save_url_reference(self, operation: Operation) -> None:
         """
@@ -715,29 +797,16 @@ class Executor:
         package = operation.package
 
         if not package.source_url or package.source_type == "legacy":
-            # Since we are installing from our own distribution cache
-            # pip will write a `direct_url.json` file pointing to the cache
-            # distribution.
-            # That's not what we want, so we remove the direct_url.json file,
-            # if it exists.
-            for (
-                direct_url_json
-            ) in self._env.site_packages.find_distribution_direct_url_json_files(
-                distribution_name=package.name, writable_only=True
-            ):
-                # We can't use unlink(missing_ok=True) because it's not always available
-                if direct_url_json.exists():
-                    direct_url_json.unlink()
             return
 
-        url_reference = None
+        url_reference: dict[str, Any] | None = None
 
-        if package.source_type == "git":
+        if package.source_type == "git" and not package.develop:
             url_reference = self._create_git_url_reference(package)
+        elif package.source_type in ("directory", "git"):
+            url_reference = self._create_directory_url_reference(package)
         elif package.source_type == "url":
             url_reference = self._create_url_url_reference(package)
-        elif package.source_type == "directory":
-            url_reference = self._create_directory_url_reference(package)
         elif package.source_type == "file":
             url_reference = self._create_file_url_reference(package)
 
@@ -745,30 +814,19 @@ class Executor:
             for dist in self._env.site_packages.distributions(
                 name=package.name, writable_only=True
             ):
-                dist._path.joinpath("direct_url.json").write_text(
-                    json.dumps(url_reference),
-                    encoding="utf-8",
-                )
+                dist_path = dist._path  # type: ignore[attr-defined]
+                assert isinstance(dist_path, Path)
+                url = dist_path / "direct_url.json"
+                url.write_text(json.dumps(url_reference), encoding="utf-8")
 
-                record = dist._path.joinpath("RECORD")
+                record = dist_path / "RECORD"
                 if record.exists():
-                    with record.open(mode="a", encoding="utf-8") as f:
+                    with record.open(mode="a", encoding="utf-8", newline="") as f:
                         writer = csv.writer(f)
-                        writer.writerow(
-                            [
-                                str(
-                                    dist._path.joinpath("direct_url.json").relative_to(
-                                        record.parent.parent
-                                    )
-                                ),
-                                "",
-                                "",
-                            ]
-                        )
+                        path = url.relative_to(record.parent.parent)
+                        writer.writerow([str(path), "", ""])
 
-    def _create_git_url_reference(
-        self, package: Package
-    ) -> dict[str, str | dict[str, str]]:
+    def _create_git_url_reference(self, package: Package) -> dict[str, Any]:
         reference = {
             "url": package.source_url,
             "vcs_info": {
@@ -777,47 +835,50 @@ class Executor:
                 "commit_id": package.source_resolved_reference,
             },
         }
+        if package.source_subdirectory:
+            reference["subdirectory"] = package.source_subdirectory
 
         return reference
 
-    def _create_url_url_reference(
-        self, package: Package
-    ) -> dict[str, str | dict[str, str]]:
-        archive_info = {}
+    def _create_url_url_reference(self, package: Package) -> dict[str, Any]:
+        archive_info = self._get_archive_info(package)
 
-        if package.name in self._hashes:
-            archive_info["hash"] = self._hashes[package.name]
+        return {"url": package.source_url, "archive_info": archive_info}
 
-        reference = {"url": package.source_url, "archive_info": archive_info}
+    def _create_file_url_reference(self, package: Package) -> dict[str, Any]:
+        archive_info = self._get_archive_info(package)
 
-        return reference
-
-    def _create_file_url_reference(
-        self, package: Package
-    ) -> dict[str, str | dict[str, str]]:
-        archive_info = {}
-
-        if package.name in self._hashes:
-            archive_info["hash"] = self._hashes[package.name]
-
-        reference = {
+        assert package.source_url is not None
+        return {
             "url": Path(package.source_url).as_uri(),
             "archive_info": archive_info,
         }
 
-        return reference
-
-    def _create_directory_url_reference(
-        self, package: Package
-    ) -> dict[str, str | dict[str, str]]:
+    def _create_directory_url_reference(self, package: Package) -> dict[str, Any]:
         dir_info = {}
 
         if package.develop:
             dir_info["editable"] = True
 
-        reference = {
+        assert package.source_url is not None
+        return {
             "url": Path(package.source_url).as_uri(),
             "dir_info": dir_info,
         }
 
-        return reference
+    def _get_archive_info(self, package: Package) -> dict[str, Any]:
+        """
+        Create dictionary `archive_info` for file `direct_url.json`.
+
+        Specification: https://packaging.python.org/en/latest/specifications/direct-url
+        (it supersedes PEP 610)
+
+        :param package: This must be a poetry package instance.
+        """
+        archive_info = {}
+
+        if package.name in self._hashes:
+            algorithm, value = self._hashes[package.name].split(":")
+            archive_info["hashes"] = {algorithm: value}
+
+        return archive_info

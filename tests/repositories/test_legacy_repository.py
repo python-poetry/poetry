@@ -2,34 +2,31 @@ from __future__ import annotations
 
 import base64
 import re
-import shutil
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
 import requests
 
+from packaging.utils import canonicalize_name
+from poetry.core.constraints.version import Version
 from poetry.core.packages.dependency import Dependency
+from poetry.core.packages.utils.link import Link
 
 from poetry.factory import Factory
-from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.repositories.exceptions import RepositoryError
 from poetry.repositories.legacy_repository import LegacyRepository
-from poetry.repositories.link_sources.html import SimpleRepositoryPage
 
-
-try:
-    import urllib.parse as urlparse
-except ImportError:
-    import urlparse
 
 if TYPE_CHECKING:
     import httpretty
 
-    from _pytest.monkeypatch import MonkeyPatch
+    from pytest import MonkeyPatch
+    from pytest_mock import MockerFixture
 
     from poetry.config.config import Config
+    from tests.types import DistributionHashGetter
 
 
 @pytest.fixture(autouse=True)
@@ -37,84 +34,54 @@ def _use_simple_keyring(with_simple_keyring: None) -> None:
     pass
 
 
-class MockRepository(LegacyRepository):
+def test_page_relative_links_path_are_correct(
+    legacy_repository: LegacyRepository,
+) -> None:
+    repo = legacy_repository
 
-    FIXTURES = Path(__file__).parent / "fixtures" / "legacy"
-
-    def __init__(self) -> None:
-        super().__init__("legacy", url="http://legacy.foo.bar", disable_cache=True)
-
-    def _get_page(self, endpoint: str) -> SimpleRepositoryPage | None:
-        parts = endpoint.split("/")
-        name = parts[1]
-
-        fixture = self.FIXTURES / (name + ".html")
-        if not fixture.exists():
-            return
-
-        with fixture.open(encoding="utf-8") as f:
-            return SimpleRepositoryPage(self._url + endpoint, f.read())
-
-    def _download(self, url: str, dest: Path) -> None:
-        filename = urlparse.urlparse(url).path.rsplit("/")[-1]
-        filepath = self.FIXTURES.parent / "pypi.org" / "dists" / filename
-
-        shutil.copyfile(str(filepath), dest)
-
-
-def test_page_relative_links_path_are_correct():
-    repo = MockRepository()
-
-    page = repo._get_page("/relative")
+    page = repo.get_page("relative")
+    assert page is not None
 
     for link in page.links:
         assert link.netloc == "legacy.foo.bar"
         assert link.path.startswith("/relative/poetry")
 
 
-def test_page_absolute_links_path_are_correct():
-    repo = MockRepository()
+def test_page_absolute_links_path_are_correct(
+    legacy_repository: LegacyRepository,
+) -> None:
+    repo = legacy_repository
 
-    page = repo._get_page("/absolute")
+    page = repo.get_page("absolute")
+    assert page is not None
 
     for link in page.links:
         assert link.netloc == "files.pythonhosted.org"
         assert link.path.startswith("/packages/")
 
 
-def test_page_clean_link():
-    repo = MockRepository()
+def test_page_clean_link(legacy_repository: LegacyRepository) -> None:
+    repo = legacy_repository
 
-    page = repo._get_page("/relative")
+    page = repo.get_page("relative")
+    assert page is not None
 
     cleaned = page.clean_link('https://legacy.foo.bar/test /the"/cleaning\0')
     assert cleaned == "https://legacy.foo.bar/test%20/the%22/cleaning%00"
 
 
-def test_page_invalid_version_link():
-    repo = MockRepository()
+def test_page_invalid_version_link(legacy_repository: LegacyRepository) -> None:
+    repo = legacy_repository
 
-    page = repo._get_page("/invalid-version")
+    page = repo.get_page("invalid-version")
+    assert page is not None
 
     links = list(page.links)
-    assert len(links) == 2
+    assert len(links) == 1
 
-    versions = list(page.versions("poetry"))
+    versions = list(page.versions(canonicalize_name("poetry")))
     assert len(versions) == 1
     assert versions[0].to_string() == "0.1.0"
-
-    invalid_link = None
-
-    for link in links:
-        if link.filename.startswith("poetry-21"):
-            invalid_link = link
-            break
-
-    links_010 = list(page.links_for_version("poetry", versions[0]))
-    assert invalid_link not in links_010
-
-    assert invalid_link
-    assert not page.link_package_data(invalid_link)
 
     packages = list(page.packages)
     assert len(packages) == 1
@@ -122,25 +89,53 @@ def test_page_invalid_version_link():
     assert packages[0].version.to_string() == "0.1.0"
 
 
-def test_sdist_format_support():
-    repo = MockRepository()
-    page = repo._get_page("/relative")
+def test_page_filters_out_invalid_package_names(
+    legacy_repository_with_extra_packages: LegacyRepository,
+    dist_hash_getter: DistributionHashGetter,
+) -> None:
+    repo = legacy_repository_with_extra_packages
+    packages = repo.find_packages(Factory.create_dependency("pytest", "*"))
+    assert len(packages) == 1
+    assert packages[0].name == "pytest"
+    assert packages[0].version == Version.parse("3.5.0")
+
+    package = repo.package("pytest", Version.parse("3.5.0"))
+    assert package.files == [
+        {
+            "file": filename,
+            "hash": (f"sha256:{dist_hash_getter(filename).sha256}"),
+        }
+        for filename in [
+            f"{package.name}-{package.version}-py2.py3-none-any.whl",
+            f"{package.name}-{package.version}.tar.gz",
+        ]
+    ]
+
+
+def test_sdist_format_support(legacy_repository: LegacyRepository) -> None:
+    repo = legacy_repository
+    page = repo.get_page("relative")
+    assert page is not None
     bz2_links = list(filter(lambda link: link.ext == ".tar.bz2", page.links))
     assert len(bz2_links) == 1
     assert bz2_links[0].filename == "poetry-0.1.1.tar.bz2"
 
 
-def test_missing_version():
-    repo = MockRepository()
+def test_missing_version(legacy_repository: LegacyRepository) -> None:
+    repo = legacy_repository
 
-    with pytest.raises(PackageNotFound):
-        repo._get_release_info("missing_version", "1.1.0")
+    with pytest.raises(PackageNotFoundError):
+        repo._get_release_info(
+            canonicalize_name("missing_version"), Version.parse("1.1.0")
+        )
 
 
-def test_get_package_information_fallback_read_setup():
-    repo = MockRepository()
+def test_get_package_information_fallback_read_setup(
+    legacy_repository: LegacyRepository,
+) -> None:
+    repo = legacy_repository
 
-    package = repo.package("jupyter", "1.0.0")
+    package = repo.package("jupyter", Version.parse("1.0.0"))
 
     assert package.source_type == "legacy"
     assert package.source_reference == repo.name
@@ -153,10 +148,45 @@ def test_get_package_information_fallback_read_setup():
     )
 
 
-def test_get_package_information_skips_dependencies_with_invalid_constraints():
-    repo = MockRepository()
+def test_get_package_information_pep_658(
+    mocker: MockerFixture, legacy_repository: LegacyRepository
+) -> None:
+    repo = legacy_repository
 
-    package = repo.package("python-language-server", "0.21.2")
+    isort_package = repo.package("isort", Version.parse("4.3.4"))
+
+    spy = mocker.spy(repo, "_get_info_from_metadata")
+
+    try:
+        package = repo.package("isort-metadata", Version.parse("4.3.4"))
+    except FileNotFoundError:
+        pytest.fail("Metadata was not successfully retrieved")
+    else:
+        assert spy.call_count > 0
+        assert spy.spy_return is not None
+
+        assert package.source_type == isort_package.source_type == "legacy"
+        assert package.source_reference == isort_package.source_reference == repo.name
+        assert package.source_url == isort_package.source_url == repo.url
+        assert package.name == "isort-metadata"
+        assert package.version.text == isort_package.version.text == "4.3.4"
+        assert package.description == isort_package.description
+        assert (
+            package.requires == isort_package.requires == [Dependency("futures", "*")]
+        )
+        assert (
+            str(package.python_constraint)
+            == str(isort_package.python_constraint)
+            == ">=2.7,<3.0.dev0 || >=3.4.dev0"
+        )
+
+
+def test_get_package_information_skips_dependencies_with_invalid_constraints(
+    legacy_repository: LegacyRepository,
+) -> None:
+    repo = legacy_repository
+
+    package = repo.package("python-language-server", Version.parse("0.21.2"))
 
     assert package.name == "python-language-server"
     assert package.version.text == "0.21.2"
@@ -176,7 +206,7 @@ def test_get_package_information_skips_dependencies_with_invalid_constraints():
         Dependency("python-jsonrpc-server", "*"),
     ]
 
-    all_extra = package.extras["all"]
+    all_extra = package.extras[canonicalize_name("all")]
 
     # rope>-0.10.5 should be discarded
     assert sorted(all_extra, key=lambda r: r.name) == [
@@ -189,8 +219,17 @@ def test_get_package_information_skips_dependencies_with_invalid_constraints():
     ]
 
 
-def test_find_packages_no_prereleases():
-    repo = MockRepository()
+def test_package_not_canonicalized(legacy_repository: LegacyRepository) -> None:
+    repo = legacy_repository
+
+    package = repo.package("discord.py", Version.parse("2.0.0"))
+
+    assert package.name == "discord-py"
+    assert package.pretty_name == "discord.py"
+
+
+def test_find_packages_no_prereleases(legacy_repository: LegacyRepository) -> None:
+    repo = legacy_repository
 
     packages = repo.find_packages(Factory.create_dependency("pyyaml", "*"))
 
@@ -202,10 +241,12 @@ def test_find_packages_no_prereleases():
 
 
 @pytest.mark.parametrize(
-    ["constraint", "count"], [("*", 1), (">=1", 0), (">=19.0.0a0", 1)]
+    ["constraint", "count"], [("*", 1), (">=1", 1), ("<=18", 0), (">=19.0.0a0", 1)]
 )
-def test_find_packages_only_prereleases(constraint: str, count: int):
-    repo = MockRepository()
+def test_find_packages_only_prereleases(
+    constraint: str, count: int, legacy_repository: LegacyRepository
+) -> None:
+    repo = legacy_repository
     packages = repo.find_packages(Factory.create_dependency("black", constraint))
 
     assert len(packages) == count
@@ -217,17 +258,32 @@ def test_find_packages_only_prereleases(constraint: str, count: int):
             assert package.source_url == repo.url
 
 
-def test_find_packages_only_prereleases_empty_when_not_any():
-    repo = MockRepository()
-    packages = repo.find_packages(Factory.create_dependency("black", ">=1"))
+@pytest.mark.parametrize(
+    ["constraint", "expected"],
+    [
+        # yanked 21.11b0 is ignored except for pinned version
+        ("*", ["19.10b0"]),
+        (">=19.0a0", ["19.10b0"]),
+        (">=20.0a0", []),
+        (">=21.11b0", []),
+        ("==21.11b0", ["21.11b0"]),
+    ],
+)
+def test_find_packages_yanked(
+    constraint: str, expected: list[str], legacy_repository: LegacyRepository
+) -> None:
+    repo = legacy_repository
+    packages = repo.find_packages(Factory.create_dependency("black", constraint))
 
-    assert len(packages) == 0
+    assert [str(p.version) for p in packages] == expected
 
 
-def test_get_package_information_chooses_correct_distribution():
-    repo = MockRepository()
+def test_get_package_information_chooses_correct_distribution(
+    legacy_repository: LegacyRepository,
+) -> None:
+    repo = legacy_repository
 
-    package = repo.package("isort", "4.3.4")
+    package = repo.package("isort", Version.parse("4.3.4"))
 
     assert package.name == "isort"
     assert package.version.text == "4.3.4"
@@ -237,30 +293,36 @@ def test_get_package_information_chooses_correct_distribution():
     assert futures_dep.python_versions == "~2.7"
 
 
-def test_get_package_information_includes_python_requires():
-    repo = MockRepository()
+def test_get_package_information_includes_python_requires(
+    legacy_repository: LegacyRepository,
+) -> None:
+    repo = legacy_repository
 
-    package = repo.package("futures", "3.2.0")
-
-    assert package.name == "futures"
-    assert package.version.text == "3.2.0"
-    assert package.python_versions == ">=2.6, <3"
-
-
-def test_get_package_information_sets_appropriate_python_versions_if_wheels_only():
-    repo = MockRepository()
-
-    package = repo.package("futures", "3.2.0")
+    package = repo.package("futures", Version.parse("3.2.0"))
 
     assert package.name == "futures"
     assert package.version.text == "3.2.0"
     assert package.python_versions == ">=2.6, <3"
 
 
-def test_get_package_from_both_py2_and_py3_specific_wheels():
-    repo = MockRepository()
+def test_get_package_information_sets_appropriate_python_versions_if_wheels_only(
+    legacy_repository: LegacyRepository,
+) -> None:
+    repo = legacy_repository
 
-    package = repo.package("ipython", "5.7.0")
+    package = repo.package("futures", Version.parse("3.2.0"))
+
+    assert package.name == "futures"
+    assert package.version.text == "3.2.0"
+    assert package.python_versions == ">=2.6, <3"
+
+
+def test_get_package_from_both_py2_and_py3_specific_wheels(
+    legacy_repository: LegacyRepository,
+) -> None:
+    repo = legacy_repository
+
+    package = repo.package("ipython", Version.parse("5.7.0"))
 
     assert package.name == "ipython"
     assert package.version.text == "5.7.0"
@@ -295,10 +357,24 @@ def test_get_package_from_both_py2_and_py3_specific_wheels():
     assert str(required[5].marker) == 'sys_platform != "win32"'
 
 
-def test_get_package_with_dist_and_universal_py3_wheel():
-    repo = MockRepository()
+def test_get_package_from_both_py2_and_py3_specific_wheels_python_constraint(
+    legacy_repository: LegacyRepository,
+) -> None:
+    repo = legacy_repository
 
-    package = repo.package("ipython", "7.5.0")
+    package = repo.package("poetry-test-py2-py3-metadata-merge", Version.parse("0.1.0"))
+
+    assert package.name == "poetry-test-py2-py3-metadata-merge"
+    assert package.version.text == "0.1.0"
+    assert package.python_versions == ">=2.7,<2.8 || >=3.7,<4.0"
+
+
+def test_get_package_with_dist_and_universal_py3_wheel(
+    legacy_repository: LegacyRepository,
+) -> None:
+    repo = legacy_repository
+
+    package = repo.package("ipython", Version.parse("7.5.0"))
 
     assert package.name == "ipython"
     assert package.version.text == "7.5.0"
@@ -323,64 +399,148 @@ def test_get_package_with_dist_and_universal_py3_wheel():
     assert sorted(required, key=lambda dep: dep.name) == expected
 
 
-def test_get_package_retrieves_non_sha256_hashes():
-    repo = MockRepository()
+def test_get_package_retrieves_non_sha256_hashes(
+    legacy_repository: LegacyRepository, dist_hash_getter: DistributionHashGetter
+) -> None:
+    repo = legacy_repository
 
-    package = repo.package("ipython", "7.5.0")
+    package = repo.package("ipython", Version.parse("7.5.0"))
 
     expected = [
         {
-            "file": "ipython-7.5.0-py3-none-any.whl",
-            "hash": "sha256:78aea20b7991823f6a32d55f4e963a61590820e43f666ad95ad07c7f0c704efa",  # noqa: E501
-        },
-        {
-            "file": "ipython-7.5.0.tar.gz",
-            "hash": "sha256:e840810029224b56cd0d9e7719dc3b39cf84d577f8ac686547c8ba7a06eeab26",  # noqa: E501
-        },
+            "file": filename,
+            "hash": (f"sha256:{dist_hash_getter(filename).sha256}"),
+        }
+        for filename in [
+            f"{package.name}-{package.version}-py3-none-any.whl",
+            f"{package.name}-{package.version}.tar.gz",
+        ]
     ]
 
     assert package.files == expected
 
 
-def test_get_package_retrieves_non_sha256_hashes_mismatching_known_hash():
-    repo = MockRepository()
+def test_get_package_retrieves_non_sha256_hashes_mismatching_known_hash(
+    legacy_repository: LegacyRepository, dist_hash_getter: DistributionHashGetter
+) -> None:
+    repo = legacy_repository
 
-    package = repo.package("ipython", "5.7.0")
+    package = repo.package("ipython", Version.parse("5.7.0"))
 
     expected = [
         {
             "file": "ipython-5.7.0-py2-none-any.whl",
-            "hash": "md5:a10a802ef98da741cd6f4f6289d47ba7",
+            # in the links provided by the legacy repository, this file only has a md5 hash,
+            # the sha256 is generated on the fly
+            "hash": f"sha256:{dist_hash_getter('ipython-5.7.0-py2-none-any.whl').sha256}",
         },
         {
             "file": "ipython-5.7.0-py3-none-any.whl",
-            "hash": "sha256:fc0464e68f9c65cd8c453474b4175432cc29ecb6c83775baedf6dbfcee9275ab",  # noqa: E501
+            "hash": f"sha256:{dist_hash_getter('ipython-5.7.0-py3-none-any.whl').sha256}",
         },
         {
             "file": "ipython-5.7.0.tar.gz",
-            "hash": "sha256:8db43a7fb7619037c98626613ff08d03dda9d5d12c84814a4504c78c0da8323c",  # noqa: E501
+            "hash": f"sha256:{dist_hash_getter('ipython-5.7.0.tar.gz').sha256}",
         },
     ]
 
     assert package.files == expected
 
 
-def test_get_package_retrieves_packages_with_no_hashes():
-    repo = MockRepository()
+def test_get_package_retrieves_packages_with_no_hashes(
+    legacy_repository: LegacyRepository, dist_hash_getter: DistributionHashGetter
+) -> None:
+    repo = legacy_repository
 
-    package = repo.package("jupyter", "1.0.0")
+    package = repo.package("jupyter", Version.parse("1.0.0"))
 
     assert [
         {
-            "file": "jupyter-1.0.0.tar.gz",
-            "hash": "sha256:d9dc4b3318f310e34c82951ea5d6683f67bed7def4b259fafbfe4f1beb1d8e5f",  # noqa: E501
+            "file": filename,
+            "hash": (f"sha256:{dist_hash_getter(filename).sha256}"),
         }
+        for filename in [
+            f"{package.name}-{package.version}.tar.gz",
+        ]
     ] == package.files
+
+
+@pytest.mark.parametrize(
+    "package_name, version, yanked, yanked_reason",
+    [
+        ("black", "19.10b0", False, ""),
+        ("black", "21.11b0", True, "Broken regex dependency. Use 21.11b1 instead."),
+    ],
+)
+def test_package_yanked(
+    package_name: str,
+    version: str,
+    yanked: bool,
+    yanked_reason: str,
+    legacy_repository: LegacyRepository,
+) -> None:
+    repo = legacy_repository
+
+    package = repo.package(package_name, Version.parse(version))
+
+    assert package.name == package_name
+    assert str(package.version) == version
+    assert package.yanked is yanked
+    assert package.yanked_reason == yanked_reason
+
+
+def test_package_partial_yank(
+    legacy_repository: LegacyRepository,
+    legacy_repository_partial_yank: LegacyRepository,
+) -> None:
+    repo = legacy_repository
+    package = repo.package("futures", Version.parse("3.2.0"))
+    assert len(package.files) == 2
+
+    repo = legacy_repository_partial_yank
+    package = repo.package("futures", Version.parse("3.2.0"))
+    assert len(package.files) == 1
+    assert package.files[0]["file"].endswith(".tar.gz")
+
+
+@pytest.mark.parametrize(
+    "package_name, version, yanked, yanked_reason",
+    [
+        ("black", "19.10b0", False, ""),
+        ("black", "21.11b0", True, "Broken regex dependency. Use 21.11b1 instead."),
+    ],
+)
+def test_find_links_for_package_yanked(
+    package_name: str,
+    version: str,
+    yanked: bool,
+    yanked_reason: str,
+    legacy_repository: LegacyRepository,
+) -> None:
+    repo = legacy_repository
+
+    package = repo.package(package_name, Version.parse(version))
+    links = repo.find_links_for_package(package)
+
+    assert len(links) == 1
+    for link in links:
+        assert link.yanked == yanked
+        assert link.yanked_reason == yanked_reason
+
+
+def test_cached_or_downloaded_file_supports_trailing_slash(
+    legacy_repository: LegacyRepository,
+) -> None:
+    repo = legacy_repository
+    with repo._cached_or_downloaded_file(
+        Link("https://files.pythonhosted.org/pytest-3.5.0-py2.py3-none-any.whl/")
+    ) as filepath:
+        assert filepath.name == "pytest-3.5.0-py2.py3-none-any.whl"
 
 
 class MockHttpRepository(LegacyRepository):
     def __init__(
-        self, endpoint_responses: dict, http: type[httpretty.httpretty]
+        self, endpoint_responses: dict[str, int], http: type[httpretty.httpretty]
     ) -> None:
         base_url = "http://legacy.foo.bar"
         super().__init__("legacy", url=base_url, disable_cache=True)
@@ -390,40 +550,49 @@ class MockHttpRepository(LegacyRepository):
             http.register_uri(http.GET, url, status=response)
 
 
-def test_get_200_returns_page(http: type[httpretty.httpretty]):
-    repo = MockHttpRepository({"/foo": 200}, http)
+def test_get_200_returns_page(http: type[httpretty.httpretty]) -> None:
+    repo = MockHttpRepository({"/foo/": 200}, http)
 
-    assert repo._get_page("/foo")
+    _ = repo.get_page("foo")
 
 
 @pytest.mark.parametrize("status_code", [401, 403, 404])
-def test_get_40x_and_returns_none(http: type[httpretty.httpretty], status_code: int):
-    repo = MockHttpRepository({"/foo": status_code}, http)
+def test_get_40x_and_returns_none(
+    http: type[httpretty.httpretty], status_code: int
+) -> None:
+    repo = MockHttpRepository({"/foo/": status_code}, http)
 
-    assert repo._get_page("/foo") is None
+    with pytest.raises(PackageNotFoundError):
+        repo.get_page("foo")
 
 
-def test_get_5xx_raises(http: type[httpretty.httpretty]):
-    repo = MockHttpRepository({"/foo": 500}, http)
+def test_get_5xx_raises(
+    http: type[httpretty.httpretty], disable_http_status_force_list: None
+) -> None:
+    repo = MockHttpRepository({"/foo/": 500}, http)
 
     with pytest.raises(RepositoryError):
-        repo._get_page("/foo")
+        repo.get_page("foo")
 
 
 def test_get_redirected_response_url(
     http: type[httpretty.httpretty], monkeypatch: MonkeyPatch
-):
-    repo = MockHttpRepository({"/foo": 200}, http)
+) -> None:
+    repo = MockHttpRepository({"/foo/": 200}, http)
     redirect_url = "http://legacy.redirect.bar"
 
-    def get_mock(url: str, raise_for_status: bool = True) -> requests.Response:
+    def get_mock(
+        url: str, raise_for_status: bool = True, timeout: int = 5
+    ) -> requests.Response:
         response = requests.Response()
         response.status_code = 200
         response.url = redirect_url + "/foo"
         return response
 
     monkeypatch.setattr(repo.session, "get", get_mock)
-    assert repo._get_page("/foo")._url == "http://legacy.redirect.bar/foo/"
+    page = repo.get_page("foo")
+    assert page is not None
+    assert page._url == "http://legacy.redirect.bar/foo"
 
 
 @pytest.mark.parametrize(
@@ -457,7 +626,7 @@ def test_authenticator_with_implicit_repository_configuration(
     )
 
     repo = LegacyRepository(name="source", url="https://foo.bar/simple", config=config)
-    repo._get_page("/foo")
+    repo.get_page("/foo")
 
     request = http.last_request()
 

@@ -7,24 +7,29 @@ from copy import deepcopy
 from hashlib import sha1
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Iterator
+from typing import TypedDict
+from urllib.parse import urlparse
+from urllib.parse import urlunparse
 
 import pytest
 
 from dulwich.client import HTTPUnauthorized
 from dulwich.client import get_transport_and_path
+from dulwich.config import ConfigFile
 from dulwich.repo import Repo
-from poetry.core.pyproject.toml import PyProjectTOML
 
-from poetry.console.exceptions import PoetrySimpleConsoleException
+from poetry.console.exceptions import PoetryConsoleError
+from poetry.pyproject.toml import PyProjectTOML
 from poetry.utils.authenticator import Authenticator
 from poetry.vcs.git import Git
 from poetry.vcs.git.backend import GitRefSpec
 
 
 if TYPE_CHECKING:
-    from _pytest.tmpdir import TempdirFactory
     from dulwich.client import FetchPackResult
     from dulwich.client import GitClient
+    from pytest import TempPathFactory
     from pytest_mock import MockerFixture
 
     from tests.conftest import Config
@@ -33,6 +38,15 @@ if TYPE_CHECKING:
 # these tests are integration as they rely on an external repository
 # see `source_url` fixture
 pytestmark = pytest.mark.integration
+
+
+class GitCloneKwargs(TypedDict):
+    name: str | None
+    branch: str | None
+    tag: str | None
+    revision: str | None
+    source_root: Path | None
+    clean: bool
 
 
 @pytest.fixture(autouse=True)
@@ -78,9 +92,11 @@ def source_directory_name(source_url: str) -> str:
 
 
 @pytest.fixture(scope="module")
-def local_repo(tmpdir_factory: TempdirFactory, source_directory_name: str) -> Repo:
+def local_repo(
+    tmp_path_factory: TempPathFactory, source_directory_name: str
+) -> Iterator[Repo]:
     with Repo.init(
-        tmpdir_factory.mktemp("src") / source_directory_name, mkdir=True
+        str(tmp_path_factory.mktemp("src") / source_directory_name), mkdir=True
     ) as repo:
         yield repo
 
@@ -102,12 +118,20 @@ def remote_refs(_remote_refs: FetchPackResult) -> FetchPackResult:
 
 @pytest.fixture(scope="module")
 def remote_default_ref(_remote_refs: FetchPackResult) -> bytes:
-    return _remote_refs.symrefs[b"HEAD"]
+    ref: bytes = _remote_refs.symrefs[b"HEAD"]
+    return ref
 
 
 @pytest.fixture(scope="module")
 def remote_default_branch(remote_default_ref: bytes) -> str:
     return remote_default_ref.decode("utf-8").replace("refs/heads/", "")
+
+
+# Regression test for https://github.com/python-poetry/poetry/issues/6722
+def test_use_system_git_client_from_environment_variables() -> None:
+    os.environ["POETRY_EXPERIMENTAL_SYSTEM_GIT_CLIENT"] = "true"
+
+    assert Git.is_using_legacy_client()
 
 
 def test_git_local_info(
@@ -119,35 +143,39 @@ def test_git_local_info(
         assert info.revision == remote_refs.refs[remote_default_ref].decode("utf-8")
 
 
+@pytest.mark.parametrize(
+    "specification", [{}, {"revision": "HEAD"}, {"branch": "HEAD"}]
+)
 def test_git_clone_default_branch_head(
+    specification: GitCloneKwargs,
     source_url: str,
     remote_refs: FetchPackResult,
     remote_default_ref: bytes,
     mocker: MockerFixture,
-):
+) -> None:
     spy = mocker.spy(Git, "_clone")
     spy_legacy = mocker.spy(Git, "_clone_legacy")
 
-    with Git.clone(url=source_url) as repo:
+    with Git.clone(url=source_url, **specification) as repo:
         assert remote_refs.refs[remote_default_ref] == repo.head()
 
     spy_legacy.assert_not_called()
     spy.assert_called()
 
 
-def test_git_clone_fails_for_non_existent_branch(source_url: str):
+def test_git_clone_fails_for_non_existent_branch(source_url: str) -> None:
     branch = uuid.uuid4().hex
 
-    with pytest.raises(PoetrySimpleConsoleException) as e:
+    with pytest.raises(PoetryConsoleError) as e:
         Git.clone(url=source_url, branch=branch)
 
     assert f"Failed to clone {source_url} at '{branch}'" in str(e.value)
 
 
-def test_git_clone_fails_for_non_existent_revision(source_url: str):
+def test_git_clone_fails_for_non_existent_revision(source_url: str) -> None:
     revision = sha1(uuid.uuid4().bytes).hexdigest()
 
-    with pytest.raises(PoetrySimpleConsoleException) as e:
+    with pytest.raises(PoetryConsoleError) as e:
         Git.clone(url=source_url, revision=revision)
 
     assert f"Failed to clone {source_url} at '{revision}'" in str(e.value)
@@ -232,12 +260,40 @@ def test_git_clone_clones_submodules(source_url: str) -> None:
     assert len(list(submodule_package_directory.glob("*"))) > 1
 
 
+def test_git_clone_clones_submodules_with_relative_urls(source_url: str) -> None:
+    with Git.clone(url=source_url, branch="relative_submodule") as repo:
+        submodule_package_directory = (
+            Path(repo.path) / "submodules" / "relative-url-submodule"
+        )
+
+    assert submodule_package_directory.exists()
+    assert submodule_package_directory.joinpath("README.md").exists()
+    assert len(list(submodule_package_directory.glob("*"))) > 1
+
+
+def test_git_clone_clones_submodules_with_relative_urls_and_explicit_base(
+    source_url: str,
+) -> None:
+    with Git.clone(url=source_url, branch="relative_submodule") as repo:
+        submodule_package_directory = (
+            Path(repo.path) / "submodules" / "relative-url-submodule-with-base"
+        )
+
+    assert submodule_package_directory.exists()
+    assert submodule_package_directory.joinpath("README.md").exists()
+    assert len(list(submodule_package_directory.glob("*"))) > 1
+
+
 def test_system_git_fallback_on_http_401(
     mocker: MockerFixture,
     source_url: str,
 ) -> None:
     spy = mocker.spy(Git, "_clone_legacy")
-    mocker.patch.object(Git, "_clone", side_effect=HTTPUnauthorized(None, None))
+    mocker.patch.object(
+        Git,
+        "_clone",
+        side_effect=HTTPUnauthorized(None, None),
+    )
 
     with Git.clone(url=source_url, branch="0.1") as repo:
         path = Path(repo.path)
@@ -280,6 +336,12 @@ def test_configured_repository_http_auth(
         }
     )
 
+    dummy_git_config = ConfigFile()
+    mocker.patch(
+        "poetry.vcs.git.backend.Repo.get_config_stack",
+        return_value=dummy_git_config,
+    )
+
     mocker.patch(
         "poetry.vcs.git.backend.get_default_authenticator",
         return_value=Authenticator(config=config),
@@ -292,6 +354,7 @@ def test_configured_repository_http_auth(
 
     spy_get_transport_and_path.assert_called_with(
         location=source_url,
+        config=dummy_git_config,
         username=GIT_USERNAME,
         password=GIT_PASSWORD,
     )
@@ -306,6 +369,12 @@ def test_username_password_parameter_is_not_passed_to_dulwich(
     spy_clone = mocker.spy(Git, "_clone")
     spy_get_transport_and_path = mocker.spy(backend, "get_transport_and_path")
 
+    dummy_git_config = ConfigFile()
+    mocker.patch(
+        "poetry.vcs.git.backend.Repo.get_config_stack",
+        return_value=dummy_git_config,
+    )
+
     with Git.clone(url=source_url, branch="0.1") as repo:
         assert_version(repo, BRANCH_TO_REVISION_MAP["0.1"])
 
@@ -313,6 +382,7 @@ def test_username_password_parameter_is_not_passed_to_dulwich(
 
     spy_get_transport_and_path.assert_called_with(
         location=source_url,
+        config=dummy_git_config,
     )
     spy_get_transport_and_path.assert_called_once()
 
@@ -335,3 +405,32 @@ def test_system_git_called_when_configured(
         target=path,
         refspec=GitRefSpec(branch="0.1", revision=None, tag=None, ref=b"HEAD"),
     )
+
+
+def test_relative_submodules_with_ssh(
+    source_url: str, tmpdir: Path, mocker: MockerFixture
+) -> None:
+    target = tmpdir / "temp"
+    ssh_source_url = urlunparse(urlparse(source_url)._replace(scheme="ssh"))
+
+    repo_with_unresolved_submodules = Git._clone(
+        url=source_url,
+        refspec=GitRefSpec(branch="relative_submodule"),
+        target=target,
+    )
+
+    # construct fake git config
+    fake_config = ConfigFile(
+        {(b"remote", b"origin"): {b"url": ssh_source_url.encode("utf-8")}}
+    )
+    # trick Git into thinking remote.origin is an ssh url
+    mock_get_config = mocker.patch.object(repo_with_unresolved_submodules, "get_config")
+    mock_get_config.return_value = fake_config
+
+    submodules = Git._get_submodules(repo_with_unresolved_submodules)
+
+    assert [s.url for s in submodules] == [
+        "https://github.com/pypa/sample-namespace-packages.git",
+        "ssh://github.com/python-poetry/test-fixture-vcs-repository.git",
+        "ssh://github.com/python-poetry/test-fixture-vcs-repository.git",
+    ]

@@ -1,24 +1,15 @@
 ---
 title: "Docker Best Practices"
-draft: true
+draft: false
 type: docs
 layout: "docs"
 
 menu:
   docs:
-    weight: 50
+    weight: 130
 ---
 
 # Docker Best Practices
-
-- [Best Practices](#best-practices)
-- [Imags examples and use cases](#imags-examples-and-use-cases)
-  - [Minimum-poetry](#minimum-poetry)
-    - [Specifics](#specifics)
-    - [Use cases](#use-cases)
-  - [Poetry-multistage](#poetry-multistage)
-    - [Specifics](#specifics-1)
-    - [Use cases](#use-cases-1)
 
 Poetry is a very valuable tool for increasing the robustness and reproducibility of a virtual environment on which your python code is based. When integrating Poetry into a Docker image, adopting some best practices will help improve build efficiency, container security, and help achieve lighter images. In this section, we will explore best practices for creating optimized and secure Docker images for projects managed with Poetry.
 This section is a developing project, so you are warmly invited to contribute new suggestions.
@@ -29,7 +20,7 @@ The following best practices should be kept in mind
 
 - [optional] Set the latest python version, in order to get the latest security patch.
   - CAVEAT: It might reduce the reproducibility of the code, between one image build and another, since some function might change from one version of python to another.
-- [highly suggested] Use `pip` to install poetry (see https://python-poetry.org/docs/#ci-recommendations).
+- [highly suggested] Use `pip` to install poetry (see [CI recommendations]({{< ref "#ci-recommendations" >}})).
 - [highly suggested] Clear Poetry cache after the installation.
 - [critical] Never hardcode credentials to private sources.
 - [optional] Install Poetry in a dedicated venv
@@ -37,8 +28,7 @@ The following best practices should be kept in mind
 - [highly suggested] Take advantage of Docker's layer caching mechanism to rebuild the image much faster. This means that you should reduce the variability points in the Dockerfile and the files linked to it (e.g. ARGS that may change). In alternative you can move them as far down in the Dockerfile as possible. For more info please see:
   - https://docs.docker.com/build/cache/
   - https://pythonspeed.com/docker/
-- [highly suggested] copy source code only after `poetry install`. For more info see:
-  - https://python-poetry.org/docs/faq/#poetry-busts-my-docker-cache-because-it-requires-me-to-copy-my-source-files-in-before-installing-3rd-party-dependencies
+- [highly suggested] copy source code only after `poetry install`. For more info see: [FAQ]({{< relref "faq/#poetry-busts-my-docker-cache-because-it-requires-me-to-copy-my-source-files-in-before-installing-3rd-party-dependencies" >}})
 
 ## Imags examples and use cases
 
@@ -46,7 +36,7 @@ Below are general examples of Docker images, along with their typical use cases,
 
 ### Minimum-poetry
 
-[Minimum-poetry](../docker-examples/minimum-poetry/README.md) is the minimum-constructible image containing poetry, from an official python base image.
+[Minimum-poetry](https://github.com/gianfa/poetry/tree/docs/docker-best-practices/docker-examples/minimum-poetry/README.md) is the minimum-constructible image containing poetry, from an official python base image.
 
 Expected size: ~218 MB, virtual env layer excluded.
 
@@ -58,11 +48,11 @@ Expected size: ~218 MB, virtual env layer excluded.
 
 #### Use cases
 
-As in the case of [Minimum-poetry](../docker-examples/minimum-poetry/README.md), this image is useful when you need to create a virtual self-content  environment, complex at will.
+As in the case of [Minimum-poetry](https://github.com/gianfa/poetry/tree/docs/docker-best-practices/docker-examples/minimum-poetry/README.md), this image is useful when you need to create a virtual self-content  environment, complex at will.
 
 ### Poetry-multistage
 
-[Poetry-multistage](./../docker-examples/poetry-multistage/README.md) is a minimum-constructible multistage image containing Poetry, from an official Python base image. It is very similar to [Minimum-poetr](#minimum-poetry), except that it may be more complex as it implements at least 2 more best practices.
+[Poetry-multistage](https://github.com/gianfa/poetry/tree/docs/docker-best-practices/docker-examples/poetry-multistage/README.md) is a minimum-constructible multistage image containing Poetry, from an official Python base image. It is very similar to [Minimum-poetry](#minimum-poetry), except that it may be more complex as it implements at least 2 more best practices.
 
 Expected size: ~130MB, virtual env layer excluded.
 

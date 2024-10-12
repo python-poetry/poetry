@@ -2,7 +2,7 @@
   "info": {
     "author": "The IPython Development Team",
     "author_email": "ipython-dev@scipy.org",
-    "bugtrack_url": "",
+    "bugtrack_url": null,
     "classifiers": [
       "Framework :: IPython",
       "Intended Audience :: Developers",
@@ -14,7 +14,8 @@
       "Programming Language :: Python :: 3",
       "Topic :: System :: Shells"
     ],
-    "description": "IPython provides a rich toolkit to help you make the most out of using Python\ninteractively.  Its main components are:\n\n* A powerful interactive Python shell\n* A `Jupyter <http://jupyter.org/>`_ kernel to work with Python code in Jupyter\n  notebooks and other interactive frontends.\n\nThe enhanced interactive Python shells have the following main features:\n\n* Comprehensive object introspection.\n\n* Input history, persistent across sessions.\n\n* Caching of output results during a session with automatically generated\n  references.\n\n* Extensible tab completion, with support by default for completion of python\n  variables and keywords, filenames and function keywords.\n\n* Extensible system of 'magic' commands for controlling the environment and\n  performing many tasks related either to IPython or the operating system.\n\n* A rich configuration system with easy switching between different setups\n  (simpler than changing $PYTHONSTARTUP environment variables every time).\n\n* Session logging and reloading.\n\n* Extensible syntax processing for special purpose situations.\n\n* Access to the system shell with user-extensible alias system.\n\n* Easily embeddable in other Python programs and GUIs.\n\n* Integrated access to the pdb debugger and the Python profiler.\n\nThe latest development version is always available from IPython's `GitHub\nsite <http://github.com/ipython>`_.",
+    "description": "",
+    "description_content_type": null,
     "docs_url": null,
     "download_url": "https://github.com/ipython/ipython/downloads",
     "downloads": {
@@ -22,6 +23,7 @@
       "last_month": -1,
       "last_week": -1
     },
+    "dynamic": null,
     "home_page": "http://ipython.org",
     "keywords": "Interactive,Interpreter,Shell,Parallel,Distributed,Web-based computing,Qt console,Embedding",
     "license": "BSD",
@@ -31,6 +33,11 @@
     "package_url": "https://pypi.org/project/ipython/",
     "platform": "Linux,Mac OSX,Windows XP/Vista/7/8",
     "project_url": "https://pypi.org/project/ipython/",
+    "project_urls": {
+      "Download": "https://github.com/ipython/ipython/downloads",
+      "Homepage": "http://ipython.org"
+    },
+    "provides_extra": null,
     "release_url": "https://pypi.org/project/ipython/4.1.0rc1/",
     "requires_dist": [
       "pickleshare",
@@ -67,150 +74,16 @@
     ],
     "requires_python": "",
     "summary": "IPython: Productive Interactive Computing",
-    "version": "4.1.0rc1"
+    "version": "4.1.0rc1",
+    "yanked": false,
+    "yanked_reason": null
   },
-  "last_serial": 3740674,
-  "releases": {
-    "0.10": {},
-    "0.10.1": {},
-    "0.10.2": {},
-    "0.11": {},
-    "0.12": {},
-    "0.12.1": {},
-    "0.13": {},
-    "0.13.1": {},
-    "0.13.2": {},
-    "0.6.10": {},
-    "0.6.11": {},
-    "0.6.12": {},
-    "0.6.13": {},
-    "0.6.14": {},
-    "0.6.15": {},
-    "0.6.4": {},
-    "0.6.5": {},
-    "0.6.6": {},
-    "0.6.7": {},
-    "0.6.8": {},
-    "0.6.9": {},
-    "0.7.0": {},
-    "0.7.1": {},
-    "0.7.1.fix1": {},
-    "0.7.2": {},
-    "0.7.3": {},
-    "0.7.4.svn.r2010": {},
-    "0.8.0": {},
-    "0.8.1": {},
-    "0.8.2": {},
-    "0.8.3": {},
-    "0.8.4": {},
-    "0.9": {},
-    "0.9.1": {},
-    "1.0.0": {},
-    "1.1.0": {},
-    "1.2.0": {},
-    "1.2.1": {},
-    "2.0.0": {},
-    "2.1.0": {},
-    "2.2.0": {},
-    "2.3.0": {},
-    "2.3.1": {},
-    "2.4.0": {},
-    "2.4.1": {},
-    "3.0.0": {},
-    "3.1.0": {},
-    "3.2.0": {},
-    "3.2.1": {},
-    "3.2.2": {},
-    "3.2.3": {},
-    "4.0.0": {},
-    "4.0.0-b1": {},
-    "4.0.0b1": {},
-    "4.0.1": {},
-    "4.0.2": {},
-    "4.0.3": {},
-    "4.1.0": {},
-    "4.1.0rc1": [
-      {
-        "comment_text": "",
-        "digests": {
-          "md5": "512f0431c850c75a12baa9f8c4a9f12f",
-          "sha256": "4d0a08f3fd8837502bf33e9497a5ab28fe63e2fa4201765f378cb139c7a60d5f"
-        },
-        "downloads": -1,
-        "filename": "ipython-4.1.0rc1-py2.py3-none-any.whl",
-        "has_sig": false,
-        "md5_digest": "512f0431c850c75a12baa9f8c4a9f12f",
-        "packagetype": "bdist_wheel",
-        "python_version": "py2.py3",
-        "size": 736900,
-        "upload_time": "2016-01-26T19:58:35",
-        "url": "https://files.pythonhosted.org/packages/ac/02/04a5d372b4e64f9c97b2846646aec1ce4532885005aa4ba51eb20b80e17f/ipython-4.1.0rc1-py2.py3-none-any.whl"
-      },
-      {
-        "comment_text": "",
-        "digests": {
-          "md5": "2aff56d8e78341f64663bcbc81366376",
-          "sha256": "6244a8e3293088ee31c1854abe1a1e7a409cf3ac2fb7579aa9616bdfadd3d4dc"
-        },
-        "downloads": -1,
-        "filename": "ipython-4.1.0rc1.tar.gz",
-        "has_sig": false,
-        "md5_digest": "2aff56d8e78341f64663bcbc81366376",
-        "packagetype": "sdist",
-        "python_version": "source",
-        "size": 4933377,
-        "upload_time": "2016-01-26T19:58:53",
-        "url": "https://files.pythonhosted.org/packages/a0/de/f71f0c8b8a26ef28cc968fbf1859729ad3e68146cd2eb4a759e9c88da218/ipython-4.1.0rc1.tar.gz"
-      },
-      {
-        "comment_text": "",
-        "digests": {
-          "md5": "a9ff233f176dd99b076b81dc8904ab7a",
-          "sha256": "efa3a5a676648cb18e2a2d3cd6353f3c83f0f704df8eb0eb6ae7d0dcbf187ea1"
-        },
-        "downloads": -1,
-        "filename": "ipython-4.1.0rc1.zip",
-        "has_sig": false,
-        "md5_digest": "a9ff233f176dd99b076b81dc8904ab7a",
-        "packagetype": "sdist",
-        "python_version": "source",
-        "size": 5100723,
-        "upload_time": "2016-01-26T19:59:14",
-        "url": "https://files.pythonhosted.org/packages/71/f0/9d670266b840b8b921dc7106ecddd892f6fb893424883498e1ba3ec3a3a1/ipython-4.1.0rc1.zip"
-      }
-    ],
-    "4.1.0rc2": {},
-    "4.1.1": {},
-    "4.1.2": {},
-    "4.2.0": {},
-    "4.2.1": {},
-    "5.0.0": {},
-    "5.0.0b1": {},
-    "5.0.0b2": {},
-    "5.0.0b3": {},
-    "5.0.0b4": {},
-    "5.0.0rc1": {},
-    "5.1.0": {},
-    "5.2.0": {},
-    "5.2.1": {},
-    "5.2.2": {},
-    "5.3.0": {},
-    "5.4.0": {},
-    "5.4.1": {},
-    "5.5.0": {},
-    "5.6.0": {},
-    "6.0.0": {},
-    "6.0.0rc1": {},
-    "6.1.0": {},
-    "6.2.0": {},
-    "6.2.1": {},
-    "6.3.0": {},
-    "6.3.1": {}
-  },
+  "last_serial": 0,
   "urls": [
     {
       "comment_text": "",
       "digests": {
+        "blake2b_256": "ac0204a5d372b4e64f9c97b2846646aec1ce4532885005aa4ba51eb20b80e17f",
         "md5": "512f0431c850c75a12baa9f8c4a9f12f",
         "sha256": "4d0a08f3fd8837502bf33e9497a5ab28fe63e2fa4201765f378cb139c7a60d5f"
       },
@@ -220,13 +93,18 @@
       "md5_digest": "512f0431c850c75a12baa9f8c4a9f12f",
       "packagetype": "bdist_wheel",
       "python_version": "py2.py3",
+      "requires_python": null,
       "size": 736900,
       "upload_time": "2016-01-26T19:58:35",
-      "url": "https://files.pythonhosted.org/packages/ac/02/04a5d372b4e64f9c97b2846646aec1ce4532885005aa4ba51eb20b80e17f/ipython-4.1.0rc1-py2.py3-none-any.whl"
+      "upload_time_iso_8601": "2016-01-26T19:58:35.544443Z",
+      "url": "https://files.pythonhosted.org/packages/ac/02/04a5d372b4e64f9c97b2846646aec1ce4532885005aa4ba51eb20b80e17f/ipython-4.1.0rc1-py2.py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
+        "blake2b_256": "a0def71f0c8b8a26ef28cc968fbf1859729ad3e68146cd2eb4a759e9c88da218",
         "md5": "2aff56d8e78341f64663bcbc81366376",
         "sha256": "6244a8e3293088ee31c1854abe1a1e7a409cf3ac2fb7579aa9616bdfadd3d4dc"
       },
@@ -236,13 +114,18 @@
       "md5_digest": "2aff56d8e78341f64663bcbc81366376",
       "packagetype": "sdist",
       "python_version": "source",
+      "requires_python": null,
       "size": 4933377,
       "upload_time": "2016-01-26T19:58:53",
-      "url": "https://files.pythonhosted.org/packages/a0/de/f71f0c8b8a26ef28cc968fbf1859729ad3e68146cd2eb4a759e9c88da218/ipython-4.1.0rc1.tar.gz"
+      "upload_time_iso_8601": "2016-01-26T19:58:53.938491Z",
+      "url": "https://files.pythonhosted.org/packages/a0/de/f71f0c8b8a26ef28cc968fbf1859729ad3e68146cd2eb4a759e9c88da218/ipython-4.1.0rc1.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
     },
     {
       "comment_text": "",
       "digests": {
+        "blake2b_256": "71f09d670266b840b8b921dc7106ecddd892f6fb893424883498e1ba3ec3a3a1",
         "md5": "a9ff233f176dd99b076b81dc8904ab7a",
         "sha256": "efa3a5a676648cb18e2a2d3cd6353f3c83f0f704df8eb0eb6ae7d0dcbf187ea1"
       },
@@ -252,9 +135,14 @@
       "md5_digest": "a9ff233f176dd99b076b81dc8904ab7a",
       "packagetype": "sdist",
       "python_version": "source",
+      "requires_python": null,
       "size": 5100723,
       "upload_time": "2016-01-26T19:59:14",
-      "url": "https://files.pythonhosted.org/packages/71/f0/9d670266b840b8b921dc7106ecddd892f6fb893424883498e1ba3ec3a3a1/ipython-4.1.0rc1.zip"
+      "upload_time_iso_8601": "2016-01-26T19:59:14.449245Z",
+      "url": "https://files.pythonhosted.org/packages/71/f0/9d670266b840b8b921dc7106ecddd892f6fb893424883498e1ba3ec3a3a1/ipython-4.1.0rc1.zip",
+      "yanked": false,
+      "yanked_reason": null
     }
-  ]
+  ],
+  "vulnerabilities": []
 }

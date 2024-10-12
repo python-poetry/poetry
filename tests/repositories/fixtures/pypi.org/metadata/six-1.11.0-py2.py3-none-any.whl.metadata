@@ -1,0 +1,16 @@
+Metadata-Version: 2.0
+Name: six
+Version: 1.11.0
+Summary: Python 2 and 3 compatibility utilities
+Home-page: http://pypi.python.org/pypi/six/
+Author: Benjamin Peterson
+Author-email: benjamin@python.org
+License: MIT
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 3
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Topic :: Software Development :: Libraries
+Classifier: Topic :: Utilities
+

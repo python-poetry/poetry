@@ -19,7 +19,7 @@ WORKDIR /app
 # --- Reproduce the environment ---
 # You can comment the following two lines if you prefer to manually install
 #   the dependencies from inside the container.
-COPY pyproject.toml .
+COPY pyproject.toml poetry.lock
 
 # Install the dependencies and clear the cache afterwards.
 #   This may save some MBs.
@@ -33,6 +33,5 @@ ENV VIRTUAL_ENV=/app/.venv
 ENV PATH="/app/.venv/bin:$PATH"
 
 COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
-
 
 ENTRYPOINT ["bash"]

@@ -22,7 +22,7 @@ By default, Poetry will try to use the Python version used during Poetry's insta
 to create the virtual environment for the current project.
 
 However, for various reasons, this Python version might not be compatible
-with the `python` requirement of the project. In this case, Poetry will try
+with the `python` range supported by the project. In this case, Poetry will try
 to find one that is and use it. If it's unable to do so then you will be prompted
 to activate one explicitly, see [Switching environments](#switching-between-environments).
 
@@ -39,6 +39,11 @@ pyenv install 3.9.8
 pyenv local 3.9.8  # Activate Python 3.9 for the current project
 poetry install
 ```
+
+{{% /note %}}
+
+{{% note %}}
+Since version 1.2, Poetry no longer supports managing environments for Python 2.7.
 {{% /note %}}
 
 ## Switching between environments
@@ -83,13 +88,13 @@ poetry env info
 will output something similar to this:
 
 ```text
-Virtual environment
+Virtualenv
 Python:         3.7.1
 Implementation: CPython
 Path:           /path/to/poetry/cache/virtualenvs/test-O3eWbxRl-py3.7
 Valid:          True
 
-System
+Base
 Platform: darwin
 OS:       posix
 Python:   /path/to/main/python
@@ -100,6 +105,13 @@ to `env info`:
 
 ```bash
 poetry env info --path
+```
+
+If you only want to know the path to the python executable (useful for running mypy from a global environment without installing it in the virtual environment), you can pass the `--executable` option
+to `env info`:
+
+```bash
+poetry env info --executable
 ```
 
 ## Listing the environments associated with the project
@@ -114,9 +126,14 @@ poetry env list
 will output something like the following:
 
 ```text
-test-O3eWbxRl-py2.7
 test-O3eWbxRl-py3.6
 test-O3eWbxRl-py3.7 (Activated)
+```
+
+You can pass the option `--full-path` to display the full path to the environments:
+
+```bash
+poetry env list --full-path
 ```
 
 ## Deleting the environments
@@ -131,12 +148,24 @@ poetry env remove test-O3eWbxRl-py3.7
 ```
 
 You can delete more than one environment at a time.
+
 ```bash
 poetry env remove python3.6 python3.7 python3.8
 ```
+
 Use the `--all` option to delete all virtual environments at once.
+
 ```bash
 poetry env remove --all
 ```
 
 If you remove the currently activated virtual environment, it will be automatically deactivated.
+
+{{% note %}}
+If you use the [`virtualenvs.in-project`]({{< relref "configuration#virtualenvsin-project" >}}) configuration, you
+can simply use the command as shown below.
+
+```bash
+poetry env remove
+```
+{{% /note %}}

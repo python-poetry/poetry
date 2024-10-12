@@ -1,19 +1,18 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import cast
 
-from poetry.core.semver.helpers import parse_constraint
+from poetry.core.constraints.version import parse_constraint
 
-from poetry.mixology.incompatibility_cause import ConflictCause
-from poetry.mixology.incompatibility_cause import PythonCause
+from poetry.mixology.incompatibility_cause import ConflictCauseError
+from poetry.mixology.incompatibility_cause import PythonCauseError
 
 
 if TYPE_CHECKING:
     from poetry.mixology.incompatibility import Incompatibility
 
 
-class SolveFailure(Exception):
+class SolveFailureError(Exception):
     def __init__(self, incompatibility: Incompatibility) -> None:
         self._incompatibility = incompatibility
 
@@ -36,13 +35,25 @@ class _Writer:
 
     def write(self) -> str:
         buffer = []
-
+        version_solutions = []
         required_python_version_notification = False
         for incompatibility in self._root.external_incompatibilities:
-            if isinstance(incompatibility.cause, PythonCause):
+            if isinstance(incompatibility.cause, PythonCauseError):
+                root_constraint = parse_constraint(
+                    incompatibility.cause.root_python_version
+                )
+                constraint = parse_constraint(incompatibility.cause.python_version)
+
+                version_solutions.append(
+                    "For <fg=default;options=bold>"
+                    f"{incompatibility.terms[0].dependency.name}</>,"
+                    " a possible solution would be to set the"
+                    " `<fg=default;options=bold>python</>` property to"
+                    f' <fg=yellow>"{root_constraint.intersect(constraint)}"</>'
+                )
                 if not required_python_version_notification:
                     buffer.append(
-                        "The current project's Python requirement"
+                        "The current project's supported Python range"
                         f" ({incompatibility.cause.root_python_version}) is not"
                         " compatible with some of the required packages Python"
                         " requirement:"
@@ -62,7 +73,7 @@ class _Writer:
         if required_python_version_notification:
             buffer.append("")
 
-        if isinstance(self._root.cause, ConflictCause):
+        if isinstance(self._root.cause, ConflictCauseError):
             self._visit(self._root)
         else:
             self._write(self._root, f"Because {self._root}, version solving failed.")
@@ -92,7 +103,31 @@ class _Writer:
                 message = " " * padding + message
 
             buffer.append(message)
+        if required_python_version_notification:
+            # Add suggested solution
+            links = ",".join(
+                f"\n    <fg=blue>https://python-poetry.org/docs/dependency-specification/#{section}</>"
+                for section in [
+                    "python-restricted-dependencies",
+                    "using-environment-markers",
+                ]
+            )
 
+            description = (
+                "The Python requirement can be specified via the"
+                " `<fg=default;options=bold>python</>` or"
+                " `<fg=default;options=bold>markers</>` properties"
+            )
+            if version_solutions:
+                description += "\n\n    " + "\n".join(version_solutions)
+
+            description = description.strip(" ")
+
+            buffer.append(
+                f"\n  <fg=blue;options=bold>* </>"
+                f"<fg=default;options=bold>Check your dependencies Python requirement</>:"
+                f" {description}\n{links}\n",
+            )
         return "\n".join(buffer)
 
     def _write(
@@ -114,10 +149,11 @@ class _Writer:
         conjunction = "So," if conclusion or incompatibility == self._root else "And"
         incompatibility_string = str(incompatibility)
 
-        cause: ConflictCause = cast(ConflictCause, incompatibility.cause)
+        cause = incompatibility.cause
+        assert isinstance(cause, ConflictCauseError)
 
-        if isinstance(cause.conflict.cause, ConflictCause) and isinstance(
-            cause.other.cause, ConflictCause
+        if isinstance(cause.conflict.cause, ConflictCauseError) and isinstance(
+            cause.other.cause, ConflictCauseError
         ):
             conflict_line = self._line_numbers.get(cause.conflict)
             other_line = self._line_numbers.get(cause.other)
@@ -170,22 +206,22 @@ class _Writer:
 
                     self._write(
                         incompatibility,
-                        f"{conjunction} because"
-                        f" {cause.conflict!s} ({self._line_numbers[cause.conflict]}),"
+                        f"{conjunction} because {cause.conflict!s}"
+                        f" ({self._line_numbers[cause.conflict]}),"
                         f" {incompatibility_string}",
                         numbered=numbered,
                     )
-        elif isinstance(cause.conflict.cause, ConflictCause) or isinstance(
-            cause.other.cause, ConflictCause
+        elif isinstance(cause.conflict.cause, ConflictCauseError) or isinstance(
+            cause.other.cause, ConflictCauseError
         ):
             derived = (
                 cause.conflict
-                if isinstance(cause.conflict.cause, ConflictCause)
+                if isinstance(cause.conflict.cause, ConflictCauseError)
                 else cause.other
             )
             ext = (
                 cause.other
-                if isinstance(cause.conflict.cause, ConflictCause)
+                if isinstance(cause.conflict.cause, ConflictCauseError)
                 else cause.conflict
             )
 
@@ -198,8 +234,9 @@ class _Writer:
                     numbered=numbered,
                 )
             elif self._is_collapsible(derived):
-                derived_cause: ConflictCause = cast(ConflictCause, derived.cause)
-                if isinstance(derived_cause.conflict.cause, ConflictCause):
+                derived_cause = derived.cause
+                assert isinstance(derived_cause, ConflictCauseError)
+                if isinstance(derived_cause.conflict.cause, ConflictCauseError):
                     collapsed_derived = derived_cause.conflict
                     collapsed_ext = derived_cause.other
                 else:
@@ -233,29 +270,30 @@ class _Writer:
         if self._derivations[incompatibility] > 1:
             return False
 
-        cause: ConflictCause = cast(ConflictCause, incompatibility.cause)
-        if isinstance(cause.conflict.cause, ConflictCause) and isinstance(
-            cause.other.cause, ConflictCause
+        cause = incompatibility.cause
+        assert isinstance(cause, ConflictCauseError)
+        if isinstance(cause.conflict.cause, ConflictCauseError) and isinstance(
+            cause.other.cause, ConflictCauseError
         ):
             return False
 
-        if not isinstance(cause.conflict.cause, ConflictCause) and not isinstance(
-            cause.other.cause, ConflictCause
+        if not isinstance(cause.conflict.cause, ConflictCauseError) and not isinstance(
+            cause.other.cause, ConflictCauseError
         ):
             return False
 
         complex = (
             cause.conflict
-            if isinstance(cause.conflict.cause, ConflictCause)
+            if isinstance(cause.conflict.cause, ConflictCauseError)
             else cause.other
         )
 
         return complex not in self._line_numbers
 
-    def _is_single_line(self, cause: ConflictCause) -> bool:
-        return not isinstance(cause.conflict.cause, ConflictCause) and not isinstance(
-            cause.other.cause, ConflictCause
-        )
+    def _is_single_line(self, cause: ConflictCauseError) -> bool:
+        return not isinstance(
+            cause.conflict.cause, ConflictCauseError
+        ) and not isinstance(cause.other.cause, ConflictCauseError)
 
     def _count_derivations(self, incompatibility: Incompatibility) -> None:
         if incompatibility in self._derivations:
@@ -263,6 +301,6 @@ class _Writer:
         else:
             self._derivations[incompatibility] = 1
             cause = incompatibility.cause
-            if isinstance(cause, ConflictCause):
+            if isinstance(cause, ConflictCauseError):
                 self._count_derivations(cause.conflict)
                 self._count_derivations(cause.other)

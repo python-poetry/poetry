@@ -9,16 +9,10 @@ if TYPE_CHECKING:
     from poetry.core.packages.project_package import ProjectPackage
 
     from poetry.mixology.result import SolverResult
-    from poetry.packages import DependencyPackage
     from poetry.puzzle.provider import Provider
 
 
-def resolve_version(
-    root: ProjectPackage,
-    provider: Provider,
-    locked: dict[str, list[DependencyPackage]] | None = None,
-    use_latest: list[str] | None = None,
-) -> SolverResult:
-    solver = VersionSolver(root, provider, locked=locked, use_latest=use_latest)
+def resolve_version(root: ProjectPackage, provider: Provider) -> SolverResult:
+    solver = VersionSolver(root, provider)
 
     return solver.solve()
