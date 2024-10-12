@@ -6,7 +6,7 @@ layout: "docs"
 
 menu:
   docs:
-    weight: 50
+    weight: 130
 ---
 
 # Docker Best Practices
