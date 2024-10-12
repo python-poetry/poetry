@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
     from tomlkit import TOMLDocument
 
+    from poetry.config.config import Config
     from poetry.poetry import Poetry
     from poetry.utils.env import MockEnv
     from poetry.utils.env import VirtualEnv
@@ -35,6 +36,13 @@ if TYPE_CHECKING:
     from tests.types import CommandTesterFactory
     from tests.types import FixtureDirGetter
     from tests.types import ProjectFactory
+
+
+@pytest.fixture(autouse=True)
+def config(config: Config) -> Config:
+    # Disable parallel installs to get reproducible output.
+    config.merge({"installer": {"parallel": False}})
+    return config
 
 
 @pytest.fixture
