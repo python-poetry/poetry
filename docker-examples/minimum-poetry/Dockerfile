@@ -10,9 +10,9 @@ WORKDIR /app
 # --- Reproduce the environment ---
 # You can comment the following two lines if you prefer to manually install
 #   the dependencies from inside the container.
-COPY pyproject.toml .
+COPY pyproject.toml poetry.lock /app/
 
-RUN poetry install
+RUN poetry install --no-root
 # --- --- --- --- --- --- --- --- ---
 
 ENTRYPOINT ["bash"]
