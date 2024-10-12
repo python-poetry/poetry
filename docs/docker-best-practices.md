@@ -37,7 +37,7 @@ Below are general examples of Docker images, along with their typical use cases,
 
 ### Minimum-poetry
 
-[Minimum-poetry](../docker-examples/minimum-poetry/README.md) is the minimum-constructible image containing poetry, from an official python base image.
+[Minimum-poetry](https://github.com/gianfa/poetry/tree/docs/docker-best-practices/docker-examples/minimum-poetry/README.md) is the minimum-constructible image containing poetry, from an official python base image.
 
 Expected size: ~218 MB, virtual env layer excluded.
 
@@ -49,11 +49,11 @@ Expected size: ~218 MB, virtual env layer excluded.
 
 #### Use cases
 
-As in the case of [Minimum-poetry](../docker-examples/minimum-poetry/README.md), this image is useful when you need to create a virtual self-content  environment, complex at will.
+As in the case of [Minimum-poetry](https://github.com/gianfa/poetry/tree/docs/docker-best-practices/docker-examples/minimum-poetry/README.md), this image is useful when you need to create a virtual self-content  environment, complex at will.
 
 ### Poetry-multistage
 
-[Poetry-multistage](./../docker-examples/poetry-multistage/README.md) is a minimum-constructible multistage image containing Poetry, from an official Python base image. It is very similar to [Minimum-poetr](#minimum-poetry), except that it may be more complex as it implements at least 2 more best practices.
+[Poetry-multistage](https://github.com/gianfa/poetry/tree/docs/docker-best-practices/docker-examples/poetry-multistage/README.md) is a minimum-constructible multistage image containing Poetry, from an official Python base image. It is very similar to [Minimum-poetr](#minimum-poetry), except that it may be more complex as it implements at least 2 more best practices.
 
 Expected size: ~130MB, virtual env layer excluded.
 
