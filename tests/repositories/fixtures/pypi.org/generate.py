@@ -42,6 +42,7 @@ import sys
 import tarfile
 import zipfile
 
+from copy import copy
 from functools import cached_property
 from gzip import GzipFile
 from pathlib import Path
@@ -51,7 +52,7 @@ from typing import Callable
 from typing import Iterator
 
 from packaging.metadata import parse_email
-from poetry.core.masonry.builders.sdist import SdistBuilder
+from poetry.core.masonry.utils.helpers import normalize_file_permissions
 from poetry.core.packages.package import Package
 
 from poetry.repositories.pypi_repository import PyPiRepository
@@ -64,6 +65,8 @@ from tests.helpers import FIXTURE_PATH_REPOSITORIES_PYPI
 
 
 if TYPE_CHECKING:
+    from tarfile import TarInfo
+
     import requests
 
     from poetry.core.packages.utils.link import Link
@@ -357,7 +360,7 @@ class FileManager:
         ) as dst_tf, tarfile.open(src, "r") as src_tf:
             for member in src_tf.getmembers():
                 member.mtime = 0
-                member = SdistBuilder.clean_tarinfo(member)
+                member = self.clean_tarinfo(member)
 
                 if member.isfile() and not is_protected(Path(member.name).name):
                     logger.debug("Stubbing file %s(%s)", link.filename, member.name)
@@ -371,6 +374,26 @@ class FileManager:
         os.utime(dst, (0, 0))
 
         return ReleaseFileMetadata(dst)
+
+    def clean_tarinfo(self, tar_info: TarInfo) -> TarInfo:
+        """
+        Clean metadata from a TarInfo object to make it more reproducible.
+
+            - Set uid & gid to 0
+            - Set uname and gname to ""
+            - Normalise permissions to 644 or 755
+            - Set mtime if not None
+        """
+
+        ti = copy(tar_info)
+        ti.uid = 0
+        ti.gid = 0
+        ti.uname = ""
+        ti.gname = ""
+        ti.mtime = 0
+        ti.mode = normalize_file_permissions(ti.mode)
+
+        return ti
 
 
 class Project:

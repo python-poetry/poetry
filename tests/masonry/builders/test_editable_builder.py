@@ -184,6 +184,7 @@ Classifier: License :: OSI Approved :: MIT License
 Classifier: Topic :: Software Development :: Build Tools
 Classifier: Topic :: Software Development :: Libraries :: Python Modules
 Project-URL: Documentation, https://python-poetry.org/docs
+Project-URL: Homepage, https://python-poetry.org
 Project-URL: Repository, https://github.com/python-poetry/poetry
 Description-Content-Type: text/x-rst
 
@@ -349,6 +350,7 @@ Requires-Python: >=2.7,<3.0
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Programming Language :: Python :: 2
 Classifier: Programming Language :: Python :: 2.7
+Project-URL: Homepage, https://python-poetry.org
 Description-Content-Type: text/x-rst
 
 Single Python
