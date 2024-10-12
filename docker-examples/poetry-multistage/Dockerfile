@@ -19,7 +19,7 @@ WORKDIR /app
 # --- Reproduce the environment ---
 # You can comment the following two lines if you prefer to manually install
 #   the dependencies from inside the container.
-COPY pyproject.toml poetry.lock
+COPY pyproject.toml poetry.lock /app/
 
 # Install the dependencies and clear the cache afterwards.
 #   This may save some MBs.
