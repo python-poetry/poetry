@@ -137,10 +137,14 @@ you can set the "package-mode" to false in your pyproject.toml file.
             )
             return 1
 
-        if self.option("only") and self.option("all-groups"):
+        if (
+            self.option("only") or self.option("with") or self.option("without")
+        ) and self.option("all-groups"):
             self.line_error(
-                "<error>You cannot specify `<fg=yellow;options=bold>--all-groups</>`"
-                " when using `<fg=yellow;options=bold>--only</>`.</error>"
+                "<error>You cannot specify `<fg=yellow;options=bold>--with</>`,"
+                " `<fg=yellow;options=bold>--without</>`, or"
+                " `<fg=yellow;options=bold>--only</>` when using"
+                " `<fg=yellow;options=bold>--all-groups</>`.</error>"
             )
             return 1
 

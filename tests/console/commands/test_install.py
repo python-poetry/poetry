@@ -57,12 +57,6 @@ optional = true
 [tool.poetry.group.bam.dependencies]
 bam = "^1.4"
 
-[tool.poetry.group.bum]
-optional = true
-
-[tool.poetry.group.bum.dependencies]
-bam = "^1.5"
-
 [tool.poetry.extras]
 extras_a = [ "fizz" ]
 extras_b = [ "buzz" ]
@@ -110,12 +104,7 @@ def _project_factory(
         ("--without foo,bar", {MAIN_GROUP, "baz", "bim"}),
         (f"--without {MAIN_GROUP}", {"foo", "bar", "baz", "bim"}),
         ("--with foo,bar --without baz --without bim --only bam", {"bam"}),
-        ("--all-groups", {MAIN_GROUP, "foo", "bar", "baz", "bim", "bam", "bum"}),
-        (
-            "--all-groups --with bum",
-            {MAIN_GROUP, "foo", "bar", "baz", "bim", "bam", "bum"},
-        ),
-        ("--all-groups --without bum", {MAIN_GROUP, "foo", "bar", "baz", "bim", "bam"}),
+        ("--all-groups", {MAIN_GROUP, "foo", "bar", "baz", "bim", "bam"}),
         # net result zero options
         ("--with foo", {MAIN_GROUP, "foo", "bar", "baz", "bim"}),
         ("--without bam", {MAIN_GROUP, "foo", "bar", "baz", "bim"}),
@@ -320,19 +309,29 @@ def test_only_root_conflicts_with_without_only_all_groups(
     )
 
 
-def test_only_conflicts_with_all_groups(
+@pytest.mark.parametrize(
+    "options",
+    [
+        "--with foo",
+        "--without foo",
+        "--with foo,bar --without baz",
+        "--only foo",
+    ],
+)
+def test_all_groups_conflicts_with_only_with_without(
+    options: str,
     tester: CommandTester,
     mocker: MockerFixture,
 ) -> None:
     assert isinstance(tester.command, InstallerCommand)
     mocker.patch.object(tester.command.installer, "run", return_value=0)
 
-    tester.execute("--only foo --all-groups")
+    tester.execute(f"{options} --all-groups")
 
     assert tester.status_code == 1
     assert (
         tester.io.fetch_error()
-        == "You cannot specify `--all-groups` when using `--only`.\n"
+        == "You cannot specify `--with`, `--without`, or `--only` when using `--all-groups`.\n"
     )
 
 

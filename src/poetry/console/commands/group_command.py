@@ -82,12 +82,6 @@ class GroupCommand(Command):
             }
 
         if self.option("all-groups"):
-            if self.option("with"):
-                self.line_error(
-                    "<warning>The `<fg=yellow;options=bold>--with</>` option is"
-                    " ignored when using the `<fg=yellow;options=bold>--all-groups</>`"
-                    " option.</warning>"
-                )
             groups["with"] = self.poetry.package.dependency_group_names(
                 include_optional=True
             )
