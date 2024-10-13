@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
+
+      - run: pipx run build
+
+      - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        with:
+          name: distfiles
+          path: dist/
+          if-no-files-found: error
+
+  upload-github:
+    name: Upload (GitHub)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    needs: build
+    steps:
+      # We need to be in a git repo for gh to work.
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
+
+      - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          name: distfiles
+          path: dist/
+
+      - run: gh release upload ${{ github.event.release.tag_name }} dist/*.{tar.gz,whl}
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  upload-pypi:
+    name: Upload (PyPI)
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/poetry/
+    permissions:
+      id-token: write
+    needs: build
+    steps:
+      - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          name: distfiles
+          path: dist/
+
+      - uses: pypa/gh-action-pypi-publish@f7600683efdcb7656dec5b29656edb7bc586e597 # v1.10.3
+        with:
+          print-hash: true
