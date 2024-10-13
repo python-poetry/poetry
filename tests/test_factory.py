@@ -207,10 +207,18 @@ def test_create_poetry_with_packages_and_includes(
         {"include": "src_package", "from": "src"},
     ]
 
-    assert package.include == [
-        {"path": "extra_dir/vcs_excluded.txt", "format": []},
-        {"path": "notes.txt", "format": []},
-    ]
+    assert package.include in (
+        # with https://github.com/python-poetry/poetry-core/pull/773
+        [
+            {"path": "extra_dir/vcs_excluded.txt"},
+            {"path": "notes.txt"},
+        ],
+        # without https://github.com/python-poetry/poetry-core/pull/773
+        [
+            {"path": "extra_dir/vcs_excluded.txt", "format": []},
+            {"path": "notes.txt", "format": []},
+        ],
+    )
 
 
 def test_create_poetry_with_multi_constraints_dependency(

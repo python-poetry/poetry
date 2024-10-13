@@ -110,8 +110,6 @@ def _project_factory(
         ("--without bam", {MAIN_GROUP, "foo", "bar", "baz", "bim"}),
         ("--with bam --without bam", {MAIN_GROUP, "foo", "bar", "baz", "bim"}),
         ("--with foo --without foo", {MAIN_GROUP, "bar", "baz", "bim"}),
-        # deprecated options
-        ("--no-dev", {MAIN_GROUP}),
     ],
 )
 @pytest.mark.parametrize("with_root", [True, False])
@@ -376,22 +374,6 @@ def test_invalid_groups_with_without_only(
                 assert (
                     re.search(rf"{group} \(via .*{opt}.*\)", str(e.value)) is not None
                 )
-
-
-def test_remove_untracked_outputs_deprecation_warning(
-    tester: CommandTester,
-    mocker: MockerFixture,
-) -> None:
-    assert isinstance(tester.command, InstallerCommand)
-    mocker.patch.object(tester.command.installer, "run", return_value=0)
-
-    tester.execute("--remove-untracked")
-
-    assert tester.status_code == 1
-    assert (
-        "The `--remove-untracked` option is deprecated, use the `--sync` option"
-        " instead.\n" in tester.io.fetch_error()
-    )
 
 
 def test_dry_run_populates_installer(

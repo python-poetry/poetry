@@ -4,7 +4,6 @@ from collections import defaultdict
 from typing import TYPE_CHECKING
 
 from cleo.helpers import option
-from poetry.core.packages.dependency_group import MAIN_GROUP
 
 from poetry.console.commands.command import Command
 from poetry.console.exceptions import GroupNotFoundError
@@ -87,18 +86,6 @@ class GroupCommand(Command):
             )
 
         self._validate_group_options(groups)
-
-        for opt, new, group in [
-            ("no-dev", "only", MAIN_GROUP),
-            ("dev", "with", "dev"),
-        ]:
-            if self.io.input.has_option(opt) and self.option(opt):
-                self.line_error(
-                    f"<warning>The `<fg=yellow;options=bold>--{opt}</>` option is"
-                    f" deprecated, use the `<fg=yellow;options=bold>--{new} {group}</>`"
-                    " notation instead.</warning>"
-                )
-                groups[new].add(group)
 
         if groups["only"] and (groups["with"] or groups["without"]):
             self.line_error(
