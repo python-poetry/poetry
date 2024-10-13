@@ -264,10 +264,10 @@ poetry install --compile
 * `--sync`: Synchronize the environment with the locked packages and the specified groups.
 * `--no-root`: Do not install the root package (your project).
 * `--no-directory`: Skip all directory path dependencies (including transitive ones).
-* `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
+* `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
 * `--extras (-E)`: Features to install (multiple values allowed).
-* `--all-extras`: Install all extra features (conflicts with --extras).
-* `--all-groups`: Install dependencies from all groups (conflicts with --only).
+* `--all-extras`: Install all extra features (conflicts with `--extras`).
+* `--all-groups`: Install dependencies from all groups (conflicts with `--only`, `--with`, and `--without`).
 * `--compile`: Compile Python source files to bytecode.
 * `--no-dev`: Do not install dev dependencies. (**Deprecated**, use `--only main` or `--without dev` instead)
 * `--remove-untracked`: Remove dependencies not presented in the lock file. (**Deprecated**, use `--sync` instead)
@@ -308,7 +308,7 @@ You can do this using the `add` command.
 * `--without`: The dependency groups to ignore.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
-* `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
+* `--dry-run` : Outputs the operations but will not execute anything (implicitly enables `--verbose`).
 * `--no-dev` : Do not update the development dependencies. (**Deprecated**, use `--only main` or `--without dev` instead)
 * `--lock` : Do not perform install (only update the lockfile).
 * `--sync`: Synchronize the environment with the locked packages and the specified groups.
@@ -470,7 +470,7 @@ about dependency groups.
 * `--platform`: Platforms for which the dependency must be installed.
 * `--source`: Name of the source to use to install the package.
 * `--allow-prereleases`: Accept prereleases.
-* `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
+* `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
 * `--lock`: Do not perform install (only update the lockfile).
 
 
@@ -496,7 +496,7 @@ about dependency groups.
 
 * `--group (-G)`: The group to remove the dependency from.
 * `--dev (-D)`: Removes a package from the development dependencies. (**Deprecated**, use `-G dev` instead)
-* `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
+* `--dry-run` : Outputs the operations but will not execute anything (implicitly enables `--verbose`).
 * `--lock`: Do not perform operations (only update the lockfile).
 
 
@@ -1007,7 +1007,7 @@ poetry self add artifacts-keyring
 * `--extras (-E)`: Extras to activate for the dependency. (multiple values allowed)
 * `--allow-prereleases`: Accept prereleases.
 * `--source`: Name of the source to use to install the package.
-* `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
+* `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
 
 ### self update
 
@@ -1025,7 +1025,7 @@ poetry self update
 #### Options
 
 * `--preview`: Allow the installation of pre-release versions.
-* `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
+* `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
 
 ### self lock
 
@@ -1079,7 +1079,7 @@ poetry self remove poetry-plugin-export
 
 #### Options
 
-* `--dry-run`: Outputs the operations but will not execute anything (implicitly enables --verbose).
+* `--dry-run`: Outputs the operations but will not execute anything (implicitly enables `--verbose`).
 
 ### self install
 
@@ -1098,4 +1098,4 @@ poetry self install --sync
 #### Options
 
 * `--sync`: Synchronize the environment with the locked packages and the specified groups.
-* `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
+* `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
