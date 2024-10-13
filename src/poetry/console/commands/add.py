@@ -43,8 +43,7 @@ class AddCommand(InstallerCommand, InitCommand):
         option(
             "dev",
             "D",
-            "Add as a development dependency. (<warning>Deprecated</warning>) Use"
-            " --group=dev instead.",
+            "Add as a development dependency. (shortcut for '-G dev')",
         ),
         option("editable", "e", "Add vcs/path dependencies as editable."),
         option(
@@ -129,10 +128,6 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
         packages = self.argument("name")
         if self.option("dev"):
-            self.line_error(
-                "<warning>The --dev option is deprecated, "
-                "use the `--group dev` notation instead.</warning>"
-            )
             group = "dev"
         else:
             group = self.option("group", self.default_group or MAIN_GROUP)

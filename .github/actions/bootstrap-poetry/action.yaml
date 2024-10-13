@@ -8,9 +8,6 @@ inputs:
   python-latest:
     description: Use an uncached Python if a newer match is available
     default: 'false'
-  python-prereleases:
-    description: Allow usage of pre-release Python versions
-    default: 'false'
   poetry-spec:
     description: pip-compatible installation specification to use for Poetry
     default: 'poetry'
@@ -32,7 +29,7 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
         check-latest: ${{ inputs.python-latest == 'true' }}
-        allow-prereleases: ${{ inputs.python-prereleases == 'true' }}
+        allow-prereleases: true
         update-environment: false
 
     - run: >

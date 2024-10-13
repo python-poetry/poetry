@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
     from tomlkit import TOMLDocument
 
+    from poetry.config.config import Config
     from poetry.poetry import Poetry
     from poetry.utils.env import MockEnv
     from poetry.utils.env import VirtualEnv
@@ -35,6 +36,13 @@ if TYPE_CHECKING:
     from tests.types import CommandTesterFactory
     from tests.types import FixtureDirGetter
     from tests.types import ProjectFactory
+
+
+@pytest.fixture(autouse=True)
+def config(config: Config) -> Config:
+    # Disable parallel installs to get reproducible output.
+    config.merge({"installer": {"parallel": False}})
+    return config
 
 
 @pytest.fixture
@@ -1091,14 +1099,8 @@ def test_add_creating_poetry_section_does_not_remove_existing_tools(
     assert pyproject["tool"]["foo"]["key"] == "value"
 
 
-def test_add_to_dev_section_deprecated(
-    app: PoetryTestApplication, tester: CommandTester
-) -> None:
+def test_add_to_dev_section(app: PoetryTestApplication, tester: CommandTester) -> None:
     tester.execute("cachy --dev")
-
-    warning = """\
-The --dev option is deprecated, use the `--group dev` notation instead.
-"""
 
     expected = """\
 Using version ^0.2.0 for cachy
@@ -1114,7 +1116,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 Writing lock file
 """
 
-    assert tester.io.fetch_error() == warning
+    assert tester.io.fetch_error() == ""
     assert tester.io.fetch_output() == expected
     assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 2

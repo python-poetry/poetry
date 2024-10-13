@@ -87,54 +87,6 @@ def poetry_with_invalid_lockfile(
     return _project_factory("invalid_lock", project_factory, fixture_dir)
 
 
-def test_lock_check_outdated_legacy(
-    command_tester_factory: CommandTesterFactory,
-    poetry_with_outdated_lockfile: Poetry,
-) -> None:
-    locker = Locker(
-        lock=poetry_with_outdated_lockfile.pyproject.file.path.parent / "poetry.lock",
-        pyproject_data=poetry_with_outdated_lockfile.locker._pyproject_data,
-    )
-    poetry_with_outdated_lockfile.set_locker(locker)
-
-    tester = command_tester_factory("lock", poetry=poetry_with_outdated_lockfile)
-    status_code = tester.execute("--check")
-    expected = (
-        "poetry lock --check is deprecated, use `poetry check --lock` instead.\n"
-        "Error: pyproject.toml changed significantly since poetry.lock was last generated. "
-        "Run `poetry lock [--no-update]` to fix the lock file.\n"
-    )
-
-    assert tester.io.fetch_error() == expected
-
-    # exit with an error
-    assert status_code == 1
-
-
-def test_lock_check_up_to_date_legacy(
-    command_tester_factory: CommandTesterFactory,
-    poetry_with_up_to_date_lockfile: Poetry,
-) -> None:
-    locker = Locker(
-        lock=poetry_with_up_to_date_lockfile.pyproject.file.path.parent / "poetry.lock",
-        pyproject_data=poetry_with_up_to_date_lockfile.locker._pyproject_data,
-    )
-    poetry_with_up_to_date_lockfile.set_locker(locker)
-
-    tester = command_tester_factory("lock", poetry=poetry_with_up_to_date_lockfile)
-    status_code = tester.execute("--check")
-    expected = "poetry.lock is consistent with pyproject.toml.\n"
-    assert tester.io.fetch_output() == expected
-
-    expected_error = (
-        "poetry lock --check is deprecated, use `poetry check --lock` instead.\n"
-    )
-    assert tester.io.fetch_error() == expected_error
-
-    # exit with an error
-    assert status_code == 0
-
-
 def test_lock_does_not_update_if_not_necessary(
     command_tester_factory: CommandTesterFactory,
     poetry_with_old_lockfile: Poetry,
