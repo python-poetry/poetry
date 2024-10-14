@@ -4,7 +4,7 @@ import re
 
 
 wheel_file_re = re.compile(
-    r"^(?P<namever>(?P<name>[^-]+)-(?P<ver>[^-]*))"
+    r"^(?P<namever>(?P<name>.+?)-(?P<ver>\d[^-]*))"
     r"(-(?P<build>\d[^-]*))?"
     r"-(?P<pyver>[^-]+)"
     r"-(?P<abi>[^-]+)"
