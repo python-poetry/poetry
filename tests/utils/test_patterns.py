@@ -42,6 +42,12 @@ def test_wheel_file_re(filename: str, expected: dict[str, str | None]) -> None:
     assert groups == expected
 
 
+@pytest.mark.parametrize("filename", [".dist-info"])
+def test_wheel_file_re_not_matches(filename: str) -> None:
+    match = patterns.wheel_file_re.match(filename)
+    assert match is None
+
+
 @pytest.mark.parametrize(
     ["filename", "expected"],
     [
