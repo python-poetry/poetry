@@ -33,6 +33,7 @@ from poetry.utils.helpers import pluralize
 from poetry.utils.helpers import remove_directory
 from poetry.utils.isolated_build import IsolatedBuildError
 from poetry.utils.isolated_build import IsolatedBuildInstallError
+from poetry.vcs.git import Git
 
 
 if TYPE_CHECKING:
@@ -44,6 +45,12 @@ if TYPE_CHECKING:
     from poetry.installation.operations.operation import Operation
     from poetry.repositories import RepositoryPool
     from poetry.utils.env import Env
+
+
+def _package_get_name(package: Package) -> str | None:
+    if url := package.repository_url:
+        return Git.get_name_from_source_url(url)
+    return None
 
 
 class Executor:
@@ -167,8 +174,9 @@ class Executor:
                 if is_parallel_unsafe:
                     serial_operations.append(operation)
                 elif operation.package.source_type == "git":
-                    # Git operations on the same repository should be executed serially
-                    serial_git_operations[operation.package.source_url].append(
+                    # Serially execute git operations that get cloned to the same directory,
+                    # to prevent multiple parallel git operations in the same repo.
+                    serial_git_operations[_package_get_name(operation.package)].append(
                         operation
                     )
                 else:
@@ -604,8 +612,6 @@ class Executor:
         )
 
     def _prepare_git_archive(self, operation: Install | Update) -> Path:
-        from poetry.vcs.git import Git
-
         package = operation.package
         assert package.source_url is not None
 
