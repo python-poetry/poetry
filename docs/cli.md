@@ -509,7 +509,7 @@ dependencies
  - pytzdata >=2017.2.2
 
 required by
- - calendar >=1.4.0
+ - calendar requires >=1.4.0
 ```
 
 ### Options

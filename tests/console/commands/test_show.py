@@ -1975,7 +1975,7 @@ dependencies
  - msgpack-python >=0.5 <0.6
 
 required by
- - pendulum >=0.2.0 <0.3.0
+ - pendulum requires >=0.2.0 <0.3.0
 """.splitlines()
     actual = [line.rstrip() for line in tester.io.fetch_output().splitlines()]
     assert actual == expected
