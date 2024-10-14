@@ -32,6 +32,18 @@ from poetry.utils import patterns
                 "plat": "manylinux2010_x86_64",
             },
         ),
+        (
+            "isort-metadata-4.3.4-py2-none-any.whl",
+            {
+                "namever": "isort-metadata-4.3.4",
+                "name": "isort-metadata",
+                "ver": "4.3.4",
+                "build": None,
+                "pyver": "py2",
+                "abi": "none",
+                "plat": "any",
+            },
+        ),
     ],
 )
 def test_wheel_file_re(filename: str, expected: dict[str, str | None]) -> None:
