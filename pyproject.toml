@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "poetry"
-version = "1.8.3"
+version = "1.8.4"
 description = "Python dependency management and packaging made easy."
 authors = ["Sébastien Eustace <sebastien@eustace.io>"]
 maintainers = [
@@ -31,7 +31,7 @@ Changelog = "https://python-poetry.org/history/"
 [tool.poetry.dependencies]
 python = "^3.8"
 
-poetry-core = "1.9.0"
+poetry-core = "1.9.1"
 poetry-plugin-export = "^1.6.0"
 build = "^1.0.3"
 cachecontrol = { version = "^0.14.0", extras = ["filecache"] }

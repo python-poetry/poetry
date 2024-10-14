@@ -1,6 +1,21 @@
 # Change Log
 
 
+## [1.8.4] - 2024-10-14
+
+### Added
+
+- **Add official support for Python 3.13** ([#9523](https://github.com/python-poetry/poetry/pull/9523)).
+
+### Changed
+
+- Require `virtualenv>=20.26.6` to mitigate potential command injection when running `poetry shell` in untrusted projects ([#9757](https://github.com/python-poetry/poetry/pull/9757)).
+
+### poetry-core ([`1.9.1`](https://github.com/python-poetry/poetry-core/releases/tag/1.9.1))
+
+- Add `3.13` to the list of available Python versions ([#747](https://github.com/python-poetry/poetry-core/pull/747)).
+
+
 ## [1.8.3] - 2024-05-08
 
 ### Added
@@ -2189,7 +2204,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.8.3...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.8.4...master
+[1.8.4]: https://github.com/python-poetry/poetry/releases/tag/1.8.4
 [1.8.3]: https://github.com/python-poetry/poetry/releases/tag/1.8.3
 [1.8.2]: https://github.com/python-poetry/poetry/releases/tag/1.8.2
 [1.8.1]: https://github.com/python-poetry/poetry/releases/tag/1.8.1
