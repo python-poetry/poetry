@@ -79,6 +79,12 @@ class GroupCommand(Command):
                 for groups in self.option(key, "")
                 for group in groups.split(",")
             }
+
+        if self.option("all-groups"):
+            groups["with"] = self.poetry.package.dependency_group_names(
+                include_optional=True
+            )
+
         self._validate_group_options(groups)
 
         if groups["only"] and (groups["with"] or groups["without"]):
