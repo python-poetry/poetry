@@ -269,7 +269,6 @@ poetry install --compile
 
 {{% note %}}
 When `--only` is specified, `--with` and `--without` options are ignored.
-When `--all-groups` is specified, the `--with` option is ignored.
 {{% /note %}}
 
 
