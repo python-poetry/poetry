@@ -118,6 +118,10 @@ def mock_git_info(mocker: MockerFixture) -> None:
         revision: str
 
     mocker.patch(
+        "poetry.vcs.git.Git.is_valid_repo",
+        return_value=True,
+    )
+    mocker.patch(
         "poetry.vcs.git.Git.info",
         return_value=GitRepoLocalInfo(
             origin="https://github.com/sdispater/pendulum.git",
