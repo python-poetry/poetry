@@ -4,10 +4,9 @@ from collections import defaultdict
 from typing import TYPE_CHECKING
 
 from cleo.helpers import option
-from poetry.core.packages.dependency_group import MAIN_GROUP
 
 from poetry.console.commands.command import Command
-from poetry.console.exceptions import GroupNotFound
+from poetry.console.exceptions import GroupNotFoundError
 
 
 if TYPE_CHECKING:
@@ -80,19 +79,13 @@ class GroupCommand(Command):
                 for groups in self.option(key, "")
                 for group in groups.split(",")
             }
-        self._validate_group_options(groups)
 
-        for opt, new, group in [
-            ("no-dev", "only", MAIN_GROUP),
-            ("dev", "with", "dev"),
-        ]:
-            if self.io.input.has_option(opt) and self.option(opt):
-                self.line_error(
-                    f"<warning>The `<fg=yellow;options=bold>--{opt}</>` option is"
-                    f" deprecated, use the `<fg=yellow;options=bold>--{new} {group}</>`"
-                    " notation instead.</warning>"
-                )
-                groups[new].add(group)
+        if self.option("all-groups"):
+            groups["with"] = self.poetry.package.dependency_group_names(
+                include_optional=True
+            )
+
+        self._validate_group_options(groups)
 
         if groups["only"] and (groups["with"] or groups["without"]):
             self.line_error(
@@ -128,4 +121,4 @@ class GroupCommand(Command):
                     for opt in sorted(invalid_options[group])
                 )
                 message_parts.append(f"{group} (via {opts})")
-            raise GroupNotFound(f"Group(s) not found: {', '.join(message_parts)}")
+            raise GroupNotFoundError(f"Group(s) not found: {', '.join(message_parts)}")

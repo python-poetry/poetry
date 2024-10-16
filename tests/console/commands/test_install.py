@@ -6,11 +6,11 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from poetry.core.masonry.utils.module import ModuleOrPackageNotFound
+from poetry.core.masonry.utils.module import ModuleOrPackageNotFoundError
 from poetry.core.packages.dependency_group import MAIN_GROUP
 
 from poetry.console.commands.installer_command import InstallerCommand
-from poetry.console.exceptions import GroupNotFound
+from poetry.console.exceptions import GroupNotFoundError
 from tests.helpers import TestLocker
 
 
@@ -104,13 +104,12 @@ def _project_factory(
         ("--without foo,bar", {MAIN_GROUP, "baz", "bim"}),
         (f"--without {MAIN_GROUP}", {"foo", "bar", "baz", "bim"}),
         ("--with foo,bar --without baz --without bim --only bam", {"bam"}),
+        ("--all-groups", {MAIN_GROUP, "foo", "bar", "baz", "bim", "bam"}),
         # net result zero options
         ("--with foo", {MAIN_GROUP, "foo", "bar", "baz", "bim"}),
         ("--without bam", {MAIN_GROUP, "foo", "bar", "baz", "bim"}),
         ("--with bam --without bam", {MAIN_GROUP, "foo", "bar", "baz", "bim"}),
         ("--with foo --without foo", {MAIN_GROUP, "bar", "baz", "bim"}),
-        # deprecated options
-        ("--no-dev", {MAIN_GROUP}),
     ],
 )
 @pytest.mark.parametrize("with_root", [True, False])
@@ -128,7 +127,7 @@ def test_group_options_are_passed_to_the_installer(
     mocker.patch.object(tester.command.installer, "run", return_value=0)
     editable_builder_mock = mocker.patch(
         "poetry.masonry.builders.editable.EditableBuilder",
-        side_effect=ModuleOrPackageNotFound(),
+        side_effect=ModuleOrPackageNotFoundError(),
     )
 
     if not with_root:
@@ -136,7 +135,7 @@ def test_group_options_are_passed_to_the_installer(
 
     status_code = tester.execute(options)
 
-    if options == "--no-root --only-root":
+    if options == "--no-root --only-root" or with_root:
         assert status_code == 1
         return
     else:
@@ -247,6 +246,20 @@ def test_extras_are_parsed_and_populate_installer(
     assert tester.command.installer._extras == ["first", "second", "third"]
 
 
+def test_install_ensures_project_plugins(
+    tester: CommandTester, mocker: MockerFixture
+) -> None:
+    assert isinstance(tester.command, InstallerCommand)
+    mocker.patch.object(tester.command.installer, "run", return_value=1)
+    ensure_project_plugins = mocker.patch(
+        "poetry.plugins.plugin_manager.PluginManager.ensure_project_plugins"
+    )
+
+    tester.execute("")
+
+    ensure_project_plugins.assert_called_once()
+
+
 def test_extras_conflicts_all_extras(
     tester: CommandTester, mocker: MockerFixture
 ) -> None:
@@ -273,9 +286,10 @@ def test_extras_conflicts_all_extras(
         "--without foo",
         "--with foo,bar --without baz",
         "--only foo",
+        "--all-groups",
     ],
 )
-def test_only_root_conflicts_with_without_only(
+def test_only_root_conflicts_with_without_only_all_groups(
     options: str,
     tester: CommandTester,
     mocker: MockerFixture,
@@ -288,8 +302,34 @@ def test_only_root_conflicts_with_without_only(
     assert tester.status_code == 1
     assert (
         tester.io.fetch_error()
-        == "The `--with`, `--without` and `--only` options cannot be used with"
+        == "The `--with`, `--without`, `--only` and `--all-groups` options cannot be used with"
         " the `--only-root` option.\n"
+    )
+
+
+@pytest.mark.parametrize(
+    "options",
+    [
+        "--with foo",
+        "--without foo",
+        "--with foo,bar --without baz",
+        "--only foo",
+    ],
+)
+def test_all_groups_conflicts_with_only_with_without(
+    options: str,
+    tester: CommandTester,
+    mocker: MockerFixture,
+) -> None:
+    assert isinstance(tester.command, InstallerCommand)
+    mocker.patch.object(tester.command.installer, "run", return_value=0)
+
+    tester.execute(f"{options} --all-groups")
+
+    assert tester.status_code == 1
+    assert (
+        tester.io.fetch_error()
+        == "You cannot specify `--with`, `--without`, or `--only` when using `--all-groups`.\n"
     )
 
 
@@ -322,9 +362,9 @@ def test_invalid_groups_with_without_only(
 
     if not should_raise:
         tester.execute(cmd_args)
-        assert tester.status_code == 0
+        assert tester.status_code == 1
     else:
-        with pytest.raises(GroupNotFound, match=r"^Group\(s\) not found:") as e:
+        with pytest.raises(GroupNotFoundError, match=r"^Group\(s\) not found:") as e:
             tester.execute(cmd_args)
         assert tester.status_code is None
         for opt, groups in options.items():
@@ -334,22 +374,6 @@ def test_invalid_groups_with_without_only(
                 assert (
                     re.search(rf"{group} \(via .*{opt}.*\)", str(e.value)) is not None
                 )
-
-
-def test_remove_untracked_outputs_deprecation_warning(
-    tester: CommandTester,
-    mocker: MockerFixture,
-) -> None:
-    assert isinstance(tester.command, InstallerCommand)
-    mocker.patch.object(tester.command.installer, "run", return_value=0)
-
-    tester.execute("--remove-untracked")
-
-    assert tester.status_code == 0
-    assert (
-        "The `--remove-untracked` option is deprecated, use the `--sync` option"
-        " instead.\n" in tester.io.fetch_error()
-    )
 
 
 def test_dry_run_populates_installer(
@@ -440,7 +464,11 @@ authors = []
     tester = command_tester_factory("install", poetry=poetry)
     tester.execute("" if with_root else "--no-root")
 
-    assert tester.status_code == 0
+    if error and with_root:
+        assert tester.status_code == 1
+    else:
+        assert tester.status_code == 0
+
     if with_root and error:
         assert "The current project could not be installed: " in tester.io.fetch_error()
     else:

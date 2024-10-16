@@ -50,7 +50,7 @@ class Chef:
     ) -> Path:
         from subprocess import CalledProcessError
 
-        distribution: DistributionType = "editable" if editable else "wheel"  # type: ignore[assignment]
+        distribution: DistributionType = "editable" if editable else "wheel"
         error: Exception | None = None
 
         try:

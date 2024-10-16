@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 from packaging.utils import canonicalize_name
 from poetry.core.packages.package import Package
+from poetry.core.packages.utils.utils import is_python_project
 from poetry.core.packages.utils.utils import url_to_path
 from poetry.core.utils.helpers import module_name
 
@@ -141,7 +142,10 @@ class InstalledRepository(Repository):
                         # TODO: handle multiple source directories?
                         if is_editable_package:
                             source_type = "directory"
-                            source_url = paths.pop().as_posix()
+                            path = paths.pop()
+                            if path.name == "src":
+                                path = path.parent
+                            source_url = path.as_posix()
         elif cls.is_vcs_package(path, env):
             (
                 source_type,
@@ -150,8 +154,7 @@ class InstalledRepository(Repository):
             ) = cls.get_package_vcs_properties_from_path(
                 env.path / "src" / canonicalize_name(distribution.metadata["name"])
             )
-        else:
-            # If not, it's a path dependency
+        elif is_python_project(path.parent):
             source_type = "directory"
             source_url = str(path.parent)
 
@@ -239,7 +242,7 @@ class InstalledRepository(Repository):
         seen = set()
         skipped = set()
 
-        for entry in reversed(env.sys_path):
+        for entry in env.sys_path:
             if not entry.strip():
                 logger.debug(
                     "Project environment contains an empty path in <c1>sys_path</>,"

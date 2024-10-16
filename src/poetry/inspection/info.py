@@ -22,8 +22,8 @@ from poetry.core.packages.package import Package
 from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.core.utils.helpers import parse_requires
 from poetry.core.utils.helpers import temporary_directory
-from poetry.core.version.markers import InvalidMarker
-from poetry.core.version.requirements import InvalidRequirement
+from poetry.core.version.markers import InvalidMarkerError
+from poetry.core.version.requirements import InvalidRequirementError
 
 from poetry.utils.helpers import extractall
 from poetry.utils.isolated_build import isolated_builder
@@ -178,7 +178,7 @@ class PackageInfo:
             try:
                 # Attempt to parse the PEP-508 requirement string
                 dependency = Dependency.create_from_pep_508(req, relative_to=root_dir)
-            except InvalidMarker:
+            except InvalidMarkerError:
                 # Invalid marker, We strip the markers hoping for the best
                 logger.warning(
                     "Stripping invalid marker (%s) found in %s-%s dependencies",
@@ -188,7 +188,7 @@ class PackageInfo:
                 )
                 req = req.split(";")[0]
                 dependency = Dependency.create_from_pep_508(req, relative_to=root_dir)
-            except InvalidRequirement:
+            except InvalidRequirementError:
                 # Unable to parse requirement so we skip it
                 logger.warning(
                     "Invalid requirement (%s) found in %s-%s dependencies, skipping",

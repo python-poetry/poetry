@@ -6,6 +6,7 @@ import itertools
 import json
 import threading
 
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import wait
 from pathlib import Path
@@ -32,6 +33,7 @@ from poetry.utils.helpers import pluralize
 from poetry.utils.helpers import remove_directory
 from poetry.utils.isolated_build import IsolatedBuildError
 from poetry.utils.isolated_build import IsolatedBuildInstallError
+from poetry.vcs.git import Git
 
 
 if TYPE_CHECKING:
@@ -43,6 +45,12 @@ if TYPE_CHECKING:
     from poetry.installation.operations.operation import Operation
     from poetry.repositories import RepositoryPool
     from poetry.utils.env import Env
+
+
+def _package_get_name(package: Package) -> str | None:
+    if url := package.repository_url:
+        return Git.get_name_from_source_url(url)
+    return None
 
 
 class Executor:
@@ -144,6 +152,7 @@ class Executor:
         for _, group in groups:
             tasks = []
             serial_operations = []
+            serial_git_operations = defaultdict(list)
             for operation in group:
                 if self._shutdown:
                     break
@@ -158,17 +167,43 @@ class Executor:
                     operation.package.develop
                     and operation.package.source_type in {"directory", "git"}
                 )
-                if not operation.skipped and is_parallel_unsafe:
-                    serial_operations.append(operation)
-                    continue
+                # Skipped operations are safe to execute in parallel
+                if operation.skipped:
+                    is_parallel_unsafe = False
 
-                tasks.append(self._executor.submit(self._execute_operation, operation))
+                if is_parallel_unsafe:
+                    serial_operations.append(operation)
+                elif operation.package.source_type == "git":
+                    # Serially execute git operations that get cloned to the same directory,
+                    # to prevent multiple parallel git operations in the same repo.
+                    serial_git_operations[_package_get_name(operation.package)].append(
+                        operation
+                    )
+                else:
+                    tasks.append(
+                        self._executor.submit(self._execute_operation, operation)
+                    )
+
+            def _serialize(
+                repository_serial_operations: list[Operation],
+            ) -> None:
+                for operation in repository_serial_operations:
+                    self._execute_operation(operation)
+
+            # For each git repository, execute all operations serially
+            for repository_git_operations in serial_git_operations.values():
+                tasks.append(
+                    self._executor.submit(
+                        _serialize,
+                        repository_serial_operations=repository_git_operations,
+                    )
+                )
 
             try:
                 wait(tasks)
 
                 for operation in serial_operations:
-                    wait([self._executor.submit(self._execute_operation, operation)])
+                    self._execute_operation(operation)
 
             except KeyboardInterrupt:
                 self._shutdown = True
@@ -577,8 +612,6 @@ class Executor:
         )
 
     def _prepare_git_archive(self, operation: Install | Update) -> Path:
-        from poetry.vcs.git import Git
-
         package = operation.package
         assert package.source_url is not None
 

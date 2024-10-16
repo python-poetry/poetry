@@ -130,21 +130,27 @@ class CheckCommand(Command):
 
         # Load poetry config and display errors, if any
         poetry_file = self.poetry.file.path
-        config = PyProjectTOML(poetry_file).poetry_config
-        check_result = Factory.validate(config, strict=True)
+        toml_data = PyProjectTOML(poetry_file).data
+        check_result = Factory.validate(toml_data, strict=True)
+
+        project = toml_data.get("project", {})
+        poetry_config = toml_data["tool"]["poetry"]
 
         # Validate trove classifiers
-        project_classifiers = set(config.get("classifiers", []))
+        project_classifiers = set(
+            project.get("classifiers") or poetry_config.get("classifiers", [])
+        )
         errors, warnings = self._validate_classifiers(project_classifiers)
         check_result["errors"].extend(errors)
         check_result["warnings"].extend(warnings)
 
         # Validate readme (files must exist)
-        if "readme" in config:
-            errors = self._validate_readme(config["readme"], poetry_file)
+        # TODO: consider [project.readme] as well
+        if "readme" in poetry_config:
+            errors = self._validate_readme(poetry_config["readme"], poetry_file)
             check_result["errors"].extend(errors)
 
-        check_result["errors"] += self._validate_dependencies_source(config)
+        check_result["errors"] += self._validate_dependencies_source(poetry_config)
 
         # Verify that lock file is consistent
         if self.option("lock") and not self.poetry.locker.is_locked():

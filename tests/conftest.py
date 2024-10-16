@@ -49,10 +49,10 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
     from collections.abc import Mapping
 
-    from _pytest.config import Config as PyTestConfig
-    from _pytest.config.argparsing import Parser
-    from _pytest.tmpdir import TempPathFactory
     from keyring.credentials import Credential
+    from pytest import Config as PyTestConfig
+    from pytest import Parser
+    from pytest import TempPathFactory
     from pytest_mock import MockerFixture
 
     from poetry.poetry import Poetry
@@ -138,7 +138,7 @@ class DummyBackend(KeyringBackend):
         if password is None:
             return None
 
-        return SimpleCredential(username, password)  # type: ignore[no-untyped-call]
+        return SimpleCredential(username, password)
 
     def delete_password(self, service: str, username: str) -> None:
         if service in self._passwords and username in self._passwords[service]:
@@ -534,7 +534,6 @@ def venv_flags_default() -> dict[str, bool]:
         "always-copy": False,
         "system-site-packages": False,
         "no-pip": False,
-        "no-setuptools": False,
     }
 
 

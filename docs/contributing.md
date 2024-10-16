@@ -33,6 +33,8 @@ related reports.
 * **Check that your issue does not already exist** in the [issue tracker].
 * **Make sure your issue is really a bug, and is not a support request or question** better suited for [Discussions]
 or [Discord].
+* **Try running your commands with the** `--no-cache` **flag**.
+* **Try clearing your cache with** `poetry cache clear --all PyPI` **and rerunning your commands**.
 
 {{% note %}}
 If you find a **Closed** issue that seems like it is the same thing that you're experiencing, open a new issue and
@@ -151,6 +153,14 @@ Next, you should install Poetry's dependencies, and run the test suite to make s
 poetry install
 poetry run pytest
 ```
+
+{{% note %}}
+If you want to see the coverage stats after the tests are complete, use:
+
+```bash
+poetry run pytest --cov=src/poetry --cov-report term
+```
+{{% /note %}}
 
 When you contribute to Poetry, automated tools will be run to make sure your code is suitable to be merged. Besides
 pytest, you will need to make sure your code typechecks properly using [mypy](http://mypy-lang.org/):

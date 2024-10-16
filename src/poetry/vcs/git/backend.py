@@ -219,7 +219,7 @@ class Git:
             if wassima.RUSTLS_LOADED
             else None,
         )
-        kwargs["pool_manager"] = pool_manager
+        kwargs["pool_manager"] = pool_manager  # type: ignore[assignment]
 
         client, path = get_transport_and_path(url, config=config, **kwargs)
 

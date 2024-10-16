@@ -14,7 +14,7 @@ from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.utils.link import Link
 
 from poetry.factory import Factory
-from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.repositories.exceptions import RepositoryError
 from poetry.repositories.legacy_repository import LegacyRepository
 
@@ -22,7 +22,7 @@ from poetry.repositories.legacy_repository import LegacyRepository
 if TYPE_CHECKING:
     import httpretty
 
-    from _pytest.monkeypatch import MonkeyPatch
+    from pytest import MonkeyPatch
     from pytest_mock import MockerFixture
 
     from poetry.config.config import Config
@@ -124,7 +124,7 @@ def test_sdist_format_support(legacy_repository: LegacyRepository) -> None:
 def test_missing_version(legacy_repository: LegacyRepository) -> None:
     repo = legacy_repository
 
-    with pytest.raises(PackageNotFound):
+    with pytest.raises(PackageNotFoundError):
         repo._get_release_info(
             canonicalize_name("missing_version"), Version.parse("1.1.0")
         )
@@ -562,7 +562,7 @@ def test_get_40x_and_returns_none(
 ) -> None:
     repo = MockHttpRepository({"/foo/": status_code}, http)
 
-    with pytest.raises(PackageNotFound):
+    with pytest.raises(PackageNotFoundError):
         repo.get_page("foo")
 
 

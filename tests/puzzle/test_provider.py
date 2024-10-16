@@ -24,7 +24,7 @@ from poetry.inspection.info import PackageInfo
 from poetry.packages import DependencyPackage
 from poetry.puzzle.provider import IncompatibleConstraintsError
 from poetry.puzzle.provider import Provider
-from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.repositories.repository import Repository
 from poetry.repositories.repository_pool import Priority
 from poetry.repositories.repository_pool import RepositoryPool
@@ -852,7 +852,7 @@ def test_complete_package_raises_packagenotfound_if_locked_source_not_available(
 
     locked = provider.get_locked(dependency)
     assert locked is not None
-    with pytest.raises(PackageNotFound):
+    with pytest.raises(PackageNotFoundError):
         provider.complete_package(locked)
 
 

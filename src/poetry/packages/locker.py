@@ -18,7 +18,7 @@ from poetry.core.constraints.version import Version
 from poetry.core.constraints.version import parse_constraint
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
-from poetry.core.version.requirements import InvalidRequirement
+from poetry.core.version.requirements import InvalidRequirementError
 from tomlkit import array
 from tomlkit import comment
 from tomlkit import document
@@ -59,6 +59,11 @@ class Locker:
         "dev-dependencies",
     ]
     _relevant_keys: ClassVar[list[str]] = [*_legacy_keys, "group"]
+    _relevant_project_keys: ClassVar[list[str]] = [
+        "requires-python",
+        "dependencies",
+        "optional-dependencies",
+    ]
 
     def __init__(self, lock: Path, pyproject_data: dict[str, Any]) -> None:
         self._lock = lock
@@ -189,7 +194,7 @@ class Locker:
                     for dep in deps:
                         try:
                             dependency = Dependency.create_from_pep_508(dep)
-                        except InvalidRequirement:
+                        except InvalidRequirementError:
                             # handle lock files with invalid PEP 508
                             m = re.match(r"^(.+?)(?:\[(.+?)])?(?:\s+\((.+)\))?$", dep)
                             if not m:
@@ -324,16 +329,37 @@ class Locker:
         """
         Returns the sha256 hash of the sorted content of the pyproject file.
         """
-        content = self._pyproject_data.get("tool", {}).get("poetry", {})
+        project_content = self._pyproject_data.get("project", {})
+        tool_poetry_content = self._pyproject_data.get("tool", {}).get("poetry", {})
 
-        relevant_content = {}
+        relevant_project_content = {}
+        for key in self._relevant_project_keys:
+            data = project_content.get(key)
+            if data is not None:
+                relevant_project_content[key] = data
+
+        relevant_poetry_content = {}
         for key in self._relevant_keys:
-            data = content.get(key)
+            data = tool_poetry_content.get(key)
 
-            if data is None and key not in self._legacy_keys:
+            if data is None and (
+                # Special handling for legacy keys is just for backwards compatibility,
+                # and thereby not required if there is relevant content in [project].
+                key not in self._legacy_keys or relevant_project_content
+            ):
                 continue
 
-            relevant_content[key] = data
+            relevant_poetry_content[key] = data
+
+        if relevant_project_content:
+            relevant_content = {
+                "project": relevant_project_content,
+                "tool": {"poetry": relevant_poetry_content},
+            }
+        else:
+            # For backwards compatibility, we have to put the relevant content
+            # of the [tool.poetry] section at top level!
+            relevant_content = relevant_poetry_content
 
         return sha256(json.dumps(relevant_content, sort_keys=True).encode()).hexdigest()
 

@@ -20,14 +20,14 @@ from poetry.core.version.markers import AnyMarker
 from poetry.core.version.markers import union as marker_union
 
 from poetry.mixology.incompatibility import Incompatibility
-from poetry.mixology.incompatibility_cause import DependencyCause
-from poetry.mixology.incompatibility_cause import PythonCause
+from poetry.mixology.incompatibility_cause import DependencyCauseError
+from poetry.mixology.incompatibility_cause import PythonCauseError
 from poetry.mixology.term import Term
 from poetry.packages import DependencyPackage
 from poetry.packages.direct_origin import DirectOrigin
 from poetry.packages.package_collection import PackageCollection
-from poetry.puzzle.exceptions import OverrideNeeded
-from poetry.repositories.exceptions import PackageNotFound
+from poetry.puzzle.exceptions import OverrideNeededError
+from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.utils.helpers import get_file_hash
 
 
@@ -446,7 +446,7 @@ class Provider:
                     return [
                         Incompatibility(
                             [Term(package.to_dependency(), True)],
-                            PythonCause(
+                            PythonCauseError(
                                 package.python_versions, str(self._python_constraint)
                             ),
                         )
@@ -464,7 +464,7 @@ class Provider:
         return [
             Incompatibility(
                 [Term(package.to_dependency(), True), Term(dep, False)],
-                DependencyCause(),
+                DependencyCauseError(),
             )
             for dep in dependencies
         ]
@@ -493,7 +493,7 @@ class Provider:
                         repository_name=dependency.source_name,
                     ),
                 )
-            except PackageNotFound as e:
+            except PackageNotFoundError as e:
                 try:
                     dependency_package = next(
                         DependencyPackage(dependency, pkg)
@@ -650,7 +650,7 @@ class Provider:
                     overrides.append(current_overrides)
 
             if overrides:
-                raise OverrideNeeded(*overrides)
+                raise OverrideNeededError(*overrides)
 
         # Modifying dependencies as needed
         clean_dependencies = []

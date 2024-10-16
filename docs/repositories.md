@@ -104,12 +104,15 @@ poetry publish --build --repository foo-pub
 
 ## Package Sources
 
-By default, Poetry is configured to use the Python ecosystem's canonical package index
+By default, if you have not configured any primary source,
+Poetry is configured to use the Python ecosystem's canonical package index
 [PyPI](https://pypi.org).
+You can alter this behaviour and exclusively look up packages only from the configured
+package sources by adding at least one primary source.
 
 {{% note %}}
 
-With the exception of the implicitly configured source for [PyPI](https://pypi.org) named `pypi`,
+Except for the implicitly configured source for [PyPI](https://pypi.org) named `PyPI`,
 package sources are local to a project and must be configured within the project's
 [`pyproject.toml`]({{< relref "pyproject" >}}) file. This is **not** the same configuration used
 when publishing a package.
@@ -142,55 +145,16 @@ url = "https://foo.bar/simple/"
 priority = "primary"
 ```
 
-If `priority` is undefined, the source is considered a primary source that takes precedence over PyPI, secondary, supplemental and explicit sources.
+If `priority` is undefined, the source is considered a primary source,
+which disables the implicit PyPI source and takes precedence over supplemental sources.
 
 Package sources are considered in the following order:
-1. [default source](#default-package-source-deprecated) (DEPRECATED),
-2. [primary sources](#primary-package-sources),
-3. implicit PyPI (unless disabled by another [primary source](#primary-package-sources), [default source](#default-package-source-deprecated) or configured explicitly),
-4. [secondary sources](#secondary-package-sources-deprecated) (DEPRECATED),
-5. [supplemental sources](#supplemental-package-sources).
+1. [primary sources](#primary-package-sources) or implicit PyPI (if there are no primary sources),
+2. [supplemental sources](#supplemental-package-sources).
 
 [Explicit sources](#explicit-package-sources) are considered only for packages that explicitly [indicate their source](#package-source-constraint).
 
 Within each priority class, package sources are considered in order of appearance in `pyproject.toml`.
-
-{{% note %}}
-
-If you want to change the priority of [PyPI](https://pypi.org), you can set it explicitly, e.g.
-
-```bash
-poetry source add --priority=primary PyPI
-```
-
-If you prefer to disable PyPI completely,
-just add a [primary source](#primary-package-sources)
-or configure PyPI as [explicit source](#explicit-package-sources).
-
-{{% /note %}}
-
-
-#### Default Package Source (DEPRECATED)
-
-*Deprecated in 1.8.0*
-
-{{% warning %}}
-
-Configuring a default package source is deprecated because it is the same
-as the topmost [primary source](#primary-package-sources).
-Just configure a primary package source and put it first in the list of package sources.
-
-{{% /warning %}}
-
-By default, if you have not configured any primary source,
-Poetry will configure [PyPI](https://pypi.org) as the package source for your project.
-You can alter this behaviour and exclusively look up packages only from the configured
-package sources by adding at least one primary source (recommended)
-or a **single** source with `priority = "default"` (deprecated).
-
-```bash
-poetry source add --priority=default foo https://foo.bar/simple/
-```
 
 
 #### Primary Package Sources
@@ -234,27 +198,6 @@ with Poetry, the PyPI repository cannot be configured with a given URL. Remember
 
 {{% /warning %}}
 
-#### Secondary Package Sources (DEPRECATED)
-
-*Deprecated in 1.5.0*
-
-If package sources are configured as secondary, all it means is that these will be given a lower
-priority when selecting compatible package distribution that also exists in your default and primary package sources. If the package source should instead be searched only if higher-priority repositories did not return results, please consider a [supplemental source](#supplemental-package-sources) instead.
-
-You can configure a package source as a secondary source with `priority = "secondary"` in your package
-source configuration.
-
-```bash
-poetry source add --priority=secondary foo https://foo.bar/simple/
-```
-
-There can be more than one secondary package source.
-
-{{% warning %}}
-
-Secondary package sources are deprecated in favor of supplemental package sources.
-
-{{% /warning %}}
 
 #### Supplemental Package Sources
 
@@ -305,9 +248,10 @@ poetry add --source pytorch-gpu-src torch torchvision torchaudio
 
 #### Package Source Constraint
 
-All package sources (including secondary and possibly supplemental sources) will be searched during the package lookup
-process. These network requests will occur for all sources, regardless of if the package is
-found at one or more sources.
+All package sources (including possibly supplemental sources) will be searched
+during the package lookup process.
+These network requests will occur for all primary sources, regardless of if the package is
+found at one or more sources, and all supplemental sources until the package is found.
 
 In order to limit the search for a specific package to a particular package repository, you can specify the source explicitly.
 
@@ -398,8 +342,8 @@ httpx = {version = "^0.22.0", source = "pypi"}
 
 {{% warning %}}
 
-If any source within a project is configured with `priority = "default"`, The implicit `pypi` source will
-be disabled and not used for any packages.
+The implicit `PyPI` source will be disabled and not used for any packages
+if at least one [primary source](#primary-package-sources) is configured.
 
 {{% /warning %}}
 

@@ -4,15 +4,15 @@ from typing import TYPE_CHECKING
 
 from poetry.core.constraints.version import parse_constraint
 
-from poetry.mixology.incompatibility_cause import ConflictCause
-from poetry.mixology.incompatibility_cause import PythonCause
+from poetry.mixology.incompatibility_cause import ConflictCauseError
+from poetry.mixology.incompatibility_cause import PythonCauseError
 
 
 if TYPE_CHECKING:
     from poetry.mixology.incompatibility import Incompatibility
 
 
-class SolveFailure(Exception):
+class SolveFailureError(Exception):
     def __init__(self, incompatibility: Incompatibility) -> None:
         self._incompatibility = incompatibility
 
@@ -38,7 +38,7 @@ class _Writer:
         version_solutions = []
         required_python_version_notification = False
         for incompatibility in self._root.external_incompatibilities:
-            if isinstance(incompatibility.cause, PythonCause):
+            if isinstance(incompatibility.cause, PythonCauseError):
                 root_constraint = parse_constraint(
                     incompatibility.cause.root_python_version
                 )
@@ -73,7 +73,7 @@ class _Writer:
         if required_python_version_notification:
             buffer.append("")
 
-        if isinstance(self._root.cause, ConflictCause):
+        if isinstance(self._root.cause, ConflictCauseError):
             self._visit(self._root)
         else:
             self._write(self._root, f"Because {self._root}, version solving failed.")
@@ -150,10 +150,10 @@ class _Writer:
         incompatibility_string = str(incompatibility)
 
         cause = incompatibility.cause
-        assert isinstance(cause, ConflictCause)
+        assert isinstance(cause, ConflictCauseError)
 
-        if isinstance(cause.conflict.cause, ConflictCause) and isinstance(
-            cause.other.cause, ConflictCause
+        if isinstance(cause.conflict.cause, ConflictCauseError) and isinstance(
+            cause.other.cause, ConflictCauseError
         ):
             conflict_line = self._line_numbers.get(cause.conflict)
             other_line = self._line_numbers.get(cause.other)
@@ -211,17 +211,17 @@ class _Writer:
                         f" {incompatibility_string}",
                         numbered=numbered,
                     )
-        elif isinstance(cause.conflict.cause, ConflictCause) or isinstance(
-            cause.other.cause, ConflictCause
+        elif isinstance(cause.conflict.cause, ConflictCauseError) or isinstance(
+            cause.other.cause, ConflictCauseError
         ):
             derived = (
                 cause.conflict
-                if isinstance(cause.conflict.cause, ConflictCause)
+                if isinstance(cause.conflict.cause, ConflictCauseError)
                 else cause.other
             )
             ext = (
                 cause.other
-                if isinstance(cause.conflict.cause, ConflictCause)
+                if isinstance(cause.conflict.cause, ConflictCauseError)
                 else cause.conflict
             )
 
@@ -235,8 +235,8 @@ class _Writer:
                 )
             elif self._is_collapsible(derived):
                 derived_cause = derived.cause
-                assert isinstance(derived_cause, ConflictCause)
-                if isinstance(derived_cause.conflict.cause, ConflictCause):
+                assert isinstance(derived_cause, ConflictCauseError)
+                if isinstance(derived_cause.conflict.cause, ConflictCauseError):
                     collapsed_derived = derived_cause.conflict
                     collapsed_ext = derived_cause.other
                 else:
@@ -271,29 +271,29 @@ class _Writer:
             return False
 
         cause = incompatibility.cause
-        assert isinstance(cause, ConflictCause)
-        if isinstance(cause.conflict.cause, ConflictCause) and isinstance(
-            cause.other.cause, ConflictCause
+        assert isinstance(cause, ConflictCauseError)
+        if isinstance(cause.conflict.cause, ConflictCauseError) and isinstance(
+            cause.other.cause, ConflictCauseError
         ):
             return False
 
-        if not isinstance(cause.conflict.cause, ConflictCause) and not isinstance(
-            cause.other.cause, ConflictCause
+        if not isinstance(cause.conflict.cause, ConflictCauseError) and not isinstance(
+            cause.other.cause, ConflictCauseError
         ):
             return False
 
         complex = (
             cause.conflict
-            if isinstance(cause.conflict.cause, ConflictCause)
+            if isinstance(cause.conflict.cause, ConflictCauseError)
             else cause.other
         )
 
         return complex not in self._line_numbers
 
-    def _is_single_line(self, cause: ConflictCause) -> bool:
-        return not isinstance(cause.conflict.cause, ConflictCause) and not isinstance(
-            cause.other.cause, ConflictCause
-        )
+    def _is_single_line(self, cause: ConflictCauseError) -> bool:
+        return not isinstance(
+            cause.conflict.cause, ConflictCauseError
+        ) and not isinstance(cause.other.cause, ConflictCauseError)
 
     def _count_derivations(self, incompatibility: Incompatibility) -> None:
         if incompatibility in self._derivations:
@@ -301,6 +301,6 @@ class _Writer:
         else:
             self._derivations[incompatibility] = 1
             cause = incompatibility.cause
-            if isinstance(cause, ConflictCause):
+            if isinstance(cause, ConflictCauseError):
                 self._count_derivations(cause.conflict)
                 self._count_derivations(cause.other)

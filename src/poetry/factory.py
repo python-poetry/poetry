@@ -10,11 +10,14 @@ from typing import cast
 
 from cleo.io.null_io import NullIO
 from packaging.utils import canonicalize_name
+from poetry.core.constraints.version import Version
+from poetry.core.constraints.version import parse_constraint
 from poetry.core.factory import Factory as BaseFactory
 from poetry.core.packages.dependency_group import MAIN_GROUP
 
+from poetry.__version__ import __version__
 from poetry.config.config import Config
-from poetry.exceptions import PoetryException
+from poetry.exceptions import PoetryError
 from poetry.json import validate_object
 from poetry.packages.locker import Locker
 from poetry.plugins.plugin import Plugin
@@ -56,6 +59,15 @@ class Factory(BaseFactory):
 
         base_poetry = super().create_poetry(cwd=cwd, with_groups=with_groups)
 
+        if version_str := base_poetry.local_config.get("requires-poetry"):
+            version_constraint = parse_constraint(version_str)
+            version = Version.parse(__version__)
+            if not version_constraint.allows(version):
+                raise PoetryError(
+                    f"This project requires Poetry {version_constraint},"
+                    f" but you are using Poetry {version}"
+                )
+
         poetry_file = base_poetry.pyproject_path
         locker = Locker(poetry_file.parent / "poetry.lock", base_poetry.pyproject.data)
 
@@ -73,7 +85,7 @@ class Factory(BaseFactory):
         # Load local sources
         repositories = {}
         existing_repositories = config.get("repositories", {})
-        for source in base_poetry.pyproject.poetry_config.get("source", []):
+        for source in base_poetry.local_config.get("source", []):
             name = source.get("name")
             url = source.get("url")
             if name and url and name not in existing_repositories:
@@ -99,9 +111,10 @@ class Factory(BaseFactory):
             )
         )
 
-        plugin_manager = PluginManager(Plugin.group, disable_plugins=disable_plugins)
-        plugin_manager.load_plugins()
-        plugin_manager.activate(poetry, io)
+        if not disable_plugins:
+            plugin_manager = PluginManager(Plugin.group)
+            plugin_manager.load_plugins()
+            plugin_manager.activate(poetry, io)
 
         return poetry
 
@@ -130,46 +143,12 @@ class Factory(BaseFactory):
                 source, config, disable_cache=disable_cache
             )
             priority = Priority[source.get("priority", Priority.PRIMARY.name).upper()]
-            if "default" in source or "secondary" in source:
-                warning = (
-                    "Found deprecated key 'default' or 'secondary' in"
-                    " pyproject.toml configuration for source"
-                    f" {source.get('name')}. Please provide the key 'priority'"
-                    " instead. Accepted values are:"
-                    f" {', '.join(repr(p.name.lower()) for p in Priority)}."
-                )
-                io.write_error_line(f"<warning>Warning: {warning}</warning>")
-                if source.get("default"):
-                    priority = Priority.DEFAULT
-                elif source.get("secondary"):
-                    priority = Priority.SECONDARY
-
-            if priority is Priority.SECONDARY:
-                allowed_prios = (p for p in Priority if p is not Priority.SECONDARY)
-                warning = (
-                    "Found deprecated priority 'secondary' for source"
-                    f" '{source.get('name')}' in pyproject.toml. Consider changing the"
-                    " priority to one of the non-deprecated values:"
-                    f" {', '.join(repr(p.name.lower()) for p in allowed_prios)}."
-                )
-                io.write_error_line(f"<warning>Warning: {warning}</warning>")
-            elif priority is Priority.DEFAULT:
-                warning = (
-                    "Found deprecated priority 'default' for source"
-                    f" '{source.get('name')}' in pyproject.toml. You can achieve"
-                    " the same effect by changing the priority to 'primary' and putting"
-                    " the source first."
-                )
-                io.write_error_line(f"<warning>Warning: {warning}</warning>")
 
             if io.is_debug():
-                message = f"Adding repository {repository.name} ({repository.url})"
-                if priority is Priority.DEFAULT:
-                    message += " and setting it as the default one"
-                else:
-                    message += f" and setting it as {priority.name.lower()}"
-
-                io.write_line(message)
+                io.write_line(
+                    f"Adding repository {repository.name} ({repository.url})"
+                    f" and setting it as {priority.name.lower()}"
+                )
 
             pool.add_repository(repository, priority=priority)
             if repository.name.lower() == "pypi":
@@ -177,7 +156,7 @@ class Factory(BaseFactory):
 
         # Only add PyPI if no default repository is configured
         if not explicit_pypi:
-            if pool.has_default() or pool.has_primary_repositories():
+            if pool.has_primary_repositories():
                 if io.is_debug():
                     io.write_line("Deactivating the PyPI repository")
             else:
@@ -189,7 +168,7 @@ class Factory(BaseFactory):
                 )
 
         if not pool.repositories:
-            raise PoetryException(
+            raise PoetryError(
                 "At least one source must not be configured as 'explicit'."
             )
 
@@ -340,22 +319,26 @@ class Factory(BaseFactory):
 
     @classmethod
     def validate(
-        cls, config: dict[str, Any], strict: bool = False
+        cls, toml_data: dict[str, Any], strict: bool = False
     ) -> dict[str, list[str]]:
-        results = super().validate(config, strict)
+        results = super().validate(toml_data, strict)
+        poetry_config = toml_data["tool"]["poetry"]
 
-        results["errors"].extend(validate_object(config))
+        results["errors"].extend(validate_object(poetry_config))
 
         # A project should not depend on itself.
-        dependencies = set(config.get("dependencies", {}).keys())
-        dependencies.update(config.get("dev-dependencies", {}).keys())
-        groups = config.get("group", {}).values()
+        # TODO: consider [project.dependencies] and [project.optional-dependencies]
+        dependencies = set(poetry_config.get("dependencies", {}).keys())
+        dependencies.update(poetry_config.get("dev-dependencies", {}).keys())
+        groups = poetry_config.get("group", {}).values()
         for group in groups:
             dependencies.update(group.get("dependencies", {}).keys())
 
         dependencies = {canonicalize_name(d) for d in dependencies}
 
-        project_name = config.get("name")
+        project_name = toml_data.get("project", {}).get("name") or poetry_config.get(
+            "name"
+        )
         if project_name is not None and canonicalize_name(project_name) in dependencies:
             results["errors"].append(
                 f"Project name ({project_name}) is same as one of its dependencies"

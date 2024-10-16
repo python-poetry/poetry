@@ -939,6 +939,13 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
         download_spy.assert_not_called()
 
 
+@pytest.mark.parametrize(
+    "source_url,written_source_url",
+    [
+        ("https://github.com/demo/demo.git", "https://github.com/demo/demo.git"),
+        ("git@github.com:demo/demo.git", "ssh://git@github.com/demo/demo.git"),
+    ],
+)
 @pytest.mark.parametrize("is_artifact_cached", [False, True])
 def test_executor_should_write_pep610_url_references_for_git(
     tmp_venv: VirtualEnv,
@@ -949,6 +956,8 @@ def test_executor_should_write_pep610_url_references_for_git(
     wheel: Path,
     mocker: MockerFixture,
     fixture_dir: FixtureDirGetter,
+    source_url: str,
+    written_source_url: str,
     is_artifact_cached: bool,
 ) -> None:
     if is_artifact_cached:
@@ -960,7 +969,7 @@ def test_executor_should_write_pep610_url_references_for_git(
     clone_spy = mocker.spy(Git, "clone")
 
     source_resolved_reference = "123456"
-    source_url = "https://github.com/demo/demo.git"
+    source_url = source_url
 
     package = Package(
         "demo",
@@ -970,6 +979,8 @@ def test_executor_should_write_pep610_url_references_for_git(
         source_resolved_reference=source_resolved_reference,
         source_url=source_url,
     )
+
+    assert package.source_url == written_source_url
 
     chef = Chef(artifact_cache, tmp_venv, Factory.create_pool(config))
     chef.set_directory_wheel(wheel)
@@ -996,7 +1007,9 @@ def test_executor_should_write_pep610_url_references_for_git(
         prepare_spy.assert_not_called()
     else:
         clone_spy.assert_called_once_with(
-            url=source_url, source_root=mocker.ANY, revision=source_resolved_reference
+            url=package.source_url,
+            source_root=mocker.ANY,
+            revision=source_resolved_reference,
         )
         prepare_spy.assert_called_once()
         assert prepare_spy.spy_return.exists(), "cached file should not be deleted"
@@ -1078,7 +1091,92 @@ def test_executor_should_append_subdirectory_for_git(
     executor.execute([Install(package)])
 
     archive_arg = spy.call_args[0][0]
-    assert archive_arg == tmp_venv.path / "src/demo/subdirectories/two"
+    assert archive_arg == tmp_venv.path / "src/subdirectories/two"
+
+
+def test_executor_should_install_multiple_packages_from_same_git_repository(
+    mocker: MockerFixture,
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    config: Config,
+    artifact_cache: ArtifactCache,
+    io: BufferedIO,
+    wheel: Path,
+) -> None:
+    package_a = Package(
+        "package_a",
+        "0.1.2",
+        source_type="git",
+        source_reference="master",
+        source_resolved_reference="123456",
+        source_url="https://github.com/demo/subdirectories.git",
+        source_subdirectory="package_a",
+    )
+    package_b = Package(
+        "package_b",
+        "0.1.2",
+        source_type="git",
+        source_reference="master",
+        source_resolved_reference="123456",
+        source_url="https://github.com/demo/subdirectories.git",
+        source_subdirectory="package_b",
+    )
+
+    chef = Chef(artifact_cache, tmp_venv, Factory.create_pool(config))
+    chef.set_directory_wheel(wheel)
+    spy = mocker.spy(chef, "prepare")
+
+    executor = Executor(tmp_venv, pool, config, io)
+    executor._chef = chef
+    executor.execute([Install(package_a), Install(package_b)])
+
+    archive_arg = spy.call_args_list[0][0][0]
+    assert archive_arg == tmp_venv.path / "src/subdirectories/package_a"
+
+    archive_arg = spy.call_args_list[1][0][0]
+    assert archive_arg == tmp_venv.path / "src/subdirectories/package_b"
+
+
+def test_executor_should_install_multiple_packages_from_forked_git_repository(
+    mocker: MockerFixture,
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    config: Config,
+    artifact_cache: ArtifactCache,
+    io: BufferedIO,
+    wheel: Path,
+) -> None:
+    package_a = Package(
+        "one",
+        "1.0.0",
+        source_type="git",
+        source_reference="master",
+        source_resolved_reference="123456",
+        source_url="https://github.com/demo/subdirectories.git",
+        source_subdirectory="one",
+    )
+    package_b = Package(
+        "two",
+        "2.0.0",
+        source_type="git",
+        source_reference="master",
+        source_resolved_reference="123456",
+        source_url="https://github.com/forked_demo/subdirectories.git",
+        source_subdirectory="two",
+    )
+
+    chef = Chef(artifact_cache, tmp_venv, Factory.create_pool(config))
+    chef.set_directory_wheel(wheel)
+    prepare_spy = mocker.spy(chef, "prepare")
+
+    executor = Executor(tmp_venv, pool, config, io)
+    executor._chef = chef
+    executor.execute([Install(package_a), Install(package_b)])
+
+    # Verify that the repo for package_a is not re-used for package_b.
+    # both repos must be cloned serially into separate directories.
+    # If so, executor.prepare() will be called twice.
+    assert prepare_spy.call_count == 2
 
 
 def test_executor_should_write_pep610_url_references_for_git_with_subdirectories(
@@ -1299,7 +1397,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
   - Installing {package_name} ({package_version} {package_url})
 
-  SolveFailure
+  SolveFailureError
 
   Because -root- depends on poetry-core (0.999) which doesn't match any versions,\
  version solving failed.

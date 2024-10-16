@@ -44,11 +44,6 @@ class ShowCommand(GroupCommand, EnvCommand):
     ]
     options: ClassVar[list[Option]] = [
         *GroupCommand._group_dependency_options(),
-        option(
-            "no-dev",
-            None,
-            "Do not list the development dependencies. (<warning>Deprecated</warning>)",
-        ),
         option("tree", "t", "List the dependencies as a tree."),
         option(
             "why",
@@ -200,7 +195,7 @@ lists all packages available."""
             self.line("")
             self.line("<info>required by</info>")
             for parent, requires_version in required_by.items():
-                self.line(f" - <c1>{parent}</c1> <b>{requires_version}</b>")
+                self.line(f" - <c1>{parent}</c1> requires <b>{requires_version}</b>")
 
         return 0
 

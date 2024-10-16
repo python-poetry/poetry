@@ -12,8 +12,8 @@ from poetry.utils.env.exceptions import EnvCommandError
 from poetry.utils.env.exceptions import EnvError
 from poetry.utils.env.exceptions import IncorrectEnvError
 from poetry.utils.env.exceptions import InvalidCurrentPythonVersionError
-from poetry.utils.env.exceptions import NoCompatiblePythonVersionFound
-from poetry.utils.env.exceptions import PythonVersionNotFound
+from poetry.utils.env.exceptions import NoCompatiblePythonVersionFoundError
+from poetry.utils.env.exceptions import PythonVersionNotFoundError
 from poetry.utils.env.generic_env import GenericEnv
 from poetry.utils.env.mock_env import MockEnv
 from poetry.utils.env.null_env import NullEnv
@@ -67,7 +67,7 @@ def build_environment(
     if not env or poetry.package.build_script:
         with ephemeral_environment(
             executable=env.python if env else None,
-            flags={"no-pip": True, "no-setuptools": True, "no-wheel": True},
+            flags={"no-pip": True},
         ) as venv:
             if io:
                 requires = [
@@ -102,8 +102,8 @@ __all__ = [
     "EnvCommandError",
     "IncorrectEnvError",
     "InvalidCurrentPythonVersionError",
-    "NoCompatiblePythonVersionFound",
-    "PythonVersionNotFound",
+    "NoCompatiblePythonVersionFoundError",
+    "PythonVersionNotFoundError",
     "Env",
     "EnvManager",
     "GenericEnv",

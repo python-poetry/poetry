@@ -9,6 +9,7 @@ from typing import ClassVar
 from cleo.helpers import argument
 from cleo.helpers import option
 from packaging.utils import canonicalize_name
+from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.dependency_group import MAIN_GROUP
 from tomlkit.toml_document import TOMLDocument
 
@@ -17,8 +18,11 @@ from poetry.console.commands.installer_command import InstallerCommand
 
 
 if TYPE_CHECKING:
+    from collections.abc import Collection
+
     from cleo.io.inputs.argument import Argument
     from cleo.io.inputs.option import Option
+    from packaging.utils import NormalizedName
 
 
 class AddCommand(InstallerCommand, InitCommand):
@@ -39,8 +43,7 @@ class AddCommand(InstallerCommand, InitCommand):
         option(
             "dev",
             "D",
-            "Add as a development dependency. (<warning>Deprecated</warning>) Use"
-            " --group=dev instead.",
+            "Add as a development dependency. (shortcut for '-G dev')",
         ),
         option("editable", "e", "Add vcs/path dependencies as editable."),
         option(
@@ -50,7 +53,12 @@ class AddCommand(InstallerCommand, InitCommand):
             flag=False,
             multiple=True,
         ),
-        option("optional", None, "Add as an optional dependency."),
+        option(
+            "optional",
+            None,
+            "Add as an optional dependency to an extra.",
+            flag=False,
+        ),
         option(
             "python",
             None,
@@ -111,6 +119,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
     def handle(self) -> int:
         from poetry.core.constraints.version import parse_constraint
+        from tomlkit import array
         from tomlkit import inline_table
         from tomlkit import nl
         from tomlkit import table
@@ -119,10 +128,6 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
         packages = self.argument("name")
         if self.option("dev"):
-            self.line_error(
-                "<warning>The --dev option is deprecated, "
-                "use the `--group dev` notation instead.</warning>"
-            )
             group = "dev"
         else:
             group = self.option("group", self.default_group or MAIN_GROUP)
@@ -132,19 +137,42 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                 "You can only specify one package when using the --extras option"
             )
 
+        optional = self.option("optional")
+        if optional and group != MAIN_GROUP:
+            raise ValueError("You can only add optional dependencies to the main group")
+
         # tomlkit types are awkward to work with, treat content as a mostly untyped
         # dictionary.
         content: dict[str, Any] = self.poetry.file.read()
-        poetry_content = content["tool"]["poetry"]
+        project_content = content.get("project", table())
+        poetry_content = content.get("tool", {}).get("poetry", table())
         project_name = (
-            canonicalize_name(name) if (name := poetry_content.get("name")) else None
+            canonicalize_name(name)
+            if (name := project_content.get("name", poetry_content.get("name")))
+            else None
         )
 
+        use_project_section = False
+        project_dependency_names = []
         if group == MAIN_GROUP:
-            if "dependencies" not in poetry_content:
-                poetry_content["dependencies"] = table()
+            if (
+                "dependencies" in project_content
+                or "optional-dependencies" in project_content
+            ):
+                use_project_section = True
+                if optional:
+                    project_section = project_content.get(
+                        "optional-dependencies", {}
+                    ).get(optional, array())
+                else:
+                    project_section = project_content.get("dependencies", array())
+                project_dependency_names = [
+                    Dependency.create_from_pep_508(dep).name for dep in project_section
+                ]
+            else:
+                project_section = array()
 
-            section = poetry_content["dependencies"]
+            poetry_section = poetry_content.get("dependencies", table())
         else:
             if "group" not in poetry_content:
                 poetry_content["group"] = table(is_super_table=True)
@@ -160,9 +188,12 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
             if "dependencies" not in this_group:
                 this_group["dependencies"] = table()
 
-            section = this_group["dependencies"]
+            poetry_section = this_group["dependencies"]
+            project_section = []
 
-        existing_packages = self.get_existing_packages_from_input(packages, section)
+        existing_packages = self.get_existing_packages_from_input(
+            packages, poetry_section, project_dependency_names
+        )
 
         if existing_packages:
             self.notify_about_existing_packages(existing_packages)
@@ -172,6 +203,13 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
         if not packages:
             self.line("Nothing to add.")
             return 0
+
+        if optional and not use_project_section:
+            self.line_error(
+                "<warning>Optional dependencies will not be added to extras"
+                " in legacy mode. Consider converting your project to use the [project]"
+                " section.</warning>"
+            )
 
         requirements = self._determine_requirements(
             packages,
@@ -187,13 +225,13 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                 parse_constraint(version)
 
             constraint: dict[str, Any] = inline_table()
-            for name, value in _constraint.items():
-                if name == "name":
+            for key, value in _constraint.items():
+                if key == "name":
                     continue
 
-                constraint[name] = value
+                constraint[key] = value
 
-            if self.option("optional"):
+            if optional:
                 constraint["optional"] = True
 
             if self.option("allow-prereleases"):
@@ -244,28 +282,67 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                 self.line_error("\nNo changes were applied.")
                 return 1
 
-            for key in section:
-                if canonicalize_name(key) == canonical_constraint_name:
-                    section[key] = constraint
-                    break
-            else:
-                section[constraint_name] = constraint
-
             with contextlib.suppress(ValueError):
                 self.poetry.package.dependency_group(group).remove_dependency(
                     constraint_name
                 )
 
-            self.poetry.package.add_dependency(
-                Factory.create_dependency(
-                    constraint_name,
-                    constraint,
-                    groups=[group],
-                    root_dir=self.poetry.file.path.parent,
-                )
+            dependency = Factory.create_dependency(
+                constraint_name,
+                constraint,
+                groups=[group],
+                root_dir=self.poetry.file.path.parent,
             )
+            self.poetry.package.add_dependency(dependency)
+
+            if use_project_section:
+                try:
+                    index = project_dependency_names.index(canonical_constraint_name)
+                except ValueError:
+                    project_section.append(dependency.to_pep_508())
+                else:
+                    project_section[index] = dependency.to_pep_508()
+
+                # create a second constraint for tool.poetry.dependencies with keys
+                # that cannot be stored in the project section
+                poetry_constraint: dict[str, Any] = inline_table()
+                if not isinstance(constraint, str):
+                    for key in ["allow-prereleases", "develop", "source"]:
+                        if value := constraint.get(key):
+                            poetry_constraint[key] = value
+                    if poetry_constraint:
+                        # add marker related keys to avoid ambiguity
+                        for key in ["python", "platform"]:
+                            if value := constraint.get(key):
+                                poetry_constraint[key] = value
+            else:
+                poetry_constraint = constraint
+
+            if poetry_constraint:
+                for key in poetry_section:
+                    if canonicalize_name(key) == canonical_constraint_name:
+                        poetry_section[key] = poetry_constraint
+                        break
+                else:
+                    poetry_section[constraint_name] = poetry_constraint
 
         # Refresh the locker
+        if project_section:
+            assert group == MAIN_GROUP
+            if optional:
+                if "optional-dependencies" not in project_content:
+                    project_content["optional-dependencies"] = table()
+                if optional not in project_content["optional-dependencies"]:
+                    project_content["optional-dependencies"][optional] = project_section
+            elif "dependencies" not in project_content:
+                project_content["dependencies"] = project_section
+        if poetry_section:
+            if "tool" not in content:
+                content["tool"] = table()
+            if "poetry" not in content["tool"]:
+                content["tool"]["poetry"] = poetry_content
+            if group == MAIN_GROUP and "dependencies" not in poetry_content:
+                poetry_content["dependencies"] = poetry_section
         self.poetry.locker.set_pyproject_data(content)
         self.installer.set_locker(self.poetry.locker)
 
@@ -289,13 +366,20 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
         return status
 
     def get_existing_packages_from_input(
-        self, packages: list[str], section: dict[str, Any]
+        self,
+        packages: list[str],
+        section: dict[str, Any],
+        project_dependencies: Collection[NormalizedName],
     ) -> list[str]:
         existing_packages = []
 
         for name in packages:
+            normalized_name = canonicalize_name(name)
+            if normalized_name in project_dependencies:
+                existing_packages.append(name)
+                continue
             for key in section:
-                if canonicalize_name(key) == canonicalize_name(name):
+                if normalized_name == canonicalize_name(key):
                     existing_packages.append(name)
 
         return existing_packages

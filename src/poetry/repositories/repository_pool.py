@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import enum
-import warnings
 
 from collections import OrderedDict
 from dataclasses import dataclass
@@ -10,7 +9,7 @@ from typing import TYPE_CHECKING
 
 from poetry.config.config import Config
 from poetry.repositories.abstract_repository import AbstractRepository
-from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.repositories.repository import Repository
 from poetry.utils.cache import ArtifactCache
 
@@ -20,15 +19,11 @@ if TYPE_CHECKING:
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
 
-_SENTINEL = object()
-
 
 class Priority(IntEnum):
     # The order of the members below dictates the actual priority. The first member has
     # top priority.
-    DEFAULT = enum.auto()
     PRIMARY = enum.auto()
-    SECONDARY = enum.auto()
     SUPPLEMENTAL = enum.auto()
     EXPLICIT = enum.auto()
 
@@ -43,7 +38,6 @@ class RepositoryPool(AbstractRepository):
     def __init__(
         self,
         repositories: list[Repository] | None = None,
-        ignore_repository_names: object = _SENTINEL,
         *,
         config: Config | None = None,
     ) -> None:
@@ -58,15 +52,6 @@ class RepositoryPool(AbstractRepository):
         self._artifact_cache = ArtifactCache(
             cache_dir=(config or Config.create()).artifacts_cache_directory
         )
-
-        if ignore_repository_names is not _SENTINEL:
-            warnings.warn(
-                "The 'ignore_repository_names' argument to 'RepositoryPool.__init__' is"
-                " deprecated. It has no effect anymore and will be removed in a future"
-                " version.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
 
     @staticmethod
     def from_packages(packages: list[Package], config: Config | None) -> RepositoryPool:
@@ -118,9 +103,6 @@ class RepositoryPool(AbstractRepository):
     def artifact_cache(self) -> ArtifactCache:
         return self._artifact_cache
 
-    def has_default(self) -> bool:
-        return self._contains_priority(Priority.DEFAULT)
-
     def has_primary_repositories(self) -> bool:
         return self._contains_priority(Priority.PRIMARY)
 
@@ -145,12 +127,7 @@ class RepositoryPool(AbstractRepository):
         raise IndexError(f'Repository "{name}" does not exist.')
 
     def add_repository(
-        self,
-        repository: Repository,
-        default: bool = False,
-        secondary: bool = False,
-        *,
-        priority: Priority = Priority.PRIMARY,
+        self, repository: Repository, *, priority: Priority = Priority.PRIMARY
     ) -> RepositoryPool:
         """
         Adds a repository to the pool.
@@ -160,19 +137,6 @@ class RepositoryPool(AbstractRepository):
             raise ValueError(
                 f"A repository with name {repository_name} was already added."
             )
-
-        if default or secondary:
-            warnings.warn(
-                "Parameters 'default' and 'secondary' to"
-                " 'RepositoryPool.add_repository' are deprecated. Please provide"
-                " the keyword-argument 'priority' instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            priority = Priority.DEFAULT if default else Priority.SECONDARY
-
-        if priority is Priority.DEFAULT and self.has_default():
-            raise ValueError("Only one repository can be the default.")
 
         self._repositories[repository_name] = PrioritizedRepository(
             repository, priority
@@ -202,9 +166,9 @@ class RepositoryPool(AbstractRepository):
         for repo in self.repositories:
             try:
                 return repo.package(name, version, extras=extras)
-            except PackageNotFound:
+            except PackageNotFoundError:
                 continue
-        raise PackageNotFound(f"Package {name} ({version}) not found.")
+        raise PackageNotFoundError(f"Package {name} ({version}) not found.")
 
     def find_packages(self, dependency: Dependency) -> list[Package]:
         repository_name = dependency.source_name
