@@ -104,6 +104,7 @@ def _project_factory(
         ("--without foo,bar", {MAIN_GROUP, "baz", "bim"}),
         (f"--without {MAIN_GROUP}", {"foo", "bar", "baz", "bim"}),
         ("--with foo,bar --without baz --without bim --only bam", {"bam"}),
+        ("--all-groups", {MAIN_GROUP, "foo", "bar", "baz", "bim", "bam"}),
         # net result zero options
         ("--with foo", {MAIN_GROUP, "foo", "bar", "baz", "bim"}),
         ("--without bam", {MAIN_GROUP, "foo", "bar", "baz", "bim"}),
@@ -285,9 +286,10 @@ def test_extras_conflicts_all_extras(
         "--without foo",
         "--with foo,bar --without baz",
         "--only foo",
+        "--all-groups",
     ],
 )
-def test_only_root_conflicts_with_without_only(
+def test_only_root_conflicts_with_without_only_all_groups(
     options: str,
     tester: CommandTester,
     mocker: MockerFixture,
@@ -300,8 +302,34 @@ def test_only_root_conflicts_with_without_only(
     assert tester.status_code == 1
     assert (
         tester.io.fetch_error()
-        == "The `--with`, `--without` and `--only` options cannot be used with"
+        == "The `--with`, `--without`, `--only` and `--all-groups` options cannot be used with"
         " the `--only-root` option.\n"
+    )
+
+
+@pytest.mark.parametrize(
+    "options",
+    [
+        "--with foo",
+        "--without foo",
+        "--with foo,bar --without baz",
+        "--only foo",
+    ],
+)
+def test_all_groups_conflicts_with_only_with_without(
+    options: str,
+    tester: CommandTester,
+    mocker: MockerFixture,
+) -> None:
+    assert isinstance(tester.command, InstallerCommand)
+    mocker.patch.object(tester.command.installer, "run", return_value=0)
+
+    tester.execute(f"{options} --all-groups")
+
+    assert tester.status_code == 1
+    assert (
+        tester.io.fetch_error()
+        == "You cannot specify `--with`, `--without`, or `--only` when using `--all-groups`.\n"
     )
 
 
