@@ -50,6 +50,7 @@ class InstallCommand(InstallerCommand):
             multiple=True,
         ),
         option("all-extras", None, "Install all extra dependencies."),
+        option("all-groups", None, "Install dependencies from all groups."),
         option("only-root", None, "Exclude all dependencies."),
         option(
             "compile",
@@ -104,12 +105,14 @@ you can set the "package-mode" to false in your pyproject.toml file.
             return 1
 
         if self.option("only-root") and any(
-            self.option(key) for key in {"with", "without", "only"}
+            self.option(key) for key in {"with", "without", "only", "all-groups"}
         ):
             self.line_error(
                 "<error>The `<fg=yellow;options=bold>--with</>`,"
-                " `<fg=yellow;options=bold>--without</>` and"
-                " `<fg=yellow;options=bold>--only</>` options cannot be used with"
+                " `<fg=yellow;options=bold>--without</>`,"
+                " `<fg=yellow;options=bold>--only</>` and"
+                " `<fg=yellow;options=bold>--all-groups</>`"
+                " options cannot be used with"
                 " the `<fg=yellow;options=bold>--only-root</>`"
                 " option.</error>"
             )
@@ -119,6 +122,17 @@ you can set the "package-mode" to false in your pyproject.toml file.
             self.line_error(
                 "<error>You cannot specify `<fg=yellow;options=bold>--no-root</>`"
                 " when using `<fg=yellow;options=bold>--only-root</>`.</error>"
+            )
+            return 1
+
+        if (
+            self.option("only") or self.option("with") or self.option("without")
+        ) and self.option("all-groups"):
+            self.line_error(
+                "<error>You cannot specify `<fg=yellow;options=bold>--with</>`,"
+                " `<fg=yellow;options=bold>--without</>`, or"
+                " `<fg=yellow;options=bold>--only</>` when using"
+                " `<fg=yellow;options=bold>--all-groups</>`.</error>"
             )
             return 1
 

@@ -164,6 +164,12 @@ You can also select optional dependency groups with the `--with` option.
 poetry install --with test,docs
 ```
 
+To install all dependency groups including the optional groups, use the ``--all-groups`` flag.
+
+```bash
+poetry install --all-groups
+```
+
 It's also possible to only install specific dependency groups by using the `only` option.
 
 ```bash
@@ -254,9 +260,10 @@ poetry install --compile
 * `--sync`: Synchronize the environment with the locked packages and the specified groups.
 * `--no-root`: Do not install the root package (your project).
 * `--no-directory`: Skip all directory path dependencies (including transitive ones).
-* `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
+* `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
 * `--extras (-E)`: Features to install (multiple values allowed).
-* `--all-extras`: Install all extra features (conflicts with --extras).
+* `--all-extras`: Install all extra features (conflicts with `--extras`).
+* `--all-groups`: Install dependencies from all groups (conflicts with `--only`, `--with`, and `--without`).
 * `--compile`: Compile Python source files to bytecode.
 * `--remove-untracked`: Remove dependencies not presented in the lock file. (**Deprecated**, use `--sync` instead)
 
@@ -295,7 +302,7 @@ You can do this using the `add` command.
 * `--without`: The dependency groups to ignore.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
-* `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
+* `--dry-run` : Outputs the operations but will not execute anything (implicitly enables `--verbose`).
 * `--lock` : Do not perform install (only update the lockfile).
 * `--sync`: Synchronize the environment with the locked packages and the specified groups.
 
@@ -456,7 +463,7 @@ about dependency groups.
 * `--platform`: Platforms for which the dependency must be installed.
 * `--source`: Name of the source to use to install the package.
 * `--allow-prereleases`: Accept prereleases.
-* `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
+* `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
 * `--lock`: Do not perform install (only update the lockfile).
 
 
@@ -482,7 +489,7 @@ about dependency groups.
 
 * `--group (-G)`: The group to remove the dependency from.
 * `--dev (-D)`: Removes a package from the development dependencies. (shortcut for `-G dev`)
-* `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
+* `--dry-run` : Outputs the operations but will not execute anything (implicitly enables `--verbose`).
 * `--lock`: Do not perform operations (only update the lockfile).
 
 
@@ -509,7 +516,7 @@ dependencies
  - pytzdata >=2017.2.2
 
 required by
- - calendar >=1.4.0
+ - calendar requires >=1.4.0
 ```
 
 ### Options
@@ -991,7 +998,7 @@ poetry self add artifacts-keyring
 * `--extras (-E)`: Extras to activate for the dependency. (multiple values allowed)
 * `--allow-prereleases`: Accept prereleases.
 * `--source`: Name of the source to use to install the package.
-* `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
+* `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
 
 ### self update
 
@@ -1009,7 +1016,7 @@ poetry self update
 #### Options
 
 * `--preview`: Allow the installation of pre-release versions.
-* `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
+* `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
 
 ### self lock
 
@@ -1063,7 +1070,7 @@ poetry self remove poetry-plugin-export
 
 #### Options
 
-* `--dry-run`: Outputs the operations but will not execute anything (implicitly enables --verbose).
+* `--dry-run`: Outputs the operations but will not execute anything (implicitly enables `--verbose`).
 
 ### self install
 
@@ -1082,4 +1089,4 @@ poetry self install --sync
 #### Options
 
 * `--sync`: Synchronize the environment with the locked packages and the specified groups.
-* `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
+* `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
