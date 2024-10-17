@@ -76,6 +76,41 @@ special `system` Python version to retrieve the default behavior:
 poetry env use system
 ```
 
+## Activating the environment
+
+`poetry env activate` command prints the activate command to the console. This way you won't leave the current shell.
+You can then feed the output to `eval` to activate the environment. This way is the closest to manually activating the environment.
+
+{{% note %}}
+Looking for `poetry shell`? It was moved to a plugin: [`poetry-plugin-shell`](https://github.com/python-poetry/poetry-plugin-shell)
+{{% /note %}}
+
+{{< tabs tabTotal="3" tabID1="bash-csh-zsh" tabID2="fish" tabID3="powershell" tabName1="Bash/Zsh/Csh" tabName2="Fish" tabName3="Powershell" >}}
+
+{{< tab tabID="bash-csh-zsh" >}}
+
+```bash
+$ eval $(poetry env activate)
+(test-project-for-test) $  # Virtualenv entered
+```
+
+{{< /tab >}}
+{{< tab tabID="fish" >}}
+
+```bash
+$ eval (poetry env activate)
+```
+
+{{< /tab >}}
+{{< tab tabID="powershell" >}}
+
+```ps1
+PS1> Invoke-Expression (poetry env activate)
+```
+
+{{< /tab >}}
+{{< /tabs >}}
+
 ## Displaying the environment information
 
 If you want to get basic information about the currently activated virtual environment,
