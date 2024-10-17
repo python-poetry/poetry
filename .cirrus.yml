@@ -8,10 +8,6 @@ tests_task:
 
   env:
     matrix:
-      - PYTHON: python3.8
-        PYTHON_VERSION: 3.8
-        PYTHON_PACKAGE: python38
-        SQLITE_PACKAGE: py38-sqlite3
       - PYTHON: python3.9
         PYTHON_VERSION: 3.9
         PYTHON_PACKAGE: python39

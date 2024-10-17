@@ -7,10 +7,10 @@ import re
 import shutil
 import sys
 
+from collections.abc import Iterator
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Iterator
 
 import httpretty
 import keyring

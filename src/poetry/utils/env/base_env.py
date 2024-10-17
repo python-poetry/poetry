@@ -23,15 +23,13 @@ from poetry.utils.helpers import get_real_windows_path
 
 
 if TYPE_CHECKING:
-    from typing import Tuple
-
     from packaging.tags import Tag
     from poetry.core.version.markers import BaseMarker
     from virtualenv.seed.wheels.util import Wheel
 
     from poetry.utils.env.generic_env import GenericEnv
 
-    PythonVersion = Tuple[int, int, int, str, int]
+    PythonVersion = tuple[int, int, int, str, int]
 
 
 class Env(ABC):
