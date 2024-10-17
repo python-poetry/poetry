@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Iterator
 from typing import TypedDict
+from unittest.mock import ANY
 from urllib.parse import urlparse
 from urllib.parse import urlunparse
 
@@ -357,6 +358,7 @@ def test_configured_repository_http_auth(
         config=dummy_git_config,
         username=GIT_USERNAME,
         password=GIT_PASSWORD,
+        pool_manager=ANY,
     )
     spy_get_transport_and_path.assert_called_once()
 
@@ -383,6 +385,7 @@ def test_username_password_parameter_is_not_passed_to_dulwich(
     spy_get_transport_and_path.assert_called_with(
         location=source_url,
         config=dummy_git_config,
+        pool_manager=ANY,
     )
     spy_get_transport_and_path.assert_called_once()
 
