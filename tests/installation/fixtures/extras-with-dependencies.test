@@ -4,6 +4,7 @@ version = "1.0"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = []
 
 [[package]]
@@ -12,6 +13,7 @@ version = "1.0"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = []
 
 [[package]]
@@ -20,6 +22,8 @@ version = "1.0"
 description = ""
 optional = true
 python-versions = "*"
+groups = ["main"]
+markers = 'extra == "foo"'
 files = []
 
 [package.dependencies]
@@ -31,6 +35,8 @@ version = "1.1"
 description = ""
 optional = true
 python-versions = "*"
+groups = ["main"]
+markers = 'extra == "foo"'
 files = []
 
 [extras]
@@ -38,5 +44,5 @@ foo = ["C"]
 
 [metadata]
 python-versions = "*"
-lock-version = "2.0"
+lock-version = "2.1"
 content-hash = "123456789"
