@@ -51,7 +51,7 @@ from typing import Callable
 from typing import Iterator
 
 from packaging.metadata import parse_email
-from poetry.core.masonry.builders.sdist import SdistBuilder
+from poetry.core.masonry.utils.helpers import normalize_file_permissions
 from poetry.core.packages.package import Package
 
 from poetry.repositories.pypi_repository import PyPiRepository
@@ -356,8 +356,12 @@ class FileManager:
             dst, mode="w", fileobj=gz, format=tarfile.PAX_FORMAT
         ) as dst_tf, tarfile.open(src, "r") as src_tf:
             for member in src_tf.getmembers():
+                member.uid = 0
+                member.gid = 0
+                member.uname = ""
+                member.gname = ""
                 member.mtime = 0
-                member = SdistBuilder.clean_tarinfo(member)
+                member.mode = normalize_file_permissions(member.mode)
 
                 if member.isfile() and not is_protected(Path(member.name).name):
                     logger.debug("Stubbing file %s(%s)", link.filename, member.name)
