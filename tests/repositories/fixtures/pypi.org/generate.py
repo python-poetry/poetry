@@ -48,7 +48,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
-from typing import Iterator
 
 from packaging.metadata import parse_email
 from poetry.core.masonry.utils.helpers import normalize_file_permissions
@@ -64,6 +63,8 @@ from tests.helpers import FIXTURE_PATH_REPOSITORIES_PYPI
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     import requests
 
     from poetry.core.packages.utils.link import Link
@@ -325,9 +326,13 @@ class FileManager:
             dst.relative_to(FIXTURE_PATH_REPOSITORIES_PYPI),
         )
 
-        with self.pypi._cached_or_downloaded_file(link) as src, zipfile.ZipFile(
-            dst, "w", compression=zipfile.ZIP_DEFLATED
-        ) as stubbed_sdist, zipfile.ZipFile(src) as zf:
+        with (
+            self.pypi._cached_or_downloaded_file(link) as src,
+            zipfile.ZipFile(
+                dst, "w", compression=zipfile.ZIP_DEFLATED
+            ) as stubbed_sdist,
+            zipfile.ZipFile(src) as zf,
+        ):
             for member in zf.infolist():
                 if not is_protected(member.filename):
                     logger.debug("Stubbing file %s(%s)", link.filename, member.filename)
@@ -350,11 +355,14 @@ class FileManager:
             dst.relative_to(FIXTURE_PATH_REPOSITORIES_PYPI),
         )
 
-        with self.pypi._cached_or_downloaded_file(link) as src, GzipFile(
-            dst.as_posix(), mode="wb", mtime=0
-        ) as gz, tarfile.TarFile(
-            dst, mode="w", fileobj=gz, format=tarfile.PAX_FORMAT
-        ) as dst_tf, tarfile.open(src, "r") as src_tf:
+        with (
+            self.pypi._cached_or_downloaded_file(link) as src,
+            GzipFile(dst.as_posix(), mode="wb", mtime=0) as gz,
+            tarfile.TarFile(
+                dst, mode="w", fileobj=gz, format=tarfile.PAX_FORMAT
+            ) as dst_tf,
+            tarfile.open(src, "r") as src_tf,
+        ):
             for member in src_tf.getmembers():
                 member.uid = 0
                 member.gid = 0

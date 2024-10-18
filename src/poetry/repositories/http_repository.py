@@ -8,7 +8,6 @@ from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Iterator
 
 import requests
 import requests.adapters
@@ -36,6 +35,8 @@ from poetry.utils.patterns import wheel_file_re
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from packaging.utils import NormalizedName
     from poetry.core.packages.utils.link import Link
 

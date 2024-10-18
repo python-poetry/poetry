@@ -7,8 +7,6 @@ import urllib.parse
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Dict
-from typing import List
 from typing import TypeVar
 from typing import Union
 from typing import cast
@@ -26,7 +24,7 @@ if TYPE_CHECKING:
     from poetry.utils.env import Env
 
 
-DependencySpec = Dict[str, Union[str, bool, Dict[str, Union[str, bool]], List[str]]]
+DependencySpec = dict[str, Union[str, bool, dict[str, Union[str, bool]], list[str]]]
 BaseSpec = TypeVar("BaseSpec", DependencySpec, InlineTable)
 
 GIT_URL_SCHEMES = {"git+http", "git+https", "git+ssh"}
