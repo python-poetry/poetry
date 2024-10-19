@@ -80,10 +80,25 @@ class AuthenticatorRepositoryConfig:
     def get_http_credentials(
         self, password_manager: PasswordManager
     ) -> HTTPAuthCredential:
-        # try with the repository name via the password manager
-        credential = HTTPAuthCredential(
-            **(password_manager.get_http_auth(self.name) or {})
-        )
+        # try with the URL
+        if "@" in self.netloc:
+            # Split from the right because that's how urllib.parse.urlsplit()
+            # behaves if more than one @ is present (which can be checked using
+            # the password attribute of urlsplit()'s return value).
+            auth, netloc = self.netloc.rsplit("@", 1)
+            # Split from the left because that's how urllib.parse.urlsplit()
+            # behaves if more than one : is present (which again can be checked
+            # using the password attribute of the return value)
+            user, password = auth.split(":", 1) if ":" in auth else (auth, "")
+            credential = HTTPAuthCredential(
+                urllib.parse.unquote(user),
+                urllib.parse.unquote(password),
+            )
+        else:
+            # try with the repository name via the password manager
+            credential = HTTPAuthCredential(
+                **(password_manager.get_http_auth(self.name) or {})
+            )
 
         if credential.password is not None:
             return credential
@@ -401,7 +416,8 @@ class Authenticator:
                     return repository
                 continue
 
-            if repository.netloc == parsed_url.netloc:
+            # Compare repository URL without credentials
+            if repository.netloc.rsplit("@", 1)[-1] == parsed_url.netloc:
                 if parsed_url.path.startswith(repository.path) or commonprefix(
                     (parsed_url.path, repository.path)
                 ):
