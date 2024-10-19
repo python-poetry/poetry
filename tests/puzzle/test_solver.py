@@ -140,7 +140,7 @@ def test_install_non_existing_package_fail(
         solver.solve()
 
 
-def test_install_unpublished_package_does_not_fail(
+def test_install_unpublished_package_fails(
     package: ProjectPackage, repo: Repository, pool: RepositoryPool, io: NullIO
 ) -> None:
     package.add_dependency(Factory.create_dependency("B", "1"))
@@ -151,20 +151,10 @@ def test_install_unpublished_package_does_not_fail(
 
     repo.add_package(package_a)
 
+    # Even though B is installed, it is unpublished and cannot be used during solving.
     solver = Solver(package, pool, [package_b], [], io)
-    transaction = solver.solve()
-
-    check_solver_result(
-        transaction,
-        [
-            {"job": "install", "package": package_a},
-            {
-                "job": "install",
-                "package": package_b,
-                "skipped": True,  # already installed
-            },
-        ],
-    )
+    with pytest.raises(SolverProblemError):
+        solver.solve()
 
 
 def test_solver_with_deps(

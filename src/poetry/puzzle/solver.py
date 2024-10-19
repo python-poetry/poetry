@@ -56,9 +56,7 @@ class Solver:
         self._locked_packages = locked
         self._io = io
 
-        self._provider = Provider(
-            self._package, self._pool, self._io, installed=installed, locked=locked
-        )
+        self._provider = Provider(self._package, self._pool, self._io, locked=locked)
         self._overrides: list[dict[Package, dict[str, Dependency]]] = []
 
     @property
