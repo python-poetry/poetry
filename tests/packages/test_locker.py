@@ -15,13 +15,17 @@ import pytest
 
 from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import Version
+from poetry.core.packages.dependency_group import MAIN_GROUP
 from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
+from poetry.core.version.markers import AnyMarker
+from poetry.core.version.markers import parse_marker
 
 from poetry.__version__ import __version__
 from poetry.factory import Factory
 from poetry.packages.locker import GENERATED_COMMENT
 from poetry.packages.locker import Locker
+from poetry.packages.transitive_package_info import TransitivePackageInfo
 from tests.helpers import get_dependency
 from tests.helpers import get_package
 
@@ -45,7 +49,50 @@ def root() -> ProjectPackage:
     return ProjectPackage("root", "1.2.3")
 
 
-def test_lock_file_data_is_ordered(locker: Locker, root: ProjectPackage) -> None:
+@pytest.fixture
+def transitive_info() -> TransitivePackageInfo:
+    return TransitivePackageInfo(0, {MAIN_GROUP}, {})
+
+
+@pytest.mark.parametrize("is_locked", [True, False])
+def test_is_locked(locker: Locker, root: ProjectPackage, is_locked: bool) -> None:
+    if is_locked:
+        locker.set_lock_data(root, {})
+    assert locker.is_locked() is is_locked
+
+
+@pytest.mark.parametrize("is_fresh", [True, False])
+def test_is_fresh(
+    locker: Locker,
+    root: ProjectPackage,
+    transitive_info: TransitivePackageInfo,
+    is_fresh: bool,
+) -> None:
+    locker.set_lock_data(root, {})
+    if not is_fresh:
+        locker.set_pyproject_data(
+            {"tool": {"poetry": {"dependencies": {"tomli": "*"}}}}
+        )
+    assert locker.is_fresh() is is_fresh
+
+
+@pytest.mark.parametrize("lock_version", [None, "2.0", "2.1"])
+def test_is_locked_group_and_markers(
+    locker: Locker, root: ProjectPackage, lock_version: str | None
+) -> None:
+    if lock_version:
+        locker.set_lock_data(root, {})
+        with locker.lock.open("r", encoding="utf-8") as f:
+            content = f.read()
+        content = content.replace(locker._VERSION, lock_version)
+        with locker.lock.open("w", encoding="utf-8") as f:
+            f.write(content)
+    assert locker.is_locked_groups_and_markers() is (lock_version == "2.1")
+
+
+def test_lock_file_data_is_ordered(
+    locker: Locker, root: ProjectPackage, transitive_info: TransitivePackageInfo
+) -> None:
     package_a = get_package("A", "1.0.0")
     package_a.add_dependency(Factory.create_dependency("B", "^1.0"))
     package_a.files = [{"file": "foo", "hash": "456"}, {"file": "bar", "hash": "123"}]
@@ -80,15 +127,15 @@ def test_lock_file_data_is_ordered(locker: Locker, root: ProjectPackage) -> None
         source_type="url",
         source_url="https://example.org/url-package-1.0-cp39-win_amd64.whl",
     )
-    packages = [
-        package_a2,
-        package_a,
-        get_package("B", "1.2"),
-        package_git,
-        package_git_with_subdirectory,
-        package_url_win32,
-        package_url_linux,
-    ]
+    packages = {
+        package_a2: transitive_info,
+        package_a: transitive_info,
+        get_package("B", "1.2"): transitive_info,
+        package_git: transitive_info,
+        package_git_with_subdirectory: transitive_info,
+        package_url_win32: transitive_info,
+        package_url_linux: transitive_info,
+    }
 
     locker.set_lock_data(root, packages)
 
@@ -104,6 +151,7 @@ version = "1.0.0"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = [
     {{file = "bar", hash = "123"}},
     {{file = "foo", hash = "456"}},
@@ -118,6 +166,7 @@ version = "2.0.0"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = [
     {{file = "baz", hash = "345"}},
 ]
@@ -128,6 +177,7 @@ version = "1.2"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = []
 
 [[package]]
@@ -136,6 +186,7 @@ version = "1.2.3"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = []
 develop = false
 
@@ -151,6 +202,7 @@ version = "1.2.3"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = []
 develop = false
 
@@ -167,6 +219,7 @@ version = "1.0"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = []
 
 [package.source]
@@ -179,6 +232,7 @@ version = "1.0"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = []
 
 [package.source]
@@ -186,7 +240,7 @@ type = "url"
 url = "https://example.org/url-package-1.0-cp39-win_amd64.whl"
 
 [metadata]
-lock-version = "2.0"
+lock-version = "2.1"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 """
@@ -204,6 +258,7 @@ version = "0.12.5"
 description = "httplib2 caching for requests"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+groups = ["main"]
 files = []
 
 [package.dependencies]
@@ -219,7 +274,7 @@ filecache = ["lockfile (>=0.9)"]
 redis = ["redis (>=2.10.5)"]
 
 [metadata]
-lock-version = "2.0"
+lock-version = "2.1"
 python-versions = "~2.7 || ^3.4"
 content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
 """
@@ -249,6 +304,7 @@ version = "1.0"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = []
 
 [package.dependencies]
@@ -263,6 +319,7 @@ version = "1.0"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = []
 
 [package.dependencies]
@@ -277,11 +334,12 @@ version = "1.0"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = []
 
 [metadata]
 python-versions = "*"
-lock-version = "2.0"
+lock-version = "2.1"
 content-hash = "123456789"
 """
 
@@ -327,6 +385,7 @@ version = "1.0"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = []
 
 [package.dependencies]
@@ -341,11 +400,12 @@ version = "1.0"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = []
 
 [metadata]
 python-versions = "*"
-lock-version = "2.0"
+lock-version = "2.1"
 content-hash = "123456789"
 """
 
@@ -374,6 +434,7 @@ version = "1.2.3"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 develop = false
 files = []
 
@@ -385,7 +446,7 @@ resolved_reference = "123456"
 subdirectory = "subdir"
 
 [metadata]
-lock-version = "2.0"
+lock-version = "2.1"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 """
@@ -402,6 +463,64 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
     assert package.source_subdirectory == "subdir"
 
 
+@pytest.mark.parametrize(
+    ("groups", "marker", "expected"),
+    [
+        (["main"], None, {"main": "*"}),
+        (
+            ["main"],
+            repr('python_version == "3.9"'),
+            {"main": 'python_version == "3.9"'},
+        ),
+        (
+            ["main", "dev"],
+            repr('python_version == "3.9"'),
+            {"main": 'python_version == "3.9"', "dev": 'python_version == "3.9"'},
+        ),
+        (
+            ["main", "dev"],
+            (
+                '{"main" = \'python_version == "3.9"\','
+                ' "dev" = \'sys_platform == "linux"\'}'
+            ),
+            {"main": 'python_version == "3.9"', "dev": 'sys_platform == "linux"'},
+        ),
+        (
+            ["main", "dev"],
+            '{"main" = \'python_version == "3.9"\'}',
+            {"main": 'python_version == "3.9"', "dev": "*"},
+        ),
+    ],
+)
+def test_locker_properly_loads_groups_and_markers(
+    locker: Locker, groups: list[str], marker: str, expected: dict[str, str]
+) -> None:
+    content = rf"""
+[[package]]
+name = "a"
+version = "1.0"
+optional = false
+python-versions = "*"
+groups = {groups}
+{"markers = " + marker if marker else ""}
+files = []
+
+[metadata]
+lock-version = "2.1"
+python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+"""
+    with open(locker.lock, "w", encoding="utf-8") as f:
+        f.write(content)
+
+    packages = locker.locked_packages()
+
+    a = get_package("a", "1.0")
+    assert len(packages) == 1
+    assert packages[a].groups == set(groups)
+    assert packages[a].markers == {g: parse_marker(m) for g, m in expected.items()}
+
+
 def test_locker_properly_assigns_metadata_files(locker: Locker) -> None:
     """
     For multiple constraints dependencies, there is only one common entry in
@@ -416,6 +535,7 @@ version = "1.0"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 develop = false
 
 [[package]]
@@ -424,6 +544,7 @@ version = "1.0"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 develop = false
 
 [package.source]
@@ -438,6 +559,7 @@ version = "1.0"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 develop = false
 
 [package.source]
@@ -450,6 +572,7 @@ version = "1.0"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 develop = false
 
 [package.source]
@@ -462,6 +585,7 @@ version = "1.0"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 develop = false
 
 [package.source]
@@ -513,12 +637,12 @@ demo = [
 
 
 def test_lock_packages_with_null_description(
-    locker: Locker, root: ProjectPackage
+    locker: Locker, root: ProjectPackage, transitive_info: TransitivePackageInfo
 ) -> None:
     package_a = get_package("A", "1.0.0")
     package_a.description = None  # type: ignore[assignment]
 
-    locker.set_lock_data(root, [package_a])
+    locker.set_lock_data(root, {package_a: transitive_info})
 
     with locker.lock.open(encoding="utf-8") as f:
         content = f.read()
@@ -532,10 +656,11 @@ version = "1.0.0"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = []
 
 [metadata]
-lock-version = "2.0"
+lock-version = "2.1"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 """
@@ -544,7 +669,7 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 
 
 def test_lock_file_should_not_have_mixed_types(
-    locker: Locker, root: ProjectPackage
+    locker: Locker, root: ProjectPackage, transitive_info: TransitivePackageInfo
 ) -> None:
     package_a = get_package("A", "1.0.0")
     package_a.add_dependency(Factory.create_dependency("B", "^1.0.0"))
@@ -554,7 +679,7 @@ def test_lock_file_should_not_have_mixed_types(
     package_a.requires[-1].activate()
     package_a.extras = {canonicalize_name("foo"): [get_dependency("B", ">=1.0.0")]}
 
-    locker.set_lock_data(root, [package_a])
+    locker.set_lock_data(root, {package_a: transitive_info})
 
     expected = f"""\
 # {GENERATED_COMMENT}
@@ -565,6 +690,7 @@ version = "1.0.0"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = []
 
 [package.dependencies]
@@ -577,7 +703,7 @@ B = [
 foo = ["B (>=1.0.0)"]
 
 [metadata]
-lock-version = "2.0"
+lock-version = "2.1"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 """
@@ -600,6 +726,7 @@ version = "1.0.0"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = []
 
 [package.extras]
@@ -609,7 +736,7 @@ foo = ["bar"]
 foo = ["bar"]
 
 [metadata]
-lock-version = "2.0"
+lock-version = "2.1"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 """
@@ -634,6 +761,7 @@ version = "1.0.0"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = []
 
 [package.source]
@@ -654,7 +782,7 @@ reference = "legacy"
 
 
 def test_locking_legacy_repository_package_should_include_source_section(
-    root: ProjectPackage, locker: Locker
+    root: ProjectPackage, locker: Locker, transitive_info: TransitivePackageInfo
 ) -> None:
     package_a = Package(
         "A",
@@ -663,7 +791,7 @@ def test_locking_legacy_repository_package_should_include_source_section(
         source_url="https://foo.bar",
         source_reference="legacy",
     )
-    packages = [package_a]
+    packages = {package_a: transitive_info}
 
     locker.set_lock_data(root, packages)
 
@@ -679,6 +807,7 @@ version = "1.0.0"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = []
 
 [package.source]
@@ -687,7 +816,7 @@ url = "https://foo.bar"
 reference = "legacy"
 
 [metadata]
-lock-version = "2.0"
+lock-version = "2.1"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 """
@@ -776,7 +905,7 @@ def test_root_extras_dependencies_are_ordered(
         canonicalize_name("C"): [package_third, package_second, package_first],
         canonicalize_name("B"): [package_first, package_second, package_third],
     }
-    locker.set_lock_data(root, [])
+    locker.set_lock_data(root, {})
 
     expected = f"""\
 # {GENERATED_COMMENT}
@@ -787,7 +916,7 @@ b = ["first", "second", "third"]
 c = ["first", "second", "third"]
 
 [metadata]
-lock-version = "2.0"
+lock-version = "2.1"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 """
@@ -798,7 +927,9 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
     assert content == expected
 
 
-def test_extras_dependencies_are_ordered(locker: Locker, root: ProjectPackage) -> None:
+def test_extras_dependencies_are_ordered(
+    locker: Locker, root: ProjectPackage, transitive_info: TransitivePackageInfo
+) -> None:
     package_a = get_package("A", "1.0.0")
     package_a.add_dependency(
         Factory.create_dependency(
@@ -807,7 +938,7 @@ def test_extras_dependencies_are_ordered(locker: Locker, root: ProjectPackage) -
     )
     package_a.requires[-1].activate()
 
-    locker.set_lock_data(root, [package_a])
+    locker.set_lock_data(root, {package_a: transitive_info})
 
     expected = f"""\
 # {GENERATED_COMMENT}
@@ -818,13 +949,14 @@ version = "1.0.0"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = []
 
 [package.dependencies]
 B = {{version = "^1.0.0", extras = ["a", "b", "c"], optional = true}}
 
 [metadata]
-lock-version = "2.0"
+lock-version = "2.1"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 """
@@ -857,8 +989,128 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
     assert len(caplog.records) == 0
 
 
+def test_locker_dumps_groups_and_markers(
+    locker: Locker,
+    root: ProjectPackage,
+    fixture_base: Path,
+    transitive_info: TransitivePackageInfo,
+) -> None:
+    packages = {
+        get_package("A", "1.0"): TransitivePackageInfo(
+            0, {"main"}, {"main": AnyMarker()}
+        ),
+        get_package("B", "1.0"): TransitivePackageInfo(
+            0, {"main"}, {"main": parse_marker('sys_platform == "win32"')}
+        ),
+        get_package("C", "1.0"): TransitivePackageInfo(
+            0, {"main", "dev"}, {"main": AnyMarker(), "dev": AnyMarker()}
+        ),
+        get_package("D", "1.0"): TransitivePackageInfo(
+            0,
+            {"main", "dev"},
+            {
+                "main": parse_marker('sys_platform == "win32"'),
+                "dev": parse_marker('sys_platform == "win32"'),
+            },
+        ),
+        get_package("E", "1.0"): TransitivePackageInfo(
+            0,
+            {"main", "dev"},
+            {
+                "main": parse_marker('sys_platform == "win32"'),
+                "dev": parse_marker('sys_platform == "linux"'),
+            },
+        ),
+        get_package("F", "1.0"): TransitivePackageInfo(
+            0,
+            {"main", "dev"},
+            {
+                "main": parse_marker('sys_platform == "win32"'),
+                "dev": AnyMarker(),
+            },
+        ),
+    }
+
+    locker.set_lock_data(root, packages)
+
+    with locker.lock.open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = f"""\
+# {GENERATED_COMMENT}
+
+[[package]]
+name = "A"
+version = "1.0"
+description = ""
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = []
+
+[[package]]
+name = "B"
+version = "1.0"
+description = ""
+optional = false
+python-versions = "*"
+groups = ["main"]
+markers = "sys_platform == \\"win32\\""
+files = []
+
+[[package]]
+name = "C"
+version = "1.0"
+description = ""
+optional = false
+python-versions = "*"
+groups = ["main", "dev"]
+files = []
+
+[[package]]
+name = "D"
+version = "1.0"
+description = ""
+optional = false
+python-versions = "*"
+groups = ["main", "dev"]
+markers = "sys_platform == \\"win32\\""
+files = []
+
+[[package]]
+name = "E"
+version = "1.0"
+description = ""
+optional = false
+python-versions = "*"
+groups = ["main", "dev"]
+files = []
+markers = {{main = "sys_platform == \\"win32\\"", dev = "sys_platform == \\"linux\\""}}
+
+[[package]]
+name = "F"
+version = "1.0"
+description = ""
+optional = false
+python-versions = "*"
+groups = ["main", "dev"]
+files = []
+markers = {{main = "sys_platform == \\"win32\\""}}
+
+[metadata]
+lock-version = "2.1"
+python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+"""
+
+    assert content == expected
+
+
 def test_locker_dumps_dependency_information_correctly(
-    locker: Locker, root: ProjectPackage, fixture_base: Path
+    locker: Locker,
+    root: ProjectPackage,
+    fixture_base: Path,
+    transitive_info: TransitivePackageInfo,
 ) -> None:
     package_a = get_package("A", "1.0.0")
     package_a.add_dependency(
@@ -908,7 +1160,7 @@ def test_locker_dumps_dependency_information_correctly(
         )
     )
 
-    packages = [package_a]
+    packages = {package_a: transitive_info}
 
     locker.set_lock_data(root, packages)
 
@@ -924,6 +1176,7 @@ version = "1.0.0"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = []
 
 [package.dependencies]
@@ -937,7 +1190,7 @@ H = {{git = "https://github.com/python-poetry/poetry.git", tag = "baz"}}
 I = {{git = "https://github.com/python-poetry/poetry.git", rev = "spam"}}
 
 [metadata]
-lock-version = "2.0"
+lock-version = "2.1"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 """
@@ -945,7 +1198,9 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
     assert content == expected
 
 
-def test_locker_dumps_subdir(locker: Locker, root: ProjectPackage) -> None:
+def test_locker_dumps_subdir(
+    locker: Locker, root: ProjectPackage, transitive_info: TransitivePackageInfo
+) -> None:
     package_git_with_subdirectory = Package(
         "git-package-subdir",
         "1.2.3",
@@ -956,7 +1211,7 @@ def test_locker_dumps_subdir(locker: Locker, root: ProjectPackage) -> None:
         source_subdirectory="subdir",
     )
 
-    locker.set_lock_data(root, [package_git_with_subdirectory])
+    locker.set_lock_data(root, {package_git_with_subdirectory: transitive_info})
 
     with locker.lock.open(encoding="utf-8") as f:
         content = f.read()
@@ -970,6 +1225,7 @@ version = "1.2.3"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = []
 develop = false
 
@@ -981,7 +1237,7 @@ resolved_reference = "123456"
 subdirectory = "subdir"
 
 [metadata]
-lock-version = "2.0"
+lock-version = "2.1"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 """
@@ -990,7 +1246,10 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 
 
 def test_locker_dumps_dependency_extras_in_correct_order(
-    locker: Locker, root: ProjectPackage, fixture_base: Path
+    locker: Locker,
+    root: ProjectPackage,
+    fixture_base: Path,
+    transitive_info: TransitivePackageInfo,
 ) -> None:
     package_a = get_package("A", "1.0.0")
     Factory.create_dependency("B", "1.0.0", root_dir=fixture_base)
@@ -1004,7 +1263,7 @@ def test_locker_dumps_dependency_extras_in_correct_order(
         canonicalize_name("B"): [package_first, package_second, package_third],
     }
 
-    locker.set_lock_data(root, [package_a])
+    locker.set_lock_data(root, {package_a: transitive_info})
 
     with locker.lock.open(encoding="utf-8") as f:
         content = f.read()
@@ -1018,6 +1277,7 @@ version = "1.0.0"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = []
 
 [package.extras]
@@ -1025,7 +1285,7 @@ b = ["first (==1.0.0)", "second (==1.0.0)", "third (==1.0.0)"]
 c = ["first (==1.0.0)", "second (==1.0.0)", "third (==1.0.0)"]
 
 [metadata]
-lock-version = "2.0"
+lock-version = "2.1"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 """
@@ -1045,6 +1305,7 @@ version = "0.1.0"
 description = ""
 optional = false
 python-versions = "^2.7.9"
+groups = ["main"]
 develop = true
 file = []
 
@@ -1056,7 +1317,7 @@ type = "directory"
 url = "lib/libA"
 
 [metadata]
-lock-version = "2.0"
+lock-version = "2.1"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 """
@@ -1122,7 +1383,9 @@ def test_content_hash_with_legacy_is_compatible(
     assert (content_hash == old_content_hash) or fresh
 
 
-def test_lock_file_resolves_file_url_symlinks(root: ProjectPackage) -> None:
+def test_lock_file_resolves_file_url_symlinks(
+    root: ProjectPackage, transitive_info: TransitivePackageInfo
+) -> None:
     """
     Create directories and file structure as follows:
 
@@ -1167,9 +1430,9 @@ def test_lock_file_resolves_file_url_symlinks(root: ProjectPackage) -> None:
                 source_reference="develop",
                 source_resolved_reference="123456",
             )
-            packages = [
-                package_local,
-            ]
+            packages = {
+                package_local: transitive_info,
+            }
 
             locker.set_lock_data(root, packages)
 
@@ -1185,6 +1448,7 @@ version = "1.2.3"
 description = ""
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = []
 
 [package.source]
@@ -1201,7 +1465,7 @@ reference = "develop"
 resolved_reference = "123456"
 
 [metadata]
-lock-version = "2.0"
+lock-version = "2.1"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 """
@@ -1219,7 +1483,7 @@ def test_lockfile_is_not_rewritten_if_only_poetry_version_changed(
 package = []
 
 [metadata]
-lock-version = "2.0"
+lock-version = "2.1"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 """
@@ -1227,7 +1491,7 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
     with open(locker.lock, "w", encoding="utf-8") as f:
         f.write(old_content)
 
-    assert not locker.set_lock_data(root, [])
+    assert not locker.set_lock_data(root, {})
 
     with locker.lock.open(encoding="utf-8") as f:
         content = f.read()
@@ -1235,13 +1499,17 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
     assert content == old_content
 
 
-def test_lockfile_keep_eol(locker: Locker, root: ProjectPackage) -> None:
+def test_lockfile_keep_eol(
+    locker: Locker, root: ProjectPackage, transitive_info: TransitivePackageInfo
+) -> None:
     sep = "\n" if os.linesep == "\r\n" else "\r\n"
 
     with open(locker.lock, "wb") as f:
         f.write((sep * 10).encode())
 
-    assert locker.set_lock_data(root, [Package("test", version="0.0.1")])
+    packages = {Package("test", version="0.0.1"): transitive_info}
+
+    assert locker.set_lock_data(root, packages)
 
     with locker.lock.open(encoding="utf-8", newline="") as f:
         line, *_ = f.read().splitlines(keepends=True)

@@ -3,6 +3,7 @@ description = ""
 name = "pendulum"
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = []
 version = "1.4.4"
 
@@ -12,6 +13,7 @@ develop = false
 name = "project-with-extras"
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = []
 version = "1.2.3"
 
@@ -28,5 +30,5 @@ url = "tests/fixtures/project_with_extras"
 
 [metadata]
 content-hash = "123456789"
-lock-version = "2.0"
+lock-version = "2.1"
 python-versions = "*"

@@ -4,6 +4,7 @@ name = "demo"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "0.1.0"
+groups = ["main"]
 
 [[package.files]]
 file = "demo-0.1.0-py2.py3-none-any.whl"
@@ -26,6 +27,7 @@ develop = false
 name = "inner-directory-project"
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = []
 version = "1.2.4"
 
@@ -38,6 +40,7 @@ description = ""
 name = "pendulum"
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = []
 version = "1.4.4"
 
@@ -47,6 +50,7 @@ develop = false
 name = "project-with-transitive-file-dependencies"
 optional = false
 python-versions = "*"
+groups = ["main"]
 files = []
 version = "1.2.3"
 
@@ -60,5 +64,5 @@ url = "project_with_transitive_file_dependencies"
 
 [metadata]
 content-hash = "123456789"
-lock-version = "2.0"
+lock-version = "2.1"
 python-versions = "*"

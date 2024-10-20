@@ -126,6 +126,7 @@ class Config:
             "max-retries": 0,
         },
         "installer": {
+            "re-resolve": True,
             "parallel": True,
             "max-workers": None,
             "no-binary": None,
@@ -300,6 +301,7 @@ class Config:
             "virtualenvs.options.system-site-packages",
             "virtualenvs.options.prefer-active-python",
             "experimental.system-git-client",
+            "installer.re-resolve",
             "installer.parallel",
             "solver.lazy-wheel",
             "keyring.enabled",
