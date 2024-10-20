@@ -104,7 +104,7 @@ jobs:
         # Replace the python version to avoid conflicts
         # if the plugin still supports a wider range than Poetry itself.
         run: |
-          sed -i 's/^python =.*$/python = "~${{ inputs.python-version }}"/' pyproject.toml
+          perl -pi -e 's/^python =.*$/python = "~${{ inputs.python-version }}"/' pyproject.toml
           poetry add --lock --group dev ../poetry
 
       # This step can be removed after having released a poetry-plugin-export version
