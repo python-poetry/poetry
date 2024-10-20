@@ -6,8 +6,6 @@ from contextlib import contextmanager
 from contextlib import redirect_stdout
 from io import StringIO
 from typing import TYPE_CHECKING
-from typing import Collection
-from typing import Iterator
 
 from build.env import IsolatedEnv as BaseIsolatedEnv
 
@@ -17,6 +15,8 @@ from poetry.utils.env import ephemeral_environment
 
 
 if TYPE_CHECKING:
+    from collections.abc import Collection
+    from collections.abc import Iterator
     from pathlib import Path
 
     from build import DistributionType

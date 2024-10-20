@@ -7,10 +7,8 @@ from typing import Protocol
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from contextlib import AbstractContextManager
     from pathlib import Path
-    from typing import ContextManager
-    from typing import Dict
-    from typing import Tuple
 
     from cleo.io.io import IO
     from cleo.testers.command_tester import CommandTester
@@ -26,9 +24,9 @@ if TYPE_CHECKING:
     from poetry.utils.env import Env
     from tests.repositories.fixtures.distribution_hashes import DistributionHash
 
-    HTTPrettyResponse = Tuple[int, Dict[str, Any], bytes]  # status code, headers, body
+    HTTPrettyResponse = tuple[int, dict[str, Any], bytes]  # status code, headers, body
     HTTPrettyRequestCallback = Callable[
-        [HTTPrettyRequest, str, Dict[str, Any]], HTTPrettyResponse
+        [HTTPrettyRequest, str, dict[str, Any]], HTTPrettyResponse
     ]
     HTTPPrettyRequestCallbackWrapper = Callable[
         [HTTPrettyRequestCallback], HTTPrettyRequestCallback
@@ -111,4 +109,4 @@ class DistributionHashGetter(Protocol):
 class SetProjectContext(Protocol):
     def __call__(
         self, project: str | Path, in_place: bool = False
-    ) -> ContextManager[Path]: ...
+    ) -> AbstractContextManager[Path]: ...

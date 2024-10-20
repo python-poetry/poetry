@@ -5,8 +5,6 @@ import time
 from collections import defaultdict
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
-from typing import FrozenSet
-from typing import Tuple
 
 from poetry.mixology import resolve_version
 from poetry.mixology.failure import SolveFailureError
@@ -195,7 +193,7 @@ class Solver:
         return final_packages, depths
 
 
-DFSNodeID = Tuple[str, FrozenSet[str], bool]
+DFSNodeID = tuple[str, frozenset[str], bool]
 
 
 class DFSNode:

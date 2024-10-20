@@ -7,7 +7,6 @@ import zipfile
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Iterator
 from typing import NamedTuple
 
 import pytest
@@ -22,6 +21,8 @@ from tests.helpers import with_working_directory
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from poetry.core.packages.package import Package
     from pytest import LogCaptureFixture
     from pytest_mock.plugin import MockerFixture

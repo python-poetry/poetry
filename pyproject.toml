@@ -29,7 +29,7 @@ Changelog = "https://python-poetry.org/history/"
 
 # Requirements
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 
 poetry-core = { git = "https://github.com/python-poetry/poetry-core.git", branch = "main" }
 build = "^1.2.1"
@@ -104,7 +104,7 @@ extend-exclude = [
 ]
 fix = true
 line-length = 88
-target-version = "py38"
+target-version = "py39"
 
 [tool.ruff.lint]
 extend-select = [

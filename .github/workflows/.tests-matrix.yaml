@@ -101,7 +101,11 @@ jobs:
 
       - name: Use local poetry
         working-directory: poetry-plugin-export
-        run: poetry add --lock --group dev ../poetry
+        # Replace the python version to avoid conflicts
+        # if the plugin still supports a wider range than Poetry itself.
+        run: |
+          perl -pi -e 's/^python =.*$/python = "~${{ inputs.python-version }}"/' pyproject.toml
+          poetry add --lock --group dev ../poetry
 
       # This step can be removed after having released a poetry-plugin-export version
       # that has cffi>=1.17.0 in its lock file.
