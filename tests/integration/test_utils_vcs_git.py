@@ -7,7 +7,6 @@ from copy import deepcopy
 from hashlib import sha1
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Iterator
 from typing import TypedDict
 from urllib.parse import urlparse
 from urllib.parse import urlunparse
@@ -27,6 +26,8 @@ from poetry.vcs.git.backend import GitRefSpec
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from dulwich.client import FetchPackResult
     from dulwich.client import GitClient
     from pytest import TempPathFactory

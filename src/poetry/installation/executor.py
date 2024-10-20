@@ -209,10 +209,7 @@ class Executor:
                 self._shutdown = True
 
             if self._shutdown:
-                # Cancelling further tasks from being executed
-                [task.cancel() for task in tasks]
-                self._executor.shutdown(wait=True)
-
+                self._executor.shutdown(wait=True, cancel_futures=True)
                 break
 
         for warning in self._yanked_warnings:

@@ -6,7 +6,6 @@ import time
 
 from typing import TYPE_CHECKING
 from typing import Optional
-from typing import Tuple
 
 from poetry.core.packages.dependency import Dependency
 
@@ -32,7 +31,7 @@ if TYPE_CHECKING:
 _conflict = object()
 
 
-DependencyCacheKey = Tuple[
+DependencyCacheKey = tuple[
     str, Optional[str], Optional[str], Optional[str], Optional[str]
 ]
 

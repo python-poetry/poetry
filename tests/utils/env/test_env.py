@@ -28,7 +28,7 @@ from poetry.utils.env import ephemeral_environment
 
 
 if TYPE_CHECKING:
-    from typing import Iterator
+    from collections.abc import Iterator
 
     from pytest_mock import MockerFixture
 
