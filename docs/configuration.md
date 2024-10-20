@@ -419,7 +419,7 @@ Directory where virtual environments will be created.
 This setting controls the global virtual environment storage path. It most likely will not be useful at the local level. To store virtual environments in the project root, see `virtualenvs.in-project`.
 {{% /note %}}
 
-### `virtualenvs.prefer-active-python` (experimental)
+### `virtualenvs.prefer-active-python`
 
 **Type**: `boolean`
 
