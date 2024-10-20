@@ -68,7 +68,7 @@ virtualenvs.options.always-copy = false
 virtualenvs.options.no-pip = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
-virtualenvs.prefer-active-python = false
+virtualenvs.prefer-active-python = true
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 """
 
@@ -99,7 +99,7 @@ virtualenvs.options.always-copy = false
 virtualenvs.options.no-pip = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
-virtualenvs.prefer-active-python = false
+virtualenvs.prefer-active-python = true
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 """
 
@@ -151,7 +151,7 @@ virtualenvs.options.always-copy = false
 virtualenvs.options.no-pip = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
-virtualenvs.prefer-active-python = false
+virtualenvs.prefer-active-python = true
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 """
     assert config.set_config_source.call_count == 0  # type: ignore[attr-defined]
@@ -181,7 +181,7 @@ virtualenvs.options.always-copy = false
 virtualenvs.options.no-pip = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
-virtualenvs.prefer-active-python = false
+virtualenvs.prefer-active-python = true
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 """
     assert config.set_config_source.call_count == 0  # type: ignore[attr-defined]
@@ -309,7 +309,7 @@ virtualenvs.options.always-copy = false
 virtualenvs.options.no-pip = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
-virtualenvs.prefer-active-python = false
+virtualenvs.prefer-active-python = true
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 """
 
@@ -348,7 +348,7 @@ virtualenvs.options.always-copy = false
 virtualenvs.options.no-pip = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
-virtualenvs.prefer-active-python = false
+virtualenvs.prefer-active-python = true
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 """
 

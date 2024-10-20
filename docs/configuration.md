@@ -417,13 +417,15 @@ Directory where virtual environments will be created.
 This setting controls the global virtual environment storage path. It most likely will not be useful at the local level. To store virtual environments in the project root, see `virtualenvs.in-project`.
 {{% /note %}}
 
-### `virtualenvs.prefer-active-python` (experimental)
+### `virtualenvs.prefer-active-python`
 
 **Type**: `boolean`
 
-**Default**: `false`
+**Default**: `true`
 
 **Environment Variable**: `POETRY_VIRTUALENVS_PREFER_ACTIVE_PYTHON`
+
+*Default changed to `true` in 2.0.0*
 
 *Introduced in 1.2.0*
 

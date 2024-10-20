@@ -494,6 +494,7 @@ def test_deactivate_non_activated_but_existing(
     mocker: MockerFixture,
     venv_name: str,
 ) -> None:
+    config.config["virtualenvs"]["prefer-active-python"] = False
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
@@ -521,6 +522,7 @@ def test_deactivate_activated(
     mocker: MockerFixture,
     venv_name: str,
 ) -> None:
+    config.config["virtualenvs"]["prefer-active-python"] = False
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
@@ -894,6 +896,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_
     venv_name: str,
     venv_flags_default: dict[str, bool],
 ) -> None:
+    config.config["virtualenvs"]["prefer-active-python"] = False
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
@@ -952,6 +955,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
     venv_name: str,
     venv_flags_default: dict[str, bool],
 ) -> None:
+    config.config["virtualenvs"]["prefer-active-python"] = False
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
@@ -987,6 +991,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
 def test_create_venv_fails_if_no_compatible_python_version_could_be_found(
     manager: EnvManager, poetry: Poetry, config: Config, mocker: MockerFixture
 ) -> None:
+    config.config["virtualenvs"]["prefer-active-python"] = False
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
@@ -1016,6 +1021,7 @@ def test_create_venv_fails_if_no_compatible_python_version_could_be_found(
 def test_create_venv_does_not_try_to_find_compatible_versions_with_executable(
     manager: EnvManager, poetry: Poetry, config: Config, mocker: MockerFixture
 ) -> None:
+    config.config["virtualenvs"]["prefer-active-python"] = False
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
@@ -1048,6 +1054,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility(
     venv_name: str,
     venv_flags_default: dict[str, bool],
 ) -> None:
+    config.config["virtualenvs"]["prefer-active-python"] = False
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
@@ -1151,6 +1158,7 @@ def test_create_venv_project_name_empty_sets_correct_prompt(
     mocker: MockerFixture,
     config_virtualenvs_path: Path,
 ) -> None:
+    config.config["virtualenvs"]["prefer-active-python"] = False
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
