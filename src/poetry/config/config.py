@@ -116,7 +116,7 @@ class Config:
                 "system-site-packages": False,
                 "no-pip": False,
             },
-            "prefer-active-python": False,
+            "prefer-active-python": True,
             "prompt": "{project_name}-py{python_version}",
         },
         "requests": {

@@ -423,9 +423,11 @@ This setting controls the global virtual environment storage path. It most likel
 
 **Type**: `boolean`
 
-**Default**: `false`
+**Default**: `true`
 
 **Environment Variable**: `POETRY_VIRTUALENVS_PREFER_ACTIVE_PYTHON`
+
+*Default changed to `true` in 2.0.0*
 
 *Introduced in 1.2.0*
 
