@@ -624,6 +624,11 @@ Thus, you only have to specify the directory where your root package resides.
 
 ### exclude and include
 
+{{% note %}}
+If you just want to include a package or module, which is not picked up automatically,
+use [packages]({{< relref "#packages" >}}) instead of `include`.
+{{% /note %}}
+
 A list of patterns that will be excluded or included in the final package.
 
 ```toml
