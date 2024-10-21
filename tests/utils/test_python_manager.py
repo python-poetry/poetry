@@ -56,22 +56,24 @@ def test_python_get_preferred_default(config: Config) -> None:
     )
 
 
-def test_python_get_preferred_activated(config: Config, mocker: MockerFixture) -> None:
+def test_get_preferred_python_use_poetry_python_disabled(
+    config: Config, mocker: MockerFixture
+) -> None:
     mocker.patch(
         "subprocess.check_output",
         side_effect=check_output_wrapper(Version.parse("3.7.1")),
     )
-    config.config["virtualenvs"]["prefer-active-python"] = True
+    config.config["virtualenvs"]["use-poetry-python"] = False
     python = Python.get_preferred_python(config)
 
     assert python.executable.as_posix().startswith("/usr/bin/python")
     assert python.version == Version.parse("3.7.1")
 
 
-def test_python_get_preferred_activated_fallback(
+def test_get_preferred_python_use_poetry_python_disabled_fallback(
     config: Config, mocker: MockerFixture
 ) -> None:
-    config.config["virtualenvs"]["prefer-active-python"] = True
+    config.config["virtualenvs"]["use-poetry-python"] = False
     with mocker.patch(
         "subprocess.check_output",
         side_effect=subprocess.CalledProcessError(1, "some command"),

@@ -87,7 +87,6 @@ we are allowing any version of Python 3 that is greater than `3.7.0`.
 
 When you run `poetry install`, you must have access to some version of a Python interpreter that satisfies this constraint available on your system.
 Poetry will not install a Python interpreter for you.
-If you use a tool like `pyenv`, you can use the experimental configuration value [`virtualenvs.prefer-active-python`]({{< relref "configuration/#virtualenvsprefer-active-python-experimental" >}}).
 
 ### Initialising a pre-existing project
 

@@ -68,8 +68,8 @@ virtualenvs.options.always-copy = false
 virtualenvs.options.no-pip = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
-virtualenvs.prefer-active-python = true
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
+virtualenvs.use-poetry-python = false
 """
 
     assert tester.io.fetch_output() == expected
@@ -99,8 +99,8 @@ virtualenvs.options.always-copy = false
 virtualenvs.options.no-pip = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
-virtualenvs.prefer-active-python = true
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
+virtualenvs.use-poetry-python = false
 """
 
     assert config.set_config_source.call_count == 0  # type: ignore[attr-defined]
@@ -151,8 +151,8 @@ virtualenvs.options.always-copy = false
 virtualenvs.options.no-pip = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
-virtualenvs.prefer-active-python = true
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
+virtualenvs.use-poetry-python = false
 """
     assert config.set_config_source.call_count == 0  # type: ignore[attr-defined]
     assert tester.io.fetch_output() == expected
@@ -181,8 +181,8 @@ virtualenvs.options.always-copy = false
 virtualenvs.options.no-pip = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
-virtualenvs.prefer-active-python = true
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
+virtualenvs.use-poetry-python = false
 """
     assert config.set_config_source.call_count == 0  # type: ignore[attr-defined]
     assert tester.io.fetch_output() == expected
@@ -309,8 +309,8 @@ virtualenvs.options.always-copy = false
 virtualenvs.options.no-pip = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
-virtualenvs.prefer-active-python = true
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
+virtualenvs.use-poetry-python = false
 """
 
     assert config.set_config_source.call_count == 1  # type: ignore[attr-defined]
@@ -348,8 +348,8 @@ virtualenvs.options.always-copy = false
 virtualenvs.options.no-pip = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
-virtualenvs.prefer-active-python = true
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
+virtualenvs.use-poetry-python = false
 """
 
     assert tester.io.fetch_output() == expected
