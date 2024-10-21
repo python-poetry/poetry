@@ -115,7 +115,7 @@ Here are some more examples of caret requirements and the versions that would be
 For example, if you specify a major, minor, and patch version, only patch-level changes are allowed.
 If you only specify a major, and minor version, then minor- and patch-level changes are allowed.
 
-`~=1.2.3` is an example of a tilde requirement.
+`~=1.2.3` is an example of a compatible release requirement.
 
 | Requirement | Versions allowed |
 | ----------- | ---------------- |
