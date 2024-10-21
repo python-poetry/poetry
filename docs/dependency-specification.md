@@ -294,7 +294,7 @@ Poetry 1.2, you may wish to explicitly configure the use of the system git clien
 subprocess call.
 
 ```bash
-poetry config experimental.system-git-client true
+poetry config system-git-client true
 ```
 
 Keep in mind however, that doing so will surface bugs that existed in versions prior to 1.2 which

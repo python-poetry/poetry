@@ -54,7 +54,6 @@ def test_list_displays_default_value_if_not_set(
     cache_dir = json.dumps(str(config_cache_dir))
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
-experimental.system-git-client = false
 installer.max-workers = null
 installer.no-binary = null
 installer.only-binary = null
@@ -62,6 +61,7 @@ installer.parallel = true
 keyring.enabled = true
 requests.max-retries = 0
 solver.lazy-wheel = true
+system-git-client = false
 virtualenvs.create = true
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
@@ -85,7 +85,6 @@ def test_list_displays_set_get_setting(
     cache_dir = json.dumps(str(config_cache_dir))
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
-experimental.system-git-client = false
 installer.max-workers = null
 installer.no-binary = null
 installer.only-binary = null
@@ -93,6 +92,7 @@ installer.parallel = true
 keyring.enabled = true
 requests.max-retries = 0
 solver.lazy-wheel = true
+system-git-client = false
 virtualenvs.create = false
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
@@ -137,7 +137,6 @@ def test_unset_setting(
     cache_dir = json.dumps(str(config_cache_dir))
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
-experimental.system-git-client = false
 installer.max-workers = null
 installer.no-binary = null
 installer.only-binary = null
@@ -145,6 +144,7 @@ installer.parallel = true
 keyring.enabled = true
 requests.max-retries = 0
 solver.lazy-wheel = true
+system-git-client = false
 virtualenvs.create = true
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
@@ -167,7 +167,6 @@ def test_unset_repo_setting(
     cache_dir = json.dumps(str(config_cache_dir))
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
-experimental.system-git-client = false
 installer.max-workers = null
 installer.no-binary = null
 installer.only-binary = null
@@ -175,6 +174,7 @@ installer.parallel = true
 keyring.enabled = true
 requests.max-retries = 0
 solver.lazy-wheel = true
+system-git-client = false
 virtualenvs.create = true
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
@@ -295,7 +295,6 @@ def test_list_displays_set_get_local_setting(
     cache_dir = json.dumps(str(config_cache_dir))
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
-experimental.system-git-client = false
 installer.max-workers = null
 installer.no-binary = null
 installer.only-binary = null
@@ -303,6 +302,7 @@ installer.parallel = true
 keyring.enabled = true
 requests.max-retries = 0
 solver.lazy-wheel = true
+system-git-client = false
 virtualenvs.create = false
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
@@ -333,7 +333,6 @@ def test_list_must_not_display_sources_from_pyproject_toml(
     cache_dir = json.dumps(str(config_cache_dir))
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
-experimental.system-git-client = false
 installer.max-workers = null
 installer.no-binary = null
 installer.only-binary = null
@@ -342,6 +341,7 @@ keyring.enabled = true
 repositories.foo.url = "https://foo.bar/simple/"
 requests.max-retries = 0
 solver.lazy-wheel = true
+system-git-client = false
 virtualenvs.create = true
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
