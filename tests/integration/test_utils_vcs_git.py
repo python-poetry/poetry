@@ -79,7 +79,7 @@ REF_TO_REVISION_MAP = {
 
 @pytest.fixture
 def use_system_git_client(config: Config) -> None:
-    config.merge({"experimental": {"system-git-client": True}})
+    config.merge({"system-git-client": True})
 
 
 @pytest.fixture(scope="module")
@@ -130,7 +130,7 @@ def remote_default_branch(remote_default_ref: bytes) -> str:
 
 # Regression test for https://github.com/python-poetry/poetry/issues/6722
 def test_use_system_git_client_from_environment_variables() -> None:
-    os.environ["POETRY_EXPERIMENTAL_SYSTEM_GIT_CLIENT"] = "true"
+    os.environ["POETRY_SYSTEM_GIT_CLIENT"] = "true"
 
     assert Git.is_using_legacy_client()
 
