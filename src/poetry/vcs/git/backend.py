@@ -397,9 +397,7 @@ class Git:
     def is_using_legacy_client() -> bool:
         from poetry.config.config import Config
 
-        legacy_client: bool = Config.create().get(
-            "experimental.system-git-client", False
-        )
+        legacy_client: bool = Config.create().get("system-git-client", False)
         return legacy_client
 
     @staticmethod

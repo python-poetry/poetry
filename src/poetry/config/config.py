@@ -119,9 +119,6 @@ class Config:
             "prefer-active-python": False,
             "prompt": "{project_name}-py{python_version}",
         },
-        "experimental": {
-            "system-git-client": False,
-        },
         "requests": {
             "max-retries": 0,
         },
@@ -134,6 +131,7 @@ class Config:
         "solver": {
             "lazy-wheel": True,
         },
+        "system-git-client": False,
         "keyring": {
             "enabled": True,
         },
@@ -299,9 +297,9 @@ class Config:
             "virtualenvs.options.no-pip",
             "virtualenvs.options.system-site-packages",
             "virtualenvs.options.prefer-active-python",
-            "experimental.system-git-client",
             "installer.parallel",
             "solver.lazy-wheel",
+            "system-git-client",
             "keyring.enabled",
         }:
             return boolean_normalizer
