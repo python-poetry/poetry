@@ -492,8 +492,8 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
     @staticmethod
     def _validate_author(author: str, default: str) -> str | None:
-        from poetry.core.packages.package import AUTHOR_REGEX
         from poetry.core.utils.helpers import combine_unicode
+        from poetry.core.utils.patterns import AUTHOR_REGEX
 
         author = combine_unicode(author or default)
 
