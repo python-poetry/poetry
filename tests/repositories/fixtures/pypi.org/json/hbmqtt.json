@@ -8,6 +8,7 @@
       "hashes": {
         "sha256": "57799a933500caadb472000ba0c1e043d4768608cd8142104f89c53930d8613c"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 186560,
       "upload-time": "2020-01-25T14:13:44.484402Z",
@@ -21,6 +22,7 @@
       "hashes": {
         "sha256": "c83ba91dc5cf9a01f83afb5380701504f69bdf9ea1c071f4dfdc1cba412fcd63"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 126180,
       "upload-time": "2020-01-25T14:12:53.948778Z",
@@ -35,6 +37,7 @@
         "md5": "b284e3118882f169aa618a856cd91c5f",
         "sha256": "379f1d9044997c69308ac2e01621c817b5394e1fbe0696e62538ae2dd0aa7e07"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 74727,
       "upload-time": "2020-01-25T14:12:45.640961Z",
@@ -44,7 +47,7 @@
   ],
   "meta": {
     "_last-serial": 0,
-    "api-version": "1.2"
+    "api-version": "1.3"
   },
   "name": "hbmqtt",
   "versions": [
