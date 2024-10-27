@@ -303,7 +303,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
     def _determine_requirements(
         self,
         requires: list[str],
-        allow_prereleases: bool = False,
+        allow_prereleases: bool | None = None,
         source: str | None = None,
         is_interactive: bool | None = None,
     ) -> list[dict[str, Any]]:
@@ -440,7 +440,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         self,
         name: str,
         required_version: str | None = None,
-        allow_prereleases: bool = False,
+        allow_prereleases: bool | None = None,
         source: str | None = None,
     ) -> tuple[str, str]:
         from poetry.version.version_selector import VersionSelector

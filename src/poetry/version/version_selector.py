@@ -17,7 +17,7 @@ class VersionSelector:
         self,
         package_name: str,
         target_package_version: str | None = None,
-        allow_prereleases: bool = False,
+        allow_prereleases: bool | None = None,
         source: str | None = None,
     ) -> Package | None:
         """
