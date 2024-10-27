@@ -272,6 +272,21 @@ When `--only` is specified, `--with` and `--without` options are ignored.
 {{% /note %}}
 
 
+## sync
+
+The `sync` command makes sure that the project's environment is in sync with the `poetry.lock` file.
+It is equivalent to running `poetry install --sync` and provides the same options
+(except for `--sync`) as [install]({{< relref "#install" >}}).
+
+{{% note %}}
+Normally, you should prefer `poetry sync` to `poetry install` to avoid untracked outdated packages.
+However, if you have set `virtualenvs.create = false` to install dependencies into your system environment,
+which is discouraged, or `virtualenvs.options.system-site-packages = true` to make
+system site-packages available in your virtual environment, you should use `poetry install`
+because `poetry sync` will normally not work well in these cases.
+{{% /note %}}
+
+
 ## update
 
 In order to get the latest versions of the dependencies and to update the `poetry.lock` file,

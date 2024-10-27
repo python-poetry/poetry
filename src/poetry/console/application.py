@@ -63,6 +63,7 @@ COMMANDS = [
     "run",
     "search",
     "show",
+    "sync",
     "update",
     "version",
     # Cache commands
