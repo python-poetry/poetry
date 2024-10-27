@@ -13,6 +13,7 @@
         "md5": "be7589b4902793e66d7d979bd8581591",
         "sha256": "e216b70f013c47b82a72540d34347632c5bfe59fd54f5fe5d51f6a68b19aaf84"
       },
+      "provenance": null,
       "requires-python": ">=3.7,<4.0",
       "size": 464992,
       "upload-time": "2023-01-28T10:52:52.445537Z",
@@ -27,6 +28,7 @@
         "md5": "3f9b36a7a94cd235bfd5f05794828445",
         "sha256": "0ae8d28caf5c12ec1714b16d2e7157ddd52397ea6bfdeba5a9432e449a0184da"
       },
+      "provenance": null,
       "requires-python": ">=3.7,<4.0",
       "size": 448812,
       "upload-time": "2023-01-28T10:52:53.916268Z",
@@ -36,7 +38,7 @@
   ],
   "meta": {
     "_last-serial": 0,
-    "api-version": "1.2"
+    "api-version": "1.3"
   },
   "name": "poetry-core",
   "versions": [

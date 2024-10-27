@@ -13,6 +13,7 @@
         "md5": "7bcf6cf4a6034339bb6a481f27b9ba62",
         "sha256": "a50f685abd033a7b50b13330833c15699885186517b713d9f7e8280ce7976e4c"
       },
+      "provenance": null,
       "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
       "size": 116499,
       "upload-time": "2018-11-09T17:09:28.212157Z",
@@ -27,6 +28,7 @@
         "md5": "7c31987ef6fba2cd64715cae27fade64",
         "sha256": "4a226ccf11ee5a2e76bfc185747b54ee7718706aeb3aabb981327249dbe2b1d4"
       },
+      "provenance": null,
       "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
       "size": 29813,
       "upload-time": "2018-11-09T17:09:29.709061Z",
@@ -45,6 +47,7 @@
         "md5": "b868779f054c64bc6c2ae4ad2cdbf6b3",
         "sha256": "d4fe74be9b732d76886da6da2e96f76ae42551e53afce1ea29bc703629b70497"
       },
+      "provenance": null,
       "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
       "size": 116796,
       "upload-time": "2018-11-19T20:05:37.276181Z",
@@ -59,6 +62,7 @@
         "md5": "cdbdc302a184d1f1e38d5e0810e3b212",
         "sha256": "e2f785651609492c771d9887ccb2369d891d16595d2d97972e2cbe5e8fb3439f"
       },
+      "provenance": null,
       "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
       "size": 29864,
       "upload-time": "2018-11-19T20:05:39.200001Z",
@@ -68,7 +72,7 @@
   ],
   "meta": {
     "_last-serial": 0,
-    "api-version": "1.2"
+    "api-version": "1.3"
   },
   "name": "tomlkit",
   "versions": [

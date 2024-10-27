@@ -12,6 +12,7 @@
       "hashes": {
         "sha256": "8553bf332d8fbf39b500745ed9c4044a846fbba68e31de70e6fe83fdffcb0a9e"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 4789,
       "upload-time": "2018-01-14T04:10:57.825822Z",
@@ -25,6 +26,7 @@
       "hashes": {
         "sha256": "4e5c77056792168a4e84c84bb7214dfb614b79f289dcbe1525be614483496439"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 40187,
       "upload-time": "2018-01-14T04:11:03.212494Z",
@@ -42,6 +44,7 @@
       "hashes": {
         "sha256": "6e0a2f800a351bbe8639802954d8d283a52b8cdde378541610ff2bfb3b24ad2f"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 4788,
       "upload-time": "2018-01-14T04:52:03.658804Z",
@@ -55,6 +58,7 @@
       "hashes": {
         "sha256": "630d2f932bf7aba3a143d3a332190a46a0a3895f509099a20f033caadf131b76"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 40203,
       "upload-time": "2018-01-14T04:52:09.347038Z",
@@ -72,6 +76,7 @@
       "hashes": {
         "sha256": "846f1598d5ce91e44aefaac8abc9ba8c5a7c3bbd8c69d7004b92ef64228500ad"
       },
+      "provenance": null,
       "requires-python": ">=3.7",
       "size": 1945,
       "upload-time": "2023-01-30T03:29:31.034500Z",
@@ -85,6 +90,7 @@
       "hashes": {
         "sha256": "0d1f04d6b5773b8682e5eb1260ec9f07b43f950b89916f9406b2db33cde27240"
       },
+      "provenance": null,
       "requires-python": ">=3.7",
       "size": 3236,
       "upload-time": "2023-01-30T03:29:34.595566Z",
@@ -102,6 +108,7 @@
       "hashes": {
         "sha256": "cd2e47bb19ad7dfe0447f1379d4a7e8d9849a25ab8db62d41358185dcb4e4636"
       },
+      "provenance": null,
       "requires-python": ">=3.8",
       "size": 2270,
       "upload-time": "2023-11-03T04:09:37.311582Z",
@@ -115,6 +122,7 @@
       "hashes": {
         "sha256": "5ced4a0c85399a52e7c2397e7326f787a04da748bc1e9fc37037bde8e1cf4d54"
       },
+      "provenance": null,
       "requires-python": ">=3.8",
       "size": 3815,
       "upload-time": "2023-11-03T04:09:40.090279Z",
@@ -124,7 +132,7 @@
   ],
   "meta": {
     "_last-serial": 0,
-    "api-version": "1.2"
+    "api-version": "1.3"
   },
   "name": "toga",
   "versions": [

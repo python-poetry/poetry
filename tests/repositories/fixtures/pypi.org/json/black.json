@@ -13,6 +13,7 @@
         "md5": "4a420234749e1ea350581160ef51cd02",
         "sha256": "3471ff321348d851b6f3047f4ed42c88622ac038caf7c2d160bd653334c88e88"
       },
+      "provenance": null,
       "requires-python": ">=3.6",
       "size": 97525,
       "upload-time": "2019-10-28T23:53:54.000711Z",
@@ -27,6 +28,7 @@
         "md5": "c383543109a66a5a99113e6326db5251",
         "sha256": "6cada614d5d2132698c6d5fff384657273d922c4fffa6a2f0de9e03e25b8913a"
       },
+      "provenance": null,
       "requires-python": ">=3.6",
       "size": 1019740,
       "upload-time": "2019-10-28T23:54:05.455213Z",
@@ -45,6 +47,7 @@
         "md5": "294e105f34e2e21286a49bfcfb8fb6ae",
         "sha256": "e16b6879ed61f9268994b879174fad1cb2319a651afd20f8cf036428ac65f846"
       },
+      "provenance": null,
       "requires-python": ">=3.6.2",
       "size": 155131,
       "upload-time": "2021-11-17T02:32:14.551680Z",
@@ -59,6 +62,7 @@
         "md5": "f01267bf2613f825dd6684629c1c829e",
         "sha256": "f23c482185d842e2f19d506e55c004061167e3c677c063ecd721042c62086ada"
       },
+      "provenance": null,
       "requires-python": ">=3.6.2",
       "size": 593164,
       "upload-time": "2021-11-17T02:32:16.396821Z",
@@ -68,7 +72,7 @@
   ],
   "meta": {
     "_last-serial": 0,
-    "api-version": "1.2"
+    "api-version": "1.3"
   },
   "name": "black",
   "versions": [

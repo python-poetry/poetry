@@ -13,6 +13,7 @@
         "md5": "c3558fef2a1148bb1df96376def5c8fe",
         "sha256": "60900adbac91d6d2cefc88efe2639ce3090f4520106596ac855bee3763f276c0"
       },
+      "provenance": null,
       "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
       "size": 85786,
       "upload-time": "2019-05-11T17:09:23.516387Z",
@@ -27,6 +28,7 @@
         "md5": "f7cdbad3508038a04561f646aae68146",
         "sha256": "0fdd41e86e8b118a8b1e94ef2835925ada541d481c9b3b2fc635fa68713e6125"
       },
+      "provenance": null,
       "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
       "size": 50980,
       "upload-time": "2019-05-11T17:09:25.865051Z",
@@ -36,7 +38,7 @@
   ],
   "meta": {
     "_last-serial": 0,
-    "api-version": "1.2"
+    "api-version": "1.3"
   },
   "name": "clikit",
   "versions": [

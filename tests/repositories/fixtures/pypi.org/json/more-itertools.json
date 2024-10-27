@@ -9,6 +9,7 @@
         "md5": "bf351a1050242ce3af7e475a4da1a26b",
         "sha256": "bab2dc6f4be8f9a4a72177842c5283e2dff57c167439a03e3d8d901e854f0f2e"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 51310,
       "upload-time": "2018-01-21T15:34:22.533243Z",
@@ -27,6 +28,7 @@
         "md5": "c70269eabc5fae5e0d93c2eca638720e",
         "sha256": "5dd7dfd88d2fdaea446da478ffef8d7151fdf26ee92ac7ed7b14e8d71efe4b62"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 47987,
       "upload-time": "2018-01-21T15:34:19.304356Z",
@@ -45,6 +47,7 @@
         "md5": "26d7c309ef806b4e563d2a7e4ceafb14",
         "sha256": "29b1e1661aaa56875ce090fa219fa84dfc13daecb52cd4fae321f6f57b419ec4"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 47988,
       "upload-time": "2018-01-21T15:34:20.567853Z",
@@ -54,7 +57,7 @@
   ],
   "meta": {
     "_last-serial": 0,
-    "api-version": "1.2"
+    "api-version": "1.3"
   },
   "name": "more-itertools",
   "versions": [

@@ -12,6 +12,7 @@
       "hashes": {
         "sha256": "d5eef459e30b09f5a098b9cea68bebfeb268697f78d647bd255a085371ac7f3f"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 191712,
       "upload-time": "2018-07-05T22:53:15.231061Z",
@@ -29,6 +30,7 @@
       "hashes": {
         "sha256": "e01d3203230e1786cd91ccfdc8f8454c8069c91bee3962ad93b87a4b2860f537"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 209872,
       "upload-time": "2018-07-05T22:53:16.904443Z",
@@ -46,6 +48,7 @@
       "hashes": {
         "sha256": "558dd60b890ba8fd982e05941927a3911dc409a63dcb8b634feaa0cda69330d3"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 192898,
       "upload-time": "2018-07-05T22:53:19.190872Z",
@@ -63,6 +66,7 @@
       "hashes": {
         "sha256": "d46d7982b62e0729ad0175a9bc7e10a566fc07b224d2c79fafb5e032727eaa04"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 206242,
       "upload-time": "2018-07-05T22:53:20.770605Z",
@@ -80,6 +84,7 @@
       "hashes": {
         "sha256": "a7c28b45d9f99102fa092bb213aa12e0aaf9a6a1f5e395d36166639c1f96c3a1"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 187499,
       "upload-time": "2018-07-05T22:53:22.576919Z",
@@ -97,6 +102,7 @@
       "hashes": {
         "sha256": "bc558586e6045763782014934bfaf39d48b8ae85a2713117d16c39864085c613"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 205387,
       "upload-time": "2018-07-05T22:53:24.438646Z",
@@ -114,6 +120,7 @@
       "hashes": {
         "sha256": "40c71b8e076d0550b2e6380bada1f1cd1017b882f7e16f09a65be98e017f211a"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 188186,
       "upload-time": "2018-07-05T22:53:25.923669Z",
@@ -131,6 +138,7 @@
       "hashes": {
         "sha256": "3d7da3009c0f3e783b2c873687652d83b1bbfd5c88e9813fb7e5b03c0dd3108b"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 206277,
       "upload-time": "2018-07-05T22:53:27.386610Z",
@@ -148,6 +156,7 @@
       "hashes": {
         "sha256": "e170a9e6fcfd19021dd29845af83bb79236068bf5fd4df3327c1be18182b2531"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 188313,
       "upload-time": "2018-07-05T22:53:28.995194Z",
@@ -165,6 +174,7 @@
       "hashes": {
         "sha256": "aa7dd4a6a427aed7df6fb7f08a580d68d9b118d90310374716ae90b710280af1"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 206614,
       "upload-time": "2018-07-05T22:53:30.864210Z",
@@ -178,6 +188,7 @@
       "hashes": {
         "sha256": "3ef3092145e9b70e3ddd2c7ad59bdd0252a94dfe3949721633e41344de00a6bf"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 270607,
       "upload-time": "2018-07-05T22:52:16.800539Z",
@@ -187,7 +198,7 @@
   ],
   "meta": {
     "_last-serial": 0,
-    "api-version": "1.2"
+    "api-version": "1.3"
   },
   "name": "pyyaml",
   "versions": [

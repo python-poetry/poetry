@@ -12,6 +12,7 @@
       "hashes": {
         "sha256": "4d0a08f3fd8837502bf33e9497a5ab28fe63e2fa4201765f378cb139c7a60d5f"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 736900,
       "upload-time": "2016-01-26T19:58:35.544443Z",
@@ -25,6 +26,7 @@
       "hashes": {
         "sha256": "6244a8e3293088ee31c1854abe1a1e7a409cf3ac2fb7579aa9616bdfadd3d4dc"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 4933377,
       "upload-time": "2016-01-26T19:58:53.938491Z",
@@ -38,6 +40,7 @@
       "hashes": {
         "sha256": "efa3a5a676648cb18e2a2d3cd6353f3c83f0f704df8eb0eb6ae7d0dcbf187ea1"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 5100723,
       "upload-time": "2016-01-26T19:59:14.449245Z",
@@ -56,6 +59,7 @@
         "md5": "cf35939995e0fd8c44fca7509308abde",
         "sha256": "3d93d3995e2e52a98dc4f44361cd5bf68dbde62925d1f820b97d8f0e1d941f73"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 760413,
       "upload-time": "2018-05-10T18:56:05.083695Z",
@@ -74,6 +78,7 @@
         "md5": "8805d83c415de06f5eadd55aeb2fa738",
         "sha256": "b94c7a3971290024ffaa916d51ee377ee85f8860a62b5f30c58f5376f0956a06"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 760415,
       "upload-time": "2018-05-10T18:56:07.665559Z",
@@ -88,6 +93,7 @@
         "md5": "01f2808ebe78ff2f28dc39be3aa635ca",
         "sha256": "4e7fb265e0264498bd0d62c6261936a658bf3d38beb8a7b10cd2c6327c62ac2a"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 4977745,
       "upload-time": "2018-05-10T18:56:17.132984Z",
@@ -106,6 +112,7 @@
         "md5": "99a386eca39b536033c71aacf9f98e2b",
         "sha256": "634f505893bbbdb79d1a04d89f4633d8cfc41115337847fbf9d5a23610fc3e3d"
       },
+      "provenance": null,
       "requires-python": ">=3.5",
       "size": 770001,
       "upload-time": "2019-04-25T15:38:21.726776Z",
@@ -120,6 +127,7 @@
         "md5": "0e8c1d7c14f309f6cd2dfd4e48e75cb1",
         "sha256": "cd2a17ac273fea8bf8953118a2d83bad94f592f0db3e83fff9129a1842e36dbe"
       },
+      "provenance": null,
       "requires-python": ">=3.5",
       "size": 5118610,
       "upload-time": "2019-04-25T15:38:33.098872Z",
@@ -129,7 +137,7 @@
   ],
   "meta": {
     "_last-serial": 0,
-    "api-version": "1.2"
+    "api-version": "1.3"
   },
   "name": "ipython",
   "versions": [
