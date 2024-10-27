@@ -13,6 +13,7 @@
         "md5": "e84fb6f2278ee4d0bd719a4d44863d9f",
         "sha256": "3bbfc8f6119a46a48064487afb0b3ca9daa4b09fbfd94336a24c7616b71db2ca"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 45393,
       "upload-time": "2018-02-12T15:06:38.441257Z",
@@ -31,6 +32,7 @@
         "md5": "baa2e5dc4e89511b6bc54e969d040a08",
         "sha256": "e7aa083302c758b358e10a3a1c707adcc9f8ab57795e99246ac72eeffe7f2b20"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 45352,
       "upload-time": "2018-02-12T15:06:20.089641Z",
@@ -45,6 +47,7 @@
         "md5": "9244631852cf8bd8559f7ab78bf4ec78",
         "sha256": "234ad07e1e2780c27fa56364eefa734bee991b0d744337ef7e7ce3d5b1b59f39"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 56070,
       "upload-time": "2018-02-12T15:06:16.498194Z",
@@ -54,7 +57,7 @@
   ],
   "meta": {
     "_last-serial": 0,
-    "api-version": "1.2"
+    "api-version": "1.3"
   },
   "name": "isort",
   "versions": [

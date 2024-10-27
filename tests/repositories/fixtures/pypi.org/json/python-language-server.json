@@ -9,6 +9,7 @@
         "md5": "677602ec38bc1c7b72de6128d90d846b",
         "sha256": "91b564e092f3135b2bac70dbd23d283da5ad50269766a76648787b69fe702c7e"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 51676,
       "upload-time": "2018-09-06T18:11:28.546667Z",
@@ -18,7 +19,7 @@
   ],
   "meta": {
     "_last-serial": 0,
-    "api-version": "1.2"
+    "api-version": "1.3"
   },
   "name": "python-language-server",
   "versions": [

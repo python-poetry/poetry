@@ -9,6 +9,7 @@
         "md5": "35ff4705ea90a76bf972ff3b229546ca",
         "sha256": "4335327da58be11dd6e482ec6b85eb055bcc953a9570cd59e7840a2ce9419a8e"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 3088398,
       "upload-time": "2018-10-15T09:11:22.298247Z",
@@ -18,7 +19,7 @@
   ],
   "meta": {
     "_last-serial": 0,
-    "api-version": "1.2"
+    "api-version": "1.3"
   },
   "name": "twisted",
   "versions": [

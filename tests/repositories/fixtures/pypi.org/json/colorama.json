@@ -13,6 +13,7 @@
         "md5": "faef2bbd3c2ecc43e0969877d67b4c92",
         "sha256": "5b632359f1ed2b7676a869812ba0edaacb99be04679b29eb56c07a5e137ab5a2"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 20181,
       "upload-time": "2017-04-27T07:12:36.597052Z",
@@ -27,6 +28,7 @@
         "md5": "8323a5b84fdf7ad810804e51fc256b39",
         "sha256": "4c5a15209723ce1330a5c193465fe221098f761e9640d823a2ce7c03f983137f"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 25053,
       "upload-time": "2017-04-27T07:12:12.351237Z",
@@ -36,7 +38,7 @@
   ],
   "meta": {
     "_last-serial": 0,
-    "api-version": "1.2"
+    "api-version": "1.3"
   },
   "name": "colorama",
   "versions": [

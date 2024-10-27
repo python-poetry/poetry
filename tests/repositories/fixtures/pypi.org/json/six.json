@@ -13,6 +13,7 @@
         "md5": "35b1057b388e276352d0709138b1e194",
         "sha256": "112f5b46e6aa106db3e4e2494a03694c938f41c4c4535edbdfc816c2e0cb50f2"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 10702,
       "upload-time": "2017-09-17T18:46:53.702194Z",
@@ -27,6 +28,7 @@
         "md5": "25d3568604f921dd23532b88a0ce17e7",
         "sha256": "268a4ccb159c1a2d2c79336b02e75058387b0cdbb4cea2f07846a758f48a356d"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 29860,
       "upload-time": "2017-09-17T18:46:54.492027Z",
@@ -36,7 +38,7 @@
   ],
   "meta": {
     "_last-serial": 0,
-    "api-version": "1.2"
+    "api-version": "1.3"
   },
   "name": "six",
   "versions": [

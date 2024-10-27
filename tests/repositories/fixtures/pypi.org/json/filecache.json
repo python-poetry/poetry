@@ -12,6 +12,7 @@
       "hashes": {
         "sha256": "91ce1a42b532d0e9ad75364c13159bafc3015973d4a5a0dbf37e4b4feb194055"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 4449,
       "upload-time": "2020-05-29T20:07:06.928906Z",
@@ -25,6 +26,7 @@
       "hashes": {
         "sha256": "be071ad64937b51f38b03ecd82b9b68c08d0f570cdddb30aa8f90150fe54b30a"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 6423,
       "upload-time": "2020-05-29T20:07:07.751617Z",
@@ -34,7 +36,7 @@
   ],
   "meta": {
     "_last-serial": 0,
-    "api-version": "1.2"
+    "api-version": "1.3"
   },
   "name": "filecache",
   "versions": [

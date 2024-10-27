@@ -13,6 +13,7 @@
         "md5": "b2f5e2daab779c7bda0be38925ab1b92",
         "sha256": "83c4591b9c7392ea5f91e0d9f8e98d894f76e8e669260788f0fcb281ec0b3b1f"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 2736,
       "upload-time": "2015-08-12T00:42:58.951595Z",
@@ -27,6 +28,7 @@
         "md5": "78acaec88533ea6b6e761e7d086a1d04",
         "sha256": "3ef1e86ba0556ea5922b846416a41acfd2625830d996c7d06d80c90bed1dc193"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 12916,
       "upload-time": "2015-08-12T00:43:08.537857Z",
@@ -41,6 +43,7 @@
         "md5": "7b7a957694a73ac0c19fe46c216c0ea0",
         "sha256": "4a855b9717c3ea24fd8ca4fd91ab5995894aecc4d20e7f39c28786a2c1869fae"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 16690,
       "upload-time": "2015-08-12T00:43:12.460314Z",
@@ -50,7 +53,7 @@
   ],
   "meta": {
     "_last-serial": 0,
-    "api-version": "1.2"
+    "api-version": "1.3"
   },
   "name": "jupyter",
   "versions": [

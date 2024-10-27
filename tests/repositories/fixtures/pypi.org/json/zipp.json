@@ -13,6 +13,7 @@
         "md5": "52aecc0484efd07d62575d152f6a98f6",
         "sha256": "82da6dcae3676123d6f493a876259614e7e6e970b14c59b1830a2c901ed91306"
       },
+      "provenance": null,
       "requires-python": ">=3.6",
       "size": 5700,
       "upload-time": "2021-07-02T23:51:45.759726Z",
@@ -27,6 +28,7 @@
         "md5": "16bf2a24fae340052e8565c264d21092",
         "sha256": "239d50954a15aa4b283023f18dc451ba811fb4d263f4dd6855642e4d1c80cc9f"
       },
+      "provenance": null,
       "requires-python": ">=3.6",
       "size": 13270,
       "upload-time": "2021-07-02T23:51:47.004396Z",
@@ -36,7 +38,7 @@
   ],
   "meta": {
     "_last-serial": 0,
-    "api-version": "1.2"
+    "api-version": "1.3"
   },
   "name": "zipp",
   "versions": [

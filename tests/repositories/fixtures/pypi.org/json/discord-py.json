@@ -13,6 +13,7 @@
         "md5": "8ffc907807f8351401dbe4408dcaff79",
         "sha256": "054c3d8cf89a8e37a691e0268232dad23e07f4e9a06f33454c3bafeaba34a9b7"
       },
+      "provenance": null,
       "requires-python": ">=3.8.0",
       "size": 1059049,
       "upload-time": "2022-08-18T03:47:52.438785Z",
@@ -27,6 +28,7 @@
         "md5": "6c0505a6032342b29f31f9979f37d277",
         "sha256": "b86fa9dd562684f7a52564e6dfe0216f6c172a009c0d86b8dea8bdd6ffa6b1f4"
       },
+      "provenance": null,
       "requires-python": ">=3.8.0",
       "size": 955054,
       "upload-time": "2022-08-18T03:47:54.173712Z",
@@ -36,7 +38,7 @@
   ],
   "meta": {
     "_last-serial": 0,
-    "api-version": "1.2"
+    "api-version": "1.3"
   },
   "name": "discord-py",
   "versions": [
