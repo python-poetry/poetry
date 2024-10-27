@@ -60,6 +60,8 @@ class Repository(AbstractRepository):
             level="debug",
         )
 
+        if allow_prereleases is False:  # in contrast to None!
+            return packages
         return packages or ignored_pre_release_packages
 
     def has_package(self, package: Package) -> bool:

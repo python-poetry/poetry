@@ -546,7 +546,7 @@ lists all packages available."""
                     provider = Provider(root, self.poetry.pool, NullIO())
                     return provider.search_for_direct_origin_dependency(dep)
 
-        allow_prereleases = False
+        allow_prereleases: bool | None = None
         for dep in requires:
             if dep.name == package.name:
                 allow_prereleases = dep.allows_prereleases()

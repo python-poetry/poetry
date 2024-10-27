@@ -219,7 +219,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
         requirements = self._determine_requirements(
             packages,
-            allow_prereleases=self.option("allow-prereleases"),
+            allow_prereleases=self.option("allow-prereleases") or None,
             source=self.option("source"),
         )
 
