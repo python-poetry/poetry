@@ -116,7 +116,7 @@ class Python:
     def get_preferred_python(cls, config: Config, io: IO | None = None) -> Python:
         io = io or NullIO()
 
-        if config.get("virtualenvs.prefer-active-python") and (
+        if not config.get("virtualenvs.use-poetry-python") and (
             active_python := Python._detect_active_python(io)
         ):
             return cls(executable=active_python)

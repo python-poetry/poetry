@@ -116,7 +116,7 @@ class Config:
                 "system-site-packages": False,
                 "no-pip": False,
             },
-            "prefer-active-python": False,
+            "use-poetry-python": False,
             "prompt": "{project_name}-py{python_version}",
         },
         "requests": {
@@ -296,7 +296,7 @@ class Config:
             "virtualenvs.options.always-copy",
             "virtualenvs.options.no-pip",
             "virtualenvs.options.system-site-packages",
-            "virtualenvs.options.prefer-active-python",
+            "virtualenvs.use-poetry-python",
             "installer.parallel",
             "solver.lazy-wheel",
             "system-git-client",

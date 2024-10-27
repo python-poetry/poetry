@@ -28,8 +28,8 @@ to activate one explicitly, see [Switching environments](#switching-between-envi
 
 {{% note %}}
 If you use a tool like [pyenv](https://github.com/pyenv/pyenv) to manage different Python versions,
-you can set the experimental `virtualenvs.prefer-active-python` option to `true`. Poetry
-will then try to find the current `python` of your shell.
+you can switch the current `python` of your shell and Poetry will use it to create
+the new environment.
 
 For instance, if your project requires a newer Python than is available with
 your system, a standard workflow would be:

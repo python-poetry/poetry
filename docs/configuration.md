@@ -58,8 +58,8 @@ virtualenvs.options.always-copy = true
 virtualenvs.options.no-pip = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = "{cache-dir}/virtualenvs"  # /path/to/cache/directory/virtualenvs
-virtualenvs.prefer-active-python = false
 virtualenvs.prompt = "{project_name}-py{python_version}"
+virtualenvs.use-poetry-python = false
 ```
 
 ## Displaying a single configuration setting
@@ -419,19 +419,6 @@ Directory where virtual environments will be created.
 This setting controls the global virtual environment storage path. It most likely will not be useful at the local level. To store virtual environments in the project root, see `virtualenvs.in-project`.
 {{% /note %}}
 
-### `virtualenvs.prefer-active-python` (experimental)
-
-**Type**: `boolean`
-
-**Default**: `false`
-
-**Environment Variable**: `POETRY_VIRTUALENVS_PREFER_ACTIVE_PYTHON`
-
-*Introduced in 1.2.0*
-
-Use currently activated Python version to create a new virtual environment.
-If set to `false`, Python version used during Poetry installation is used.
-
 ### `virtualenvs.prompt`
 
 **Type**: `string`
@@ -444,6 +431,19 @@ If set to `false`, Python version used during Poetry installation is used.
 
 Format string defining the prompt to be displayed when the virtual environment is activated.
 The variables `project_name` and `python_version` are available for formatting.
+
+### `virtualenvs.use-poetry-python`
+
+**Type**: `boolean`
+
+**Default**: `false`
+
+**Environment Variable**: `POETRY_VIRTUALENVS_USE_POETRY_PYTHON`
+
+*Introduced in 2.0.0*
+
+By default, Poetry will use the activated Python version to create a new virtual environment.
+If set to `true`, the Python version used during Poetry installation is used.
 
 ### `repositories.<name>.url`
 

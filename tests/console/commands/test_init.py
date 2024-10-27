@@ -1087,14 +1087,14 @@ def test_package_include(
 
 
 @pytest.mark.parametrize(
-    ["prefer_active", "python"],
+    ["use_poetry_python", "python"],
     [
-        (True, "1.1"),
-        (False, f"{sys.version_info[0]}.{sys.version_info[1]}"),
+        (False, "1.1"),
+        (True, f"{sys.version_info[0]}.{sys.version_info[1]}"),
     ],
 )
-def test_respect_prefer_active_on_init(
-    prefer_active: bool,
+def test_respect_use_poetry_python_on_init(
+    use_poetry_python: bool,
     python: str,
     config: Config,
     mocker: MockerFixture,
@@ -1117,7 +1117,7 @@ def test_respect_prefer_active_on_init(
         "poetry.utils.env.python_manager.Python._full_python_path",
         return_value=Path(f"/usr/bin/python{python}"),
     )
-    config.config["virtualenvs"]["prefer-active-python"] = prefer_active
+    config.config["virtualenvs"]["use-poetry-python"] = use_poetry_python
     pyproject_file = source_dir / "pyproject.toml"
 
     tester.execute(

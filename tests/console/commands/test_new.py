@@ -189,14 +189,14 @@ def test_command_new_with_readme(
 
 
 @pytest.mark.parametrize(
-    ["prefer_active", "python"],
+    ["use_poetry_python", "python"],
     [
-        (True, "1.1"),
-        (False, f"{sys.version_info[0]}.{sys.version_info[1]}"),
+        (False, "1.1"),
+        (True, f"{sys.version_info[0]}.{sys.version_info[1]}"),
     ],
 )
-def test_respect_prefer_active_on_new(
-    prefer_active: bool,
+def test_respect_use_poetry_python_on_new(
+    use_poetry_python: bool,
     python: str,
     config: Config,
     mocker: MockerFixture,
@@ -220,7 +220,7 @@ def test_respect_prefer_active_on_new(
         return_value=Path(f"/usr/bin/python{python}"),
     )
 
-    config.config["virtualenvs"]["prefer-active-python"] = prefer_active
+    config.config["virtualenvs"]["use-poetry-python"] = use_poetry_python
 
     package = "package"
     path = tmp_path / package
