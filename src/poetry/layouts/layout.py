@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 from packaging.utils import canonicalize_name
-from poetry.core.packages.package import AUTHOR_REGEX
 from poetry.core.utils.helpers import module_name
+from poetry.core.utils.patterns import AUTHOR_REGEX
 from tomlkit import inline_table
 from tomlkit import loads
 from tomlkit import table
