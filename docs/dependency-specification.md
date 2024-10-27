@@ -109,6 +109,19 @@ Here are some more examples of caret requirements and the versions that would be
 | ^0.0        | >=0.0.0 <0.1.0   |
 | ^0          | >=0.0.0 <1.0.0   |
 
+### Compatible release requirements
+
+**Compatible release requirements** specify a minimal version with the ability to update to later versions of the same level.
+For example, if you specify a major, minor, and patch version, only patch-level changes are allowed.
+If you only specify a major, and minor version, then minor- and patch-level changes are allowed.
+
+`~=1.2.3` is an example of a compatible release requirement.
+
+| Requirement | Versions allowed |
+| ----------- | ---------------- |
+| ~=1.2.3     | >=1.2.3 <1.3.0   |
+| ~=1.2       | >=1.2.0 <2.0.0   |
+
 ### Tilde requirements
 
 {{% warning %}}
