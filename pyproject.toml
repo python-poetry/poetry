@@ -25,6 +25,7 @@ dependencies = [
     "tomlkit (>=0.11.4,<1.0.0)",
     # trove-classifiers uses calver, so version is unclamped
     "trove-classifiers (>=2022.5.19)",
+    "truststore (>=0.10.0,<1.0.0) ; python_version >= '3.10'",
     "virtualenv (>=20.26.6,<21.0.0)",
     "xattr (>=1.0.0,<2.0.0) ; sys_platform == 'darwin'",
 ]
@@ -187,6 +188,7 @@ module = [
     'shellingham.*',
     'virtualenv.*',
     'xattr.*',
+    'truststore.*' # not available on Python < 3.10
 ]
 ignore_missing_imports = true
 

@@ -1571,6 +1571,19 @@ files = [
 ]
 
 [[package]]
+name = "truststore"
+version = "0.10.0"
+description = "Verify certificates using native system trust stores"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+markers = "python_version >= \"3.10\""
+files = [
+    {file = "truststore-0.10.0-py3-none-any.whl", hash = "sha256:b3798548e421ffe2ca2a6217cca49e7a17baf40b72d86a5505dc7d701e77d15b"},
+    {file = "truststore-0.10.0.tar.gz", hash = "sha256:5da347c665714fdfbd46f738c823fe9f0d8775e41ac5fb94f325749091187896"},
+]
+
+[[package]]
 name = "types-requests"
 version = "2.32.0.20241016"
 description = "Typing stubs for requests"
@@ -1735,4 +1748,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<4.0"
-content-hash = "308952b9d3e6645aa1a55c5c021949e2300dd78a8f0049cdf2814785e1196dc5"
+content-hash = "8b5159eb8fa3222d9b096fdd0efd2fd042fd016a8359f47981e8444680e83dbf"
