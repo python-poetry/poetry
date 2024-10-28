@@ -1,21 +1,18 @@
 from __future__ import annotations
 
 import re
-import shutil
 import subprocess
 import typing
 
-import dulwich.repo
 import pytest
 
 from poetry.vcs.git.system import SystemGit
+from tests.vcs.git.git_fixture import GIT_NOT_INSTALLLED
+from tests.vcs.git.git_fixture import TempRepoFixture
 
 
 if typing.TYPE_CHECKING:
     from pathlib import Path
-
-
-GIT_NOT_INSTALLLED = shutil.which("git") is None
 
 
 def get_head_sha(cwd: Path) -> str:
@@ -25,48 +22,6 @@ def get_head_sha(cwd: Path) -> str:
         text=True,
         encoding="utf-8",
     ).strip()
-
-
-class TempRepoFixture(typing.NamedTuple):
-    path: Path
-    repo: dulwich.repo.Repo
-    init_commit: str
-    head_commit: str
-
-
-@pytest.fixture()
-def temp_repo(tmp_path: Path) -> TempRepoFixture:
-    """Temporary repository with 2 commits"""
-    repo = dulwich.repo.Repo.init(str(tmp_path))
-
-    # init commit
-    (tmp_path / "foo").write_text("foo", encoding="utf-8")
-    repo.stage(["foo"])
-
-    init_commit = repo.do_commit(
-        committer=b"User <user@example.com>",
-        author=b"User <user@example.com>",
-        message=b"init",
-        no_verify=True,
-    )
-
-    # extra commit
-    (tmp_path / "foo").write_text("bar", encoding="utf-8")
-    repo.stage(["foo"])
-
-    head_commit = repo.do_commit(
-        committer=b"User <user@example.com>",
-        author=b"User <user@example.com>",
-        message=b"extra",
-        no_verify=True,
-    )
-
-    return TempRepoFixture(
-        path=tmp_path,
-        repo=repo,
-        init_commit=init_commit.decode(),
-        head_commit=head_commit.decode(),
-    )
 
 
 @pytest.mark.skipif(GIT_NOT_INSTALLLED, reason="These tests requires git cli")
