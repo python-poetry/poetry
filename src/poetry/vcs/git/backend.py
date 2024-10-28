@@ -325,18 +325,9 @@ class Git:
                         commit.id,
                     )
                     local.refs[b"HEAD"] = commit.id
-                    try:
-                        with local:
-                            local.reset_index()
-                        short_ref_found = True
-                    except (AssertionError, KeyError) as e:
-                        logger.debug(
-                            "\nRequested ref (<c2>%s</c2>) was not fetched to local copy and"
-                            " cannot be used. The following error was"
-                            " raised:\n\n\t<warning>%s</>",
-                            refspec.key,
-                            e,
-                        )
+                    with local:
+                        local.reset_index()
+                    short_ref_found = True
 
             if not short_ref_found:
                 raise PoetryConsoleError(
