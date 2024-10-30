@@ -72,6 +72,12 @@ class AddCommand(InstallerCommand, InitCommand):
             flag=False,
         ),
         option(
+            "markers",
+            None,
+            "Environment markers which describe when the dependency should be installed.",
+            flag=False,
+        ),
+        option(
             "source",
             None,
             "Name of the source to use to install the package.",
@@ -262,6 +268,9 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
             if self.option("platform"):
                 constraint["platform"] = self.option("platform")
+
+            if self.option("markers"):
+                constraint["markers"] = self.option("markers")
 
             if self.option("source"):
                 constraint["source"] = self.option("source")
