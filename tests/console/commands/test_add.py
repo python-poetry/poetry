@@ -347,6 +347,18 @@ Writing lock file
     assert tester.command.installer.executor.installations_count == 2
 
 
+def test_add_with_markers(app: PoetryTestApplication, tester: CommandTester) -> None:
+    marker = "python_version <= '3.4' or sys_platform == 'win32'"
+    tester.execute(f"""cachy --markers "{marker}" """)
+
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    content = pyproject["tool"]["poetry"]
+
+    assert "cachy" in content["dependencies"]
+    assert content["dependencies"]["cachy"]["version"] == "^0.2.0"
+    assert content["dependencies"]["cachy"]["markers"] == marker
+
+
 def test_add_git_constraint(
     app: PoetryTestApplication,
     tester: CommandTester,

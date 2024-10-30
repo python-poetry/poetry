@@ -461,6 +461,7 @@ about dependency groups.
 * `--optional`: Add as an optional dependency to an extra.
 * `--python`: Python version for which the dependency must be installed.
 * `--platform`: Platforms for which the dependency must be installed.
+* `--markers`: Environment markers which describe when the dependency should be installed.
 * `--source`: Name of the source to use to install the package.
 * `--allow-prereleases`: Accept prereleases.
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
