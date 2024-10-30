@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import importlib.metadata
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 
 from packaging.utils import canonicalize_name
+from poetry.core.constraints.version import Version
 from poetry.core.utils.helpers import module_name
 from poetry.core.utils.patterns import AUTHOR_REGEX
 from tomlkit import inline_table
@@ -41,8 +44,16 @@ packages = []
 [tool.poetry.group.dev.dependencies]
 """
 
-BUILD_SYSTEM_MIN_VERSION: str | None = None
-BUILD_SYSTEM_MAX_VERSION: str | None = None
+poetry_core_version = Version.parse(importlib.metadata.version("poetry-core"))
+
+BUILD_SYSTEM_MIN_VERSION: str | None = Version.from_parts(
+    major=poetry_core_version.major,
+    minor=poetry_core_version.minor if poetry_core_version.major == 0 else 0,
+    patch=poetry_core_version.patch
+    if (poetry_core_version.major, poetry_core_version.minor) == (0, 0)
+    else 0,
+).to_string()
+BUILD_SYSTEM_MAX_VERSION: str | None = poetry_core_version.next_breaking().to_string()
 
 
 class Layout:

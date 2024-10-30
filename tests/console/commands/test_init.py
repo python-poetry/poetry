@@ -4,6 +4,7 @@ import os
 import shutil
 import subprocess
 import sys
+import textwrap
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -95,6 +96,14 @@ def test_noninteractive(
     assert 'name = "my-package"' in toml_content
     assert '"pytest (>=3.6.0,<4.0.0)"' in toml_content
 
+    expected_build_system = textwrap.dedent("""
+    [build-system]
+    requires = ["poetry-core>=2.0.0,<3.0.0"]
+    build-backend = "poetry.core.masonry.api"
+    """)
+
+    assert expected_build_system in toml_content
+
 
 def test_interactive_with_dependencies(
     tester: CommandTester, repo: TestRepository
@@ -148,6 +157,10 @@ dependencies = [
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
 """
 
     assert expected in tester.io.fetch_output()
