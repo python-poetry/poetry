@@ -602,7 +602,7 @@ def temp_repo(tmp_path: Path) -> TempRepoFixture:
         no_verify=True,
     )
 
-    # one commit which is not "head
+    # one commit which is not "head"
     (tmp_path / "bar").write_text("bar", encoding="utf-8")
     repo.stage(["bar"])
     middle_commit = repo.do_commit(
