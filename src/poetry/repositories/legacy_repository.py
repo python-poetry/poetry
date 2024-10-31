@@ -30,6 +30,7 @@ class LegacyRepository(HTTPRepository):
         self,
         name: str,
         url: str,
+        *,
         config: Config | None = None,
         disable_cache: bool = False,
         pool_size: int = requests.adapters.DEFAULT_POOLSIZE,
@@ -37,7 +38,13 @@ class LegacyRepository(HTTPRepository):
         if name == "pypi":
             raise ValueError("The name [pypi] is reserved for repositories")
 
-        super().__init__(name, url.rstrip("/"), config, disable_cache, pool_size)
+        super().__init__(
+            name,
+            url.rstrip("/"),
+            config=config,
+            disable_cache=disable_cache,
+            pool_size=pool_size,
+        )
 
     def package(
         self, name: str, version: Version, extras: list[str] | None = None
