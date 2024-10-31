@@ -154,16 +154,16 @@ class Factory(BaseFactory):
             if repository.name.lower() == "pypi":
                 explicit_pypi = True
 
-        # Only add PyPI if no default repository is configured
+        # Only add PyPI if no primary repository is configured
         if not explicit_pypi:
             if pool.has_primary_repositories():
                 if io.is_debug():
                     io.write_line("Deactivating the PyPI repository")
             else:
-                from poetry.repositories.pypi_repository import PyPiRepository
-
                 pool.add_repository(
-                    PyPiRepository(disable_cache=disable_cache),
+                    cls.create_package_source(
+                        {"name": "pypi"}, config, disable_cache=disable_cache
+                    ),
                     priority=Priority.PRIMARY,
                 )
 
