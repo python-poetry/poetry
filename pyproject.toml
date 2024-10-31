@@ -189,7 +189,7 @@ addopts = [ "-n", "logical", "-ra", "--strict-config", "--strict-markers" ]
 testpaths = ["tests"]
 markers = [
     "network: mark tests that require internet access",
-    "skip_git_mock: makrs test should not auto-apply git_mock"
+    "skip_git_mock: mark tests that should not auto-apply git_mock"
 ]
 log_cli_level = "INFO"
 xfail_strict = true
