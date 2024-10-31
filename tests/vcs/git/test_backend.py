@@ -11,12 +11,12 @@ from poetry.vcs.git.backend import Git
 from poetry.vcs.git.backend import annotated_tag
 from poetry.vcs.git.backend import is_revision_sha
 from poetry.vcs.git.backend import urlpathjoin
-from tests.vcs.git.git_fixture import GIT_NOT_INSTALLLED
-from tests.vcs.git.git_fixture import TempRepoFixture
 
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+    from tests.vcs.git.git_fixture import TempRepoFixture
 
 
 VALID_SHA = "c5c7624ef64f34d9f50c3b7e8118f7f652fddbbd"
@@ -84,7 +84,6 @@ def test_urlpathjoin(url: str, expected_result: str) -> None:
     assert result == expected_result
 
 
-@pytest.mark.skipif(GIT_NOT_INSTALLLED, reason="These tests requires git cli")
 class TestBackendGit:
     @pytest.mark.skip_git_mock
     def test_clone_success(self, tmp_path: Path, temp_repo: TempRepoFixture) -> None:

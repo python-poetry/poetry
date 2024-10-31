@@ -613,8 +613,8 @@ def temp_repo(tmp_path: Path) -> TempRepoFixture:
     )
 
     # extra commit
-    (tmp_path / "foo").write_text("foo", encoding="utf-8")
-    repo.stage(["foo"])
+    (tmp_path / "third").write_text("third file", encoding="utf-8")
+    repo.stage(["third"])
 
     head_commit = repo.do_commit(
         committer=b"User <user@example.com>",
