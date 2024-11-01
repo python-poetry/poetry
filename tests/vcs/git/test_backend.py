@@ -84,28 +84,26 @@ def test_urlpathjoin(url: str, expected_result: str) -> None:
     assert result == expected_result
 
 
-class TestBackendGit:
-    @pytest.mark.skip_git_mock
-    def test_clone_success(self, tmp_path: Path, temp_repo: TempRepoFixture) -> None:
-        source_root_dir = tmp_path / "test-repo"
-        Git.clone(
-            url=temp_repo.path.as_uri(), source_root=source_root_dir, name="clone-test"
-        )
+@pytest.mark.skip_git_mock
+def test_clone_success(tmp_path: Path, temp_repo: TempRepoFixture) -> None:
+    source_root_dir = tmp_path / "test-repo"
+    Git.clone(
+        url=temp_repo.path.as_uri(), source_root=source_root_dir, name="clone-test"
+    )
 
-        target_dir = source_root_dir / "clone-test"
-        assert (target_dir / ".git").is_dir()
+    target_dir = source_root_dir / "clone-test"
+    assert (target_dir / ".git").is_dir()
 
-    @pytest.mark.skip_git_mock
-    def test_short_sha_not_in_head(
-        self, tmp_path: Path, temp_repo: TempRepoFixture
-    ) -> None:
-        source_root_dir = tmp_path / "test-repo"
-        Git.clone(
-            url=temp_repo.path.as_uri(),
-            revision=temp_repo.middle_commit[:6],
-            name="clone-test",
-            source_root=source_root_dir,
-        )
 
-        target_dir = source_root_dir / "clone-test"
-        assert (target_dir / ".git").is_dir()
+@pytest.mark.skip_git_mock
+def test_short_sha_not_in_head(tmp_path: Path, temp_repo: TempRepoFixture) -> None:
+    source_root_dir = tmp_path / "test-repo"
+    Git.clone(
+        url=temp_repo.path.as_uri(),
+        revision=temp_repo.middle_commit[:6],
+        name="clone-test",
+        source_root=source_root_dir,
+    )
+
+    target_dir = source_root_dir / "clone-test"
+    assert (target_dir / ".git").is_dir()

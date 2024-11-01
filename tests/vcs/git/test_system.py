@@ -1,18 +1,21 @@
 from __future__ import annotations
 
 import re
+import shutil
 import subprocess
 import typing
 
 import pytest
 
 from poetry.vcs.git.system import SystemGit
-from tests.vcs.git.git_fixture import GIT_NOT_INSTALLLED
-from tests.vcs.git.git_fixture import TempRepoFixture
 
 
 if typing.TYPE_CHECKING:
     from pathlib import Path
+
+    from tests.vcs.git.git_fixture import TempRepoFixture
+
+GIT_NOT_INSTALLED = shutil.which("git") is None
 
 
 def get_head_sha(cwd: Path) -> str:
@@ -24,7 +27,7 @@ def get_head_sha(cwd: Path) -> str:
     ).strip()
 
 
-@pytest.mark.skipif(GIT_NOT_INSTALLLED, reason="These tests requires git cli")
+@pytest.mark.skipif(GIT_NOT_INSTALLED, reason="These tests requires git cli")
 class TestSystemGit:
     def test_clone_success(self, tmp_path: Path, temp_repo: TempRepoFixture) -> None:
         target_dir = tmp_path / "test-repo"
