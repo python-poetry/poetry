@@ -103,9 +103,11 @@ jobs:
         working-directory: poetry-plugin-export
         # Replace the python version to avoid conflicts
         # if the plugin still supports a wider range than Poetry itself.
+        # TODO: Add poetry without keyring extra after a poetry-plugin-export version
+        #       with https://github.com/python-poetry/poetry-plugin-export/pull/304 has been released.
         run: |
           perl -pi -e 's/^python =.*$/python = "~${{ inputs.python-version }}"/' pyproject.toml
-          poetry add --lock --group dev ../poetry
+          poetry add --lock --group dev ../poetry[keyring]
 
       # This step can be removed after having released a poetry-plugin-export version
       # that has cffi>=1.17.0 in its lock file.

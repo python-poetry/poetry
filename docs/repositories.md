@@ -472,15 +472,19 @@ poetry config http-basic.pypi <username> <password>
 You can also specify the username and password when using the `publish` command
 with the `--username` and `--password` options.
 
-If a system keyring is available and supported, the password is stored to and retrieved from the keyring. In the above example, the credential will be stored using the name `poetry-repository-pypi`. If access to keyring fails or is unsupported, this will fall back to writing the password to the `auth.toml` file along with the username.
-
-Keyring support is enabled using the [keyring library](https://pypi.org/project/keyring/). For more information on supported backends refer to the [library documentation](https://keyring.readthedocs.io/en/latest/?badge=latest).
-
-If you do not want to use the keyring, you can tell Poetry to disable it and store the credentials in plaintext config files:
+If a system keyring is available and supported, the password is stored to and retrieved from the keyring.
+Otherwise, credentials are stored in plaintext config files.
+In order to use keyring, you have to install Poetry with its `keyring` extra (`poetry[keyring]`)
+and enable keyring support:
 
 ```bash
-poetry config keyring.enabled false
+poetry config keyring.enabled true
 ```
+
+In the above example, the credential will be stored using the name `poetry-repository-pypi`.
+If access to keyring is disabled, fails or is unsupported, this will fall back to writing the password to the `auth.toml` file along with the username.
+
+Keyring support is enabled using the [keyring library](https://pypi.org/project/keyring/). For more information on supported backends refer to the [library documentation](https://keyring.readthedocs.io/en/latest/?badge=latest).
 
 {{% note %}}
 

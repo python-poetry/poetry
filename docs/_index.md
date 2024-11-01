@@ -58,6 +58,15 @@ Any non-ancient version of `pipx` will do.
 ```bash
 pipx install poetry
 ```
+
+If you want to use a keyring for storing credentials, you can install Poetry with its `keyring` extra:
+
+```bash
+pipx install poetry[keyring]
+```
+
+See [Repositories - Configuring credentials]({{< relref "repositories#configuring-credentials" >}})
+for more information.
 {{< /step >}}
 {{< step >}}
 **Install Poetry (advanced)**

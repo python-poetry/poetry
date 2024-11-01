@@ -154,7 +154,12 @@ class PasswordManager:
 
     @staticmethod
     def warn_plaintext_credentials_stored() -> None:
-        logger.warning("Using a plaintext file to store credentials")
+        logger.warning(
+            "Using a plaintext file to store credentials.\n"
+            "Install Poetry with its `keyring` extra (`poetry[keyring]`)"
+            "and enable it (`poetry config keyring.enabled true`)"
+            " to store credentials securely."
+        )
 
     def set_pypi_token(self, repo_name: str, token: str) -> None:
         if not self.use_keyring:

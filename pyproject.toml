@@ -39,7 +39,7 @@ dulwich = "^0.22.6"
 fastjsonschema = "^2.18.0"
 importlib-metadata = { version = ">=4.4", python = "<3.10" }
 installer = "^0.7.0"
-keyring = "^25.1.0"
+keyring = { version = "^25.1.0", optional = true }
 # packaging uses calver, so version is unclamped
 packaging = ">=24.0"
 pkginfo = "^1.10"
@@ -55,6 +55,9 @@ trove-classifiers = ">=2022.5.19"
 virtualenv = "^20.26.6"
 xattr = { version = "^1.0.0", markers = "sys_platform == 'darwin'" }
 
+[tool.poetry.extras]
+keyring = [ "keyring" ]
+
 [tool.poetry.group.dev.dependencies]
 pre-commit = ">=2.10"
 # add setuptools for PyCharm
@@ -66,6 +69,7 @@ setuptools = { version = ">=60", python = "<3.10" }
 coverage = ">=7.2.0"
 deepdiff = ">=6.3"
 httpretty = ">=1.1"
+keyring = "*"  # version is constrained via extra
 jaraco-classes = ">=3.3.1"
 pytest = ">=8.0"
 pytest-cov = ">=4.0"
@@ -130,8 +134,19 @@ unfixable = [
     "ERA", # do not autoremove commented out code
 ]
 
+[tool.ruff.lint.per-file-ignores]
+# keyring is an extra and must only be imported in password_manager.py
+# and even there not globally
+# see flake8-tidy-imports.banned-api and .banned-module-level-imports settings
+"password_manager.py" = ["TID251"]
+"tests/*" = ["TID251", "TID253"]
+
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
+banned-module-level-imports = ["keyring"]  # because it is an extra
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"keyring".msg = "keyring imports are only allowed in password_manager.py"
 
 [tool.ruff.lint.isort]
 force-single-line = true
