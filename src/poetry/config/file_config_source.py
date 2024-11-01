@@ -8,6 +8,7 @@ from tomlkit import document
 from tomlkit import table
 
 from poetry.config.config_source import ConfigSource
+from poetry.config.config_source import PropertyNotFoundError
 
 
 if TYPE_CHECKING:
@@ -29,6 +30,20 @@ class FileConfigSource(ConfigSource):
     @property
     def file(self) -> TOMLFile:
         return self._file
+
+    def get_property(self, key: str) -> Any:
+        keys = key.split(".")
+
+        config = self.file.read() if self.file.exists() else {}
+
+        for i, key in enumerate(keys):
+            if key not in config:
+                raise PropertyNotFoundError(f"Key {'.'.join(keys)} not in config")
+
+            if i == len(keys) - 1:
+                return config[key]
+
+            config = config[key]
 
     def add_property(self, key: str, value: Any) -> None:
         with self.secure() as toml:
