@@ -5,7 +5,14 @@ from abc import abstractmethod
 from typing import Any
 
 
+class PropertyNotFoundError(ValueError):
+    pass
+
+
 class ConfigSource(ABC):
+    @abstractmethod
+    def get_property(self, key: str) -> Any: ...
+
     @abstractmethod
     def add_property(self, key: str, value: Any) -> None: ...
 
