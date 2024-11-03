@@ -102,10 +102,7 @@ class WheelInstaller:
     def install(self, wheel: Path) -> None:
         with WheelFile.open(wheel) as source:
             try:
-                # Content validation is temporarily disabled because of
-                # pypa/installer's out of memory issues with big wheels. See
-                # https://github.com/python-poetry/poetry/issues/7983
-                source.validate_record(validate_contents=False)
+                source.validate_record()
             except _WheelFileValidationError as e:
                 self.invalid_wheels[wheel] = e.issues
 
