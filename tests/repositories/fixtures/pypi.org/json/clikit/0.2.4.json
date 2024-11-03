@@ -55,13 +55,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "c3558fef2a1148bb1df96376def5c8fe",
-        "sha256": "60900adbac91d6d2cefc88efe2639ce3090f4520106596ac855bee3763f276c0"
+        "md5": "93a51e8bf259c29692e51a7cbca6d664",
+        "sha256": "27316bf6382b04be8fb2f60c85d538fd2b2b03f0f1eba5c88f7d7eddbefc2778"
       },
       "downloads": -1,
       "filename": "clikit-0.2.4-py2.py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "c3558fef2a1148bb1df96376def5c8fe",
+      "md5_digest": "93a51e8bf259c29692e51a7cbca6d664",
       "packagetype": "bdist_wheel",
       "python_version": "py2.py3",
       "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",

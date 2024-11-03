@@ -10,8 +10,8 @@
       },
       "filename": "py-1.5.3-py2.py3-none-any.whl",
       "hashes": {
-        "md5": "98652ecee6fc3bb5393a17828f93e1fb",
-        "sha256": "43ee6c7f95e0ec6a906de49906b79d138d89728fff17109d49f086abc2fdd985"
+        "md5": "b316b380701661cb67732ecdaef30eeb",
+        "sha256": "ef4a94f47156178e42ef8f2b131db420e0f4b6aa0b3936b6dbde6ad6487476a5"
       },
       "provenance": null,
       "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",

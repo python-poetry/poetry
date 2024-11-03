@@ -10,8 +10,8 @@
       },
       "filename": "tomlkit-0.5.2-py2.py3-none-any.whl",
       "hashes": {
-        "md5": "7bcf6cf4a6034339bb6a481f27b9ba62",
-        "sha256": "a50f685abd033a7b50b13330833c15699885186517b713d9f7e8280ce7976e4c"
+        "md5": "4045c5f6848fbc93c38df2296a441f07",
+        "sha256": "dea8ff39e9e2170f1b2f465520482eec71e7909cfff53dcb076b585d50f8ccc8"
       },
       "provenance": null,
       "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
@@ -44,8 +44,8 @@
       },
       "filename": "tomlkit-0.5.3-py2.py3-none-any.whl",
       "hashes": {
-        "md5": "b868779f054c64bc6c2ae4ad2cdbf6b3",
-        "sha256": "d4fe74be9b732d76886da6da2e96f76ae42551e53afce1ea29bc703629b70497"
+        "md5": "3a90c70a5067d5727110838094ab8674",
+        "sha256": "35f06da5835e85f149a4701d43e730adcc09f1b362e5fc2300d77bdd26280908"
       },
       "provenance": null,
       "requires-python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",

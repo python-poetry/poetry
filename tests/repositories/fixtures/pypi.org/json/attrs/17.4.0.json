@@ -73,13 +73,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "9d32f2b5a93343e01f54d87740f2da60",
-        "sha256": "d38e57f381e891928357c68e300d28d3d4dcddc50486d5f8dfaf743d40477619"
+        "md5": "7fe37931797b16c7fa158017457a9ea9",
+        "sha256": "1fbfc10ebc8c876dcbab17f016b80ae1a4f0c1413461a695871427960795beb4"
       },
       "downloads": -1,
       "filename": "attrs-17.4.0-py2.py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "9d32f2b5a93343e01f54d87740f2da60",
+      "md5_digest": "7fe37931797b16c7fa158017457a9ea9",
       "packagetype": "bdist_wheel",
       "python_version": "py2.py3",
       "requires_python": null,

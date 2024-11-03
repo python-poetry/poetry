@@ -196,38 +196,33 @@ def dist_hash_getter() -> DistributionHashGetter:
 
 
 def cleanup_legacy_html_hashes(metadata: ReleaseFileMetadata) -> None:
-    path = FIXTURE_PATH_REPOSITORIES_LEGACY / f"{metadata.path.name}.html"
-
-    for filepath in [path, *list(path.parent.glob(f"{path.stem}-*.html"))]:
-        if not filepath.exists():
-            return None
-
-        existing_content = filepath.read_text(encoding="utf-8")
+    for index in FIXTURE_PATH_REPOSITORIES_LEGACY.glob("*.html"):
+        existing_content = index.read_text(encoding="utf-8")
 
         content = re.sub(
-            f"{filepath.name}#sha256=[A-Fa-f0-9]{{64}}",
-            f"{filepath.name}#sha256={metadata.sha256}",
+            f"{metadata.path.name}#sha256=[A-Fa-f0-9]{{64}}",
+            f"{metadata.path.name}#sha256={metadata.sha256}",
             existing_content,
         )
         content = re.sub(
-            f'data-dist-info-metadata="sha256=[A-Fa-f0-9]{{64}}">{filepath.name}<',
-            f'data-dist-info-metadata="sha256={metadata.sha256}">{filepath.name}<',
+            f'data-dist-info-metadata="sha256=[A-Fa-f0-9]{{64}}">{metadata.path.name}<',
+            f'data-dist-info-metadata="sha256={metadata.sha256}">{metadata.path.name}<',
             content,
         )
         content = re.sub(
-            f"{filepath.name}#md5=[A-Fa-f0-9]{{32}}",
-            f"{filepath.name}#md5={metadata.md5}",
+            f"{metadata.path.name}#md5=[A-Fa-f0-9]{{32}}",
+            f"{metadata.path.name}#md5={metadata.md5}",
             content,
         )
         content = re.sub(
-            f'data-dist-info-metadata="md5=[A-Fa-f0-9]{{32}}">{filepath.name}<',
-            f'data-dist-info-metadata="md5={metadata.md5}">{filepath.name}<',
+            f'data-dist-info-metadata="md5=[A-Fa-f0-9]{{32}}">{metadata.path.name}<',
+            f'data-dist-info-metadata="md5={metadata.md5}">{metadata.path.name}<',
             content,
         )
 
         if existing_content != content:
-            logger.info("Rewriting hashes in %s", filepath)
-            filepath.write_text(content, encoding="utf-8")
+            logger.info("Rewriting hashes in %s", index)
+            index.write_text(content, encoding="utf-8")
 
 
 def cleanup_installation_fixtures(metadata: ReleaseFileMetadata) -> None:
@@ -337,6 +332,26 @@ class FileManager:
                 if not is_protected(member.filename):
                     logger.debug("Stubbing file %s(%s)", link.filename, member.filename)
                     stubbed_sdist.writestr(member, io.BytesIO().getvalue())
+
+                elif Path(member.filename).name == "RECORD":
+                    # Since unprotected files are stubbed to be zero size, the RECORD file must
+                    # be updated to match.
+                    stubbed_content = io.StringIO()
+                    for line in zf.read(member.filename).decode("utf-8").splitlines():
+                        filename = line.split(",")[0]
+                        if is_protected(filename):
+                            stubbed_content.write(f"{line}\n")
+                            continue
+
+                        stubbed_line = re.sub(
+                            ",sha256=.*",
+                            ",sha256=47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU,0",
+                            line,
+                        )
+                        stubbed_content.write(f"{stubbed_line}\n")
+
+                    stubbed_sdist.writestr(member, stubbed_content.getvalue())
+
                 else:
                     logger.debug(
                         "Preserving file %s(%s)", link.filename, member.filename
@@ -461,7 +476,7 @@ class Project:
 
         for file in files:
             cleanup_installation_fixtures(file)
-            cleanup_installation_fixtures(file)
+            cleanup_legacy_html_hashes(file)
 
     def populate(self, pypi: PyPiRepository) -> None:
         logger.info("Fetching remote json via https://pypi.org/simple/%s", self.name)

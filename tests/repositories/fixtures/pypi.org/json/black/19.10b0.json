@@ -63,13 +63,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "4a420234749e1ea350581160ef51cd02",
-        "sha256": "3471ff321348d851b6f3047f4ed42c88622ac038caf7c2d160bd653334c88e88"
+        "md5": "acc537b0f3f7ebf575616490d7cc14f4",
+        "sha256": "13001c5b7dbc81137164b43137320a1785e95ce84e4db849279786877ac6d7f6"
       },
       "downloads": -1,
       "filename": "black-19.10b0-py36-none-any.whl",
       "has_sig": false,
-      "md5_digest": "4a420234749e1ea350581160ef51cd02",
+      "md5_digest": "acc537b0f3f7ebf575616490d7cc14f4",
       "packagetype": "bdist_wheel",
       "python_version": "py36",
       "requires_python": ">=3.6",

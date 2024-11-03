@@ -68,13 +68,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "f1de372a436700e3a785e85c11d15821",
-        "sha256": "6d3e83b1c1697d220137e436980e73b3ca674f643e666d7c24b0321cb57b76a4"
+        "md5": "1e81fba94885bef80170545d045924eb",
+        "sha256": "d327df3686046c5b374a9776d9e11606f7dba6fb3db5cf5d60ebc78a31e0768e"
       },
       "downloads": -1,
       "filename": "pytest-3.5.1-py2.py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "f1de372a436700e3a785e85c11d15821",
+      "md5_digest": "1e81fba94885bef80170545d045924eb",
       "packagetype": "bdist_wheel",
       "python_version": "py2.py3",
       "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",

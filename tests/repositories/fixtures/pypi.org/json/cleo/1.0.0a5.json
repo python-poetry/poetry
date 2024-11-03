@@ -50,13 +50,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "eaf14b3f99b2b88c0846ecc9a5a18af4",
-        "sha256": "20dbd69ed5c27e2889a2d428b9b01771f6073e4a1483a731e3c14c07a666aa9f"
+        "md5": "19ed7de77063e8f16bc459276ccbe197",
+        "sha256": "d0cfea878b77be28be027033e6af419b705abe47278067a7c3a298f39cf825c5"
       },
       "downloads": -1,
       "filename": "cleo-1.0.0a5-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "eaf14b3f99b2b88c0846ecc9a5a18af4",
+      "md5_digest": "19ed7de77063e8f16bc459276ccbe197",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.7,<4.0",
