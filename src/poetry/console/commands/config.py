@@ -16,6 +16,8 @@ from poetry.config.config import PackageFilterPolicy
 from poetry.config.config import boolean_normalizer
 from poetry.config.config import boolean_validator
 from poetry.config.config import int_normalizer
+from poetry.config.config_source import UNSET
+from poetry.config.config_source import ConfigSourceMigration
 from poetry.console.commands.command import Command
 
 
@@ -24,6 +26,17 @@ if TYPE_CHECKING:
     from cleo.io.inputs.option import Option
 
     from poetry.config.config_source import ConfigSource
+
+CONFIG_MIGRATIONS = [
+    ConfigSourceMigration(
+        old_key="experimental.system-git-client", new_key="system-git-client"
+    ),
+    ConfigSourceMigration(
+        old_key="virtualenvs.prefer-active-python",
+        new_key="virtualenvs.use-poetry-python",
+        value_migration={True: UNSET, False: True},
+    ),
+]
 
 
 class ConfigCommand(Command):
@@ -39,6 +52,7 @@ class ConfigCommand(Command):
         option("list", None, "List configuration settings."),
         option("unset", None, "Unset configuration setting."),
         option("local", None, "Set/Get from the project's local configuration."),
+        option("migrate", None, "Migrate outdated configuration settings."),
     ]
 
     help = """\
@@ -97,6 +111,9 @@ To remove a repository (repo is a short alias for repositories):
         from poetry.config.file_config_source import FileConfigSource
         from poetry.locations import CONFIG_DIR
         from poetry.toml.file import TOMLFile
+
+        if self.option("migrate"):
+            self._migrate()
 
         config = Config.create()
         config_file = TOMLFile(CONFIG_DIR / "config.toml")
@@ -325,3 +342,14 @@ To remove a repository (repo is a short alias for repositories):
                 message = f"<c1>{k + key}</c1> = <c2>{json.dumps(value)}</c2>"
 
             self.line(message)
+
+    def _migrate(self) -> None:
+        from poetry.config.file_config_source import FileConfigSource
+        from poetry.locations import CONFIG_DIR
+        from poetry.toml.file import TOMLFile
+
+        config_file = TOMLFile(CONFIG_DIR / "config.toml")
+        config_source = FileConfigSource(config_file)
+
+        for migration in CONFIG_MIGRATIONS:
+            migration.apply(config_source)
