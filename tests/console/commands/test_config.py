@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 import os
+import textwrap
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
@@ -18,8 +20,6 @@ from tests.conftest import Config
 
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from cleo.testers.command_tester import CommandTester
     from pytest_mock import MockerFixture
 
@@ -566,3 +566,33 @@ def test_config_solver_lazy_wheel(
 
     repo = LegacyRepository("foo", "https://foo.com")
     assert not repo._lazy_wheel
+
+
+def test_config_migrate(
+    tester: CommandTester, mocker: MockerFixture, tmp_path: Path
+) -> None:
+    config_dir = tmp_path / "config"
+    mocker.patch("poetry.locations.CONFIG_DIR", config_dir)
+
+    config_file = Path(config_dir / "config.toml")
+    config_data = textwrap.dedent("""\
+    [experimental]
+    system-git-client = true
+
+    [virtualenvs]
+    prefer-active-python = false
+    """)
+    with config_file.open("w") as fh:
+        fh.write(config_data)
+
+    tester.execute("--migrate")
+
+    expected_config = textwrap.dedent("""\
+    system-git-client = true
+
+    [virtualenvs]
+    use-poetry-python = true
+    """)
+
+    with config_file.open("r") as fh:
+        assert fh.read() == expected_config
