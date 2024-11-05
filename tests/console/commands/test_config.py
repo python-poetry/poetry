@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from poetry.config.dict_config_source import DictConfigSource
+    from poetry.poetry import Poetry
     from tests.types import CommandTesterFactory
     from tests.types import FixtureDirGetter
     from tests.types import ProjectFactory
@@ -596,3 +597,36 @@ def test_config_migrate(
 
     with config_file.open("r") as fh:
         assert fh.read() == expected_config
+
+
+def test_config_migrate_local_config(tester: CommandTester, poetry: Poetry) -> None:
+    local_config = poetry.file.path.parent / "poetry.toml"
+    config_data = textwrap.dedent("""\
+    [experimental]
+    system-git-client = true
+
+    [virtualenvs]
+    prefer-active-python = false
+    """)
+
+    with local_config.open("w") as fh:
+        fh.write(config_data)
+
+    tester.execute("--migrate --local")
+
+    expected_config = textwrap.dedent("""\
+        system-git-client = true
+
+        [virtualenvs]
+        use-poetry-python = true
+        """)
+
+    with local_config.open("r") as fh:
+        assert fh.read() == expected_config
+
+
+def test_config_migrate_local_config_should_raise_if_not_found(
+    tester: CommandTester,
+) -> None:
+    with pytest.raises(RuntimeError, match="No local config file found"):
+        tester.execute("--migrate --local")
