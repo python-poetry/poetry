@@ -114,6 +114,21 @@ This also works for secret settings, like credentials:
 export POETRY_HTTP_BASIC_MY_REPOSITORY_PASSWORD=secret
 ```
 
+## Migrate outdated configs
+
+If poetry renames or remove config options it might be necessary to migrate explicit set options. This is possible
+by running:
+
+```bash
+poetry config --migrate
+```
+
+If you need to migrate a local config run:
+
+```bash
+poetry config --migrate --local
+```
+
 ## Default Directories
 
 Poetry uses the following default directories:

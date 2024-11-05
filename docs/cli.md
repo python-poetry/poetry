@@ -630,6 +630,7 @@ Without `--` this command will fail if `${GITLAB_JOB_TOKEN}` starts with a hyphe
 * `--unset`: Remove the configuration element named by `setting-key`.
 * `--list`: Show the list of current config variables.
 * `--local`: Set/Get settings that are specific to a project (in the local configuration file `poetry.toml`).
+* `--migrate`: Migrate outdated configuration settings.
 
 ## run
 
