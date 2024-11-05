@@ -10,8 +10,8 @@
       },
       "filename": "futures-3.2.0-py2-none-any.whl",
       "hashes": {
-        "md5": "33e76564a87766c3e186d986ddc55bd8",
-        "sha256": "d89e1540e8b553fbda912230db359954365a1f5d0d0fa7fab96ad3969d9d5a93"
+        "md5": "f81c5c27f3ba2efc008cc96363a81c5e",
+        "sha256": "41353b36198757a766cfc82dc9b60e88ecb28e543dd92473b2cc74fc7bf205af"
       },
       "provenance": null,
       "requires-python": ">=2.6, <3",

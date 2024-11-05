@@ -73,13 +73,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "294e105f34e2e21286a49bfcfb8fb6ae",
-        "sha256": "e16b6879ed61f9268994b879174fad1cb2319a651afd20f8cf036428ac65f846"
+        "md5": "92942a9efabf8e321a11360667ad2494",
+        "sha256": "38f6ad54069912caf2fa2d4f25d0c5dedef4b2338a0cb545dbe2fdf54a6a8891"
       },
       "downloads": -1,
       "filename": "black-21.11b0-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "294e105f34e2e21286a49bfcfb8fb6ae",
+      "md5_digest": "92942a9efabf8e321a11360667ad2494",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.6.2",

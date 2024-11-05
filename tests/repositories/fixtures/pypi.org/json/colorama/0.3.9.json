@@ -58,13 +58,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "faef2bbd3c2ecc43e0969877d67b4c92",
-        "sha256": "5b632359f1ed2b7676a869812ba0edaacb99be04679b29eb56c07a5e137ab5a2"
+        "md5": "8021c861015b5f590be41190bc3f8eed",
+        "sha256": "78a441d2e984c790526cdef1cfd8415a366979ef5b3186771a055b35886953bf"
       },
       "downloads": -1,
       "filename": "colorama-0.3.9-py2.py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "faef2bbd3c2ecc43e0969877d67b4c92",
+      "md5_digest": "8021c861015b5f590be41190bc3f8eed",
       "packagetype": "bdist_wheel",
       "python_version": "2.7",
       "requires_python": null,

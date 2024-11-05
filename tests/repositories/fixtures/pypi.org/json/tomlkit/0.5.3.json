@@ -54,13 +54,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "b868779f054c64bc6c2ae4ad2cdbf6b3",
-        "sha256": "d4fe74be9b732d76886da6da2e96f76ae42551e53afce1ea29bc703629b70497"
+        "md5": "3a90c70a5067d5727110838094ab8674",
+        "sha256": "35f06da5835e85f149a4701d43e730adcc09f1b362e5fc2300d77bdd26280908"
       },
       "downloads": -1,
       "filename": "tomlkit-0.5.3-py2.py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "b868779f054c64bc6c2ae4ad2cdbf6b3",
+      "md5_digest": "3a90c70a5067d5727110838094ab8674",
       "packagetype": "bdist_wheel",
       "python_version": "py2.py3",
       "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",

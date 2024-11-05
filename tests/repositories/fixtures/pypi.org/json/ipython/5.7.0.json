@@ -92,13 +92,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "cf35939995e0fd8c44fca7509308abde",
-        "sha256": "3d93d3995e2e52a98dc4f44361cd5bf68dbde62925d1f820b97d8f0e1d941f73"
+        "md5": "20da5e0b1f79dccb37f033a885d798d7",
+        "sha256": "4608e3e0500fe8142659d149891400fc0b9fa250051814b569457ae4688943dc"
       },
       "downloads": -1,
       "filename": "ipython-5.7.0-py2-none-any.whl",
       "has_sig": false,
-      "md5_digest": "cf35939995e0fd8c44fca7509308abde",
+      "md5_digest": "20da5e0b1f79dccb37f033a885d798d7",
       "packagetype": "bdist_wheel",
       "python_version": "py2",
       "requires_python": null,
@@ -112,13 +112,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "8805d83c415de06f5eadd55aeb2fa738",
-        "sha256": "b94c7a3971290024ffaa916d51ee377ee85f8860a62b5f30c58f5376f0956a06"
+        "md5": "2844fa01618fe27ab99ad455d605b47d",
+        "sha256": "4292c026552a77b2edc0543941516eddd6fe1a4b681a76ac40b3f585d2fca76f"
       },
       "downloads": -1,
       "filename": "ipython-5.7.0-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "8805d83c415de06f5eadd55aeb2fa738",
+      "md5_digest": "2844fa01618fe27ab99ad455d605b47d",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": null,
