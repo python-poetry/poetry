@@ -56,7 +56,7 @@ def test_file_config_source_remove_property(tmp_path: Path) -> None:
     }
 
     config_source.remove_property("virtualenvs.use-poetry-python")
-    assert config_source._file.read() == {"virtualenvs": {}}
+    assert config_source._file.read() == {}
 
 
 def test_file_config_source_get_property(tmp_path: Path) -> None:

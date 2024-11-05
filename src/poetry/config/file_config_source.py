@@ -9,6 +9,7 @@ from tomlkit import table
 
 from poetry.config.config_source import ConfigSource
 from poetry.config.config_source import PropertyNotFoundError
+from poetry.config.config_source import drop_empty_config_category
 
 
 if TYPE_CHECKING:
@@ -76,6 +77,10 @@ class FileConfigSource(ConfigSource):
                     break
 
                 current_config = current_config[key]
+
+            current_config = drop_empty_config_category(keys=keys[:-1], config=config)
+            config.clear()
+            config.update(current_config)
 
     @contextmanager
     def secure(self) -> Iterator[TOMLDocument]:
