@@ -20,6 +20,7 @@ from cleo.formatters.style import Style
 from poetry.__version__ import __version__
 from poetry.console.command_loader import CommandLoader
 from poetry.console.commands.command import Command
+from poetry.utils.helpers import directory
 
 
 if TYPE_CHECKING:
@@ -111,6 +112,64 @@ class Application(BaseApplication):
         self.set_command_loader(command_loader)
 
     @property
+    def _default_definition(self) -> Definition:
+        from cleo.io.inputs.option import Option
+
+        definition = super()._default_definition
+
+        definition.add_option(
+            Option("--no-plugins", flag=True, description="Disables plugins.")
+        )
+
+        definition.add_option(
+            Option(
+                "--no-cache", flag=True, description="Disables Poetry source caches."
+            )
+        )
+
+        definition.add_option(
+            Option(
+                "--project",
+                "-P",
+                flag=False,
+                description=(
+                    "Specify another path as the project root."
+                    " All command-line arguments will be resolved relative to the current working directory."
+                ),
+            )
+        )
+
+        definition.add_option(
+            Option(
+                "--directory",
+                "-C",
+                flag=False,
+                description=(
+                    "The working directory for the Poetry command (defaults to the"
+                    " current working directory). All command-line arguments will be"
+                    " resolved relative to the given directory."
+                ),
+            )
+        )
+
+        return definition
+
+    @cached_property
+    def _project_directory(self) -> Path:
+        if self._io and self._io.input.option("project"):
+            with directory(self._working_directory):
+                return Path(self._io.input.option("project")).absolute()
+
+        return self._working_directory
+
+    @cached_property
+    def _working_directory(self) -> Path:
+        if self._io and self._io.input.option("directory"):
+            return Path(self._io.input.option("directory")).absolute()
+
+        return Path.cwd()
+
+    @property
     def poetry(self) -> Poetry:
         from poetry.factory import Factory
 
@@ -118,7 +177,7 @@ class Application(BaseApplication):
             return self._poetry
 
         self._poetry = Factory().create_poetry(
-            cwd=self._directory,
+            cwd=self._project_directory,
             io=self._io,
             disable_plugins=self._disable_plugins,
             disable_cache=self._disable_cache,
@@ -171,7 +230,9 @@ class Application(BaseApplication):
 
         self._load_plugins(io)
 
-        exit_code: int = super()._run(io)
+        with directory(self._working_directory):
+            exit_code: int = super()._run(io)
+
         return exit_code
 
     def _configure_io(self, io: IO) -> None:
@@ -331,48 +392,12 @@ class Application(BaseApplication):
             from poetry.plugins.application_plugin import ApplicationPlugin
             from poetry.plugins.plugin_manager import PluginManager
 
-            PluginManager.add_project_plugin_path(self._directory)
+            PluginManager.add_project_plugin_path(self._project_directory)
             manager = PluginManager(ApplicationPlugin.group)
             manager.load_plugins()
             manager.activate(self)
 
         self._plugins_loaded = True
-
-    @property
-    def _default_definition(self) -> Definition:
-        from cleo.io.inputs.option import Option
-
-        definition = super()._default_definition
-
-        definition.add_option(
-            Option("--no-plugins", flag=True, description="Disables plugins.")
-        )
-
-        definition.add_option(
-            Option(
-                "--no-cache", flag=True, description="Disables Poetry source caches."
-            )
-        )
-
-        definition.add_option(
-            Option(
-                "--project",
-                "-P",
-                flag=False,
-                description=(
-                    "Specify another path as the project root."
-                    " All command-line arguments will be resolved relative to the current working directory."
-                ),
-            )
-        )
-
-        return definition
-
-    @cached_property
-    def _directory(self) -> Path:
-        if self._io and self._io.input.option("project"):
-            return Path(self._io.input.option("project")).absolute()
-        return Path.cwd()
 
 
 def main() -> int:
