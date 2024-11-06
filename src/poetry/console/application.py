@@ -356,12 +356,12 @@ class Application(BaseApplication):
 
         definition.add_option(
             Option(
-                "--directory",
-                "-C",
+                "--project",
+                "-P",
                 flag=False,
                 description=(
-                    "The working directory for the Poetry command (defaults to the"
-                    " current working directory)."
+                    "Specify another path as the project root."
+                    " All command-line arguments will be resolved relative to the current working directory."
                 ),
             )
         )
@@ -370,8 +370,8 @@ class Application(BaseApplication):
 
     @cached_property
     def _directory(self) -> Path:
-        if self._io and self._io.input.option("directory"):
-            return Path(self._io.input.option("directory")).absolute()
+        if self._io and self._io.input.option("project"):
+            return Path(self._io.input.option("project")).absolute()
         return Path.cwd()
 
 
