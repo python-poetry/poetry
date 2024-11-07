@@ -1,10 +1,18 @@
 from __future__ import annotations
 
 import dataclasses
+import json
 
 from abc import ABC
 from abc import abstractmethod
+from typing import TYPE_CHECKING
 from typing import Any
+
+from cleo.io.null_io import NullIO
+
+
+if TYPE_CHECKING:
+    from cleo.io.io import IO
 
 
 UNSET = object()
@@ -31,7 +39,9 @@ class ConfigSourceMigration:
     new_key: str | None
     value_migration: dict[Any, Any] = dataclasses.field(default_factory=dict)
 
-    def apply(self, config_source: ConfigSource) -> None:
+    def apply(self, config_source: ConfigSource, io: IO | None = None) -> None:
+        io = io or NullIO()
+
         try:
             old_value = config_source.get_property(self.old_key)
         except PropertyNotFoundError:
@@ -43,8 +53,17 @@ class ConfigSourceMigration:
 
         config_source.remove_property(self.old_key)
 
+        msg = f"<c1>{self.old_key}</c1> = <c2>{json.dumps(old_value)}</c2>"
+
         if self.new_key is not None and new_value is not UNSET:
+            msg += f" -> <c1>{self.new_key}</c1> = <c2>{json.dumps(new_value)}</c2>"
             config_source.add_property(self.new_key, new_value)
+        elif self.new_key is None:
+            msg += " -> <c1>Removed from config</c1>"
+        elif self.new_key and new_value is UNSET:
+            msg += f" -> <c1>{self.new_key}</c1> = <c2>Not explicit set</c2>"
+
+        io.write_line(msg)
 
 
 def drop_empty_config_category(
