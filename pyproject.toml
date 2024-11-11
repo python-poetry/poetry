@@ -99,7 +99,6 @@ extend-exclude = [
     "tests/fixtures/git/*",
     "tests/fixtures/project_with_setup*/*",
     "tests/masonry/builders/fixtures/pep_561_stub_only*/*",
-    "tests/utils/fixtures/setups/*",
 ]
 fix = true
 line-length = 88
