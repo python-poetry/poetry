@@ -98,7 +98,6 @@ extend-exclude = [
     # External to the project's coding standards
     "tests/fixtures/git/*",
     "tests/fixtures/project_with_setup*/*",
-    "tests/masonry/builders/fixtures/pep_561_stub_only*/*",
 ]
 fix = true
 line-length = 88
