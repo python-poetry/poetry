@@ -555,13 +555,13 @@ class Provider:
             if dep.name in self.UNSAFE_PACKAGES:
                 continue
 
-            active_extras = (
-                self._active_root_extras if package.is_root() else dependency.extras
-            )
-            if self._env and not dep.marker.validate(
-                self._marker_values(active_extras)
-            ):
-                continue
+            if self._env:
+                marker_values = (
+                    self._marker_values(self._active_root_extras) if package.is_root()
+                    else self._env.marker_env
+                )
+                if not dep.marker.validate(marker_values):
+                    continue
 
             if not package.is_root() and (
                 (dep.is_optional() and dep.name not in optional_dependencies)

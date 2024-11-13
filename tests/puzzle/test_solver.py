@@ -4776,9 +4776,8 @@ def test_solver_resolves_duplicate_dependency_in_root_extra(
     """
     Without extras, a newer version of A can be chosen than with root extras.
     """
-    constraint: dict[str, Any] = {"version": "*"}
-    if with_extra:
-        constraint["extras"] = ["foo"]
+    extra = ["foo"] if with_extra else []
+
     package_a1 = get_package("A", "1.0")
     package_a2 = get_package("A", "2.0")
 
@@ -4793,7 +4792,7 @@ def test_solver_resolves_duplicate_dependency_in_root_extra(
     repo.add_package(package_a1)
     repo.add_package(package_a2)
 
-    solver = Solver(package, pool, [], [], io)
+    solver = Solver(package, pool, [], [], io, active_root_extras=extra)
     transaction = solver.solve()
 
     check_solver_result(
