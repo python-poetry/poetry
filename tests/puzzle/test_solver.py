@@ -4776,7 +4776,7 @@ def test_solver_resolves_duplicate_dependency_in_root_extra(
     """
     Without extras, a newer version of A can be chosen than with root extras.
     """
-    extra = ["foo"] if with_extra else []
+    extra = [canonicalize_name("foo")] if with_extra else []
 
     package_a1 = get_package("A", "1.0")
     package_a2 = get_package("A", "2.0")
