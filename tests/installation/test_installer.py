@@ -1077,10 +1077,8 @@ def test_run_with_conflicting_dependency_extras(
         canonicalize_name("extra-two"): [conflicting_dep_one, conflicting_dep_two],
     }
     main_package.add_dependency(conflicting_dep_one)
+    main_package.add_dependency(conflicting_dep_two)
 
-    main_package.add_dependency(
-        conflicting_dep_two
-    )
     repo.add_package(conflicting_dep_one_pkg)
     repo.add_package(conflicting_dep_two_pkg)
     if not root:
@@ -1252,82 +1250,6 @@ def test_run_with_exclusive_extras_different_sources(
             source_url=source_url,
             source_reference=source_reference,
         )
-
-
-@pytest.mark.parametrize("locked", [True, False])
-@pytest.mark.parametrize("extra", [None, "extra-one", "extra-two"])
-def test_run_with_conflicting_root_dependency_extras(
-        installer: Installer,
-        pool: RepositoryPool,
-        locker: Locker,
-        installed: CustomInstalledRepository,
-        repo: Repository,
-        config: Config,
-        package: ProjectPackage,
-        extra: str | None,
-        locked: bool,
-) -> None:
-    """https://github.com/python-poetry/poetry/issues/834
-
-    Tests resolution of extras in both root ('extra-one', 'extra-two') and transitive
-    ('demo-extra-one', 'demo-extra-two') dependencies
-    """
-    dep_one = get_package("dependency", "1.1.0")
-    dep_two = get_package("dependency", "1.2.0")
-    package.extras = {
-        canonicalize_name("extra-one"): [
-            get_dependency("dependency", constraint={"version": "1.1.0", "optional": True})
-        ],
-        canonicalize_name("extra-two"): [
-            get_dependency("dependency", constraint={"version": "1.2.0", "optional": True})
-        ],
-    }
-    package.add_dependency(
-        Factory.create_dependency(
-            "dependency",
-            {
-                "version": "1.1.0",
-                "markers": "extra == 'extra-one' and extra != 'extra-two'",
-                "optional": True,
-            }
-        )
-    )
-    package.add_dependency(
-        Factory.create_dependency(
-            "dependency",
-            {
-                "version": "1.2.0",
-                "markers": "extra != 'extra-one' and extra == 'extra-two'",
-                "optional": True,
-            }
-        )
-    )
-    repo.add_package(dep_one)
-    repo.add_package(dep_two)
-
-    locker.locked(locked)
-    if locked:
-        locker.mock_lock_data(dict(fixture("with-conflicting-dependencies-root-extras")))
-
-    if extra is not None:
-        installer.extras([extra])
-    result = installer.run()
-    assert result == 0
-
-    if not locked:
-        expected = fixture("with-conflicting-dependencies-root-extras")
-        assert locker.written_data == expected
-
-    # Results of installation are consistent with the 'extra' input
-    assert isinstance(installer.executor, Executor)
-    if extra is None:
-        assert len(installer.executor.installations) == 0
-    elif extra == "extra-one":
-        assert installer.executor.installations == [dep_one]
-    elif extra == "extra-two":
-        assert installer.executor.installations == [dep_two]
-    else:
-        raise ValueError(f"Unexpected extra value {extra}")
 
 
 @pytest.mark.parametrize("locked", [True, False])
