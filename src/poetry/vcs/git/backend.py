@@ -231,11 +231,8 @@ class Git:
 
         try:
             SystemGit.clone(url, target)
-        except CalledProcessError:
-            raise PoetryConsoleError(
-                f"Failed to clone {url}, check your git configuration and permissions"
-                " for this repository."
-            )
+        except CalledProcessError as e:
+            raise PoetryConsoleError(f"Failed to clone {url}\n {e.stderr}")
 
         if revision:
             revision.replace("refs/head/", "")
