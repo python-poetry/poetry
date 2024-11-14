@@ -608,7 +608,7 @@ class Provider:
         #   • pypiwin32 (219); sys_platform == "win32" and python_version < "3.6"
         duplicates: dict[str, list[Dependency]] = defaultdict(list)
         for dep in dependencies:
-            duplicates[dep.complete_name].append(dep)
+            duplicates[dep.name].append(dep)
 
         dependencies = []
         for dep_name, deps in duplicates.items():
@@ -619,16 +619,19 @@ class Provider:
             self.debug(f"<debug>Duplicate dependencies for {dep_name}</debug>")
 
             # For dependency resolution, markers of duplicate dependencies must be
-            # mutually exclusive.
-            active_extras = (
-                self._active_root_extras if package.is_root() else dependency.extras
-            )
-            deps = self._resolve_overlapping_markers(package, deps, active_extras)
+            # mutually exclusive. Perform overlapping marker resolution if the
+            # duplicates share all share a complete_name (i.e. are the same exact
+            # package, including in their extra definitions)
+            if len(set(d.complete_name for d in deps)) == 1:
+                active_extras = (
+                    self._active_root_extras if package.is_root() else dependency.extras
+                )
+                deps = self._resolve_overlapping_markers(package, deps, active_extras)
 
-            if len(deps) == 1:
-                self.debug(f"<debug>Merging requirements for {dep_name}</debug>")
-                dependencies.append(deps[0])
-                continue
+                if len(deps) == 1:
+                    self.debug(f"<debug>Merging requirements for {dep_name}</debug>")
+                    dependencies.append(deps[0])
+                    continue
 
             # At this point, we raise an exception that will
             # tell the solver to make new resolutions with specific overrides.
