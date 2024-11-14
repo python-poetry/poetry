@@ -1,14 +1,22 @@
 from __future__ import annotations
 
+import os
+import textwrap
+
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
 
+from cleo.testers.application_tester import ApplicationTester
+
+from poetry.console.application import Application
 from poetry.console.commands.version import VersionCommand
 
 
 if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
+    from pytest_mock import MockerFixture
 
     from poetry.poetry import Poetry
     from tests.types import CommandTesterFactory
@@ -132,3 +140,103 @@ def test_dry_run(tester: CommandTester) -> None:
     new_pyproject = tester.command.poetry.file.path.read_text(encoding="utf-8")
     assert tester.io.fetch_output() == "Bumping version from 1.2.3 to 2.0.0\n"
     assert old_pyproject == new_pyproject
+
+
+def test_version_with_project_parameter(
+    fixture_dir: FixtureDirGetter, mocker: MockerFixture
+) -> None:
+    app = Application()
+    tester = ApplicationTester(app)
+
+    orig_version_command = VersionCommand.handle
+
+    def mock_handle(command: VersionCommand) -> int:
+        exit_code = orig_version_command(command)
+
+        command.io.write_line(f"ProjectPath: {command.poetry.pyproject_path.parent}")
+        command.io.write_line(f"WorkingDirectory: {os.getcwd()}")
+
+        return exit_code
+
+    mocker.patch("poetry.console.commands.version.VersionCommand.handle", mock_handle)
+
+    source_dir = fixture_dir("scripts")
+    tester.execute(f"--project {source_dir} version")
+
+    output = tester.io.fetch_output()
+    expected = textwrap.dedent(f"""\
+    scripts 0.1.0
+    ProjectPath: {source_dir}
+    WorkingDirectory: {os.getcwd()}
+    """)
+
+    assert source_dir != Path(os.getcwd())
+    assert output == expected
+
+
+def test_version_with_directory_parameter(
+    fixture_dir: FixtureDirGetter, mocker: MockerFixture
+) -> None:
+    app = Application()
+    tester = ApplicationTester(app)
+
+    orig_version_command = VersionCommand.handle
+
+    def mock_handle(command: VersionCommand) -> int:
+        exit_code = orig_version_command(command)
+
+        command.io.write_line(f"ProjectPath: {command.poetry.pyproject_path.parent}")
+        command.io.write_line(f"WorkingDirectory: {os.getcwd()}")
+
+        return exit_code
+
+    mocker.patch("poetry.console.commands.version.VersionCommand.handle", mock_handle)
+
+    source_dir = fixture_dir("scripts")
+    tester.execute(f"--directory {source_dir} version")
+
+    output = tester.io.fetch_output()
+    expected = textwrap.dedent(f"""\
+    scripts 0.1.0
+    ProjectPath: {source_dir}
+    WorkingDirectory: {source_dir}
+    """)
+
+    assert source_dir != Path(os.getcwd())
+    assert output == expected
+
+
+def test_version_with_directory_and_project_parameter(
+    fixture_dir: FixtureDirGetter, mocker: MockerFixture
+) -> None:
+    app = Application()
+    tester = ApplicationTester(app)
+
+    orig_version_command = VersionCommand.handle
+
+    def mock_handle(command: VersionCommand) -> int:
+        exit_code = orig_version_command(command)
+
+        command.io.write_line(f"ProjectPath: {command.poetry.pyproject_path.parent}")
+        command.io.write_line(f"WorkingDirectory: {os.getcwd()}")
+
+        return exit_code
+
+    mocker.patch("poetry.console.commands.version.VersionCommand.handle", mock_handle)
+
+    source_dir = fixture_dir("scripts")
+    working_directory = source_dir.parent
+    project_path = "./scripts"
+
+    tester.execute(f"--directory {working_directory} --project {project_path} version")
+
+    output = tester.io.fetch_output()
+
+    expected = textwrap.dedent(f"""\
+    scripts 0.1.0
+    ProjectPath: {source_dir}
+    WorkingDirectory: {working_directory}
+    """)
+
+    assert source_dir != working_directory
+    assert output == expected
