@@ -97,7 +97,8 @@ def poetry(
 @pytest.fixture
 def app(poetry: Poetry) -> PoetryTestApplication:
     app_ = PoetryTestApplication(poetry)
-    app_._load_plugins()
+    io = NullIO()
+    app_._load_plugins(io)
     return app_
 
 
