@@ -43,8 +43,7 @@ class SystemGit:
         subprocess.run(
             git_command + list(args),
             check=True,
-            stderr=subprocess.PIPE,
-            stdout=subprocess.PIPE,
+            capture_output=True
             env=env,
             text=True,
             encoding="utf-8",
