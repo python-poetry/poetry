@@ -557,7 +557,8 @@ class Provider:
 
             if self._env:
                 marker_values = (
-                    self._marker_values(self._active_root_extras) if package.is_root()
+                    self._marker_values(self._active_root_extras)
+                    if package.is_root()
                     else self._env.marker_env
                 )
                 if not dep.marker.validate(marker_values):
@@ -622,7 +623,7 @@ class Provider:
             # mutually exclusive. Perform overlapping marker resolution if the
             # duplicates share all share a complete_name (i.e. are the same exact
             # package, including in their extra definitions)
-            if len(set(d.complete_name for d in deps)) == 1:
+            if len({d.complete_name for d in deps}) == 1:
                 active_extras = (
                     self._active_root_extras if package.is_root() else dependency.extras
                 )
@@ -988,6 +989,8 @@ class Provider:
         """
         result = self._env.marker_env.copy() if self._env is not None else {}
         if extras is not None:
-            assert "extra" not in result, "'extra' marker key is already present in environment"
+            assert (
+                "extra" not in result
+            ), "'extra' marker key is already present in environment"
             result["extra"] = set(extras)
         return result

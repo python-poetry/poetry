@@ -1030,16 +1030,16 @@ def test_run_with_dependencies_nested_extras(
 @pytest.mark.parametrize("locked", [False, True])
 @pytest.mark.parametrize("extra", [None, "extra-one", "extra-two"])
 def test_run_with_conflicting_dependency_extras(
-        installer: Installer,
-        pool: RepositoryPool,
-        locker: Locker,
-        installed: CustomInstalledRepository,
-        repo: Repository,
-        config: Config,
-        package: ProjectPackage,
-        extra: str | None,
-        locked: bool,
-        root: bool,
+    installer: Installer,
+    pool: RepositoryPool,
+    locker: Locker,
+    installed: CustomInstalledRepository,
+    repo: Repository,
+    config: Config,
+    package: ProjectPackage,
+    extra: str | None,
+    locked: bool,
+    root: bool,
 ) -> None:
     """
     - https://github.com/python-poetry/poetry/issues/6419
@@ -1061,7 +1061,7 @@ def test_run_with_conflicting_dependency_extras(
             "version": "1.1.0",
             "markers": "extra == 'extra-one' and extra != 'extra-two'",
             "optional": True,
-        }
+        },
     )
     conflicting_dep_two = Factory.create_dependency(
         "conflicting-dep",
@@ -1069,7 +1069,7 @@ def test_run_with_conflicting_dependency_extras(
             "version": "1.2.0",
             "markers": "extra != 'extra-one' and extra == 'extra-two'",
             "optional": True,
-        }
+        },
     )
 
     # Include both just for extra validation that our marker validation works as expected
@@ -1113,7 +1113,9 @@ def test_run_with_conflicting_dependency_extras(
             canonicalize_name("root-extra-two"): [extra_one_dep, extra_two_dep],
         }
 
-    fixture_name = "with-conflicting-dependency-extras-" + ("root" if root else "transitive")
+    fixture_name = "with-conflicting-dependency-extras-" + (
+        "root" if root else "transitive"
+    )
     locker.locked(locked)
     if locked:
         locker.mock_lock_data(dict(fixture(fixture_name)))
@@ -1145,13 +1147,13 @@ def test_run_with_conflicting_dependency_extras(
 @pytest.mark.parametrize("locked", [True, False])
 @pytest.mark.parametrize("extra", [None, "cpu", "cuda"])
 def test_run_with_exclusive_extras_different_sources(
-        installer: Installer,
-        locker: Locker,
-        installed: CustomInstalledRepository,
-        config: Config,
-        package: ProjectPackage,
-        extra: str | None,
-        locked: bool,
+    installer: Installer,
+    locker: Locker,
+    installed: CustomInstalledRepository,
+    config: Config,
+    package: ProjectPackage,
+    extra: str | None,
+    locked: bool,
 ) -> None:
     """
     - https://github.com/python-poetry/poetry/issues/6409
@@ -1257,15 +1259,15 @@ def test_run_with_exclusive_extras_different_sources(
 @pytest.mark.parametrize("locked", [True, False])
 @pytest.mark.parametrize("extra", [None, "extra-one", "extra-two"])
 def test_run_with_different_dependency_extras(
-        installer: Installer,
-        pool: RepositoryPool,
-        locker: Locker,
-        installed: CustomInstalledRepository,
-        repo: Repository,
-        config: Config,
-        package: ProjectPackage,
-        extra: str | None,
-        locked: bool,
+    installer: Installer,
+    pool: RepositoryPool,
+    locker: Locker,
+    installed: CustomInstalledRepository,
+    repo: Repository,
+    config: Config,
+    package: ProjectPackage,
+    extra: str | None,
+    locked: bool,
 ) -> None:
     """
     - https://github.com/python-poetry/poetry/issues/834
@@ -1286,7 +1288,7 @@ def test_run_with_different_dependency_extras(
             "version": "1.1.0",
             "markers": "extra == 'demo-extra-one' and extra != 'demo-extra-two'",
             "optional": True,
-        }
+        },
     )
     transitive_dep_two = Factory.create_dependency(
         "transitive-dep-two",
@@ -1294,14 +1296,18 @@ def test_run_with_different_dependency_extras(
             "version": "1.2.0",
             "markers": "extra != 'demo-extra-one' and extra == 'demo-extra-two'",
             "optional": True,
-        }
+        },
     )
     # Include both packages in both demo extras, to validate that they're filtered out based on extra markers alone
     demo_pkg.extras = {
-        canonicalize_name("demo-extra-one"): [get_dependency("transitive-dep-one"),
-                                              get_dependency("transitive-dep-two")],
-        canonicalize_name("demo-extra-two"): [get_dependency("transitive-dep-one"),
-                                              get_dependency("transitive-dep-two")],
+        canonicalize_name("demo-extra-one"): [
+            get_dependency("transitive-dep-one"),
+            get_dependency("transitive-dep-two"),
+        ],
+        canonicalize_name("demo-extra-two"): [
+            get_dependency("transitive-dep-one"),
+            get_dependency("transitive-dep-two"),
+        ],
     }
     demo_pkg.add_dependency(transitive_dep_one)
     demo_pkg.add_dependency(transitive_dep_two)
