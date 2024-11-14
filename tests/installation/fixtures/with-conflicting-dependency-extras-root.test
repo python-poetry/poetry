@@ -15,8 +15,8 @@ python-versions = "*"
 files = [ ]
 
 [extras]
-extra-one = [ "conflicting-dep" ]
-extra-two = [ "conflicting-dep" ]
+extra-one = [ "conflicting-dep", "conflicting-dep" ]
+extra-two = [ "conflicting-dep", "conflicting-dep" ]
 
 [metadata]
 lock-version = "2.0"

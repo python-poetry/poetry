@@ -1042,8 +1042,9 @@ def test_run_with_conflicting_dependency_extras(
         root: bool,
 ) -> None:
     """https://github.com/python-poetry/poetry/issues/834
-    Tests resolution of extras in both root ('extra-one', 'extra-two') and transitive
-    ('demo-extra-one', 'demo-extra-two') dependencies
+
+    Tests resolution of extras with conflicting dependencies. Tests in both as direct dependencies of
+    root package and as transitive dependencies.
     """
     # A package with two optional dependencies, one for each extra
     # If root, this is the root package, otherwise an intermediate package
@@ -1070,9 +1071,10 @@ def test_run_with_conflicting_dependency_extras(
         }
     )
 
+    # Include both just for extra validation that our marker validation works as expected
     main_package.extras = {
-        canonicalize_name("extra-one"): [conflicting_dep_one],
-        canonicalize_name("extra-two"): [conflicting_dep_two],
+        canonicalize_name("extra-one"): [conflicting_dep_one, conflicting_dep_two],
+        canonicalize_name("extra-two"): [conflicting_dep_one, conflicting_dep_two],
     }
     main_package.add_dependency(conflicting_dep_one)
 
@@ -1106,9 +1108,10 @@ def test_run_with_conflicting_dependency_extras(
         )
         package.add_dependency(extra_one_dep)
         package.add_dependency(extra_two_dep)
+        # Include both just for extra validation that our marker validation works as expected
         package.extras = {
-            canonicalize_name("root-extra-one"): [extra_one_dep],
-            canonicalize_name("root-extra-two"): [extra_two_dep],
+            canonicalize_name("root-extra-one"): [extra_one_dep, extra_two_dep],
+            canonicalize_name("root-extra-two"): [extra_one_dep, extra_two_dep],
         }
 
     fixture_name = "with-conflicting-dependency-extras-" + ("root" if root else "transitive")

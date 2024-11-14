@@ -33,12 +33,12 @@ optional = true
 markers = 'extra != "extra-one" and extra == "extra-two"'
 
   [package.extras]
-  extra-one = [ "conflicting-dep (==1.1.0)" ]
-  extra-two = [ "conflicting-dep (==1.2.0)" ]
+  extra-one = [ "conflicting-dep (==1.1.0)", "conflicting-dep (==1.2.0)" ]
+  extra-two = [ "conflicting-dep (==1.1.0)", "conflicting-dep (==1.2.0)" ]
 
 [extras]
-root-extra-one = [ "intermediate-dep" ]
-root-extra-two = [ "intermediate-dep" ]
+root-extra-one = [ "intermediate-dep", "intermediate-dep" ]
+root-extra-two = [ "intermediate-dep", "intermediate-dep" ]
 
 [metadata]
 lock-version = "2.0"
