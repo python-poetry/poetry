@@ -397,7 +397,7 @@ def extractall(source: Path, dest: Path, zip: bool) -> None:
     else:
         # These versions of python shipped with a broken tarfile data_filter, per
         # https://github.com/python/cpython/issues/107845.
-        broken_tarfile_filter = {(3, 8, 17), (3, 9, 17), (3, 10, 12), (3, 11, 4)}
+        broken_tarfile_filter = {(3, 9, 17), (3, 10, 12), (3, 11, 4)}
         with tarfile.open(source) as archive:
             if (
                 hasattr(tarfile, "data_filter")
