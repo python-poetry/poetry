@@ -444,7 +444,4 @@ def test_git_error_is_exposed_for_non_existent_repo() -> None:
     with pytest.raises(PoetryConsoleError) as e:
         Git.clone(url=source_url, branch=branch)
 
-    assert (
-        f"remote: Repository not found."
-        in str(e.value)
-    )
+    assert "remote: Repository not found." in str(e.value)
