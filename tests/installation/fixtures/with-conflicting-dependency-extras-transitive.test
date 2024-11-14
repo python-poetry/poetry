@@ -1,0 +1,46 @@
+[[package]]
+name = "conflicting-dep"
+version = "1.1.0"
+description = ""
+optional = true
+python-versions = "*"
+files = [ ]
+
+[[package]]
+name = "conflicting-dep"
+version = "1.2.0"
+description = ""
+optional = true
+python-versions = "*"
+files = [ ]
+
+[[package]]
+name = "intermediate-dep"
+version = "1.0.0"
+description = ""
+optional = true
+python-versions = "*"
+files = [ ]
+
+[[package.dependencies.conflicting-dep]]
+version = "1.1.0"
+optional = true
+markers = 'extra == "extra-one" and extra != "extra-two"'
+
+[[package.dependencies.conflicting-dep]]
+version = "1.2.0"
+optional = true
+markers = 'extra != "extra-one" and extra == "extra-two"'
+
+  [package.extras]
+  extra-one = [ "conflicting-dep (==1.1.0)" ]
+  extra-two = [ "conflicting-dep (==1.2.0)" ]
+
+[extras]
+root-extra-one = [ "intermediate-dep" ]
+root-extra-two = [ "intermediate-dep" ]
+
+[metadata]
+lock-version = "2.0"
+python-versions = "*"
+content-hash = "123456789"
