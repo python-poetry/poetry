@@ -1041,7 +1041,8 @@ def test_run_with_conflicting_dependency_extras(
         locked: bool,
         root: bool,
 ) -> None:
-    """https://github.com/python-poetry/poetry/issues/834
+    """
+    - https://github.com/python-poetry/poetry/issues/6419
 
     Tests resolution of extras with conflicting dependencies. Tests in both as direct dependencies of
     root package and as transitive dependencies.
@@ -1156,6 +1157,7 @@ def test_run_with_exclusive_extras_different_sources(
     - https://github.com/python-poetry/poetry/issues/6409
     - https://github.com/python-poetry/poetry/issues/6419
     - https://github.com/python-poetry/poetry/issues/7748
+    - https://github.com/python-poetry/poetry/issues/9537
     """
     # Setup repo for each of our sources
     cpu_repo = Repository("pytorch-cpu")
@@ -1265,7 +1267,9 @@ def test_run_with_different_dependency_extras(
         extra: str | None,
         locked: bool,
 ) -> None:
-    """https://github.com/python-poetry/poetry/issues/834
+    """
+    - https://github.com/python-poetry/poetry/issues/834
+    - https://github.com/python-poetry/poetry/issues/7748
 
     This tests different sets of extras in a dependency of the root project. These different dependency extras are
     themselves conditioned on extras in the root project.
