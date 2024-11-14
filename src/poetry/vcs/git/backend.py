@@ -232,9 +232,7 @@ class Git:
         try:
             SystemGit.clone(url, target)
         except CalledProcessError as e:
-            raise PoetryConsoleError(
-                f"Failed to clone {url}\n {e.stderr}"
-            )
+            raise PoetryConsoleError(f"Failed to clone {url}\n {e.stderr}")
 
         if revision:
             revision.replace("refs/head/", "")

@@ -436,10 +436,14 @@ def test_relative_submodules_with_ssh(
         "ssh://github.com/python-poetry/test-fixture-vcs-repository.git",
     ]
 
+
 def test_git_error_is_exposed_for_non_existent_branch(source_url: str) -> None:
     branch = uuid.uuid4().hex
 
     with pytest.raises(PoetryConsoleError) as e:
         Git.clone(url=source_url, branch=branch)
 
-    assert f"Failed to clone {source_url} at '{branch}', verify ref exists on remote." in str(e.value)
+    assert (
+        f"Failed to clone {source_url} at '{branch}', verify ref exists on remote."
+        in str(e.value)
+    )
