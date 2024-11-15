@@ -195,7 +195,11 @@ class Factory(BaseFactory):
                 raise InvalidSourceError(
                     "The PyPI repository cannot be configured with a custom url."
                 )
-            return PyPiRepository(disable_cache=disable_cache, pool_size=pool_size)
+            return PyPiRepository(
+                config=config,
+                disable_cache=disable_cache,
+                pool_size=pool_size,
+            )
 
         try:
             url = source["url"]

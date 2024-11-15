@@ -51,13 +51,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "632fcf45cc28aed4a4dce1324d1bd1d1",
-        "sha256": "d88b34efa115392ee42c55d6f82cdf5e5e08221ef2e18a16ae696a80008c3499"
+        "md5": "cf7c53ab0a5d7e7c721425b24b486124",
+        "sha256": "754d192c088e256d52a3f825c3b9e14252d5adc70f53656453f6431e50a70b99"
       },
       "downloads": -1,
       "filename": "pastel-0.1.0-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "632fcf45cc28aed4a4dce1324d1bd1d1",
+      "md5_digest": "cf7c53ab0a5d7e7c721425b24b486124",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": null,

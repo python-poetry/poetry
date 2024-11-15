@@ -10,8 +10,8 @@
       },
       "filename": "black-19.10b0-py36-none-any.whl",
       "hashes": {
-        "md5": "4a420234749e1ea350581160ef51cd02",
-        "sha256": "3471ff321348d851b6f3047f4ed42c88622ac038caf7c2d160bd653334c88e88"
+        "md5": "acc537b0f3f7ebf575616490d7cc14f4",
+        "sha256": "13001c5b7dbc81137164b43137320a1785e95ce84e4db849279786877ac6d7f6"
       },
       "provenance": null,
       "requires-python": ">=3.6",
@@ -44,8 +44,8 @@
       },
       "filename": "black-21.11b0-py3-none-any.whl",
       "hashes": {
-        "md5": "294e105f34e2e21286a49bfcfb8fb6ae",
-        "sha256": "e16b6879ed61f9268994b879174fad1cb2319a651afd20f8cf036428ac65f846"
+        "md5": "92942a9efabf8e321a11360667ad2494",
+        "sha256": "38f6ad54069912caf2fa2d4f25d0c5dedef4b2338a0cb545dbe2fdf54a6a8891"
       },
       "provenance": null,
       "requires-python": ">=3.6.2",

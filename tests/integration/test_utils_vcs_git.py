@@ -310,11 +310,11 @@ def test_system_git_fallback_on_http_401(
 
 GIT_USERNAME = os.environ.get("POETRY_TEST_INTEGRATION_GIT_USERNAME")
 GIT_PASSWORD = os.environ.get("POETRY_TEST_INTEGRATION_GIT_PASSWORD")
-HTTP_AUTH_CREDENTIALS_AVAILABLE = not (GIT_USERNAME and GIT_PASSWORD)
+HTTP_AUTH_CREDENTIALS_UNAVAILABLE = not (GIT_USERNAME and GIT_PASSWORD)
 
 
 @pytest.mark.skipif(
-    HTTP_AUTH_CREDENTIALS_AVAILABLE,
+    HTTP_AUTH_CREDENTIALS_UNAVAILABLE,
     reason="HTTP authentication credentials not available",
 )
 def test_configured_repository_http_auth(

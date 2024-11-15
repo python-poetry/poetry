@@ -95,13 +95,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "99a386eca39b536033c71aacf9f98e2b",
-        "sha256": "634f505893bbbdb79d1a04d89f4633d8cfc41115337847fbf9d5a23610fc3e3d"
+        "md5": "f40ea889fb7adf989760c5e7a38bd112",
+        "sha256": "1b4c76bf1e8dd9067a4f5ab4695d4c5ad81c30d7d06f7592f4c069c389e37f37"
       },
       "downloads": -1,
       "filename": "ipython-7.5.0-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "99a386eca39b536033c71aacf9f98e2b",
+      "md5_digest": "f40ea889fb7adf989760c5e7a38bd112",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.5",

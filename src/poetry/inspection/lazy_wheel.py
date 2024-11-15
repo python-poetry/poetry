@@ -10,11 +10,10 @@ from bisect import bisect_left
 from bisect import bisect_right
 from contextlib import contextmanager
 from tempfile import NamedTemporaryFile
+from typing import IO
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import BinaryIO
 from typing import ClassVar
-from typing import cast
 from urllib.parse import urlparse
 from zipfile import BadZipFile
 from zipfile import ZipFile
@@ -168,14 +167,14 @@ class MergeIntervals:
         yield from self._merge(start, end, left, right)
 
 
-class ReadOnlyIOWrapper(BinaryIO):
-    """Implement read-side ``BinaryIO`` methods wrapping an inner ``BinaryIO``.
+class ReadOnlyIOWrapper(IO[bytes]):
+    """Implement read-side ``IO[bytes]`` methods wrapping an inner ``IO[bytes]``.
 
     This wrapper is useful because Python currently does not distinguish read-only
     streams at the type level.
     """
 
-    def __init__(self, inner: BinaryIO) -> None:
+    def __init__(self, inner: IO[bytes]) -> None:
         self._file = inner
 
     def __enter__(self) -> Self:
@@ -296,7 +295,8 @@ class LazyFileOverHTTP(ReadOnlyIOWrapper):
         session: Session | Authenticator,
         delete_backing_file: bool = True,
     ) -> None:
-        super().__init__(cast(BinaryIO, NamedTemporaryFile(delete=delete_backing_file)))
+        inner = NamedTemporaryFile(delete=delete_backing_file)  # noqa: SIM115
+        super().__init__(inner)
 
         self._merge_intervals: MergeIntervals | None = None
         self._length: int | None = None

@@ -28,48 +28,48 @@ KNOWN_DISTRIBUTION_HASHES = {
         "35ff4705ea90a76bf972ff3b229546ca",
     ),
     "attrs-17.4.0-py2.py3-none-any.whl": DistributionHash(
-        "d38e57f381e891928357c68e300d28d3d4dcddc50486d5f8dfaf743d40477619",
-        "9d32f2b5a93343e01f54d87740f2da60",
+        "1fbfc10ebc8c876dcbab17f016b80ae1a4f0c1413461a695871427960795beb4",
+        "7fe37931797b16c7fa158017457a9ea9",
     ),
     "attrs-17.4.0.tar.gz": DistributionHash(
         "eb7536a1e6928190b3008c5b350bdf9850d619fff212341cd096f87a27a5e564",
         "c03e5b3608d9071fbd098850d8922668",
     ),
     "black-19.10b0-py36-none-any.whl": DistributionHash(
-        "3471ff321348d851b6f3047f4ed42c88622ac038caf7c2d160bd653334c88e88",
-        "4a420234749e1ea350581160ef51cd02",
+        "13001c5b7dbc81137164b43137320a1785e95ce84e4db849279786877ac6d7f6",
+        "acc537b0f3f7ebf575616490d7cc14f4",
     ),
     "black-19.10b0.tar.gz": DistributionHash(
         "6cada614d5d2132698c6d5fff384657273d922c4fffa6a2f0de9e03e25b8913a",
         "c383543109a66a5a99113e6326db5251",
     ),
     "black-21.11b0-py3-none-any.whl": DistributionHash(
-        "e16b6879ed61f9268994b879174fad1cb2319a651afd20f8cf036428ac65f846",
-        "294e105f34e2e21286a49bfcfb8fb6ae",
+        "38f6ad54069912caf2fa2d4f25d0c5dedef4b2338a0cb545dbe2fdf54a6a8891",
+        "92942a9efabf8e321a11360667ad2494",
     ),
     "black-21.11b0.tar.gz": DistributionHash(
         "f23c482185d842e2f19d506e55c004061167e3c677c063ecd721042c62086ada",
         "f01267bf2613f825dd6684629c1c829e",
     ),
     "cleo-1.0.0a5-py3-none-any.whl": DistributionHash(
-        "20dbd69ed5c27e2889a2d428b9b01771f6073e4a1483a731e3c14c07a666aa9f",
-        "eaf14b3f99b2b88c0846ecc9a5a18af4",
+        "d0cfea878b77be28be027033e6af419b705abe47278067a7c3a298f39cf825c5",
+        "19ed7de77063e8f16bc459276ccbe197",
     ),
     "cleo-1.0.0a5.tar.gz": DistributionHash(
         "88f0a4275a17f2ab4d013786b8b9522d4c60bd37d8fc9b3def0fb27f4ac1e694",
         "92e181952976e09b9d1c583da6c3e2fc",
     ),
     "clikit-0.2.4-py2.py3-none-any.whl": DistributionHash(
-        "60900adbac91d6d2cefc88efe2639ce3090f4520106596ac855bee3763f276c0",
-        "c3558fef2a1148bb1df96376def5c8fe",
+        "27316bf6382b04be8fb2f60c85d538fd2b2b03f0f1eba5c88f7d7eddbefc2778",
+        "93a51e8bf259c29692e51a7cbca6d664",
     ),
     "clikit-0.2.4.tar.gz": DistributionHash(
         "0fdd41e86e8b118a8b1e94ef2835925ada541d481c9b3b2fc635fa68713e6125",
         "f7cdbad3508038a04561f646aae68146",
     ),
     "colorama-0.3.9-py2.py3-none-any.whl": DistributionHash(
-        "5b632359f1ed2b7676a869812ba0edaacb99be04679b29eb56c07a5e137ab5a2",
-        "faef2bbd3c2ecc43e0969877d67b4c92",
+        "78a441d2e984c790526cdef1cfd8415a366979ef5b3186771a055b35886953bf",
+        "8021c861015b5f590be41190bc3f8eed",
     ),
     "colorama-0.3.9.tar.gz": DistributionHash(
         "4c5a15209723ce1330a5c193465fe221098f761e9640d823a2ce7c03f983137f",
@@ -112,16 +112,16 @@ KNOWN_DISTRIBUTION_HASHES = {
         "eeaf257d6b2c3b01def567751b21c1e8",
     ),
     "discord.py-2.0.0-py3-none-any.whl": DistributionHash(
-        "054c3d8cf89a8e37a691e0268232dad23e07f4e9a06f33454c3bafeaba34a9b7",
-        "8ffc907807f8351401dbe4408dcaff79",
+        "25b9739ba456622655203a0925b354c0ba96ac6c740562e7c37791c2f6b594fb",
+        "65394fc868632423cedb6be7259db970",
     ),
     "discord.py-2.0.0.tar.gz": DistributionHash(
         "b86fa9dd562684f7a52564e6dfe0216f6c172a009c0d86b8dea8bdd6ffa6b1f4",
         "6c0505a6032342b29f31f9979f37d277",
     ),
     "futures-3.2.0-py2-none-any.whl": DistributionHash(
-        "d89e1540e8b553fbda912230db359954365a1f5d0d0fa7fab96ad3969d9d5a93",
-        "33e76564a87766c3e186d986ddc55bd8",
+        "41353b36198757a766cfc82dc9b60e88ecb28e543dd92473b2cc74fc7bf205af",
+        "f81c5c27f3ba2efc008cc96363a81c5e",
     ),
     "futures-3.2.0.tar.gz": DistributionHash(
         "baf0d469c9e541b747986b7404cd63a5496955bd0c43a3cc068c449b09b7d4a4",
@@ -132,40 +132,40 @@ KNOWN_DISTRIBUTION_HASHES = {
         "b284e3118882f169aa618a856cd91c5f",
     ),
     "ipython-5.7.0-py2-none-any.whl": DistributionHash(
-        "3d93d3995e2e52a98dc4f44361cd5bf68dbde62925d1f820b97d8f0e1d941f73",
-        "cf35939995e0fd8c44fca7509308abde",
+        "4608e3e0500fe8142659d149891400fc0b9fa250051814b569457ae4688943dc",
+        "20da5e0b1f79dccb37f033a885d798d7",
     ),
     "ipython-5.7.0-py3-none-any.whl": DistributionHash(
-        "b94c7a3971290024ffaa916d51ee377ee85f8860a62b5f30c58f5376f0956a06",
-        "8805d83c415de06f5eadd55aeb2fa738",
+        "4292c026552a77b2edc0543941516eddd6fe1a4b681a76ac40b3f585d2fca76f",
+        "2844fa01618fe27ab99ad455d605b47d",
     ),
     "ipython-5.7.0.tar.gz": DistributionHash(
         "4e7fb265e0264498bd0d62c6261936a658bf3d38beb8a7b10cd2c6327c62ac2a",
         "01f2808ebe78ff2f28dc39be3aa635ca",
     ),
     "ipython-7.5.0-py3-none-any.whl": DistributionHash(
-        "634f505893bbbdb79d1a04d89f4633d8cfc41115337847fbf9d5a23610fc3e3d",
-        "99a386eca39b536033c71aacf9f98e2b",
+        "1b4c76bf1e8dd9067a4f5ab4695d4c5ad81c30d7d06f7592f4c069c389e37f37",
+        "f40ea889fb7adf989760c5e7a38bd112",
     ),
     "ipython-7.5.0.tar.gz": DistributionHash(
         "cd2a17ac273fea8bf8953118a2d83bad94f592f0db3e83fff9129a1842e36dbe",
         "0e8c1d7c14f309f6cd2dfd4e48e75cb1",
     ),
     "isort-4.3.4-py2-none-any.whl": DistributionHash(
-        "3bbfc8f6119a46a48064487afb0b3ca9daa4b09fbfd94336a24c7616b71db2ca",
-        "e84fb6f2278ee4d0bd719a4d44863d9f",
+        "383c39c10b5db83e8d150ac5b84d74bda96e3a1b06a30257f022dcbcd21f54b9",
+        "42bccda292eca3c91eadf3eb781a224f",
     ),
     "isort-4.3.4-py3-none-any.whl": DistributionHash(
-        "e7aa083302c758b358e10a3a1c707adcc9f8ab57795e99246ac72eeffe7f2b20",
-        "baa2e5dc4e89511b6bc54e969d040a08",
+        "5668dce9fb48544c57ed626982e190c8ea99e3a612850453e9c3b193b9fa2edc",
+        "6c3b582d7782633ec23917b00a97a2fe",
     ),
     "isort-4.3.4.tar.gz": DistributionHash(
         "234ad07e1e2780c27fa56364eefa734bee991b0d744337ef7e7ce3d5b1b59f39",
         "9244631852cf8bd8559f7ab78bf4ec78",
     ),
     "jupyter-1.0.0-py2.py3-none-any.whl": DistributionHash(
-        "83c4591b9c7392ea5f91e0d9f8e98d894f76e8e669260788f0fcb281ec0b3b1f",
-        "b2f5e2daab779c7bda0be38925ab1b92",
+        "1de1f2be45629dd6f7f9558e2385ddf6901849699ef1044c52d171a9b520a420",
+        "27f411f164e0878104d76d868127f76f",
     ),
     "jupyter-1.0.0.tar.gz": DistributionHash(
         "3ef1e86ba0556ea5922b846416a41acfd2625830d996c7d06d80c90bed1dc193",
@@ -180,28 +180,28 @@ KNOWN_DISTRIBUTION_HASHES = {
         "bf351a1050242ce3af7e475a4da1a26b",
     ),
     "more_itertools-4.1.0-py2-none-any.whl": DistributionHash(
-        "5dd7dfd88d2fdaea446da478ffef8d7151fdf26ee92ac7ed7b14e8d71efe4b62",
-        "c70269eabc5fae5e0d93c2eca638720e",
+        "0f461c2cd4ec16611396f9ee57f40433de3d59e95475d84c0c829cde02f746cd",
+        "703e1e0922de1f11823da60af1488b7a",
     ),
     "more_itertools-4.1.0-py3-none-any.whl": DistributionHash(
-        "29b1e1661aaa56875ce090fa219fa84dfc13daecb52cd4fae321f6f57b419ec4",
-        "26d7c309ef806b4e563d2a7e4ceafb14",
+        "580b6002d1f28feb5bcb8303278d59cf17dfbd19a63a5c2375112dae72c9bf98",
+        "ae17a45d13e9dc319794c40fa739c38f",
     ),
     "pastel-0.1.0-py3-none-any.whl": DistributionHash(
-        "d88b34efa115392ee42c55d6f82cdf5e5e08221ef2e18a16ae696a80008c3499",
-        "632fcf45cc28aed4a4dce1324d1bd1d1",
+        "754d192c088e256d52a3f825c3b9e14252d5adc70f53656453f6431e50a70b99",
+        "cf7c53ab0a5d7e7c721425b24b486124",
     ),
     "pastel-0.1.0.tar.gz": DistributionHash(
         "22f14474c4120b37c54ac2173b49b0ac1de9283ca714be6eb3ea8b39296285a9",
         "43ea5f07660f630da18ae1827f5b4333",
     ),
     "pluggy-0.6.0-py2-none-any.whl": DistributionHash(
-        "9b835f86bfe5498c87ace7f4899cb1b0c40e71c9277377f6851c74a307879285",
-        "de6f342e8044d0071eefc3c9cda33055",
+        "f5f767d398f18aa177976bf9c4d0c05d96487a7d8f07062251585803aaf56246",
+        "095eed084713c9b2a9a01520485e20fb",
     ),
     "pluggy-0.6.0-py3-none-any.whl": DistributionHash(
-        "8c646771f5eab7557d1f3924077c55408e86bdfb700f7d86a6d83abeabff4c66",
-        "f2fc2c3179edccaa7728650178c9133c",
+        "d34798b80853ab688de1a3ca5b99ba4de91c459c19c76a555dc939979ae67eb0",
+        "2b6dc266f54023dfb26726686ee6b227",
     ),
     "pluggy-0.6.0.tar.gz": DistributionHash(
         "a982e208d054867661d27c6d2a86b17ba05fbb6b1bdc01f42660732dd107f865",
@@ -216,24 +216,24 @@ KNOWN_DISTRIBUTION_HASHES = {
         "3f9b36a7a94cd235bfd5f05794828445",
     ),
     "py-1.5.3-py2.py3-none-any.whl": DistributionHash(
-        "43ee6c7f95e0ec6a906de49906b79d138d89728fff17109d49f086abc2fdd985",
-        "98652ecee6fc3bb5393a17828f93e1fb",
+        "ef4a94f47156178e42ef8f2b131db420e0f4b6aa0b3936b6dbde6ad6487476a5",
+        "b316b380701661cb67732ecdaef30eeb",
     ),
     "py-1.5.3.tar.gz": DistributionHash(
         "2df2c513c3af11de15f58189ba5539ddc4768c6f33816dc5c03950c8bd6180fa",
         "623e80cfc06df930414a9ce4bf0fd6c9",
     ),
     "pytest-3.5.0-py2.py3-none-any.whl": DistributionHash(
-        "28e4d9c2ae3196d74805c2eba24f350ae4c791a5b9b397c79b41506a48dc64ca",
-        "d3b1e9aea9e5b9e7a226d8b08aa43662",
+        "427b4582bda18e92ad1967e8b1e071e2c53e6cb7e3e5f090cb3ca443455be23f",
+        "4a8651dec151e76f283bf59e333286f9",
     ),
     "pytest-3.5.0.tar.gz": DistributionHash(
         "677b1d6decd29c041fe64276f29f79fbe66e40c59e445eb251366b4a8ab8bf68",
         "ccd78dac54112045f561c4df86631f19",
     ),
     "pytest-3.5.1-py2.py3-none-any.whl": DistributionHash(
-        "6d3e83b1c1697d220137e436980e73b3ca674f643e666d7c24b0321cb57b76a4",
-        "f1de372a436700e3a785e85c11d15821",
+        "d327df3686046c5b374a9776d9e11606f7dba6fb3db5cf5d60ebc78a31e0768e",
+        "1e81fba94885bef80170545d045924eb",
     ),
     "pytest-3.5.1.tar.gz": DistributionHash(
         "b8fe151f3e181801dd38583a1c03818fbc662a8fce96c9063a0af624613e78f8",
@@ -244,8 +244,8 @@ KNOWN_DISTRIBUTION_HASHES = {
         "677602ec38bc1c7b72de6128d90d846b",
     ),
     "requests-2.18.4-py2.py3-none-any.whl": DistributionHash(
-        "ce91d39dc2857eeb19fc8bf765df6c14874bcdc724d3ce9c6cd89915618e7023",
-        "f392c0ab49bf677c6240ef2b1890b079",
+        "098be851f30be5bcb2c7537798d44314f576e53818ba9def25141ae4dce8b25d",
+        "e770e65750c42f40b97b0ed738d0f859",
     ),
     "requests-2.18.4.tar.gz": DistributionHash(
         "ec62f7e0e9d4814656b0172dbd592fea06127c6556ff5651eb5d2c8768671fd4",
@@ -260,24 +260,24 @@ KNOWN_DISTRIBUTION_HASHES = {
         "ee2562f783544d1f95022c906dd3cf98",
     ),
     "six-1.11.0-py2.py3-none-any.whl": DistributionHash(
-        "112f5b46e6aa106db3e4e2494a03694c938f41c4c4535edbdfc816c2e0cb50f2",
-        "35b1057b388e276352d0709138b1e194",
+        "534e9875e44a507adec601c29b3cbd2ca6dae7df92bf3dd20c7289b2f99f7466",
+        "9500094701f7201ddd065c60abcefef1",
     ),
     "six-1.11.0.tar.gz": DistributionHash(
         "268a4ccb159c1a2d2c79336b02e75058387b0cdbb4cea2f07846a758f48a356d",
         "25d3568604f921dd23532b88a0ce17e7",
     ),
     "tomlkit-0.5.2-py2.py3-none-any.whl": DistributionHash(
-        "a50f685abd033a7b50b13330833c15699885186517b713d9f7e8280ce7976e4c",
-        "7bcf6cf4a6034339bb6a481f27b9ba62",
+        "dea8ff39e9e2170f1b2f465520482eec71e7909cfff53dcb076b585d50f8ccc8",
+        "4045c5f6848fbc93c38df2296a441f07",
     ),
     "tomlkit-0.5.2.tar.gz": DistributionHash(
         "4a226ccf11ee5a2e76bfc185747b54ee7718706aeb3aabb981327249dbe2b1d4",
         "7c31987ef6fba2cd64715cae27fade64",
     ),
     "tomlkit-0.5.3-py2.py3-none-any.whl": DistributionHash(
-        "d4fe74be9b732d76886da6da2e96f76ae42551e53afce1ea29bc703629b70497",
-        "b868779f054c64bc6c2ae4ad2cdbf6b3",
+        "35f06da5835e85f149a4701d43e730adcc09f1b362e5fc2300d77bdd26280908",
+        "3a90c70a5067d5727110838094ab8674",
     ),
     "tomlkit-0.5.3.tar.gz": DistributionHash(
         "e2f785651609492c771d9887ccb2369d891d16595d2d97972e2cbe5e8fb3439f",
@@ -292,8 +292,8 @@ KNOWN_DISTRIBUTION_HASHES = {
         "5f175a8d693f74878964d4fd29729ab7",
     ),
     "zipp-3.5.0-py3-none-any.whl": DistributionHash(
-        "82da6dcae3676123d6f493a876259614e7e6e970b14c59b1830a2c901ed91306",
-        "52aecc0484efd07d62575d152f6a98f6",
+        "ec508cd5a3ed3d126293cafb34611469f2aef7342f575c3b6e072b995dc9da1f",
+        "da62cbd850ba32ba93817aab0f03a855",
     ),
     "zipp-3.5.0.tar.gz": DistributionHash(
         "239d50954a15aa4b283023f18dc451ba811fb4d263f4dd6855642e4d1c80cc9f",

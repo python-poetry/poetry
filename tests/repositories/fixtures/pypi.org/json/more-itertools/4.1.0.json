@@ -55,13 +55,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "c70269eabc5fae5e0d93c2eca638720e",
-        "sha256": "5dd7dfd88d2fdaea446da478ffef8d7151fdf26ee92ac7ed7b14e8d71efe4b62"
+        "md5": "703e1e0922de1f11823da60af1488b7a",
+        "sha256": "0f461c2cd4ec16611396f9ee57f40433de3d59e95475d84c0c829cde02f746cd"
       },
       "downloads": -1,
       "filename": "more_itertools-4.1.0-py2-none-any.whl",
       "has_sig": false,
-      "md5_digest": "c70269eabc5fae5e0d93c2eca638720e",
+      "md5_digest": "703e1e0922de1f11823da60af1488b7a",
       "packagetype": "bdist_wheel",
       "python_version": "py2",
       "requires_python": null,
@@ -75,13 +75,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "26d7c309ef806b4e563d2a7e4ceafb14",
-        "sha256": "29b1e1661aaa56875ce090fa219fa84dfc13daecb52cd4fae321f6f57b419ec4"
+        "md5": "ae17a45d13e9dc319794c40fa739c38f",
+        "sha256": "580b6002d1f28feb5bcb8303278d59cf17dfbd19a63a5c2375112dae72c9bf98"
       },
       "downloads": -1,
       "filename": "more_itertools-4.1.0-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "26d7c309ef806b4e563d2a7e4ceafb14",
+      "md5_digest": "ae17a45d13e9dc319794c40fa739c38f",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": null,

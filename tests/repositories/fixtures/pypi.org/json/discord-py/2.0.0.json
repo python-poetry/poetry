@@ -73,13 +73,13 @@
     {
       "comment_text": "",
       "digests": {
-        "md5": "8ffc907807f8351401dbe4408dcaff79",
-        "sha256": "054c3d8cf89a8e37a691e0268232dad23e07f4e9a06f33454c3bafeaba34a9b7"
+        "md5": "65394fc868632423cedb6be7259db970",
+        "sha256": "25b9739ba456622655203a0925b354c0ba96ac6c740562e7c37791c2f6b594fb"
       },
       "downloads": -1,
       "filename": "discord.py-2.0.0-py3-none-any.whl",
       "has_sig": false,
-      "md5_digest": "8ffc907807f8351401dbe4408dcaff79",
+      "md5_digest": "65394fc868632423cedb6be7259db970",
       "packagetype": "bdist_wheel",
       "python_version": "py3",
       "requires_python": ">=3.8.0",
