@@ -30,6 +30,8 @@
     "home_page": "https://github.com/erikrose/more-itertools",
     "keywords": "itertools,iterator,iteration,filter,peek,peekable,collate,chunk,chunked",
     "license": "MIT",
+    "license_expression": null,
+    "license_files": null,
     "maintainer": "",
     "maintainer_email": "",
     "name": "more-itertools",

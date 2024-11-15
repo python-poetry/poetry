@@ -33,6 +33,8 @@
     "home_page": "http://funcsigs.readthedocs.org",
     "keywords": null,
     "license": "ASL",
+    "license_expression": null,
+    "license_files": null,
     "maintainer": null,
     "maintainer_email": null,
     "name": "funcsigs",
