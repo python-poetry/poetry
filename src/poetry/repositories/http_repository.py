@@ -49,11 +49,12 @@ class HTTPRepository(CachedRepository):
         self,
         name: str,
         url: str,
+        *,
         config: Config | None = None,
         disable_cache: bool = False,
         pool_size: int = requests.adapters.DEFAULT_POOLSIZE,
     ) -> None:
-        super().__init__(name, disable_cache, config)
+        super().__init__(name, disable_cache=disable_cache, config=config)
         self._url = url
         if config is None:
             config = Config.create()
