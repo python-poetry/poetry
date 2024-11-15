@@ -30,6 +30,8 @@
     "home_page": "http://pybee.org/toga",
     "keywords": "",
     "license": "New BSD",
+    "license_expression": null,
+    "license_files": null,
     "maintainer": "",
     "maintainer_email": "",
     "name": "toga",

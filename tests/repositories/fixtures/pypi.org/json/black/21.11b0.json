@@ -32,6 +32,8 @@
     "home_page": "https://github.com/psf/black",
     "keywords": "automation formatter yapf autopep8 pyfmt gofmt rustfmt",
     "license": "MIT",
+    "license_expression": null,
+    "license_files": null,
     "maintainer": "",
     "maintainer_email": "",
     "name": "black",

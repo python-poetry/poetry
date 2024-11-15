@@ -26,6 +26,8 @@
     "home_page": "https://github.com/sdispater/clikit",
     "keywords": "packaging,dependency,poetry",
     "license": "MIT",
+    "license_expression": null,
+    "license_files": null,
     "maintainer": "Sébastien Eustace",
     "maintainer_email": "sebastien@eustace.io",
     "name": "clikit",

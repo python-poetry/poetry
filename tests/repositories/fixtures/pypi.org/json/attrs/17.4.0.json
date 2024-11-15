@@ -33,6 +33,8 @@
     "home_page": "http://www.attrs.org/",
     "keywords": "class,attribute,boilerplate",
     "license": "MIT",
+    "license_expression": null,
+    "license_files": null,
     "maintainer": "",
     "maintainer_email": "",
     "name": "attrs",

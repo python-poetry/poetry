@@ -29,6 +29,8 @@
     "home_page": "https://github.com/beerfactory/hbmqtt",
     "keywords": "",
     "license": "MIT",
+    "license_expression": null,
+    "license_files": null,
     "maintainer": "",
     "maintainer_email": "",
     "name": "hbmqtt",

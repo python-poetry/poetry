@@ -27,6 +27,8 @@
     "home_page": "https://ipython.org",
     "keywords": "Interactive,Interpreter,Shell,Embedding",
     "license": "BSD",
+    "license_expression": null,
+    "license_files": null,
     "maintainer": "",
     "maintainer_email": "",
     "name": "ipython",

@@ -27,6 +27,8 @@
     "home_page": "https://github.com/sdispater/pastel",
     "keywords": "",
     "license": "MIT",
+    "license_expression": null,
+    "license_files": null,
     "maintainer": "",
     "maintainer_email": "",
     "name": "pastel",
