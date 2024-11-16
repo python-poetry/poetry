@@ -357,9 +357,22 @@ To remove a repository (repo is a short alias for repositories):
 
         config_source = FileConfigSource(config_file)
 
-        self.io.write_line("Starting config migration ...")
+        self.io.write_line("Checking for required migrations ...")
 
-        for migration in CONFIG_MIGRATIONS:
-            migration.apply(config_source, io=self.io)
+        required_migrations = [
+            migration
+            for migration in CONFIG_MIGRATIONS
+            if migration.dry_run(config_source, io=self.io)
+        ]
 
-        self.io.write_line("Config migration successfully done.")
+        if not required_migrations:
+            self.io.write_line("Already up to date.")
+            return
+
+        if not self.io.is_interactive() or self.confirm(
+            "Proceed with migration?: ", False
+        ):
+            for migration in required_migrations:
+                migration.apply(config_source)
+
+            self.io.write_line("Config migration successfully done.")

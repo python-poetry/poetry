@@ -569,31 +569,53 @@ def test_config_solver_lazy_wheel(
     assert not repo._lazy_wheel
 
 
+current_config = """\
+[experimental]
+system-git-client = true
+
+[virtualenvs]
+prefer-active-python = false
+"""
+
+config_migrated = """\
+system-git-client = true
+
+[virtualenvs]
+use-poetry-python = true
+"""
+
+
+@pytest.mark.parametrize(
+    ["proceed", "expected_config"],
+    [
+        ("yes", config_migrated),
+        ("no", current_config),
+    ],
+)
 def test_config_migrate(
-    tester: CommandTester, mocker: MockerFixture, tmp_path: Path
+    proceed: str,
+    expected_config: str,
+    tester: CommandTester,
+    mocker: MockerFixture,
+    tmp_path: Path,
 ) -> None:
     config_dir = tmp_path / "config"
     mocker.patch("poetry.locations.CONFIG_DIR", config_dir)
 
     config_file = Path(config_dir / "config.toml")
-    config_data = textwrap.dedent("""\
-    [experimental]
-    system-git-client = true
-
-    [virtualenvs]
-    prefer-active-python = false
-    """)
     with config_file.open("w") as fh:
-        fh.write(config_data)
+        fh.write(current_config)
 
-    tester.execute("--migrate")
+    tester.execute("--migrate", inputs=proceed)
 
-    expected_config = textwrap.dedent("""\
-    system-git-client = true
-
-    [virtualenvs]
-    use-poetry-python = true
+    expected_output = textwrap.dedent("""\
+    Checking for required migrations ...
+    experimental.system-git-client = true -> system-git-client = true
+    virtualenvs.prefer-active-python = false -> virtualenvs.use-poetry-python = true
     """)
+
+    output = tester.io.fetch_output()
+    assert output.startswith(expected_output)
 
     with config_file.open("r") as fh:
         assert fh.read() == expected_config
@@ -612,7 +634,7 @@ def test_config_migrate_local_config(tester: CommandTester, poetry: Poetry) -> N
     with local_config.open("w") as fh:
         fh.write(config_data)
 
-    tester.execute("--migrate --local")
+    tester.execute("--migrate --local", inputs="yes")
 
     expected_config = textwrap.dedent("""\
         system-git-client = true
@@ -629,4 +651,4 @@ def test_config_migrate_local_config_should_raise_if_not_found(
     tester: CommandTester,
 ) -> None:
     with pytest.raises(RuntimeError, match="No local config file found"):
-        tester.execute("--migrate --local")
+        tester.execute("--migrate --local", inputs="yes")
