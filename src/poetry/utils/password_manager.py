@@ -195,18 +195,25 @@ class PasswordManager:
     def get_http_auth(self, repo_name: str) -> dict[str, str | None] | None:
         username = self._config.get(f"http-basic.{repo_name}.username")
         password = self._config.get(f"http-basic.{repo_name}.password")
-        if not username and not password:
+
+        # we only return None if both values are None or ""
+        # password can be None at this stage with the username ""
+        if (username is password is None) or (username == password == ""):
             return None
 
         if not password:
             if self.use_keyring:
                 password = self.keyring.get_password(repo_name, username)
-            else:
+            elif not username:
+                # at this tage if username is "" or None, auth is invalid
                 return None
 
+        if not username and not password:
+            return None
+
         return {
-            "username": username,
-            "password": password,
+            "username": username or "",
+            "password": password or "",
         }
 
     def set_http_password(self, repo_name: str, username: str, password: str) -> None:
