@@ -620,19 +620,44 @@ class Provider:
             self.debug(f"<debug>Duplicate dependencies for {dep_name}</debug>")
 
             # For dependency resolution, markers of duplicate dependencies must be
-            # mutually exclusive. Perform overlapping marker resolution if the
-            # duplicates share all share a complete_name (i.e. are the same exact
-            # package, including in their extra definitions)
-            if len({d.complete_name for d in deps}) == 1:
+            # mutually exclusive. However, we have to take care about duplicates
+            # with differing extras.
+            duplicates_by_extras: dict[str, list[Dependency]] = defaultdict(list)
+            for dep in deps:
+                duplicates_by_extras[dep.complete_name].append(dep)
+
+            if len(duplicates_by_extras) == 1:
                 active_extras = (
                     self._active_root_extras if package.is_root() else dependency.extras
                 )
                 deps = self._resolve_overlapping_markers(package, deps, active_extras)
-
-                if len(deps) == 1:
-                    self.debug(f"<debug>Merging requirements for {dep_name}</debug>")
-                    dependencies.append(deps[0])
+            else:
+                # There are duplicates with different extras.
+                for complete_dep_name, deps_by_extra in duplicates_by_extras.items():
+                    if len(deps_by_extra) > 1:
+                        duplicates_by_extras[complete_dep_name] = (
+                            self._resolve_overlapping_markers(package, deps, None)
+                        )
+                if all(len(d) == 1 for d in duplicates_by_extras.values()) and all(
+                    d1[0].marker.intersect(d2[0].marker).is_empty()
+                    for d1, d2 in itertools.combinations(
+                        duplicates_by_extras.values(), 2
+                    )
+                ):
+                    # Since all markers are mutually exclusive,
+                    # we can trigger overrides.
+                    deps = list(itertools.chain(*duplicates_by_extras.values()))
+                else:
+                    # Too complicated to handle with overrides,
+                    # fallback to basic handling without overrides.
+                    for d in duplicates_by_extras.values():
+                        dependencies.extend(d)
                     continue
+
+            if len(deps) == 1:
+                self.debug(f"<debug>Merging requirements for {dep_name}</debug>")
+                dependencies.append(deps[0])
+                continue
 
             # At this point, we raise an exception that will
             # tell the solver to make new resolutions with specific overrides.
