@@ -81,9 +81,7 @@ class AuthenticatorRepositoryConfig:
         self, password_manager: PasswordManager
     ) -> HTTPAuthCredential:
         # try with the repository name via the password manager
-        credential = HTTPAuthCredential(
-            **(password_manager.get_http_auth(self.name) or {})
-        )
+        credential = password_manager.get_http_auth(self.name)
 
         if credential.password is not None:
             return credential

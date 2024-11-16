@@ -511,6 +511,17 @@ You can prevent this by adding double dashes to prevent any following argument f
 poetry config -- http-basic.pypi myUsername -myPasswordStartingWithDash
 ```
 
+{{% note %}}
+In some cases like that of [Gemfury](https://gemfury.com/help/errors/repo-url-password/) repositories, it might be
+required to set an empty password. This is supported by Poetry.
+
+```bash
+poetry config http-basic.foo <TOKEN> ""
+```
+
+**Note:** Usernames cannot be empty.  Attempting to use an empty username can result in an unpredictable failure.
+{{% /note %}}
+
 ## Certificates
 
 ### Custom certificate authority and mutual TLS authentication
