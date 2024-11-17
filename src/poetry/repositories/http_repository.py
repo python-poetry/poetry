@@ -200,10 +200,7 @@ class HTTPRepository(CachedRepository):
         return None
 
     def _get_info_from_links(
-        self,
-        links: list[Link],
-        *,
-        ignore_yanked: bool = True,
+        self, links: list[Link], *, ignore_yanked: bool
     ) -> PackageInfo:
         # Sort links by distribution type
         wheels: list[Link] = []

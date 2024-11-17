@@ -664,6 +664,8 @@ PROJECTS = [
             Release("ipython", "7.5.0"),
         ],
     ),
+    # yanked, no dependencies
+    Project("isodate", releases=[Release("isodate", "0.7.0")]),
     Project("isort", releases=[Release("isort", "4.3.4")]),
     Project("jupyter", releases=[Release("jupyter", "1.0.0")]),
     Project("more-itertools", releases=[Release("more-itertools", "4.1.0")]),
