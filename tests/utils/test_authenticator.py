@@ -541,6 +541,26 @@ def test_authenticator_uses_env_provided_credentials_matched_by_url_path(
     assert request.headers["Authorization"] == f"Basic {basic_auth}"
 
 
+def test_authenticator_uses_url_provided_credentials_matched_by_url_path(
+    config: Config,
+    mock_remote: type[httpretty.httpretty],
+    http: type[httpretty.httpretty],
+) -> None:
+    config.merge(
+        {
+            "repositories": {
+                "foo": {"url": "https://foo001:bar002@foo.bar/files/simple/"}
+            }
+        }
+    )
+    authenticator = Authenticator(config, NullIO())
+    authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
+
+    request = http.last_request()
+
+    assert request.headers["Authorization"] == "Basic Zm9vMDAxOmJhcjAwMg=="
+
+
 def test_authenticator_azure_feed_guid_credentials(
     config: Config,
     mock_remote: None,
