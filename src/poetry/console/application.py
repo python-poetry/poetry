@@ -362,6 +362,7 @@ class Application(BaseApplication):
                 description=(
                     "The working directory for the Poetry command (defaults to the"
                     " current working directory)."
+                    " The Poetry project will be selected automatically using this path"
                 ),
             )
         )
@@ -371,7 +372,11 @@ class Application(BaseApplication):
     @cached_property
     def _directory(self) -> Path:
         if self._io and self._io.input.option("directory"):
-            return Path(self._io.input.option("directory")).absolute()
+            path = Path(self._io.input.option("directory")).absolute()
+            if not (path / "pyproject.toml").exists():
+                raise ValueError(f"Could not find a project in directory {path}")
+            return path
+
         return Path.cwd()
 
 
