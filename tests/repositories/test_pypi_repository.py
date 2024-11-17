@@ -145,6 +145,21 @@ def test_package_yanked(
     assert package.yanked_reason == yanked_reason
 
 
+@pytest.mark.parametrize("fallback", [False, True])
+def test_package_yanked_no_dependencies(
+    pypi_repository: PyPiRepository, fallback: bool
+) -> None:
+    repo = pypi_repository
+    repo._fallback = fallback
+
+    package = repo.package("isodate", Version.parse("0.7.0"))
+
+    assert package.name == "isodate"
+    assert str(package.version) == "0.7.0"
+    assert package.yanked is True
+    assert package.yanked_reason == "fails for py2.7 but is not marked as py3 only."
+
+
 def test_package_not_canonicalized(pypi_repository: PyPiRepository) -> None:
     repo = pypi_repository
 

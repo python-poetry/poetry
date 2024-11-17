@@ -179,7 +179,7 @@ class PyPiRepository(HTTPRepository):
             # dependencies by introspecting packages.
             page = self.get_page(name)
             links = list(page.links_for_version(name, version))
-            info = self._get_info_from_links(links)
+            info = self._get_info_from_links(links, ignore_yanked=not data.yanked)
 
             data.requires_dist = info.requires_dist
 

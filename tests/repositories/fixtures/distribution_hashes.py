@@ -151,6 +151,14 @@ KNOWN_DISTRIBUTION_HASHES = {
         "cd2a17ac273fea8bf8953118a2d83bad94f592f0db3e83fff9129a1842e36dbe",
         "0e8c1d7c14f309f6cd2dfd4e48e75cb1",
     ),
+    "isodate-0.7.0-py3-none-any.whl": DistributionHash(
+        "04505f97eb100b66dff1239859e6e04ab913714c453d6ab9591adbf418285847",
+        "1af9e3ee3f5669186356afd2dbe7ce81",
+    ),
+    "isodate-0.7.0.tar.gz": DistributionHash(
+        "167c3615c0bd2e498c9bae7a1aba5863a17e52299aafd89f17a3a091187dca74",
+        "5668b7b7120797f03330363000afc35a",
+    ),
     "isort-4.3.4-py2-none-any.whl": DistributionHash(
         "383c39c10b5db83e8d150ac5b84d74bda96e3a1b06a30257f022dcbcd21f54b9",
         "42bccda292eca3c91eadf3eb781a224f",
