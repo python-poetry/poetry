@@ -27,7 +27,6 @@ from poetry.packages import DependencyPackage
 from poetry.packages.direct_origin import DirectOrigin
 from poetry.packages.package_collection import PackageCollection
 from poetry.puzzle.exceptions import OverrideNeededError
-from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.utils.helpers import get_file_hash
 
 
@@ -115,7 +114,6 @@ class Provider:
         pool: RepositoryPool,
         io: IO,
         *,
-        installed: list[Package] | None = None,
         locked: list[Package] | None = None,
     ) -> None:
         self._package = package
@@ -129,7 +127,6 @@ class Provider:
         self._deferred_cache: dict[Dependency, Package] = {}
         self._load_deferred = True
         self._source_root: Path | None = None
-        self._installed_packages = installed if installed is not None else []
         self._direct_origin_packages: dict[str, Package] = {}
         self._locked: dict[NormalizedName, list[DependencyPackage]] = defaultdict(list)
         self._use_latest: Collection[NormalizedName] = []
@@ -205,36 +202,6 @@ class Provider:
                 f" package's name: {package.name}"
             )
 
-    def search_for_installed_packages(
-        self,
-        dependency: Dependency,
-    ) -> list[Package]:
-        """
-        Search for installed packages, when available, that satisfy the given
-        dependency.
-
-        This is useful when dealing with packages that are under development, not
-        published on package sources and/or only available via system installations.
-        """
-        if not self._installed_packages:
-            return []
-
-        logger.debug(
-            "Falling back to installed packages to discover metadata for <c2>%s</>",
-            dependency.complete_name,
-        )
-        packages = [
-            package
-            for package in self._installed_packages
-            if package.satisfies(dependency, ignore_source_type=True)
-        ]
-        logger.debug(
-            "Found <c2>%d</> compatible packages for <c2>%s</>",
-            len(packages),
-            dependency.complete_name,
-        )
-        return packages
-
     def search_for_direct_origin_dependency(self, dependency: Dependency) -> Package:
         package = self._deferred_cache.get(dependency)
         if package is not None:
@@ -307,9 +274,6 @@ class Provider:
             ),
             reverse=True,
         )
-
-        if not packages:
-            packages = self.search_for_installed_packages(dependency)
 
         return PackageCollection(dependency, packages)
 
@@ -483,24 +447,15 @@ class Provider:
         elif package.is_direct_origin():
             requires = package.requires
         else:
-            try:
-                dependency_package = DependencyPackage(
-                    dependency,
-                    self._pool.package(
-                        package.pretty_name,
-                        package.version,
-                        extras=list(dependency.extras),
-                        repository_name=dependency.source_name,
-                    ),
-                )
-            except PackageNotFoundError as e:
-                try:
-                    dependency_package = next(
-                        DependencyPackage(dependency, pkg)
-                        for pkg in self.search_for_installed_packages(dependency)
-                    )
-                except StopIteration:
-                    raise e from e
+            dependency_package = DependencyPackage(
+                dependency,
+                self._pool.package(
+                    package.pretty_name,
+                    package.version,
+                    extras=list(dependency.extras),
+                    repository_name=dependency.source_name,
+                ),
+            )
 
             package = dependency_package.package
             dependency = dependency_package.dependency
