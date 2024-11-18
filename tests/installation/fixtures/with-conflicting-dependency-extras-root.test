@@ -5,6 +5,8 @@ description = ""
 optional = true
 python-versions = "*"
 files = [ ]
+groups = [ "main" ]
+markers = "extra == \"extra-one\" and extra != \"extra-two\""
 
 [[package]]
 name = "conflicting-dep"
@@ -13,12 +15,14 @@ description = ""
 optional = true
 python-versions = "*"
 files = [ ]
+groups = [ "main" ]
+markers = "extra != \"extra-one\" and extra == \"extra-two\""
 
 [extras]
 extra-one = [ "conflicting-dep", "conflicting-dep" ]
 extra-two = [ "conflicting-dep", "conflicting-dep" ]
 
 [metadata]
-lock-version = "2.0"
+lock-version = "2.1"
 python-versions = "*"
 content-hash = "123456789"

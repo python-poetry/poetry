@@ -5,6 +5,8 @@ description = ""
 optional = true
 python-versions = "*"
 files = []
+groups = [ "main" ]
+markers = "extra == \"cpu\" and extra != \"cuda\""
 
 [package.source]
 reference = "pytorch-cpu"
@@ -18,6 +20,8 @@ description = ""
 optional = true
 python-versions = "*"
 files = []
+groups = [ "main" ]
+markers = "extra != \"cpu\" and extra == \"cuda\""
 
 [package.source]
 reference = "pytorch-cuda"
@@ -30,5 +34,5 @@ cuda = ["torch", "torch"]
 
 [metadata]
 python-versions = "*"
-lock-version = "2.0"
+lock-version = "2.1"
 content-hash = "123456789"
