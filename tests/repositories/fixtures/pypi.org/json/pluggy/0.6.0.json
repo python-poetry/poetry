@@ -35,6 +35,8 @@
     "home_page": "https://github.com/pytest-dev/pluggy",
     "keywords": "",
     "license": "MIT license",
+    "license_expression": null,
+    "license_files": null,
     "maintainer": "",
     "maintainer_email": "",
     "name": "pluggy",

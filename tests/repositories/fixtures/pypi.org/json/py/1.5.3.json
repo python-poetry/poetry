@@ -36,6 +36,8 @@
     "home_page": "http://py.readthedocs.io/",
     "keywords": "",
     "license": "MIT license",
+    "license_expression": null,
+    "license_files": null,
     "maintainer": "",
     "maintainer_email": "",
     "name": "py",

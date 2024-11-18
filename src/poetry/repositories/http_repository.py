@@ -49,11 +49,12 @@ class HTTPRepository(CachedRepository):
         self,
         name: str,
         url: str,
+        *,
         config: Config | None = None,
         disable_cache: bool = False,
         pool_size: int = requests.adapters.DEFAULT_POOLSIZE,
     ) -> None:
-        super().__init__(name, disable_cache, config)
+        super().__init__(name, disable_cache=disable_cache, config=config)
         self._url = url
         if config is None:
             config = Config.create()
@@ -199,10 +200,7 @@ class HTTPRepository(CachedRepository):
         return None
 
     def _get_info_from_links(
-        self,
-        links: list[Link],
-        *,
-        ignore_yanked: bool = True,
+        self, links: list[Link], *, ignore_yanked: bool
     ) -> PackageInfo:
         # Sort links by distribution type
         wheels: list[Link] = []

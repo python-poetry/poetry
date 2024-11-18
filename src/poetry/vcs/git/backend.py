@@ -176,7 +176,7 @@ class Git:
     @staticmethod
     def get_revision(repo: Repo) -> str:
         with repo:
-            return repo.head().decode("utf-8")
+            return repo.get_peeled(b"HEAD").decode("utf-8")
 
     @classmethod
     def info(cls, repo: Repo | Path) -> GitRepoLocalInfo:
@@ -434,7 +434,8 @@ class Git:
                     current_repo = Repo(str(target))
 
                     with current_repo:
-                        current_sha = current_repo.head().decode("utf-8")
+                        # we use peeled sha here to ensure tags are resolved consistently
+                        current_sha = current_repo.get_peeled(b"HEAD").decode("utf-8")
                 except (NotGitRepository, AssertionError, KeyError):
                     # something is wrong with the current checkout, clean it
                     remove_directory(target, force=True)

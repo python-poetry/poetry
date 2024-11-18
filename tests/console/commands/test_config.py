@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 import os
+import textwrap
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
@@ -18,12 +20,11 @@ from tests.conftest import Config
 
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from cleo.testers.command_tester import CommandTester
     from pytest_mock import MockerFixture
 
     from poetry.config.dict_config_source import DictConfigSource
+    from poetry.poetry import Poetry
     from tests.types import CommandTesterFactory
     from tests.types import FixtureDirGetter
     from tests.types import ProjectFactory
@@ -58,6 +59,7 @@ installer.max-workers = null
 installer.no-binary = null
 installer.only-binary = null
 installer.parallel = true
+installer.re-resolve = true
 keyring.enabled = true
 requests.max-retries = 0
 solver.lazy-wheel = true
@@ -89,6 +91,7 @@ installer.max-workers = null
 installer.no-binary = null
 installer.only-binary = null
 installer.parallel = true
+installer.re-resolve = true
 keyring.enabled = true
 requests.max-retries = 0
 solver.lazy-wheel = true
@@ -141,6 +144,7 @@ installer.max-workers = null
 installer.no-binary = null
 installer.only-binary = null
 installer.parallel = true
+installer.re-resolve = true
 keyring.enabled = true
 requests.max-retries = 0
 solver.lazy-wheel = true
@@ -171,6 +175,7 @@ installer.max-workers = null
 installer.no-binary = null
 installer.only-binary = null
 installer.parallel = true
+installer.re-resolve = true
 keyring.enabled = true
 requests.max-retries = 0
 solver.lazy-wheel = true
@@ -299,6 +304,7 @@ installer.max-workers = null
 installer.no-binary = null
 installer.only-binary = null
 installer.parallel = true
+installer.re-resolve = true
 keyring.enabled = true
 requests.max-retries = 0
 solver.lazy-wheel = true
@@ -337,6 +343,7 @@ installer.max-workers = null
 installer.no-binary = null
 installer.only-binary = null
 installer.parallel = true
+installer.re-resolve = true
 keyring.enabled = true
 repositories.foo.url = "https://foo.bar/simple/"
 requests.max-retries = 0
@@ -560,3 +567,88 @@ def test_config_solver_lazy_wheel(
 
     repo = LegacyRepository("foo", "https://foo.com")
     assert not repo._lazy_wheel
+
+
+current_config = """\
+[experimental]
+system-git-client = true
+
+[virtualenvs]
+prefer-active-python = false
+"""
+
+config_migrated = """\
+system-git-client = true
+
+[virtualenvs]
+use-poetry-python = true
+"""
+
+
+@pytest.mark.parametrize(
+    ["proceed", "expected_config"],
+    [
+        ("yes", config_migrated),
+        ("no", current_config),
+    ],
+)
+def test_config_migrate(
+    proceed: str,
+    expected_config: str,
+    tester: CommandTester,
+    mocker: MockerFixture,
+    tmp_path: Path,
+) -> None:
+    config_dir = tmp_path / "config"
+    mocker.patch("poetry.locations.CONFIG_DIR", config_dir)
+
+    config_file = Path(config_dir / "config.toml")
+    with config_file.open("w") as fh:
+        fh.write(current_config)
+
+    tester.execute("--migrate", inputs=proceed)
+
+    expected_output = textwrap.dedent("""\
+    Checking for required migrations ...
+    experimental.system-git-client = true -> system-git-client = true
+    virtualenvs.prefer-active-python = false -> virtualenvs.use-poetry-python = true
+    """)
+
+    output = tester.io.fetch_output()
+    assert output.startswith(expected_output)
+
+    with config_file.open("r") as fh:
+        assert fh.read() == expected_config
+
+
+def test_config_migrate_local_config(tester: CommandTester, poetry: Poetry) -> None:
+    local_config = poetry.file.path.parent / "poetry.toml"
+    config_data = textwrap.dedent("""\
+    [experimental]
+    system-git-client = true
+
+    [virtualenvs]
+    prefer-active-python = false
+    """)
+
+    with local_config.open("w") as fh:
+        fh.write(config_data)
+
+    tester.execute("--migrate --local", inputs="yes")
+
+    expected_config = textwrap.dedent("""\
+        system-git-client = true
+
+        [virtualenvs]
+        use-poetry-python = true
+        """)
+
+    with local_config.open("r") as fh:
+        assert fh.read() == expected_config
+
+
+def test_config_migrate_local_config_should_raise_if_not_found(
+    tester: CommandTester,
+) -> None:
+    with pytest.raises(RuntimeError, match="No local config file found"):
+        tester.execute("--migrate --local", inputs="yes")

@@ -8,6 +8,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from poetry.utils.password_manager import HTTPAuthCredential
 from poetry.utils.password_manager import PasswordManager
 from poetry.utils.password_manager import PoetryKeyring
 from poetry.utils.password_manager import PoetryKeyringError
@@ -36,19 +37,36 @@ def test_set_http_password(
     assert "password" not in auth
 
 
+@pytest.mark.parametrize(
+    ("username", "password", "is_valid"),
+    [
+        ("bar", "baz", True),
+        ("", "baz", False),
+        ("bar", "", True),
+        ("", "", False),
+    ],
+)
 def test_get_http_auth(
-    config: Config, with_simple_keyring: None, dummy_keyring: DummyBackend
+    username: str,
+    password: str,
+    is_valid: bool,
+    config: Config,
+    with_simple_keyring: None,
+    dummy_keyring: DummyBackend,
 ) -> None:
-    dummy_keyring.set_password("poetry-repository-foo", "bar", "baz")
-    config.auth_config_source.add_property("http-basic.foo", {"username": "bar"})
+    dummy_keyring.set_password("poetry-repository-foo", username, password)
+    config.auth_config_source.add_property("http-basic.foo", {"username": username})
     manager = PasswordManager(config)
 
     assert PoetryKeyring.is_available()
     auth = manager.get_http_auth("foo")
-    assert auth is not None
 
-    assert auth["username"] == "bar"
-    assert auth["password"] == "baz"
+    if is_valid:
+        assert auth is not None
+        assert auth.username == username
+        assert auth.password == password
+    else:
+        assert auth.username is auth.password is None
 
 
 def test_delete_http_password(
@@ -113,20 +131,36 @@ def test_set_http_password_with_unavailable_backend(
     assert auth["password"] == "baz"
 
 
+@pytest.mark.parametrize(
+    ("username", "password", "is_valid"),
+    [
+        ("bar", "baz", True),
+        ("", "baz", False),
+        ("bar", "", True),
+        ("", "", False),
+    ],
+)
 def test_get_http_auth_with_unavailable_backend(
-    config: Config, with_fail_keyring: None
+    username: str,
+    password: str,
+    is_valid: bool,
+    config: Config,
+    with_fail_keyring: None,
 ) -> None:
     config.auth_config_source.add_property(
-        "http-basic.foo", {"username": "bar", "password": "baz"}
+        "http-basic.foo", {"username": username, "password": password}
     )
     manager = PasswordManager(config)
 
     assert not PoetryKeyring.is_available()
     auth = manager.get_http_auth("foo")
-    assert auth is not None
 
-    assert auth["username"] == "bar"
-    assert auth["password"] == "baz"
+    if is_valid:
+        assert auth is not None
+        assert auth.username == username
+        assert auth.password == password
+    else:
+        assert auth.username is auth.password is None
 
 
 def test_delete_http_password_with_unavailable_backend(
@@ -271,7 +305,7 @@ def test_get_http_auth_from_environment_variables(
     manager = PasswordManager(config)
 
     auth = manager.get_http_auth("foo")
-    assert auth == {"username": "bar", "password": "baz"}
+    assert auth == HTTPAuthCredential(username="bar", password="baz")
 
 
 def test_get_http_auth_does_not_call_keyring_when_credentials_in_environment_variables(
@@ -284,7 +318,7 @@ def test_get_http_auth_does_not_call_keyring_when_credentials_in_environment_var
     manager.keyring = MagicMock()
 
     auth = manager.get_http_auth("foo")
-    assert auth == {"username": "bar", "password": "baz"}
+    assert auth == HTTPAuthCredential(username="bar", password="baz")
     manager.keyring.get_password.assert_not_called()
 
 
@@ -302,7 +336,7 @@ def test_get_http_auth_does_not_call_keyring_when_password_in_environment_variab
     manager.keyring = MagicMock()
 
     auth = manager.get_http_auth("foo")
-    assert auth == {"username": "bar", "password": "baz"}
+    assert auth == HTTPAuthCredential(username="bar", password="baz")
     manager.keyring.get_password.assert_not_called()
 
 

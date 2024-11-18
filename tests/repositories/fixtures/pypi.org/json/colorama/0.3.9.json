@@ -34,6 +34,8 @@
     "home_page": "https://github.com/tartley/colorama",
     "keywords": "color colour terminal text ansi windows crossplatform xplatform",
     "license": "BSD",
+    "license_expression": null,
+    "license_files": null,
     "maintainer": null,
     "maintainer_email": null,
     "name": "colorama",

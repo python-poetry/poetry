@@ -114,6 +114,21 @@ This also works for secret settings, like credentials:
 export POETRY_HTTP_BASIC_MY_REPOSITORY_PASSWORD=secret
 ```
 
+## Migrate outdated configs
+
+If poetry renames or remove config options it might be necessary to migrate explicit set options. This is possible
+by running:
+
+```bash
+poetry config --migrate
+```
+
+If you need to migrate a local config run:
+
+```bash
+poetry config --migrate --local
+```
+
 ## Default Directories
 
 Poetry uses the following default directories:
@@ -268,6 +283,21 @@ Use parallel execution when using the new (`>=1.1.0`) installer.
 
 Set the maximum number of retries in an unstable network.
 This setting has no effect if the server does not support HTTP range requests.
+
+### `installer.re-resolve`
+
+**Type**: `boolean`
+
+**Default**: `true`
+
+**Environment Variable**: `POETRY_INSTALLER_RE_RESOLVE`
+
+*Introduced in 2.0.0*
+
+If the config option is _not_ set and the lock file is at least version 2.1
+(created by Poetry 2.0 or above), the installer will not re-resolve dependencies
+but evaluate the locked markers to decide which of the locked dependencies have to
+be installed into the target environment.
 
 ### `solver.lazy-wheel`
 

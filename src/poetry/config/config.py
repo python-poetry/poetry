@@ -123,6 +123,7 @@ class Config:
             "max-retries": 0,
         },
         "installer": {
+            "re-resolve": True,
             "parallel": True,
             "max-workers": None,
             "no-binary": None,
@@ -297,6 +298,7 @@ class Config:
             "virtualenvs.options.no-pip",
             "virtualenvs.options.system-site-packages",
             "virtualenvs.use-poetry-python",
+            "installer.re-resolve",
             "installer.parallel",
             "solver.lazy-wheel",
             "system-git-client",

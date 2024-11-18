@@ -153,7 +153,7 @@ def test_authenticator_uses_empty_strings_as_default_password(
     assert request.headers["Authorization"] == f"Basic {basic_auth}"
 
 
-def test_authenticator_uses_empty_strings_as_default_username(
+def test_authenticator_ignores_empty_strings_as_default_username(
     config: Config,
     mock_remote: None,
     repo: dict[str, dict[str, str]],
@@ -170,8 +170,7 @@ def test_authenticator_uses_empty_strings_as_default_username(
     authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
 
     request = http.last_request()
-    basic_auth = base64.b64encode(b":bar").decode()
-    assert request.headers["Authorization"] == f"Basic {basic_auth}"
+    assert request.headers["Authorization"] is None
 
 
 def test_authenticator_falls_back_to_keyring_url(

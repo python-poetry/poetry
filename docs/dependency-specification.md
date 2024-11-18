@@ -601,3 +601,17 @@ markers = "platform_python_implementation == 'CPython'"
 The same information is still present, and ends up providing the exact
 same specification. It's simply split into multiple, slightly more readable,
 lines.
+
+### Handling of pre-releases
+
+Per default, Poetry will prefer stable releases and only choose a pre-release
+if no stable release satisfies a version constraint. In some cases, this may result in
+a solution containing pre-releases even if another solution without pre-releases exists.
+
+If you want to disallow pre-releases for a specific dependency,
+you can set `allow-prereleases` to `false`. In this case, dependency resolution will
+fail if there is no solution without choosing a pre-release.
+
+If you want to prefer the latest version of a dependency even if it is a pre-release,
+you can set `allow-prereleases` to `true` so that Poetry makes no distinction
+between stable and pre-release versions during dependency resolution.

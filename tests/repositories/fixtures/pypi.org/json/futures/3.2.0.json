@@ -24,6 +24,8 @@
     "home_page": "https://github.com/agronholm/pythonfutures",
     "keywords": "",
     "license": "PSF",
+    "license_expression": null,
+    "license_files": null,
     "maintainer": "",
     "maintainer_email": "",
     "name": "futures",

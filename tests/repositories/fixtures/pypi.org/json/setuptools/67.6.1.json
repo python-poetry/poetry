@@ -27,6 +27,8 @@
     "home_page": "https://github.com/pypa/setuptools",
     "keywords": "CPAN PyPI distutils eggs package management",
     "license": "",
+    "license_expression": null,
+    "license_files": null,
     "maintainer": "",
     "maintainer_email": "",
     "name": "setuptools",

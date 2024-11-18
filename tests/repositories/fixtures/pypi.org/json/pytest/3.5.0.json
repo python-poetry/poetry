@@ -34,6 +34,8 @@
     "home_page": "http://pytest.org",
     "keywords": "test unittest",
     "license": "MIT license",
+    "license_expression": null,
+    "license_files": null,
     "maintainer": "",
     "maintainer_email": "",
     "name": "pytest",

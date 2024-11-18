@@ -29,6 +29,8 @@ if TYPE_CHECKING:
     from poetry.core.constraints.version import Version
     from poetry.core.constraints.version import VersionConstraint
 
+    from poetry.config.config import Config
+
 SUPPORTED_PACKAGE_TYPES = {"sdist", "bdist_wheel"}
 
 
@@ -36,13 +38,16 @@ class PyPiRepository(HTTPRepository):
     def __init__(
         self,
         url: str = "https://pypi.org/",
+        *,
+        config: Config | None = None,
         disable_cache: bool = False,
-        fallback: bool = True,
         pool_size: int = requests.adapters.DEFAULT_POOLSIZE,
+        fallback: bool = True,
     ) -> None:
         super().__init__(
             "PyPI",
             url.rstrip("/") + "/simple/",
+            config=config,
             disable_cache=disable_cache,
             pool_size=pool_size,
         )
@@ -174,7 +179,7 @@ class PyPiRepository(HTTPRepository):
             # dependencies by introspecting packages.
             page = self.get_page(name)
             links = list(page.links_for_version(name, version))
-            info = self._get_info_from_links(links)
+            info = self._get_info_from_links(links, ignore_yanked=not data.yanked)
 
             data.requires_dist = info.requires_dist
 

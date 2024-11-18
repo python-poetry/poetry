@@ -192,22 +192,17 @@ class PasswordManager:
 
         self.keyring.delete_password(repo_name, "__token__")
 
-    def get_http_auth(self, repo_name: str) -> dict[str, str | None] | None:
+    def get_http_auth(self, repo_name: str) -> HTTPAuthCredential:
         username = self._config.get(f"http-basic.{repo_name}.username")
         password = self._config.get(f"http-basic.{repo_name}.password")
-        if not username and not password:
-            return None
 
-        if not password:
-            if self.use_keyring:
-                password = self.keyring.get_password(repo_name, username)
-            else:
-                return None
+        if not username:
+            return HTTPAuthCredential()
 
-        return {
-            "username": username,
-            "password": password,
-        }
+        if password is None and self.use_keyring:
+            password = self.keyring.get_password(repo_name, username)
+
+        return HTTPAuthCredential(username=username, password=password)
 
     def set_http_password(self, repo_name: str, username: str, password: str) -> None:
         auth = {"username": username}
@@ -222,15 +217,12 @@ class PasswordManager:
 
     def delete_http_password(self, repo_name: str) -> None:
         auth = self.get_http_auth(repo_name)
-        if not auth:
-            return
 
-        username = auth.get("username")
-        if username is None:
+        if auth.username is None:
             return
 
         with suppress(PoetryKeyringError):
-            self.keyring.delete_password(repo_name, username)
+            self.keyring.delete_password(repo_name, auth.username)
 
         self._config.auth_config_source.remove_property(f"http-basic.{repo_name}")
 
@@ -239,5 +231,5 @@ class PasswordManager:
     ) -> HTTPAuthCredential:
         if self.use_keyring:
             return self.keyring.get_credential(*names, username=username)
-        else:
-            return HTTPAuthCredential(username=username, password=None)
+
+        return HTTPAuthCredential(username=username, password=None)

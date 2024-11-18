@@ -23,6 +23,8 @@
     "home_page": "https://github.com/jaraco/zipp",
     "keywords": "",
     "license": "",
+    "license_expression": null,
+    "license_files": null,
     "maintainer": "",
     "maintainer_email": "",
     "name": "zipp",

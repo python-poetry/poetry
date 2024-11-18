@@ -34,7 +34,7 @@ python = "^3.9"
 poetry-core = { git = "https://github.com/python-poetry/poetry-core.git", branch = "main" }
 build = "^1.2.1"
 cachecontrol = { version = "^0.14.0", extras = ["filecache"] }
-cleo = "^2.1.0"
+cleo = "^2.2.1"
 dulwich = "^0.22.1"
 fastjsonschema = "^2.18.0"
 importlib-metadata = { version = ">=4.4", python = "<3.10" }
@@ -98,8 +98,6 @@ extend-exclude = [
     # External to the project's coding standards
     "tests/fixtures/git/*",
     "tests/fixtures/project_with_setup*/*",
-    "tests/masonry/builders/fixtures/pep_561_stub_only*/*",
-    "tests/utils/fixtures/setups/*",
 ]
 fix = true
 line-length = 88

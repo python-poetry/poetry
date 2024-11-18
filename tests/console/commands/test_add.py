@@ -1711,7 +1711,13 @@ def test_add_poetry_dependencies_if_necessary(
     repo.add_package(get_package("foo", "2.0"))
     other_repo = LegacyRepository(name="my-index", url="https://my-index.fake")
     poetry.pool.add_repository(other_repo)
-    package = get_package("bar", "2.0")
+    package = Package(
+        "bar",
+        "2.0",
+        source_type="legacy",
+        source_url=other_repo.url,
+        source_reference=other_repo.name,
+    )
     mocker.patch.object(other_repo, "package", return_value=package)
     mocker.patch.object(other_repo, "_find_packages", wraps=lambda _, name: [package])
     repo.add_package(package)
