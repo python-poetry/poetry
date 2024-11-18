@@ -51,12 +51,5 @@ def test_self_install(
 
     tester.execute()
 
-    expected_output = """\
-Updating dependencies
-Resolving dependencies...
-
-Writing lock file
-"""
-
-    assert tester.io.fetch_output() == expected_output
+    assert tester.io.fetch_output().endswith("Writing lock file\n")
     assert tester.io.fetch_error() == ""

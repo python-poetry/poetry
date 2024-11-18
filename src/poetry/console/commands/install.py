@@ -20,10 +20,9 @@ class InstallCommand(InstallerCommand):
     options: ClassVar[list[Option]] = [
         *InstallerCommand._group_dependency_options(),
         option(
-            "sync",
+            "keep-untracked",
             None,
-            "Synchronize the environment with the locked packages and the specified"
-            " groups.",
+            "Do not uninstall the untracked packages.",
         ),
         option(
             "no-root", None, "Do not install the root package (the current project)."
@@ -146,7 +145,7 @@ you can set the "package-mode" to false in your pyproject.toml file.
 
         self.installer.extras(extras)
 
-        with_synchronization = self.option("sync")
+        with_synchronization = not self.option("keep-untracked")
 
         self.installer.only_groups(self.activated_groups)
         self.installer.skip_directory(self.option("no-directory"))

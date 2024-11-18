@@ -85,18 +85,23 @@ def test_update_prints_operations(
     assert ("Installing docker (4.3.1)" in output) is expected
 
 
-def test_update_sync_option_is_passed_to_the_installer(
+@pytest.mark.parametrize("options", ["", "--keep-untracked"])
+def test_update_keep_untracked_option_is_passed_to_the_installer(
     poetry_with_outdated_lockfile: Poetry,
     command_tester_factory: CommandTesterFactory,
     mocker: MockerFixture,
+    options: str,
 ) -> None:
     """
-    The --sync option is passed properly to the installer from update.
+    The --keep-untracked option is passed properly to the installer from update.
     """
     tester = command_tester_factory("update", poetry=poetry_with_outdated_lockfile)
     assert isinstance(tester.command, UpdateCommand)
     mocker.patch.object(tester.command.installer, "run", return_value=1)
 
-    tester.execute("--sync")
+    tester.execute(options)
 
-    assert tester.command.installer._requires_synchronization
+    if options:
+        assert not tester.command.installer._requires_synchronization
+    else:
+        assert tester.command.installer._requires_synchronization

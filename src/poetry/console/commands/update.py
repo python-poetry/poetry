@@ -26,10 +26,9 @@ class UpdateCommand(InstallerCommand):
     options: ClassVar[list[Option]] = [
         *InstallerCommand._group_dependency_options(),
         option(
-            "sync",
+            "keep-untracked",
             None,
-            "Synchronize the environment with the locked packages and the specified"
-            " groups.",
+            "Do not uninstall the untracked packages.",
         ),
         option(
             "dry-run",
@@ -49,7 +48,7 @@ class UpdateCommand(InstallerCommand):
 
         self.installer.only_groups(self.activated_groups)
         self.installer.dry_run(self.option("dry-run"))
-        self.installer.requires_synchronization(self.option("sync"))
+        self.installer.requires_synchronization(not self.option("keep-untracked"))
         self.installer.execute_operations(not self.option("lock"))
 
         # Force update

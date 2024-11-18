@@ -119,7 +119,7 @@ Thus, dependencies are resolved by `pip`.
 [testenv]
 allowlist_externals = poetry
 commands_pre =
-    poetry install --no-root --sync
+    poetry install --no-root
 commands =
     poetry run pytest tests/ --import-mode importlib
 ```

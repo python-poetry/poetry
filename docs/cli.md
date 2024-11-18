@@ -139,7 +139,8 @@ poetry init
 ## install
 
 The `install` command reads the `pyproject.toml` file from the current project,
-resolves the dependencies, and installs them.
+resolves the dependencies, and installs them. It also uninstalls packages
+that are not required per default.
 
 ```bash
 poetry install
@@ -185,19 +186,18 @@ poetry install --only-root
 See [Dependency groups]({{< relref "managing-dependencies#dependency-groups" >}}) for more information
 about dependency groups.
 
-If you want to synchronize your environment – and ensure it matches the lock file – use the
-`--sync` option.
+If you want to keep untracked packages use the `--keep-untracked` option.
 
 ```bash
-poetry install --sync
+poetry install --keep-untracked
 ```
 
-The `--sync` can be combined with group-related options:
+The `--keep-untracked` can be combined with group-related options:
 
 ```bash
-poetry install --without dev --sync
-poetry install --with docs --sync
-poetry install --only dev --sync
+poetry install --without dev --keep-untracked
+poetry install --with docs --keep-untracked
+poetry install --only dev --keep-untracked
 ```
 
 You can also specify the extras you want installed
@@ -210,7 +210,7 @@ poetry install -E mysql -E pgsql
 poetry install --all-extras
 ```
 
-Extras are not sensitive to `--sync`.  Any extras not specified will always be removed.
+Extras are not sensitive to `--keep-untracked`. Any extras not specified will always be removed.
 
 ```bash
 poetry install --extras "A B"  # C is removed
@@ -257,7 +257,7 @@ poetry install --compile
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
 * `--only-root`: Install only the root project, exclude all dependencies.
-* `--sync`: Synchronize the environment with the locked packages and the specified groups.
+* `--keep-untracked`: Do not uninstall the untracked packages.
 * `--no-root`: Do not install the root package (your project).
 * `--no-directory`: Skip all directory path dependencies (including transitive ones).
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
@@ -265,7 +265,6 @@ poetry install --compile
 * `--all-extras`: Install all extra features (conflicts with `--extras`).
 * `--all-groups`: Install dependencies from all groups (conflicts with `--only`, `--with`, and `--without`).
 * `--compile`: Compile Python source files to bytecode.
-* `--remove-untracked`: Remove dependencies not presented in the lock file. (**Deprecated**, use `--sync` instead)
 
 {{% note %}}
 When `--only` is specified, `--with` and `--without` options are ignored.
@@ -304,7 +303,7 @@ You can do this using the `add` command.
 * `--only`: The only dependency groups to include.
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables `--verbose`).
 * `--lock` : Do not perform install (only update the lockfile).
-* `--sync`: Synchronize the environment with the locked packages and the specified groups.
+* `--keep-untracked`: Do not uninstall the untracked packages.
 
 {{% note %}}
 When `--only` is specified, `--with` and `--without` options are ignored.
@@ -1066,10 +1065,10 @@ is different in that the packages managed are for Poetry's runtime environment.
 {{% /note %}}
 
 ```bash
-poetry self install --sync
+poetry self install
 ```
 
 #### Options
 
-* `--sync`: Synchronize the environment with the locked packages and the specified groups.
+* `--keep-untracked`: Do not uninstall the untracked packages.
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).

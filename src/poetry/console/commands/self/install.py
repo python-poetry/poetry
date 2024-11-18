@@ -19,7 +19,7 @@ class SelfInstallCommand(SelfCommand, InstallCommand):
         "Install locked packages (incl. addons) required by this Poetry installation."
     )
     options: ClassVar[list[Option]] = [
-        o for o in InstallCommand.options if o.name in {"sync", "dry-run"}
+        o for o in InstallCommand.options if o.name in {"keep-untracked", "dry-run"}
     ]
     help = f"""\
 The <c1>self install</c1> command ensures all additional packages specified are \

@@ -154,18 +154,22 @@ def test_group_options_are_passed_to_the_installer(
         assert editable_builder_mock.call_count == 0
 
 
-def test_sync_option_is_passed_to_the_installer(
-    tester: CommandTester, mocker: MockerFixture
+@pytest.mark.parametrize("options", ["", "--keep-untracked"])
+def test_keep_untracked_option_is_passed_to_the_installer(
+    tester: CommandTester, mocker: MockerFixture, options: str
 ) -> None:
     """
-    The --sync option is passed properly to the installer.
+    The --keep-untracked option is passed properly to the installer.
     """
     assert isinstance(tester.command, InstallerCommand)
     mocker.patch.object(tester.command.installer, "run", return_value=1)
 
-    tester.execute("--sync")
+    tester.execute(options)
 
-    assert tester.command.installer._requires_synchronization
+    if options:
+        assert not tester.command.installer._requires_synchronization
+    else:
+        assert tester.command.installer._requires_synchronization
 
 
 @pytest.mark.parametrize("compile", [False, True])
