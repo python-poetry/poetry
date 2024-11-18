@@ -462,16 +462,7 @@ class Provider:
             for dep in dependencies
             if dep.name not in self.UNSAFE_PACKAGES
             and self._python_constraint.allows_any(dep.python_constraint)
-            and (
-                not self._env
-                or dep.marker.validate(
-                    self._marker_values(
-                        self._active_root_extras
-                        if dependency_package.package.is_root()
-                        else dependency_package.dependency.extras
-                    )
-                )
-            )
+            and (not self._env or dep.marker.validate(self._env.marker_env))
         ]
         dependencies = self._get_dependencies_with_overrides(_dependencies, package)
 

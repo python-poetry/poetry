@@ -4792,8 +4792,11 @@ def test_solver_resolves_duplicate_dependency_in_root_extra(
     repo.add_package(package_a1)
     repo.add_package(package_a2)
 
-    solver = Solver(package, pool, [], [], io, active_root_extras=extra)
-    transaction = solver.solve()
+    solver = Solver(
+        package, pool, [], [package_a1, package_a2], io, active_root_extras=extra
+    )
+    with solver.use_environment(MockEnv()):
+        transaction = solver.solve()
 
     check_solver_result(
         transaction,
