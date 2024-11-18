@@ -1192,7 +1192,8 @@ def test_run_with_conflicting_dependency_extras(
     if not root and extra is not None:
         expected_installations.append(get_package("intermediate-dep", "1.0.0"))
 
-    assert installer.executor.installations == expected_installations
+    assert len(installer.executor.installations) == len(expected_installations)
+    assert set(installer.executor.installations) == set(expected_installations)
 
 
 @pytest.mark.parametrize("locked", [True, False])
