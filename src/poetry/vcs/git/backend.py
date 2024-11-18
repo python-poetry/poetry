@@ -18,7 +18,6 @@ from dulwich.config import ConfigFile
 from dulwich.config import parse_submodules
 from dulwich.errors import NotGitRepository
 from dulwich.index import IndexEntry
-from dulwich.objects import Commit
 from dulwich.refs import ANNOTATED_TAG_SUFFIX
 from dulwich.repo import Repo
 
@@ -55,14 +54,14 @@ class GitRefSpec:
     tag: str | None = None
     ref: bytes = dataclasses.field(default_factory=lambda: b"HEAD")
 
-    def resolve(self, remote_refs: FetchPackResult) -> None:
+    def resolve(self, remote_refs: FetchPackResult, repo: Repo) -> None:
         """
         Resolve the ref using the provided remote refs.
         """
-        self._normalise(remote_refs=remote_refs)
+        self._normalise(remote_refs=remote_refs, repo=repo)
         self._set_head(remote_refs=remote_refs)
 
-    def _normalise(self, remote_refs: FetchPackResult) -> None:
+    def _normalise(self, remote_refs: FetchPackResult, repo: Repo) -> None:
         """
         Internal helper method to determine if given revision is
             1. a branch or tag; if so, set corresponding properties.
@@ -99,7 +98,12 @@ class GitRefSpec:
             for sha in remote_refs.refs.values():
                 if sha.startswith(short_sha):
                     self.revision = sha.decode("utf-8")
-                    break
+                    return
+
+            # no heads with such SHA, let's check all objects
+            for sha in repo.object_store.iter_prefix(short_sha):
+                self.revision = sha.decode("utf-8")
+                return
 
     def _set_head(self, remote_refs: FetchPackResult) -> None:
         """
@@ -270,7 +274,7 @@ class Git:
         )
 
         try:
-            refspec.resolve(remote_refs=remote_refs)
+            refspec.resolve(remote_refs=remote_refs, repo=local)
         except KeyError:  # branch / ref does not exist
             raise PoetryConsoleError(
                 f"Failed to clone {url} at '{refspec.key}', verify ref exists on"
@@ -314,37 +318,12 @@ class Git:
             if isinstance(e, AssertionError) and "Invalid object name" not in str(e):
                 raise
 
-            short_ref_found = False
-
-            if refspec.is_sha_short:
-                commit = cls._find_object_by_sha_prefix(local, refspec.key.encode())
-                if commit is not None:
-                    logger.debug(
-                        "\nResolved short SHA <c2>%s</c2> as <c2>%s</c2>",
-                        refspec.key,
-                        commit.id,
-                    )
-                    local.refs[b"HEAD"] = commit.id
-                    with local:
-                        local.reset_index()
-                    short_ref_found = True
-
-            if not short_ref_found:
-                raise PoetryConsoleError(
-                    f"Failed to clone {url} at '{refspec.key}', verify ref exists on"
-                    " remote."
-                )
+            raise PoetryConsoleError(
+                f"Failed to clone {url} at '{refspec.key}', verify ref exists on"
+                " remote."
+            )
 
         return local
-
-    @classmethod
-    def _find_object_by_sha_prefix(cls, repo: Repo, sha_prefix: bytes) -> Commit | None:
-        for sha in repo.object_store:
-            if sha.startswith(sha_prefix):
-                obj = repo.object_store[sha]
-                if isinstance(obj, Commit):
-                    return obj
-        return None
 
     @classmethod
     def _clone_submodules(cls, repo: Repo) -> None:
