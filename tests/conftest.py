@@ -22,6 +22,7 @@ from keyring.backends.fail import Keyring as FailKeyring
 from keyring.credentials import SimpleCredential
 from keyring.errors import KeyringError
 from keyring.errors import KeyringLocked
+from pytest import FixtureRequest
 
 from poetry.config.config import Config as BaseConfig
 from poetry.config.dict_config_source import DictConfigSource
@@ -323,7 +324,10 @@ def isolate_environ() -> Iterator[None]:
 
 
 @pytest.fixture(autouse=True)
-def git_mock(mocker: MockerFixture) -> None:
+def git_mock(mocker: MockerFixture, request: FixtureRequest) -> None:
+    if request.node.get_closest_marker("skip_git_mock"):
+        return
+
     # Patch git module to not actually clone projects
     mocker.patch("poetry.vcs.git.Git.clone", new=mock_clone)
     p = mocker.patch("poetry.vcs.git.Git.get_revision")

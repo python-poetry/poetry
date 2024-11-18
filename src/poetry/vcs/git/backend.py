@@ -54,14 +54,14 @@ class GitRefSpec:
     tag: str | None = None
     ref: bytes = dataclasses.field(default_factory=lambda: b"HEAD")
 
-    def resolve(self, remote_refs: FetchPackResult) -> None:
+    def resolve(self, remote_refs: FetchPackResult, repo: Repo) -> None:
         """
         Resolve the ref using the provided remote refs.
         """
-        self._normalise(remote_refs=remote_refs)
+        self._normalise(remote_refs=remote_refs, repo=repo)
         self._set_head(remote_refs=remote_refs)
 
-    def _normalise(self, remote_refs: FetchPackResult) -> None:
+    def _normalise(self, remote_refs: FetchPackResult, repo: Repo) -> None:
         """
         Internal helper method to determine if given revision is
             1. a branch or tag; if so, set corresponding properties.
@@ -98,7 +98,12 @@ class GitRefSpec:
             for sha in remote_refs.refs.values():
                 if sha.startswith(short_sha):
                     self.revision = sha.decode("utf-8")
-                    break
+                    return
+
+            # no heads with such SHA, let's check all objects
+            for sha in repo.object_store.iter_prefix(short_sha):
+                self.revision = sha.decode("utf-8")
+                return
 
     def _set_head(self, remote_refs: FetchPackResult) -> None:
         """
@@ -269,7 +274,7 @@ class Git:
         )
 
         try:
-            refspec.resolve(remote_refs=remote_refs)
+            refspec.resolve(remote_refs=remote_refs, repo=local)
         except KeyError:  # branch / ref does not exist
             raise PoetryConsoleError(
                 f"Failed to clone {url} at '{refspec.key}', verify ref exists on"
@@ -312,14 +317,6 @@ class Git:
 
             if isinstance(e, AssertionError) and "Invalid object name" not in str(e):
                 raise
-
-            logger.debug(
-                "\nRequested ref (<c2>%s</c2>) was not fetched to local copy and"
-                " cannot be used. The following error was"
-                " raised:\n\n\t<warning>%s</>",
-                refspec.key,
-                e,
-            )
 
             raise PoetryConsoleError(
                 f"Failed to clone {url} at '{refspec.key}', verify ref exists on"
