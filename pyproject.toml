@@ -52,6 +52,7 @@ tomli = { version = "^2.0.1", python = "<3.11" }
 tomlkit = ">=0.11.4,<1.0.0"
 # trove-classifiers uses calver, so version is unclamped
 trove-classifiers = ">=2022.5.19"
+truststore = { version = ">=0.10.0,<1.0.0", python = ">=3.10" }
 virtualenv = "^20.26.6"
 xattr = { version = "^1.0.0", markers = "sys_platform == 'darwin'" }
 
@@ -180,6 +181,7 @@ module = [
     'shellingham.*',
     'virtualenv.*',
     'xattr.*',
+    'truststore.*' # not available on Python < 3.10
 ]
 ignore_missing_imports = true
 

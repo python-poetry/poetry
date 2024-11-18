@@ -1440,6 +1440,17 @@ files = [
 ]
 
 [[package]]
+name = "truststore"
+version = "0.10.0"
+description = "Verify certificates using native system trust stores"
+optional = false
+python-versions = ">=3.10"
+files = [
+    {file = "truststore-0.10.0-py3-none-any.whl", hash = "sha256:b3798548e421ffe2ca2a6217cca49e7a17baf40b72d86a5505dc7d701e77d15b"},
+    {file = "truststore-0.10.0.tar.gz", hash = "sha256:5da347c665714fdfbd46f738c823fe9f0d8775e41ac5fb94f325749091187896"},
+]
+
+[[package]]
 name = "types-requests"
 version = "2.32.0.20240712"
 description = "Typing stubs for requests"
@@ -1592,4 +1603,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "e2d6c99c48c675f99c7f00d304e0982dcc865d08572f6ec065e12e51b66d47b4"
+content-hash = "6e7caebd49719cc63f79ae2320868136bb3152b76b2cba2426fb66fb6b5ef9bf"

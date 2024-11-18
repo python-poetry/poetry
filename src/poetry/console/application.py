@@ -171,6 +171,8 @@ class Application(BaseApplication):
 
         self._load_plugins(io)
 
+        self._load_system_truststore()
+
         exit_code: int = super()._run(io)
         return exit_code
 
@@ -337,6 +339,15 @@ class Application(BaseApplication):
             manager.activate(self)
 
         self._plugins_loaded = True
+
+    @staticmethod
+    def _load_system_truststore() -> None:
+        from poetry.utils.ssl_truststore import is_truststore_enabled
+
+        if is_truststore_enabled():
+            import truststore
+
+            truststore.inject_into_ssl()
 
     @property
     def _default_definition(self) -> Definition:
