@@ -281,7 +281,8 @@ you should use the `update` command.
 poetry update
 ```
 
-This will resolve all main dependencies of the project and write the exact versions into `poetry.lock`.
+This will resolve all dependencies of the project, write the exact versions into `poetry.lock`,
+and subsequently update the main dependencies.
 
 If you just want to update a few packages and not all, you can list them as such:
 
