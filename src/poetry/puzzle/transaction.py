@@ -42,15 +42,19 @@ class Transaction:
 
     def calculate_operations(
         self,
+        *,
         with_uninstalls: bool = True,
         synchronize: bool = False,
-        *,
         skip_directory: bool = False,
         extras: set[NormalizedName] | None = None,
+        system_site_packages: set[NormalizedName] | None = None,
     ) -> list[Operation]:
         from poetry.installation.operations import Install
         from poetry.installation.operations import Uninstall
         from poetry.installation.operations import Update
+
+        if not system_site_packages:
+            system_site_packages = set()
 
         operations: list[Operation] = []
 
@@ -105,7 +109,8 @@ class Transaction:
                     # Extras that were not requested are always uninstalled.
                     if is_unsolicited_extra:
                         uninstalls.add(installed_package.name)
-                        operations.append(Uninstall(installed_package))
+                        if installed_package.name not in system_site_packages:
+                            operations.append(Uninstall(installed_package))
 
                     # We have to perform an update if the version or another
                     # attribute of the package has changed (source type, url, ref, ...).
@@ -156,7 +161,8 @@ class Transaction:
                     for installed_package in self._installed_packages:
                         if installed_package.name == current_package.name:
                             uninstalls.add(installed_package.name)
-                            operations.append(Uninstall(installed_package))
+                            if installed_package.name not in system_site_packages:
+                                operations.append(Uninstall(installed_package))
 
             if synchronize:
                 # We preserve pip when not managed by poetry, this is done to avoid
@@ -178,7 +184,8 @@ class Transaction:
 
                     if installed_package.name not in relevant_result_packages:
                         uninstalls.add(installed_package.name)
-                        operations.append(Uninstall(installed_package))
+                        if installed_package.name not in system_site_packages:
+                            operations.append(Uninstall(installed_package))
 
         return sorted(
             operations,

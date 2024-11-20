@@ -29,8 +29,8 @@ from poetry.config.dict_config_source import DictConfigSource
 from poetry.factory import Factory
 from poetry.layouts import layout
 from poetry.packages.direct_origin import _get_package_from_git
-from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
+from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils.cache import ArtifactCache
 from poetry.utils.env import EnvManager
 from poetry.utils.env import SystemEnv
@@ -379,8 +379,8 @@ def tmp_venv(tmp_path: Path) -> Iterator[VirtualEnv]:
 
 
 @pytest.fixture
-def installed() -> Repository:
-    return Repository("installed")
+def installed() -> InstalledRepository:
+    return InstalledRepository()
 
 
 @pytest.fixture(scope="session")
@@ -412,7 +412,7 @@ def project_factory(
     tmp_path: Path,
     config: Config,
     repo: TestRepository,
-    installed: Repository,
+    installed: InstalledRepository,
     default_python: str,
     load_required_fixtures: None,
 ) -> ProjectFactory:
