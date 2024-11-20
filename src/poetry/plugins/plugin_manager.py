@@ -19,7 +19,6 @@ from poetry.installation import Installer
 from poetry.packages import Locker
 from poetry.plugins.application_plugin import ApplicationPlugin
 from poetry.plugins.plugin import Plugin
-from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.toml import TOMLFile
 from poetry.utils._compat import metadata
@@ -288,7 +287,7 @@ class ProjectPluginCache:
             self._poetry.config,
             # Build installed repository from locked packages so that plugins
             # that may be overwritten are not included.
-            Repository("poetry-repo", locked_packages),
+            InstalledRepository(locked_packages),
         )
         installer.update(True)
 
