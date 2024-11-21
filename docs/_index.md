@@ -285,6 +285,16 @@ rm -rf "${POETRY_HOME:-~/.poetry}"
 Also remove ~/.poetry/bin from your `$PATH` in your shell configuration, if it is present.
 {{% /warning %}}
 
+If you installed Poetry via Powershell:
+```powershell
+(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py - --uninstall
+```
+
+{{% note %}}
+If you have installed Python through the Microsoft Store, replace `py` with `python` in the command
+above.
+{{% /note %}}
+
 {{< /step >}}
 {{< /steps >}}
 
