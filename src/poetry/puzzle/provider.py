@@ -421,21 +421,12 @@ class Provider:
                         )
                     ]
 
-        _dependencies = [
-            dep
-            for dep in dependencies
-            if dep.name not in self.UNSAFE_PACKAGES
-            and self._python_constraint.allows_any(dep.python_constraint)
-            and (not self._env or dep.marker.validate(self._env.marker_env))
-        ]
-        dependencies = self._get_dependencies_with_overrides(_dependencies, package)
-
         return [
             Incompatibility(
                 [Term(package.to_dependency(), True), Term(dep, False)],
                 DependencyCauseError(),
             )
-            for dep in dependencies
+            for dep in self._get_dependencies_with_overrides(dependencies, package)
         ]
 
     def complete_package(
