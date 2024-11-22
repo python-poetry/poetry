@@ -98,6 +98,8 @@ The following is an example, and should not be considered as complete.
 ...
 include = [
     { path = "package/**/*.so", format = "wheel" },
+    # sources must be present in sdist, can be ignored if you only have *.pyx sources
+    { path = "package/**/*.c", format = "sdist" },
 ]
 ```
 
@@ -132,6 +134,10 @@ packages = [
 ]
 include = [
     { path = "src/package/**/*.so", format = "wheel" },
+]
+# if not already excluded via .gitignore
+exclude = [
+    "**/*.c"
 ]
 
 [tool.poetry.build]
@@ -360,6 +366,10 @@ packages = [
 ]
 include = [
     { path = "src/package/**/*.so", format = "wheel" },
+]
+# exclude any intermediate source files
+exclude = [
+    "**/*.c"
 ]
 
 [tool.poetry.build]
