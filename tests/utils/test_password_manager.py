@@ -22,6 +22,12 @@ if TYPE_CHECKING:
     from tests.conftest import DummyBackend
 
 
+@pytest.fixture
+def config(config: Config) -> Config:
+    config.config["keyring"]["enabled"] = True
+    return config
+
+
 def test_set_http_password(
     config: Config, with_simple_keyring: None, dummy_keyring: DummyBackend
 ) -> None:
