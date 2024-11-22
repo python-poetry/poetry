@@ -473,14 +473,14 @@ dependencies = [
 
 ### `extra` environment marker
 
-Poetry populates the `extra` marker with each of the selected extras for the parent declaring the dependency. For
-example, consider the following dependency in your root package:
+Poetry populates the `extra` marker with each of the selected extras of the root package.
+For example, consider the following dependency:
 ```toml
 [tool.poetry.dependencies]
 pathlib2 = { version = "^2.2", markers = "extra == 'paths' and sys_platform == 'win32'", optional = true}
 ```
 `pathlib2` will be installed when you install your package with `--extras paths` on a `win32` machine.
-You'll also need to [define the `paths` extra in your project](./pyproject.md#extras).
+You will also need to [define the `paths` extra in your project]({{< relref "pyproject.md#extras" >}}).
 
 #### Exclusive extras
 
