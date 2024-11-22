@@ -134,7 +134,7 @@ class Config:
         },
         "system-git-client": False,
         "keyring": {
-            "enabled": True,
+            "enabled": False,
         },
     }
 
