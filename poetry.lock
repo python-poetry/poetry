@@ -958,9 +958,9 @@ develop = false
 
 [package.source]
 type = "git"
-url = "https://github.com/python-poetry/poetry-core.git"
-reference = "main"
-resolved_reference = "616d7bfaf018d50bd09bc24c630b697b6368d5a3"
+url = "https://github.com/radoering/poetry-core.git"
+reference = "fix-dependency-merge-by-extra-marker"
+resolved_reference = "fc7b524967386003bc143ef71ca740e3c84e72ac"
 
 [[package]]
 name = "pre-commit"
@@ -1472,4 +1472,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "abcf5a628d4f501a0a8c84fbaa96906dd7985317613f176bb2d4eee15e06313d"
+content-hash = "640e463c5fc83d34bd4058225a67e133fe8e40bb140b3efe69b7fa5ec67fffd1"
