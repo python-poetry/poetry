@@ -18,6 +18,7 @@ from poetry.core.constraints.version import Version
 from poetry.core.constraints.version import VersionRange
 from poetry.core.packages.utils.utils import get_python_constraint_from_marker
 from poetry.core.version.markers import AnyMarker
+from poetry.core.version.markers import parse_marker
 from poetry.core.version.markers import union as marker_union
 
 from poetry.mixology.incompatibility import Incompatibility
@@ -476,7 +477,7 @@ class Provider:
             package = dependency_package.package
             dependency = dependency_package.dependency
             new_dependency = package.without_features().to_dependency()
-            new_dependency.marker = AnyMarker()
+            new_dependency.marker = dependency.marker
 
             # When adding dependency foo[extra] -> foo, preserve foo's source, if it's
             # specified. This prevents us from trying to get foo from PyPI
@@ -510,6 +511,24 @@ class Provider:
                 )
             ):
                 continue
+
+            # For normal dependency resolution, we have to make sure that root extras
+            # are represented in the markers. This is required to identify mutually
+            # exclusive markers in cases like 'extra == "foo"' and 'extra != "foo"'.
+            # However, for installation with re-resolving (installer.re-resolve=true,
+            # which results in self._env being not None), this spoils the result
+            # because we have to keep extras so that they are uninstalled
+            # when calculating the operations of the transaction.
+            if self._env is None and package.is_root() and dep.in_extras:
+                # The clone is required for installation with re-resolving
+                # without an existing lock file because the root package is used
+                # once for solving and a second time for re-resolving for installation.
+                dep = dep.clone()
+                dep.marker = dep.marker.intersect(
+                    parse_marker(
+                        " or ".join(f'extra == "{extra}"' for extra in dep.in_extras)
+                    )
+                )
 
             _dependencies.append(dep)
 
