@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import contextlib
 import os
 import re
-import site
 import subprocess
 import sys
 
@@ -297,16 +295,31 @@ def test_env_system_packages_are_relative_to_lib(
         path=venv_path, flags={"system-site-packages": with_system_site_packages}
     )
     env = VirtualEnv(venv_path)
-    site_dir = Path(site.getsitepackages()[-1])
+
+    # These are Poetry's own dependencies.
+    # They should not be relative to the virtualenv's lib directory.
     for dist in metadata.distributions():
-        # Emulate is_relative_to, only available in 3.9+
-        with contextlib.suppress(ValueError):
-            dist._path.relative_to(site_dir)  # type: ignore[attr-defined]
-            break
-    assert (
-        env.is_path_relative_to_lib(dist._path)  # type: ignore[attr-defined]
-        is with_system_site_packages
-    )
+        assert not env.is_path_relative_to_lib(
+            Path(str(dist._path))  # type: ignore[attr-defined]
+        )
+        # Checking one package is sufficient
+        break
+    else:
+        pytest.fail("No distributions found in Poetry's own environment")
+
+    # These are the virtual environments' base env packages,
+    # in this case the system site packages.
+    for dist in metadata.distributions(path=[str(env.parent_env.site_packages.path)]):
+        assert (
+            env.is_path_relative_to_lib(
+                Path(str(dist._path))  # type: ignore[attr-defined]
+            )
+            is with_system_site_packages
+        )
+        # Checking one package is sufficient
+        break
+    else:
+        pytest.fail("No distributions found in the base environment of the virtualenv")
 
 
 @pytest.mark.parametrize(

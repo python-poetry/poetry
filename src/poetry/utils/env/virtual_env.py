@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import os
 import re
-import sys
 
 from contextlib import contextmanager
 from copy import deepcopy
@@ -17,7 +16,6 @@ from poetry.utils.env.script_strings import GET_BASE_PREFIX
 from poetry.utils.env.script_strings import GET_ENVIRONMENT_INFO
 from poetry.utils.env.script_strings import GET_PATHS
 from poetry.utils.env.script_strings import GET_SYS_PATH
-from poetry.utils.env.system_env import SystemEnv
 
 
 if TYPE_CHECKING:
@@ -145,5 +143,5 @@ class VirtualEnv(Env):
     def is_path_relative_to_lib(self, path: Path) -> bool:
         return super().is_path_relative_to_lib(path) or (
             self.includes_system_site_packages
-            and SystemEnv(Path(sys.prefix)).is_path_relative_to_lib(path)
+            and self.parent_env.is_path_relative_to_lib(path)
         )
