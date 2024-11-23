@@ -380,10 +380,10 @@ def test_calculate_operations_extras_no_redundant_uninstall(extra: str) -> None:
     extra2 = canonicalize_name("bar")
     package = ProjectPackage("root", "1.0")
     dep_a1 = Dependency("a", "1", optional=True)
-    dep_a1._in_extras = ["foo"]
+    dep_a1._in_extras = [canonicalize_name("foo")]
     dep_a1.marker = parse_marker("extra != 'bar'")
     dep_a2 = Dependency("a", "2", optional=True)
-    dep_a2._in_extras = ["bar"]
+    dep_a2._in_extras = [canonicalize_name("bar")]
     dep_a2.marker = parse_marker("extra != 'foo'")
     package.add_dependency(dep_a1)
     package.add_dependency(dep_a2)
