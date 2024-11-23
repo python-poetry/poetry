@@ -74,7 +74,7 @@ class Transaction:
         else:
             priorities = defaultdict(int)
         relevant_result_packages: set[NormalizedName] = set()
-        uninstalls: set[NormalizedName] = set()
+        pending_extra_uninstalls: list[Package] = []  # list for deterministic order
         for result_package in self._result_packages:
             is_unsolicited_extra = False
             if self._marker_env:
@@ -91,11 +91,12 @@ class Transaction:
                 else:
                     continue
             else:
-                relevant_result_packages.add(result_package.name)
                 is_unsolicited_extra = extras is not None and (
                     result_package.optional
                     and result_package.name not in extra_packages
                 )
+                if not is_unsolicited_extra:
+                    relevant_result_packages.add(result_package.name)
 
             installed = False
             for installed_package in self._installed_packages:
@@ -104,8 +105,7 @@ class Transaction:
 
                     # Extras that were not requested are always uninstalled.
                     if is_unsolicited_extra:
-                        uninstalls.add(installed_package.name)
-                        operations.append(Uninstall(installed_package))
+                        pending_extra_uninstalls.append(installed_package)
 
                     # We have to perform an update if the version or another
                     # attribute of the package has changed (source type, url, ref, ...).
@@ -147,6 +147,12 @@ class Transaction:
                 if is_unsolicited_extra:
                     op.skip("Not required")
                 operations.append(op)
+
+        uninstalls: set[NormalizedName] = set()
+        for package in pending_extra_uninstalls:
+            if package.name not in (relevant_result_packages | uninstalls):
+                uninstalls.add(package.name)
+                operations.append(Uninstall(package))
 
         if with_uninstalls:
             for current_package in self._current_packages:
