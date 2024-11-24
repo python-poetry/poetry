@@ -113,3 +113,9 @@ external formats like virtual environments
 * [install.python-poetry.org](https://github.com/python-poetry/install.python-poetry.org): The official Poetry
 installation script
 * [website](https://github.com/python-poetry/website): The official Poetry website and blog
+
+## Supporters
+
+Thanks to [JetBrains](https://www.jetbrains.com) for supporting us with licenses for their tools.
+
+[<img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg" width="150" alt="JetBrains logo." />](https://www.jetbrains.com)
