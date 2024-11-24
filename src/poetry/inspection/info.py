@@ -4,6 +4,7 @@ import contextlib
 import functools
 import glob
 import logging
+import subprocess
 import tempfile
 
 from pathlib import Path
@@ -542,7 +543,33 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
             info = PackageInfo.from_metadata_directory(dest)
         except BuildBackendException as e:
             logger.debug("PEP517 build failed: %s", e)
-            raise PackageInfoError(path, e, "PEP517 build failed")
+
+            if isinstance(e.exception, subprocess.CalledProcessError):
+                inner_traceback = (
+                    e.exception.output.decode()
+                    if type(e.exception.output) is bytes
+                    else e.exception.output
+                )
+                inner_reason = "\n    | ".join(
+                    ["", str(e.exception), "", *inner_traceback.split("\n")]
+                )
+                reasons = [
+                    f"<warning>{inner_reason}</warning>",
+                    (
+                        "<info>"
+                        "<options=bold>Note:</> This error originates from the build backend, and is likely not a "
+                        f"problem with poetry but with the package at {path}\n\n"
+                        "  (a) not supporting PEP 517 builds\n"
+                        "  (b) not specifying PEP 517 build requirements correctly; or\n"
+                        "  (c) the build requirement not being successfully installed in your system environment.\n\n"
+                        f'You can verify this by running <c1>pip wheel --no-cache-dir --use-pep517 "{path}"</c1>.'
+                        "</info>"
+                    ),
+                ]
+            else:
+                reasons = [str(e), "PEP517 build failed"]
+
+            raise PackageInfoError(path, *reasons) from None
 
     if info:
         return info
