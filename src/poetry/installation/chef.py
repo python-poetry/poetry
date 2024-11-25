@@ -5,12 +5,9 @@ import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from build import BuildBackendException
 from poetry.core.utils.helpers import temporary_directory
 
-from poetry.utils._compat import decode
 from poetry.utils.helpers import extractall
-from poetry.utils.isolated_build import IsolatedBuildError
 from poetry.utils.isolated_build import isolated_builder
 
 
@@ -48,38 +45,19 @@ class Chef:
     def _prepare(
         self, directory: Path, destination: Path, *, editable: bool = False
     ) -> Path:
-        from subprocess import CalledProcessError
-
         distribution: DistributionType = "editable" if editable else "wheel"
-        error: Exception | None = None
-
-        try:
-            with isolated_builder(
-                source=directory,
-                distribution=distribution,
-                python_executable=self._env.python,
-                pool=self._pool,
-            ) as builder:
-                return Path(
-                    builder.build(
-                        distribution,
-                        destination.as_posix(),
-                    )
+        with isolated_builder(
+            source=directory,
+            distribution=distribution,
+            python_executable=self._env.python,
+            pool=self._pool,
+        ) as builder:
+            return Path(
+                builder.build(
+                    distribution,
+                    destination.as_posix(),
                 )
-        except BuildBackendException as e:
-            message_parts = [str(e)]
-
-            if isinstance(e.exception, CalledProcessError):
-                text = e.exception.stderr or e.exception.stdout
-                if text is not None:
-                    message_parts.append(decode(text))
-            else:
-                message_parts.append(str(e.exception))
-
-            error = IsolatedBuildError("\n\n".join(message_parts))
-
-        if error is not None:
-            raise error from None
+            )
 
     def _prepare_sdist(self, archive: Path, destination: Path | None = None) -> Path:
         from poetry.core.packages.utils.link import Link

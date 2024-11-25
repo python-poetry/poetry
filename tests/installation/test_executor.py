@@ -1292,18 +1292,6 @@ def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess(
     assert return_code == 1
 
     package_url = directory_package.source_url
-    expected_start = f"""
-Package operations: 1 install, 0 updates, 0 removals
-
-  - Installing {package_name} ({package_version} {package_url})
-
-  IsolatedBuildError
-
-  hide the original error
-  \
-
-  original error
-"""
 
     assert directory_package.source_url is not None
     if editable:
@@ -1313,16 +1301,41 @@ Package operations: 1 install, 0 updates, 0 removals
     else:
         pip_command = "pip wheel --no-cache-dir --use-pep517"
         requirement = f"{package_name} @ {path_to_url(directory_package.source_url)}"
-    expected_end = f"""
-Note: This error originates from the build backend, and is likely not a problem with \
-poetry but with {package_name} ({package_version} {package_url}) not supporting \
-PEP 517 builds. You can verify this by running '{pip_command} "{requirement}"'.
+
+    expected_source_string = f"{package_name} ({package_version} {package_url})"
+    expected_pip_command = f'{pip_command} "{requirement}"'
+
+    expected_output = f"""
+Package operations: 1 install, 0 updates, 0 removals
+
+  - Installing {package_name} ({package_version} {package_url})
+
+PEP517 build of a dependency failed
+
+hide the original error
+"""
+
+    if isinstance(exception, CalledProcessError):
+        expected_output += (
+            "\n    | Command '['pip']' returned non-zero exit status 1."
+            "\n    | "
+            "\n    | original error"
+            "\n"
+        )
+
+    expected_output += f"""
+Note: This error originates from the build backend, and is likely not a problem with poetry but one of the following issues with {expected_source_string}
+
+  - not supporting PEP 517 builds
+  - not specifying PEP 517 build requirements correctly
+  - the build requirements are incompatible with your operating system or Python version
+  - the build requirements are missing system dependencies (eg: compilers, libraries, headers).
+
+You can verify this by running {expected_pip_command}.
 
 """
 
-    output = io.fetch_output()
-    assert output.startswith(expected_start)
-    assert output.endswith(expected_end)
+    assert io.fetch_output() == expected_output
 
 
 @pytest.mark.parametrize("encoding", ["utf-8", "latin-1"])
