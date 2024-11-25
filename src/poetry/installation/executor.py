@@ -31,7 +31,7 @@ from poetry.utils.helpers import get_file_hash
 from poetry.utils.helpers import get_highest_priority_hash_type
 from poetry.utils.helpers import pluralize
 from poetry.utils.helpers import remove_directory
-from poetry.utils.isolated_build import IsolatedBuildError
+from poetry.utils.isolated_build import IsolatedBuildBackendError
 from poetry.utils.isolated_build import IsolatedBuildInstallError
 from poetry.vcs.git import Git
 
@@ -300,10 +300,13 @@ class Executor:
                     io = self._sections.get(id(operation), self._io)
 
                 with self._lock:
-                    trace = ExceptionTrace(e)
-                    trace.render(io)
                     pkg = operation.package
-                    if isinstance(e, IsolatedBuildError):
+                    with_trace = True
+
+                    if isinstance(e, IsolatedBuildBackendError):
+                        # TODO: Revisit once upstream fix is available https://github.com/python-poetry/cleo/issues/454
+                        # we disable trace here explicitly to workaround incorrect context detection by crashtest
+                        with_trace = False
                         pip_command = "pip wheel --no-cache-dir --use-pep517"
                         if pkg.develop:
                             requirement = pkg.source_url
@@ -312,14 +315,9 @@ class Executor:
                             requirement = (
                                 pkg.to_dependency().to_pep_508().split(";")[0].strip()
                             )
-                        message = (
-                            "<info>"
-                            "Note: This error originates from the build backend,"
-                            " and is likely not a problem with poetry"
-                            f" but with {pkg.pretty_name} ({pkg.full_pretty_version})"
-                            " not supporting PEP 517 builds. You can verify this by"
-                            f" running '{pip_command} \"{requirement}\"'."
-                            "</info>"
+                        message = e.generate_message(
+                            source_string=f"{pkg.pretty_name} ({pkg.full_pretty_version})",
+                            build_command=f'{pip_command} "{requirement}"',
                         )
                     elif isinstance(e, IsolatedBuildInstallError):
                         message = (
@@ -337,6 +335,9 @@ class Executor:
                         )
                     else:
                         message = f"<error>Cannot install {pkg.pretty_name}.</error>"
+
+                    if with_trace:
+                        ExceptionTrace(e).render(io)
 
                     io.write_line("")
                     io.write_line(message)
