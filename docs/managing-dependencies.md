@@ -11,25 +11,26 @@ type: docs
 
 # Managing dependencies
 
-{{% note %}}
-Since Poetry 2.0, main dependencies can be specified in `project.dependencies`
-instead of `tool.poetry.dependencies`.
+Poetry supports specifying main dependencies in the [`project.dependencies`]({{< relref "pyproject#dependencies" >}}) section of your `pyproject.toml`
+according to PEP 621. For legacy reasons and to define additional information that are only used by Poetry
+the [`tool.poetry.dependencies`]({{< relref "pyproject#dependencies-and-dependency-groups" >}}) sections can be used.
+
 See [Dependency specification]({{< relref "dependency-specification" >}}) for more information.
-Only main dependencies can be specified in the `project` section.
-Other groups must still be specified in the `tool.poetry` section.
-{{% /note %}}
 
 ## Dependency groups
 
-Poetry provides a way to **organize** your dependencies by **groups**. For instance, you might have
-dependencies that are only needed to test your project or to build the documentation.
+Poetry provides a way to **organize** your dependencies by **groups**.
+
+The dependencies declared in `project.dependencies` respectively `tool.poetry.dependencies`
+are part of an implicit `main` group. Those dependencies are required by your project during runtime.
+
+Beside the `main` depdendencies, you might have dependencies that are only needed to test your project
+or to build the documentation.
 
 To declare a new dependency group, use a `tool.poetry.group.<group>` section
 where `<group>` is the name of your dependency group (for instance, `test`):
 
 ```toml
-[tool.poetry.group.test]  # This part can be left out
-
 [tool.poetry.group.test.dependencies]
 pytest = "^6.0.0"
 pytest-mock = "*"
@@ -45,34 +46,6 @@ the dependencies logically.
 {{% /note %}}
 
 {{% note %}}
-The dependencies declared in `project.dependencies` respectively `tool.poetry.dependencies`
-are part of an implicit `main` group.
-{{% /note %}}
-
-```toml
-[project]
-# ...
-dependencies = [  # main dependency group
-    "httpx",
-    "pendulum",
-]
-
-[tool.poetry.group.test.dependencies]
-pytest = "^6.0.0"
-pytest-mock = "*"
-```
-
-```toml
-[tool.poetry.dependencies]  # main dependency group
-httpx = "*"
-pendulum = "*"
-
-[tool.poetry.group.test.dependencies]
-pytest = "^6.0.0"
-pytest-mock = "*"
-```
-
-{{% note %}}
 Dependency groups, other than the implicit `main` group, must only contain dependencies you need in your development
 process. Installing them is only possible by using Poetry.
 
@@ -80,32 +53,6 @@ To declare a set of dependencies, which add additional functionality to the proj
 use [extras]({{< relref "pyproject#extras" >}}) instead. Extras can be installed by the end user using `pip`.
 {{% /note %}}
 
-{{% note %}}
-**A note about defining a `dev` dependencies group**
-
-The proper way to define a `dev` dependencies group since Poetry 1.2.0 is the following:
-
-```toml
-[tool.poetry.group.dev.dependencies]
-pytest = "^6.0.0"
-pytest-mock = "*"
-```
-
-This group notation is preferred since Poetry 1.2.0 and not usable in earlier versions.
-For backwards compatibility with older versions of Poetry,
-any dependency declared in the `dev-dependencies` section will automatically be added to the `dev` group.
-So the above and following notations are equivalent:
-
-```toml
-# Poetry pre-1.2.x style, understood by Poetry 1.0–1.2
-[tool.poetry.dev-dependencies]
-pytest = "^6.0.0"
-pytest-mock = "*"
-```
-
-Poetry will slowly transition away from the `dev-dependencies` notation which will soon be deprecated,
-so it's advised to migrate your existing development dependencies to the new `group` notation.
-{{% /note %}}
 
 ### Optional groups
 
@@ -150,9 +97,8 @@ If the group does not already exist, it will be created automatically.
 `poetry install`.
 
 {{% note %}}
-The default set of dependencies for a project includes the implicit `main` group defined in
-`tool.poetry.dependencies` as well as all groups that are not explicitly marked as an
-[optional group]({{< relref "#optional-groups" >}}).
+The default set of dependencies for a project includes the implicit `main` group as well as all
+groups that are not explicitly marked as an [optional group]({{< relref "#optional-groups" >}}).
 {{% /note %}}
 
 You can **exclude** one or more groups with the `--without` option:
@@ -232,10 +178,6 @@ poetry install --without dev --sync
 poetry install --with docs --sync
 poetry install --only dev
 ```
-
-{{% note %}}
-The `--sync` option replaces the `--remove-untracked` option which is now deprecated.
-{{% /note %}}
 
 ## Layering optional groups
 
