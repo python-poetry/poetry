@@ -46,22 +46,20 @@ authors = [
     {name = "Sébastien Eustace", email = "sebastien@eustace.io"}
 ]
 readme = "README.md"
-requires-python = ">=3.8"
-
-[tool.poetry]
-packages = [{include = "poetry_demo"}]
-
+requires-python = ">=3.9"
+dependencies = [
+]
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 ```
 
-Poetry assumes your package contains a package with the same name as `tool.poetry.name` located in the root of your
+Poetry assumes your package contains a package with the same name as `project.name` located in the root of your
 project. If this is not the case, populate [`tool.poetry.packages`]({{< relref "pyproject#packages" >}}) to specify
 your packages and their locations.
 
-Similarly, the traditional `MANIFEST.in` file is replaced by the `tool.poetry.readme`, `tool.poetry.include`, and
+Similarly, the traditional `MANIFEST.in` file is replaced by the `project.readme`, `tool.poetry.include`, and
 `tool.poetry.exclude` sections. `tool.poetry.exclude` is additionally implicitly populated by your `.gitignore`. For
 full documentation on the project format, see the [pyproject section]({{< relref "pyproject" >}}) of the documentation.
 
@@ -79,11 +77,11 @@ Again, it's important to remember that -- unlike other dependencies -- setting a
 For example, in this `pyproject.toml` file:
 
 ```toml
-[tool.poetry.dependencies]
-python = "^3.7.0"
+[project]
+requires-python = ">=3.9"
 ```
 
-we are allowing any version of Python 3 that is greater than `3.7.0`.
+we are allowing any version of Python 3 that is greater or equal than `3.9.0`.
 
 When you run `poetry install`, you must have access to some version of a Python interpreter that satisfies this constraint available on your system.
 Poetry will not install a Python interpreter for you.
@@ -122,11 +120,8 @@ In the [pyproject section]({{< relref "pyproject" >}}) you can see which fields 
 {{% /note %}}
 
 ### Specifying dependencies
-
 If you want to add dependencies to your project, you can specify them in the
-`project` or `tool.poetry.dependencies` section.
-See the [Dependency specification]({{< relref "dependency-specification" >}})
-for more information.
+`project` section.
 
 ```toml
 [project]
@@ -134,13 +129,6 @@ for more information.
 dependencies = [
     "pendulum (>=2.1,<3.0)"
 ]
-```
-
-or
-
-```toml
-[tool.poetry.dependencies]
-pendulum = "^2.1"
 ```
 
 As you can see, it takes a mapping of **package names** and **version constraints**.
@@ -241,8 +229,8 @@ To deactivate this virtual environment simply use `deactivate`.
 
 ## Version constraints
 
-In our example, we are requesting the `pendulum` package with the version constraint `^2.1`.
-This means any version greater or equal to 2.1.0 and less than 3.0.0 (`>=2.1.0 <3.0.0`).
+In our example, we are requesting the `pendulum` package with the version constraint `>=2.1.0 <3.0.0`.
+This means any version greater or equal to 2.1.0 and less than 3.0.0.
 
 Please read [Dependency specification]({{< relref "dependency-specification" >}} "Dependency specification documentation")
 for more in-depth information on versions, how versions relate to each other, and on the different ways you can specify
