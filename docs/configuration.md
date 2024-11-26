@@ -116,7 +116,7 @@ export POETRY_HTTP_BASIC_MY_REPOSITORY_PASSWORD=secret
 
 ## Migrate outdated configs
 
-If poetry renames or remove config options it might be necessary to migrate explicit set options. This is possible
+If Poetry renames or remove config options it might be necessary to migrate explicit set options. This is possible
 by running:
 
 ```bash
