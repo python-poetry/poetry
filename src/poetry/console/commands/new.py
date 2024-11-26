@@ -54,9 +54,9 @@ class NewCommand(InitCommand):
     def handle(self) -> int:
         from pathlib import Path
 
-        if self.io.input.option("directory"):
+        if self.io.input.option("project"):
             self.line_error(
-                "<warning>--directory only makes sense with existing projects, and will"
+                "<warning>--project only makes sense with existing projects, and will"
                 " be ignored. You should consider the option --path instead.</warning>"
             )
 

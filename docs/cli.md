@@ -29,7 +29,8 @@ then `--help` combined with any of those can give you more information.
 * `--no-interaction (-n)`: Do not ask any interactive question.
 * `--no-plugins`: Disables plugins.
 * `--no-cache`: Disables Poetry source caches.
-* `--directory=DIRECTORY (-C)`: The working directory for the Poetry command (defaults to the current working directory).
+* `--directory=DIRECTORY (-C)`: The working directory for the Poetry command (defaults to the current working directory). All command-line arguments will be resolved relative to the given directory.
+* `--project=PROJECT (-P)`: Specify another path as the project root. All command-line arguments will be resolved relative to the current working directory or directory specified using `--directory` option if used.
 
 
 ## new

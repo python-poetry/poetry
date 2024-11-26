@@ -206,7 +206,7 @@ def test_build_relative_directory_src_layout(
         # initializes Poetry before passing the directory.
         app = Application()
         tester = ApplicationTester(app)
-        tester.execute("build --directory .")
+        tester.execute("build --project .")
 
         build_dir = tmp_project_path / "dist"
 
