@@ -421,11 +421,6 @@ my-package = {path = "../my/path", develop = true}
 ```
 
 {{% note %}}
-Before poetry 1.1 path dependencies were installed in editable mode by default. You should always set the `develop` attribute explicitly,
-to make sure the behavior is the same for all poetry versions.
-{{% /note %}}
-
-{{% note %}}
 The `develop` attribute is a Poetry-specific feature, so it is not included in the package distribution metadata.
 In other words, it is only considered when using Poetry to install the project.
 {{% /note %}}
@@ -644,10 +639,24 @@ It can also execute one of the scripts defined in `pyproject.toml`.
 
 So, if you have a script defined like this:
 
+{{< tabs tabTotal="2" tabID1="script-project" tabID2=script-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
+
+{{< tab tabID="script-project" >}}
+```toml
+[project]
+# ...
+[project.scripts]
+my-script = "my_module:main"
+```
+{{< /tab >}}
+
+{{< tab tabID="script-poetry" >}}
 ```toml
 [tool.poetry.scripts]
 my-script = "my_module:main"
 ```
+{{< /tab >}}
+{{< /tabs >}}
 
 You can execute it like so:
 
