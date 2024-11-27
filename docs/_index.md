@@ -18,18 +18,10 @@ Poetry offers a lockfile to ensure repeatable installs, and can build your proje
 
 ## System requirements
 
-Poetry requires **Python 3.8+**. It is multi-platform and the goal is to make it work equally well
+Poetry requires **Python 3.9+**. It is multi-platform and the goal is to make it work equally well
 on Linux, macOS and Windows.
 
 ## Installation
-
-{{% warning %}}
-Poetry should always be installed in a dedicated virtual environment to isolate it from the rest of your system.
-It should in no case be installed in the environment of the project that is to be managed by Poetry.
-This ensures that Poetry's own dependencies will not be accidentally upgraded or uninstalled.
-(Each of the following installation methods ensures that Poetry is installed into an isolated environment.)
-In addition, the isolated virtual environment in which poetry is installed should not be activated for running poetry commands.
-{{% /warning %}}
 
 {{% note %}}
 If you are viewing documentation for the development branch, you may wish to install a preview or development version of Poetry.
@@ -71,15 +63,15 @@ source, having multiple versions installed at the same time etc.
 `pipx` can install different versions of Poetry, using the same syntax as pip:
 
 ```bash
-pipx install poetry==1.2.0
+pipx install poetry==1.8.4
 ```
 
 `pipx` can also install versions of Poetry in parallel, which allows for easy testing of alternate or prerelease
 versions. Each version is given a unique, user-specified suffix, which will be used to create a unique binary name:
 
 ```bash
-pipx install --suffix=@1.2.0 poetry==1.2.0
-poetry@1.2.0 --version
+pipx install --suffix=@1.8.4 poetry==1.8.4
+poetry@1.8.4 --version
 ```
 
 ```bash
@@ -127,21 +119,11 @@ and is developed in [its own repository](https://github.com/python-poetry/instal
 The script can be executed directly (i.e. 'curl python') or downloaded and then executed from disk
 (e.g. in a CI environment).
 
-{{% warning %}}
-The `install-poetry.py` installer has been deprecated and removed from the Poetry repository.
-Please migrate from the in-tree version to the standalone version described above.
-{{% /warning %}}
-
 **Linux, macOS, Windows (WSL)**
 
 ```bash
 curl -sSL https://install.python-poetry.org | python3 -
 ```
-
-{{% note %}}
-Note: On some systems, `python` may still refer to Python 2 instead of Python 3. We always suggest the
-`python3` binary to avoid ambiguity.
-{{% /note %}}
 
 **Windows (Powershell)**
 ```powershell
@@ -187,8 +169,8 @@ Similarly, if you want to install a specific version, you can use `--version` op
 environment variable:
 
 ```bash
-curl -sSL https://install.python-poetry.org | python3 - --version 1.2.0
-curl -sSL https://install.python-poetry.org | POETRY_VERSION=1.2.0 python3 -
+curl -sSL https://install.python-poetry.org | python3 - --version 1.8.4
+curl -sSL https://install.python-poetry.org | POETRY_VERSION=1.8.4 python3 -
 ```
 
 You can also install Poetry from a `git` repository by using the `--git` option:
@@ -228,7 +210,7 @@ Once Poetry is installed and in your `$PATH`, you can execute the following:
 poetry --version
 ```
 
-If you see something like `Poetry (version 1.2.0)`, your installation is ready to use!
+If you see something like `Poetry (version 2.0.0)`, your installation is ready to use!
 {{< /step >}}
 {{< step >}}
 **Update Poetry**
@@ -254,14 +236,9 @@ And finally, if you want to install a specific version, you can pass it as an ar
 to `self update`.
 
 ```bash
-poetry self update 1.2.0
+poetry self update 1.8.4
 ```
 
-{{% warning %}}
-Poetry `1.1` series releases are not able to update in-place to `1.2` or newer series releases.
-To migrate to newer releases, uninstall using your original install method, and then reinstall
-using the [methods above]({{< ref "#installation" >}} "Installation").
-{{% /warning %}}
 {{< /step >}}
 {{< step >}}
 **Uninstall Poetry**
@@ -274,17 +251,6 @@ the `POETRY_UNINSTALL` environment variable before executing the installer.
 curl -sSL https://install.python-poetry.org | python3 - --uninstall
 curl -sSL https://install.python-poetry.org | POETRY_UNINSTALL=1 python3 -
 ```
-
-{{% warning %}}
-If you installed using the deprecated `get-poetry.py` script, you should remove the path it uses manually, e.g.
-
-```bash
-rm -rf "${POETRY_HOME:-~/.poetry}"
-```
-
-Also remove ~/.poetry/bin from your `$PATH` in your shell configuration, if it is present.
-{{% /warning %}}
-
 {{< /step >}}
 {{< /steps >}}
 
@@ -324,7 +290,7 @@ Just as `pipx` is a powerful tool for development use, it is equally useful in a
 and should be one of your top choices for use of Poetry in CI.
 
 ```bash
-pipx install poetry==1.2.0
+pipx install poetry==2.0.0
 ```
 
 **Using install.python-poetry.org**
@@ -345,7 +311,7 @@ Poetry difficult (especially in cases like multi-stage container builds). It is 
 
 ```bash
 export POETRY_HOME=/opt/poetry
-python3 install-poetry.py --version 1.2.0
+python3 install-poetry.py --version 2.0.0
 $POETRY_HOME/bin/poetry --version
 ```
 
@@ -358,7 +324,7 @@ best debugging experience, and leaves you subject to the fewest external tools.
 ```bash
 export POETRY_HOME=/opt/poetry
 python3 -m venv $POETRY_HOME
-$POETRY_HOME/bin/pip install poetry==1.2.0
+$POETRY_HOME/bin/pip install poetry==2.0.0
 $POETRY_HOME/bin/poetry --version
 ```
 
@@ -371,7 +337,13 @@ is likely to upgrade or uninstall its own dependencies (causing hard-to-debug an
 {{< /tab >}}
 {{< /tabs >}}
 
-
+{{% warning %}}
+Poetry should always be installed in a dedicated virtual environment to isolate it from the rest of your system.
+Each of the above described installation methods ensures that.
+It should in no case be installed in the environment of the project that is to be managed by Poetry.
+This ensures that Poetry's own dependencies will not be accidentally upgraded or uninstalled.
+In addition, the isolated virtual environment in which poetry is installed should not be activated for running poetry commands.
+{{% /warning %}}
 
 ## Enable tab completion for Bash, Fish, or Zsh
 
