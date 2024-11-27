@@ -84,31 +84,6 @@ must still be specified in the `tool.poetry` section.
 
 ## Version constraints
 
-{{% warning %}}
-Some of the following constraints can only be used in `tool.poetry.dependencies` and not in `project.dependencies`.
-When using `poetry add` such constraints are automatically converted into an equivalent constraint.
-{{% /warning %}}
-
-### Caret requirements
-
-{{% warning %}}
-Not supported in `project.dependencies`.
-{{% /warning %}}
-
-**Caret requirements** allow [SemVer](https://semver.org/) compatible updates to a specified version. An update is allowed if the new version number does not modify the left-most non-zero digit in the major, minor, patch grouping. For instance, if we previously ran `poetry add requests@^2.13.0` and wanted to update the library and ran `poetry update requests`, poetry would update us to version `2.14.0` if it was available, but would not update us to `3.0.0`. If instead we had specified the version string as `^0.1.13`, poetry would update to `0.1.14` but not `0.2.0`. `0.0.x` is not considered compatible with any other version.
-
-Here are some more examples of caret requirements and the versions that would be allowed with them:
-
-| Requirement | Versions allowed |
-| ----------- | ---------------- |
-| ^1.2.3      | >=1.2.3 <2.0.0   |
-| ^1.2        | >=1.2.0 <2.0.0   |
-| ^1          | >=1.0.0 <2.0.0   |
-| ^0.2.3      | >=0.2.3 <0.3.0   |
-| ^0.0.3      | >=0.0.3 <0.0.4   |
-| ^0.0        | >=0.0.0 <0.1.0   |
-| ^0          | >=0.0.0 <1.0.0   |
-
 ### Compatible release requirements
 
 **Compatible release requirements** specify a minimal version with the ability to update to later versions of the same level.
@@ -121,24 +96,6 @@ If you only specify a major, and minor version, then minor- and patch-level chan
 | ----------- | ---------------- |
 | ~=1.2.3     | >=1.2.3 <1.3.0   |
 | ~=1.2       | >=1.2.0 <2.0.0   |
-
-### Tilde requirements
-
-{{% warning %}}
-Not supported in `project.dependencies`.
-{{% /warning %}}
-
-**Tilde requirements** specify a minimal version with some ability to update.
-If you specify a major, minor, and patch version or only a major and minor version, only patch-level changes are allowed.
-If you only specify a major version, then minor- and patch-level changes are allowed.
-
-`~1.2.3` is an example of a tilde requirement.
-
-| Requirement | Versions allowed |
-| ----------- | ---------------- |
-| ~1.2.3      | >=1.2.3 <1.3.0   |
-| ~1.2        | >=1.2.0 <1.3.0   |
-| ~1          | >=1.0.0 <2.0.0   |
 
 ### Wildcard requirements
 
@@ -182,6 +139,48 @@ Exact versions can also be specified with `==` according to [PEP 440](https://pe
 
 `==1.2.3` is an example of this.
 
+### Caret requirements
+
+{{% warning %}}
+Not supported in `project.dependencies`.
+
+When using `poetry add` such constraints are automatically converted into an equivalent constraint.
+{{% /warning %}}
+
+**Caret requirements** allow [SemVer](https://semver.org/) compatible updates to a specified version. An update is allowed if the new version number does not modify the left-most non-zero digit in the major, minor, patch grouping. For instance, if we previously ran `poetry add requests@^2.13.0` and wanted to update the library and ran `poetry update requests`, poetry would update us to version `2.14.0` if it was available, but would not update us to `3.0.0`. If instead we had specified the version string as `^0.1.13`, poetry would update to `0.1.14` but not `0.2.0`. `0.0.x` is not considered compatible with any other version.
+
+Here are some more examples of caret requirements and the versions that would be allowed with them:
+
+| Requirement | Versions allowed |
+| ----------- | ---------------- |
+| ^1.2.3      | >=1.2.3 <2.0.0   |
+| ^1.2        | >=1.2.0 <2.0.0   |
+| ^1          | >=1.0.0 <2.0.0   |
+| ^0.2.3      | >=0.2.3 <0.3.0   |
+| ^0.0.3      | >=0.0.3 <0.0.4   |
+| ^0.0        | >=0.0.0 <0.1.0   |
+| ^0          | >=0.0.0 <1.0.0   |
+
+### Tilde requirements
+
+{{% warning %}}
+Not supported in `project.dependencies`.
+
+When using `poetry add` such constraints are automatically converted into an equivalent constraint.
+{{% /warning %}}
+
+**Tilde requirements** specify a minimal version with some ability to update.
+If you specify a major, minor, and patch version or only a major and minor version, only patch-level changes are allowed.
+If you only specify a major version, then minor- and patch-level changes are allowed.
+
+`~1.2.3` is an example of a tilde requirement.
+
+| Requirement | Versions allowed |
+| ----------- | ---------------- |
+| ~1.2.3      | >=1.2.3 <1.3.0   |
+| ~1.2        | >=1.2.0 <1.3.0   |
+| ~1          | >=1.0.0 <2.0.0   |
+
 ### Using the `@` operator
 
 When adding dependencies via `poetry add`, you can use the `@` operator.
@@ -189,23 +188,58 @@ This is understood similarly to the `==` syntax, but also allows prefixing any
 specifiers that are valid in `pyproject.toml`. For example:
 
 ```shell
-poetry add django@^4.0.0
+poetry add "django@^4.0.0"
 ```
 
 The above would translate to the following entry in `pyproject.toml`:
+
+{{< tabs tabTotal="2" tabID1="at-project" tabID2="at-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
+
+{{< tab tabID="at-project" >}}
 ```toml
-Django = "^4.0.0"
+[project]
+# ...
+dependencies = [
+    "django (>=4.0.0,<5.0.0)",
+]
 ```
+
+{{< /tab >}}
+
+{{< tab tabID="at-poetry" >}}
+```toml
+[tool.poetry.dependencies]
+django = "^4.0.0"
+```
+{{< /tab >}}
+{{< /tabs >}}
 
 The special keyword `latest` is also understood by the `@` operator:
 ```shell
 poetry add django@latest
 ```
 
-The above would translate to the following entry in `pyproject.toml`, assuming the latest release of `django` is `4.0.5`:
+The above would translate to the following entry in `pyproject.toml`, assuming the latest release of `django` is `5.1.3`:
+
+{{< tabs tabTotal="2" tabID1="at-latest-project" tabID2="at-latest-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
+
+{{< tab tabID="at-latest-project" >}}
 ```toml
-Django = "^4.0.5"
+[project]
+# ...
+dependencies = [
+    "django (>=5.1.3,<6.0.0)",
+]
 ```
+{{< /tab >}}
+
+{{< tab tabID="at-latest-poetry" >}}
+```toml
+[tool.poetry.dependencies]
+django = "^5.1.3"
+```
+{{< /tab >}}
+{{< /tabs >}}
 
 #### Extras
 
@@ -218,42 +252,41 @@ poetry add django[bcrypt]@^4.0.0
 ## `git` dependencies
 
 To depend on a library located in a `git` repository,
-the minimum information you need to specify is the location of the repository with the git key:
+the minimum information you need to specify is the location of the repository:
+
+{{< tabs tabTotal="2" tabID1="git-project" tabID2="git-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
+
+{{< tab tabID="git-project" >}}
+```toml
+[project]
+# ...
+dependencies = [
+    "requests @ git+https://github.com/requests/requests.git",
+]
+```
+{{< /tab >}}
+
+{{< tab tabID="git-poetry" >}}
+In the `tool.poetry` section you use the `git` key:
 
 ```toml
 [tool.poetry.dependencies]
 requests = { git = "https://github.com/requests/requests.git" }
 ```
 
-or in the `project` section:
-
-```toml
-[project]
-# ...
-dependencies = [
-    "requests @ git+https://github.com/requests/requests.git"
-]
-```
+{{< /tab >}}
+{{< /tabs >}}
 
 Since we haven’t specified any other information,
 Poetry assumes that we intend to use the latest commit on the `main` branch
 to build our project.
 
-You can combine the `git` key with the `branch` key to use another branch.
-Alternatively, use `rev` or `tag` to pin a dependency to a specific commit hash
-or tagged ref, respectively. For example:
+You can explicit specify which branch, commit hash or tagged ref should be usd:
 
-```toml
-[tool.poetry.dependencies]
-# Get the latest revision on the branch named "next"
-requests = { git = "https://github.com/kennethreitz/requests.git", branch = "next" }
-# Get a revision by its commit hash
-flask = { git = "https://github.com/pallets/flask.git", rev = "38eb5d3b" }
-# Get a revision by its tag
-numpy = { git = "https://github.com/numpy/numpy.git", tag = "v0.13.2" }
-```
+{{< tabs tabTotal="2" tabID1="git-rev-project" tabID2="git-rev-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
 
-or in the `project` section:
+{{< tab tabID="git-rev-project" >}}
+Append the information to the git url.
 
 ```toml
 [project]
@@ -264,16 +297,50 @@ dependencies = [
     "numpy @ git+https://github.com/numpy/numpy.git@v0.13.2",
 ]
 ```
+{{< /tab >}}
 
-In cases where the package you want to install is located in a subdirectory of the VCS repository, you can use the `subdirectory` option, similarly to what [pip](https://pip.pypa.io/en/stable/topics/vcs-support/#url-fragments) provides:
+{{< tab tabID="git-rev-poetry" >}}
+Combine the `git` key with the `branch`, `rev` or `tag` key respectively.
+
+```toml
+[tool.poetry.dependencies]
+# Get the latest revision on the branch named "next"
+requests = { git = "https://github.com/kennethreitz/requests.git", branch = "next" }
+# Get a revision by its commit hash
+flask = { git = "https://github.com/pallets/flask.git", rev = "38eb5d3b" }
+# Get a revision by its tag
+numpy = { git = "https://github.com/numpy/numpy.git", tag = "v0.13.2" }
+```
+{{< /tab >}}
+{{< /tabs >}}
+
+It's possible to add a package that is located in a subdirectory of the VCS repository.
+
+{{< tabs tabTotal="2" tabID1="git-subdir-project" tabID2="git-subdir-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
+
+{{< tab tabID="git-subdir-project" >}}
+Provide the subdirectory as a URL fragment similarly to what [pip](https://pip.pypa.io/en/stable/topics/vcs-support/#url-fragments) provides.
+```toml
+[project]
+# ...
+dependencies = [
+    "subdir_package @ git+https://github.com/myorg/mypackage_with_subdirs.git#subdirectory=subdir"
+]
+```
+{{< /tab >}}
+
+{{< tab tabID="git-subdir-poetry" >}}
+Use the `subdirectory` key in the `tool.poetry` section:
 
 ```toml
 [tool.poetry.dependencies]
 # Install a package named `subdir_package` from a folder called `subdir` within the repository
 subdir_package = { git = "https://github.com/myorg/mypackage_with_subdirs.git", subdirectory = "subdir" }
 ```
+{{< /tab >}}
+{{< /tabs >}}
 
-with the corresponding `add` call:
+The corresponding `add` call looks like this:
 
 ```bash
 poetry add "git+https://github.com/myorg/mypackage_with_subdirs.git#subdirectory=subdir"
@@ -281,10 +348,25 @@ poetry add "git+https://github.com/myorg/mypackage_with_subdirs.git#subdirectory
 
 To use an SSH connection, for example in the case of private repositories, use the following example syntax:
 
+{{< tabs tabTotal="2" tabID1="git-ssh-project" tabID2="git-ssh-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
+
+{{< tab tabID="git-ssh-project" >}}
+```toml
+[project]
+# ...
+dependencies = [
+    "pendulum @ git+ssh://git@github.com/sdispater/pendulum.git"
+]
+```
+{{< /tab >}}
+
+{{< tab tabID="git-ssh-poetry" >}}
 ```toml
 [tool.poetry.dependencies]
-requests = { git = "git@github.com:requests/requests.git" }
+pendulum = { git = "git@github.com/sdispater/pendulum.git" }
 ```
+{{< /tab >}}
+{{< /tabs >}}
 
 To use HTTP basic authentication with your git repositories, you can configure credentials similar to
 how [repository credentials]({{< relref "repositories#configuring-credentials" >}}) are configured.
@@ -296,38 +378,25 @@ poetry add git+https://github.com/org/project.git
 ```
 
 {{% note %}}
-With Poetry 1.2 releases, the default git client used is [Dulwich](https://www.dulwich.io/).
+The default git client used is [Dulwich](https://www.dulwich.io/).
 
 We fall back to legacy system git client implementation in cases where
 [gitcredentials](https://git-scm.com/docs/gitcredentials) is used. This fallback will be removed in
 a future release where `gitcredentials` helpers can be better supported natively.
 
-In cases where you encounter issues with the default implementation that used to work prior to
-Poetry 1.2, you may wish to explicitly configure the use of the system git client via a shell
-subprocess call.
+In cases where you encounter issues with the default implementation, you may wish to
+explicitly configure the use of the system git client via a shell subprocess call.
 
 ```bash
 poetry config system-git-client true
 ```
-
-Keep in mind however, that doing so will surface bugs that existed in versions prior to 1.2 which
-were caused due to the use of the system git client.
 {{% /note %}}
 
 ## `path` dependencies
 
-To depend on a library located in a local directory or file,
-you can use the `path` property:
+{{< tabs tabTotal="2" tabID1="path-project" tabID2="path-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
 
-```toml
-[tool.poetry.dependencies]
-# directory
-my-package = { path = "../my-package/", develop = false }
-
-# file
-my-package = { path = "../my-package/dist/my-package-0.1.0.tar.gz" }
-```
-
+{{< tab tabID="path-project" >}}
 In the `project` section, you can only use absolute paths:
 
 ```toml
@@ -336,26 +405,34 @@ In the `project` section, you can only use absolute paths:
 dependencies = [
     "my-package @ file:///absolute/path/to/my-package/dist/my-package-0.1.0.tar.gz"
 ]
+
 ```
+{{< /tab >}}
 
-{{% note %}}
-Before poetry 1.1 directory path dependencies were installed in editable mode by default. You should set the `develop` attribute explicitly,
-to make sure the behavior is the same for all poetry versions.
-{{% /note %}}
-
-## `url` dependencies
-
-To depend on a library located on a remote archive,
-you can use the `url` property:
+{{< tab tabID="path-poetry" >}}
+To depend on a library located in a local directory or file,
+you can use the `path` property:
 
 ```toml
 [tool.poetry.dependencies]
 # directory
-my-package = { url = "https://example.com/my-package-0.1.0.tar.gz" }
+my-package = { path = "../my-package/", develop = true }
+
+# file
+my-package = { path = "../my-package/dist/my-package-0.1.0.tar.gz" }
 ```
 
-or in the `project` section:
+To install directory path dependencies in editable mode use the `develop` keyword and set it to `true`.
+{{< /tab >}}
+{{< /tabs >}}
 
+## `url` dependencies
+
+`url` dependencies are libraries located on a remote archive.
+
+{{< tabs tabTotal="2" tabID1="url-project" tabID2="url-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
+
+{{< tab tabID="url-project" >}}
 ```toml
 [project]
 # ...
@@ -363,8 +440,20 @@ dependencies = [
     "my-package @ https://example.com/my-package-0.1.0.tar.gz"
 ]
 ```
+{{< /tab >}}
 
-with the corresponding `add` call:
+{{< tab tabID="url-poetry" >}}
+Use the `url` property.
+
+```toml
+[tool.poetry.dependencies]
+# directory
+my-package = { url = "https://example.com/my-package-0.1.0.tar.gz" }
+```
+{{< /tab >}}
+{{< /tabs >}}
+
+The corresponding `add` call is:
 
 ```bash
 poetry add https://example.com/my-package-0.1.0.tar.gz
@@ -375,13 +464,9 @@ poetry add https://example.com/my-package-0.1.0.tar.gz
 You can specify [PEP-508 Extras](https://www.python.org/dev/peps/pep-0508/#extras)
 for a dependency as shown here.
 
-```toml
-[tool.poetry.dependencies]
-gunicorn = { version = "^20.1", extras = ["gevent"] }
-```
+{{< tabs tabTotal="2" tabID1="extras-project" tabID2="extras-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
 
-or in the `project` section:
-
+{{< tab tabID="extras-project" >}}
 ```toml
 [project]
 # ...
@@ -389,6 +474,15 @@ dependencies = [
     "gunicorn[gevent] (>=20.1,<21.0)"
 ]
 ```
+{{< /tab >}}
+
+{{< tab tabID="extras-poetry" >}}
+```toml
+[tool.poetry.dependencies]
+gunicorn = { version = "^20.1", extras = ["gevent"] }
+```
+{{< /tab >}}
+{{< /tabs >}}
 
 {{% note %}}
 These activate extra defined for the dependency, to configure an optional dependency
@@ -396,6 +490,9 @@ for extras in your project refer to [`extras`]({{< relref "pyproject#extras" >}}
 {{% /note %}}
 
 ## `source` dependencies
+{{% note %}}
+It is not possible to define source dependencies in the `project` section.
+{{% /note %}}
 
 To depend on a package from an [alternate repository]({{< relref "repositories#installing-from-private-package-sources" >}}),
 you can use the `source` property:
@@ -421,48 +518,41 @@ In this example, we expect `foo` to be configured correctly. See [using a privat
 for further information.
 {{% /note %}}
 
-{{% note %}}
-It is not possible to define source dependencies in the `project` section.
-{{% /note %}}
-
 ## Python restricted dependencies
 
 You can also specify that a dependency should be installed only for specific Python versions:
 
-```toml
-[tool.poetry.dependencies]
-tomli = { version = "^2.0.1", python = "<3.11" }
-```
+{{< tabs tabTotal="2" tabID1="python-restriction-project" tabID2="python-restriction-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
 
-```toml
-[tool.poetry.dependencies]
-pathlib2 = { version = "^2.2", python = "^3.9" }
-```
-
-or in the `project` section:
-
+{{< tab tabID="python-restriction-project" >}}
 ```toml
 [project]
 # ...
 dependencies = [
-    "tomli (>=2.0.1,<3.11) ; python_version < '3.11'",
+    "tomli (>=2.0.1,<3.0) ; python_version < '3.11'",
     "pathlib2 (>=2.2,<3.0) ; python_version >= '3.9' and python_version < '4.0'"
 ]
 ```
+{{< /tab >}}
+
+{{< tab tabID="python-restriction-poetry" >}}
+
+```toml
+[tool.poetry.dependencies]
+tomli = { version = "^2.0.1", python = "<3.11" }
+pathlib2 = { version = "^2.2", python = "^3.9" }
+```
+{{< /tab >}}
+{{< /tabs >}}
 
 ## Using environment markers
 
 If you need more complex install conditions for your dependencies,
-Poetry supports [environment markers](https://www.python.org/dev/peps/pep-0508/#environment-markers)
-via the `markers` property:
+Poetry supports [environment markers](https://www.python.org/dev/peps/pep-0508/#environment-markers):
 
-```toml
-[tool.poetry.dependencies]
-pathlib2 = { version = "^2.2", markers = "python_version <= '3.4' or sys_platform == 'win32'" }
-```
+{{< tabs tabTotal="2" tabID1="markers-project" tabID2="markers-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
 
-or in the `project` section:
-
+{{< tab tabID="markers-project" >}}
 ```toml
 [project]
 # ...
@@ -470,6 +560,17 @@ dependencies = [
     "pathlib2 (>=2.2,<3.0) ; python_version <= '3.4' or sys_platform == 'win32'"
 ]
 ```
+{{< /tab >}}
+
+{{< tab tabID="markers-poetry" >}}
+Use the `markers` property:
+
+```toml
+[tool.poetry.dependencies]
+pathlib2 = { version = "^2.2", markers = "python_version <= '3.4' or sys_platform == 'win32'" }
+```
+{{< /tab >}}
+{{< /tabs >}}
 
 ## Multiple constraints dependencies
 
@@ -480,16 +581,9 @@ Let's say you have a dependency on the package `foo` which is only compatible
 with Python 3.6-3.7 up to version 1.9, and compatible with Python 3.8+ from version 2.0:
 you would declare it like so:
 
-```toml
-[tool.poetry.dependencies]
-foo = [
-    {version = "<=1.9", python = ">=3.6,<3.8"},
-    {version = "^2.0", python = ">=3.8"}
-]
-```
+{{< tabs tabTotal="2" tabID1="multiple-constraints-project" tabID2="multiple-constraints-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
 
-or in the `project` section:
-
+{{< tab tabID="multiple-constraints-project" >}}
 ```toml
 [project]
 # ...
@@ -498,6 +592,18 @@ dependencies = [
     "foo (>=2.0,<3.0) ; python_version >= '3.8'"
 ]
 ```
+{{< /tab >}}
+
+{{< tab tabID="multiple-constraints-poetry" >}}
+```toml
+[tool.poetry.dependencies]
+foo = [
+    {version = "<=1.9", python = ">=3.6,<3.8"},
+    {version = "^2.0", python = ">=3.8"}
+]
+```
+{{< /tab >}}
+{{< /tabs >}}
 
 {{% note %}}
 The constraints **must** have different requirements (like `python`)
