@@ -587,6 +587,17 @@ paths = [
 
 #### Exclusive extras
 
+{{% warning %}}
+The first example will only work completely if you configure Poetry to not re-resolve for installation:
+
+```bash
+poetry config installer.re-resolve false
+```
+
+This is a new feature of Poetry 2.0 that may become the default in a future version of Poetry.
+
+{{% /warning %}}
+
 Keep in mind that all combinations of possible extras available in your project need to be compatible with each other.
 This means that in order to use differing or incompatible versions across different combinations, you need to make your
 extra markers *exclusive*. For example, the following installs PyTorch from one source repository with CPU versions
@@ -595,6 +606,8 @@ for GPUs when the `cuda` extra *is* specified:
 
 ```toml
 [project]
+name = "torch-example"
+requires-python = ">=3.10"
 dependencies = [
     "torch (==2.3.1+cpu) ; extra != 'cuda'",
 ]
@@ -604,10 +617,13 @@ cuda = [
     "torch (==2.3.1+cu118)",
 ]
 
+[tool.poetry]
+package-mode = false
+
 [tool.poetry.dependencies]
 torch = [
     { markers = "extra != 'cuda'", source = "pytorch-cpu"},
-    { markers = "extra == 'cuda'", source = "pytorch-cu118"},
+    { markers = "extra == 'cuda'", source = "pytorch-cuda"},
  ]
 
 [[tool.poetry.source]]
@@ -616,7 +632,7 @@ url = "https://download.pytorch.org/whl/cpu"
 priority = "explicit"
 
 [[tool.poetry.source]]
-name = "pytorch-cu118"
+name = "pytorch-cuda"
 url = "https://download.pytorch.org/whl/cu118"
 priority = "explicit"
 ```
@@ -627,18 +643,25 @@ GPU (`cuda`) version.
 This same logic applies when you want either-or extras:
 
 ```toml
+[project]
+name = "torch-example"
+requires-python = ">=3.10"
+
 [project.optional-dependencies]
-cuda = [
-    "torch (==2.3.1+cu118) ; extra != 'cpu'",
-]
 cpu = [
-    "torch (==2.3.1+cpu) ; extra != 'cuda'",
+    "torch (==2.3.1+cpu)",
 ]
+cuda = [
+    "torch (==2.3.1+cu118)",
+]
+
+[tool.poetry]
+package-mode = false
 
 [tool.poetry.dependencies]
 torch = [
     { markers = "extra == 'cpu' and extra != 'cuda'", source = "pytorch-cpu"},
-    { markers = "extra == 'cuda' and extra != 'cpu'", source = "pytorch-cu118"},
+    { markers = "extra == 'cuda' and extra != 'cpu'", source = "pytorch-cuda"},
  ]
 
 [[tool.poetry.source]]
@@ -647,7 +670,7 @@ url = "https://download.pytorch.org/whl/cpu"
 priority = "explicit"
 
 [[tool.poetry.source]]
-name = "pytorch-cu118"
+name = "pytorch-cuda"
 url = "https://download.pytorch.org/whl/cu118"
 priority = "explicit"
 ```
