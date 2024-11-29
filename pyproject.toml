@@ -31,7 +31,7 @@ Changelog = "https://python-poetry.org/history/"
 [tool.poetry.dependencies]
 python = "^3.9"
 
-poetry-core = { git = "https://github.com/radoering/poetry-core.git", branch = "fix-dependency-merge-by-extra-marker" }
+poetry-core = { git = "https://github.com/python-poetry/poetry-core.git", branch = "main" }
 build = "^1.2.1"
 cachecontrol = { version = "^0.14.0", extras = ["filecache"] }
 cleo = "^2.1.0"
