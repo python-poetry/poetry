@@ -12,7 +12,6 @@ from typing import Any
 
 import pkginfo
 
-from build import BuildBackendException
 from poetry.core.constraints.version import Version
 from poetry.core.factory import Factory
 from poetry.core.packages.dependency import Dependency
@@ -24,6 +23,7 @@ from poetry.core.version.markers import InvalidMarkerError
 from poetry.core.version.requirements import InvalidRequirementError
 
 from poetry.utils.helpers import extractall
+from poetry.utils.isolated_build import IsolatedBuildBackendError
 from poetry.utils.isolated_build import isolated_builder
 
 
@@ -540,9 +540,8 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
                 builder.metadata_path(dest)
 
             info = PackageInfo.from_metadata_directory(dest)
-        except BuildBackendException as e:
-            logger.debug("PEP517 build failed: %s", e)
-            raise PackageInfoError(path, e, "PEP517 build failed")
+        except IsolatedBuildBackendError as e:
+            raise PackageInfoError(path, str(e)) from None
 
     if info:
         return info

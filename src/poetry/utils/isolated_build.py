@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 import os
+import subprocess
 
 from contextlib import contextmanager
 from contextlib import redirect_stdout
 from io import StringIO
 from typing import TYPE_CHECKING
 
+from build import BuildBackendException
 from build.env import IsolatedEnv as BaseIsolatedEnv
 
+from poetry.utils._compat import decode
 from poetry.utils.env import Env
 from poetry.utils.env import EnvManager
 from poetry.utils.env import ephemeral_environment
@@ -28,7 +31,47 @@ if TYPE_CHECKING:
 class IsolatedBuildBaseError(Exception): ...
 
 
-class IsolatedBuildError(IsolatedBuildBaseError): ...
+class IsolatedBuildBackendError(IsolatedBuildBaseError):
+    def __init__(self, source: Path, exception: BuildBackendException) -> None:
+        super().__init__()
+        self.source = source
+        self.exception = exception
+
+    def generate_message(
+        self, source_string: str | None = None, build_command: str | None = None
+    ) -> str:
+        e = self.exception.exception
+        source_string = source_string or self.source.as_posix()
+        build_command = (
+            build_command
+            or f'pip wheel --no-cache-dir --use-pep517 "{self.source.as_posix()}"'
+        )
+
+        reasons = ["PEP517 build of a dependency failed", str(self.exception)]
+
+        if isinstance(e, subprocess.CalledProcessError):
+            inner_traceback = decode(e.stderr or e.stdout or e.output).strip()
+            inner_reason = "\n    | ".join(
+                ["", str(e), "", *inner_traceback.split("\n")]
+            ).lstrip("\n")
+            reasons.append(f"<warning>{inner_reason}</warning>")
+
+        reasons.append(
+            "<info>"
+            "<options=bold>Note:</> This error originates from the build backend, and is likely not a "
+            f"problem with poetry but one of the following issues with {source_string}\n\n"
+            "  - not supporting PEP 517 builds\n"
+            "  - not specifying PEP 517 build requirements correctly\n"
+            "  - the build requirements are incompatible with your operating system or Python version\n"
+            "  - the build requirements are missing system dependencies (eg: compilers, libraries, headers).\n\n"
+            f"You can verify this by running <c1>{build_command}</c1>."
+            "</info>"
+        )
+
+        return "\n\n".join(reasons)
+
+    def __str__(self) -> str:
+        return self.generate_message()
 
 
 class IsolatedBuildInstallError(IsolatedBuildBaseError):
@@ -140,18 +183,20 @@ def isolated_builder(
     ) as venv:
         env = IsolatedEnv(venv, pool)
         stdout = StringIO()
-
-        builder = ProjectBuilder.from_isolated_env(
-            env, source, runner=quiet_subprocess_runner
-        )
-
-        with redirect_stdout(stdout):
-            env.install(builder.build_system_requires)
-
-            # we repeat the build system requirements to avoid poetry installer from removing them
-            env.install(
-                builder.build_system_requires
-                | builder.get_requires_for_build(distribution)
+        try:
+            builder = ProjectBuilder.from_isolated_env(
+                env, source, runner=quiet_subprocess_runner
             )
 
-            yield builder
+            with redirect_stdout(stdout):
+                env.install(builder.build_system_requires)
+
+                # we repeat the build system requirements to avoid poetry installer from removing them
+                env.install(
+                    builder.build_system_requires
+                    | builder.get_requires_for_build(distribution)
+                )
+
+                yield builder
+        except BuildBackendException as e:
+            raise IsolatedBuildBackendError(source, e) from None

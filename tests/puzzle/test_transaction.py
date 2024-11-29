@@ -135,6 +135,59 @@ def test_it_should_remove_installed_packages_if_required() -> None:
     )
 
 
+def test_it_should_not_remove_system_site_packages() -> None:
+    """
+    Different types of uninstalls:
+    - c: tracked but not required
+    - e: not tracked
+    - f: root extra that is not requested
+    """
+    extra_name = canonicalize_name("foo")
+    package = ProjectPackage("root", "1.0")
+    dep_f = Dependency("f", "1", optional=True)
+    dep_f._in_extras = [extra_name]
+    package.add_dependency(dep_f)
+    package.extras = {extra_name: [dep_f]}
+    opt_f = Package("f", "6.0.0")
+    opt_f.optional = True
+    transaction = Transaction(
+        [Package("a", "1.0.0"), Package("b", "2.0.0"), Package("c", "3.0.0")],
+        {
+            Package("a", "1.0.0"): get_transitive_info(1),
+            Package("b", "2.1.0"): get_transitive_info(2),
+            Package("d", "4.0.0"): get_transitive_info(0),
+            opt_f: get_transitive_info(0),
+        },
+        installed_packages=[
+            Package("a", "1.0.0"),
+            Package("b", "2.0.0"),
+            Package("c", "3.0.0"),
+            Package("e", "5.0.0"),
+            Package("f", "6.0.0"),
+        ],
+        root_package=package,
+    )
+
+    check_operations(
+        transaction.calculate_operations(
+            synchronize=True,
+            extras=set(),
+            system_site_packages={
+                canonicalize_name(name) for name in ("a", "b", "c", "e", "f")
+            },
+        ),
+        [
+            {
+                "job": "update",
+                "from": Package("b", "2.0.0"),
+                "to": Package("b", "2.1.0"),
+            },
+            {"job": "install", "package": Package("a", "1.0.0"), "skipped": True},
+            {"job": "install", "package": Package("d", "4.0.0")},
+        ],
+    )
+
+
 def test_it_should_not_remove_installed_packages_that_are_in_result() -> None:
     transaction = Transaction(
         [],
@@ -236,7 +289,9 @@ def test_calculate_operations_with_groups(
             for name in sorted({"a", "b", "c"}.difference(expected), reverse=True):
                 expected_ops.insert(0, {"job": "remove", "package": Package(name, "1")})
 
-    check_operations(transaction.calculate_operations(sync), expected_ops)
+    check_operations(
+        transaction.calculate_operations(with_uninstalls=sync), expected_ops
+    )
 
 
 @pytest.mark.parametrize(
@@ -273,7 +328,9 @@ def test_calculate_operations_with_markers(
             for name in sorted({"a", "b"}.difference(expected), reverse=True):
                 expected_ops.insert(0, {"job": "remove", "package": Package(name, "1")})
 
-    check_operations(transaction.calculate_operations(sync), expected_ops)
+    check_operations(
+        transaction.calculate_operations(with_uninstalls=sync), expected_ops
+    )
 
 
 @pytest.mark.parametrize(
@@ -366,8 +423,8 @@ def test_calculate_operations_extras(
 
     check_operations(
         transaction.calculate_operations(
-            with_uninstalls,
-            sync,
+            with_uninstalls=with_uninstalls,
+            synchronize=sync,
             extras={extra_name} if extras else set(),
         ),
         ops,

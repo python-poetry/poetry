@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import platform
 import shutil
 import zipfile
 
@@ -415,6 +416,48 @@ def test_load_pep_610_compliant_editable_directory_packages(
     assert package.develop
 
 
+@pytest.mark.parametrize("with_system_site_packages", [False, True])
+def test_system_site_packages(
+    tmp_path: Path,
+    mocker: MockerFixture,
+    poetry: Poetry,
+    site_purelib: Path,
+    with_system_site_packages: bool,
+) -> None:
+    venv_path = tmp_path / "venv"
+    site_path = tmp_path / "site"
+    cleo_dist_info = "cleo-0.7.6.dist-info"
+    shutil.copytree(site_purelib / cleo_dist_info, site_path / cleo_dist_info)
+
+    EnvManager(poetry).build_venv(
+        path=venv_path, flags={"system-site-packages": with_system_site_packages}
+    )
+    env = VirtualEnv(venv_path)
+    standard_dist_info = "standard-1.2.3.dist-info"
+    shutil.copytree(site_purelib / standard_dist_info, env.purelib / standard_dist_info)
+    orig_sys_path = env.sys_path
+    if with_system_site_packages:
+        mocker.patch(
+            "poetry.utils.env.virtual_env.VirtualEnv.sys_path",
+            orig_sys_path[:-1] + [str(site_path)],
+        )
+    mocker.patch(
+        "poetry.utils.env.generic_env.GenericEnv.get_paths",
+        return_value={"purelib": str(site_path)},
+    )
+
+    installed_repository = InstalledRepository.load(env)
+
+    expected_system_site_packages = {"cleo"} if with_system_site_packages else set()
+    expected_packages = {"standard"} | expected_system_site_packages
+    if platform.system() == "FreeBSD":
+        expected_packages.add("sqlite3")
+    assert {p.name for p in installed_repository.packages} == expected_packages
+    assert {
+        p.name for p in installed_repository.system_site_packages
+    } == expected_system_site_packages
+
+
 def test_system_site_packages_source_type(
     tmp_path: Path, mocker: MockerFixture, poetry: Poetry, site_purelib: Path
 ) -> None:
@@ -427,12 +470,17 @@ def test_system_site_packages_source_type(
     for dist_info in {"cleo-0.7.6.dist-info", "directory_pep_610-1.2.3.dist-info"}:
         shutil.copytree(site_purelib / dist_info, site_path / dist_info)
     mocker.patch("poetry.utils.env.virtual_env.VirtualEnv.sys_path", [str(site_path)])
-    mocker.patch("site.getsitepackages", return_value=[str(site_path)])
+    mocker.patch(
+        "poetry.utils.env.generic_env.GenericEnv.get_paths",
+        return_value={"purelib": str(site_path)},
+    )
 
     EnvManager(poetry).build_venv(path=venv_path, flags={"system-site-packages": True})
     env = VirtualEnv(venv_path)
+
     installed_repository = InstalledRepository.load(env)
 
+    assert installed_repository.packages == installed_repository.system_site_packages
     source_types = {
         package.name: package.source_type for package in installed_repository.packages
     }
@@ -458,6 +506,7 @@ def test_pipx_shared_lib_site_packages(
     installed_repository = InstalledRepository.load(env)
 
     assert len(installed_repository.packages) == 1
+    assert installed_repository.system_site_packages == []
     cleo_package = installed_repository.packages[0]
     cleo_package.to_dependency()
     # There must not be a warning

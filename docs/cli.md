@@ -29,7 +29,8 @@ then `--help` combined with any of those can give you more information.
 * `--no-interaction (-n)`: Do not ask any interactive question.
 * `--no-plugins`: Disables plugins.
 * `--no-cache`: Disables Poetry source caches.
-* `--directory=DIRECTORY (-C)`: The working directory for the Poetry command (defaults to the current working directory).
+* `--directory=DIRECTORY (-C)`: The working directory for the Poetry command (defaults to the current working directory). All command-line arguments will be resolved relative to the given directory.
+* `--project=PROJECT (-P)`: Specify another path as the project root. All command-line arguments will be resolved relative to the current working directory or directory specified using `--directory` option if used.
 
 
 ## new
@@ -265,7 +266,6 @@ poetry install --compile
 * `--all-extras`: Install all extra features (conflicts with `--extras`).
 * `--all-groups`: Install dependencies from all groups (conflicts with `--only`, `--with`, and `--without`).
 * `--compile`: Compile Python source files to bytecode.
-* `--remove-untracked`: Remove dependencies not presented in the lock file. (**Deprecated**, use `--sync` instead)
 
 {{% note %}}
 When `--only` is specified, `--with` and `--without` options are ignored.
@@ -419,11 +419,6 @@ Alternatively, you can specify it in the `pyproject.toml` file. It means that ch
 [tool.poetry.dependencies]
 my-package = {path = "../my/path", develop = true}
 ```
-
-{{% note %}}
-Before poetry 1.1 path dependencies were installed in editable mode by default. You should always set the `develop` attribute explicitly,
-to make sure the behavior is the same for all poetry versions.
-{{% /note %}}
 
 {{% note %}}
 The `develop` attribute is a Poetry-specific feature, so it is not included in the package distribution metadata.
@@ -644,10 +639,24 @@ It can also execute one of the scripts defined in `pyproject.toml`.
 
 So, if you have a script defined like this:
 
+{{< tabs tabTotal="2" tabID1="script-project" tabID2=script-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
+
+{{< tab tabID="script-project" >}}
+```toml
+[project]
+# ...
+[project.scripts]
+my-script = "my_module:main"
+```
+{{< /tab >}}
+
+{{< tab tabID="script-poetry" >}}
 ```toml
 [tool.poetry.scripts]
 my-script = "my_module:main"
 ```
+{{< /tab >}}
+{{< /tabs >}}
 
 You can execute it like so:
 
@@ -704,7 +713,6 @@ poetry lock
 
 ### Options
 
-* `--check`: Verify that `poetry.lock` is consistent with `pyproject.toml`. (**Deprecated**) Use `poetry check --lock` instead.
 * `--regenerate`: Ignore existing lock file and overwrite it with a new lock file created from scratch.
 
 ## version
@@ -751,52 +759,6 @@ The option `--next-phase` allows the increment of prerelease phase versions.
 * `--next-phase`: Increment the phase of the current version.
 * `--short (-s)`: Output the version number only.
 * `--dry-run`: Do not update pyproject.toml file.
-
-## export
-
-{{% warning %}}
-This command is provided by the [Export Poetry Plugin](https://github.com/python-poetry/poetry-plugin-export).
-The plugin is no longer installed by default with Poetry 2.0.
-
-See [Using plugins]({{< relref "plugins#using-plugins" >}}) for information on how to install a plugin.
-As described in [Project plugins]({{< relref "plugins#project-plugins" >}}),
-you can also define in your `pyproject.toml` that the plugin is required for the development of your project:
-
-```toml
-[tool.poetry.requires-plugins]
-poetry-plugin-export = ">1.8"
-```
-{{% /warning %}}
-
-This command exports the lock file to other formats.
-
-```bash
-poetry export -f requirements.txt --output requirements.txt
-```
-
-{{% note %}}
-The `export` command is also available as a pre-commit hook.
-See [pre-commit hooks]({{< relref "pre-commit-hooks#poetry-export" >}}) for more information.
-{{% /note %}}
-
-{{% note %}}
-Unlike the `install` command, this command only includes the project's dependencies defined in the implicit `main`
-group defined in `tool.poetry.dependencies` when used without specifying any options.
-{{% /note %}}
-
-### Options
-
-* `--format (-f)`: The format to export to (default: `requirements.txt`).
-  Currently, only `constraints.txt` and `requirements.txt` are supported.
-* `--output (-o)`: The name of the output file.  If omitted, print to standard
-  output.
-* `--extras (-E)`: Extra sets of dependencies to include.
-* `--without`: The dependency groups to ignore.
-* `--with`: The optional dependency groups to include.
-* `--only`: The only dependency groups to include.
-* `--without-hashes`: Exclude hashes from the exported file.
-* `--without-urls`: Exclude source repository urls from the exported file.
-* `--with-credentials`: Include credentials for extra indices.
 
 ## env
 
@@ -1073,3 +1035,24 @@ poetry self install --sync
 
 * `--sync`: Synchronize the environment with the locked packages and the specified groups.
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
+
+## export
+
+{{% warning %}}
+This command is provided by the [Export Poetry Plugin](https://github.com/python-poetry/poetry-plugin-export).
+The plugin is no longer installed by default with Poetry 2.0.
+
+See [Using plugins]({{< relref "plugins#using-plugins" >}}) for information on how to install a plugin.
+As described in [Project plugins]({{< relref "plugins#project-plugins" >}}),
+you can also define in your `pyproject.toml` that the plugin is required for the development of your project:
+
+```toml
+[tool.poetry.requires-plugins]
+poetry-plugin-export = ">1.8"
+```
+{{% /warning %}}
+
+{{% note %}}
+The `export` command is also available as a pre-commit hook.
+See [pre-commit hooks]({{< relref "pre-commit-hooks#poetry-export" >}}) for more information.
+{{% /note %}}

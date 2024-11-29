@@ -140,7 +140,7 @@ start a [Discussion][Discussions].
 Poetry is developed using Poetry. Refer to the [documentation] to install Poetry in your local environment.
 
 {{% note %}}
-Poetry's development toolchain requires Python 3.8 or newer.
+Poetry's development toolchain requires Python 3.9 or newer.
 {{% /note %}}
 
 You should first fork the Poetry repository and then clone it locally, so that you can make pull requests against the

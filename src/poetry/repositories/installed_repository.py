@@ -16,18 +16,26 @@ from poetry.core.utils.helpers import module_name
 from poetry.repositories.repository import Repository
 from poetry.utils._compat import getencoding
 from poetry.utils._compat import metadata
+from poetry.utils.env import VirtualEnv
 
 
 if TYPE_CHECKING:
-    from poetry.utils.env import Env
+    from collections.abc import Sequence
 
+    from poetry.utils.env import Env
 
 logger = logging.getLogger(__name__)
 
 
 class InstalledRepository(Repository):
-    def __init__(self) -> None:
-        super().__init__("poetry-installed")
+    def __init__(self, packages: Sequence[Package] | None = None) -> None:
+        super().__init__("poetry-installed", packages)
+        self.system_site_packages: list[Package] = []
+
+    def add_package(self, package: Package, *, is_system_site: bool = False) -> None:
+        super().add_package(package)
+        if is_system_site:
+            self.system_site_packages.append(package)
 
     @classmethod
     def get_package_paths(cls, env: Env, name: str) -> set[Path]:
@@ -242,6 +250,12 @@ class InstalledRepository(Repository):
         seen = set()
         skipped = set()
 
+        base_env = (
+            env.parent_env
+            if isinstance(env, VirtualEnv) and env.includes_system_site_packages
+            else None
+        )
+
         for entry in env.sys_path:
             if not entry.strip():
                 logger.debug(
@@ -283,6 +297,14 @@ class InstalledRepository(Repository):
                         package.add_dependency(dep)
 
                 seen.add(package.name)
-                repo.add_package(package)
+                repo.add_package(
+                    package,
+                    is_system_site=bool(
+                        base_env
+                        and base_env.is_path_relative_to_lib(
+                            Path(str(distribution._path))  # type: ignore[attr-defined]
+                        )
+                    ),
+                )
 
         return repo

@@ -39,7 +39,7 @@ class Installer:
         locker: Locker,
         pool: RepositoryPool,
         config: Config,
-        installed: Repository | None = None,
+        installed: InstalledRepository | None = None,
         executor: Executor | None = None,
         disable_cache: bool = False,
     ) -> None:
@@ -333,6 +333,9 @@ class Installer:
             synchronize=self._requires_synchronization,
             skip_directory=self._skip_directory,
             extras=set(self._extras),
+            system_site_packages={
+                p.name for p in self._installed_repository.system_site_packages
+            },
         )
 
         # Validate the dependencies

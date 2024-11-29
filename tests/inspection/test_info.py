@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import shutil
+import uuid
 
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
@@ -331,14 +332,23 @@ def test_info_setup_complex(demo_setup_complex: Path) -> None:
 def test_info_setup_complex_pep517_error(
     mocker: MockerFixture, demo_setup_complex: Path
 ) -> None:
+    output = uuid.uuid4().hex
     mocker.patch(
         "build.ProjectBuilder.from_isolated_env",
         autospec=True,
-        side_effect=BuildBackendException(CalledProcessError(1, "mock", output="mock")),
+        side_effect=BuildBackendException(CalledProcessError(1, "mock", output=output)),
     )
 
-    with pytest.raises(PackageInfoError):
+    with pytest.raises(PackageInfoError) as exc:
         PackageInfo.from_directory(demo_setup_complex)
+
+    text = str(exc.value)
+    assert "Command 'mock' returned non-zero exit status 1." in text
+    assert output in text
+    assert (
+        "This error originates from the build backend, and is likely not a problem with poetry"
+        in text
+    )
 
 
 def test_info_setup_complex_pep517_legacy(
