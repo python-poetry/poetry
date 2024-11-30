@@ -3,18 +3,16 @@ name: Documentation Preview
 on:
   pull_request:
     # allow repository maintainers to modify and test workflow
-    paths-ignore:
-      - "**"
-      - "!.github/workflows/docs.yaml"
+    paths:
+      - ".github/workflows/docs.yaml"
   pull_request_target:
     # enable runs for this workflow when labeled as documentation only
     # prevent execution when the workflow itself is modified from a fork
     types:
       - labeled
       - synchronize
-    paths-ignore:
-      - "**"
-      - "!docs/**"
+    paths:
+      - "docs/**"
 
 jobs:
   deploy:
@@ -22,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     if: >
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'impact/docs'))
-      || (github.event_name != 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+      || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
     permissions:
       contents: read
       pull-requests: write
@@ -50,10 +48,6 @@ jobs:
         with:
           node-version: "18"
 
-      - uses: peaceiris/actions-hugo@16361eb4acea8698b220b76c0d4e84e1fd22c61d # v2.6.0
-        with:
-          hugo-version: '0.83.1'
-
       - uses: ./poetry-github/.github/actions/bootstrap-poetry
 
       - uses: ./poetry-github/.github/actions/poetry-install
@@ -67,7 +61,7 @@ jobs:
           # Build website assets (CSS/JS).
           npm ci && npm run prod
           # Build the static website.
-          hugo -v --minify
+          npx hugo --minify --logLevel info
 
       - uses: amondnet/vercel-action@16e87c0a08142b0d0d33b76aeaf20823c381b9b9 # v25.2.0
         with:
