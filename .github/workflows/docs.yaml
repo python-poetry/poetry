@@ -48,10 +48,6 @@ jobs:
         with:
           node-version: "18"
 
-      - uses: peaceiris/actions-hugo@16361eb4acea8698b220b76c0d4e84e1fd22c61d # v2.6.0
-        with:
-          hugo-version: "0.139.2"
-
       - uses: ./poetry-github/.github/actions/bootstrap-poetry
 
       - uses: ./poetry-github/.github/actions/poetry-install
@@ -65,7 +61,7 @@ jobs:
           # Build website assets (CSS/JS).
           npm ci && npm run prod
           # Build the static website.
-          hugo --minify --logLevel info
+          npx hugo --minify --logLevel info
 
       - uses: amondnet/vercel-action@16e87c0a08142b0d0d33b76aeaf20823c381b9b9 # v25.2.0
         with:
