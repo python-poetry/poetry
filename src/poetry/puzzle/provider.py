@@ -8,6 +8,7 @@ import time
 from collections import defaultdict
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import ClassVar
 from typing import cast
 
@@ -17,6 +18,7 @@ from poetry.core.constraints.version import Version
 from poetry.core.constraints.version import VersionRange
 from poetry.core.packages.utils.utils import get_python_constraint_from_marker
 from poetry.core.version.markers import AnyMarker
+from poetry.core.version.markers import parse_marker
 from poetry.core.version.markers import union as marker_union
 
 from poetry.mixology.incompatibility import Incompatibility
@@ -115,6 +117,7 @@ class Provider:
         io: IO,
         *,
         locked: list[Package] | None = None,
+        active_root_extras: Collection[NormalizedName] | None = None,
     ) -> None:
         self._package = package
         self._pool = pool
@@ -130,6 +133,9 @@ class Provider:
         self._direct_origin_packages: dict[str, Package] = {}
         self._locked: dict[NormalizedName, list[DependencyPackage]] = defaultdict(list)
         self._use_latest: Collection[NormalizedName] = []
+        self._active_root_extras = (
+            frozenset(active_root_extras) if active_root_extras is not None else None
+        )
 
         self._explicit_sources: dict[str, str] = {}
         for package in locked or []:
@@ -416,21 +422,12 @@ class Provider:
                         )
                     ]
 
-        _dependencies = [
-            dep
-            for dep in dependencies
-            if dep.name not in self.UNSAFE_PACKAGES
-            and self._python_constraint.allows_any(dep.python_constraint)
-            and (not self._env or dep.marker.validate(self._env.marker_env))
-        ]
-        dependencies = self._get_dependencies_with_overrides(_dependencies, package)
-
         return [
             Incompatibility(
                 [Term(package.to_dependency(), True), Term(dep, False)],
                 DependencyCauseError(),
             )
-            for dep in dependencies
+            for dep in self._get_dependencies_with_overrides(dependencies, package)
         ]
 
     def complete_package(
@@ -480,7 +477,7 @@ class Provider:
             package = dependency_package.package
             dependency = dependency_package.dependency
             new_dependency = package.without_features().to_dependency()
-            new_dependency.marker = AnyMarker()
+            new_dependency.marker = dependency.marker
 
             # When adding dependency foo[extra] -> foo, preserve foo's source, if it's
             # specified. This prevents us from trying to get foo from PyPI
@@ -497,8 +494,14 @@ class Provider:
             if dep.name in self.UNSAFE_PACKAGES:
                 continue
 
-            if self._env and not dep.marker.validate(self._env.marker_env):
-                continue
+            if self._env:
+                marker_values = (
+                    self._marker_values(self._active_root_extras)
+                    if package.is_root()
+                    else self._env.marker_env
+                )
+                if not dep.marker.validate(marker_values):
+                    continue
 
             if not package.is_root() and (
                 (dep.is_optional() and dep.name not in optional_dependencies)
@@ -508,6 +511,24 @@ class Provider:
                 )
             ):
                 continue
+
+            # For normal dependency resolution, we have to make sure that root extras
+            # are represented in the markers. This is required to identify mutually
+            # exclusive markers in cases like 'extra == "foo"' and 'extra != "foo"'.
+            # However, for installation with re-resolving (installer.re-resolve=true,
+            # which results in self._env being not None), this spoils the result
+            # because we have to keep extras so that they are uninstalled
+            # when calculating the operations of the transaction.
+            if self._env is None and package.is_root() and dep.in_extras:
+                # The clone is required for installation with re-resolving
+                # without an existing lock file because the root package is used
+                # once for solving and a second time for re-resolving for installation.
+                dep = dep.clone()
+                dep.marker = dep.marker.intersect(
+                    parse_marker(
+                        " or ".join(f'extra == "{extra}"' for extra in dep.in_extras)
+                    )
+                )
 
             _dependencies.append(dep)
 
@@ -545,7 +566,7 @@ class Provider:
         #   • pypiwin32 (219); sys_platform == "win32" and python_version < "3.6"
         duplicates: dict[str, list[Dependency]] = defaultdict(list)
         for dep in dependencies:
-            duplicates[dep.complete_name].append(dep)
+            duplicates[dep.name].append(dep)
 
         dependencies = []
         for dep_name, deps in duplicates.items():
@@ -556,9 +577,39 @@ class Provider:
             self.debug(f"<debug>Duplicate dependencies for {dep_name}</debug>")
 
             # For dependency resolution, markers of duplicate dependencies must be
-            # mutually exclusive.
-            active_extras = None if package.is_root() else dependency.extras
-            deps = self._resolve_overlapping_markers(package, deps, active_extras)
+            # mutually exclusive. However, we have to take care about duplicates
+            # with differing extras.
+            duplicates_by_extras: dict[str, list[Dependency]] = defaultdict(list)
+            for dep in deps:
+                duplicates_by_extras[dep.complete_name].append(dep)
+
+            if len(duplicates_by_extras) == 1:
+                active_extras = (
+                    self._active_root_extras if package.is_root() else dependency.extras
+                )
+                deps = self._resolve_overlapping_markers(package, deps, active_extras)
+            else:
+                # There are duplicates with different extras.
+                for complete_dep_name, deps_by_extra in duplicates_by_extras.items():
+                    if len(deps_by_extra) > 1:
+                        duplicates_by_extras[complete_dep_name] = (
+                            self._resolve_overlapping_markers(package, deps, None)
+                        )
+                if all(len(d) == 1 for d in duplicates_by_extras.values()) and all(
+                    d1[0].marker.intersect(d2[0].marker).is_empty()
+                    for d1, d2 in itertools.combinations(
+                        duplicates_by_extras.values(), 2
+                    )
+                ):
+                    # Since all markers are mutually exclusive,
+                    # we can trigger overrides.
+                    deps = list(itertools.chain(*duplicates_by_extras.values()))
+                else:
+                    # Too complicated to handle with overrides,
+                    # fallback to basic handling without overrides.
+                    for d in duplicates_by_extras.values():
+                        dependencies.extend(d)
+                    continue
 
             if len(deps) == 1:
                 self.debug(f"<debug>Merging requirements for {dep_name}</debug>")
@@ -909,3 +960,19 @@ class Provider:
         # dependencies by constraint again. After overlapping markers were
         # resolved, there might be new dependencies with the same constraint.
         return self._merge_dependencies_by_constraint(new_dependencies)
+
+    def _marker_values(
+        self, extras: Collection[NormalizedName] | None = None
+    ) -> dict[str, Any]:
+        """
+        Marker values, from `self._env` if present plus the supplied extras
+
+        :param extras: the values to add to the 'extra' marker value
+        """
+        result = self._env.marker_env.copy() if self._env is not None else {}
+        if extras is not None:
+            assert (
+                "extra" not in result
+            ), "'extra' marker key is already present in environment"
+            result["extra"] = set(extras)
+        return result

@@ -305,6 +305,7 @@ class Installer:
                 self._installed_repository.packages,
                 locked_repository.packages,
                 NullIO(),
+                active_root_extras=self._extras,
             )
             # Everything is resolved at this point, so we no longer need
             # to load deferred dependencies (i.e. VCS, URL and path dependencies)

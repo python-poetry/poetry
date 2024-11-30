@@ -4755,6 +4755,136 @@ def test_solver_resolves_duplicate_dependency_in_extra(
     )
 
 
+def test_solver_resolves_conflicting_dependency_in_root_extra(
+    package: ProjectPackage,
+    pool: RepositoryPool,
+    repo: Repository,
+    io: NullIO,
+) -> None:
+    package_a1 = get_package("A", "1.0")
+    package_a2 = get_package("A", "2.0")
+
+    dep = get_dependency("A", {"version": "1.0", "markers": "extra != 'foo'"})
+    package.add_dependency(dep)
+
+    dep_extra = get_dependency("A", "2.0", optional=True)
+    dep_extra._in_extras = [canonicalize_name("foo")]
+    package.extras = {canonicalize_name("foo"): [dep_extra]}
+    package.add_dependency(dep_extra)
+
+    repo.add_package(package_a1)
+    repo.add_package(package_a2)
+
+    solver = Solver(package, pool, [], [], io)
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        (
+            [
+                {"job": "install", "package": package_a1},
+                {"job": "install", "package": package_a2},
+            ]
+        ),
+    )
+    solved_packages = transaction.get_solved_packages()
+    assert solved_packages[package_a1].markers["main"] == parse_marker("extra != 'foo'")
+    assert solved_packages[package_a2].markers["main"] == parse_marker("extra == 'foo'")
+
+
+def test_solver_resolves_conflicting_dependency_in_root_extras(
+    package: ProjectPackage,
+    pool: RepositoryPool,
+    repo: Repository,
+    io: NullIO,
+) -> None:
+    package_a1 = get_package("A", "1.0")
+    package_a2 = get_package("A", "2.0")
+
+    dep_extra1 = get_dependency(  # extra == 'foo' is implicit via _in_extras!
+        "A", {"version": "1.0", "markers": "extra != 'bar'"}, optional=True
+    )
+    dep_extra1._in_extras = [canonicalize_name("foo")]
+    package.add_dependency(dep_extra1)
+
+    dep_extra2 = get_dependency(  # extra == 'bar' is implicit via _in_extras!
+        "A", {"version": "2.0", "markers": "extra != 'foo'"}, optional=True
+    )
+    dep_extra2._in_extras = [canonicalize_name("bar")]
+    package.extras = {
+        canonicalize_name("foo"): [dep_extra1],
+        canonicalize_name("bar"): [dep_extra2],
+    }
+    package.add_dependency(dep_extra1)
+    package.add_dependency(dep_extra2)
+
+    repo.add_package(package_a1)
+    repo.add_package(package_a2)
+
+    solver = Solver(package, pool, [], [], io)
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        (
+            [
+                {"job": "install", "package": package_a1},
+                {"job": "install", "package": package_a2},
+            ]
+        ),
+    )
+    solved_packages = transaction.get_solved_packages()
+    assert solved_packages[package_a1].markers["main"] == parse_marker(
+        "extra != 'bar' and extra == 'foo'"
+    )
+    assert solved_packages[package_a2].markers["main"] == parse_marker(
+        "extra != 'foo' and extra == 'bar'"
+    )
+
+
+@pytest.mark.parametrize("with_extra", [False, True])
+def test_solver_resolves_duplicate_dependency_in_root_extra_for_installation(
+    package: ProjectPackage,
+    pool: RepositoryPool,
+    repo: Repository,
+    io: NullIO,
+    with_extra: bool,
+) -> None:
+    """
+    Without extras, a newer version of A can be chosen than with root extras.
+    """
+    extra = [canonicalize_name("foo")] if with_extra else []
+
+    package_a1 = get_package("A", "1.0")
+    package_a2 = get_package("A", "2.0")
+
+    dep = get_dependency("A", ">=1.0")
+    package.add_dependency(dep)
+
+    dep_extra = get_dependency("A", "^1.0", optional=True)
+    dep_extra.marker = parse_marker("extra == 'foo'")
+    package.extras = {canonicalize_name("foo"): [dep_extra]}
+    package.add_dependency(dep_extra)
+
+    repo.add_package(package_a1)
+    repo.add_package(package_a2)
+
+    solver = Solver(
+        package, pool, [], [package_a1, package_a2], io, active_root_extras=extra
+    )
+    with solver.use_environment(MockEnv()):
+        transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        (
+            [
+                {"job": "install", "package": package_a1 if with_extra else package_a2},
+            ]
+        ),
+    )
+
+
 def test_solver_resolves_duplicate_dependencies_with_restricted_extras(
     package: ProjectPackage,
     pool: RepositoryPool,

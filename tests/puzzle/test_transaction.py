@@ -429,3 +429,55 @@ def test_calculate_operations_extras(
         ),
         ops,
     )
+
+
+@pytest.mark.parametrize("extra", ["", "foo", "bar"])
+def test_calculate_operations_extras_no_redundant_uninstall(extra: str) -> None:
+    extra1 = canonicalize_name("foo")
+    extra2 = canonicalize_name("bar")
+    package = ProjectPackage("root", "1.0")
+    dep_a1 = Dependency("a", "1", optional=True)
+    dep_a1._in_extras = [canonicalize_name("foo")]
+    dep_a1.marker = parse_marker("extra != 'bar'")
+    dep_a2 = Dependency("a", "2", optional=True)
+    dep_a2._in_extras = [canonicalize_name("bar")]
+    dep_a2.marker = parse_marker("extra != 'foo'")
+    package.add_dependency(dep_a1)
+    package.add_dependency(dep_a2)
+    package.extras = {extra1: [dep_a1], extra2: [dep_a2]}
+    opt_a1 = Package("a", "1")
+    opt_a1.optional = True
+    opt_a2 = Package("a", "2")
+    opt_a2.optional = True
+
+    transaction = Transaction(
+        [Package("a", "1")],
+        {
+            opt_a1: TransitivePackageInfo(
+                0, {"main"}, {"main": parse_marker("extra == 'foo' and extra != 'bar'")}
+            ),
+            opt_a2: TransitivePackageInfo(
+                0, {"main"}, {"main": parse_marker("extra == 'bar' and extra != 'foo'")}
+            ),
+        },
+        [Package("a", "1")],
+        package,
+        {"python_version": "3.9"},
+        {"main"},
+    )
+
+    if not extra:
+        ops = [{"job": "remove", "package": Package("a", "1")}]
+    elif extra == "foo":
+        ops = [{"job": "install", "package": Package("a", "1"), "skipped": True}]
+    elif extra == "bar":
+        ops = [{"job": "update", "from": Package("a", "1"), "to": Package("a", "2")}]
+    else:
+        raise NotImplementedError
+
+    check_operations(
+        transaction.calculate_operations(
+            extras=set() if not extra else {canonicalize_name(extra)},
+        ),
+        ops,
+    )

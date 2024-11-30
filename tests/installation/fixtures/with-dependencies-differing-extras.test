@@ -1,0 +1,52 @@
+[[package]]
+name = "demo"
+version = "1.0.0"
+description = ""
+optional = true
+python-versions = "*"
+files = [ ]
+groups = [ "main" ]
+markers = "extra == \"extra-one\" and extra != \"extra-two\" or extra == \"extra-two\" and extra != \"extra-one\""
+
+[package.dependencies.transitive-dep-one]
+version = "1.1.0"
+optional = true
+markers = 'extra == "demo-extra-one" and extra != "demo-extra-two"'
+
+[package.dependencies.transitive-dep-two]
+version = "1.2.0"
+optional = true
+markers = 'extra != "demo-extra-one" and extra == "demo-extra-two"'
+
+  [package.extras]
+  demo-extra-one = [ "transitive-dep-one", "transitive-dep-two" ]
+  demo-extra-two = [ "transitive-dep-one", "transitive-dep-two" ]
+
+[[package]]
+name = "transitive-dep-one"
+version = "1.1.0"
+description = ""
+optional = true
+python-versions = "*"
+files = [ ]
+groups = [ "main" ]
+markers = "extra == \"extra-one\" and extra != \"extra-two\""
+
+[[package]]
+name = "transitive-dep-two"
+version = "1.2.0"
+description = ""
+optional = true
+python-versions = "*"
+files = [ ]
+groups = [ "main" ]
+markers = "extra != \"extra-one\" and extra == \"extra-two\""
+
+[extras]
+extra-one = [ "demo", "demo" ]
+extra-two = [ "demo", "demo" ]
+
+[metadata]
+lock-version = "2.1"
+python-versions = "*"
+content-hash = "123456789"

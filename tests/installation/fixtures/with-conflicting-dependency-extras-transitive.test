@@ -1,0 +1,52 @@
+[[package]]
+name = "conflicting-dep"
+version = "1.1.0"
+description = ""
+optional = true
+python-versions = "*"
+files = [ ]
+groups = [ "main" ]
+markers = "extra == \"root-extra-one\" and extra != \"root-extra-two\""
+
+[[package]]
+name = "conflicting-dep"
+version = "1.2.0"
+description = ""
+optional = true
+python-versions = "*"
+files = [ ]
+groups = [ "main" ]
+markers = "extra != \"root-extra-one\" and extra == \"root-extra-two\""
+
+[[package]]
+name = "intermediate-dep"
+version = "1.0.0"
+description = ""
+optional = true
+python-versions = "*"
+files = [ ]
+groups = [ "main" ]
+markers = "extra == \"root-extra-one\" and extra != \"root-extra-two\" or extra == \"root-extra-two\" and extra != \"root-extra-one\""
+
+[[package.dependencies.conflicting-dep]]
+version = "1.1.0"
+optional = true
+markers = 'extra == "extra-one" and extra != "extra-two"'
+
+[[package.dependencies.conflicting-dep]]
+version = "1.2.0"
+optional = true
+markers = 'extra != "extra-one" and extra == "extra-two"'
+
+  [package.extras]
+  extra-one = [ "conflicting-dep (==1.1.0)", "conflicting-dep (==1.2.0)" ]
+  extra-two = [ "conflicting-dep (==1.1.0)", "conflicting-dep (==1.2.0)" ]
+
+[extras]
+root-extra-one = [ "intermediate-dep", "intermediate-dep" ]
+root-extra-two = [ "intermediate-dep", "intermediate-dep" ]
+
+[metadata]
+lock-version = "2.1"
+python-versions = "*"
+content-hash = "123456789"
