@@ -31,7 +31,7 @@ class Transaction:
         if installed_packages is None:
             installed_packages = []
 
-        self._installed_packages = installed_packages
+        self._installed_packages = {pkg.name: pkg for pkg in installed_packages}
         self._root_package = root_package
         self._marker_env = marker_env
         self._groups = groups
@@ -102,51 +102,40 @@ class Transaction:
                 if not is_unsolicited_extra:
                     relevant_result_packages.add(result_package.name)
 
-            installed = False
-            for installed_package in self._installed_packages:
-                if result_package.name == installed_package.name:
-                    installed = True
+            if installed_package := self._installed_packages.get(result_package.name):
+                # Extras that were not requested are always uninstalled.
+                if is_unsolicited_extra:
+                    pending_extra_uninstalls.append(installed_package)
 
-                    # Extras that were not requested are always uninstalled.
-                    if is_unsolicited_extra:
-                        pending_extra_uninstalls.append(installed_package)
-
-                    # We have to perform an update if the version or another
-                    # attribute of the package has changed (source type, url, ref, ...).
-                    elif result_package.version != installed_package.version or (
-                        (
-                            # This has to be done because installed packages cannot
-                            # have type "legacy". If a package with type "legacy"
-                            # is installed, the installed package has no source_type.
-                            # Thus, if installed_package has no source_type and
-                            # the result_package has source_type "legacy" (negation of
-                            # the following condition), update must not be performed.
-                            # This quirk has the side effect that when switching
-                            # from PyPI to legacy (or vice versa),
-                            # no update is performed.
-                            installed_package.source_type
-                            or result_package.source_type != "legacy"
+                # We have to perform an update if the version or another
+                # attribute of the package has changed (source type, url, ref, ...).
+                elif result_package.version != installed_package.version or (
+                    (
+                        # This has to be done because installed packages cannot
+                        # have type "legacy". If a package with type "legacy"
+                        # is installed, the installed package has no source_type.
+                        # Thus, if installed_package has no source_type and
+                        # the result_package has source_type "legacy" (negation of
+                        # the following condition), update must not be performed.
+                        # This quirk has the side effect that when switching
+                        # from PyPI to legacy (or vice versa),
+                        # no update is performed.
+                        installed_package.source_type
+                        or result_package.source_type != "legacy"
+                    )
+                    and not result_package.is_same_package_as(installed_package)
+                ):
+                    operations.append(
+                        Update(
+                            installed_package,
+                            result_package,
+                            priority=priorities[result_package],
                         )
-                        and not result_package.is_same_package_as(installed_package)
-                    ):
-                        operations.append(
-                            Update(
-                                installed_package,
-                                result_package,
-                                priority=priorities[result_package],
-                            )
-                        )
-                    else:
-                        operations.append(
-                            Install(result_package).skip("Already installed")
-                        )
+                    )
+                else:
+                    operations.append(Install(result_package).skip("Already installed"))
 
-                    break
-
-            if not (
-                installed
-                or (skip_directory and result_package.source_type == "directory")
-            ):
+            elif not (skip_directory and result_package.source_type == "directory"):
                 op = Install(result_package, priority=priorities[result_package])
                 if is_unsolicited_extra:
                     op.skip("Not required")
@@ -161,21 +150,23 @@ class Transaction:
 
         if with_uninstalls:
             for current_package in self._current_packages:
-                found = current_package.name in (relevant_result_packages | uninstalls)
-
-                if not found:
-                    for installed_package in self._installed_packages:
-                        if installed_package.name == current_package.name:
-                            uninstalls.add(installed_package.name)
-                            if installed_package.name not in system_site_packages:
-                                operations.append(Uninstall(installed_package))
+                if current_package.name not in (
+                    relevant_result_packages | uninstalls
+                ) and (
+                    installed_package := self._installed_packages.get(
+                        current_package.name
+                    )
+                ):
+                    uninstalls.add(installed_package.name)
+                    if installed_package.name not in system_site_packages:
+                        operations.append(Uninstall(installed_package))
 
             if synchronize:
                 # We preserve pip when not managed by poetry, this is done to avoid
                 # externally managed virtual environments causing unnecessary removals.
                 preserved_package_names = {"pip"} - relevant_result_packages
 
-                for installed_package in self._installed_packages:
+                for installed_package in self._installed_packages.values():
                     if installed_package.name in uninstalls:
                         continue
 

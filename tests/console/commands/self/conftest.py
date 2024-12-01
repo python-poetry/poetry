@@ -28,11 +28,17 @@ if TYPE_CHECKING:
     from tests.helpers import TestRepository
 
 
+@pytest.fixture
+def poetry_package() -> Package:
+    return Package("poetry", __version__)
+
+
 @pytest.fixture(autouse=True)
-def _patch_repos(repo: TestRepository, installed: Repository) -> None:
-    poetry = Package("poetry", __version__)
-    repo.add_package(poetry)
-    installed.add_package(poetry)
+def _patch_repos(
+    repo: TestRepository, installed: Repository, poetry_package: Package
+) -> None:
+    repo.add_package(poetry_package)
+    installed.add_package(poetry_package)
 
 
 @pytest.fixture()
