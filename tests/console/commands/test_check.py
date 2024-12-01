@@ -137,33 +137,13 @@ def test_check_invalid_dep_name_same_as_project_name(
         ),
         new_callable=mocker.PropertyMock,
     )
-    tester.execute("--lock")
-    fastjsonschema_error = "data must contain ['description'] properties"
-    custom_error = "The fields ['description'] are required in package mode."
-    expected_template = """\
-Error: Project name (invalid) is same as one of its dependencies
-Error: Unrecognized classifiers: ['Intended Audience :: Clowns'].
-Error: Declared README file does not exist: never/exists.md
-Error: Invalid source "exists" referenced in dependencies.
-Error: Invalid source "not-exists" referenced in dependencies.
-Error: Invalid source "not-exists2" referenced in dependencies.
-Error: poetry.lock was not found.
-Warning: A wildcard Python dependency is ambiguous.\
- Consider specifying a more explicit one.
-Warning: The "pendulum" dependency specifies the "allows-prereleases" property,\
- which is deprecated. Use "allow-prereleases" instead.
-Warning: Deprecated classifier 'Natural Language :: Ukranian'.\
- Must be replaced by ['Natural Language :: Ukrainian'].
-Warning: Deprecated classifier\
- 'Topic :: Communications :: Chat :: AOL Instant Messenger'.\
- Must be removed.
-"""
-    expected = {
-        expected_template.format(schema_error=schema_error)
-        for schema_error in (fastjsonschema_error, custom_error)
-    }
+    tester.execute("")
 
-    assert tester.io.fetch_error() in expected
+    expected = """\
+Error: Project name (invalid) is same as one of its dependencies
+"""
+
+    assert tester.io.fetch_error() == expected
 
 
 def test_check_invalid(

@@ -1,28 +1,7 @@
 [project]
 name = "invalid"
 version = "1.0.0"
-license = { text = "INVALID" }
-classifiers = [
-    "Environment :: Console",
-    "Intended Audience :: Clowns",
-    "Natural Language :: Ukranian",
-    "Topic :: Communications :: Chat :: AOL Instant Messenger",
-]
-dynamic = [ "readme", "dependencies", "requires-python" ]
-
-[tool.poetry]
-readme = "never/exists.md"
+dynamic = ["dependencies"]
 
 [tool.poetry.dependencies]
-python = "*"
-pendulum = {"version" = "^2.0.5", allows-prereleases = true}
 invalid = "1.0"
-invalid_source = { "version" = "*", source = "not-exists" }
-invalid_source_multi = [
-    { "version" = "*", platform = "linux", source = "exists" },
-    { "version" = "*", platform = "win32", source = "not-exists2" },
-]
-
-[[tool.poetry.source]]
-name = "exists"
-priority = "explicit"
