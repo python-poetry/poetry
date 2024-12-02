@@ -265,7 +265,10 @@ class PackageInfo:
 
         :param dist: The distribution instance to parse information from.
         """
-        if dist.metadata_version not in pkginfo.distribution.HEADER_ATTRS:
+        # The current pkginfo version (1.11.2) does not support 2.4.
+        # The fields we are interested in can be parsed nevertheless.
+        supported_metadata_versions = {*pkginfo.distribution.HEADER_ATTRS.keys(), "2.4"}
+        if dist.metadata_version not in supported_metadata_versions:
             # This check can be replaced once upstream implements strict parsing
             # https://bugs.launchpad.net/pkginfo/+bug/2058697
             raise ValueError(f"Unknown metadata version: {dist.metadata_version}")
