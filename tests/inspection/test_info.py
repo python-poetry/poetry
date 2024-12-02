@@ -202,10 +202,13 @@ def test_info_from_wheel(demo_wheel: Path) -> None:
     assert info._source_url == demo_wheel.resolve().as_posix()
 
 
-def test_info_from_wheel_metadata_version_23(fixture_dir: FixtureDirGetter) -> None:
+@pytest.mark.parametrize("version", ["23", "24"])
+def test_info_from_wheel_metadata_versions(
+    version: str, fixture_dir: FixtureDirGetter
+) -> None:
     path = (
         fixture_dir("distributions")
-        / "demo_metadata_version_23-0.1.0-py2.py3-none-any.whl"
+        / f"demo_metadata_version_{version}-0.1.0-py2.py3-none-any.whl"
     )
     info = PackageInfo.from_wheel(path)
     demo_check_info(info)
