@@ -1,0 +1,7 @@
+[project]
+name = "invalid"
+version = "1.0.0"
+dynamic = ["dependencies"]
+
+[tool.poetry.dependencies]
+invalid = "1.0"

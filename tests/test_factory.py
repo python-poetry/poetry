@@ -405,7 +405,7 @@ def test_create_poetry_fails_on_invalid_configuration(
     fixture_dir: FixtureDirGetter,
 ) -> None:
     with pytest.raises(RuntimeError) as e:
-        Factory().create_poetry(fixture_dir("invalid_pyproject"))
+        Factory().create_poetry(fixture_dir("invalid_pyproject_dep_name"))
 
     expected = """\
 The Poetry configuration is invalid:

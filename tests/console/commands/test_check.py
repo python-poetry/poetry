@@ -43,6 +43,22 @@ def poetry_with_up_to_date_lockfile(
         yield Factory().create_poetry(cwd)
 
 
+@pytest.fixture
+def poetry_with_pypi_reference(
+    set_project_context: SetProjectContext,
+) -> Iterator[Poetry]:
+    with set_project_context("pypi_reference", in_place=False) as cwd:
+        yield Factory().create_poetry(cwd)
+
+
+@pytest.fixture
+def poetry_with_invalid_pyproject(
+    set_project_context: SetProjectContext,
+) -> Iterator[Poetry]:
+    with set_project_context("invalid_pyproject", in_place=False) as cwd:
+        yield Factory().create_poetry(cwd)
+
+
 @pytest.fixture()
 def tester(
     command_tester_factory: CommandTesterFactory, poetry_simple_project: Poetry
@@ -111,19 +127,35 @@ def test_check_valid_legacy(
     assert tester.io.fetch_error() == expected
 
 
-def test_check_invalid(
+def test_check_invalid_dep_name_same_as_project_name(
     mocker: MockerFixture, tester: CommandTester, fixture_dir: FixtureDirGetter
 ) -> None:
     mocker.patch(
         "poetry.poetry.Poetry.file",
-        return_value=TOMLFile(fixture_dir("invalid_pyproject") / "pyproject.toml"),
+        return_value=TOMLFile(
+            fixture_dir("invalid_pyproject_dep_name") / "pyproject.toml"
+        ),
         new_callable=mocker.PropertyMock,
     )
-
-    tester.execute("--lock")
+    tester.execute("")
 
     expected = """\
 Error: Project name (invalid) is same as one of its dependencies
+"""
+
+    assert tester.io.fetch_error() == expected
+
+
+def test_check_invalid(
+    tester: CommandTester,
+    fixture_dir: FixtureDirGetter,
+    command_tester_factory: CommandTesterFactory,
+    poetry_with_invalid_pyproject: Poetry,
+) -> None:
+    tester = command_tester_factory("check", poetry=poetry_with_invalid_pyproject)
+    tester.execute("--lock")
+
+    expected = """\
 Error: Unrecognized classifiers: ['Intended Audience :: Clowns'].
 Error: Declared README file does not exist: never/exists.md
 Error: Invalid source "not-exists" referenced in dependencies.
@@ -253,4 +285,15 @@ def test_check_lock_up_to_date(
     assert tester.io.fetch_output() == expected
 
     # exit with an error
+    assert status_code == 0
+
+
+def test_check_does_not_error_on_pypi_reference(
+    command_tester_factory: CommandTesterFactory,
+    poetry_with_pypi_reference: Poetry,
+) -> None:
+    tester = command_tester_factory("check", poetry=poetry_with_pypi_reference)
+    status_code = tester.execute("")
+
+    assert tester.io.fetch_output() == "All set!\n"
     assert status_code == 0
