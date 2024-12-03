@@ -22,6 +22,12 @@ if TYPE_CHECKING:
     from tests.conftest import DummyBackend
 
 
+@pytest.fixture
+def config(config: Config) -> Config:
+    config.config["keyring"]["enabled"] = True
+    return config
+
+
 def test_set_http_password(
     config: Config, with_simple_keyring: None, dummy_keyring: DummyBackend
 ) -> None:
@@ -368,10 +374,18 @@ def test_get_pypi_token_with_env_var_not_available(
     assert result_token is None
 
 
-def test_disabled_keyring_never_called(
-    config: Config, with_simple_keyring: None, dummy_keyring: DummyBackend
+@pytest.mark.parametrize("enabled", [False, True])
+def test_disabled_or_unavailable_keyring_never_called(
+    config: Config,
+    with_simple_keyring: None,
+    dummy_keyring: DummyBackend,
+    mocker: MockerFixture,
+    enabled: bool,
 ) -> None:
-    config.config["keyring"]["enabled"] = False
+    if enabled:
+        # enabled but not available
+        mocker.patch.dict("sys.modules", {"keyring": None})
+    config.config["keyring"]["enabled"] = enabled
     config.config["http-basic"] = {"onlyuser": {"username": "user"}}
 
     manager = PasswordManager(config)
