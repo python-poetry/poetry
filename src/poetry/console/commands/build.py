@@ -13,6 +13,10 @@ from poetry.utils.helpers import remove_directory
 
 if TYPE_CHECKING:
     from cleo.io.inputs.option import Option
+    from cleo.io.io import IO
+
+    from poetry.poetry import Poetry
+    from poetry.utils.env import Env
 
 
 class BuildCommand(EnvCommand):
@@ -47,49 +51,61 @@ class BuildCommand(EnvCommand):
         "poetry.core.masonry.builders.wheel",
     ]
 
-    def _build(
-        self,
-        fmt: str,
-        executable: str | Path | None = None,
-        *,
-        target_dir: Path | None = None,
-    ) -> None:
+    def handle(self) -> int:
+        return self.build(
+            self.poetry,
+            self.env,
+            self.io,
+            self.option("format"),
+            self.option("clean"),
+            self.option("local-version"),
+            self.option("output"),
+        )
+
+    @staticmethod
+    def build(
+        poetry: Poetry,
+        env: Env,
+        io: IO,
+        format: str = "all",
+        clean: bool = True,
+        local_version_label: str | None = None,
+        output: str = "dist",
+    ) -> int:
         from poetry.masonry.builders import BUILD_FORMATS
 
-        if fmt in BUILD_FORMATS:
-            builders = [BUILD_FORMATS[fmt]]
-        elif fmt == "all":
-            builders = list(BUILD_FORMATS.values())
-        else:
-            raise ValueError(f"Invalid format: {fmt}")
-
-        if local_version_label := self.option("local-version"):
-            self.poetry.package.version = self.poetry.package.version.replace(
-                local=local_version_label
+        if not poetry.is_package_mode:
+            io.write_error_line(
+                "Building a package is not possible in non-package mode."
             )
-
-        for builder in builders:
-            builder(self.poetry, executable=executable).build(target_dir)
-
-    def handle(self) -> int:
-        if not self.poetry.is_package_mode:
-            self.line_error("Building a package is not possible in non-package mode.")
             return 1
 
-        with build_environment(poetry=self.poetry, env=self.env, io=self.io) as env:
-            fmt = self.option("format") or "all"
-            dist_dir = Path(self.option("output"))
-            package = self.poetry.package
-            self.line(
+        with build_environment(poetry=poetry, env=env, io=io) as env:
+            dist_dir = Path(output)
+            package = poetry.package
+            io.write_line(
                 f"Building <c1>{package.pretty_name}</c1> (<c2>{package.version}</c2>)"
             )
 
             if not dist_dir.is_absolute():
-                dist_dir = self.poetry.pyproject_path.parent / dist_dir
+                dist_dir = poetry.pyproject_path.parent / dist_dir
 
-            if self.option("clean"):
+            if clean:
                 remove_directory(path=dist_dir, force=True)
 
-            self._build(fmt, executable=env.python, target_dir=dist_dir)
+            if format in BUILD_FORMATS:
+                builders = [BUILD_FORMATS[format]]
+            elif format == "all":
+                builders = list(BUILD_FORMATS.values())
+            else:
+                raise ValueError(f"Invalid build format: {format}")
+
+            if local_version_label:
+                poetry.package.version = poetry.package.version.replace(
+                    local=local_version_label
+                )
+
+            for builder in builders:
+                builder(poetry, executable=env.python).build(dist_dir)
 
         return 0

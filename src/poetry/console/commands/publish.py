@@ -72,6 +72,9 @@ the config command.
 
         # Building package first, if told
         if self.option("build"):
+            from poetry.console.commands.build import BuildCommand
+            from poetry.utils.env import EnvManager
+
             if publisher.files and not self.confirm(
                 f"There are <info>{len(publisher.files)}</info> files ready for"
                 " publishing. Build anyway?"
@@ -79,8 +82,8 @@ the config command.
                 self.line_error("<error>Aborted!</error>")
 
                 return 1
-
-            self.call("build", args=f"--output {dist_dir}")
+            env = EnvManager(self.poetry, io=self.io).create_venv()
+            BuildCommand.build(self.poetry, env, self.io, output=dist_dir)
 
         files = publisher.files
         if not files:
