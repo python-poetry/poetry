@@ -202,7 +202,7 @@ def test_info_from_wheel(demo_wheel: Path) -> None:
     assert info._source_url == demo_wheel.resolve().as_posix()
 
 
-@pytest.mark.parametrize("version", ["23", "24"])
+@pytest.mark.parametrize("version", ["23", "24", "299"])
 def test_info_from_wheel_metadata_versions(
     version: str, fixture_dir: FixtureDirGetter
 ) -> None:

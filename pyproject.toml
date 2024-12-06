@@ -42,7 +42,7 @@ installer = "^0.7.0"
 keyring = "^25.1.0"
 # packaging uses calver, so version is unclamped
 packaging = ">=24.0"
-pkginfo = "^1.10"
+pkginfo = "^1.12"
 platformdirs = ">=3.0.0,<5"
 pyproject-hooks = "^1.0.0"
 requests = "^2.26"
