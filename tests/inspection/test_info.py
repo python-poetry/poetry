@@ -179,6 +179,20 @@ def test_info_from_wheel(demo_wheel: Path) -> None:
     assert info._source_url == demo_wheel.resolve().as_posix()
 
 
+@pytest.mark.parametrize("version", ["24", "299"])
+def test_info_from_wheel_metadata_versions(
+    version: str, fixture_dir: FixtureDirGetter
+) -> None:
+    path = (
+        fixture_dir("distributions")
+        / f"demo_metadata_version_{version}-0.1.0-py2.py3-none-any.whl"
+    )
+    info = PackageInfo.from_wheel(path)
+    demo_check_info(info)
+    assert info._source_type == "file"
+    assert info._source_url == path.resolve().as_posix()
+
+
 def test_info_from_wheel_metadata_version_unknown(
     fixture_dir: FixtureDirGetter,
 ) -> None:
