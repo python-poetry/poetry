@@ -35,7 +35,7 @@ jobs:
           - os: Windows
             image: windows-2022
           - os: macOS
-            image: macos-12
+            image: macos-13
       fail-fast: false
     defaults:
       run:
