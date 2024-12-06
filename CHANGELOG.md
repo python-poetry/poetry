@@ -1,6 +1,14 @@
 # Change Log
 
 
+## [1.8.5] - 2024-12-06
+
+### Changed
+
+- Require `pkginfo>=1.12` to fix an issue with an unknown metadata version 2.4 ([#9888](https://github.com/python-poetry/poetry/pull/9888)).
+- Do not fail if the unknown metadata version is only a minor version update ([#9888](https://github.com/python-poetry/poetry/pull/9888)).
+
+
 ## [1.8.4] - 2024-10-14
 
 ### Added
@@ -2204,7 +2212,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.8.4...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.8.5...master
+[1.8.5]: https://github.com/python-poetry/poetry/releases/tag/1.8.5
 [1.8.4]: https://github.com/python-poetry/poetry/releases/tag/1.8.4
 [1.8.3]: https://github.com/python-poetry/poetry/releases/tag/1.8.3
 [1.8.2]: https://github.com/python-poetry/poetry/releases/tag/1.8.2
