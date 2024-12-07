@@ -249,7 +249,7 @@ across all your projects if incorrectly set.
 
 **Environment Variable**: `POETRY_INSTALLER_ONLY_BINARY`
 
-*Introduced in 1.9.0*
+*Introduced in 2.0.0*
 
 When set, this configuration allows users to enforce the use of binary distribution format for all, none or
 specific packages.
@@ -485,7 +485,7 @@ Set the repository URL for `<name>`.
 
 See [Publishable Repositories]({{< relref "repositories#publishable-repositories" >}}) for more information.
 
-### `http-basic.<name>.[username|password]`:
+### `http-basic.<name>.[username|password]`
 
 **Type**: `string`
 
@@ -495,7 +495,7 @@ Set repository credentials (`username` and `password`) for `<name>`.
 See [Repositories - Configuring credentials]({{< relref "repositories#configuring-credentials" >}})
 for more information.
 
-### `pypi-token.<name>`:
+### `pypi-token.<name>`
 
 **Type**: `string`
 
@@ -505,7 +505,7 @@ Set repository credentials (using an API token) for `<name>`.
 See [Repositories - Configuring credentials]({{< relref "repositories#configuring-credentials" >}})
 for more information.
 
-### `certificates.<name>.cert`:
+### `certificates.<name>.cert`
 
 **Type**: `string | boolean`
 
@@ -518,7 +518,7 @@ for more information.
 This configuration can be set to `false`, if TLS certificate verification should be skipped for this
 repository.
 
-### `certificates.<name>.client-cert`:
+### `certificates.<name>.client-cert`
 
 **Type**: `string`
 
@@ -528,7 +528,7 @@ Set client certificate for repository `<name>`.
 See [Repositories - Configuring credentials - Custom certificate authority]({{< relref "repositories#custom-certificate-authority-and-mutual-tls-authentication" >}})
 for more information.
 
-### `keyring.enabled`:
+### `keyring.enabled`
 
 **Type**: `boolean`
 
