@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "poetry"
-version = "2.0.0.dev0"
+version = "2.0.0"
 description = "Python dependency management and packaging made easy."
 authors = ["Sébastien Eustace <sebastien@eustace.io>"]
 maintainers = [
@@ -31,7 +31,7 @@ Changelog = "https://python-poetry.org/history/"
 [tool.poetry.dependencies]
 python = "^3.9"
 
-poetry-core = { git = "https://github.com/python-poetry/poetry-core.git", branch = "main" }
+poetry-core = { git = "https://github.com/python-poetry/poetry-core.git", branch = "main" }  # TODO: use released version
 build = "^1.2.1"
 cachecontrol = { version = "^0.14.0", extras = ["filecache"] }
 cleo = "^2.1.0"
