@@ -24,6 +24,8 @@ jobs:
       tests: ${{ steps.changes.outputs.tests }}
     steps:
       - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        with:
+          persist-credentials: false
 
       - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         id: changes
@@ -55,6 +57,8 @@ jobs:
     needs: changes
     steps:
       - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        with:
+          persist-credentials: false
 
       - uses: ./.github/actions/bootstrap-poetry
 
@@ -67,6 +71,8 @@ jobs:
     needs: lockfile
     steps:
       - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        with:
+          persist-credentials: false
 
       - run: pipx run build
 
@@ -86,6 +92,8 @@ jobs:
     needs: changes
     steps:
       - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        with:
+          persist-credentials: false
 
       - uses: ./.github/actions/bootstrap-poetry
 

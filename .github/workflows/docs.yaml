@@ -5,7 +5,7 @@ on:
     # allow repository maintainers to modify and test workflow
     paths:
       - ".github/workflows/docs.yaml"
-  pull_request_target:
+  pull_request_target:  # zizmor: ignore[dangerous-triggers]
     # enable runs for this workflow when labeled as documentation only
     # prevent execution when the workflow itself is modified from a fork
     types:
@@ -27,12 +27,14 @@ jobs:
     steps:
       - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
         with:
+          persist-credentials: false
           repository: python-poetry/website
 
       # use .github from pull request target instead of pull_request.head
       # for pull_request_target trigger to avoid arbitrary code execution
       - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
         with:
+          persist-credentials: false
           path: poetry-github
           sparse-checkout: .github
 
@@ -40,6 +42,7 @@ jobs:
       # for pull_request_target trigger (security)
       - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
         with:
+          persist-credentials: false
           path: poetry-docs
           ref: ${{ github.event.pull_request.head.sha }}
           sparse-checkout: docs
