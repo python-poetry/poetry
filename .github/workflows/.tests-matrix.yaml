@@ -32,6 +32,8 @@ jobs:
     if: inputs.run-mypy
     steps:
       - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        with:
+          persist-credentials: false
 
       - uses: ./.github/actions/bootstrap-poetry
         id: bootstrap-poetry
@@ -56,6 +58,8 @@ jobs:
     if: inputs.run-pytest
     steps:
       - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        with:
+          persist-credentials: false
 
       - uses: ./.github/actions/bootstrap-poetry
         with:
@@ -79,6 +83,7 @@ jobs:
     steps:
       - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
         with:
+          persist-credentials: false
           path: poetry
 
       - uses: ./poetry/.github/actions/bootstrap-poetry
@@ -95,6 +100,7 @@ jobs:
       - name: Check out poetry-plugin-export
         uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
         with:
+          persist-credentials: false
           path: poetry-plugin-export
           repository: python-poetry/poetry-plugin-export
           ref: refs/tags/${{ steps.poetry-plugin-export-version.outputs.version }}
@@ -104,8 +110,10 @@ jobs:
         # Replace the python version to avoid conflicts
         # if the plugin still supports a wider range than Poetry itself.
         run: |
-          perl -pi -e 's/^python =.*$/python = "~${{ inputs.python-version }}"/' pyproject.toml
+          perl -pi -e 's/^python =.*$/python = "~'"${PYTHON_VERSION}"'"/' pyproject.toml
           poetry add --lock --group dev ../poetry
+        env:
+          PYTHON_VERSION: ${{ inputs.python-version }}
 
       # This step can be removed after having released a poetry-plugin-export version
       # that has cffi>=1.17.0 in its lock file.
