@@ -532,9 +532,11 @@ for more information.
 
 **Type**: `boolean`
 
-**Default**: `true`
+**Default**: `false`
 
 **Environment Variable**: `POETRY_KEYRING_ENABLED`
+
+*Changed default to `false` in 2.0.0*
 
 Enable the system keyring for storing credentials.
 See [Repositories - Configuring credentials]({{< relref "repositories#configuring-credentials" >}})

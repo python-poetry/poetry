@@ -43,6 +43,12 @@ def repo() -> dict[str, dict[str, str]]:
 
 
 @pytest.fixture
+def config(config: Config) -> Config:
+    config.config["keyring"]["enabled"] = True
+    return config
+
+
+@pytest.fixture
 def mock_config(config: Config, repo: dict[str, dict[str, str]]) -> Config:
     config.merge(
         {
