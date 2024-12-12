@@ -196,20 +196,26 @@ class Downloader:
         headers = {"Accept-Encoding": "Identity"}
         if start > 0:
             headers["Range"] = f"bytes={start}-"
+
         response = self._session.get(
             self._url, stream=True, headers=headers, timeout=REQUESTS_TIMEOUT
         )
-        response.raise_for_status()
-        return response
+        try:
+            response.raise_for_status()
+            return response
+        except BaseException:
+            response.close()
+            raise
 
     def _iter_content_with_resume(self, chunk_size: int) -> Iterator[bytes]:
         fetched_size = 0
         retries = 0
         while True:
             try:
-                for chunk in self._response.iter_content(chunk_size=chunk_size):
-                    yield chunk
-                    fetched_size += len(chunk)
+                with self._response:
+                    for chunk in self._response.iter_content(chunk_size=chunk_size):
+                        yield chunk
+                        fetched_size += len(chunk)
             except (ChunkedEncodingError, ConnectionError):
                 if (
                     retries < self._max_retries
