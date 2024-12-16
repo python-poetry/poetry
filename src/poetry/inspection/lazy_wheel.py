@@ -428,15 +428,20 @@ class LazyFileOverHTTP(ReadOnlyIOWrapper):
         headers["Range"] = f"bytes={start}-{end}"
         logger.debug("streamed bytes request: %s", headers["Range"])
         self._request_count += 1
+
         response = self._session.get(self._url, headers=headers, stream=True)
-        response.raise_for_status()
-        if int(response.headers["Content-Length"]) != (end - start + 1):
-            raise HTTPRangeRequestNotRespectedError(
-                f"server did not respect byte range request: "
-                f"requested {end - start + 1} bytes, got "
-                f"{response.headers['Content-Length']} bytes"
-            )
-        return response
+        try:
+            response.raise_for_status()
+            if int(response.headers["Content-Length"]) != (end - start + 1):
+                raise HTTPRangeRequestNotRespectedError(
+                    f"server did not respect byte range request: "
+                    f"requested {end - start + 1} bytes, got "
+                    f"{response.headers['Content-Length']} bytes"
+                )
+            return response
+        except BaseException:
+            response.close()
+            raise
 
     def _fetch_content_range(self, start: int, end: int) -> Iterator[bytes]:
         """Perform a series of HTTP range requests to cover the specified byte range.
@@ -445,7 +450,8 @@ class LazyFileOverHTTP(ReadOnlyIOWrapper):
         method must *include* the byte indexed at argument ``end`` (so e.g. ``0-1`` is 2
         bytes long, and the range can never be empty).
         """
-        yield from self._stream_response(start, end).iter_content(CONTENT_CHUNK_SIZE)
+        with self._stream_response(start, end) as response:
+            yield from response.iter_content(CONTENT_CHUNK_SIZE)
 
     @contextmanager
     def _stay(self) -> Iterator[None]:
@@ -549,7 +555,7 @@ class LazyWheelOverHTTP(LazyFileOverHTTP):
         else:
             # If we *could* download some file contents, then write them to the end of
             # the file and set up our bisect boundaries by hand.
-            with self._stay():
+            with self._stay(), tail:
                 response_length = int(tail.headers["Content-Length"])
                 assert response_length == min(initial_chunk_size, ret_length)
                 self.seek(-response_length, io.SEEK_END)
@@ -600,36 +606,43 @@ class LazyWheelOverHTTP(LazyFileOverHTTP):
 
         self._request_count += 1
         tail = self._session.get(self._url, headers=headers, stream=True)
-        tail.raise_for_status()
+        try:
+            tail.raise_for_status()
 
-        code = tail.status_code
-        if code != codes.partial_content:
-            # According to
-            # https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests,
-            # a 200 OK implies that range requests are not supported,
-            # regardless of the requested size.
-            # However, some servers that support negative range requests also return a
-            # 200 OK if the requested range from the end was larger than the file size.
-            if code == codes.ok:
-                accept_ranges = tail.headers.get("Accept-Ranges", None)
-                content_length = int(tail.headers["Content-Length"])
-                if accept_ranges == "bytes" and content_length <= initial_chunk_size:
-                    return content_length, tail
+            code = tail.status_code
+            if code != codes.partial_content:
+                # According to
+                # https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests,
+                # a 200 OK implies that range requests are not supported,
+                # regardless of the requested size.
+                # However, some servers that support negative range requests also return a
+                # 200 OK if the requested range from the end was larger than the file size.
+                if code == codes.ok:
+                    accept_ranges = tail.headers.get("Accept-Ranges", None)
+                    content_length = int(tail.headers["Content-Length"])
+                    if (
+                        accept_ranges == "bytes"
+                        and content_length <= initial_chunk_size
+                    ):
+                        return content_length, tail
 
-            raise HTTPRangeRequestUnsupportedError(
-                f"did not receive partial content: got code {code}"
+                raise HTTPRangeRequestUnsupportedError(
+                    f"did not receive partial content: got code {code}"
+                )
+
+            if "Content-Range" not in tail.headers:
+                raise LazyWheelUnsupportedError(
+                    f"file length cannot be determined for {self._url}, "
+                    f"did not receive content range header from server"
+                )
+
+            file_length = self._parse_full_length_from_content_range(
+                tail.headers["Content-Range"]
             )
-
-        if "Content-Range" not in tail.headers:
-            raise LazyWheelUnsupportedError(
-                f"file length cannot be determined for {self._url}, "
-                f"did not receive content range header from server"
-            )
-
-        file_length = self._parse_full_length_from_content_range(
-            tail.headers["Content-Range"]
-        )
-        return (file_length, tail)
+            return (file_length, tail)
+        except BaseException:
+            tail.close()
+            raise
 
     def _extract_content_length(
         self, initial_chunk_size: int
@@ -683,6 +696,7 @@ class LazyWheelOverHTTP(LazyFileOverHTTP):
         if int(tail.headers["Content-Length"]) > initial_chunk_size or tail.headers.get(
             "Content-Range", ""
         ).startswith("bytes -"):
+            tail.close()
             tail = None
             self._domains_without_negative_range.add(domain)
         return file_length, tail
