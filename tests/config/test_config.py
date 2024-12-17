@@ -112,6 +112,10 @@ def test_disabled_keyring_is_unavailable(
     config: Config, with_simple_keyring: None, dummy_keyring: DummyBackend
 ) -> None:
     manager = PasswordManager(config)
+    assert not manager.use_keyring
+
+    config.config["keyring"]["enabled"] = True
+    manager = PasswordManager(config)
     assert manager.use_keyring
 
     config.config["keyring"]["enabled"] = False
