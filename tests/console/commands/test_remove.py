@@ -358,6 +358,44 @@ baz = "^1.0.0"
     assert expected in string_content
 
 
+def test_remove_package_does_not_exist(
+    tester: CommandTester,
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    command_tester_factory: CommandTesterFactory,
+) -> None:
+    repo.add_package(Package("foo", "2.0.0"))
+
+    original_content = app.poetry.file.read().as_string()
+
+    with pytest.raises(ValueError) as e:
+        tester.execute("foo")
+
+    assert str(e.value) == "The following packages were not found: foo"
+    assert app.poetry.file.read().as_string() == original_content
+
+
+def test_remove_package_no_dependencies(
+    tester: CommandTester,
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    command_tester_factory: CommandTesterFactory,
+) -> None:
+    repo.add_package(Package("foo", "2.0.0"))
+
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    assert "dependencies" not in pyproject["project"]
+    del pyproject["tool"]["poetry"]["dependencies"]
+    pyproject = cast("TOMLDocument", pyproject)
+    app.poetry.file.write(pyproject)
+    app.poetry.package._dependency_groups = {}
+
+    with pytest.raises(ValueError) as e:
+        tester.execute("foo")
+
+    assert str(e.value) == "The following packages were not found: foo"
+
+
 def test_remove_command_should_not_write_changes_upon_installer_errors(
     tester: CommandTester,
     app: PoetryTestApplication,
