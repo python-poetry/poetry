@@ -88,5 +88,7 @@ class Poetry(BasePoetry):
     def get_sources(self) -> list[Source]:
         return [
             Source(**source)
-            for source in self.pyproject.poetry_config.get("source", [])
+            for source in self.pyproject.data.get("tool", {})
+            .get("poetry", {})
+            .get("source", [])
         ]

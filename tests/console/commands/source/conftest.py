@@ -63,6 +63,13 @@ def source_existing() -> Source:
     return _existing_source
 
 
+PYPROJECT_WITHOUT_POETRY_SECTION = """
+[project]
+name = "source-command-test"
+version = "0.1.0"
+"""
+
+
 PYPROJECT_WITHOUT_SOURCES = """
 [tool.poetry]
 name = "source-command-test"
@@ -97,6 +104,11 @@ PYPROJECT_WITH_PYPI_AND_OTHER = f"""{PYPROJECT_WITH_SOURCES}
 [[tool.poetry.source]]
 name = "PyPI"
 """
+
+
+@pytest.fixture
+def poetry_without_poetry_section(project_factory: ProjectFactory) -> Poetry:
+    return project_factory(pyproject_content=PYPROJECT_WITHOUT_POETRY_SECTION)
 
 
 @pytest.fixture
