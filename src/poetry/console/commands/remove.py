@@ -68,13 +68,13 @@ list of installed packages
         if group is None:
             # remove from all groups
             removed = set()
-            group_sections = [
-                (
-                    MAIN_GROUP,
-                    project_content.get("dependencies", []),
-                    poetry_content.get("dependencies", {}),
+            group_sections = []
+            project_dependencies = project_content.get("dependencies", [])
+            poetry_dependencies = poetry_content.get("dependencies", {})
+            if project_dependencies or poetry_dependencies:
+                group_sections.append(
+                    (MAIN_GROUP, project_dependencies, poetry_dependencies)
                 )
-            ]
             group_sections.extend(
                 (group_name, [], group_section.get("dependencies", {}))
                 for group_name, group_section in poetry_content.get("group", {}).items()
