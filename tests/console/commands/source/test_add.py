@@ -9,6 +9,8 @@ from poetry.repositories.repository_pool import Priority
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from cleo.testers.command_tester import CommandTester
 
     from poetry.poetry import Poetry
@@ -25,17 +27,17 @@ def tester(
 def assert_source_added(
     tester: CommandTester,
     poetry: Poetry,
-    source_existing: Source,
-    source_added: Source,
+    added_source: Source,
+    existing_sources: Iterable[Source] = (),
 ) -> None:
     assert tester.io.fetch_error().strip() == ""
     assert (
         tester.io.fetch_output().strip()
-        == f"Adding source with name {source_added.name}."
+        == f"Adding source with name {added_source.name}."
     )
     poetry.pyproject.reload()
     sources = poetry.get_sources()
-    assert sources == [source_existing, source_added]
+    assert sources == [*existing_sources, added_source]
     assert tester.status_code == 0
 
 
@@ -46,7 +48,25 @@ def test_source_add_simple(
     poetry_with_source: Poetry,
 ) -> None:
     tester.execute(f"{source_one.name} {source_one.url}")
-    assert_source_added(tester, poetry_with_source, source_existing, source_one)
+    assert_source_added(tester, poetry_with_source, source_one, [source_existing])
+
+
+def test_source_add_simple_without_existing_sources(
+    tester: CommandTester,
+    source_one: Source,
+    poetry_without_source: Poetry,
+) -> None:
+    tester.execute(f"{source_one.name} {source_one.url}")
+    assert_source_added(tester, poetry_without_source, source_one)
+
+
+def test_source_add_simple_without_existing_poetry_section(
+    tester: CommandTester,
+    source_one: Source,
+    poetry_without_poetry_section: Poetry,
+) -> None:
+    tester.execute(f"{source_one.name} {source_one.url}")
+    assert_source_added(tester, poetry_without_poetry_section, source_one)
 
 
 def test_source_add_supplemental(
@@ -59,7 +79,7 @@ def test_source_add_supplemental(
         f"--priority=supplemental {source_supplemental.name} {source_supplemental.url}"
     )
     assert_source_added(
-        tester, poetry_with_source, source_existing, source_supplemental
+        tester, poetry_with_source, source_supplemental, [source_existing]
     )
 
 
@@ -70,7 +90,7 @@ def test_source_add_explicit(
     poetry_with_source: Poetry,
 ) -> None:
     tester.execute(f"--priority=explicit {source_explicit.name} {source_explicit.url}")
-    assert_source_added(tester, poetry_with_source, source_existing, source_explicit)
+    assert_source_added(tester, poetry_with_source, source_explicit, [source_existing])
 
 
 def test_source_add_error_no_url(tester: CommandTester) -> None:
@@ -99,7 +119,7 @@ def test_source_add_pypi(
     poetry_with_source: Poetry,
 ) -> None:
     tester.execute(name)
-    assert_source_added(tester, poetry_with_source, source_existing, source_pypi)
+    assert_source_added(tester, poetry_with_source, source_pypi, [source_existing])
 
 
 def test_source_add_pypi_explicit(
@@ -110,7 +130,7 @@ def test_source_add_pypi_explicit(
 ) -> None:
     tester.execute("--priority=explicit PyPI")
     assert_source_added(
-        tester, poetry_with_source, source_existing, source_pypi_explicit
+        tester, poetry_with_source, source_pypi_explicit, [source_existing]
     )
 
 
