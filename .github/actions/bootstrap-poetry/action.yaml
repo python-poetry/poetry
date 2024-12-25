@@ -23,7 +23,7 @@ outputs:
 runs:
   using: composite
   steps:
-    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5
+    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       id: setup-python
       if: inputs.python-version != 'default'
       with:
