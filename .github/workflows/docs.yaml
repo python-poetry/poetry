@@ -25,14 +25,14 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
           repository: python-poetry/website
 
       # use .github from pull request target instead of pull_request.head
       # for pull_request_target trigger to avoid arbitrary code execution
-      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
           path: poetry-github
@@ -40,14 +40,14 @@ jobs:
 
       # only checkout docs from pull_request.head to not use something else by accident
       # for pull_request_target trigger (security)
-      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
           path: poetry-docs
           ref: ${{ github.event.pull_request.head.sha }}
           sparse-checkout: docs
 
-      - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
+      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
         with:
           node-version: "18"
 
