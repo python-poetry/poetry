@@ -35,3 +35,7 @@ the <c1>self remove</c1> command.
     @property
     def activated_groups(self) -> set[str]:
         return {MAIN_GROUP, self.default_group}
+
+    @property
+    def _alternative_sync_command(self) -> str:
+        return "poetry self sync"

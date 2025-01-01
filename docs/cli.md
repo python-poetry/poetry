@@ -142,6 +142,14 @@ poetry init
 The `install` command reads the `pyproject.toml` file from the current project,
 resolves the dependencies, and installs them.
 
+{{% note %}}
+Normally, you should prefer `poetry sync` to `poetry install` to avoid untracked outdated packages.
+However, if you have set `virtualenvs.create = false` to install dependencies into your system environment,
+which is discouraged, or `virtualenvs.options.system-site-packages = true` to make
+system site-packages available in your virtual environment, you should use `poetry install`
+because `poetry sync` will normally not work well in these cases.
+{{% /note %}}
+
 ```bash
 poetry install
 ```
@@ -186,21 +194,6 @@ poetry install --only-root
 See [Dependency groups]({{< relref "managing-dependencies#dependency-groups" >}}) for more information
 about dependency groups.
 
-If you want to synchronize your environment – and ensure it matches the lock file – use the
-`--sync` option.
-
-```bash
-poetry install --sync
-```
-
-The `--sync` can be combined with group-related options:
-
-```bash
-poetry install --without dev --sync
-poetry install --with docs --sync
-poetry install --only dev --sync
-```
-
 You can also specify the extras you want installed
 by passing the `-E|--extras` option (See [Extras]({{< relref "pyproject#extras" >}}) for more info).
 Pass `--all-extras` to install all defined extras for a project.
@@ -211,7 +204,7 @@ poetry install -E mysql -E pgsql
 poetry install --all-extras
 ```
 
-Extras are not sensitive to `--sync`.  Any extras not specified will always be removed.
+Any extras not specified will always be removed.
 
 ```bash
 poetry install --extras "A B"  # C is removed
@@ -258,7 +251,7 @@ poetry install --compile
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
 * `--only-root`: Install only the root project, exclude all dependencies.
-* `--sync`: Synchronize the environment with the locked packages and the specified groups.
+* `--sync`: Synchronize the environment with the locked packages and the specified groups. (**Deprecated**, use `poetry sync` instead)
 * `--no-root`: Do not install the root package (your project).
 * `--no-directory`: Skip all directory path dependencies (including transitive ones).
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
@@ -275,15 +268,119 @@ When `--only` is specified, `--with` and `--without` options are ignored.
 ## sync
 
 The `sync` command makes sure that the project's environment is in sync with the `poetry.lock` file.
-It is equivalent to running `poetry install --sync` and provides the same options
-(except for `--sync`) as [install]({{< relref "#install" >}}).
+It is similar to `poetry install` but it additionally removes packages that are not tracked in the lock file.
+
+```bash
+poetry sync
+```
+
+If there is a `poetry.lock` file in the current directory,
+it will use the exact versions from there instead of resolving them.
+This ensures that everyone using the library will get the same versions of the dependencies.
+
+If there is no `poetry.lock` file, Poetry will create one after dependency resolution.
+
+If you want to exclude one or more dependency groups for the installation, you can use
+the `--without` option.
+
+```bash
+poetry sync --without test,docs
+```
+
+You can also select optional dependency groups with the `--with` option.
+
+```bash
+poetry sync --with test,docs
+```
+
+To install all dependency groups including the optional groups, use the ``--all-groups`` flag.
+
+```bash
+poetry sync --all-groups
+```
+
+It's also possible to only install specific dependency groups by using the `only` option.
+
+```bash
+poetry sync --only test,docs
+```
+
+To only install the project itself with no dependencies, use the `--only-root` flag.
+
+```bash
+poetry sync --only-root
+```
+
+See [Dependency groups]({{< relref "managing-dependencies#dependency-groups" >}}) for more information
+about dependency groups.
+
+You can also specify the extras you want installed
+by passing the `-E|--extras` option (See [Extras]({{< relref "pyproject#extras" >}}) for more info).
+Pass `--all-extras` to install all defined extras for a project.
+
+```bash
+poetry sync --extras "mysql pgsql"
+poetry sync -E mysql -E pgsql
+poetry sync --all-extras
+```
+
+Any extras not specified will always be removed.
+
+```bash
+poetry sync --extras "A B"  # C is removed
+```
+
+By default `poetry` will install your project's package every time you run `sync`:
+
+```bash
+$ poetry sync
+Installing dependencies from lock file
+
+No dependencies to install or update
+
+  - Installing <your-package-name> (x.x.x)
+```
+
+If you want to skip this installation, use the `--no-root` option.
+
+```bash
+poetry sync --no-root
+```
+
+Similar to `--no-root` you can use `--no-directory` to skip directory path dependencies:
+
+```bash
+poetry sync --no-directory
+```
+
+This is mainly useful for caching in CI or when building Docker images. See the [FAQ entry]({{< relref "faq#poetry-busts-my-docker-cache-because-it-requires-me-to-copy-my-source-files-in-before-installing-3rd-party-dependencies" >}}) for more information on this option.
+
+By default `poetry` does not compile Python source files to bytecode during installation.
+This speeds up the installation process, but the first execution may take a little more
+time because Python then compiles source files to bytecode automatically.
+If you want to compile source files to bytecode during installation,
+you can use the `--compile` option:
+
+```bash
+poetry sync --compile
+```
+
+### Options
+
+* `--without`: The dependency groups to ignore.
+* `--with`: The optional dependency groups to include.
+* `--only`: The only dependency groups to include.
+* `--only-root`: Install only the root project, exclude all dependencies.
+* `--no-root`: Do not install the root package (your project).
+* `--no-directory`: Skip all directory path dependencies (including transitive ones).
+* `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
+* `--extras (-E)`: Features to install (multiple values allowed).
+* `--all-extras`: Install all extra features (conflicts with `--extras`).
+* `--all-groups`: Install dependencies from all groups (conflicts with `--only`, `--with`, and `--without`).
+* `--compile`: Compile Python source files to bytecode.
 
 {{% note %}}
-Normally, you should prefer `poetry sync` to `poetry install` to avoid untracked outdated packages.
-However, if you have set `virtualenvs.create = false` to install dependencies into your system environment,
-which is discouraged, or `virtualenvs.options.system-site-packages = true` to make
-system site-packages available in your virtual environment, you should use `poetry install`
-because `poetry sync` will normally not work well in these cases.
+When `--only` is specified, `--with` and `--without` options are ignored.
 {{% /note %}}
 
 
@@ -1039,16 +1136,34 @@ runtime environment.
 
 {{% note %}}
 The `self install` command works similar to the [`install` command](#install). However,
-is different in that the packages managed are for Poetry's runtime environment.
+it is different in that the packages managed are for Poetry's runtime environment.
 {{% /note %}}
 
 ```bash
-poetry self install --sync
+poetry self install
 ```
 
 #### Options
 
-* `--sync`: Synchronize the environment with the locked packages and the specified groups.
+* `--sync`: Synchronize the environment with the locked packages and the specified groups. (**Deprecated**, use `poetry self sync` instead)
+* `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
+
+### self sync
+
+The `self sync` command ensures all additional (and no other) packages specified
+are installed in the current runtime environment.
+
+{{% note %}}
+The `self sync` command works similar to the [`sync` command](#sync). However,
+it is different in that the packages managed are for Poetry's runtime environment.
+{{% /note %}}
+
+```bash
+poetry self sync
+```
+
+#### Options
+
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
 
 ## export

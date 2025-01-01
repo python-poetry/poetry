@@ -159,8 +159,9 @@ def test_group_options_are_passed_to_the_installer(
         assert editable_builder_mock.call_count == 0
 
 
+@pytest.mark.parametrize("sync", [True, False])
 def test_sync_option_is_passed_to_the_installer(
-    tester: CommandTester, mocker: MockerFixture
+    tester: CommandTester, mocker: MockerFixture, sync: bool
 ) -> None:
     """
     The --sync option is passed properly to the installer.
@@ -168,9 +169,16 @@ def test_sync_option_is_passed_to_the_installer(
     assert isinstance(tester.command, InstallerCommand)
     mocker.patch.object(tester.command.installer, "run", return_value=1)
 
-    tester.execute("--sync")
+    tester.execute("--sync" if sync else "")
 
-    assert tester.command.installer._requires_synchronization
+    assert tester.command.installer._requires_synchronization is sync
+
+    error = tester.io.fetch_error()
+    if sync:
+        assert "deprecated" in error
+        assert "poetry sync" in error
+    else:
+        assert error == ""
 
 
 @pytest.mark.parametrize("compile", [False, True])
