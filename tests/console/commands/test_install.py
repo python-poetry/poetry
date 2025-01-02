@@ -64,15 +64,20 @@ extras_b = [ "buzz" ]
 
 
 @pytest.fixture
+def command() -> str:
+    return "install"
+
+
+@pytest.fixture
 def poetry(project_factory: ProjectFactory) -> Poetry:
     return project_factory(name="export", pyproject_content=PYPROJECT_CONTENT)
 
 
 @pytest.fixture
 def tester(
-    command_tester_factory: CommandTesterFactory, poetry: Poetry
+    command_tester_factory: CommandTesterFactory, command: str, poetry: Poetry
 ) -> CommandTester:
-    return command_tester_factory("install")
+    return command_tester_factory(command)
 
 
 def _project_factory(
@@ -154,8 +159,9 @@ def test_group_options_are_passed_to_the_installer(
         assert editable_builder_mock.call_count == 0
 
 
+@pytest.mark.parametrize("sync", [True, False])
 def test_sync_option_is_passed_to_the_installer(
-    tester: CommandTester, mocker: MockerFixture
+    tester: CommandTester, mocker: MockerFixture, sync: bool
 ) -> None:
     """
     The --sync option is passed properly to the installer.
@@ -163,9 +169,16 @@ def test_sync_option_is_passed_to_the_installer(
     assert isinstance(tester.command, InstallerCommand)
     mocker.patch.object(tester.command.installer, "run", return_value=1)
 
-    tester.execute("--sync")
+    tester.execute("--sync" if sync else "")
 
-    assert tester.command.installer._requires_synchronization
+    assert tester.command.installer._requires_synchronization is sync
+
+    error = tester.io.fetch_error()
+    if sync:
+        assert "deprecated" in error
+        assert "poetry sync" in error
+    else:
+        assert error == ""
 
 
 @pytest.mark.parametrize("compile", [False, True])
@@ -443,6 +456,7 @@ def test_install_logs_output_decorated(
 @pytest.mark.parametrize("error", ["module", "readme", ""])
 def test_install_warning_corrupt_root(
     command_tester_factory: CommandTesterFactory,
+    command: str,
     project_factory: ProjectFactory,
     with_root: bool,
     error: str,
@@ -461,7 +475,7 @@ authors = []
     if error != "module":
         (poetry.pyproject_path.parent / f"{name}.py").touch()
 
-    tester = command_tester_factory("install", poetry=poetry)
+    tester = command_tester_factory(command, poetry=poetry)
     tester.execute("" if with_root else "--no-root")
 
     if error and with_root:
@@ -481,6 +495,7 @@ authors = []
 )
 def test_install_path_dependency_does_not_exist(
     command_tester_factory: CommandTesterFactory,
+    command: str,
     project_factory: ProjectFactory,
     fixture_dir: FixtureDirGetter,
     project: str,
@@ -489,7 +504,7 @@ def test_install_path_dependency_does_not_exist(
     poetry = _project_factory(project, project_factory, fixture_dir)
     assert isinstance(poetry.locker, TestLocker)
     poetry.locker.locked(True)
-    tester = command_tester_factory("install", poetry=poetry)
+    tester = command_tester_factory(command, poetry=poetry)
     if options:
         tester.execute(options)
     else:
@@ -500,6 +515,7 @@ def test_install_path_dependency_does_not_exist(
 @pytest.mark.parametrize("options", ["", "--extras notinstallable"])
 def test_install_extra_path_dependency_does_not_exist(
     command_tester_factory: CommandTesterFactory,
+    command: str,
     project_factory: ProjectFactory,
     fixture_dir: FixtureDirGetter,
     options: str,
@@ -508,7 +524,7 @@ def test_install_extra_path_dependency_does_not_exist(
     poetry = _project_factory(project, project_factory, fixture_dir)
     assert isinstance(poetry.locker, TestLocker)
     poetry.locker.locked(True)
-    tester = command_tester_factory("install", poetry=poetry)
+    tester = command_tester_factory(command, poetry=poetry)
     if not options:
         tester.execute(options)
     else:
@@ -519,6 +535,7 @@ def test_install_extra_path_dependency_does_not_exist(
 @pytest.mark.parametrize("options", ["", "--no-directory"])
 def test_install_missing_directory_dependency_with_no_directory(
     command_tester_factory: CommandTesterFactory,
+    command: str,
     project_factory: ProjectFactory,
     fixture_dir: FixtureDirGetter,
     options: str,
@@ -528,7 +545,7 @@ def test_install_missing_directory_dependency_with_no_directory(
     )
     assert isinstance(poetry.locker, TestLocker)
     poetry.locker.locked(True)
-    tester = command_tester_factory("install", poetry=poetry)
+    tester = command_tester_factory(command, poetry=poetry)
     if options:
         tester.execute(options)
     else:
@@ -538,6 +555,7 @@ def test_install_missing_directory_dependency_with_no_directory(
 
 def test_non_package_mode_does_not_try_to_install_root(
     command_tester_factory: CommandTesterFactory,
+    command: str,
     project_factory: ProjectFactory,
 ) -> None:
     content = """\
@@ -546,7 +564,7 @@ package-mode = false
 """
     poetry = project_factory(name="non-package-mode", pyproject_content=content)
 
-    tester = command_tester_factory("install", poetry=poetry)
+    tester = command_tester_factory(command, poetry=poetry)
     tester.execute()
 
     assert tester.status_code == 0

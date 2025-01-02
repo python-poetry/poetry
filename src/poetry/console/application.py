@@ -63,6 +63,7 @@ COMMANDS = [
     "run",
     "search",
     "show",
+    "sync",
     "update",
     "version",
     # Cache commands
@@ -85,6 +86,7 @@ COMMANDS = [
     "self update",
     "self show",
     "self show plugins",
+    "self sync",
     # Source commands
     "source add",
     "source remove",

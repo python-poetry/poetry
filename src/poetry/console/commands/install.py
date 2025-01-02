@@ -23,7 +23,7 @@ class InstallCommand(InstallerCommand):
             "sync",
             None,
             "Synchronize the environment with the locked packages and the specified"
-            " groups.",
+            " groups. (<warning>Deprecated</warning>)",
         ),
         option(
             "no-root", None, "Do not install the root package (the current project)."
@@ -89,6 +89,10 @@ you can set the "package-mode" to false in your pyproject.toml file.
         else:
             return super().activated_groups
 
+    @property
+    def _alternative_sync_command(self) -> str:
+        return "poetry sync"
+
     def handle(self) -> int:
         from poetry.core.masonry.utils.module import ModuleOrPackageNotFoundError
 
@@ -147,6 +151,14 @@ you can set the "package-mode" to false in your pyproject.toml file.
         self.installer.extras(extras)
 
         with_synchronization = self.option("sync")
+        if with_synchronization:
+            self.line_error(
+                "<warning>The `<fg=yellow;options=bold>--sync</>` option is"
+                " deprecated and slated for removal in the next minor release"
+                " after June 2025, use the"
+                f" `<fg=yellow;options=bold>{self._alternative_sync_command}</>`"
+                " command instead.</warning>"
+            )
 
         self.installer.only_groups(self.activated_groups)
         self.installer.skip_directory(self.option("no-directory"))

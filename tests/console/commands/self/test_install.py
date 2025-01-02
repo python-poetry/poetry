@@ -14,8 +14,13 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
-    return command_tester_factory("self install")
+def command() -> str:
+    return "self install"
+
+
+@pytest.fixture
+def tester(command_tester_factory: CommandTesterFactory, command: str) -> CommandTester:
+    return command_tester_factory(command)
 
 
 @pytest.mark.parametrize(
@@ -60,3 +65,15 @@ Writing lock file
 
     assert tester.io.fetch_output() == expected_output
     assert tester.io.fetch_error() == ""
+
+
+@pytest.mark.parametrize("sync", [True, False])
+def test_sync_deprecation(tester: CommandTester, sync: bool) -> None:
+    tester.execute("--sync" if sync else "")
+
+    error = tester.io.fetch_error()
+    if sync:
+        assert "deprecated" in error
+        assert "poetry self sync" in error
+    else:
+        assert error == ""
