@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from deepdiff import DeepDiff
+from deepdiff.diff import DeepDiff
 from poetry.core.pyproject.exceptions import PyProjectError
 
 from poetry.config.config_source import ConfigSource
