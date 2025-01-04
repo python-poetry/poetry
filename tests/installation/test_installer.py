@@ -240,7 +240,7 @@ def test_not_fresh_lock(installer: Installer, locker: Locker) -> None:
         ValueError,
         match=re.escape(
             "pyproject.toml changed significantly since poetry.lock was last generated. "
-            "Run `poetry lock [--no-update]` to fix the lock file."
+            "Run `poetry lock` to fix the lock file."
         ),
     ):
         installer.run()

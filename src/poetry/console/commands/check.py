@@ -158,7 +158,7 @@ class CheckCommand(Command):
         if self.poetry.locker.is_locked() and not self.poetry.locker.is_fresh():
             check_result["errors"] += [
                 "pyproject.toml changed significantly since poetry.lock was last generated. "
-                "Run `poetry lock [--no-update]` to fix the lock file."
+                "Run `poetry lock` to fix the lock file."
             ]
 
         if not check_result["errors"] and not check_result["warnings"]:
