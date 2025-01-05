@@ -13,7 +13,7 @@
 - Add FIPS support for `poetry publish` ([#9101](https://github.com/python-poetry/poetry/pull/9101)).
 - Add the option to use `poetry new` interactively and configure more fields ([#9101](https://github.com/python-poetry/poetry/pull/9101)).
 - Add a config option `installer.only-binary` to enforce the use of binary distribution formats ([#9150](https://github.com/python-poetry/poetry/pull/9150)).
-- Add support for `poetry search` in legacy sources ([#9132](https://github.com/python-poetry/poetry/pull/9132)).
+- Add backend support for legacy repository search ([#9132](https://github.com/python-poetry/poetry/pull/9132)).
 - Add support to resume downloads from connection resets ([#9422](https://github.com/python-poetry/poetry/pull/9422)).
 - Add the option to define a constraint for the required Poetry version to manage the project ([#9547](https://github.com/python-poetry/poetry/pull/9547)).
 - Add an `--all-groups` option to `poetry install` ([#9744](https://github.com/python-poetry/poetry/pull/9744)).
