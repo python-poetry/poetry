@@ -309,7 +309,7 @@ def test_env_system_packages_are_relative_to_lib(
 
     # These are the virtual environments' base env packages,
     # in this case the system site packages.
-    for dist in metadata.distributions(path=[str(env.parent_env.site_packages.path)]):
+    for dist in env.parent_env.site_packages.distributions():
         assert (
             env.is_path_relative_to_lib(
                 Path(str(dist._path))  # type: ignore[attr-defined]

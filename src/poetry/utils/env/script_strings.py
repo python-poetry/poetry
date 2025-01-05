@@ -97,6 +97,11 @@ import sysconfig
 
 paths = sysconfig.get_paths().copy()
 
+paths["fallbacks"] = [
+    p for p in site.getsitepackages()
+    if p and p not in {paths.get("purelib"), paths.get("platlib")}
+]
+
 if site.check_enableusersite():
     paths["usersite"] = site.getusersitepackages()
     paths["userbase"] = site.getuserbase()
