@@ -204,7 +204,7 @@ you can set the "package-mode" to false in your pyproject.toml file.
             # No need for an editable install in this case.
             self.line("")
             self.line_error(
-                f"Warning: The current project could not be installed: {e}\n"
+                f"Error: The current project could not be installed: {e}\n"
                 "If you do not want to install the current project"
                 " use <c1>--no-root</c1>.\n"
                 "If you want to use Poetry only for dependency management"
