@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import shutil
 import uuid
 
@@ -210,7 +211,12 @@ def test_info_from_wheel_metadata_versions(
         fixture_dir("distributions")
         / f"demo_metadata_version_{version}-0.1.0-py2.py3-none-any.whl"
     )
-    info = PackageInfo.from_wheel(path)
+    with (
+        pytest.warns(NewMetadataVersion)
+        if version == "299"
+        else contextlib.nullcontext()
+    ):
+        info = PackageInfo.from_wheel(path)
     demo_check_info(info)
     assert info._source_type == "file"
     assert info._source_url == path.resolve().as_posix()
