@@ -526,7 +526,7 @@ def test_locker_properly_assigns_metadata_files(locker: Locker) -> None:
     For multiple constraints dependencies, there is only one common entry in
     metadata.files. However, we must not assign all the files to each of the packages
     because this can result in duplicated and outdated entries when running
-    `poetry lock --no-update` and hash check failures when running `poetry install`.
+    `poetry lock` and hash check failures when running `poetry install`.
     """
     content = """\
 [[package]]

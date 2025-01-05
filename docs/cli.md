@@ -1086,8 +1086,7 @@ poetry self lock
 
 #### Options
 
-* `--check`: Verify that `poetry.lock` is consistent with `pyproject.toml`. (**Deprecated**)
-* `--no-update`: Do not update locked versions, only refresh lock file.
+* `--regenerate`: Ignore existing lock file and overwrite it with a new lock file created from scratch.
 
 ### self show
 
