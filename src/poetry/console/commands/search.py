@@ -21,11 +21,7 @@ class SearchCommand(Command):
     ]
 
     def handle(self) -> int:
-        from poetry.repositories.pypi_repository import PyPiRepository
-
-        results = PyPiRepository().search(self.argument("tokens"))
-
-        for result in results:
+        for result in self.poetry.pool.search(self.argument("tokens")):
             self.line("")
             name = f"<info>{result.name}</>"
 

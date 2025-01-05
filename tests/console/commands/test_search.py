@@ -5,29 +5,23 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from poetry.repositories.pypi_repository import PyPiRepository
+
 
 if TYPE_CHECKING:
     import httpretty
 
     from cleo.testers.command_tester import CommandTester
 
+    from poetry.poetry import Poetry
+    from poetry.repositories.legacy_repository import LegacyRepository
     from tests.types import CommandTesterFactory
 
 TESTS_DIRECTORY = Path(__file__).parent.parent.parent
 FIXTURES_DIRECTORY = (
     TESTS_DIRECTORY / "repositories" / "fixtures" / "pypi.org" / "search"
 )
-
-
-@pytest.fixture
-def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
-    return command_tester_factory("search")
-
-
-def test_search(tester: CommandTester, http: type[httpretty.httpretty]) -> None:
-    tester.execute("sqlalchemy")
-
-    expected = """
+SQLALCHEMY_SEARCH_OUTPUT_PYPI = """
 sqlalchemy (1.3.10)
  Database Abstraction Library
 
@@ -88,6 +82,70 @@ cherrypy-sqlalchemy (0.5.3)
 
 sqlalchemy-sqlany (1.0.3)
  SAP Sybase SQL Anywhere dialect for SQLAlchemy
+"""
+
+
+@pytest.fixture
+def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
+    return command_tester_factory("search")
+
+
+def test_search(
+    tester: CommandTester, http: type[httpretty.httpretty], poetry: Poetry
+) -> None:
+    # we expect PyPI in the default behaviour
+    poetry.pool.add_repository(PyPiRepository())
+
+    tester.execute("sqlalchemy")
+
+    output = tester.io.fetch_output()
+
+    assert output == SQLALCHEMY_SEARCH_OUTPUT_PYPI
+
+
+def test_search_with_legacy_repository(
+    tester: CommandTester,
+    http: type[httpretty.httpretty],
+    poetry: Poetry,
+    legacy_repository: LegacyRepository,
+) -> None:
+    poetry.pool.add_repository(PyPiRepository())
+    poetry.pool.add_repository(legacy_repository)
+
+    tester.execute("sqlalchemy")
+
+    expected = (
+        SQLALCHEMY_SEARCH_OUTPUT_PYPI
+        + """
+sqlalchemy-legacy (4.3.4)
+"""
+    )
+
+    output = tester.io.fetch_output()
+
+    assert output == expected
+
+
+def test_search_only_legacy_repository(
+    tester: CommandTester,
+    http: type[httpretty.httpretty],
+    poetry: Poetry,
+    legacy_repository: LegacyRepository,
+) -> None:
+    poetry.pool.add_repository(legacy_repository)
+
+    tester.execute("ipython")
+
+    expected = """
+ipython (5.7.0)
+
+ipython (5.7.0)
+
+ipython (5.7.0)
+
+ipython (7.5.0)
+
+ipython (7.5.0)
 """
 
     output = tester.io.fetch_output()
