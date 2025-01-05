@@ -43,3 +43,8 @@ runs:
     - run: git config --system core.longpaths true
       if: runner.os == 'Windows'
       shell: pwsh
+
+    # Use Poetry Python for virtual environments
+    # (Otherwise, the system Python will be used per default instead of the Python version we just installed)
+    - run: poetry config virtualenvs.use-poetry-python true
+      shell: bash
