@@ -73,11 +73,12 @@ class Repository(AbstractRepository):
     def add_package(self, package: Package) -> None:
         self._packages.append(package)
 
-    def search(self, query: str) -> list[Package]:
+    def search(self, query: str | list[str]) -> list[Package]:
         results: list[Package] = []
+        tokens = query if isinstance(query, list) else [query]
 
         for package in self.packages:
-            if query in package.name:
+            if any(token in package.name for token in tokens):
                 results.append(package)
 
         return results

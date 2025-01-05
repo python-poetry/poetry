@@ -148,7 +148,7 @@ class LegacyRepository(HTTPRepository):
 
         return SimpleRepositoryRootPage(response.text)
 
-    def search(self, query: str) -> list[Package]:
+    def search(self, query: str | list[str]) -> list[Package]:
         results: list[Package] = []
 
         for candidate in self.root_page.search(query):

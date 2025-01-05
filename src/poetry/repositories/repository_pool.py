@@ -182,7 +182,7 @@ class RepositoryPool(AbstractRepository):
             packages += repo.find_packages(dependency)
         return packages
 
-    def search(self, query: str) -> list[Package]:
+    def search(self, query: str | list[str]) -> list[Package]:
         results: list[Package] = []
         for repo in self.repositories:
             results += repo.search(query)
