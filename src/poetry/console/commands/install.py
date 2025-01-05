@@ -94,6 +94,18 @@ you can set the "package-mode" to false in your pyproject.toml file.
         return "poetry sync"
 
     def handle(self) -> int:
+        with_synchronization = self.option("sync")
+        if with_synchronization:
+            self.line_error(
+                "<warning>The `<fg=yellow;options=bold>--sync</>` option is"
+                " deprecated and slated for removal in the next minor release"
+                " after June 2025, use the"
+                f" `<fg=yellow;options=bold>{self._alternative_sync_command}</>`"
+                " command instead.</warning>"
+            )
+        return self._handle_install(with_synchronization)
+
+    def _handle_install(self, with_synchronization: bool) -> int:
         from poetry.core.masonry.utils.module import ModuleOrPackageNotFoundError
 
         from poetry.masonry.builders.editable import EditableBuilder
@@ -149,16 +161,6 @@ you can set the "package-mode" to false in your pyproject.toml file.
                 extras += extra.split()
 
         self.installer.extras(extras)
-
-        with_synchronization = self.option("sync")
-        if with_synchronization:
-            self.line_error(
-                "<warning>The `<fg=yellow;options=bold>--sync</>` option is"
-                " deprecated and slated for removal in the next minor release"
-                " after June 2025, use the"
-                f" `<fg=yellow;options=bold>{self._alternative_sync_command}</>`"
-                " command instead.</warning>"
-            )
 
         self.installer.only_groups(self.activated_groups)
         self.installer.skip_directory(self.option("no-directory"))
