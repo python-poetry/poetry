@@ -139,12 +139,6 @@ def test_search_only_legacy_repository(
     expected = """
 ipython (5.7.0)
 
-ipython (5.7.0)
-
-ipython (5.7.0)
-
-ipython (7.5.0)
-
 ipython (7.5.0)
 """
 

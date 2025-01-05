@@ -21,7 +21,14 @@ class SearchCommand(Command):
     ]
 
     def handle(self) -> int:
+        seen = set()
+
         for result in self.poetry.pool.search(self.argument("tokens")):
+            if result.pretty_string in seen:
+                continue
+
+            seen.add(result.pretty_string)
+
             self.line("")
             name = f"<info>{result.name}</>"
 
