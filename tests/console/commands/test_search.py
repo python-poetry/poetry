@@ -145,3 +145,29 @@ ipython (7.5.0)
     output = tester.io.fetch_output()
 
     assert output == expected
+
+
+def test_search_multiple_queries(
+    tester: CommandTester,
+    http: type[httpretty.httpretty],
+    poetry: Poetry,
+    legacy_repository: LegacyRepository,
+) -> None:
+    poetry.pool.add_repository(legacy_repository)
+
+    tester.execute("ipython isort")
+
+    expected = """
+ipython (5.7.0)
+
+ipython (7.5.0)
+
+isort (4.3.4)
+
+isort-metadata (4.3.4)
+"""
+
+    output = tester.io.fetch_output()
+
+    # we use a set here to avoid ordering issues
+    assert set(output.split("\n")) == set(expected.split("\n"))
