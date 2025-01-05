@@ -34,10 +34,6 @@ def test_sync_option_not_available(tester: CommandTester) -> None:
 
 
 def test_synced_installer(tester: CommandTester, mocker: MockerFixture) -> None:
-    """
-    The --no-directory option is passed to the installer.
-    """
-
     assert isinstance(tester.command, SyncCommand)
     mock = mocker.patch(
         "poetry.console.commands.install.InstallCommand._handle_install"
