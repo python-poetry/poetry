@@ -92,13 +92,6 @@ print(json.dumps(sys.path))
 
 GET_PATHS = """\
 import json
-import sysconfig
-
-print(json.dumps(sysconfig.get_paths()))
-"""
-
-GET_PATHS_FOR_GENERIC_ENVS = """\
-import json
 import site
 import sysconfig
 
