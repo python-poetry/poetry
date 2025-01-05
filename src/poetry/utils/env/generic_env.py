@@ -8,7 +8,7 @@ import subprocess
 from typing import TYPE_CHECKING
 from typing import Any
 
-from poetry.utils.env.script_strings import GET_PATHS_FOR_GENERIC_ENVS
+from poetry.utils.env.script_strings import GET_PATHS
 from poetry.utils.env.virtual_env import VirtualEnv
 
 
@@ -78,7 +78,7 @@ class GenericEnv(VirtualEnv):
                 self._pip_executable = pip_executable
 
     def get_paths(self) -> dict[str, str]:
-        output = self.run_python_script(GET_PATHS_FOR_GENERIC_ENVS)
+        output = self.run_python_script(GET_PATHS)
 
         paths: dict[str, str] = json.loads(output)
         return paths
