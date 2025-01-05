@@ -123,7 +123,7 @@ when publishing a package.
 
 Package sources are a Poetry-specific feature and **not** included in
 [core metadata](https://packaging.python.org/en/latest/specifications/core-metadata/) produced by
-the Poetry build backend.
+the poetry-core build backend.
 
 Consequently, when a Poetry project is e.g. installed using Pip (as a normal package or in editable
 mode), package sources will be ignored and the dependencies in question downloaded from PyPI by
