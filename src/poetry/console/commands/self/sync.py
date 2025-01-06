@@ -29,3 +29,7 @@ This is managed in the \
 You can add more packages using the <c1>self add</c1> command and remove them using \
 the <c1>self remove</c1> command.
 """
+
+    @property
+    def _with_synchronization(self) -> bool:
+        return True

@@ -175,13 +175,10 @@ class Env(ABC):
     @property
     def site_packages(self) -> SitePackages:
         if self._site_packages is None:
-            # we disable write checks if no user site exist
-            fallbacks = [self.usersite] if self.usersite else []
             self._site_packages = SitePackages(
                 self.purelib,
                 self.platlib,
-                fallbacks,
-                skip_write_checks=not fallbacks,
+                self.fallbacks,
             )
         return self._site_packages
 
@@ -214,8 +211,14 @@ class Env(ABC):
 
         return self._platlib
 
+    @cached_property
+    def fallbacks(self) -> list[Path]:
+        paths = [Path(path) for path in self.paths.get("fallbacks", [])]
+        paths += [self.usersite] if self.usersite else []
+        return paths
+
     def _get_lib_dirs(self) -> list[Path]:
-        return [self.purelib, self.platlib]
+        return [self.purelib, self.platlib, *self.fallbacks]
 
     def is_path_relative_to_lib(self, path: Path) -> bool:
         for lib_path in self._get_lib_dirs():
