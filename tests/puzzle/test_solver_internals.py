@@ -360,7 +360,7 @@ def test_propagate_markers_with_cycle(package: ProjectPackage, solver: Solver) -
 
 
 def test_merge_packages_from_override_restricted(package: ProjectPackage) -> None:
-    """Markers of depedencies should be intersected with override markers."""
+    """Markers of dependencies should be intersected with override markers."""
     a = Package("a", "1")
 
     packages: dict[Package, TransitivePackageInfo] = {}
