@@ -36,5 +36,5 @@ you can set the "package-mode" to false in your pyproject.toml file.
 """
 
     @property
-    def _with_synchronization(self) -> int:
+    def _with_synchronization(self) -> bool:
         return True

@@ -104,7 +104,7 @@ you can set the "package-mode" to false in your pyproject.toml file.
                 f" `<fg=yellow;options=bold>{self._alternative_sync_command}</>`"
                 " command instead.</warning>"
             )
-        return with_synchronization
+        return bool(with_synchronization)
 
     def handle(self) -> int:
         from poetry.core.masonry.utils.module import ModuleOrPackageNotFoundError

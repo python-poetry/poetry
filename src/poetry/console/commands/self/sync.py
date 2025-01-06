@@ -31,5 +31,5 @@ the <c1>self remove</c1> command.
 """
 
     @property
-    def _with_synchronization(self) -> int:
+    def _with_synchronization(self) -> bool:
         return True
