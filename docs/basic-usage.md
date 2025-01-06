@@ -175,7 +175,7 @@ To run your script simply use `poetry run python your_script.py`.
 Likewise if you have command line tools such as `pytest` or `black` you can run them using `poetry run pytest`.
 
 {{% note %}}
-If managing your own virtual environment externally, you do not need to use `poetry run` or `poetry shell` since
+If managing your own virtual environment externally, you do not need to use `poetry run` since
 you will, presumably, already have activated that virtual environment and made available the correct python instance.
 For example, these commands should output the same python path:
 
@@ -191,41 +191,7 @@ which python
 
 ### Activating the virtual environment
 
-The easiest way to activate the virtual environment is to create a nested shell with `poetry shell`.
-
-To deactivate the virtual environment and exit this new shell type `exit`.
-To deactivate the virtual environment without leaving the shell use `deactivate`.
-
-{{% note %}}
-**Why a nested shell?**
-
-Child processes inherit their environment from their parents, but do not share
-them. As such, any modifications made by a child process is not persisted after
-the child process exits. A Python application (Poetry), being a child process,
-cannot modify the environment of the shell that it has been called from such
-that an activated virtual environment remains active after the Poetry command
-has completed execution.
-
-Therefore, Poetry has to create a sub-shell with the virtual environment activated
-in order for the subsequent commands to run from within the virtual environment.
-{{% /note %}}
-
-If you'd like to prevent `poetry shell` from modifying your shell prompt on virtual environment activation, you should
-set `VIRTUAL_ENV_DISABLE_PROMPT=1` as an environment variable before running the command.
-
-Alternatively, to avoid creating a new shell, you can manually activate the
-virtual environment by running `source {path_to_venv}/bin/activate` (`{path_to_venv}\Scripts\activate.ps1` in PowerShell).
-To get the path to your virtual environment run `poetry env info --path`.
-You can also combine these into a one-liner, such as `source $(poetry env info --path)/bin/activate`
-(`& ((poetry env info --path) + "\Scripts\activate.ps1")` in Powershell).
-
-To deactivate this virtual environment simply use `deactivate`.
-
-|                   | POSIX Shell                                     | Windows (PowerShell)                                     | Exit/Deactivate |
-| ----------------- | ----------------------------------------------- | -------------------------------------------------------- | --------------- |
-| Sub-shell         | `poetry shell`                                  | `poetry shell`                                           | `exit`          |
-| Manual Activation | `source {path_to_venv}/bin/activate`            | `{path_to_venv}\Scripts\activate.ps1`                    | `deactivate`    |
-| One-liner         | `source $(poetry env info --path)/bin/activate` | `& ((poetry env info --path) + "\Scripts\activate.ps1")` | `deactivate`    |
+See [Activating the virtual environment]({{< relref "managing-environments#activating-the-environment" >}}).
 
 ## Version constraints
 
