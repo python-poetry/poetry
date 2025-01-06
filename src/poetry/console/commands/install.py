@@ -93,7 +93,8 @@ you can set the "package-mode" to false in your pyproject.toml file.
     def _alternative_sync_command(self) -> str:
         return "poetry sync"
 
-    def handle(self) -> int:
+    @property
+    def _with_synchronization(self) -> bool:
         with_synchronization = self.option("sync")
         if with_synchronization:
             self.line_error(
@@ -103,9 +104,9 @@ you can set the "package-mode" to false in your pyproject.toml file.
                 f" `<fg=yellow;options=bold>{self._alternative_sync_command}</>`"
                 " command instead.</warning>"
             )
-        return self._handle_install(with_synchronization)
+        return with_synchronization
 
-    def _handle_install(self, with_synchronization: bool) -> int:
+    def handle(self) -> int:
         from poetry.core.masonry.utils.module import ModuleOrPackageNotFoundError
 
         from poetry.masonry.builders.editable import EditableBuilder
@@ -165,7 +166,7 @@ you can set the "package-mode" to false in your pyproject.toml file.
         self.installer.only_groups(self.activated_groups)
         self.installer.skip_directory(self.option("no-directory"))
         self.installer.dry_run(self.option("dry-run"))
-        self.installer.requires_synchronization(with_synchronization)
+        self.installer.requires_synchronization(self._with_synchronization)
         self.installer.executor.enable_bytecode_compilation(self.option("compile"))
         self.installer.verbose(self.io.is_verbose())
 

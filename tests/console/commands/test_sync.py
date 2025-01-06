@@ -36,9 +36,10 @@ def test_sync_option_not_available(tester: CommandTester) -> None:
 def test_synced_installer(tester: CommandTester, mocker: MockerFixture) -> None:
     assert isinstance(tester.command, SyncCommand)
     mock = mocker.patch(
-        "poetry.console.commands.install.InstallCommand._handle_install"
+        "poetry.console.commands.install.InstallCommand.installer",
+        new_callable=mocker.PropertyMock,
     )
 
     tester.execute()
 
-    mock.assert_called_with(with_synchronization=True)
+    mock.return_value.requires_synchronization.assert_called_with(True)

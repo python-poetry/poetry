@@ -35,5 +35,6 @@ If you want to use Poetry only for dependency management but not for packaging,
 you can set the "package-mode" to false in your pyproject.toml file.
 """
 
-    def handle(self) -> int:
-        return self._handle_install(with_synchronization=True)
+    @property
+    def _with_synchronization(self) -> int:
+        return True
