@@ -174,7 +174,6 @@ Metadata-Version: {metadata_version}
 Name: simple-project
 Version: 1.2.3
 Summary: Some description.
-Home-page: https://python-poetry.org
 License: MIT
 Keywords: packaging,dependency,poetry
 Author: Sébastien Eustace
@@ -185,6 +184,7 @@ Classifier: License :: OSI Approved :: MIT License
 Classifier: Topic :: Software Development :: Build Tools
 Classifier: Topic :: Software Development :: Libraries :: Python Modules
 Project-URL: Documentation, https://python-poetry.org/docs
+Project-URL: Homepage, https://python-poetry.org
 Project-URL: Repository, https://github.com/python-poetry/poetry
 Description-Content-Type: text/x-rst
 
@@ -342,7 +342,6 @@ Metadata-Version: {metadata_version}
 Name: my-package
 Version: 0.1
 Summary: Some description.
-Home-page: https://python-poetry.org
 License: MIT
 Author: Your Name
 Author-email: you@example.com
@@ -350,6 +349,7 @@ Requires-Python: >=2.7,<3.0
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Programming Language :: Python :: 2
 Classifier: Programming Language :: Python :: 2.7
+Project-URL: Homepage, https://python-poetry.org
 Description-Content-Type: text/x-rst
 
 Single Python
