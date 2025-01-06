@@ -111,7 +111,6 @@ def test_publish_with_client_cert(
     "options",
     [
         "--dry-run",
-        "--skip-existing",
         "--dry-run --skip-existing",
     ],
 )
@@ -129,8 +128,9 @@ def test_publish_dry_run_skip_existing(
     output = app_tester.io.fetch_output()
     error = app_tester.io.fetch_error()
 
+    assert "Running in DRY RUN mode" in output
     assert "Publishing simple-project (1.2.3) to PyPI" in output
-    assert "- Uploading simple_project-1.2.3.tar.gz" in error
+    assert "- Uploading simple_project-1.2.3.tar.gz 100%" in error
     assert "- Uploading simple_project-1.2.3-py2.py3-none-any.whl" in error
 
 
@@ -148,7 +148,10 @@ def test_skip_existing_output(
     assert exit_code == 0
 
     error = app_tester.io.fetch_error()
+    output = app_tester.io.fetch_output()
+    assert "Publishing simple-project (1.2.3) to PyPI" in output
     assert "- Uploading simple_project-1.2.3.tar.gz File exists. Skipping" in error
+    assert "- Uploading simple_project-1.2.3-py2.py3-none-any.whl" in error
 
 
 @pytest.mark.parametrize("dist_dir", [None, "dist", "other_dist/dist", "absolute"])
@@ -183,6 +186,7 @@ def test_publish_dist_dir_option(
     output = tester.io.fetch_output()
     error = tester.io.fetch_error()
 
+    assert "Running in DRY RUN mode" in output
     assert "Publishing simple-project (1.2.3) to PyPI" in output
     assert "- Uploading simple_project-1.2.3.tar.gz" in error
     assert "- Uploading simple_project-1.2.3-py2.py3-none-any.whl" in error

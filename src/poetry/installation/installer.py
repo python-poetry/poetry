@@ -98,6 +98,7 @@ class Installer:
             self._update = True
 
         if self.is_dry_run():
+            self._io.write_line("<info>Running in DRY RUN mode</>")
             self.verbose(True)
 
         return self._do_install()
