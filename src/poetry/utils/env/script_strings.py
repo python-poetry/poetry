@@ -92,17 +92,15 @@ print(json.dumps(sys.path))
 
 GET_PATHS = """\
 import json
-import sysconfig
-
-print(json.dumps(sysconfig.get_paths()))
-"""
-
-GET_PATHS_FOR_GENERIC_ENVS = """\
-import json
 import site
 import sysconfig
 
 paths = sysconfig.get_paths().copy()
+
+paths["fallbacks"] = [
+    p for p in site.getsitepackages()
+    if p and p not in {paths.get("purelib"), paths.get("platlib")}
+]
 
 if site.check_enableusersite():
     paths["usersite"] = site.getusersitepackages()
