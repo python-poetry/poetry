@@ -36,4 +36,4 @@ you can set the "package-mode" to false in your pyproject.toml file.
 """
 
     def handle(self) -> int:
-        return self._handle_install(True)
+        return self._handle_install(with_synchronization=True)
