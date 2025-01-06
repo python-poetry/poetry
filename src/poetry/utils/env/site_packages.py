@@ -25,7 +25,6 @@ class SitePackages:
         purelib: Path,
         platlib: Path | None = None,
         fallbacks: list[Path] | None = None,
-        skip_write_checks: bool = False,
     ) -> None:
         self._purelib = purelib
         self._platlib = platlib or purelib
@@ -40,7 +39,7 @@ class SitePackages:
             if path not in self._candidates:
                 self._candidates.append(path)
 
-        self._writable_candidates = None if not skip_write_checks else self._candidates
+        self._writable_candidates: list[Path] | None = None
 
     @property
     def path(self) -> Path:
