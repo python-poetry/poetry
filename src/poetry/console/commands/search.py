@@ -23,20 +23,37 @@ class SearchCommand(Command):
     def handle(self) -> int:
         seen = set()
 
-        for result in self.poetry.pool.search(self.argument("tokens")):
-            if result.pretty_string in seen:
-                continue
+        table = self.table(style="compact")
+        table.set_headers(
+            ["<b>Package</>", "<b>Version</>", "<b>Source</>", "<b>Description</>"]
+        )
 
-            seen.add(result.pretty_string)
+        rows = []
 
-            self.line("")
-            name = f"<info>{result.name}</>"
+        for repository in self.poetry.pool.repositories:
+            for result in repository.search(self.argument("tokens")):
+                key = f"{repository.name}::{result.pretty_string}"
+                if key in seen:
+                    continue
+                seen.add(key)
+                rows.append((result, repository.name))
 
-            name += f" (<comment>{result.version}</>)"
+        if not rows:
+            self.line("<info>No matching packages were found.</>")
+            return 0
 
-            self.line(name)
+        for package, source in sorted(
+            rows, key=lambda x: (x[0].name, x[0].version, x[1])
+        ):
+            table.add_row(
+                [
+                    f"<c1>{package.name}</>",
+                    f"<b>{package.version}</b>",
+                    f"<fg=yellow;options=bold>{source}</>",
+                    str(package.description),
+                ]
+            )
 
-            if result.description:
-                self.line(f" {result.description}")
+        table.render()
 
         return 0
