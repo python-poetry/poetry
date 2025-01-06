@@ -1177,7 +1177,7 @@ you can also define in your `pyproject.toml` that the plugin is required for the
 
 ```toml
 [tool.poetry.requires-plugins]
-poetry-plugin-export = ">1.8"
+poetry-plugin-export = ">=1.8"
 ```
 {{% /warning %}}
 
