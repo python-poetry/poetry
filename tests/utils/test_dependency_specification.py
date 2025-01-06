@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from deepdiff import DeepDiff
+from deepdiff.diff import DeepDiff
 
 from poetry.inspection.info import PackageInfo
 from poetry.utils.dependency_specification import RequirementsParser

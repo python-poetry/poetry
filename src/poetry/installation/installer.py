@@ -258,7 +258,7 @@ class Installer:
             if not self._locker.is_fresh():
                 raise ValueError(
                     "pyproject.toml changed significantly since poetry.lock was last"
-                    " generated. Run `poetry lock [--no-update]` to fix the lock file."
+                    " generated. Run `poetry lock` to fix the lock file."
                 )
             if not (reresolve or self._locker.is_locked_groups_and_markers()):
                 if self._io.is_verbose():

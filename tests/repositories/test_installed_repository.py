@@ -437,9 +437,11 @@ def test_system_site_packages(
     shutil.copytree(site_purelib / standard_dist_info, env.purelib / standard_dist_info)
     orig_sys_path = env.sys_path
     if with_system_site_packages:
+        # on some environments, there could be multiple system-site, filter out those and inject our test site
         mocker.patch(
             "poetry.utils.env.virtual_env.VirtualEnv.sys_path",
-            orig_sys_path[:-1] + [str(site_path)],
+            [p for p in orig_sys_path if p.startswith(str(tmp_path))]
+            + [str(site_path)],
         )
     mocker.patch(
         "poetry.utils.env.generic_env.GenericEnv.get_paths",
@@ -449,9 +451,10 @@ def test_system_site_packages(
     installed_repository = InstalledRepository.load(env)
 
     expected_system_site_packages = {"cleo"} if with_system_site_packages else set()
-    expected_packages = {"standard"} | expected_system_site_packages
-    if platform.system() == "FreeBSD":
+    expected_packages = {"standard"}
+    if platform.system() == "FreeBSD" and not with_system_site_packages:
         expected_packages.add("sqlite3")
+    expected_packages |= expected_system_site_packages
     assert {p.name for p in installed_repository.packages} == expected_packages
     assert {
         p.name for p in installed_repository.system_site_packages

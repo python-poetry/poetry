@@ -7,7 +7,7 @@ from typing import Any
 import pytest
 
 from cleo.io.buffered_io import BufferedIO
-from deepdiff import DeepDiff
+from deepdiff.diff import DeepDiff
 from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import Version
 from poetry.core.constraints.version import parse_constraint

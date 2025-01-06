@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from cleo.io.null_io import NullIO
-from deepdiff import DeepDiff
+from deepdiff.diff import DeepDiff
 from poetry.core.constraints.version import Version
 from poetry.core.masonry.metadata import Metadata
 from poetry.core.packages.package import Package

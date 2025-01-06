@@ -93,6 +93,19 @@ you can set the "package-mode" to false in your pyproject.toml file.
     def _alternative_sync_command(self) -> str:
         return "poetry sync"
 
+    @property
+    def _with_synchronization(self) -> bool:
+        with_synchronization = self.option("sync")
+        if with_synchronization:
+            self.line_error(
+                "<warning>The `<fg=yellow;options=bold>--sync</>` option is"
+                " deprecated and slated for removal in the next minor release"
+                " after June 2025, use the"
+                f" `<fg=yellow;options=bold>{self._alternative_sync_command}</>`"
+                " command instead.</warning>"
+            )
+        return bool(with_synchronization)
+
     def handle(self) -> int:
         from poetry.core.masonry.utils.module import ModuleOrPackageNotFoundError
 
@@ -150,20 +163,10 @@ you can set the "package-mode" to false in your pyproject.toml file.
 
         self.installer.extras(extras)
 
-        with_synchronization = self.option("sync")
-        if with_synchronization:
-            self.line_error(
-                "<warning>The `<fg=yellow;options=bold>--sync</>` option is"
-                " deprecated and slated for removal in the next minor release"
-                " after June 2025, use the"
-                f" `<fg=yellow;options=bold>{self._alternative_sync_command}</>`"
-                " command instead.</warning>"
-            )
-
         self.installer.only_groups(self.activated_groups)
         self.installer.skip_directory(self.option("no-directory"))
         self.installer.dry_run(self.option("dry-run"))
-        self.installer.requires_synchronization(with_synchronization)
+        self.installer.requires_synchronization(self._with_synchronization)
         self.installer.executor.enable_bytecode_compilation(self.option("compile"))
         self.installer.verbose(self.io.is_verbose())
 
@@ -204,7 +207,7 @@ you can set the "package-mode" to false in your pyproject.toml file.
             # No need for an editable install in this case.
             self.line("")
             self.line_error(
-                f"Warning: The current project could not be installed: {e}\n"
+                f"Error: The current project could not be installed: {e}\n"
                 "If you do not want to install the current project"
                 " use <c1>--no-root</c1>.\n"
                 "If you want to use Poetry only for dependency management"

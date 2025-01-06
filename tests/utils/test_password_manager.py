@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import logging
 import os
 
@@ -54,7 +55,8 @@ def test_get_http_auth(
     with_simple_keyring: None,
     dummy_keyring: DummyBackend,
 ) -> None:
-    dummy_keyring.set_password("poetry-repository-foo", username, password)
+    with contextlib.nullcontext() if username else pytest.warns(DeprecationWarning):
+        dummy_keyring.set_password("poetry-repository-foo", username, password)
     config.auth_config_source.add_property("http-basic.foo", {"username": username})
     manager = PasswordManager(config)
 
