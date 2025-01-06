@@ -111,8 +111,6 @@ license = { file = "LICENSE" }
 A path to the README file or the content.
 
 ```toml
-[tool.poetry]
-# ...
 readme = "README.md"
 ```
 
@@ -225,7 +223,7 @@ classifiers = [
 The URLs of the project.
 
 ```toml
-[tool.poetry.urls]
+[project.urls]
 homepage = "https://python-poetry.org/"
 repository = "https://github.com/python-poetry/poetry"
 documentation = "https://python-poetry.org/docs/"

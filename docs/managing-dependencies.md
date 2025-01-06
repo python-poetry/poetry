@@ -163,24 +163,24 @@ Poetry supports what's called dependency synchronization. Dependency synchroniza
 that the locked dependencies in the `poetry.lock` file are the only ones present
 in the environment, removing anything that's not necessary.
 
-This is done by using the `--sync` option of the `install` command:
+This is done by using the `sync` command:
 
 ```bash
-poetry install --sync
+poetry sync
 ```
 
-The `--sync` option can be combined with any [dependency groups]({{< relref "#dependency-groups" >}}) related options
-to synchronize the environment with specific groups. Note that extras are separate.  Any
-extras not selected for install are always removed, regardless of `--sync`.
+The `sync` command can be combined with any [dependency groups]({{< relref "#dependency-groups" >}}) related options
+to synchronize the environment with specific groups. Note that extras are separate.
+Any extras not selected for install are always removed.
 
 ```bash
-poetry install --without dev --sync
-poetry install --with docs --sync
-poetry install --only dev
+poetry sync --without dev
+poetry sync --with docs
+poetry sync --only dev
 ```
 
 ## Layering optional groups
 
-When you omit the `--sync` option, you can install any subset of optional groups without removing
+When you using `install` command without the `--sync` option, you can install any subset of optional groups without removing
 those that are already installed.  This is very useful, for example, in multi-stage
 Docker builds, where you run `poetry install` multiple times in different build stages.
