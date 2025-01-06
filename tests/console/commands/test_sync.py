@@ -41,4 +41,4 @@ def test_synced_installer(tester: CommandTester, mocker: MockerFixture) -> None:
 
     tester.execute()
 
-    mock.assert_called_with(True)
+    mock.assert_called_with(with_synchronization=True)
