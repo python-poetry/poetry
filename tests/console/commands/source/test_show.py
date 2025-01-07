@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from poetry.repositories.pypi_repository import PyPiRepository
+
 
 if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
@@ -175,6 +177,20 @@ def test_source_show_no_sources(tester_no_sources: CommandTester) -> None:
         tester_no_sources.io.fetch_output().strip()
         == "No sources configured for this project."
     )
+    assert tester_no_sources.status_code == 0
+
+
+def test_source_show_no_sources_implicit_pypi(
+    tester_no_sources: CommandTester, poetry_without_source: Poetry
+) -> None:
+    poetry_without_source.pool.add_repository(PyPiRepository())
+    tester_no_sources.execute("")
+
+    output = tester_no_sources.io.fetch_output().strip()
+
+    assert "No sources configured for this project." in output
+    assert "PyPI is implicitly enabled as a primary source." in output
+
     assert tester_no_sources.status_code == 0
 
 
