@@ -183,7 +183,7 @@ For example, these commands should output the same python path:
 conda activate your_env_name
 which python
 poetry run which python
-poetry shell
+poetry env activate
 which python
 ```
 
