@@ -28,7 +28,7 @@ The `project` section of the `pyproject.toml` file according to the
 
 ### name
 
-The name of the package. **Required in package mode**
+The name of the package. **Always required when the `project` section is specified**
 
 This should be a valid name as defined by [PEP 508](https://peps.python.org/pep-0508/#names).
 
