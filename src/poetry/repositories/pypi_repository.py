@@ -55,7 +55,7 @@ class PyPiRepository(HTTPRepository):
         self._base_url = url
         self._fallback = fallback
 
-    def search(self, query: str) -> list[Package]:
+    def search(self, query: str | list[str]) -> list[Package]:
         results = []
 
         response = requests.get(
