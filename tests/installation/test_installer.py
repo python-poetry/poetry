@@ -23,7 +23,6 @@ from poetry.core.packages.project_package import ProjectPackage
 
 from poetry.factory import Factory
 from poetry.installation import Installer
-from poetry.installation.executor import Executor as BaseExecutor
 from poetry.packages import Locker as BaseLocker
 from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
@@ -32,6 +31,7 @@ from poetry.toml.file import TOMLFile
 from poetry.utils.env import MockEnv
 from poetry.utils.env import NullEnv
 from tests.helpers import MOCK_DEFAULT_GIT_REVISION
+from tests.helpers import TestExecutor
 from tests.helpers import get_dependency
 from tests.helpers import get_package
 
@@ -42,50 +42,11 @@ if TYPE_CHECKING:
     from _pytest.fixtures import FixtureRequest
     from pytest_mock import MockerFixture
 
-    from poetry.installation.operations.operation import Operation
     from poetry.repositories.legacy_repository import LegacyRepository
     from poetry.repositories.pypi_repository import PyPiRepository
     from poetry.utils.env import Env
     from tests.conftest import Config
     from tests.types import FixtureDirGetter
-
-
-class Executor(BaseExecutor):
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-
-        self._installs: list[Package] = []
-        self._updates: list[Package] = []
-        self._uninstalls: list[Package] = []
-
-    @property
-    def installations(self) -> list[Package]:
-        return self._installs
-
-    @property
-    def updates(self) -> list[Package]:
-        return self._updates
-
-    @property
-    def removals(self) -> list[Package]:
-        return self._uninstalls
-
-    def _do_execute_operation(self, operation: Operation) -> int:
-        ret_val = super()._do_execute_operation(operation)
-
-        if not operation.skipped:
-            getattr(self, f"_{operation.job_type}s").append(operation.package)
-
-        return ret_val
-
-    def _execute_install(self, operation: Operation) -> int:
-        return 0
-
-    def _execute_update(self, operation: Operation) -> int:
-        return 0
-
-    def _execute_uninstall(self, operation: Operation) -> int:
-        return 0
 
 
 class CustomInstalledRepository(InstalledRepository):
@@ -207,7 +168,7 @@ def installer(
         pool,
         config,
         installed=installed,
-        executor=Executor(env, pool, config, NullIO()),
+        executor=TestExecutor(env, pool, config, NullIO()),
     )
 
 
@@ -760,7 +721,7 @@ def test_run_install_with_synchronization(
         *managed_reserved_package_names,
     }
 
-    assert isinstance(installer.executor, Executor)
+    assert isinstance(installer.executor, TestExecutor)
     assert {r.name for r in installer.executor.removals} == expected_removals
 
 
@@ -963,7 +924,7 @@ def test_run_with_optional_and_python_restricted_dependencies(
     # We should only have 2 installs:
     # C,D since python version is not compatible
     # with B's python constraint and A is optional
-    assert isinstance(installer.executor, Executor)
+    assert isinstance(installer.executor, TestExecutor)
     assert installer.executor.installations_count == 2
     assert installer.executor.installations[0].name == "d"
     assert installer.executor.installations[1].name == "c"
@@ -1011,7 +972,7 @@ def test_run_with_optional_and_platform_restricted_dependencies(
     # We should only have 2 installs:
     # C,D since the mocked python version is not compatible
     # with B's python constraint and A is optional
-    assert isinstance(installer.executor, Executor)
+    assert isinstance(installer.executor, TestExecutor)
     assert installer.executor.installations_count == 2
     assert installer.executor.installations[0].name == "d"
     assert installer.executor.installations[1].name == "c"
@@ -1182,7 +1143,7 @@ def test_run_with_conflicting_dependency_extras(
         assert locker.written_data == expected
 
     # Results of installation are consistent with the 'extra' input
-    assert isinstance(installer.executor, Executor)
+    assert isinstance(installer.executor, TestExecutor)
 
     expected_installations = []
     if extra == "extra-one":
@@ -1275,7 +1236,7 @@ def test_run_with_exclusive_extras_different_sources(
         pool,
         config,
         installed=installed,
-        executor=Executor(
+        executor=TestExecutor(
             MockEnv(),
             pool,
             config,
@@ -1291,7 +1252,7 @@ def test_run_with_exclusive_extras_different_sources(
     if not locked:
         expected = fixture("with-exclusive-extras")
         assert locker.written_data == expected
-    assert isinstance(installer.executor, Executor)
+    assert isinstance(installer.executor, TestExecutor)
     if extra is None:
         assert len(installer.executor.installations) == 0
     else:
@@ -1405,7 +1366,7 @@ def test_run_with_different_dependency_extras(
         pool,
         config,
         installed=installed,
-        executor=Executor(
+        executor=TestExecutor(
             MockEnv(),
             pool,
             config,
@@ -1422,7 +1383,7 @@ def test_run_with_different_dependency_extras(
         assert locker.written_data == expected
 
     # Results of installation are consistent with the 'extra' input
-    assert isinstance(installer.executor, Executor)
+    assert isinstance(installer.executor, TestExecutor)
     if extra is None:
         assert len(installer.executor.installations) == 0
     else:
@@ -1645,7 +1606,7 @@ def test_run_installs_with_local_poetry_directory_and_skip_directory_flag(
 
     assert locker.written_data == expected
 
-    assert isinstance(installer.executor, Executor)
+    assert isinstance(installer.executor, TestExecutor)
     directory_installs = [
         p.name for p in installer.executor.installations if p.source_type == "directory"
     ]
@@ -1928,7 +1889,7 @@ def test_run_install_duplicate_dependencies_different_constraints(
 
     assert locker.written_data == expected
 
-    assert isinstance(installer.executor, Executor)
+    assert isinstance(installer.executor, TestExecutor)
     installs = installer.executor.installations
     assert installer.executor.installations_count == 3
     assert installs[0] == package_c12
@@ -2302,7 +2263,7 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
         pool,
         config,
         installed=installed,
-        executor=Executor(env, pool, config, NullIO()),
+        executor=TestExecutor(env, pool, config, NullIO()),
     )
     installer.update(True)
     installer.whitelist(["D"])
@@ -2337,7 +2298,7 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
         pool,
         config,
         installed=installed,
-        executor=Executor(env, pool, config, NullIO()),
+        executor=TestExecutor(env, pool, config, NullIO()),
     )
 
     package.add_dependency(
@@ -2359,7 +2320,7 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
     locker.locked(True)
     locker.mock_lock_data(locker.written_data)
 
-    assert isinstance(installer.executor, Executor)
+    assert isinstance(installer.executor, TestExecutor)
     for pkg in installer.executor.installations:
         installed.add_package(pkg)
 
@@ -2371,7 +2332,7 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
         pool,
         config,
         installed=installed,
-        executor=Executor(env, pool, config, NullIO()),
+        executor=TestExecutor(env, pool, config, NullIO()),
     )
     installer.update(True)
     installer.whitelist(["pytest"])
@@ -2403,7 +2364,7 @@ def test_installer_required_extras_should_be_installed(
         pool,
         config,
         installed=installed,
-        executor=Executor(env, pool, config, NullIO()),
+        executor=TestExecutor(env, pool, config, NullIO()),
     )
     package.add_dependency(
         Factory.create_dependency(
@@ -2430,7 +2391,7 @@ def test_installer_required_extras_should_be_installed(
         pool,
         config,
         installed=installed,
-        executor=Executor(env, pool, config, NullIO()),
+        executor=TestExecutor(env, pool, config, NullIO()),
     )
     installer.update(True)
     result = installer.run()
@@ -2552,7 +2513,7 @@ def test_installer_can_install_dependencies_from_forced_source(
         pool,
         config,
         installed=installed,
-        executor=Executor(env, pool, config, NullIO()),
+        executor=TestExecutor(env, pool, config, NullIO()),
     )
     installer.update(True)
     result = installer.run()
@@ -2614,7 +2575,7 @@ def test_run_installs_with_same_version_url_files(
         pool,
         config,
         installed=installed,
-        executor=Executor(
+        executor=TestExecutor(
             MockEnv(platform=env_platform),
             pool,
             config,
@@ -2626,7 +2587,7 @@ def test_run_installs_with_same_version_url_files(
 
     expected = fixture("with-same-version-url-dependencies")
     assert locker.written_data == expected
-    assert isinstance(installer.executor, Executor)
+    assert isinstance(installer.executor, TestExecutor)
     assert installer.executor.installations_count == 2
     demo_package = next(p for p in installer.executor.installations if p.name == "demo")
     assert demo_package.source_url == urls[env_platform]
@@ -2776,7 +2737,7 @@ def test_installer_should_use_the_locked_version_of_git_dependencies(
     result = installer.run()
     assert result == 0
 
-    assert isinstance(installer.executor, Executor)
+    assert isinstance(installer.executor, TestExecutor)
     demo_installation = next(
         package
         for package in installer.executor.installations
@@ -2824,7 +2785,7 @@ def test_installer_should_use_the_locked_version_of_git_dependencies_with_extras
     result = installer.run()
     assert result == 0
 
-    assert isinstance(installer.executor, Executor)
+    assert isinstance(installer.executor, TestExecutor)
     assert len(installer.executor.installations) == 3
     demo_installation = next(
         package
@@ -2869,7 +2830,7 @@ def test_installer_should_use_the_locked_version_of_git_dependencies_without_ref
     result = installer.run()
     assert result == 0
 
-    assert isinstance(installer.executor, Executor)
+    assert isinstance(installer.executor, TestExecutor)
     assert len(installer.executor.installations) == 2
     demo_installation = next(
         package
@@ -2966,7 +2927,7 @@ def test_installer_distinguishes_locked_packages_with_local_version_by_source(
         pool,
         config,
         installed=installed,
-        executor=Executor(
+        executor=TestExecutor(
             MockEnv(platform=env_platform),
             pool,
             config,
@@ -2984,7 +2945,7 @@ def test_installer_distinguishes_locked_packages_with_local_version_by_source(
     )
     source_reference = None if env_platform == "darwin" else "pytorch"
 
-    assert isinstance(installer.executor, Executor)
+    assert isinstance(installer.executor, TestExecutor)
     assert len(installer.executor.installations) == 1
     assert installer.executor.installations[0] == Package(
         "torch",
@@ -3073,7 +3034,7 @@ def test_installer_distinguishes_locked_packages_with_same_version_by_source(
         pool,
         config,
         installed=installed,
-        executor=Executor(
+        executor=TestExecutor(
             MockEnv(platform_machine=env_platform_machine),
             pool,
             config,
@@ -3094,7 +3055,7 @@ def test_installer_distinguishes_locked_packages_with_same_version_by_source(
         source_url = None
         source_reference = None
 
-    assert isinstance(installer.executor, Executor)
+    assert isinstance(installer.executor, TestExecutor)
     assert len(installer.executor.installations) == 1
     assert installer.executor.installations[0] == Package(
         "kivy",
@@ -3204,7 +3165,7 @@ def test_explicit_source_dependency_with_direct_origin_dependency(
         pool,
         config,
         installed=installed,
-        executor=Executor(
+        executor=TestExecutor(
             MockEnv(platform=env_platform),
             pool,
             config,
@@ -3215,7 +3176,7 @@ def test_explicit_source_dependency_with_direct_origin_dependency(
     result = installer.run()
 
     assert result == 0
-    assert isinstance(installer.executor, Executor)
+    assert isinstance(installer.executor, TestExecutor)
     if env_platform == "linux":
         assert set(installer.executor.installations) == {
             Package("pendulum", "1.4.4"),
