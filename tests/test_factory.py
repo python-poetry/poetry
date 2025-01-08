@@ -198,25 +198,25 @@ def test_create_poetry_with_packages_and_includes(
     package = poetry.package
 
     assert package.packages == [
-        {"include": "extra_dir/**/*.py"},
-        {"include": "extra_dir/**/*.py"},
-        {"include": "my_module.py"},
-        {"include": "package_with_include"},
-        {"include": "tests", "format": "sdist"},
+        {"include": "extra_dir/**/*.py", "format": ["sdist", "wheel"]},
+        {"include": "extra_dir/**/*.py", "format": ["sdist", "wheel"]},
+        {"include": "my_module.py", "format": ["sdist", "wheel"]},
+        {"include": "package_with_include", "format": ["sdist", "wheel"]},
+        {"include": "tests", "format": ["sdist"]},
         {"include": "for_wheel_only", "format": ["wheel"]},
-        {"include": "src_package", "from": "src"},
+        {"include": "src_package", "from": "src", "format": ["sdist", "wheel"]},
     ]
 
     assert package.include in (
         # with https://github.com/python-poetry/poetry-core/pull/773
         [
-            {"path": "extra_dir/vcs_excluded.txt"},
-            {"path": "notes.txt"},
+            {"path": "extra_dir/vcs_excluded.txt", "format": ["sdist", "wheel"]},
+            {"path": "notes.txt", "format": ["sdist"]},
         ],
         # without https://github.com/python-poetry/poetry-core/pull/773
         [
-            {"path": "extra_dir/vcs_excluded.txt", "format": []},
-            {"path": "notes.txt", "format": []},
+            {"path": "extra_dir/vcs_excluded.txt", "format": ["sdist"]},
+            {"path": "notes.txt", "format": ["sdist"]},
         ],
     )
 
