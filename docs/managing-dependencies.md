@@ -24,7 +24,7 @@ Poetry provides a way to **organize** your dependencies by **groups**.
 The dependencies declared in `project.dependencies` respectively `tool.poetry.dependencies`
 are part of an implicit `main` group. Those dependencies are required by your project during runtime.
 
-Beside the `main` depdendencies, you might have dependencies that are only needed to test your project
+Beside the `main` dependencies, you might have dependencies that are only needed to test your project
 or to build the documentation.
 
 To declare a new dependency group, use a `tool.poetry.group.<group>` section

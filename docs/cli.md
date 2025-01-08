@@ -799,6 +799,7 @@ poetry check
 ### Options
 
 * `--lock`: Verifies that `poetry.lock` exists for the current `pyproject.toml`.
+* `--strict`: Fail if check reports warnings.
 
 ## search
 

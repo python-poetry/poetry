@@ -76,15 +76,26 @@ All set!
     assert tester.io.fetch_output() == expected
 
 
+@pytest.mark.parametrize(
+    ["args", "expected_status"],
+    [
+        ([], 0),
+        (["--strict"], 1),
+    ],
+)
 def test_check_valid_legacy(
-    mocker: MockerFixture, tester: CommandTester, fixture_dir: FixtureDirGetter
+    args: list[str],
+    expected_status: int,
+    mocker: MockerFixture,
+    tester: CommandTester,
+    fixture_dir: FixtureDirGetter,
 ) -> None:
     mocker.patch(
         "poetry.poetry.Poetry.file",
         return_value=TOMLFile(fixture_dir("simple_project_legacy") / "pyproject.toml"),
         new_callable=mocker.PropertyMock,
     )
-    tester.execute()
+    tester.execute(" ".join(args))
 
     expected = (
         "Warning: [tool.poetry.name] is deprecated. Use [project.name] instead.\n"
@@ -125,6 +136,7 @@ def test_check_valid_legacy(
     )
 
     assert tester.io.fetch_error() == expected
+    assert tester.status_code == expected_status
 
 
 def test_check_invalid_dep_name_same_as_project_name(
