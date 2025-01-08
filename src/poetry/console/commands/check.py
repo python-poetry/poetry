@@ -29,6 +29,11 @@ class CheckCommand(Command):
             "Checks that <comment>poetry.lock</> exists for the current"
             " version of <comment>pyproject.toml</>.",
         ),
+        option(
+            "strict",
+            None,
+            "Fail if check reports warnings.",
+        ),
     ]
 
     def _validate_classifiers(
@@ -161,10 +166,15 @@ class CheckCommand(Command):
                 "Run `poetry lock` to fix the lock file."
             ]
 
+        return_code = 0
+
+        if check_result["errors"] or (
+            check_result["warnings"] and self.option("strict")
+        ):
+            return_code = 1
+
         if not check_result["errors"] and not check_result["warnings"]:
             self.info("All set!")
-
-            return 0
 
         for error in check_result["errors"]:
             self.line_error(f"<error>Error: {error}</error>")
@@ -172,4 +182,4 @@ class CheckCommand(Command):
         for error in check_result["warnings"]:
             self.line_error(f"<warning>Warning: {error}</warning>")
 
-        return 1
+        return return_code

@@ -23,7 +23,7 @@ class BuildCommand(EnvCommand):
         option("format", "f", "Limit the format to either sdist or wheel.", flag=False),
         option(
             "clean",
-            "Clean output directory before building.",
+            description="Clean output directory before building.",
             flag=True,
         ),
         option(

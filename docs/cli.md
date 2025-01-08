@@ -799,6 +799,7 @@ poetry check
 ### Options
 
 * `--lock`: Verifies that `poetry.lock` exists for the current `pyproject.toml`.
+* `--strict`: Fail if check reports warnings.
 
 ## search
 
@@ -1185,7 +1186,7 @@ you can also define in your `pyproject.toml` that the plugin is required for the
 
 ```toml
 [tool.poetry.requires-plugins]
-poetry-plugin-export = ">1.8"
+poetry-plugin-export = ">=1.8"
 ```
 {{% /warning %}}
 
