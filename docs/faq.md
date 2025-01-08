@@ -271,3 +271,166 @@ The two key options we are using here are `--no-root` (skips installing the proj
 Poetry's default HTTP request timeout is 15 seconds, the same as `pip`.
 Similar to `PIP_REQUESTS_TIMEOUT`, the **experimental** environment variable `POETRY_REQUESTS_TIMEOUT`
 can be set to alter this value.
+
+
+### How do I migrate an existing Poetry project using `tools.poetry` section to use the new `project` section (PEP 621)?
+
+{{% note %}}
+Poetry `>=2.0.0` should seamlessly support both `tools.poetry` section only configuration as well using the `project` section. This
+lets you decide when and if you would like to migrate to using the `project` section as [described by PyPA](https://packaging.python.org/en/latest/specifications/pyproject-toml/#declaring-project-metadata-the-project-table).
+
+See documentation on [the `pyproject.toml` file]({{< relref "pyproject" >}}), for information specific to Poetry.
+{{% /note %}}
+
+Due to the nature of this change some manual changes to your `pyproject.toml` file is unavoidable in order start using the `project` section. The following tabs
+show a transition example. If you wish to retain Poetry's richer [dependency specification]({{< relref "dependency-specification" >}}) syntax it is recommended that
+you use dynamic dependencies as described in the second tab below.
+
+{{< tabs tabTotal="3" tabID1="migrate-pep621-old" tabName1="Original" tabID2="migrate-pep621-new-dynamic" tabName2="Using Dynamic Dependencies" tabID3="migrate-pep621-new-static" tabName3="Using Static Dependencies">}}
+
+{{< tab tabID="migrate-pep621-old" >}}
+
+```toml
+[tool.poetry]
+name = "foobar"
+version = "0.1.0"
+description = ""
+authors = ["Baz Qux <baz.qux@example.com>"]
+readme = "README.md"
+packages = [{ include = "awesome", from = "src" }]
+include = [{ path = "tests", format = "sdist" }]
+homepage = "https://python-foobar.org/"
+repository = "https://github.com/python-foobar/foobar"
+documentation = "https://python-foobar.org/docs"
+keywords = ["packaging", "dependency", "foobar"]
+classifiers = [
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[tool.poetry.scripts]
+foobar = "foobar.console.application:main"
+
+[tool.poetry.dependencies]
+python = "^3.13"
+httpx = "^0.28.1"
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = ">=2.10"
+
+[tool.poetry.group.test.dependencies]
+pytest = ">=8.0"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+```
+
+{{< /tab >}}
+
+{{< tab tabID="migrate-pep621-new-static" >}}
+
+```toml
+[project]
+name = "foobar"
+version = "0.1.0"
+description = ""
+authors = [
+    { name = "Baz Qux", email = "baz.qux@example.com" }
+]
+readme = "README.md"
+requires-python = ">=3.13"
+keywords = ["packaging", "dependency", "foobar"]
+# classifiers property is dynamic because we want to create Python classifiers automatically
+# dependencies are dynamic because we want to keep Poetry's rich dependency definition format
+dynamic = ["classifiers", "dependencies"]
+
+[project.urls]
+homepage = "https://python-foobar.org/"
+repository = "https://github.com/python-foobar/foobar"
+documentation = "https://python-foobar.org/docs"
+
+[project.scripts]
+foobar = "foobar.console.application:main"
+
+[tool.poetry]
+requires-poetry = ">=2.0"
+packages = [{ include = "foobar", from = "src" }]
+include = [{ path = "tests", format = "sdist" }]
+classifiers = [
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[tool.poetry.dependencies]
+httpx = "^0.28.1"
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = ">=2.10"
+
+[tool.poetry.group.test.dependencies]
+pytest = ">=8.0"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+```
+
+{{< /tab >}}
+
+{{< tab tabID="migrate-pep621-new-static" >}}
+
+```toml
+[project]
+name = "foobar"
+version = "0.1.0"
+description = ""
+authors = [
+    { name = "Baz Qux", email = "baz.qux@example.com" }
+]
+readme = "README.md"
+requires-python = ">=3.13"
+keywords = ["packaging", "dependency", "foobar"]
+# classifiers property is dynamic because we want to create Python classifiers automatically
+dynamic = ["classifiers"]
+dependencies = [
+    "httpx (>=0.28.1,<0.29.0)"
+]
+
+[project.urls]
+homepage = "https://python-foobar.org/"
+repository = "https://github.com/python-foobar/foobar"
+documentation = "https://python-foobar.org/docs"
+
+[project.scripts]
+foobar = "foobar.console.application:main"
+
+[tool.poetry]
+requires-poetry = ">=2.0"
+packages = [{ include = "foobar", from = "src" }]
+include = [{ path = "tests", format = "sdist" }]
+classifiers = [
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = ">=2.10"
+
+[tool.poetry.group.test.dependencies]
+pytest = ">=8.0"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+```
+
+{{< /tab >}}
+
+{{< /tabs >}}
+
+{{% note %}}
+- The `classifiers` property is dynamic to allow Poetry to create and manage Python classifiers in accordance with supported Python version.
+- The `python` dependency, in this example was replaced with `project.requires-python`. However, note that if you need an upper bound on supported Python versions refer to the documentation [here]({{< relref "pyproject#requires-python" >}}).
+- The [`requires-poetry`]({{< relref "pyproject#requires-poetry" >}}) is added to the `tools.poetry` section.
+{{% /note %}}
