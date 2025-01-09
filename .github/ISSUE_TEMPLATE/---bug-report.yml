@@ -73,7 +73,16 @@ body:
       label: Python Sysconfig
       description: |
         Please attach output from `python -m sysconfig`
-      render: 'bash session'
+        Note:_ You can paste the output into the placeholder below. If it is too long, you can attach it as a file.
+      value: |
+        <details>
+          <summary>sysconfig.log</summary>
+          <!-- Please leave one blank line below for enabling the code block rendering. -->
+
+          ```
+          Paste the output of 'python -m sysconfig', over this line.
+          ```
+        </details>
     validations:
       required: false
 
@@ -91,6 +100,15 @@ body:
       label: Poetry Runtime Logs
       description: |
         Please attach logs from the failing command using `poetry -vvv <command>`
-      render: 'bash session'
+        Note:_ You can paste the output into the placeholder below. If it is too long, you can attach it as a file.
+      value: |
+        <details>
+          <summary>poetry-runtime.log</summary>
+          <!-- Please leave one blank line below for enabling the code block rendering. -->
+
+          ```
+          Paste the output of 'poetry -vvv <command>', over this line.
+          ```
+        </details>
     validations:
       required: true
