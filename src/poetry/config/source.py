@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 class Source:
     name: str
     url: str = ""
+    path: str = ""
     priority: Priority = (
         Priority.PRIMARY
     )  # cheating in annotation: str will be converted to Priority in __post_init__

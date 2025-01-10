@@ -206,6 +206,15 @@ class Config:
                     "url": os.environ[env_key]
                 }
 
+        pattern = re.compile(r"POETRY_REPOSITORIES_(?P<name>[A-Z_]+)_PATH")
+
+        for env_key in os.environ:
+            match = pattern.match(env_key)
+            if match:
+                repositories[match.group("name").lower().replace("_", "-")] = {
+                    "path": os.environ[env_key]
+                }
+
         return repositories
 
     @property
