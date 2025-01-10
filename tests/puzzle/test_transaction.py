@@ -258,12 +258,17 @@ def test_it_should_update_installed_packages_if_sources_are_different() -> None:
     ],
 )
 @pytest.mark.parametrize("installed", [False, True])
+@pytest.mark.parametrize("with_uninstalls", [False, True])
 @pytest.mark.parametrize("sync", [False, True])
 def test_calculate_operations_with_groups(
-    installed: bool, sync: bool, groups: set[str], expected: list[str]
+    installed: bool,
+    with_uninstalls: bool,
+    sync: bool,
+    groups: set[str],
+    expected: list[str],
 ) -> None:
     transaction = Transaction(
-        [Package("a", "1"), Package("b", "1"), Package("c", "1")],
+        [Package("a", "1"), Package("b", "1"), Package("c", "1"), Package("d", "1")],
         {
             Package("a", "1"): TransitivePackageInfo(
                 0, {"main"}, {"main": AnyMarker()}
@@ -273,7 +278,11 @@ def test_calculate_operations_with_groups(
                 0, {"main", "dev"}, {"main": AnyMarker(), "dev": AnyMarker()}
             ),
         },
-        [Package("a", "1"), Package("b", "1"), Package("c", "1")] if installed else [],
+        (
+            [Package("a", "1"), Package("b", "1"), Package("c", "1"), Package("d", "1")]
+            if installed
+            else []
+        ),
         None,
         {"python_version": "3.8"},
         groups,
@@ -285,12 +294,19 @@ def test_calculate_operations_with_groups(
     if installed:
         for op in expected_ops:
             op["skipped"] = True
-        if sync:
-            for name in sorted({"a", "b", "c"}.difference(expected), reverse=True):
-                expected_ops.insert(0, {"job": "remove", "package": Package(name, "1")})
+        if with_uninstalls:
+            expected_ops.insert(0, {"job": "remove", "package": Package("d", "1")})
+            if sync:
+                for name in sorted({"a", "b", "c"}.difference(expected), reverse=True):
+                    expected_ops.insert(
+                        0, {"job": "remove", "package": Package(name, "1")}
+                    )
 
     check_operations(
-        transaction.calculate_operations(with_uninstalls=sync), expected_ops
+        transaction.calculate_operations(
+            with_uninstalls=with_uninstalls, synchronize=sync
+        ),
+        expected_ops,
     )
 
 
@@ -329,7 +345,8 @@ def test_calculate_operations_with_markers(
                 expected_ops.insert(0, {"job": "remove", "package": Package(name, "1")})
 
     check_operations(
-        transaction.calculate_operations(with_uninstalls=sync), expected_ops
+        transaction.calculate_operations(with_uninstalls=sync, synchronize=sync),
+        expected_ops,
     )
 
 

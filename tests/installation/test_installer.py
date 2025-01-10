@@ -373,6 +373,8 @@ def _configure_run_install_dev(
 
 
 @pytest.mark.parametrize("lock_version", ("1.1", "2.1"))
+@pytest.mark.parametrize("update", [False, True])
+@pytest.mark.parametrize("requires_synchronization", [False, True])
 @pytest.mark.parametrize(
     ("groups", "installs", "updates", "removals", "with_packages_installed"),
     [
@@ -399,6 +401,8 @@ def test_run_install_with_dependency_groups(
     repo: Repository,
     package: ProjectPackage,
     installed: CustomInstalledRepository,
+    update: bool,
+    requires_synchronization: bool,
     lock_version: str,
 ) -> None:
     _configure_run_install_dev(
@@ -414,10 +418,13 @@ def test_run_install_with_dependency_groups(
     if groups is not None:
         installer.only_groups(groups)
 
-    installer.requires_synchronization(True)
+    installer.update(update)
+    installer.requires_synchronization(requires_synchronization)
     result = installer.run()
     assert result == 0
 
+    if not requires_synchronization:
+        removals = 0
     assert installer.executor.installations_count == installs
     assert installer.executor.updates_count == updates
     assert installer.executor.removals_count == removals

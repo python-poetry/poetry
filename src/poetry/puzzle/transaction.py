@@ -149,10 +149,9 @@ class Transaction:
                     operations.append(Uninstall(package))
 
         if with_uninstalls:
+            result_packages = {package.name for package in self._result_packages}
             for current_package in self._current_packages:
-                if current_package.name not in (
-                    relevant_result_packages | uninstalls
-                ) and (
+                if current_package.name not in (result_packages | uninstalls) and (
                     installed_package := self._installed_packages.get(
                         current_package.name
                     )

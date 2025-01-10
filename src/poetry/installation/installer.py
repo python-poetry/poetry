@@ -329,7 +329,9 @@ class Installer:
             )
 
         ops = transaction.calculate_operations(
-            with_uninstalls=self._requires_synchronization or self._update,
+            with_uninstalls=(
+                self._requires_synchronization or (self._update and not reresolve)
+            ),
             synchronize=self._requires_synchronization,
             skip_directory=self._skip_directory,
             extras=set(self._extras),
@@ -337,6 +339,21 @@ class Installer:
                 p.name for p in self._installed_repository.system_site_packages
             },
         )
+        if reresolve and not self._requires_synchronization:
+            # If no packages synchronisation has been requested we need
+            # to calculate the uninstall operations
+            transaction = Transaction(
+                locked_repository.packages,
+                lockfile_repo.packages,
+                installed_packages=self._installed_repository.packages,
+                root_package=root,
+            )
+
+            ops = [
+                op
+                for op in transaction.calculate_operations(with_uninstalls=True)
+                if op.job_type == "uninstall"
+            ] + ops
 
         # Validate the dependencies
         for op in ops:
