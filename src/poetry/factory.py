@@ -241,16 +241,20 @@ class Factory(BaseFactory):
         if package.classifiers:
             content["classifiers"] = package.classifiers
 
-        for key, attr in {
-            ("documentation", "documentation_url"),
-            ("repository", "repository_url"),
-            ("homepage", "homepage"),
-            ("maintainers", "maintainers"),
-            ("keywords", "keywords"),
-        }:
-            value = getattr(package, attr, None)
-            if value:
-                content[key] = value
+        if package.documentation_url:
+            content["documentation"] = package.documentation_url
+
+        if package.repository_url:
+            content["repository"] = package.repository_url
+
+        if package.homepage:
+            content["homepage"] = package.homepage
+
+        if package.maintainers:
+            content["maintainers"] = package.maintainers
+
+        if package.keywords:
+            content["keywords"] = package.keywords
 
         readmes = []
 
