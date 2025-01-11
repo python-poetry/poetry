@@ -140,7 +140,12 @@ class Solver:
         self,
         overrides: tuple[dict[Package, dict[str, Dependency]], ...],
     ) -> dict[Package, TransitivePackageInfo]:
-        packages: dict[Package, TransitivePackageInfo] = {}
+        override_packages: list[
+            tuple[
+                dict[Package, dict[str, Dependency]],
+                dict[Package, TransitivePackageInfo],
+            ]
+        ] = []
         for override in overrides:
             self._provider.debug(
                 # ignore the warning as provider does not do interpolation
@@ -149,9 +154,9 @@ class Solver:
             )
             self._provider.set_overrides(override)
             new_packages = self._solve()
-            merge_packages_from_override(packages, new_packages, override)
+            override_packages.append((override, new_packages))
 
-        return packages
+        return merge_override_packages(override_packages)
 
     def _solve(self) -> dict[Package, TransitivePackageInfo]:
         if self._provider._overrides:
@@ -406,34 +411,63 @@ def calculate_markers(
                 transitive_info.markers = transitive_marker
 
 
-def merge_packages_from_override(
-    packages: dict[Package, TransitivePackageInfo],
-    new_packages: dict[Package, TransitivePackageInfo],
-    override: dict[Package, dict[str, Dependency]],
-) -> None:
-    override_marker: BaseMarker = AnyMarker()
-    for deps in override.values():
-        for dep in deps.values():
-            override_marker = override_marker.intersect(dep.marker.without_extras())
-    for new_package, new_package_info in new_packages.items():
-        if package_info := packages.get(new_package):
-            # update existing package
-            package_info.depth = max(package_info.depth, new_package_info.depth)
-            package_info.groups.update(new_package_info.groups)
-            for group, marker in new_package_info.markers.items():
-                package_info.markers[group] = package_info.markers.get(
-                    group, EmptyMarker()
-                ).union(override_marker.intersect(marker))
-            for package in packages:
-                if package == new_package:
-                    for dep in new_package.requires:
-                        if dep not in package.requires:
-                            package.add_dependency(dep)
-
+def merge_override_packages(
+    override_packages: list[
+        tuple[
+            dict[Package, dict[str, Dependency]], dict[Package, TransitivePackageInfo]
+        ]
+    ],
+) -> dict[Package, TransitivePackageInfo]:
+    result: dict[Package, TransitivePackageInfo] = {}
+    all_packages: dict[
+        Package, list[tuple[Package, TransitivePackageInfo, BaseMarker]]
+    ] = {}
+    for override, o_packages in override_packages:
+        override_marker: BaseMarker = AnyMarker()
+        for deps in override.values():
+            for dep in deps.values():
+                override_marker = override_marker.intersect(dep.marker.without_extras())
+        for package, info in o_packages.items():
+            all_packages.setdefault(package, []).append(
+                (package, info, override_marker)
+            )
+    for package_duplicates in all_packages.values():
+        base = package_duplicates[0]
+        package = base[0]
+        package_info = base[1]
+        first_override_marker = base[2]
+        result[package] = package_info
+        package_info.depth = max(info.depth for _, info, _ in package_duplicates)
+        package_info.groups = {
+            g for _, info, _ in package_duplicates for g in info.groups
+        }
+        if all(
+            info.markers == package_info.markers for _, info, _ in package_duplicates
+        ):
+            # performance shortcut:
+            # if markers are the same for all overrides,
+            # we can use less expensive marker operations
+            override_marker = EmptyMarker()
+            for _, _, marker in package_duplicates:
+                override_marker = override_marker.union(marker)
+            package_info.markers = {
+                group: override_marker.intersect(marker)
+                for group, marker in package_info.markers.items()
+            }
         else:
-            for group, marker in new_package_info.markers.items():
-                new_package_info.markers[group] = override_marker.intersect(marker)
-            packages[new_package] = new_package_info
+            # fallback / general algorithm with performance issues
+            for group, marker in package_info.markers.items():
+                package_info.markers[group] = first_override_marker.intersect(marker)
+            for _, info, override_marker in package_duplicates[1:]:
+                for group, marker in info.markers.items():
+                    package_info.markers[group] = package_info.markers.get(
+                        group, EmptyMarker()
+                    ).union(override_marker.intersect(marker))
+        for duplicate_package, _, _ in package_duplicates[1:]:
+            for dep in duplicate_package.requires:
+                if dep not in package.requires:
+                    package.add_dependency(dep)
+    return result
 
 
 @functools.cache
