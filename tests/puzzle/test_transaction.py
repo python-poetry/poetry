@@ -433,8 +433,10 @@ def test_calculate_operations_extras(
     if extras:
         ops = [{"job": "install", "package": Package("a", "1"), "skipped": installed}]
     elif installed:
-        # extras are always removed, even if with_uninstalls is False
-        ops = [{"job": "remove", "package": Package("a", "1")}]
+        if with_uninstalls and sync:
+            ops = [{"job": "remove", "package": Package("a", "1")}]
+        else:
+            ops = []
     else:
         ops = [{"job": "install", "package": Package("a", "1"), "skipped": True}]
 
@@ -494,6 +496,7 @@ def test_calculate_operations_extras_no_redundant_uninstall(extra: str) -> None:
 
     check_operations(
         transaction.calculate_operations(
+            synchronize=True,
             extras=set() if not extra else {canonicalize_name(extra)},
         ),
         ops,

@@ -1400,6 +1400,7 @@ def test_run_with_different_dependency_extras(
 @pytest.mark.parametrize("is_locked", [False, True])
 @pytest.mark.parametrize("is_installed", [False, True])
 @pytest.mark.parametrize("with_extras", [False, True])
+@pytest.mark.parametrize("do_update", [False, True])
 @pytest.mark.parametrize("do_sync", [False, True])
 def test_run_installs_extras_with_deps_if_requested(
     installer: Installer,
@@ -1410,6 +1411,7 @@ def test_run_installs_extras_with_deps_if_requested(
     is_locked: bool,
     is_installed: bool,
     with_extras: bool,
+    do_update: bool,
     do_sync: bool,
 ) -> None:
     package.extras = {canonicalize_name("foo"): [get_dependency("C")]}
@@ -1443,6 +1445,7 @@ def test_run_installs_extras_with_deps_if_requested(
 
     if with_extras:
         installer.extras(["foo"])
+    installer.update(do_update)
     installer.requires_synchronization(do_sync)
     result = installer.run()
     assert result == 0
@@ -1459,7 +1462,7 @@ def test_run_installs_extras_with_deps_if_requested(
         expected_installations_count = 0 if is_installed else 2
         # We only want to uninstall extras if we do a "poetry install" without extras,
         # not if we do a "poetry update" or "poetry add".
-        expected_removals_count = 2 if is_installed else 0
+        expected_removals_count = 2 if is_installed and do_sync else 0
 
     assert installer.executor.installations_count == expected_installations_count
     assert installer.executor.removals_count == expected_removals_count

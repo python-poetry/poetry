@@ -78,7 +78,6 @@ class Transaction:
         else:
             priorities = defaultdict(int)
         relevant_result_packages: set[NormalizedName] = set()
-        pending_extra_uninstalls: list[Package] = []  # list for deterministic order
         for result_package in self._result_packages:
             is_unsolicited_extra = False
             if self._marker_env:
@@ -103,9 +102,9 @@ class Transaction:
                     relevant_result_packages.add(result_package.name)
 
             if installed_package := self._installed_packages.get(result_package.name):
-                # Extras that were not requested are always uninstalled.
+                # Extras that were not requested are not relevant.
                 if is_unsolicited_extra:
-                    pending_extra_uninstalls.append(installed_package)
+                    pass
 
                 # We have to perform an update if the version or another
                 # attribute of the package has changed (source type, url, ref, ...).
@@ -141,14 +140,9 @@ class Transaction:
                     op.skip("Not required")
                 operations.append(op)
 
-        uninstalls: set[NormalizedName] = set()
-        for package in pending_extra_uninstalls:
-            if package.name not in (relevant_result_packages | uninstalls):
-                uninstalls.add(package.name)
-                if package.name not in system_site_packages:
-                    operations.append(Uninstall(package))
-
         if with_uninstalls:
+            uninstalls: set[NormalizedName] = set()
+
             result_packages = {package.name for package in self._result_packages}
             for current_package in self._current_packages:
                 if current_package.name not in (result_packages | uninstalls) and (
