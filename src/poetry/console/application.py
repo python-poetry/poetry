@@ -4,7 +4,6 @@ import logging
 import re
 
 from contextlib import suppress
-from functools import cached_property
 from importlib import import_module
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -25,6 +24,7 @@ from poetry.utils.helpers import directory
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from typing import Any
 
     from cleo.events.event import Event
     from cleo.io.inputs.argv_input import ArgvInput
@@ -103,6 +103,8 @@ class Application(BaseApplication):
         self._disable_plugins = False
         self._disable_cache = False
         self._plugins_loaded = False
+        self._working_directory = Path.cwd()
+        self._project_directory = self._working_directory
 
         dispatcher = EventDispatcher()
         dispatcher.add_listener(COMMAND, self.register_command_loggers)
@@ -155,21 +157,6 @@ class Application(BaseApplication):
         )
 
         return definition
-
-    @cached_property
-    def _project_directory(self) -> Path:
-        if self._io and self._io.input.option("project"):
-            with directory(self._working_directory):
-                return Path(self._io.input.option("project")).absolute()
-
-        return self._working_directory
-
-    @cached_property
-    def _working_directory(self) -> Path:
-        if self._io and self._io.input.option("directory"):
-            return Path(self._io.input.option("directory")).absolute()
-
-        return Path.cwd()
 
     @property
     def poetry(self) -> Poetry:
@@ -227,15 +214,50 @@ class Application(BaseApplication):
         return io
 
     def _run(self, io: IO) -> int:
-        self._disable_plugins = io.input.parameter_option("--no-plugins")
-        self._disable_cache = io.input.has_parameter_option("--no-cache")
-
         self._load_plugins(io)
 
         with directory(self._working_directory):
             exit_code: int = super()._run(io)
 
         return exit_code
+
+    def _option_get_value(self, io: IO, name: str, default: Any) -> Any:
+        option = self.definition.option(name)
+
+        if option is None:
+            return default
+
+        values = [f"--{option.name}"]
+
+        if option.shortcut:
+            values.append(f"-{option.shortcut}")
+
+        if not io.input.has_parameter_option(values):
+            return default
+
+        if option.is_flag():
+            return True
+
+        return io.input.parameter_option(values=values, default=default)
+
+    def _configure_custom_application_options(self, io: IO) -> None:
+        self._disable_plugins = self._option_get_value(
+            io, "no-plugins", self._disable_plugins
+        )
+        self._disable_cache = self._option_get_value(
+            io, "no-cache", self._disable_cache
+        )
+        self._working_directory = self._project_directory = Path(
+            self._option_get_value(io, "directory", Path.cwd())
+        )
+
+        self._project_directory = Path(
+            self._option_get_value(io, "project", self._working_directory)
+        )
+
+        if self._project_directory != self._working_directory:
+            with directory(self._working_directory):
+                self._project_directory = self._project_directory.absolute()
 
     def _configure_io(self, io: IO) -> None:
         # We need to check if the command being run
@@ -272,6 +294,8 @@ class Application(BaseApplication):
             io.set_input(run_input)
 
         super()._configure_io(io)
+
+        self._configure_custom_application_options(io)
 
     def register_command_loggers(
         self, event: Event, event_name: str, _: EventDispatcher
