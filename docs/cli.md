@@ -204,11 +204,13 @@ poetry install -E mysql -E pgsql
 poetry install --all-extras
 ```
 
-Any extras not specified will always be removed.
+Any extras not specified will be kept but not installed:
 
 ```bash
-poetry install --extras "A B"  # C is removed
+poetry install --extras "A B"  # C is kept if already installed
 ```
+
+If you want to remove unspecified extras, use the `sync` command.
 
 By default `poetry` will install your project's package every time you run `install`:
 
