@@ -13,7 +13,7 @@ from poetry.packages.transitive_package_info import TransitivePackageInfo
 from poetry.puzzle.solver import PackageNode
 from poetry.puzzle.solver import Solver
 from poetry.puzzle.solver import depth_first_search
-from poetry.puzzle.solver import merge_packages_from_override
+from poetry.puzzle.solver import merge_override_packages
 
 
 if TYPE_CHECKING:
@@ -359,28 +359,29 @@ def test_propagate_markers_with_cycle(package: ProjectPackage, solver: Solver) -
     }
 
 
-def test_merge_packages_from_override_restricted(package: ProjectPackage) -> None:
+def test_merge_override_packages_restricted(package: ProjectPackage) -> None:
     """Markers of dependencies should be intersected with override markers."""
     a = Package("a", "1")
 
-    packages: dict[Package, TransitivePackageInfo] = {}
-    merge_packages_from_override(
-        packages,
-        {
-            a: TransitivePackageInfo(
-                0, {"main"}, {"main": parse_marker("sys_platform == 'win32'")}
-            )
-        },
-        {package: {"a": dep("b", 'python_version < "3.9"')}},
-    )
-    merge_packages_from_override(
-        packages,
-        {
-            a: TransitivePackageInfo(
-                0, {"main"}, {"main": parse_marker("sys_platform == 'linux'")}
-            )
-        },
-        {package: {"a": dep("b", 'python_version >= "3.9"')}},
+    packages = merge_override_packages(
+        [
+            (
+                {package: {"a": dep("b", 'python_version < "3.9"')}},
+                {
+                    a: TransitivePackageInfo(
+                        0, {"main"}, {"main": parse_marker("sys_platform == 'win32'")}
+                    )
+                },
+            ),
+            (
+                {package: {"a": dep("b", 'python_version >= "3.9"')}},
+                {
+                    a: TransitivePackageInfo(
+                        0, {"main"}, {"main": parse_marker("sys_platform == 'linux'")}
+                    )
+                },
+            ),
+        ]
     )
     assert len(packages) == 1
     assert packages[a].groups == {"main"}
@@ -392,28 +393,33 @@ def test_merge_packages_from_override_restricted(package: ProjectPackage) -> Non
     }
 
 
-def test_merge_packages_from_override_extras(package: ProjectPackage) -> None:
+def test_merge_override_packages_extras(package: ProjectPackage) -> None:
     """Extras from overrides should not be visible in the resulting marker."""
     a = Package("a", "1")
 
-    packages: dict[Package, TransitivePackageInfo] = {}
-    merge_packages_from_override(
-        packages,
-        {
-            a: TransitivePackageInfo(
-                0, {"main"}, {"main": parse_marker("sys_platform == 'win32'")}
-            )
-        },
-        {package: {"a": dep("b", 'python_version < "3.9" and extra == "foo"')}},
-    )
-    merge_packages_from_override(
-        packages,
-        {
-            a: TransitivePackageInfo(
-                0, {"main"}, {"main": parse_marker("sys_platform == 'linux'")}
-            )
-        },
-        {package: {"a": dep("b", 'python_version >= "3.9" and extra == "foo"')}},
+    packages = merge_override_packages(
+        [
+            (
+                {package: {"a": dep("b", 'python_version < "3.9" and extra == "foo"')}},
+                {
+                    a: TransitivePackageInfo(
+                        0, {"main"}, {"main": parse_marker("sys_platform == 'win32'")}
+                    )
+                },
+            ),
+            (
+                {
+                    package: {
+                        "a": dep("b", 'python_version >= "3.9" and extra == "foo"')
+                    }
+                },
+                {
+                    a: TransitivePackageInfo(
+                        0, {"main"}, {"main": parse_marker("sys_platform == 'linux'")}
+                    )
+                },
+            ),
+        ]
     )
     assert len(packages) == 1
     assert packages[a].groups == {"main"}
@@ -425,21 +431,23 @@ def test_merge_packages_from_override_extras(package: ProjectPackage) -> None:
     }
 
 
-def test_merge_packages_from_override_multiple_deps(package: ProjectPackage) -> None:
+def test_merge_override_packages_multiple_deps(package: ProjectPackage) -> None:
     """All override markers should be intersected."""
     a = Package("a", "1")
 
-    packages: dict[Package, TransitivePackageInfo] = {}
-    merge_packages_from_override(
-        packages,
-        {a: TransitivePackageInfo(0, {"main"}, {"main": AnyMarker()})},
-        {
-            package: {
-                "a": dep("b", 'python_version < "3.9"'),
-                "c": dep("d", 'sys_platform == "linux"'),
-            },
-            a: {"e": dep("f", 'python_version >= "3.8"')},
-        },
+    packages = merge_override_packages(
+        [
+            (
+                {
+                    package: {
+                        "a": dep("b", 'python_version < "3.9"'),
+                        "c": dep("d", 'sys_platform == "linux"'),
+                    },
+                    a: {"e": dep("f", 'python_version >= "3.8"')},
+                },
+                {a: TransitivePackageInfo(0, {"main"}, {"main": AnyMarker()})},
+            ),
+        ]
     )
 
     assert len(packages) == 1
@@ -452,44 +460,45 @@ def test_merge_packages_from_override_multiple_deps(package: ProjectPackage) -> 
     }
 
 
-def test_merge_packages_from_override_groups(package: ProjectPackage) -> None:
+def test_merge_override_packages_groups(package: ProjectPackage) -> None:
     a = Package("a", "1")
     b = Package("b", "1")
 
-    packages: dict[Package, TransitivePackageInfo] = {}
-    merge_packages_from_override(
-        packages,
-        {
-            a: TransitivePackageInfo(
-                0, {"main"}, {"main": parse_marker("sys_platform == 'win32'")}
-            ),
-            b: TransitivePackageInfo(
-                0,
-                {"main", "dev"},
+    packages = merge_override_packages(
+        [
+            (
+                {package: {"a": dep("b", 'python_version < "3.9"')}},
                 {
-                    "main": parse_marker("sys_platform == 'win32'"),
-                    "dev": parse_marker("sys_platform == 'linux'"),
+                    a: TransitivePackageInfo(
+                        0, {"main"}, {"main": parse_marker("sys_platform == 'win32'")}
+                    ),
+                    b: TransitivePackageInfo(
+                        0,
+                        {"main", "dev"},
+                        {
+                            "main": parse_marker("sys_platform == 'win32'"),
+                            "dev": parse_marker("sys_platform == 'linux'"),
+                        },
+                    ),
                 },
             ),
-        },
-        {package: {"a": dep("b", 'python_version < "3.9"')}},
-    )
-    merge_packages_from_override(
-        packages,
-        {
-            a: TransitivePackageInfo(
-                0, {"dev"}, {"dev": parse_marker("sys_platform == 'linux'")}
-            ),
-            b: TransitivePackageInfo(
-                0,
-                {"main", "dev"},
+            (
+                {package: {"a": dep("b", 'python_version >= "3.9"')}},
                 {
-                    "main": parse_marker("platform_machine == 'amd64'"),
-                    "dev": parse_marker("platform_machine == 'aarch64'"),
+                    a: TransitivePackageInfo(
+                        0, {"dev"}, {"dev": parse_marker("sys_platform == 'linux'")}
+                    ),
+                    b: TransitivePackageInfo(
+                        0,
+                        {"main", "dev"},
+                        {
+                            "main": parse_marker("platform_machine == 'amd64'"),
+                            "dev": parse_marker("platform_machine == 'aarch64'"),
+                        },
+                    ),
                 },
             ),
-        },
-        {package: {"a": dep("b", 'python_version >= "3.9"')}},
+        ]
     )
     assert len(packages) == 2
     assert packages[a].groups == {"main", "dev"}
