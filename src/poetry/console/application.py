@@ -20,6 +20,7 @@ from poetry.__version__ import __version__
 from poetry.console.command_loader import CommandLoader
 from poetry.console.commands.command import Command
 from poetry.utils.helpers import directory
+from poetry.utils.helpers import ensure_path
 
 
 if TYPE_CHECKING:
@@ -104,7 +105,7 @@ class Application(BaseApplication):
         self._disable_cache = False
         self._plugins_loaded = False
         self._working_directory = Path.cwd()
-        self._project_directory = self._working_directory
+        self._project_directory: Path | None = None
 
         dispatcher = EventDispatcher()
         dispatcher.add_listener(COMMAND, self.register_command_loggers)
@@ -159,6 +160,10 @@ class Application(BaseApplication):
         return definition
 
     @property
+    def project_directory(self) -> Path:
+        return self._project_directory or self._working_directory
+
+    @property
     def poetry(self) -> Poetry:
         from poetry.factory import Factory
 
@@ -166,7 +171,7 @@ class Application(BaseApplication):
             return self._poetry
 
         self._poetry = Factory().create_poetry(
-            cwd=self._project_directory,
+            cwd=self.project_directory,
             io=self._io,
             disable_plugins=self._disable_plugins,
             disable_cache=self._disable_cache,
@@ -214,6 +219,12 @@ class Application(BaseApplication):
         return io
 
     def _run(self, io: IO) -> int:
+        # we do this here and not inside the _configure_io implementation in order
+        # to ensure the users are not exposed to a stack trace for providing invalid values to
+        # the options --directory or --project, configuring the options here allow cleo to trap and
+        # display the error cleanly unless the user uses verbose or debug
+        self._configure_custom_application_options(io)
+
         self._load_plugins(io)
 
         with directory(self._working_directory):
@@ -247,17 +258,24 @@ class Application(BaseApplication):
         self._disable_cache = self._option_get_value(
             io, "no-cache", self._disable_cache
         )
-        self._working_directory = self._project_directory = Path(
-            self._option_get_value(io, "directory", Path.cwd())
+
+        # we use ensure_path for the directories to make sure these are valid paths
+        # this will raise an exception if the path is invalid
+        self._working_directory = ensure_path(
+            self._option_get_value(io, "directory", Path.cwd()), is_directory=True
         )
 
-        self._project_directory = Path(
-            self._option_get_value(io, "project", self._working_directory)
-        )
-
-        if self._project_directory != self._working_directory:
-            with directory(self._working_directory):
-                self._project_directory = self._project_directory.absolute()
+        self._project_directory = self._option_get_value(io, "project", None)
+        if self._project_directory is not None:
+            self._project_directory = Path(self._project_directory)
+            self._project_directory = ensure_path(
+                self._project_directory
+                if self._project_directory.is_absolute()
+                else self._working_directory.joinpath(self._project_directory).resolve(
+                    strict=False
+                ),
+                is_directory=True,
+            )
 
     def _configure_io(self, io: IO) -> None:
         # We need to check if the command being run
@@ -294,8 +312,6 @@ class Application(BaseApplication):
             io.set_input(run_input)
 
         super()._configure_io(io)
-
-        self._configure_custom_application_options(io)
 
     def register_command_loggers(
         self, event: Event, event_name: str, _: EventDispatcher
@@ -418,7 +434,7 @@ class Application(BaseApplication):
             from poetry.plugins.application_plugin import ApplicationPlugin
             from poetry.plugins.plugin_manager import PluginManager
 
-            PluginManager.add_project_plugin_path(self._project_directory)
+            PluginManager.add_project_plugin_path(self.project_directory)
             manager = PluginManager(ApplicationPlugin.group)
             manager.load_plugins()
             manager.activate(self)

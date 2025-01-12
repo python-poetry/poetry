@@ -258,6 +258,18 @@ def paths_csv(paths: list[Path]) -> str:
     return ", ".join(f'"{c!s}"' for c in paths)
 
 
+def ensure_path(path: str | Path, is_directory: bool = False) -> Path:
+    if isinstance(path, str):
+        path = Path(path)
+
+    if path.exists() and path.is_dir() == is_directory:
+        return path
+
+    raise ValueError(
+        f"Specified path '{path}' is not a valid {'directory' if is_directory else 'file'}."
+    )
+
+
 def is_dir_writable(path: Path, create: bool = False) -> bool:
     try:
         if not path.exists():

@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import re
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -14,13 +15,12 @@ from requests.exceptions import ChunkedEncodingError
 from poetry.utils.helpers import Downloader
 from poetry.utils.helpers import HTTPRangeRequestSupportedError
 from poetry.utils.helpers import download_file
+from poetry.utils.helpers import ensure_path
 from poetry.utils.helpers import get_file_hash
 from poetry.utils.helpers import get_highest_priority_hash_type
 
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from httpretty import httpretty
     from httpretty.core import HTTPrettyRequest
 
@@ -299,3 +299,47 @@ def test_downloader_uses_authenticator_by_default(
     request = http.last_request()
     basic_auth = base64.b64encode(b"bar:baz").decode()
     assert request.headers["Authorization"] == f"Basic {basic_auth}"
+
+
+def test_ensure_path_converts_string(tmp_path: Path) -> None:
+    assert tmp_path.exists()
+    assert ensure_path(path=tmp_path.as_posix(), is_directory=True) == tmp_path
+
+
+def test_ensure_path_does_not_convert_path(tmp_path: Path) -> None:
+    assert tmp_path.exists()
+    assert Path(tmp_path.as_posix()) is not tmp_path
+
+    result = ensure_path(path=tmp_path, is_directory=True)
+
+    assert result == tmp_path
+    assert result is tmp_path
+
+
+def test_ensure_path_is_directory_parameter(tmp_path: Path) -> None:
+    with pytest.raises(ValueError):
+        ensure_path(path=tmp_path, is_directory=False)
+
+    assert ensure_path(path=tmp_path, is_directory=True) is tmp_path
+
+
+def test_ensure_path_file(tmp_path: Path) -> None:
+    path = tmp_path.joinpath("some_file.txt")
+    assert not path.exists()
+
+    with pytest.raises(ValueError):
+        ensure_path(path=path, is_directory=False)
+
+    path.write_text("foobar")
+    assert ensure_path(path=path, is_directory=False) is path
+
+
+def test_ensure_path_directory(tmp_path: Path) -> None:
+    path = tmp_path.joinpath("foobar")
+    assert not path.exists()
+
+    with pytest.raises(ValueError):
+        ensure_path(path=path, is_directory=True)
+
+    path.mkdir()
+    assert ensure_path(path=path, is_directory=True) is path
