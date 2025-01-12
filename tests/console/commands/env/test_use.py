@@ -12,9 +12,9 @@ import tomlkit
 from poetry.core.constraints.version import Version
 
 from poetry.toml.file import TOMLFile
-from poetry.utils.env import MockEnv
 from tests.console.commands.env.helpers import build_venv
 from tests.console.commands.env.helpers import check_output_wrapper
+from tests.utils.env.helpers import MockEnv
 
 
 if TYPE_CHECKING:

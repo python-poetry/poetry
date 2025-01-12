@@ -17,8 +17,8 @@ from poetry.plugins.plugin_manager import ProjectPluginCache
 from poetry.repositories.cached_repository import CachedRepository
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.env import EnvManager
-from poetry.utils.env import MockEnv
 from tests.helpers import mock_metadata_entry_points
+from tests.utils.env.helpers import MockEnv
 
 
 if TYPE_CHECKING:

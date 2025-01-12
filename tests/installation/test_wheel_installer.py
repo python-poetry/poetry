@@ -10,7 +10,7 @@ import pytest
 from poetry.core.constraints.version import parse_constraint
 
 from poetry.installation.wheel_installer import WheelInstaller
-from poetry.utils.env import MockEnv
+from tests.utils.env.helpers import MockEnv
 
 
 if TYPE_CHECKING:

@@ -31,8 +31,8 @@ from poetry.installation.operations import Update
 from poetry.installation.wheel_installer import WheelInstaller
 from poetry.repositories.repository_pool import RepositoryPool
 from poetry.utils.cache import ArtifactCache
-from poetry.utils.env import MockEnv
 from poetry.vcs.git.backend import Git
+from tests.utils.env.helpers import MockEnv
 
 
 if TYPE_CHECKING:

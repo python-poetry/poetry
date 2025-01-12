@@ -28,12 +28,12 @@ from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.toml.file import TOMLFile
-from poetry.utils.env import MockEnv
-from poetry.utils.env import NullEnv
 from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.helpers import TestExecutor
 from tests.helpers import get_dependency
 from tests.helpers import get_package
+from tests.utils.env.helpers import MockEnv
+from tests.utils.env.helpers import NullEnv
 
 
 if TYPE_CHECKING:

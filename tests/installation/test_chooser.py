@@ -12,7 +12,7 @@ from poetry.installation.chooser import Chooser
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.pypi_repository import PyPiRepository
 from poetry.repositories.repository_pool import RepositoryPool
-from poetry.utils.env import MockEnv
+from tests.utils.env.helpers import MockEnv
 
 
 if TYPE_CHECKING:

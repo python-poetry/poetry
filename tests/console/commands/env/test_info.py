@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from poetry.utils.env import MockEnv
+from tests.utils.env.helpers import MockEnv
 
 
 if TYPE_CHECKING:

@@ -29,8 +29,8 @@ from poetry.repositories.repository import Repository
 from poetry.repositories.repository_pool import Priority
 from poetry.repositories.repository_pool import RepositoryPool
 from poetry.utils.env import EnvCommandError
-from poetry.utils.env import MockEnv as BaseMockEnv
 from tests.helpers import get_dependency
+from tests.utils.env.helpers import MockEnv as BaseMockEnv
 
 
 if TYPE_CHECKING:

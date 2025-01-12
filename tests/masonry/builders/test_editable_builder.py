@@ -22,9 +22,9 @@ from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils._compat import getencoding
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import EnvManager
-from poetry.utils.env import MockEnv
 from poetry.utils.env import VirtualEnv
 from poetry.utils.env import ephemeral_environment
+from tests.utils.env.helpers import MockEnv
 
 
 if TYPE_CHECKING:

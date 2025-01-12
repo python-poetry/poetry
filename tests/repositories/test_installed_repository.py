@@ -16,9 +16,9 @@ from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils._compat import getencoding
 from poetry.utils._compat import metadata
 from poetry.utils.env import EnvManager
-from poetry.utils.env import MockEnv
 from poetry.utils.env import VirtualEnv
 from tests.helpers import with_working_directory
+from tests.utils.env.helpers import MockEnv
 
 
 if TYPE_CHECKING:

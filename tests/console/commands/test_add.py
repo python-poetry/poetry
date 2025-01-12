@@ -29,13 +29,13 @@ if TYPE_CHECKING:
 
     from poetry.config.config import Config
     from poetry.poetry import Poetry
-    from poetry.utils.env import MockEnv
     from poetry.utils.env import VirtualEnv
     from tests.helpers import PoetryTestApplication
     from tests.helpers import TestRepository
     from tests.types import CommandTesterFactory
     from tests.types import FixtureDirGetter
     from tests.types import ProjectFactory
+    from tests.utils.env.helpers import MockEnv
 
 
 @pytest.fixture(autouse=True)

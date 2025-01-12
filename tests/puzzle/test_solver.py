@@ -27,10 +27,10 @@ from poetry.puzzle.provider import IncompatibleConstraintsError
 from poetry.repositories.repository import Repository
 from poetry.repositories.repository_pool import Priority
 from poetry.repositories.repository_pool import RepositoryPool
-from poetry.utils.env import MockEnv
 from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.helpers import get_dependency
 from tests.helpers import get_package
+from tests.utils.env.helpers import MockEnv
 
 
 if TYPE_CHECKING:

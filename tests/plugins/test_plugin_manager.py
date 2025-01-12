@@ -31,8 +31,8 @@ from poetry.repositories import RepositoryPool
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils.env import Env
 from poetry.utils.env import EnvManager
-from poetry.utils.env import MockEnv
 from tests.helpers import mock_metadata_entry_points
+from tests.utils.env.helpers import MockEnv
 
 
 if TYPE_CHECKING:

@@ -14,8 +14,8 @@ if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
     from pytest_mock import MockerFixture
 
-    from poetry.utils.env import MockEnv
     from tests.types import CommandTesterFactory
+    from tests.utils.env.helpers import MockEnv
 
 
 @pytest.fixture

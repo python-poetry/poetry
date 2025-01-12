@@ -11,11 +11,11 @@ from cleo.testers.application_tester import ApplicationTester
 from cleo.testers.command_tester import CommandTester
 
 from poetry.installation import Installer
-from poetry.utils.env import MockEnv
 from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.helpers import PoetryTestApplication
 from tests.helpers import TestExecutor
 from tests.helpers import mock_clone
+from tests.utils.env.helpers import MockEnv
 
 
 if TYPE_CHECKING:

@@ -15,7 +15,7 @@ from poetry.core.packages.utils.link import Link
 
 from poetry.utils.cache import ArtifactCache
 from poetry.utils.cache import FileCache
-from poetry.utils.env import MockEnv
+from tests.utils.env.helpers import MockEnv
 
 
 if TYPE_CHECKING:
