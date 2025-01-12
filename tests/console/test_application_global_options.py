@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import textwrap
 
 from pathlib import Path
@@ -90,6 +91,33 @@ def test_application_global_option_position_does_not_matter(
 
     assert "certifi" in stdout
     assert len(stdout.splitlines()) == 8
+
+
+@pytest.mark.parametrize("parameter", ["-C", "--directory", "-P", "--project"])
+@pytest.mark.parametrize(
+    "invalid_source_directory",
+    [
+        "/invalid/path",  # non-existent path
+        __file__,  # not a directory
+    ],
+)
+def test_application_global_option_context_is_validated(
+    parameter: str,
+    tester: ApplicationTester,
+    invalid_source_directory: str,
+) -> None:
+    option = f"{parameter} '{invalid_source_directory}'"
+    tester.execute(f"show {option}")
+    assert tester.status_code != 0
+
+    stdout = tester.io.fetch_output()
+    assert stdout == ""
+
+    stderr = tester.io.fetch_error()
+    assert re.match(
+        r"\nSpecified path '(.+)?' is not a valid directory.\n",
+        stderr,
+    )
 
 
 @pytest.mark.parametrize("parameter", ["project", "directory"])
