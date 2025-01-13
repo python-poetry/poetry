@@ -890,6 +890,58 @@ associated with a specific project.
 
 See [Managing environments]({{< relref "managing-environments" >}}) for more information about these commands.
 
+### env activate
+
+The `env activate` command prints the command to activate a virtual environment in your current shell.
+
+{{% note %}}
+This command does not activate the virtual environment, but only displays the activation command, for more information
+on how to use this command see [here]({{< relref "managing-environments#activating-the-environment" >}}).
+{{% /note %}}
+
+### env info
+
+The `env info` command displays information about the current environment.
+
+#### Options
+
+* `--path (-p)`: Only display the environment's path.
+* `--executable (-e)`: Only display the environment's python executable path.
+
+### env list
+
+The `env list` command lists all virtualenvs associated with the current project.
+
+#### Options
+
+* `--full-path`: Output the full paths of the virtualenvs.
+
+### env remove
+
+The `env remove` command removes virtual environments associated with the project. You can specify multiple Python
+executables or virtual environment names to remove all matching ones. Alternatively, you can remove all associated
+virtual environments using the `--all` option.
+
+{{% note %}}
+If `virtualenvs.in-project` config is set to `true`, no argument or option is required. Your in project virtual environment is removed.
+{{% /note %}}
+
+#### Arguments
+
+* `python`: The python executables associated with, or names of the virtual environments which are to be removed. Can be specified multiple times.
+
+#### Options
+
+* `--all`: Remove all managed virtual environments associated with the project.
+
+### env use
+
+The `env use` command activates or creates a new virtualenv for the current project.
+
+#### Arguments
+
+* `python`: The python executable to use. This can be a version number (if not on Windows) or a path to the python binary.
+
 ## cache
 
 The `cache` command regroups sub commands to interact with Poetry's cache.
