@@ -14,7 +14,8 @@ menu:
 In package mode, the only required fields are `name` and `version`
 (either in the `project` section or in the `tool.poetry` section).
 Other fields are optional.
-In non-package mode, all fields are optional.
+In non-package mode, the `name` and `version` fields are required
+if using the `project` section.
 
 {{% note %}}
 Run `poetry check` to print warnings about deprecated fields.
@@ -39,7 +40,7 @@ name = "my-package"
 
 ### version
 
-The version of the package. **Required in package mode**
+The version of the package. **Always required when the `project` section is specified**
 
 This should be a valid [PEP 440](https://peps.python.org/pep-0440/) string.
 
