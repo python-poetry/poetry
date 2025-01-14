@@ -10,7 +10,6 @@ import sys
 from collections.abc import Iterator
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Any
 
 import httpretty
 import keyring
@@ -26,6 +25,7 @@ from pytest import FixtureRequest
 
 from poetry.config.config import Config as BaseConfig
 from poetry.config.dict_config_source import DictConfigSource
+from poetry.console.commands.command import Command
 from poetry.factory import Factory
 from poetry.layouts import layout
 from poetry.packages.direct_origin import _get_package_from_git
@@ -49,7 +49,11 @@ from tests.helpers import with_working_directory
 if TYPE_CHECKING:
     from collections.abc import Iterator
     from collections.abc import Mapping
+    from typing import Any
+    from typing import Callable
 
+    from cleo.io.inputs.argument import Argument
+    from cleo.io.inputs.option import Option
     from keyring.credentials import Credential
     from pytest import Config as PyTestConfig
     from pytest import Parser
@@ -57,6 +61,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from poetry.poetry import Poetry
+    from tests.types import CommandFactory
     from tests.types import FixtureCopier
     from tests.types import FixtureDirGetter
     from tests.types import ProjectFactory
@@ -582,3 +587,43 @@ def set_project_context(
             yield path
 
     return project_context
+
+
+@pytest.fixture
+def command_factory() -> CommandFactory:
+    """
+    Provides a pytest fixture for creating mock commands using a factory function.
+
+    This fixture allows for customization of command attributes like name,
+    arguments, options, description, help text, and handler.
+    """
+
+    def _command_factory(
+        command_name: str,
+        command_arguments: list[Argument] | None = None,
+        command_options: list[Option] | None = None,
+        command_description: str = "",
+        command_help: str = "",
+        command_handler: Callable[[Command], int] | str | None = None,
+    ) -> Command:
+        class MockCommand(Command):
+            name = command_name
+            arguments = command_arguments or []
+            options = command_options or []
+            description = command_description
+            help = command_help
+
+            def handle(self) -> int:
+                if command_handler is not None and not isinstance(command_handler, str):
+                    return command_handler(self)
+
+                self._io.write_line(
+                    command_handler
+                    or f"The mock command '{command_name}' has been called"
+                )
+
+                return 0
+
+        return MockCommand()
+
+    return _command_factory

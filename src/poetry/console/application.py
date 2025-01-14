@@ -13,6 +13,7 @@ from cleo.application import Application as BaseApplication
 from cleo.events.console_command_event import ConsoleCommandEvent
 from cleo.events.console_events import COMMAND
 from cleo.events.event_dispatcher import EventDispatcher
+from cleo.exceptions import CleoCommandNotFoundError
 from cleo.exceptions import CleoError
 from cleo.formatters.style import Style
 
@@ -93,6 +94,25 @@ COMMANDS = [
     "source remove",
     "source show",
 ]
+
+# these are special messages to override the default message when a command is not found
+# in cases where a previously existing command has been moved to a plugin or outright
+# removed for various reasons
+COMMAND_NOT_FOUND_PREFIX_MESSAGE = (
+    "Looks like you're trying to use a Poetry command that is not available."
+)
+COMMAND_NOT_FOUND_MESSAGES = {
+    "shell": """
+Since <info>Poetry (<b>2.0.0</>)</>, the <c1>shell</> command is not installed by default. You can use,
+
+  - the new <c1>env activate</> command (<b>recommended</>); or
+  - the <c1>shell plugin</> to install the <c1>shell</> command
+
+<b>Documentation:</> https://python-poetry.org/docs/managing-environments/#activating-the-environment
+
+<warning>Note that the <c1>env activate</> command is not a direct replacement for <c1>shell</> command.
+"""
+}
 
 
 class Application(BaseApplication):
@@ -228,7 +248,20 @@ class Application(BaseApplication):
         self._load_plugins(io)
 
         with directory(self._working_directory):
-            exit_code: int = super()._run(io)
+            try:
+                exit_code: int = super()._run(io)
+            except CleoCommandNotFoundError as e:
+                command = self._get_command_name(io)
+
+                if command is not None and (
+                    message := COMMAND_NOT_FOUND_MESSAGES.get(command)
+                ):
+                    io.write_error_line("")
+                    io.write_error_line(COMMAND_NOT_FOUND_PREFIX_MESSAGE)
+                    io.write_error_line(message)
+                    return 1
+
+                raise e
 
         return exit_code
 
