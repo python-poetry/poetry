@@ -10,6 +10,8 @@ if TYPE_CHECKING:
     from contextlib import AbstractContextManager
     from pathlib import Path
 
+    from cleo.io.inputs.argument import Argument
+    from cleo.io.inputs.option import Option
     from cleo.io.io import IO
     from cleo.testers.command_tester import CommandTester
     from httpretty.core import HTTPrettyRequest
@@ -17,6 +19,7 @@ if TYPE_CHECKING:
 
     from poetry.config.config import Config
     from poetry.config.source import Source
+    from poetry.console.commands.command import Command
     from poetry.installation import Installer
     from poetry.installation.executor import Executor
     from poetry.poetry import Poetry
@@ -63,6 +66,18 @@ class ProjectFactory(Protocol):
         locker_config: dict[str, Any] | None = None,
         use_test_locker: bool = True,
     ) -> Poetry: ...
+
+
+class CommandFactory(Protocol):
+    def __call__(
+        self,
+        command_name: str,
+        command_arguments: list[Argument] | None = None,
+        command_options: list[Option] | None = None,
+        command_description: str = "",
+        command_help: str = "",
+        command_handler: Callable[[Command], int] | str | None = None,
+    ) -> Command: ...
 
 
 class FixtureDirGetter(Protocol):
