@@ -124,10 +124,17 @@ class IsolatedEnv(BaseIsolatedEnv):
         # We build Poetry dependencies from the requirements
         package = ProjectPackage("__root__", "0.0.0")
         package.python_versions = ".".join(str(v) for v in self._env.version_info[:3])
+        env_markers = self._env.get_marker_env()
 
         for requirement in requirements:
             dependency = Dependency.create_from_pep_508(requirement)
-            package.add_dependency(dependency)
+
+            if dependency.marker.is_empty() or dependency.marker.validate(env_markers):
+                # we ignore dependencies that are not valid for this environment
+                # this ensures that we do not end up with unnecessary constraint
+                # errors when solving build system requirements; this is assumed
+                # safe as this environment is ephemeral
+                package.add_dependency(dependency)
 
         io = BufferedIO()
 
