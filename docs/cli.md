@@ -223,7 +223,7 @@ See [PEP 440](https://peps.python.org/pep-0440/#local-version-identifiers) for m
 
 ## cache
 
-The `cache` command regroups sub commands to interact with Poetry's cache.
+The `cache` command groups subcommands to interact with Poetry's cache.
 
 ### cache clear
 
@@ -302,7 +302,7 @@ Without `--` this command will fail if `${GITLAB_JOB_TOKEN}` starts with a hyphe
 
 ## env
 
-The `env` command regroups sub commands to interact with the virtualenvs
+The `env` command groups subcommands to interact with the virtualenvs
 associated with a specific project.
 
 See [Managing environments]({{< relref "managing-environments" >}}) for more information about these commands.
@@ -779,7 +779,7 @@ and this [discussion](https://discuss.python.org/t/fastly-interfering-with-pypi-
 
 ## self
 
-The `self` namespace regroups sub commands to manage the Poetry installation itself.
+The `self` namespace groups subcommands to manage the Poetry installation itself.
 
 {{% note %}}
 Use of these commands will create the required `pyproject.toml` and `poetry.lock` files in your
@@ -989,7 +989,7 @@ When `--only` is specified, `--with` and `--without` options are ignored.
 
 ## source
 
-The `source` namespace regroups sub commands to manage repository sources for a Poetry project.
+The `source` namespace groups subcommands to manage repository sources for a Poetry project.
 
 ### source add
 
