@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; img-src 'self' data:; media-src 'self' data:; object-src 'none'; style-src 'self' 'sha256-o4vzfmmUENEg4chMjjRP9EuW9ucGnGIGVdbl8d0SHQQ='; script-src 'self' 'sha256-a9bHdQGvRzDwDVzx8m+Rzw+0FHZad8L0zjtBwkxOIz4=';"
+    />
+    <link
+      href="/_fs-ch-1T1wmsGaOgGaSxcX/assets/inter-var.woff2"
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link href="/_fs-ch-1T1wmsGaOgGaSxcX/assets/styles.css" rel="stylesheet" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <style>
+      #loading-error {
+        font-size: 16px;
+        font-family: 'Inter', sans-serif;
+        margin-top: 10px;
+        margin-left: 10px;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>
+      <div class="noscript-container">
+        <div class="noscript-content">
+          <img
+            src="/_fs-ch-1T1wmsGaOgGaSxcX/assets/errorIcon.svg"
+            alt="Error Icon"
+            class="error-icon"
+          />
+          <span class="noscript-span"
+            >JavaScript is disabled in your browser.</span
+          >
+          Please enable JavaScript to proceed.
+        </div>
+      </div>
+    </noscript>
+    <div id="loading-error">
+      A required part of this site couldn’t load. This may be due to a browser
+      extension, network issues, or browser settings. Please check your
+      connection, disable any ad blockers, or try using a different browser.
+    </div>
+    <script>
+      function loadScript(src) {
+        return new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.onload = resolve;
+          script.onerror = (event) => {
+            console.error('Script load error event:', event);
+            document.getElementById('loading-error').style.display = 'block';
+            reject(
+              new Error(
+                `Failed to load script: ${src}, Please contact the service administrator.`
+              )
+            );
+          };
+          script.src = src;
+          document.body.appendChild(script);
+        });
+      }
+
+      loadScript('/_fs-ch-1T1wmsGaOgGaSxcX/errors.js')
+        .then(() => {
+          const script = document.createElement('script');
+          script.src = '/_fs-ch-1T1wmsGaOgGaSxcX/script.js?reload=true';
+          script.onerror = (event) => {
+            console.error('Script load error event:', event);
+            const errorMsg = new Error(
+              `Failed to load script: ${script.src}. Please contact the service administrator.`
+            );
+            console.error(errorMsg);
+            handleScriptError();
+          };
+          document.body.appendChild(script);
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    </script>
+  </body>
+</html>
