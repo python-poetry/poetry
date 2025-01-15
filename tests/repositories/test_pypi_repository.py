@@ -361,3 +361,27 @@ def test_get_release_info_includes_only_supported_types(
 
     assert len(release_info["files"]) == 1
     assert release_info["files"][0]["file"] == "hbmqtt-0.9.6.tar.gz"
+
+
+@pytest.mark.parametrize(
+    ("query", "count"),
+    [
+        ("non-existent", 0),  # no match
+        ("requests", 6),  # exact match
+        ("hbmqtt==0.9.6", 1),  # exact dependency match
+        ("requests>=2.18.4", 2),  # range dependency match
+        ("request", 0),  # partial match
+        ("reques*", 0),  # bad token
+        ("reques t", 0),  # bad token
+        (["requests", "hbmqtt"], 7),  # list of tokens
+    ],
+)
+def test_search_fallbacks_to_find_packages(
+    query: str | list[str],
+    count: int,
+    pypi_repository: PyPiRepository,
+    with_disallowed_pypi_search_html: None,
+) -> None:
+    repo = pypi_repository
+    packages = repo.search(query)
+    assert len(packages) == count

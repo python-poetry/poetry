@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import logging
 
 from typing import TYPE_CHECKING
@@ -9,9 +10,11 @@ import requests
 import requests.adapters
 
 from cachecontrol.controller import logger as cache_control_logger
+from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
 from poetry.core.version.exceptions import InvalidVersionError
+from poetry.core.version.requirements import InvalidRequirementError
 
 from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.repositories.http_repository import HTTPRepository
@@ -75,6 +78,18 @@ class PyPiRepository(HTTPRepository):
                     f" {result.name} package, skipping",
                     level="debug",
                 )
+
+        if not results:
+            # in cases like PyPI search might not be available, we fallback to explicit searches
+            # to allow for a nicer ux rather than finding nothing at all
+            # see: https://discuss.python.org/t/fastly-interfering-with-pypi-search/73597/6
+            #
+            tokens = query if isinstance(query, list) else [query]
+            for token in tokens:
+                with contextlib.suppress(InvalidRequirementError):
+                    results.extend(
+                        self.find_packages(Dependency.create_from_pep_508(token))
+                    )
 
         return results
 
