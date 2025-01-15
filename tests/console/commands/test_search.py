@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import re
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
@@ -19,10 +18,7 @@ if TYPE_CHECKING:
     from poetry.repositories.legacy_repository import LegacyRepository
     from tests.types import CommandTesterFactory
 
-TESTS_DIRECTORY = Path(__file__).parent.parent.parent
-FIXTURES_DIRECTORY = (
-    TESTS_DIRECTORY / "repositories" / "fixtures" / "pypi.org" / "search"
-)
+
 SQLALCHEMY_SEARCH_OUTPUT_PYPI = """\
  Package                  Version Source Description
  broadway-sqlalchemy      0.0.1   PyPI   A broadway extension wrapping Flask-SQLAlchemy
