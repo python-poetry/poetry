@@ -16,4 +16,8 @@ homepage = "https://python-poetry.org"
 
 
 [tool.poetry.dependencies]
-python = "^2.7"
+python = "^3.7"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

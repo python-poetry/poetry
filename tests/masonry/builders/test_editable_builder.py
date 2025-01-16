@@ -345,10 +345,16 @@ Summary: Some description.
 License: MIT
 Author: Your Name
 Author-email: you@example.com
-Requires-Python: >=2.7,<3.0
+Requires-Python: >=3.7,<4.0
 Classifier: License :: OSI Approved :: MIT License
-Classifier: Programming Language :: Python :: 2
-Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
 Project-URL: Homepage, https://python-poetry.org
 Description-Content-Type: text/x-rst
 
