@@ -102,7 +102,7 @@ def test_env_get_supported_tags_matches_inside_virtualenv(
 
 @pytest.mark.skipif(os.name == "nt", reason="Symlinks are not support for Windows")
 def test_env_has_symlinks_on_nix(tmp_path: Path, tmp_venv: VirtualEnv) -> None:
-    assert os.path.islink(tmp_venv.python)
+    assert tmp_venv.python.is_symlink()
 
 
 def test_run_with_keyboard_interrupt(

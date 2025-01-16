@@ -45,8 +45,8 @@ def test_generate_system_pyproject_carriage_returns(
     cmd.system_pyproject.write_text(example_system_pyproject + "\n", encoding="utf-8")
     cmd.generate_system_pyproject()
 
-    with open(
-        cmd.system_pyproject, newline="", encoding="utf-8"
+    with cmd.system_pyproject.open(
+        newline="", encoding="utf-8"
     ) as f:  # do not translate newlines
         generated = f.read()
 

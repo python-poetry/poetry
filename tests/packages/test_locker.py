@@ -82,11 +82,9 @@ def test_is_locked_group_and_markers(
 ) -> None:
     if lock_version:
         locker.set_lock_data(root, {})
-        with locker.lock.open("r", encoding="utf-8") as f:
-            content = f.read()
+        content = locker.lock.read_text(encoding="utf-8")
         content = content.replace(locker._VERSION, lock_version)
-        with locker.lock.open("w", encoding="utf-8") as f:
-            f.write(content)
+        locker.lock.write_text(content, encoding="utf-8")
     assert locker.is_locked_groups_and_markers() is (lock_version == "2.1")
 
 
@@ -139,8 +137,7 @@ def test_lock_file_data_is_ordered(
 
     locker.set_lock_data(root, packages)
 
-    with locker.lock.open(encoding="utf-8") as f:
-        content = f.read()
+    content = locker.lock.read_text(encoding="utf-8")
 
     expected = f"""\
 # {GENERATED_COMMENT}
@@ -279,8 +276,7 @@ python-versions = "~2.7 || ^3.4"
 content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
 """
 
-    with open(locker.lock, "w", encoding="utf-8") as f:
-        f.write(content)
+    locker.lock.write_text(content, encoding="utf-8")
 
     packages = locker.locked_repository().packages
 
@@ -343,8 +339,7 @@ lock-version = "2.1"
 content-hash = "123456789"
 """
 
-    with open(locker.lock, "w", encoding="utf-8") as f:
-        f.write(content)
+    locker.lock.write_text(content, encoding="utf-8")
 
     repository = locker.locked_repository()
     assert len(repository.packages) == 3
@@ -409,8 +404,7 @@ lock-version = "2.1"
 content-hash = "123456789"
 """
 
-    with open(locker.lock, "w", encoding="utf-8") as f:
-        f.write(content)
+    locker.lock.write_text(content, encoding="utf-8")
 
     repository = locker.locked_repository()
     assert len(repository.packages) == 2
@@ -450,8 +444,7 @@ lock-version = "2.1"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 """
-    with open(locker.lock, "w", encoding="utf-8") as f:
-        f.write(content)
+    locker.lock.write_text(content, encoding="utf-8")
 
     repository = locker.locked_repository()
     assert len(repository.packages) == 1
@@ -510,8 +503,7 @@ lock-version = "2.1"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 """
-    with open(locker.lock, "w", encoding="utf-8") as f:
-        f.write(content)
+    locker.lock.write_text(content, encoding="utf-8")
 
     packages = locker.locked_packages()
 
@@ -605,8 +597,7 @@ demo = [
     {file = "demo-1.0-py3-none-any.whl", hash = "sha256"},
 ]
 """
-    with open(locker.lock, "w", encoding="utf-8") as f:
-        f.write(content)
+    locker.lock.write_text(content, encoding="utf-8")
 
     repository = locker.locked_repository()
     assert len(repository.packages) == 5
@@ -644,9 +635,7 @@ def test_lock_packages_with_null_description(
 
     locker.set_lock_data(root, {package_a: transitive_info})
 
-    with locker.lock.open(encoding="utf-8") as f:
-        content = f.read()
-
+    content = locker.lock.read_text(encoding="utf-8")
     expected = f"""\
 # {GENERATED_COMMENT}
 
@@ -708,8 +697,7 @@ python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 """
 
-    with locker.lock.open(encoding="utf-8") as f:
-        content = f.read()
+    content = locker.lock.read_text(encoding="utf-8")
 
     assert content == expected
 
@@ -740,8 +728,7 @@ lock-version = "2.1"
 python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 """
-    with locker.lock.open("w", encoding="utf-8") as f:
-        f.write(content)
+    locker.lock.write_text(content, encoding="utf-8")
 
     with pytest.raises(RuntimeError) as e:
         _ = locker.lock_data
@@ -769,8 +756,7 @@ type = "legacy"
 url = "https://foo.bar"
 reference = "legacy"
 """
-    with locker.lock.open("w", encoding="utf-8") as f:
-        f.write(content)
+    locker.lock.write_text(content, encoding="utf-8")
 
     with pytest.raises(RuntimeError) as e:
         _ = locker.lock_data
@@ -795,8 +781,7 @@ def test_locking_legacy_repository_package_should_include_source_section(
 
     locker.set_lock_data(root, packages)
 
-    with locker.lock.open(encoding="utf-8") as f:
-        content = f.read()
+    content = locker.lock.read_text(encoding="utf-8")
 
     expected = f"""\
 # {GENERATED_COMMENT}
@@ -836,8 +821,7 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
 """
     caplog.set_level(logging.WARNING, logger="poetry.packages.locker")
 
-    with open(locker.lock, "w", encoding="utf-8") as f:
-        f.write(content)
+    locker.lock.write_text(content, encoding="utf-8")
 
     _ = locker.lock_data
 
@@ -867,8 +851,7 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
 """
     caplog.set_level(logging.WARNING, logger="poetry.packages.locker")
 
-    with open(locker.lock, "w", encoding="utf-8") as f:
-        f.write(content)
+    locker.lock.write_text(content, encoding="utf-8")
 
     with pytest.raises(RuntimeError, match="^The lock file is not compatible"):
         _ = locker.lock_data
@@ -885,8 +868,7 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
 """
     caplog.set_level(logging.WARNING, logger="poetry.packages.locker")
 
-    with open(locker.lock, "w", encoding="utf-8") as f:
-        f.write(content)
+    locker.lock.write_text(content, encoding="utf-8")
 
     with pytest.raises(RuntimeError, match="^The lock file is not compatible"):
         _ = locker.lock_data
@@ -921,8 +903,7 @@ python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 """
 
-    with locker.lock.open(encoding="utf-8") as f:
-        content = f.read()
+    content = locker.lock.read_text(encoding="utf-8")
 
     assert content == expected
 
@@ -961,8 +942,7 @@ python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 """
 
-    with locker.lock.open(encoding="utf-8") as f:
-        content = f.read()
+    content = locker.lock.read_text(encoding="utf-8")
 
     assert content == expected
 
@@ -981,8 +961,7 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
 """
     caplog.set_level(logging.WARNING, logger="poetry.packages.locker")
 
-    with open(locker.lock, "w", encoding="utf-8") as f:
-        f.write(content)
+    locker.lock.write_text(content, encoding="utf-8")
 
     _ = locker.lock_data
 
@@ -1033,8 +1012,7 @@ def test_locker_dumps_groups_and_markers(
 
     locker.set_lock_data(root, packages)
 
-    with locker.lock.open(encoding="utf-8") as f:
-        content = f.read()
+    content = locker.lock.read_text(encoding="utf-8")
 
     expected = f"""\
 # {GENERATED_COMMENT}
@@ -1164,8 +1142,7 @@ def test_locker_dumps_dependency_information_correctly(
 
     locker.set_lock_data(root, packages)
 
-    with locker.lock.open(encoding="utf-8") as f:
-        content = f.read()
+    content = locker.lock.read_text(encoding="utf-8")
 
     expected = f"""\
 # {GENERATED_COMMENT}
@@ -1213,8 +1190,7 @@ def test_locker_dumps_subdir(
 
     locker.set_lock_data(root, {package_git_with_subdirectory: transitive_info})
 
-    with locker.lock.open(encoding="utf-8") as f:
-        content = f.read()
+    content = locker.lock.read_text(encoding="utf-8")
 
     expected = f"""\
 # {GENERATED_COMMENT}
@@ -1265,8 +1241,7 @@ def test_locker_dumps_dependency_extras_in_correct_order(
 
     locker.set_lock_data(root, {package_a: transitive_info})
 
-    with locker.lock.open(encoding="utf-8") as f:
-        content = f.read()
+    content = locker.lock.read_text(encoding="utf-8")
 
     expected = f"""\
 # {GENERATED_COMMENT}
@@ -1322,8 +1297,7 @@ python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 """
 
-    with open(locker.lock, "w", encoding="utf-8") as f:
-        f.write(content)
+    locker.lock.write_text(content, encoding="utf-8")
 
     create_dependency_patch = mocker.patch(
         "poetry.factory.Factory.create_dependency", autospec=True
@@ -1436,8 +1410,7 @@ def test_lock_file_resolves_file_url_symlinks(
 
             locker.set_lock_data(root, packages)
 
-            with locker.lock.open(encoding="utf-8") as f:
-                content = f.read()
+            content = locker.lock.read_text(encoding="utf-8")
 
             expected = f"""\
 # {GENERATED_COMMENT}
@@ -1488,13 +1461,11 @@ python-versions = "*"
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 """
 
-    with open(locker.lock, "w", encoding="utf-8") as f:
-        f.write(old_content)
+    locker.lock.write_text(old_content, encoding="utf-8")
 
     assert not locker.set_lock_data(root, {})
 
-    with locker.lock.open(encoding="utf-8") as f:
-        content = f.read()
+    content = locker.lock.read_text(encoding="utf-8")
 
     assert content == old_content
 
@@ -1504,8 +1475,7 @@ def test_lockfile_keep_eol(
 ) -> None:
     sep = "\n" if os.linesep == "\r\n" else "\r\n"
 
-    with open(locker.lock, "wb") as f:
-        f.write((sep * 10).encode())
+    locker.lock.write_bytes((sep * 10).encode())
 
     packages = {Package("test", version="0.0.1"): transitive_info}
 

@@ -594,7 +594,7 @@ def verify_installed_distribution(
         record_file = distribution._path.joinpath(  # type: ignore[attr-defined]
             "RECORD"
         )
-        with open(record_file, encoding="utf-8", newline="") as f:
+        with record_file.open(encoding="utf-8", newline="") as f:
             reader = csv.reader(f)
             rows = list(reader)
         assert all(len(row) == 3 for row in rows)

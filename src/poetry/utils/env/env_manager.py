@@ -493,14 +493,14 @@ class EnvManager:
         # but others can symlink *to* the venv Python,
         # so we can't just use sys.executable.
         # So we just check every item in the symlink tree (generally <= 3)
-        p = os.path.normcase(sys.executable)
+        p = Path(os.path.normcase(sys.executable))
         paths = [p]
-        while os.path.islink(p):
-            p = os.path.normcase(os.path.join(os.path.dirname(p), os.readlink(p)))
+        while p.is_symlink():
+            p = Path(os.path.normcase(p.parent / p.readlink()))
             paths.append(p)
 
         p_venv = os.path.normcase(str(venv))
-        if any(p.startswith(p_venv) for p in paths):
+        if any(str(p).startswith(p_venv) for p in paths):
             # Running properly in the virtualenv, don't need to do anything
             return self.get_system_env()
 
