@@ -122,6 +122,9 @@ def mock_clone(
 
 
 class TestExecutor(Executor):
+    # class name begins 'Test': tell pytest that it does not contain testcases.
+    __test__ = False
+
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 

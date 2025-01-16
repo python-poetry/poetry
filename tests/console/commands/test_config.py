@@ -603,7 +603,7 @@ def test_config_migrate(
     mocker.patch("poetry.locations.CONFIG_DIR", config_dir)
 
     config_file = Path(config_dir / "config.toml")
-    with config_file.open("w") as fh:
+    with config_file.open("w", encoding="utf-8") as fh:
         fh.write(current_config)
 
     tester.execute("--migrate", inputs=proceed)
@@ -617,7 +617,7 @@ def test_config_migrate(
     output = tester.io.fetch_output()
     assert output.startswith(expected_output)
 
-    with config_file.open("r") as fh:
+    with config_file.open("r", encoding="utf-8") as fh:
         assert fh.read() == expected_config
 
 
@@ -631,7 +631,7 @@ def test_config_migrate_local_config(tester: CommandTester, poetry: Poetry) -> N
     prefer-active-python = false
     """)
 
-    with local_config.open("w") as fh:
+    with local_config.open("w", encoding="utf-8") as fh:
         fh.write(config_data)
 
     tester.execute("--migrate --local", inputs="yes")
@@ -643,7 +643,7 @@ def test_config_migrate_local_config(tester: CommandTester, poetry: Poetry) -> N
         use-poetry-python = true
         """)
 
-    with local_config.open("r") as fh:
+    with local_config.open("r", encoding="utf-8") as fh:
         assert fh.read() == expected_config
 
 

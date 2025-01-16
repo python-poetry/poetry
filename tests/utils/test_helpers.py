@@ -330,7 +330,7 @@ def test_ensure_path_file(tmp_path: Path) -> None:
     with pytest.raises(ValueError):
         ensure_path(path=path, is_directory=False)
 
-    path.write_text("foobar")
+    path.write_text("foobar", encoding="utf-8")
     assert ensure_path(path=path, is_directory=False) is path
 
 
