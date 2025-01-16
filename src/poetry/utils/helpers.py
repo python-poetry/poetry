@@ -91,11 +91,12 @@ def _on_rm_error(
 
 
 def _on_rm_error(func: Callable[[str], None], path: str, exc_info: Any) -> None:
-    if not os.path.exists(path):
+    path_p = Path(path)
+    if not path_p.exists():
         return
 
-    os.chmod(path, stat.S_IWRITE)
-    func(path)
+    path_p.chmod(stat.S_IWRITE)
+    func(str(path_p))
 
 
 def remove_directory(path: Path, force: bool = False) -> None:
@@ -107,7 +108,7 @@ def remove_directory(path: Path, force: bool = False) -> None:
     Internally, all arguments are passed to `shutil.rmtree`.
     """
     if path.is_symlink():
-        return os.unlink(path)
+        return path.unlink()
 
     kwargs: dict[str, Any] = {}
     if force:
@@ -430,10 +431,10 @@ def extractall(source: Path, dest: Path, zip: bool) -> None:
                 #
                 # We want to avoid Path.resolve() because it is significantly slower
                 # than os.path.abspath()!
-                dest = Path(os.path.abspath(dest))
+                dest = Path(os.path.abspath(dest))  # noqa: PTH100
                 safe_members = []
                 for member in archive.getmembers():
-                    member_path = Path(os.path.abspath(dest / member.name))
+                    member_path = Path(os.path.abspath(dest / member.name))  # noqa: PTH100
                     if not member_path.is_relative_to(dest):
                         raise ValueError(
                             f"Refusing to extract {member.name}: "
@@ -441,7 +442,7 @@ def extractall(source: Path, dest: Path, zip: bool) -> None:
                         )
                     if member.issym():
                         link_target = Path(
-                            os.path.abspath(member_path.parent / member.linkname)
+                            os.path.abspath(member_path.parent / member.linkname)  # noqa: PTH100
                         )
                         if not link_target.is_relative_to(dest):
                             raise ValueError(
@@ -449,7 +450,7 @@ def extractall(source: Path, dest: Path, zip: bool) -> None:
                                 f"target {member.linkname} outside {dest}"
                             )
                     elif member.islnk():
-                        link_target = Path(os.path.abspath(dest / member.linkname))
+                        link_target = Path(os.path.abspath(dest / member.linkname))  # noqa: PTH100
                         if not link_target.is_relative_to(dest):
                             raise ValueError(
                                 f"Refusing hardlink {member.name}: "

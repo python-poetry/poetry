@@ -178,7 +178,7 @@ def test_add_existing_plugin_warns_about_no_operation(
     installed: TestRepository,
 ) -> None:
     pyproject = SelfCommand.get_default_system_pyproject_file()
-    with open(pyproject, "w", encoding="utf-8", newline="") as f:
+    with pyproject.open("w", encoding="utf-8", newline="") as f:
         f.write(
             f"""\
 [tool.poetry]
@@ -220,7 +220,7 @@ def test_add_existing_plugin_updates_if_requested(
     installed: TestRepository,
 ) -> None:
     pyproject = SelfCommand.get_default_system_pyproject_file()
-    with open(pyproject, "w", encoding="utf-8", newline="") as f:
+    with pyproject.open("w", encoding="utf-8", newline="") as f:
         f.write(
             f"""\
 [tool.poetry]
