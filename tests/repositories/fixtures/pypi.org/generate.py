@@ -671,7 +671,13 @@ PROJECTS = [
     Project("more-itertools", releases=[Release("more-itertools", "4.1.0")]),
     Project("pastel", releases=[Release("pastel", "0.1.0")]),
     Project("pluggy", releases=[Release("pluggy", "0.6.0")]),
-    Project("poetry-core", releases=[Release("poetry-core", "1.5.0", stub=False)]),
+    Project(
+        "poetry-core",
+        releases=[
+            Release("poetry-core", "1.5.0", stub=False),
+            Release("poetry-core", "2.0.1", stub=False),
+        ],
+    ),
     Project("py", releases=[Release("py", "1.5.3")]),
     Project("pylev", releases=[Release("pylev", "1.3.0", download_files=False)]),
     Project(

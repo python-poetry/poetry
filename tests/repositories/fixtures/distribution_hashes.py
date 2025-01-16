@@ -99,6 +99,14 @@ KNOWN_DISTRIBUTION_HASHES = {
         "7592aa158137726d9579e5d4347bd03a88f9fc82e11061303215feaaf000d32c",
         "434114a36f986671d132033e130f26b7",
     ),
+    "demo_metadata_version_24-0.1.0-py2.py3-none-any.whl": DistributionHash(
+        "f0d306c48d665e4a0051c660cc39f5ed7b7d51427050bfbca525e95d9fad2587",
+        "c0cbc2e5f2736a487ff960a8c39defbe",
+    ),
+    "demo_metadata_version_299-0.1.0-py2.py3-none-any.whl": DistributionHash(
+        "9678f9e59454a281bf7780661d719122766111dc9432ad20823ce6569d10edb2",
+        "2eb53ee23408e65de909e20d9575afe3",
+    ),
     "demo_metadata_version_unknown-0.1.0-py2.py3-none-any.whl": DistributionHash(
         "d716cd66546468ec3d4d40f4a4ecc813e3e4c661e155ecbc3a932f47d46d6e05",
         "749f823ff755a2f46bfb5ab25fdf9810",
@@ -222,6 +230,14 @@ KNOWN_DISTRIBUTION_HASHES = {
     "poetry_core-1.5.0.tar.gz": DistributionHash(
         "0ae8d28caf5c12ec1714b16d2e7157ddd52397ea6bfdeba5a9432e449a0184da",
         "3f9b36a7a94cd235bfd5f05794828445",
+    ),
+    "poetry_core-2.0.1-py3-none-any.whl": DistributionHash(
+        "a3c7009536522cda4eb0fb3805c9dc935b5537f8727dd01efb9c15e51a17552b",
+        "a52cf4beef0de009e0a9a36c9e6962f5",
+    ),
+    "poetry_core-2.0.1.tar.gz": DistributionHash(
+        "d2acdaec3b93dc1ab43adaeb0e9a8a6a6b3701c4535b5baab4b718ab12c8993c",
+        "1b1bb959cd760ac509de9b38ae67fc3b",
     ),
     "py-1.5.3-py2.py3-none-any.whl": DistributionHash(
         "ef4a94f47156178e42ef8f2b131db420e0f4b6aa0b3936b6dbde6ad6487476a5",
