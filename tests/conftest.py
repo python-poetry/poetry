@@ -342,7 +342,11 @@ def git_mock(mocker: MockerFixture, request: FixtureRequest) -> None:
 
 
 @pytest.fixture
-def http() -> Iterator[type[httpretty.httpretty]]:
+def http(mocker: MockerFixture) -> Iterator[type[httpretty.httpretty]]:
+    import sys
+
+    if sys.version_info >= (3, 10):
+        mocker.patch("truststore.inject_into_ssl")
     httpretty.reset()
     with httpretty.enabled(allow_net_connect=False, verbose=True):
         yield httpretty

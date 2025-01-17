@@ -246,6 +246,7 @@ class Application(BaseApplication):
         self._configure_custom_application_options(io)
 
         self._load_plugins(io)
+        self._load_system_truststore()
 
         with directory(self._working_directory):
             try:
@@ -473,6 +474,15 @@ class Application(BaseApplication):
             manager.activate(self)
 
         self._plugins_loaded = True
+
+    @staticmethod
+    def _load_system_truststore() -> None:
+        from poetry.utils.ssl_truststore import is_truststore_enabled
+
+        if is_truststore_enabled():
+            import truststore
+
+            truststore.inject_into_ssl()
 
 
 def main() -> int:
