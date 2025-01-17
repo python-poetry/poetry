@@ -15,6 +15,7 @@ from poetry.core.packages.package import Package
 from poetry.console.commands.installer_command import InstallerCommand
 from poetry.puzzle.exceptions import SolverProblemError
 from poetry.repositories.legacy_repository import LegacyRepository
+from poetry.utils.dependency_specification import RequirementsParser
 from tests.helpers import TestLocker
 from tests.helpers import get_dependency
 from tests.helpers import get_package
@@ -1243,6 +1244,21 @@ def test_add_should_fail_circular_dependency(
 
     expected = "Cannot add dependency on simple-project to project with the same name."
     assert expected in tester.io.fetch_error()
+
+
+def test_add_latest_should_strip_out_invalid_pep508_path(
+    tester: CommandTester, repo: TestRepository, mocker: MockerFixture
+) -> None:
+    spy = mocker.spy(RequirementsParser, "parse")
+    repo.add_package(get_package("foo", "1.1.1"))
+    repo.add_package(get_package("foo", "1.1.2"))
+    tester.execute("foo@latest")
+
+    assert tester.status_code == 0
+    assert "Using version ^1.1.2 for foo" in tester.io.fetch_output()
+
+    assert spy.call_count == 1
+    assert spy.call_args_list[0].args[1] == "foo"
 
 
 @pytest.mark.parametrize("project_dependencies", [True, False])

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from collections.abc import Mapping
 from contextlib import suppress
 from pathlib import Path
@@ -470,7 +472,10 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             env=self.env if isinstance(self, EnvCommand) else None,
             cwd=cwd,
         )
-        return [parser.parse(requirement) for requirement in requirements]
+        return [
+            parser.parse(re.sub(r"@\s*latest$", "", requirement, flags=re.I))
+            for requirement in requirements
+        ]
 
     def _format_requirements(self, requirements: list[dict[str, str]]) -> Requirements:
         requires: Requirements = {}
