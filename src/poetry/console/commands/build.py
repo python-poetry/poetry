@@ -36,7 +36,7 @@ class BuildCommand(EnvCommand):
         option(
             "local-version",
             "l",
-            "Add or replace a local version label to the build.",
+            "Add or replace a local version label to the build. (<warning>Deprecated</warning>)",
             flag=False,
         ),
         option(
@@ -45,6 +45,13 @@ class BuildCommand(EnvCommand):
             "Set output directory for build artifacts. Default is `dist`.",
             default="dist",
             flag=False,
+        ),
+        option(
+            "config-settings",
+            "c",
+            description="Provide config settings that should be passed to backend in <key>=<value> format.",
+            flag=False,
+            multiple=True,
         ),
     ]
 
@@ -71,7 +78,22 @@ class BuildCommand(EnvCommand):
         config_settings = {}
 
         if local_version_label := self.option("local-version"):
+            self.line_error(
+                f"<warning>`<fg=yellow;options=bold>--local-version</>` is deprecated."
+                f" Use `<fg=yellow;options=bold>--config-settings local-version={local_version_label}</>`"
+                f" instead.</warning>"
+            )
             config_settings["local-version"] = local_version_label
+
+        for config_setting in self.option("config-settings"):
+            if "=" not in config_setting:
+                raise ValueError(
+                    f"Invalid config setting format: {config_setting}. "
+                    "Config settings must be in the format 'key=value'"
+                )
+
+            key, _, value = config_setting.partition("=")
+            config_settings[key] = value
 
         return config_settings
 
