@@ -21,7 +21,7 @@ from dulwich.index import IndexEntry
 from dulwich.refs import ANNOTATED_TAG_SUFFIX
 from dulwich.repo import Repo
 
-from poetry.console.exceptions import PoetryConsoleError
+from poetry.console.exceptions import PoetryRuntimeError
 from poetry.utils.authenticator import get_default_authenticator
 from poetry.utils.helpers import remove_directory
 
@@ -35,6 +35,30 @@ logger = logging.getLogger(__name__)
 
 # A relative URL by definition starts with ../ or ./
 RELATIVE_SUBMODULE_REGEX = re.compile(r"^\.{1,2}/")
+
+# Common error messages
+ERROR_MESSAGE_NOTE = (
+    "<b>Note:</> This error arises from interacting with "
+    "the specified vcs source and is likely not a "
+    "Poetry issue."
+)
+ERROR_MESSAGE_PROBLEMS_SECTION_START = (
+    "This issue could be caused by any of the following;\n\n"
+    "- there are network issues in this environment"
+)
+ERROR_MESSAGE_BAD_REVISION = (
+    "- the revision ({revision}) you have specified\n"
+    "    - was misspelled\n"
+    "    - is invalid (must be a sha or symref)\n"
+    "    - is not present on remote"
+)
+ERROR_MESSAGE_BAD_REMOTE = (
+    "- the remote ({remote}) you have specified\n"
+    "    - was misspelled\n"
+    "    - does not exist\n"
+    "    - requires credentials that were either not configured or is incorrect\n"
+    "    - is in accessible due to network issues"
+)
 
 
 def is_revision_sha(revision: str | None) -> bool:
@@ -236,10 +260,15 @@ class Git:
 
         try:
             SystemGit.clone(url, target)
-        except CalledProcessError:
-            raise PoetryConsoleError(
-                f"Failed to clone {url}, check your git configuration and permissions"
-                " for this repository."
+        except CalledProcessError as e:
+            raise PoetryRuntimeError.create(
+                reason=f"<error>Failed to clone <info>{url}</>, check your git configuration and permissions for this repository.</>",
+                exception=e,
+                info=[
+                    ERROR_MESSAGE_NOTE,
+                    ERROR_MESSAGE_PROBLEMS_SECTION_START,
+                    ERROR_MESSAGE_BAD_REMOTE.format(remote=url),
+                ],
             )
 
         if revision:
@@ -248,8 +277,16 @@ class Git:
 
         try:
             SystemGit.checkout(revision, target)
-        except CalledProcessError:
-            raise PoetryConsoleError(f"Failed to checkout {url} at '{revision}'")
+        except CalledProcessError as e:
+            raise PoetryRuntimeError.create(
+                reason=f"<error>Failed to checkout {url} at '{revision}'.</>",
+                exception=e,
+                info=[
+                    ERROR_MESSAGE_NOTE,
+                    ERROR_MESSAGE_PROBLEMS_SECTION_START,
+                    ERROR_MESSAGE_BAD_REVISION.format(revision=revision),
+                ],
+            )
 
         repo = Repo(str(target))
         return repo
@@ -276,13 +313,28 @@ class Git:
         try:
             refspec.resolve(remote_refs=remote_refs, repo=local)
         except KeyError:  # branch / ref does not exist
-            raise PoetryConsoleError(
-                f"Failed to clone {url} at '{refspec.key}', verify ref exists on"
-                " remote."
+            raise PoetryRuntimeError.create(
+                reason=f"<error>Failed to clone {url} at '{refspec.key}', verify ref exists on remote.</>",
+                info=[
+                    ERROR_MESSAGE_NOTE,
+                    ERROR_MESSAGE_PROBLEMS_SECTION_START,
+                    ERROR_MESSAGE_BAD_REVISION.format(revision=refspec.key),
+                ],
             )
 
-        # ensure local HEAD matches remote
-        local.refs[b"HEAD"] = remote_refs.refs[b"HEAD"]
+        try:
+            # ensure local HEAD matches remote
+            local.refs[b"HEAD"] = remote_refs.refs[b"HEAD"]
+        except ValueError:
+            raise PoetryRuntimeError.create(
+                reason=f"<error>Failed to clone {url} at '{refspec.key}', verify ref exists on remote.</>",
+                info=[
+                    ERROR_MESSAGE_NOTE,
+                    ERROR_MESSAGE_PROBLEMS_SECTION_START,
+                    ERROR_MESSAGE_BAD_REVISION.format(revision=refspec.key),
+                    f"\nThis particular error is prevalent when {refspec.key} could not be resolved to a specific commit sha.",
+                ],
+            )
 
         if refspec.is_ref:
             # set ref to current HEAD
@@ -318,9 +370,14 @@ class Git:
             if isinstance(e, AssertionError) and "Invalid object name" not in str(e):
                 raise
 
-            raise PoetryConsoleError(
-                f"Failed to clone {url} at '{refspec.key}', verify ref exists on"
-                " remote."
+            raise PoetryRuntimeError.create(
+                reason=f"<error>Failed to clone {url} at '{refspec.key}', verify ref exists on remote.</>",
+                info=[
+                    ERROR_MESSAGE_NOTE,
+                    ERROR_MESSAGE_PROBLEMS_SECTION_START,
+                    ERROR_MESSAGE_BAD_REVISION.format(revision=refspec.key),
+                ],
+                exception=e,
             )
 
         return local
