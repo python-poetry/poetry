@@ -8,6 +8,8 @@ from typing import Any
 
 from poetry.config.config import Config
 from poetry.config.config import PackageFilterPolicy
+from poetry.console.exceptions import ConsoleMessage
+from poetry.console.exceptions import PoetryRuntimeError
 from poetry.repositories.http_repository import HTTPRepository
 from poetry.utils.helpers import get_highest_priority_hash_type
 from poetry.utils.wheel import Wheel
@@ -134,11 +136,28 @@ class Chooser:
             selected_links.append(link)
 
         if links and not selected_links:
-            links_str = ", ".join(f"{link}({h})" for link, h in skipped)
-            raise RuntimeError(
-                f"Retrieved digests for links {links_str} not in poetry.lock"
-                f" metadata {locked_hashes}"
-            )
+            reason = f"Downloaded distributions for <b>{package.pretty_name} ({package.pretty_version})</> did not match any known checksums in your lock file."
+            link_hashes = "\n".join(f"  - {link}({h})" for link, h in skipped)
+            known_hashes = "\n".join(f"  - {h}" for h in locked_hashes)
+            messages = [
+                ConsoleMessage(
+                    "<options=bold>Causes:</>\n"
+                    "  - invalid or corrupt cache either during locking or installation\n"
+                    "  - network interruptions or errors causing corrupted downloads\n\n"
+                    "<b>Solutions:</>\n"
+                    "  1. Try running your command again using the <c1>--no-cache</> global option enabled.\n"
+                    "  2. Try regenerating your lock file using (<c1>poetry lock --no-cache --regenerate</>).\n\n"
+                    "If any of those solutions worked, you will have to clear your caches using (<c1>poetry cache clear --all CACHE_NAME</>)."
+                ),
+                ConsoleMessage(
+                    f"Poetry retrieved the following links:\n"
+                    f"{link_hashes}\n\n"
+                    f"The lockfile contained only the following hashes:\n"
+                    f"{known_hashes}",
+                    debug=True,
+                ),
+            ]
+            raise PoetryRuntimeError(reason, messages)
 
         return selected_links
 

@@ -8,6 +8,7 @@ import pytest
 from packaging.tags import Tag
 from poetry.core.packages.package import Package
 
+from poetry.console.exceptions import PoetryRuntimeError
 from poetry.installation.chooser import Chooser
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.pypi_repository import PyPiRepository
@@ -366,9 +367,15 @@ def test_chooser_throws_an_error_if_package_hashes_do_not_match(
 
     package.files = files
 
-    with pytest.raises(RuntimeError) as e:
+    with pytest.raises(PoetryRuntimeError) as e:
         chooser.choose_for(package)
-    assert files[0]["hash"] in str(e)
+
+    reason = f"Downloaded distributions for {package.name} ({package.version}) did not match any known checksums in your lock file."
+    assert str(e.value) == reason
+
+    text = e.value.get_text(debug=True, strip=True)
+    assert reason in text
+    assert files[0]["hash"] in text
 
 
 def test_chooser_md5_remote_fallback_to_sha256_inline_calculation(

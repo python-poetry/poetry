@@ -16,6 +16,7 @@ from typing import Any
 
 from poetry.core.packages.utils.link import Link
 
+from poetry.console.exceptions import PoetryRuntimeError
 from poetry.installation.chef import Chef
 from poetry.installation.chooser import Chooser
 from poetry.installation.operations import Install
@@ -333,6 +334,10 @@ class Executor:
                             f" for {pkg.pretty_name}."
                             "</error>"
                         )
+                    elif isinstance(e, PoetryRuntimeError):
+                        message = e.get_text(io.is_verbose(), indent="    | ").rstrip()
+                        message = f"<warning>{message}</>"
+                        with_trace = False
                     else:
                         message = f"<error>Cannot install {pkg.pretty_name}.</error>"
 
