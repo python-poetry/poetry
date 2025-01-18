@@ -21,6 +21,7 @@ from cleo.io.inputs.argv_input import ArgvInput
 from poetry.__version__ import __version__
 from poetry.console.command_loader import CommandLoader
 from poetry.console.commands.command import Command
+from poetry.console.exceptions import PoetryRuntimeError
 from poetry.utils.helpers import directory
 from poetry.utils.helpers import ensure_path
 
@@ -246,9 +247,15 @@ class Application(BaseApplication):
 
         self._load_plugins(io)
 
+        exit_code: int = 1
+
         with directory(self._working_directory):
             try:
-                exit_code: int = super()._run(io)
+                exit_code = super()._run(io)
+            except PoetryRuntimeError as e:
+                io.write_error_line("")
+                e.write(io)
+                io.write_error_line("")
             except CleoCommandNotFoundError as e:
                 command = self._get_command_name(io)
 
