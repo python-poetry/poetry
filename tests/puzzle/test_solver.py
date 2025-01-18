@@ -2035,34 +2035,34 @@ def test_solver_duplicate_dependencies_with_overlapping_markers_complex(
             ),
             (
                 'numpy (>=1.17.3) ; python_version < "3.9"'
-                ' and (platform_system != "Darwin" and platform_system != "Linux")'
+                ' and platform_system != "Darwin" and platform_system != "Linux"'
                 ' and python_version >= "3.8" or python_version < "3.9"'
                 ' and platform_system != "Darwin" and python_version >= "3.8"'
                 ' and platform_machine != "aarch64" or python_version < "3.9"'
                 ' and platform_machine != "arm64" and python_version >= "3.8"'
                 ' and platform_system != "Linux" or python_version < "3.9"'
-                ' and (platform_machine != "arm64" and platform_machine != "aarch64")'
+                ' and platform_machine != "arm64" and platform_machine != "aarch64"'
                 ' and python_version >= "3.8"'
             ),
             (
                 'numpy (>=1.14.5) ; python_version < "3.8"'
-                ' and (platform_system != "Darwin" and platform_system != "Linux")'
+                ' and platform_system != "Darwin" and platform_system != "Linux"'
                 ' and python_version >= "3.7" or python_version < "3.8"'
                 ' and platform_system != "Darwin" and python_version >= "3.7"'
                 ' and platform_machine != "aarch64" or python_version < "3.8"'
                 ' and platform_machine != "arm64" and python_version >= "3.7"'
                 ' and platform_system != "Linux" or python_version < "3.8"'
-                ' and (platform_machine != "arm64" and platform_machine != "aarch64")'
+                ' and platform_machine != "arm64" and platform_machine != "aarch64"'
                 ' and python_version >= "3.7"'
             ),
             (
                 'numpy (>=1.13.3) ; python_version < "3.6" or python_version < "3.7"'
-                ' and (platform_system != "Darwin" and platform_system != "Linux")'
+                ' and platform_system != "Darwin" and platform_system != "Linux"'
                 ' or python_version < "3.7" and platform_system != "Darwin"'
                 ' and platform_machine != "aarch64" or python_version < "3.7"'
                 ' and platform_machine != "arm64" and platform_system != "Linux"'
-                ' or python_version < "3.7" and (platform_machine != "arm64"'
-                ' and platform_machine != "aarch64")'
+                ' or python_version < "3.7" and platform_machine != "arm64"'
+                ' and platform_machine != "aarch64"'
             ),
         },
     )

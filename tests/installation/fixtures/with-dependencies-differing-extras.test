@@ -6,7 +6,7 @@ optional = true
 python-versions = "*"
 files = [ ]
 groups = [ "main" ]
-markers = "extra == \"extra-one\" and extra != \"extra-two\" or extra == \"extra-two\" and extra != \"extra-one\""
+markers = "extra == \"extra-one\" and extra != \"extra-two\" or extra != \"extra-one\" and extra == \"extra-two\""
 
 [package.dependencies.transitive-dep-one]
 version = "1.1.0"
