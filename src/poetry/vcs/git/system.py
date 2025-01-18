@@ -40,13 +40,14 @@ class SystemGit:
         git_command = find_git_command()
         env = os.environ.copy()
         env["GIT_TERMINAL_PROMPT"] = "0"
-        subprocess.check_call(
+
+        subprocess.run(
             git_command + list(args),
-            stderr=subprocess.DEVNULL,
-            stdout=subprocess.DEVNULL,
+            capture_output=True,
             env=env,
             text=True,
             encoding="utf-8",
+            check=True,
         )
 
     @staticmethod
