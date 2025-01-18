@@ -26,7 +26,7 @@ optional = true
 python-versions = "*"
 files = [ ]
 groups = [ "main" ]
-markers = "extra == \"root-extra-one\" and extra != \"root-extra-two\" or extra == \"root-extra-two\" and extra != \"root-extra-one\""
+markers = "extra == \"root-extra-one\" and extra != \"root-extra-two\" or extra != \"root-extra-one\" and extra == \"root-extra-two\""
 
 [[package.dependencies.conflicting-dep]]
 version = "1.1.0"

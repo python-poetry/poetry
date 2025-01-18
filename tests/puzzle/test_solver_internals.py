@@ -213,16 +213,13 @@ def test_propagate_markers_with_root_extra(
     assert tm(result[package]) == {}
     assert tm(result[a]) == {"main": 'extra == "foo"'}
     assert tm(result[b]) == {
-        "main": (
-            'extra == "foo" and sys_platform == "linux"'
-            ' or extra == "bar" and sys_platform == "linux"'
-        )
+        "main": 'sys_platform == "linux" and (extra == "foo" or extra == "bar")',
     }
     assert tm(result[c]) == {"main": 'extra == "foo" and python_version == "3.8"'}
     assert tm(result[d]) == {
         "main": (
-            'extra == "foo" and sys_platform == "linux" and python_version == "3.9"'
-            ' or extra == "bar" and sys_platform == "linux" and python_version == "3.9"'
+            'sys_platform == "linux" and (extra == "foo" or extra == "bar")'
+            ' and python_version == "3.9"'
         )
     }
 
