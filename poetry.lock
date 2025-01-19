@@ -1052,7 +1052,7 @@ develop = false
 type = "git"
 url = "https://github.com/python-poetry/poetry-core.git"
 reference = "HEAD"
-resolved_reference = "b1505c6eef8160ffe4ead25c7bff81317947da1a"
+resolved_reference = "d97577e664d59173482a78f70e8f743cc5468851"
 
 [[package]]
 name = "pre-commit"
