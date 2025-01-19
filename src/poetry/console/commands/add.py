@@ -335,6 +335,13 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                 else:
                     poetry_section[constraint_name] = poetry_constraint
 
+            if optional:
+                extra_name = canonicalize_name(optional)
+                # _in_extras must be set after converting the dependency to PEP 508
+                # and adding it to the project section to avoid a redundant extra marker
+                dependency._in_extras = [extra_name]
+                self._add_dependency_to_extras(dependency, extra_name)
+
         # Refresh the locker
         if project_section:
             assert group == MAIN_GROUP
@@ -409,3 +416,20 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
         for name in existing_packages:
             self.line(f"  - <c1>{name}</c1>")
         self.line(self._hint_update_packages)
+
+    def _add_dependency_to_extras(
+        self, dependency: Dependency, extra_name: NormalizedName
+    ) -> None:
+        extras = dict(self.poetry.package.extras)
+        extra_deps = []
+        replaced = False
+        for dep in extras.get(extra_name, ()):
+            if dep.name == dependency.name:
+                extra_deps.append(dependency)
+                replaced = True
+            else:
+                extra_deps.append(dep)
+        if not replaced:
+            extra_deps.append(dependency)
+        extras[extra_name] = extra_deps
+        self.poetry.package.extras = extras
