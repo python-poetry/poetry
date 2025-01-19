@@ -822,13 +822,16 @@ Writing lock file
     [
         (None, {"my-extra": ["cachy (==0.2.0)"]}),
         (
-            {"other": ["foo>2"]},
-            {"other": ["foo>2"], "my-extra": ["cachy (==0.2.0)"]},
+            {"other": ["tomlkit (<2)"]},
+            {"other": ["tomlkit (<2)"], "my-extra": ["cachy (==0.2.0)"]},
         ),
-        ({"my-extra": ["foo>2"]}, {"my-extra": ["foo>2", "cachy (==0.2.0)"]}),
         (
-            {"my-extra": ["foo>2", "cachy (==0.1.0)", "bar>1"]},
-            {"my-extra": ["foo>2", "cachy (==0.2.0)", "bar>1"]},
+            {"my-extra": ["tomlkit (<2)"]},
+            {"my-extra": ["tomlkit (<2)", "cachy (==0.2.0)"]},
+        ),
+        (
+            {"my-extra": ["tomlkit (<2)", "cachy (==0.1.0)", "pendulum (>1)"]},
+            {"my-extra": ["tomlkit (<2)", "cachy (==0.2.0)", "pendulum (>1)"]},
         ),
     ],
 )
@@ -841,29 +844,22 @@ def test_add_constraint_with_optional(
 ) -> None:
     pyproject: dict[str, Any] = app.poetry.file.read()
     if project_dependencies:
-        pyproject["project"]["dependencies"] = ["foo>1"]
+        pyproject["project"]["dependencies"] = ["tomlkit (<1)"]
         if existing_extras:
             pyproject["project"]["optional-dependencies"] = existing_extras
     else:
-        pyproject["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
+        pyproject["tool"]["poetry"]["dependencies"]["tomlkit"] = "<1"
     pyproject = cast("TOMLDocument", pyproject)
     app.poetry.file.write(pyproject)
+    app.reset_poetry()
 
     tester.execute("cachy=0.2.0 --optional my-extra")
-    expected = """\
 
-Updating dependencies
-Resolving dependencies...
-
-No dependencies to install or update
-
-Writing lock file
-"""
-
-    assert tester.io.fetch_output() == expected
+    assert tester.io.fetch_output().endswith("Writing lock file\n")
     assert isinstance(tester.command, InstallerCommand)
-    assert tester.command.installer.executor.installations_count == 0
+    assert tester.command.installer.executor.installations_count > 0
 
+    # check pyproject content
     pyproject2: dict[str, Any] = app.poetry.file.read()
     project_content = pyproject2["project"]
     poetry_content = pyproject2["tool"]["poetry"]
@@ -886,6 +882,24 @@ Writing lock file
             "Optional dependencies will not be added to extras in legacy mode."
             in tester.io.fetch_error()
         )
+
+    # check lock content
+    if project_dependencies:
+        lock_data = app.poetry.locker.lock_data
+
+        extras = lock_data["extras"]
+        assert list(extras) == sorted(expected_extras)
+        assert extras["my-extra"] == sorted(
+            e.split(" ")[0] for e in expected_extras["my-extra"]
+        )
+
+        added_package: dict[str, Any] | None = None
+        for package in lock_data["package"]:
+            if package["name"] == "cachy":
+                added_package = package
+                break
+        assert added_package is not None
+        assert added_package.get("markers") == 'extra == "my-extra"'
 
 
 def test_add_constraint_with_optional_not_main_group(
