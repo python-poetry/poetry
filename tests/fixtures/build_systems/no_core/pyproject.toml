@@ -1,0 +1,20 @@
+[project]
+name = "simple-project"
+version = "1.2.3"
+description = "Some description."
+authors = [
+    { name = "Poetry Contributors", email = "no-reply@python-poetry.org" }
+]
+license = { text = "MIT" }
+readme = "README.md"
+keywords = ["packaging", "dependency", "poetry"]
+requires-python = ">=3.4"
+
+[tool.maturin]
+manylinux = "off"
+sdist-include = ["Cargo.lock", "json/**/*"]
+strip = "on"
+
+[build-system]
+build-backend = "maturin"
+requires = ["maturin>=0.8.1,<0.9"]
