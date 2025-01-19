@@ -7,9 +7,13 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from cleo.io.null_io import NullIO
 from cleo.testers.application_tester import ApplicationTester
 
 from poetry.console.application import Application
+from poetry.console.commands.build import BuildCommand
+from poetry.console.commands.build import BuildHandler
+from poetry.console.commands.build import BuildOptions
 from poetry.factory import Factory
 from poetry.utils.helpers import remove_directory
 from tests.helpers import with_working_directory
@@ -19,6 +23,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from cleo.testers.command_tester import CommandTester
+    from pytest_mock import MockerFixture
 
     from poetry.poetry import Poetry
     from poetry.utils.env import VirtualEnv
@@ -211,3 +216,87 @@ def test_build_relative_directory_src_layout(
         build_dir = tmp_project_path / "dist"
 
         assert len(list(build_dir.iterdir())) == 2
+
+
+def test_build_options_validate_formats() -> None:
+    with pytest.raises(ValueError, match="Invalid format: UNKNOWN"):
+        _ = BuildOptions(clean=True, formats=["sdist", "UNKNOWN"], output="dist")  # type: ignore[list-item]
+
+
+def test_prepare_config_settings() -> None:
+    config_settings = BuildCommand._prepare_config_settings(
+        local_version="42",
+        config_settings=["setting_1=value_1", "setting_2=value_2"],
+        io=NullIO(),
+    )
+
+    assert config_settings == {
+        "local-version": "42",
+        "setting_1": "value_1",
+        "setting_2": "value_2",
+    }
+
+
+def test_prepare_config_settings_raise_on_invalid_setting() -> None:
+    with pytest.raises(ValueError, match="Invalid config setting format: value_2"):
+        _ = BuildCommand._prepare_config_settings(
+            local_version="42",
+            config_settings=["setting_1=value_1", "value_2"],
+            io=NullIO(),
+        )
+
+
+@pytest.mark.parametrize(
+    ["fmt", "expected_formats"],
+    [
+        ("all", ["sdist", "wheel"]),
+        (None, ["sdist", "wheel"]),
+        ("sdist", ["sdist"]),
+        ("wheel", ["wheel"]),
+    ],
+)
+def test_prepare_formats(fmt: str | None, expected_formats: list[str]) -> None:
+    formats = BuildCommand._prepare_formats(fmt)
+    assert formats == expected_formats
+
+
+@pytest.mark.parametrize(
+    ["project", "isolated_build"],
+    [
+        ("core_in_range", False),
+        ("core_not_in_range", True),
+        ("has_build_script", True),
+        ("multiple_build_deps", True),
+        ("no_core", True),
+        ("core_from_git", True),
+    ],
+)
+def test_requires_isolated_build(
+    project: str,
+    isolated_build: bool,
+    fixture_dir: FixtureDirGetter,
+    mocker: MockerFixture,
+) -> None:
+    poetry = Factory().create_poetry(fixture_dir(f"build_systems/{project}"))
+    handler = BuildHandler(poetry=poetry, env=mocker.Mock(), io=NullIO())
+
+    assert handler._requires_isolated_build() is isolated_build
+
+
+def test_build_handler_build_isolated(
+    fixture_dir: FixtureDirGetter, mocker: MockerFixture
+) -> None:
+    from build import ProjectBuilder
+
+    poetry = Factory().create_poetry(fixture_dir("build_systems/has_build_script"))
+
+    mock_builder = mocker.MagicMock(spec=ProjectBuilder)
+    mock_isolated_builder = mocker.patch(
+        "poetry.console.commands.build.isolated_builder"
+    )
+    mock_isolated_builder.return_value.__enter__.return_value = mock_builder
+
+    handler = BuildHandler(poetry=poetry, env=mocker.Mock(), io=NullIO())
+    handler.build(BuildOptions(clean=True, formats=["wheel"], output="dist"))
+
+    assert mock_builder.build.call_count == 1
