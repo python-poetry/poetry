@@ -156,8 +156,10 @@ class RequirementsParser:
     def _parse_path(self, requirement: str) -> DependencySpec | None:
         if (os.path.sep in requirement or "/" in requirement) and (
             self._cwd.joinpath(requirement).exists()
-            or Path(requirement).expanduser().exists()
-            and Path(requirement).expanduser().is_absolute()
+            or (
+                Path(requirement).expanduser().exists()
+                and Path(requirement).expanduser().is_absolute()
+            )
         ):
             path = Path(requirement).expanduser()
             is_absolute = path.is_absolute()

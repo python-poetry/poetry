@@ -1108,7 +1108,7 @@ def test_add_creating_poetry_section_does_not_remove_existing_tools(
     poetry = project_factory(
         name="foobar",
         pyproject_content=(
-            '[project]\nname = "foobar"\nversion="0"\n' '[tool.foo]\nkey = "value"\n'
+            '[project]\nname = "foobar"\nversion="0"\n[tool.foo]\nkey = "value"\n'
         ),
     )
     tester = command_tester_factory("add", poetry=poetry)

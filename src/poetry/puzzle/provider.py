@@ -971,8 +971,8 @@ class Provider:
         """
         result = self._env.marker_env.copy() if self._env is not None else {}
         if extras is not None:
-            assert (
-                "extra" not in result
-            ), "'extra' marker key is already present in environment"
+            assert "extra" not in result, (
+                "'extra' marker key is already present in environment"
+            )
             result["extra"] = set(extras)
         return result

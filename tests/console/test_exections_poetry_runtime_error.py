@@ -117,8 +117,8 @@ def test_poetry_runtime_error_get_text(
                 "Subprocess error",
                 "<warning><b>Exception:</>\n"
                 "    | Command '['cmd']' returned non-zero exit status 1.</>",
-                "<warning><b>Output:</>\n" "    | stdout</>",
-                "<warning><b>Errors:</>\n" "    | stderr</>",
+                "<warning><b>Output:</>\n    | stdout</>",
+                "<warning><b>Errors:</>\n    | stderr</>",
                 "<info>Additional info</>",
                 "You can test the failed command by executing:\n\n    <c1>cmd</c1>",
             ],

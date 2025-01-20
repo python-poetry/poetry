@@ -10,6 +10,7 @@ repos:
       - id: end-of-file-fixer
         exclude: ^.*\.egg-info/|tests/repositories/fixtures/pypi.org/metadata/.*\.metadata
       - id: check-merge-conflict
+        exclude: tests/repositories/fixtures/installed/vendor/py3.7/attrs-19.3.0.dist-info/METADATA
       - id: check-case-conflict
       - id: check-json
       - id: check-toml
