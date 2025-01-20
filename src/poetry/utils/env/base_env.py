@@ -217,6 +217,35 @@ class Env(ABC):
         paths += [self.usersite] if self.usersite else []
         return paths
 
+    def set_paths(
+        self,
+        purelib: str | Path | None = None,
+        platlib: str | Path | None = None,
+        userbase: str | Path | None = None,
+        usersite: str | Path | None = None,
+    ) -> None:
+        """
+        A cached property aware way to set environment paths during runtime.
+
+        In some cases, like in `PluginManager._install()` method, paths are modified during execution. Direct
+        modification of `self.paths` is not safe as caches relying on are not invalidated. This helper method
+        ensures that we clear the relevant caches why paths are modified.
+        """
+        if purelib:
+            self.paths["purelib"] = str(purelib)
+
+        if platlib:
+            self.paths["platlib"] = str(platlib)
+
+        if userbase:
+            self.paths["userbase"] = str(userbase)
+
+        if usersite:
+            self.paths["usersite"] = str(usersite)
+
+        # clear cached properties using the env paths
+        self.__dict__.pop("fallbacks", None)
+
     def _get_lib_dirs(self) -> list[Path]:
         return [self.purelib, self.platlib, *self.fallbacks]
 

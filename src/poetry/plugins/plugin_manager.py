@@ -273,8 +273,7 @@ class ProjectPluginCache:
             project.add_dependency(dependency)
 
         # force new package to be installed in the project cache instead of Poetry's env
-        poetry_env.paths["platlib"] = str(self._path)
-        poetry_env.paths["purelib"] = str(self._path)
+        poetry_env.set_paths(purelib=self._path, platlib=self._path)
 
         self._ensure_cache_directory()
 
