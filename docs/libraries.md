@@ -45,6 +45,16 @@ If you do not want to commit the lock file and you are using git, add it to the 
 
 Before you can actually publish your library, you will need to package it.
 
+You need to define a build-system according to [PEP 517](https://peps.python.org/pep-0517/) in the `pyproject.toml` file:
+
+```toml
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+```
+
+Then you can package your library by running:
+
 ```bash
 poetry build
 ```
@@ -62,6 +72,21 @@ a `wheel`, the following files are included in the `.dist-info` directory:
 
 When building an `sdist`, the following files will be included in the root folder:
   - `LICENSE*`
+
+### Alternative build backends
+
+If you want to use a different build backend, you can specify it in the `pyproject.toml` file:
+
+```toml
+[build-system]
+requires = ["maturin>=0.8.1,<0.9"]
+build-backend = "maturin"
+```
+
+The `poetry build` command will then use the specified build backend to build your package in
+an isolated environment. Ensure you have specified any additional settings according to the
+documentation of the build backend you are using.
+
 
 Once building is done you are ready to publish your library.
 

@@ -200,18 +200,23 @@ The `build` command builds the source and wheels archives.
 poetry build
 ```
 
-Note that, at the moment, only pure python wheels are supported.
+The command will trigger the build system defined in the `pyproject.toml` file according to [PEP 517](https://peps.python.org/pep-0517/).
+If necessary the build process happens in an isolated environment.
 
 #### Options
 
 * `--format (-f)`: Limit the format to either `wheel` or `sdist`.
 * `--clean`: Clean output directory before building.
-* `--local-version (-l)`: Add or replace a local version label to the build.
+* `--local-version (-l)`: Add or replace a local version label to the build (deprecated).
 * `--output (-o)`: Set output directory for build artifacts. Default is `dist`.
+* `--config-settings=<key>=<value> (-c)`: Config settings to be passed to the build back-end. (multiple allowed)
 
 {{% note %}}
 When using `--local-version`, the identifier must be [PEP 440](https://peps.python.org/pep-0440/#local-version-identifiers)
 compliant. This is useful for adding build numbers, platform specificities etc. for private packages.
+
+`--local-version` is deprecated and will be removed in a future version of Poetry.
+Use `--config-settings local-version=<version>` instead.
 {{% /note %}}
 
 {{% warning %}}
