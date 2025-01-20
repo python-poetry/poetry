@@ -1454,13 +1454,13 @@ files = []
 [package.source]
 type = "file"
 url = "{
-    Path(
-        os.path.relpath(
-            Path(source_file.name).resolve().as_posix(),
-            Path(Path(lock_file.name).parent).resolve().as_posix(),
-        )
-    ).as_posix()
-}"
+                Path(
+                    os.path.relpath(
+                        Path(source_file.name).resolve().as_posix(),
+                        Path(Path(lock_file.name).parent).resolve().as_posix(),
+                    )
+                ).as_posix()
+            }"
 reference = "develop"
 resolved_reference = "123456"
 

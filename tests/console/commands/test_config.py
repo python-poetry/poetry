@@ -69,7 +69,7 @@ virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
 virtualenvs.options.no-pip = false
 virtualenvs.options.system-site-packages = false
-virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
+virtualenvs.path = {venv_path}  # {config_cache_dir / "virtualenvs"}
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 virtualenvs.use-poetry-python = false
 """
@@ -101,7 +101,7 @@ virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
 virtualenvs.options.no-pip = false
 virtualenvs.options.system-site-packages = false
-virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
+virtualenvs.path = {venv_path}  # {config_cache_dir / "virtualenvs"}
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 virtualenvs.use-poetry-python = false
 """
@@ -154,7 +154,7 @@ virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
 virtualenvs.options.no-pip = false
 virtualenvs.options.system-site-packages = false
-virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
+virtualenvs.path = {venv_path}  # {config_cache_dir / "virtualenvs"}
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 virtualenvs.use-poetry-python = false
 """
@@ -185,7 +185,7 @@ virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
 virtualenvs.options.no-pip = false
 virtualenvs.options.system-site-packages = false
-virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
+virtualenvs.path = {venv_path}  # {config_cache_dir / "virtualenvs"}
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 virtualenvs.use-poetry-python = false
 """
@@ -314,7 +314,7 @@ virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
 virtualenvs.options.no-pip = false
 virtualenvs.options.system-site-packages = false
-virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
+virtualenvs.path = {venv_path}  # {config_cache_dir / "virtualenvs"}
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 virtualenvs.use-poetry-python = false
 """
@@ -354,7 +354,7 @@ virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
 virtualenvs.options.no-pip = false
 virtualenvs.options.system-site-packages = false
-virtualenvs.path = {venv_path}  # {config_cache_dir / 'virtualenvs'}
+virtualenvs.path = {venv_path}  # {config_cache_dir / "virtualenvs"}
 virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 virtualenvs.use-poetry-python = false
 """

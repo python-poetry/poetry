@@ -100,7 +100,7 @@ class PrettyCalledProcessError:
     exception: InitVar[CalledProcessError] = dataclasses.field(init=True)
     indent: InitVar[str] = dataclasses.field(default="")
 
-    def __post_init__(self, exception: CalledProcessError, indent: str = "") -> None:
+    def __post_init__(self, exception: CalledProcessError, indent: str) -> None:
         self.message = ConsoleMessage(str(exception).strip(), debug=True).make_section(
             "Exception", indent
         )

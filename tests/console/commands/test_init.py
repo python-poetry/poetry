@@ -1087,13 +1087,13 @@ def test_package_include(
         f'name = "{package_name.replace(".", "-")}"\n'  # canonicalized
         'version = "0.1.0"\n'
         'description = ""\n'
-        'authors = [\n'
+        "authors = [\n"
         '    {name = "poetry"}\n'
-        ']\n'
+        "]\n"
         'readme = "README.md"\n'
         'requires-python = ">=3.10"\n'
-        'dependencies = [\n'
-        ']\n'
+        "dependencies = [\n"
+        "]\n"
         f"{packages}"  # This line is optional. Thus, no newline here.
     )
     assert expected in tester.io.fetch_output()
