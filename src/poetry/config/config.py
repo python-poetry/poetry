@@ -31,7 +31,7 @@ def boolean_validator(val: str) -> bool:
 
 
 def boolean_normalizer(val: str) -> bool:
-    return val in ["true", "1"]
+    return val.lower() in ["true", "1"]
 
 
 def int_normalizer(val: str) -> int:

@@ -53,7 +53,17 @@ def test_config_get_processes_depended_on_values(
 
 def generate_environment_variable_tests() -> Iterator[tuple[str, str, str, bool]]:
     data: list[tuple[Normalizer, list[tuple[str, Any]]]] = [
-        (boolean_normalizer, [("true", True), ("false", False)]),
+        (
+            boolean_normalizer,
+            [
+                ("true", True),
+                ("false", False),
+                ("True", True),
+                ("False", False),
+                ("1", True),
+                ("0", False),
+            ],
+        ),
         (int_normalizer, [("4", 4), ("2", 2)]),
     ]
 
