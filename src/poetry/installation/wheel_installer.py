@@ -95,7 +95,7 @@ class WheelInstaller:
             except _WheelFileValidationError as e:
                 self.invalid_wheels[wheel] = e.issues
 
-            scheme_dict = self._env.paths.copy()
+            scheme_dict = self._env.scheme_dict.copy()
             scheme_dict["headers"] = str(
                 Path(scheme_dict["include"]) / source.distribution
             )

@@ -29,9 +29,6 @@ from poetry.puzzle.exceptions import SolverProblemError
 from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
 from poetry.repositories.installed_repository import InstalledRepository
-from poetry.utils.env import Env
-from poetry.utils.env import EnvManager
-from poetry.utils.env import MockEnv
 from tests.helpers import mock_metadata_entry_points
 
 
@@ -40,6 +37,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from poetry.console.commands.command import Command
+    from poetry.utils.env import Env
     from tests.conftest import Config
     from tests.types import FixtureDirGetter
 
@@ -82,13 +80,6 @@ def pool(repo: Repository) -> RepositoryPool:
     pool.add_repository(repo)
 
     return pool
-
-
-@pytest.fixture
-def system_env(tmp_path: Path, mocker: MockerFixture) -> Env:
-    env = MockEnv(path=tmp_path, sys_path=[str(tmp_path / "purelib")])
-    mocker.patch.object(EnvManager, "get_system_env", return_value=env)
-    return env
 
 
 @pytest.fixture

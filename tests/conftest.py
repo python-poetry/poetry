@@ -15,6 +15,7 @@ import httpretty
 import keyring
 import pytest
 
+from installer.utils import SCHEME_NAMES
 from jaraco.classes import properties
 from keyring.backend import KeyringBackend
 from keyring.backends.fail import Keyring as FailKeyring
@@ -39,6 +40,7 @@ from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils.cache import ArtifactCache
 from poetry.utils.env import EnvManager
+from poetry.utils.env import MockEnv
 from poetry.utils.env import SystemEnv
 from poetry.utils.env import VirtualEnv
 from poetry.utils.password_manager import PoetryKeyring
@@ -722,3 +724,25 @@ def command_factory() -> CommandFactory:
 @pytest.fixture(autouse=True)
 def default_keyring(with_null_keyring: None) -> None:
     pass
+
+
+@pytest.fixture
+def system_env(tmp_path_factory: TempPathFactory, mocker: MockerFixture) -> SystemEnv:
+    base_path = tmp_path_factory.mktemp("system_env")
+    env = MockEnv(path=base_path, sys_path=[str(base_path / "purelib")])
+    assert env.path.is_dir()
+
+    userbase = env.path / "userbase"
+    userbase.mkdir(exist_ok=False)
+    env.paths["userbase"] = str(userbase)
+
+    paths = {str(scheme): str(env.path / scheme) for scheme in SCHEME_NAMES}
+    env.paths.update(paths)
+
+    for path in paths.values():
+        Path(path).mkdir(exist_ok=False)
+
+    mocker.patch.object(EnvManager, "get_system_env", return_value=env)
+
+    env.set_paths()
+    return env

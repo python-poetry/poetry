@@ -11,6 +11,9 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from deepdiff.diff import DeepDiff
+from installer.utils import SCHEME_NAMES
+
 from poetry.factory import Factory
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils._compat import WINDOWS
@@ -23,6 +26,7 @@ from poetry.utils.env import SystemEnv
 from poetry.utils.env import VirtualEnv
 from poetry.utils.env import build_environment
 from poetry.utils.env import ephemeral_environment
+from poetry.utils.helpers import is_dir_writable
 
 
 if TYPE_CHECKING:
@@ -510,3 +514,37 @@ def test_command_from_bin_preserves_relative_path(manager: EnvManager) -> None:
     env = manager.get()
     command = env.get_command_from_bin("./foo.py")
     assert command == ["./foo.py"]
+
+
+@pytest.fixture
+def system_env_read_only(system_env: SystemEnv, mocker: MockerFixture) -> SystemEnv:
+    original_is_dir_writable = is_dir_writable
+
+    read_only_paths = {system_env.paths[key] for key in SCHEME_NAMES}
+
+    def mock_is_dir_writable(path: Path, create: bool = False) -> bool:
+        if str(path) in read_only_paths:
+            return False
+        return original_is_dir_writable(path, create)
+
+    mocker.patch("poetry.utils.env.base_env.is_dir_writable", new=mock_is_dir_writable)
+
+    return system_env
+
+
+def test_env_scheme_dict_returns_original_when_writable(system_env: SystemEnv) -> None:
+    assert not DeepDiff(system_env.scheme_dict, system_env.paths, ignore_order=True)
+
+
+def test_env_scheme_dict_returns_modified_when_read_only(
+    system_env_read_only: SystemEnv,
+) -> None:
+    scheme_dict = system_env_read_only.scheme_dict
+    assert DeepDiff(scheme_dict, system_env_read_only.paths, ignore_order=True)
+
+    paths = system_env_read_only.paths
+    assert all(
+        Path(scheme_dict[scheme]).exists()
+        and scheme_dict[scheme].startswith(paths["userbase"])
+        for scheme in SCHEME_NAMES
+    )
