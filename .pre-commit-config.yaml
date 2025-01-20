@@ -3,7 +3,7 @@ ci:
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
       - id: trailing-whitespace
         exclude: tests/repositories/fixtures/pypi.org/metadata/.*\.metadata
@@ -22,18 +22,18 @@ repos:
       - id: check-docstring-first
 
   - repo: https://github.com/pre-commit/pre-commit
-    rev: v3.7.1
+    rev: v4.1.0
     hooks:
       - id: validate_manifest
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.7.3
+    rev: v0.9.2
     hooks:
       - id: ruff
       - id: ruff-format
 
   - repo: https://github.com/woodruffw/zizmor-pre-commit
-    rev: v0.8.0
+    rev: v1.2.2
     hooks:
       - id: zizmor
         # types and files can be removed with https://github.com/woodruffw/zizmor-pre-commit/pull/2
