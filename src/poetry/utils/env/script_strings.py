@@ -104,7 +104,8 @@ paths["fallbacks"] = [
 
 if site.check_enableusersite():
     paths["usersite"] = site.getusersitepackages()
-    paths["userbase"] = site.getuserbase()
+
+paths["userbase"] = site.getuserbase()
 
 print(json.dumps(paths))
 """

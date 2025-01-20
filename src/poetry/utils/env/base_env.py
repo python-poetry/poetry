@@ -338,6 +338,13 @@ class Env(ABC):
         return self._run(cmd, **kwargs)
 
     def run_python_script(self, content: str, **kwargs: Any) -> str:
+        # Options Used:
+        #     -I        : Run Python in isolated mode. (#6627)
+        #     -W ignore : Suppress warnings.
+        #
+        # TODO: Consider replacing (-I) with (-EP) once support for managing Python <3.11 environments dropped.
+        # This is useful to prevent user site being disabled over zealously.
+
         return self.run(
             self._executable,
             "-I",
