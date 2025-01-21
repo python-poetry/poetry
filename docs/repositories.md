@@ -531,7 +531,10 @@ required to set an empty password. This is supported by Poetry.
 poetry config http-basic.foo <TOKEN> ""
 ```
 
-**Note:** Usernames cannot be empty.  Attempting to use an empty username can result in an unpredictable failure.
+**Note:** Empty usernames are discouraged. However, Poetry will honour them if a password is configured without it. This
+is unfortunately commonplace practice, while not best practice, for private indices that use tokens. When a password is
+stored into the system keyring with an empty username, Poetry will use a literal `__poetry_source_empty_username__` as
+the username to circumvent [keyring#687](https://github.com/jaraco/keyring/pull/687).
 {{% /note %}}
 
 ## Certificates

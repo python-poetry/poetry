@@ -25,6 +25,7 @@ if TYPE_CHECKING:
     from pytest import MonkeyPatch
     from pytest_mock import MockerFixture
 
+    from poetry.utils.password_manager import PoetryKeyring
     from tests.conftest import Config
     from tests.conftest import DummyBackend
 
@@ -153,7 +154,7 @@ def test_authenticator_uses_empty_strings_as_default_password(
     assert request.headers["Authorization"] == f"Basic {basic_auth}"
 
 
-def test_authenticator_ignores_empty_strings_as_default_username(
+def test_authenticator_does_not_ignore_empty_strings_as_default_username(
     config: Config,
     mock_remote: None,
     repo: dict[str, dict[str, str]],
@@ -170,7 +171,7 @@ def test_authenticator_ignores_empty_strings_as_default_username(
     authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
 
     request = http.last_request()
-    assert request.headers["Authorization"] is None
+    assert request.headers["Authorization"] == "Basic OmJhcg=="
 
 
 def test_authenticator_falls_back_to_keyring_url(
@@ -207,6 +208,7 @@ def test_authenticator_falls_back_to_keyring_netloc(
     http: type[httpretty.httpretty],
     with_simple_keyring: None,
     dummy_keyring: DummyBackend,
+    poetry_keyring: PoetryKeyring,
 ) -> None:
     config.merge(
         {

@@ -27,6 +27,13 @@ class HTTPAuthCredential:
 
 
 class PoetryKeyring:
+    # some private sources expect tokens to be provided as password with that can be empty
+    # we use a fixed literal to ensure that this can be stored in keyring (jaraco/keyring#687)
+    #
+    # Note: If this is changed, users with passwords stored with empty usernames will have to
+    # re-add the config.
+    _EMPTY_USERNAME_KEY = "__poetry_source_empty_username__"
+
     def __init__(self, namespace: str) -> None:
         self._namespace = namespace
 
@@ -41,6 +48,7 @@ class PoetryKeyring:
         for name in names:
             credential = None
             try:
+                # we do default to empty username string here since credentials support empty usernames
                 credential = keyring.get_credential(name, username)
             except KeyringLocked:
                 logger.debug("Keyring %s is locked", name)
@@ -61,7 +69,7 @@ class PoetryKeyring:
         name = self.get_entry_name(name)
 
         try:
-            return keyring.get_password(name, username)
+            return keyring.get_password(name, username or self._EMPTY_USERNAME_KEY)
         except (RuntimeError, keyring.errors.KeyringError):
             raise PoetryKeyringError(
                 f"Unable to retrieve the password for {name} from the key ring"
@@ -74,7 +82,7 @@ class PoetryKeyring:
         name = self.get_entry_name(name)
 
         try:
-            keyring.set_password(name, username, password)
+            keyring.set_password(name, username or self._EMPTY_USERNAME_KEY, password)
         except (RuntimeError, keyring.errors.KeyringError) as e:
             raise PoetryKeyringError(
                 f"Unable to store the password for {name} in the key ring: {e}"
@@ -86,7 +94,7 @@ class PoetryKeyring:
         name = self.get_entry_name(name)
 
         try:
-            keyring.delete_password(name, username)
+            keyring.delete_password(name, username or self._EMPTY_USERNAME_KEY)
         except (RuntimeError, keyring.errors.KeyringError):
             raise PoetryKeyringError(
                 f"Unable to delete the password for {name} from the key ring"
@@ -196,13 +204,11 @@ class PasswordManager:
         username = self._config.get(f"http-basic.{repo_name}.username")
         password = self._config.get(f"http-basic.{repo_name}.password")
 
-        if not username:
-            return HTTPAuthCredential()
-
         if password is None and self.use_keyring:
             password = self.keyring.get_password(repo_name, username)
 
-        return HTTPAuthCredential(username=username, password=password)
+        # we use `or None` here to ensure that empty strings are passed as None
+        return HTTPAuthCredential(username=username or None, password=password or None)
 
     def set_http_password(self, repo_name: str, username: str, password: str) -> None:
         auth = {"username": username}
