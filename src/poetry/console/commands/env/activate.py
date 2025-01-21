@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import shellingham
 
-from poetry.console.commands.command import Command
+from poetry.console.commands.env_command import EnvCommand
 from poetry.utils._compat import WINDOWS
 
 
@@ -18,7 +18,7 @@ class ShellNotSupportedError(Exception):
     """Raised when a shell doesn't have an activator in virtual environment"""
 
 
-class EnvActivateCommand(Command):
+class EnvActivateCommand(EnvCommand):
     name = "env activate"
     description = "Print the command to activate a virtual environment."
 
