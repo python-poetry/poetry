@@ -269,11 +269,11 @@ class Env(ABC):
     @abstractmethod
     def get_marker_env(self) -> dict[str, Any]: ...
 
-    def get_pip_command(self, embedded: bool = False) -> list[str]:
-        if embedded or not Path(self._bin(self._pip_executable)).exists():
-            return [str(self.python), str(self.pip_embedded)]
-        # run as module so that pip can update itself on Windows
-        return [str(self.python), "-m", "pip"]
+    def get_pip_command(self, prefer_in_env: bool = False) -> list[str]:
+        if prefer_in_env and Path(self._bin(self._pip_executable)).exists():
+            # we run pip as module so that pip can update itself on Windows
+            return [str(self.python), "-m", "pip"]
+        return [str(self.python), str(self.pip_embedded)]
 
     @abstractmethod
     def get_supported_tags(self) -> list[Tag]: ...
@@ -295,7 +295,7 @@ class Env(ABC):
         if bin == "pip":
             # when pip is required we need to ensure that we fall back to
             # embedded pip when pip is not available in the environment
-            return self.get_pip_command()
+            return self.get_pip_command(prefer_in_env=True)
 
         return [self._bin(bin)]
 
