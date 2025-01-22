@@ -723,6 +723,7 @@ for more information on other keys and specifying version ranges.
 ### scripts
 
 **Deprecated**: Use `project.scripts` instead.
+Use `[tool.poetry.scripts]` only for scripts of type "file", because those are not supported in `[project.scripts]`.
 
 This section describes the scripts or executables that will be installed when installing the package
 
@@ -737,7 +738,17 @@ Here, we will have the `my_package_cli` script installed which will execute the 
 When a script is added or updated, run `poetry install` to make them available in the project's virtualenv.
 {{% /note %}}
 
-### extras
+```toml
+[tool.poetry.scripts]
+my_executable = { reference = "some_binary.exe", type = "file" }
+```
+
+This tells Poetry to include the specified file, relative to your project directory, in distribution builds. It will then be copied to the appropriate installation directory for your operating system when your package is installed.
+
+* On Windows the file is placed in the `Scripts/` directory.
+* On *nix system the file is placed in the `bin/` directory.
+
+### `extras`
 
 **Deprecated**: Use `project.optional-dependencies` instead.
 
