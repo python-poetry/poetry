@@ -269,6 +269,8 @@ def test_prepare_formats(fmt: str | None, expected_formats: list[str]) -> None:
         ("multiple_build_deps", True),
         ("no_core", True),
         ("core_from_git", True),
+        ("no_build_system", False),
+        ("no_build_backend", False),
     ],
 )
 def test_requires_isolated_build(
