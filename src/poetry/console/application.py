@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+import argparse
 import logging
-import re
 
 from contextlib import suppress
 from importlib import import_module
@@ -16,6 +16,7 @@ from cleo.events.event_dispatcher import EventDispatcher
 from cleo.exceptions import CleoCommandNotFoundError
 from cleo.exceptions import CleoError
 from cleo.formatters.style import Style
+from cleo.io.inputs.argv_input import ArgvInput
 
 from poetry.__version__ import __version__
 from poetry.console.command_loader import CommandLoader
@@ -26,10 +27,8 @@ from poetry.utils.helpers import ensure_path
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from typing import Any
 
     from cleo.events.event import Event
-    from cleo.io.inputs.argv_input import ArgvInput
     from cleo.io.inputs.definition import Definition
     from cleo.io.inputs.input import Input
     from cleo.io.io import IO
@@ -243,7 +242,7 @@ class Application(BaseApplication):
         # to ensure the users are not exposed to a stack trace for providing invalid values to
         # the options --directory or --project, configuring the options here allow cleo to trap and
         # display the error cleanly unless the user uses verbose or debug
-        self._configure_custom_application_options(io)
+        self._configure_global_options(io)
 
         self._load_plugins(io)
 
@@ -265,40 +264,29 @@ class Application(BaseApplication):
 
         return exit_code
 
-    def _option_get_value(self, io: IO, name: str, default: Any) -> Any:
-        option = self.definition.option(name)
+    def _configure_global_options(self, io: IO) -> None:
+        """
+        Configures global options for the application by setting up the relevant
+        directories, disabling plugins or cache, and managing the working and
+        project directories. This method ensures that all directories are valid
+        paths and handles the resolution of the project directory relative to the
+        working directory if necessary.
 
-        if option is None:
-            return default
+        :param io: The IO instance whose input and options are being read.
+        :return: Nothing.
+        """
+        self._sort_global_options(io)
 
-        values = [f"--{option.name}"]
-
-        if option.shortcut:
-            values.append(f"-{option.shortcut}")
-
-        if not io.input.has_parameter_option(values):
-            return default
-
-        if option.is_flag():
-            return True
-
-        return io.input.parameter_option(values=values, default=default)
-
-    def _configure_custom_application_options(self, io: IO) -> None:
-        self._disable_plugins = self._option_get_value(
-            io, "no-plugins", self._disable_plugins
-        )
-        self._disable_cache = self._option_get_value(
-            io, "no-cache", self._disable_cache
-        )
+        self._disable_plugins = io.input.option("no-plugins")
+        self._disable_cache = io.input.option("no-cache")
 
         # we use ensure_path for the directories to make sure these are valid paths
         # this will raise an exception if the path is invalid
         self._working_directory = ensure_path(
-            self._option_get_value(io, "directory", Path.cwd()), is_directory=True
+            io.input.option("directory") or Path.cwd(), is_directory=True
         )
 
-        self._project_directory = self._option_get_value(io, "project", None)
+        self._project_directory = io.input.option("project")
         if self._project_directory is not None:
             self._project_directory = Path(self._project_directory)
             self._project_directory = ensure_path(
@@ -310,40 +298,151 @@ class Application(BaseApplication):
                 is_directory=True,
             )
 
-    def _configure_io(self, io: IO) -> None:
-        # We need to check if the command being run
-        # is the "run" command.
-        definition = self.definition
+    def _sort_global_options(self, io: IO) -> None:
+        """
+        Sorts global options of the provided IO instance according to the
+        definition of the available options, reordering and parsing arguments
+        to ensure consistency in input handling.
+
+        The function interprets the options and their corresponding values
+        using an argument parser, constructs a sorted list of tokens, and
+        recreates the input with the rearranged sequence while maintaining
+        compatibility with the initially provided input stream.
+
+        If using in conjunction with `_configure_run_command`, it is recommended that
+        it be called first in order to correctly handling cases like
+        `poetry run -V python -V`.
+
+        :param io: The IO instance whose input and options are being processed
+                   and reordered.
+        :return: Nothing.
+        """
+        original_input = cast(ArgvInput, io.input)
+        tokens: list[str] = original_input._tokens
+
+        parser = argparse.ArgumentParser(add_help=False)
+
+        for option in self.definition.options:
+            parser.add_argument(
+                f"--{option.name}",
+                *([f"-{option.shortcut}"] if option.shortcut else []),
+                action="store_true" if option.is_flag() else "store",
+            )
+
+        args, remaining_args = parser.parse_known_args(tokens)
+
+        tokens = []
+        for option in self.definition.options:
+            key = option.name.replace("-", "_")
+            value = getattr(args, key, None)
+
+            if value is not None:
+                if value:  # is truthy
+                    tokens.append(f"--{option.name}")
+
+                if option.accepts_value():
+                    tokens.append(str(value))
+
+        sorted_input = ArgvInput([self._name or "", *tokens, *remaining_args])
+        sorted_input.set_stream(original_input.stream)
+
         with suppress(CleoError):
-            io.input.bind(definition)
+            sorted_input.bind(self.definition)
 
-        name = io.input.first_argument
-        if name == "run":
-            from poetry.console.io.inputs.run_argv_input import RunArgvInput
+        io.set_input(sorted_input)
 
-            input = cast("ArgvInput", io.input)
-            run_input = RunArgvInput([self._name or "", *input._tokens])
-            # For the run command reset the definition
-            # with only the set options (i.e. the options given before the command)
-            for option_name, value in input.options.items():
-                if value:
-                    option = definition.option(option_name)
-                    run_input.add_parameter_option("--" + option.name)
-                    if option.shortcut:
-                        shortcuts = re.split(r"\|-?", option.shortcut.lstrip("-"))
-                        shortcuts = [s for s in shortcuts if s]
-                        for shortcut in shortcuts:
-                            run_input.add_parameter_option("-" + shortcut.lstrip("-"))
+    def _configure_run_command(self, io: IO) -> None:
+        """
+        Configures the input for the "run" command to properly handle cases where the user
+        executes commands such as "poetry run -- <subcommand>". This involves reorganizing
+        input tokens to ensure correct parsing and execution of the run command.
+        """
+        with suppress(CleoError):
+            io.input.bind(self.definition)
+
+        command_name = io.input.first_argument
+
+        if command_name == "run":
+            original_input = cast(ArgvInput, io.input)
+            tokens: list[str] = original_input._tokens
+
+            if "--" in tokens:
+                # this means the user has done the right thing and used "poetry run -- echo hello"
+                # in this case there is not much we need to do, we can skip the rest
+                return
+
+            # find the correct command index, in some cases this might not be first occurrence
+            # eg: poetry -C run run echo
+            command_index = tokens.index(command_name)
+
+            while command_index < (len(tokens) - 1):
+                try:
+                    # try parsing the tokens so far
+                    _ = ArgvInput(
+                        [self._name or "", *tokens[: command_index + 1]],
+                        definition=self.definition,
+                    )
+                    break
+                except CleoError:
+                    # parsing failed, try finding the next "run" token
+                    try:
+                        command_index += (
+                            tokens[command_index + 1 :].index(command_name) + 1
+                        )
+                    except ValueError:
+                        command_index = len(tokens)
+            else:
+                # looks like we reached the end of the road, let cleo deal with it
+                return
+
+            # fetch tokens after the "run" command
+            tokens_without_command = tokens[command_index + 1 :]
+
+            # we create a new input for parsing the subcommand pretending
+            # it is poetry command
+            without_command = ArgvInput(
+                [self._name or "", *tokens_without_command], None
+            )
 
             with suppress(CleoError):
-                run_input.bind(definition)
+                # we want to bind the definition here so that cleo knows what should be
+                # parsed, and how
+                without_command.bind(self.definition)
 
-            for option_name, value in input.options.items():
-                if value:
-                    run_input.set_option(option_name, value)
+            # the first argument here is the subcommand
+            subcommand = without_command.first_argument
+            subcommand_index = (
+                (tokens_without_command.index(subcommand) if subcommand else 0)
+                + command_index
+                + 1
+            )
 
+            # recreate the original input reordering in the following order
+            #   - all tokens before "run" command
+            #   - all tokens after "run" command but before the subcommand
+            #   - the "run" command token
+            #   - the "--" token to normalise the form
+            #   - all remaining tokens starting with the subcommand
+            run_input = ArgvInput(
+                [
+                    self._name or "",
+                    *tokens[:command_index],
+                    *tokens[command_index + 1 : subcommand_index],
+                    command_name,
+                    "--",
+                    *tokens[subcommand_index:],
+                ]
+            )
+            run_input.set_stream(original_input.stream)
+
+            with suppress(CleoError):
+                run_input.bind(self.definition)
+
+            # reset the input to our constructed form
             io.set_input(run_input)
 
+    def _configure_io(self, io: IO) -> None:
+        self._configure_run_command(io)
         super()._configure_io(io)
 
     def register_command_loggers(

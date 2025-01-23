@@ -51,6 +51,74 @@ def test_run_passes_all_args(app_tester: ApplicationTester, env: MockEnv) -> Non
     assert env.executed == [["python", "-V"]]
 
 
+def test_run_is_not_eager(app_tester: ApplicationTester, env: MockEnv) -> None:
+    app_tester.execute("--no-ansi -C run -install", decorated=True)
+    assert (
+        app_tester.io.fetch_error().strip()
+        == "Specified path 'run' is not a valid directory."
+    )
+    assert env.executed == []
+
+
+def test_run_passes_args_after_run_before_command(
+    app_tester: ApplicationTester, env: MockEnv
+) -> None:
+    app_tester.execute("run -P. python -V", decorated=True)
+    assert env.executed == [["python", "-V"]]
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        "-vP run run",
+        "run -vP run",
+        "-vPrun run",
+        "run -vPrun ",
+        "-v --project=run run",
+        "-v run --project=run",
+        "-v --directory=run run",
+        "run -v --directory=run",
+    ],
+)
+def test_run_passes_args_after_run_before_command_name_conflict(
+    args: str,
+    app_tester: ApplicationTester,
+    env: MockEnv,
+    project_factory: ProjectFactory,
+) -> None:
+    poetry = project_factory("run")
+    path = poetry.file.path.parent
+    path.rename(path.parent / "run")
+
+    app_tester.execute(f"{args} python -V", decorated=True)
+    assert app_tester.io.fetch_error() == ""
+    assert env.executed == [["python", "-V"]]
+
+
+def test_run_keeps_options_passed_before_command_args_combined_short_opts(
+    app_tester: ApplicationTester, env: MockEnv
+) -> None:
+    app_tester.execute("run -VP. --no-ansi python", decorated=True)
+
+    assert not app_tester.io.is_decorated()
+    assert app_tester.io.fetch_output() == app_tester.io.remove_format(
+        app_tester.application.long_version + "\n"
+    )
+    assert env.executed == []
+
+
+def test_run_keeps_options_passed_before_command_args(
+    app_tester: ApplicationTester, env: MockEnv
+) -> None:
+    app_tester.execute("run -V --no-ansi python", decorated=True)
+
+    assert not app_tester.io.is_decorated()
+    assert app_tester.io.fetch_output() == app_tester.io.remove_format(
+        app_tester.application.long_version + "\n"
+    )
+    assert env.executed == []
+
+
 def test_run_keeps_options_passed_before_command(
     app_tester: ApplicationTester, env: MockEnv
 ) -> None:

@@ -5,6 +5,7 @@ import shutil
 
 from typing import TYPE_CHECKING
 from typing import ClassVar
+from typing import cast
 
 import pytest
 
@@ -24,8 +25,10 @@ from tests.helpers import mock_metadata_entry_points
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from cleo.io.inputs.argv_input import ArgvInput
     from pytest_mock import MockerFixture
 
+    from tests.helpers import PoetryTestApplication
     from tests.types import FixtureDirGetter
     from tests.types import SetProjectContext
 
@@ -185,3 +188,60 @@ def test_application_verify_cache_flag_at_install(
             (name, args, kwargs) = call
             assert "disable_cache" in kwargs
             assert disable_cache is kwargs["disable_cache"]
+
+
+@pytest.mark.parametrize(
+    ("tokens", "result"),
+    [
+        (
+            ["-C", "/path/working/dir", "env", "list"],
+            ["--directory", "/path/working/dir", "env", "list"],
+        ),
+        (
+            ["-P", "/path/project/dir", "env", "list"],
+            ["--project", "/path/project/dir", "env", "list"],
+        ),
+        (
+            ["-P/path/project/dir", "env", "list"],
+            ["--project", "/path/project/dir", "env", "list"],
+        ),
+        (
+            ["-P/path/project/dir", "env", "list"],
+            ["--project", "/path/project/dir", "env", "list"],
+        ),
+        (
+            ["-v", "run", "-P/path/project/dir", "echo", "--help"],
+            [
+                "--verbose",
+                "--project",
+                "/path/project/dir",
+                "run",
+                "--",
+                "echo",
+                "--help",
+            ],
+        ),
+        (
+            ["--no-ansi", "run", "-V", "python", "-V"],
+            ["--version", "--no-ansi", "run", "--", "python", "-V"],
+        ),
+        (
+            ["--no-ansi", "run", "-V", "--", "python", "-V"],
+            ["--version", "--no-ansi", "run", "--", "python", "-V"],
+        ),
+    ],
+)
+def test_application_input_configuration_and_sorting(
+    tokens: list[str], result: list[str], app: PoetryTestApplication
+) -> None:
+    app.create_io()
+    assert app._io is not None
+
+    io_input = cast("ArgvInput", app._io.input)
+    io_input._tokens = tokens
+
+    app._configure_io(app._io)
+    app._sort_global_options(app._io)
+
+    io_input = cast("ArgvInput", app._io.input)
+    assert io_input._tokens == result
