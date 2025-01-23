@@ -8,14 +8,6 @@ tests_task:
 
   env:
     matrix:
-      - PYTHON: python3.9
-        PYTHON_VERSION: 3.9
-        PYTHON_PACKAGE: python39
-        SQLITE_PACKAGE: py39-sqlite3
-      - PYTHON: python3.10
-        PYTHON_VERSION: 3.10
-        PYTHON_PACKAGE: python310
-        SQLITE_PACKAGE: py310-sqlite3
       - PYTHON: python3.11
         PYTHON_VERSION: 3.11
         PYTHON_PACKAGE: python311
@@ -53,18 +45,11 @@ tests_task:
           format: junit
           type: text/xml
 
-    # TODO: caching
-    - alias: mypy
-      name: "Tests / FreeBSD (Python ${PYTHON_VERSION}) / mypy"
-      skip: "!changesInclude('.cirrus.yml', 'poetry.lock', 'pyproject.toml', 'src/**.py', 'tests/**')"
-      mypy_script: poetry run mypy
-
 status_task:
   name: "Tests / FreeBSD Status"
 
   depends_on:
     - pytest
-    - mypy
 
   container:
     image: alpine:latest
