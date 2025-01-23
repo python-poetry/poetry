@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-import subprocess
 import sys
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Any
 
 import pytest
 
@@ -15,12 +13,14 @@ from poetry.factory import Factory
 
 
 if TYPE_CHECKING:
+    from unittest.mock import MagicMock
+
     from cleo.testers.command_tester import CommandTester
-    from pytest_mock import MockerFixture
 
     from poetry.config.config import Config
     from poetry.poetry import Poetry
     from tests.types import CommandTesterFactory
+    from tests.types import MockedPythonRegister
 
 
 @pytest.fixture
@@ -199,27 +199,12 @@ def test_respect_use_poetry_python_on_new(
     use_poetry_python: bool,
     python: str,
     config: Config,
-    mocker: MockerFixture,
     tester: CommandTester,
     tmp_path: Path,
+    mocked_python_register: MockedPythonRegister,
+    with_no_active_python: MagicMock,
 ) -> None:
-    from poetry.utils.env import GET_PYTHON_VERSION_ONELINER
-
-    orig_check_output = subprocess.check_output
-
-    def mock_check_output(cmd: str, *_: Any, **__: Any) -> str:
-        if GET_PYTHON_VERSION_ONELINER in cmd:
-            return "1.1.1"
-
-        output: str = orig_check_output(cmd, *_, **__)
-        return output
-
-    mocker.patch("subprocess.check_output", side_effect=mock_check_output)
-    mocker.patch(
-        "poetry.utils.env.python_manager.Python._full_python_path",
-        return_value=Path(f"/usr/bin/python{python}"),
-    )
-
+    mocked_python_register(f"{python}.1", make_system=True)
     config.config["virtualenvs"]["use-poetry-python"] = use_poetry_python
 
     package = "package"

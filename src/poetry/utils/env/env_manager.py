@@ -114,17 +114,8 @@ class EnvManager:
     def activate(self, python: str) -> Env:
         venv_path = self._poetry.config.virtualenvs_path
 
-        try:
-            python_version = Version.parse(python)
-            python = f"python{python_version.major}"
-            if python_version.precision > 1:
-                python += f".{python_version.minor}"
-        except ValueError:
-            # Executable in PATH or full executable path
-            pass
-
-        python_ = Python.get_by_name(python)
-        if python_ is None:
+        python_instance = Python.get_by_name(python)
+        if python_instance is None:
             raise PythonVersionNotFoundError(python)
 
         create = False
@@ -138,10 +129,10 @@ class EnvManager:
                 _venv = VirtualEnv(venv)
                 current_patch = ".".join(str(v) for v in _venv.version_info[:3])
 
-                if python_.patch_version.to_string() != current_patch:
+                if python_instance.patch_version.to_string() != current_patch:
                     create = True
 
-            self.create_venv(executable=python_.executable, force=create)
+            self.create_venv(python=python_instance, force=create)
 
             return self.get(reload=True)
 
@@ -154,14 +145,16 @@ class EnvManager:
                 current_patch = current_env["patch"]
 
                 if (
-                    current_minor == python_.minor_version.to_string()
-                    and current_patch != python_.patch_version.to_string()
+                    current_minor == python_instance.minor_version.to_string()
+                    and current_patch != python_instance.patch_version.to_string()
                 ):
                     # We need to recreate
                     create = True
 
-        name = f"{self.base_env_name}-py{python_.minor_version.to_string()}"
-        venv = venv_path / name
+        venv = (
+            venv_path
+            / f"{self.base_env_name}-py{python_instance.minor_version.to_string()}"
+        )
 
         # Create if needed
         if not venv.exists() or create:
@@ -174,15 +167,15 @@ class EnvManager:
                 _venv = VirtualEnv(venv)
                 current_patch = ".".join(str(v) for v in _venv.version_info[:3])
 
-                if python_.patch_version.to_string() != current_patch:
+                if python_instance.patch_version.to_string() != current_patch:
                     create = True
 
-            self.create_venv(executable=python_.executable, force=create)
+            self.create_venv(python=python_instance, force=create)
 
         # Activate
         envs[self.base_env_name] = {
-            "minor": python_.minor_version.to_string(),
-            "patch": python_.patch_version.to_string(),
+            "minor": python_instance.minor_version.to_string(),
+            "patch": python_instance.patch_version.to_string(),
         }
         self.envs_file.write(envs)
 
@@ -203,8 +196,7 @@ class EnvManager:
         if self._env is not None and not reload:
             return self._env
 
-        python = Python.get_preferred_python(config=self._poetry.config, io=self._io)
-        python_minor = python.minor_version.to_string()
+        python_minor: str | None = None
 
         env = None
         envs = None
@@ -236,6 +228,13 @@ class EnvManager:
                 return self.get_system_env()
 
             venv_path = self._poetry.config.virtualenvs_path
+
+            if python_minor is None:
+                # we only need to discover python version in this case
+                python = Python.get_preferred_python(
+                    config=self._poetry.config, io=self._io
+                )
+                python_minor = python.minor_version.to_string()
 
             name = f"{self.base_env_name}-py{python_minor.strip()}"
 
@@ -372,7 +371,7 @@ class EnvManager:
     def create_venv(
         self,
         name: str | None = None,
-        executable: Path | None = None,
+        python: Python | None = None,
         force: bool = False,
     ) -> Env:
         if self._env is not None and not force:
@@ -400,11 +399,11 @@ class EnvManager:
         use_poetry_python = self._poetry.config.get("virtualenvs.use-poetry-python")
         venv_prompt = self._poetry.config.get("virtualenvs.prompt")
 
-        python = (
-            Python(executable)
-            if executable
-            else Python.get_preferred_python(config=self._poetry.config, io=self._io)
-        )
+        specific_python_requested = python is not None
+        if not python:
+            python = Python.get_preferred_python(
+                config=self._poetry.config, io=self._io
+            )
 
         venv_path = (
             self.in_project_venv
@@ -422,7 +421,7 @@ class EnvManager:
             # If an executable has been specified, we stop there
             # and notify the user of the incompatibility.
             # Otherwise, we try to find a compatible Python version.
-            if executable and use_poetry_python:
+            if specific_python_requested and use_poetry_python:
                 raise NoCompatiblePythonVersionFoundError(
                     self._poetry.package.python_versions,
                     python.patch_version.to_string(),

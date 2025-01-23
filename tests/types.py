@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from poetry.poetry import Poetry
     from poetry.repositories.legacy_repository import LegacyRepository
     from poetry.utils.env import Env
+    from poetry.utils.env.python_manager import Python
     from tests.repositories.fixtures.distribution_hashes import DistributionHash
 
     HTTPrettyResponse = tuple[int, dict[str, Any], bytes]  # status code, headers, body
@@ -137,3 +138,13 @@ class SetProjectContext(Protocol):
     def __call__(
         self, project: str | Path, in_place: bool = False
     ) -> AbstractContextManager[Path]: ...
+
+
+class MockedPythonRegister(Protocol):
+    def __call__(
+        self,
+        version: str,
+        executable_name: str | Path | None = None,
+        parent: str | Path | None = None,
+        make_system: bool = False,
+    ) -> Python: ...

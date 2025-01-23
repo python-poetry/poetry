@@ -11,8 +11,10 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import findpython
 import httpretty
 import keyring
+import packaging.version
 import pytest
 
 from installer.utils import SCHEME_NAMES
@@ -43,6 +45,7 @@ from poetry.utils.env import EnvManager
 from poetry.utils.env import MockEnv
 from poetry.utils.env import SystemEnv
 from poetry.utils.env import VirtualEnv
+from poetry.utils.env.python_manager import Python
 from poetry.utils.password_manager import PoetryKeyring
 from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.helpers import TestLocker
@@ -61,6 +64,7 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
     from typing import Any
     from typing import Callable
+    from unittest.mock import MagicMock
 
     from cleo.io.inputs.argument import Argument
     from cleo.io.inputs.option import Option
@@ -76,6 +80,7 @@ if TYPE_CHECKING:
     from tests.types import CommandFactory
     from tests.types import FixtureCopier
     from tests.types import FixtureDirGetter
+    from tests.types import MockedPythonRegister
     from tests.types import PackageFactory
     from tests.types import ProjectFactory
     from tests.types import SetProjectContext
@@ -746,3 +751,214 @@ def system_env(tmp_path_factory: TempPathFactory, mocker: MockerFixture) -> Syst
 
     env.set_paths()
     return env
+
+
+@pytest.fixture
+def mocked_pythons() -> list[findpython.PythonVersion]:
+    """
+    Fixture that provides a mock representation of Python versions that are registered.
+
+    This fixture returns a list of `findpython.PythonVersion` objects. Typically,
+    it is used in test scenarios to replace actual Python version discovery with
+    mocked data. By default, this fixture returns an empty list to simulate an
+    environment without any Python installations.
+
+    :return: Mocked list of Python versions with the type of
+        `findpython.PythonVersion`.
+    """
+    return []
+
+
+@pytest.fixture
+def mocked_pythons_version_map() -> dict[str, findpython.PythonVersion]:
+    """
+    Create a mocked Python version map for testing purposes. This serves as a
+    quick lookup for exact version matches.
+
+    This function provides a fixture that returns a dictionary containing a
+    mapping of specific keys to corresponding instances of the
+    `findpython.PythonVersion` class. This is primarily used for testing
+    scenarios involving multiple Python interpreters. If the key is an
+    empty string, it maps to the system Python interpreter as used by the
+    `with_mocked_findpython` fixture.
+
+    :return: A dictionary mapping string keys to `findpython.PythonVersion`
+        instances. A default key "" (empty string) is pre-set to match the
+        current system environment.
+    """
+    return {
+        # add the system python if key is empty
+        "": Python.get_system_python()._python
+    }
+
+
+@pytest.fixture
+def mock_findpython_find(
+    mocked_pythons: list[findpython.PythonVersion],
+    mocked_pythons_version_map: dict[str, findpython.PythonVersion],
+    mocker: MockerFixture,
+) -> MagicMock:
+    """
+    Mock the `findpython.find` function for testing purposes, enabling controlled
+    execution and predictable results when specific python versions or executables
+    are queried. This mock is particularly useful for reproducing various scenarios
+    involving Python version detection without dependence on the actual system's
+    Python installations.
+
+    :return:
+        A `MagicMock` object representing the mocked `findpython.find` function. It
+        operates using the `_find` internal function, which resolves python versions
+        based on the provided test data (`mocked_pythons` and
+        `mocked_pythons_version_map`).
+
+    """
+
+    def _find(
+        name: str | None = None,
+    ) -> findpython.PythonVersion | None:
+        # find exact version matches
+        # the default key is an empty string in mocked_pythons_version_map
+        if python := mocked_pythons_version_map.get(name or ""):
+            return python
+
+        if name is None:
+            return None
+
+        candidates: list[findpython.PythonVersion] = []
+
+        # iterate through to find executable name match
+        for python in mocked_pythons:
+            if python.executable.name == name:
+                return python
+            elif str(python.executable).endswith(name):
+                candidates.append(python)
+
+        if candidates:
+            candidates.sort(key=lambda p: p.executable.name)
+            return candidates[0]
+
+        return None
+
+    return mocker.patch(
+        "findpython.find",
+        side_effect=_find,
+    )
+
+
+@pytest.fixture
+def mock_findpython_find_all(
+    mocked_pythons: list[findpython.PythonVersion],
+    mocker: MockerFixture,
+) -> MagicMock:
+    """
+    Mocks the `find_all` function in the `findpython` module to return a predefined
+    list of `PythonVersion` objects.
+
+    This fixture is useful for testing functionality dependent on the output of the
+    `find_all` function without executing its original logic.
+
+    :return: Mocked `find_all` function patched to return the specified list of
+        `mocked_pythons`.
+    """
+    return mocker.patch(
+        "findpython.find_all",
+        return_value=mocked_pythons,
+    )
+
+
+@pytest.fixture
+def mocked_python_register(
+    with_mocked_findpython: None,
+    mocked_pythons: list[findpython.PythonVersion],
+    mocked_pythons_version_map: dict[str, findpython.PythonVersion],
+    mocker: MockerFixture,
+) -> MockedPythonRegister:
+    """
+    Fixture to provide a mocked registration mechanism for PythonVersion objects. The
+    fixture interacts with mocked versions of Python, allowing test cases to register
+    and manage Python versions under controlled conditions. The provided register
+    function enables the dynamic registration of Python versions, executable,
+    and optional system designation.
+
+    :return: A function to register a Python version with configurable options.
+    """
+
+    def register(
+        version: str,
+        executable_name: str | Path | None = None,
+        parent: str | Path | None = None,
+        make_system: bool = False,
+    ) -> Python:
+        # we allow this to let windows specific tests setup special cases
+        parent = Path(parent or "/usr/bin")
+
+        if not executable_name:
+            info = version.split(".")
+            executable_name = f"python{info[0]}.{info[1]}"
+
+        python = findpython.PythonVersion(
+            executable=parent / executable_name,
+            _version=packaging.version.Version(version),
+            _interpreter=parent / executable_name,
+        )
+        mocked_pythons.append(python)
+        mocked_pythons_version_map[version] = python
+
+        if make_system:
+            mocker.patch(
+                "poetry.utils.env.python_manager.Python.get_system_python",
+                return_value=Python(python=python),
+            )
+            mocked_pythons_version_map[""] = python
+
+        return Python(python=python)
+
+    return register
+
+
+@pytest.fixture
+def without_mocked_findpython(
+    mock_findpython_find: MagicMock,
+    mock_findpython_find_all: MagicMock,
+    mocker: MockerFixture,
+) -> None:
+    """
+    This fixture stops the mocks for the functions `mock_findpython_find_all`
+    and `mock_findpython_find`. It is intended for use within unit tests
+    to ensure that the actual behavior of the mocked functions is not
+    included unless explicitly required.
+    """
+    mocker.stop(mock_findpython_find_all)
+    mocker.stop(mock_findpython_find)
+
+
+@pytest.fixture(autouse=True)
+def with_mocked_findpython(
+    mock_findpython_find: MagicMock,
+    mock_findpython_find_all: MagicMock,
+) -> None:
+    """
+    Fixture that mocks the `findpython` library functions `find` and `find_all`.
+
+    This fixture enables controlled testing of Python version discovery by providing
+    mocked data for `findpython.PythonVersion` objects and behavior. It patches
+    the `findpython.find` and `findpython.find_all` methods using the given mock
+    data to simulate real functionality.
+
+    This function mock behavior includes:
+    - Finding Python versions by an exact match of executable name or selectable from
+      candidates whose executable names end with the provided input.
+    - Returning all mocked Python versions through the `findpython.find_all`.
+
+    See also the `without_mocked_findpython`, `mocked_python_register`, `mock_findpython_find`,
+    and `mock_findpython_find_all` fixtures.
+    """
+    return
+
+
+@pytest.fixture
+def with_no_active_python(mocker: MockerFixture) -> MagicMock:
+    return mocker.patch(
+        "poetry.utils.env.python_manager.Python.get_active_python",
+        return_value=None,
+    )
