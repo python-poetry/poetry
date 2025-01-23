@@ -392,7 +392,7 @@ class Application(BaseApplication):
                     except ValueError:
                         command_index = len(tokens)
             else:
-                # looks like we reached the end of the road, let clea deal with it
+                # looks like we reached the end of the road, let cleo deal with it
                 return
 
             # fetch tokens after the "run" command
