@@ -27,6 +27,7 @@ dependencies = [
     "trove-classifiers (>=2022.5.19)",
     "virtualenv (>=20.26.6,<21.0.0)",
     "xattr (>=1.0.0,<2.0.0) ; sys_platform == 'darwin'",
+    "findpython (>=0.6.2,<0.7.0)",
 ]
 authors = [
     { name = "Sébastien Eustace", email = "sebastien@eustace.io" }
@@ -182,6 +183,7 @@ warn_unused_ignores = false
 module = [
     'deepdiff.*',
     'fastjsonschema.*',
+    'findpython.*',
     'httpretty.*',
     'requests_toolbelt.*',
     'shellingham.*',

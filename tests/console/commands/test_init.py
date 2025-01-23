@@ -2,13 +2,11 @@ from __future__ import annotations
 
 import os
 import shutil
-import subprocess
 import sys
 import textwrap
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Any
 
 import pytest
 
@@ -24,6 +22,7 @@ from tests.helpers import get_package
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from unittest.mock import MagicMock
 
     from poetry.core.packages.package import Package
     from pytest import FixtureRequest
@@ -34,6 +33,7 @@ if TYPE_CHECKING:
     from tests.helpers import PoetryTestApplication
     from tests.helpers import TestRepository
     from tests.types import FixtureDirGetter
+    from tests.types import MockedPythonRegister
 
 
 @pytest.fixture
@@ -1110,26 +1110,12 @@ def test_respect_use_poetry_python_on_init(
     use_poetry_python: bool,
     python: str,
     config: Config,
-    mocker: MockerFixture,
     tester: CommandTester,
     source_dir: Path,
+    mocked_python_register: MockedPythonRegister,
+    with_no_active_python: MagicMock,
 ) -> None:
-    from poetry.utils.env import GET_PYTHON_VERSION_ONELINER
-
-    orig_check_output = subprocess.check_output
-
-    def mock_check_output(cmd: str, *_: Any, **__: Any) -> str:
-        if GET_PYTHON_VERSION_ONELINER in cmd:
-            return "1.1.1"
-
-        result: str = orig_check_output(cmd, *_, **__)
-        return result
-
-    mocker.patch("subprocess.check_output", side_effect=mock_check_output)
-    mocker.patch(
-        "poetry.utils.env.python_manager.Python._full_python_path",
-        return_value=Path(f"/usr/bin/python{python}"),
-    )
+    mocked_python_register(f"{python}.1", make_system=True)
     config.config["virtualenvs"]["use-poetry-python"] = use_poetry_python
     pyproject_file = source_dir / "pyproject.toml"
 
