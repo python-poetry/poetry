@@ -21,6 +21,10 @@ from keyring.backends.fail import Keyring as FailKeyring
 from keyring.credentials import SimpleCredential
 from keyring.errors import KeyringError
 from keyring.errors import KeyringLocked
+from packaging.utils import canonicalize_name
+from poetry.core.constraints.version import parse_constraint
+from poetry.core.packages.dependency import Dependency
+from poetry.core.version.markers import parse_marker
 from pytest import FixtureRequest
 
 from poetry.config.config import Config as BaseConfig
@@ -29,7 +33,9 @@ from poetry.console.commands.command import Command
 from poetry.factory import Factory
 from poetry.layouts import layout
 from poetry.packages.direct_origin import _get_package_from_git
+from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
+from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils.cache import ArtifactCache
 from poetry.utils.env import EnvManager
@@ -57,6 +63,8 @@ if TYPE_CHECKING:
     from cleo.io.inputs.argument import Argument
     from cleo.io.inputs.option import Option
     from keyring.credentials import Credential
+    from packaging.utils import NormalizedName
+    from poetry.core.packages.package import Package
     from pytest import Config as PyTestConfig
     from pytest import Parser
     from pytest import TempPathFactory
@@ -66,6 +74,7 @@ if TYPE_CHECKING:
     from tests.types import CommandFactory
     from tests.types import FixtureCopier
     from tests.types import FixtureDirGetter
+    from tests.types import PackageFactory
     from tests.types import ProjectFactory
     from tests.types import SetProjectContext
 
@@ -498,6 +507,80 @@ def project_factory(
         return poetry
 
     return _factory
+
+
+@pytest.fixture
+def create_package(repo: Repository) -> PackageFactory:
+    """
+    This function is a pytest fixture that creates a factory function to generate
+    and customize package objects. These packages are added to the default repository
+    fixture and configured with specific versions, optional extras, and self-referenced
+    extras. This helps in setting up package dependencies for testing purposes.
+
+    :return: A factory function that can be used to create and configure packages.
+    """
+
+    def create_new_package(
+        name: str,
+        version: str | None = None,
+        dependencies: list[Dependency] | None = None,
+        extras: dict[str, list[str]] | None = None,
+    ) -> Package:
+        version = version or "1.0"
+        package = get_package(name, version)
+
+        package_extras: dict[NormalizedName, list[Dependency]] = {}
+
+        for extra, extra_dependencies in (extras or {}).items():
+            extra = canonicalize_name(extra)
+
+            if extra not in package_extras:
+                package_extras[extra] = []
+
+            for extra_dependency_spec in extra_dependencies:
+                extra_dependency = Dependency.create_from_pep_508(extra_dependency_spec)
+                extra_dependency._optional = True
+                extra_dependency.marker = extra_dependency.marker.intersect(
+                    parse_marker(f"extra == '{extra}'")
+                )
+
+                if extra_dependency.name != package.name:
+                    assert extra_dependency.constraint.allows(package.version)
+
+                    # if it is not a self-referencing dependency, make sure we add it to the repo
+                    try:
+                        pkg = repo.package(extra_dependency.name, package.version)
+                    except PackageNotFoundError:
+                        pkg = get_package(extra_dependency.name, str(package.version))
+                        repo.add_package(pkg)
+
+                    extra_dependency.constraint = parse_constraint(f"^{pkg.version}")
+
+                    # if requirement already exists in the package, update the marker
+                    for requirement in package.requires:
+                        if (
+                            requirement.name == extra_dependency.name
+                            and requirement.is_optional()
+                        ):
+                            requirement.marker = requirement.marker.union(
+                                extra_dependency.marker
+                            )
+                            break
+                    else:
+                        package.add_dependency(extra_dependency)
+
+                package_extras[extra].append(extra_dependency)
+
+        package.extras = package_extras
+
+        for dependency in dependencies or []:
+            package.add_dependency(dependency)
+
+        repo.add_package(package)
+
+        return package
+
+    return create_new_package
 
 
 @pytest.fixture(autouse=True)

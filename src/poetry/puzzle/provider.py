@@ -460,18 +460,29 @@ class Provider:
             dependency = dependency_package.dependency
             requires = package.requires
 
-        optional_dependencies = []
+        found_extras = set()
+        optional_dependencies = set()
         _dependencies = []
 
-        # If some extras/features were required, we need to
-        # add a special dependency representing the base package
-        # to the current package
         if dependency.extras:
-            for extra in dependency.extras:
-                if extra not in package.extras:
+            # Find all the optional dependencies that are wanted - taking care to allow
+            # for self-referential extras.
+            stack = list(dependency.extras)
+            while stack:
+                extra = stack.pop()
+                if extra in found_extras:
                     continue
+                found_extras.add(extra)
 
-                optional_dependencies += [d.name for d in package.extras[extra]]
+                extra_dependencies = package.extras.get(extra, [])
+                for extra_dependency in extra_dependencies:
+                    if extra_dependency.name == dependency.name:
+                        stack += list(extra_dependency.extras)
+                    else:
+                        optional_dependencies.add(extra_dependency.name)
+
+            # If some extras/features were required, we need to add a special dependency
+            # representing the base package to the current package.
 
             dependency_package = dependency_package.with_features(
                 list(dependency.extras)
@@ -507,10 +518,7 @@ class Provider:
 
             if not package.is_root() and (
                 (dep.is_optional() and dep.name not in optional_dependencies)
-                or (
-                    dep.in_extras
-                    and not set(dep.in_extras).intersection(dependency.extras)
-                )
+                or (dep.in_extras and not set(dep.in_extras).intersection(found_extras))
             ):
                 continue
 
