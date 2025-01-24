@@ -148,6 +148,14 @@ class Executor:
         self._sections = {}
         self._yanked_warnings = []
 
+        # pip has to be installed/updated first without parallelism
+        # because we still need it for uninstalls
+        for i, op in enumerate(operations):
+            if op.package.name == "pip":
+                wait([self._executor.submit(self._execute_operation, op)])
+                del operations[i]
+                break
+
         # We group operations by priority
         groups = itertools.groupby(operations, key=lambda o: -o.priority)
         for _, group in groups:
