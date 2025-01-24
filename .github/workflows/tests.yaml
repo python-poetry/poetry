@@ -13,6 +13,8 @@ defaults:
   run:
     shell: bash
 
+permissions: {}
+
 jobs:
   changes:
     name: Detect changed files
@@ -119,7 +121,7 @@ jobs:
       run-mypy: ${{ needs.changes.outputs.tests == 'true' }}
       run-pytest: ${{ needs.changes.outputs.tests == 'true' }}
       run-pytest-export: ${{ needs.changes.outputs.src == 'true' }}
-    secrets: inherit
+    secrets: inherit  # zizmor: ignore[secrets-inherit]
     strategy:
       matrix:
         os:
