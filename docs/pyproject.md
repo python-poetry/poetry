@@ -699,16 +699,6 @@ If you have multiple repositories configured, you can explicitly tell poetry whe
 requests = { version = "^2.13.0", source = "private" }
 ```
 
-{{% note %}}
-Be aware that declaring the python version for which your package
-is compatible is mandatory:
-
-```toml
-[tool.poetry.dependencies]
-python = "^3.7"
-```
-{{% /note %}}
-
 You can organize your dependencies in [groups]({{< relref "managing-dependencies#dependency-groups" >}})
 to manage them in a more granular way.
 
