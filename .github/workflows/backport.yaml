@@ -6,6 +6,9 @@ on:
       - closed
       - labeled
 
+# we create the token we need later on
+permissions: {}
+
 jobs:
   backport:
     name: Create backport
