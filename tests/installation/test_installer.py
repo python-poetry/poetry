@@ -49,6 +49,7 @@ if TYPE_CHECKING:
     from poetry.utils.env import Env
     from tests.conftest import Config
     from tests.types import FixtureDirGetter
+    from tests.types import PackageFactory
 
 
 class CustomInstalledRepository(InstalledRepository):
@@ -1062,6 +1063,101 @@ def test_run_with_dependencies_nested_extras(
     assert result == 0
 
     expected = fixture("with-dependencies-nested-extras")
+    assert locker.written_data == expected
+
+
+@pytest.mark.parametrize(
+    "enabled_extras",
+    [
+        ([]),
+        (["all"]),
+        (["nested"]),
+        (["install", "download"]),
+        (["install"]),
+        (["download"]),
+    ],
+)
+@pytest.mark.parametrize("top_level_dependency", [True, False])
+def test_solver_resolves_self_referential_extras(
+    enabled_extras: list[str],
+    top_level_dependency: bool,
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    create_package: PackageFactory,
+) -> None:
+    dependency = (
+        create_package(
+            "A",
+            str(package.version),
+            extras={
+                "download": ["download-package"],
+                "install": ["install-package"],
+                "py38": ["py38-package ; python_version == '3.8'"],
+                "py310": ["py310-package ; python_version > '3.8'"],
+                "all": ["a[download,install]"],
+                "py": ["a[py38,py310]"],
+                "nested": ["a[all]"],
+            },
+        )
+        .to_dependency()
+        .with_features(enabled_extras)
+    )
+
+    if not top_level_dependency:
+        dependency = create_package(
+            "B", "1.0", dependencies=[dependency]
+        ).to_dependency()
+
+    package.add_dependency(dependency)
+
+    result = installer.run()
+    assert result == 0
+
+    name = "-".join(
+        [
+            "with-self-referencing-extras",
+            *enabled_extras,
+            "top" if top_level_dependency else "deep",
+        ]
+    )
+
+    expected = fixture(name)
+    assert locker.written_data == expected
+
+
+def test_solver_resolves_self_referential_extras_with_markers(
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    create_package: PackageFactory,
+) -> None:
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "*", "extras": ["all"]})
+    )
+
+    create_package(
+        "A",
+        str(package.version),
+        extras={
+            "download": ["download-package"],
+            "install": ["install-package"],
+            "all": ["a[download,install] ; python_version < '3.9'"],
+        },
+    )
+
+    result = installer.run()
+    assert result == 0
+
+    name = "-".join(["with-self-referencing-extras", "b", "markers"])
+
+    # FIXME: At the time of writing this test case, the markers from self-ref extras are not
+    #  correctly propagated into the dependency specs. For example, given this case,
+    #  the package "install-package" should have a final marker of
+    #  "extra == 'install' or extra == 'all' and python_version < '3.9'".
+    expected = fixture(name)
     assert locker.written_data == expected
 
 
