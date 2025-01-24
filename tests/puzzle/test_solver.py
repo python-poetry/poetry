@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import re
 import shutil
+import sys
 
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Literal
 
 import pytest
 
@@ -46,6 +48,7 @@ if TYPE_CHECKING:
     from poetry.repositories.legacy_repository import LegacyRepository
     from poetry.repositories.pypi_repository import PyPiRepository
     from tests.types import FixtureDirGetter
+    from tests.types import PackageFactory
 
 DEFAULT_SOURCE_REF = (
     VCSDependency("poetry", "git", "git@github.com:python-poetry/poetry.git").branch
@@ -510,6 +513,110 @@ def test_solver_returns_extras_if_requested(
 
     assert ops[-1].package.marker.is_any()
     assert ops[0].package.marker.is_any()
+
+
+@pytest.mark.parametrize(
+    ("enabled_extras", "expected_packages"),
+    [
+        ([], ["a"]),
+        (["all"], ["download-package", "install-package", "a"]),
+        (["nested"], ["download-package", "install-package", "a"]),
+        (["install", "download"], ["download-package", "install-package", "a"]),
+        (["install"], ["install-package", "a"]),
+        (["download"], ["download-package", "a"]),
+        # test to ensure target extra dependencies with markers are respected
+        (["py"], ["py310-package", "a"]),
+    ],
+)
+@pytest.mark.parametrize("top_level_dependency", [True, False])
+def test_solver_resolves_self_referential_extras(
+    enabled_extras: list[str],
+    expected_packages: list[Literal["a", "b", "download-package", "install-package"]],
+    top_level_dependency: bool,
+    solver: Solver,
+    repo: Repository,
+    package: ProjectPackage,
+    create_package: PackageFactory,
+) -> None:
+    dependency = (
+        create_package(
+            "A",
+            str(package.version),
+            extras={
+                "download": ["download-package"],
+                "install": ["install-package"],
+                "py38": ["py38-package ; python_version == '3.8'"],
+                "py310": ["py310-package ; python_version > '3.8'"],
+                "all": ["a[download,install]"],
+                "py": ["a[py38,py310]"],
+                "nested": ["a[all]"],
+            },
+        )
+        .to_dependency()
+        .with_features(enabled_extras)
+    )
+
+    if not top_level_dependency:
+        dependency = create_package(
+            "B", "1.0", dependencies=[dependency]
+        ).to_dependency()
+        # we do not use append() here to avoid flaky tests
+        expected_packages = [*expected_packages, "b"]
+
+    package.add_dependency(dependency)
+
+    # Solving the dependency graph
+    with solver.use_environment(MockEnv((3, 10, 0))):
+        transaction = solver.solve()
+
+    # Verifying the results
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": repo.package(name, package.version)}
+            for name in expected_packages
+        ],
+    )
+
+
+def test_solver_resolves_self_referential_extras_markers(
+    solver: Solver,
+    repo: Repository,
+    package: ProjectPackage,
+    create_package: PackageFactory,
+) -> None:
+    package.python_versions = ".".join([str(i) for i in sys.version_info[:3]])
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "*", "extras": ["all"]})
+    )
+
+    create_package(
+        "A",
+        str(package.version),
+        extras={
+            "download": ["download-package"],
+            "install": ["install-package"],
+            "all": ["a[download,install] ; python_version < '3.9'"],
+        },
+    )
+
+    # Solving the dependency graph
+    with solver.use_environment(MockEnv((3, 10, 0))):
+        transaction = solver.solve()
+
+    # Verifying the results
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": repo.package(name, package.version)}
+            # FIXME: At the time of writing this test case, the markers from self-ref extras are not
+            #  correctly propagated into the dependency specs. For example, given this case,
+            #  the package "install-package" should have a final marker of
+            #  "extra == 'install' or extra == 'all' and python_version < '3.9'".
+            #  Once fixed, this should only install package "a".
+            for name in ["download-package", "install-package", "a"]
+        ],
+    )
 
 
 @pytest.mark.parametrize("enabled_extra", ["one", "two", None])

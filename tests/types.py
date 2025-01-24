@@ -16,6 +16,8 @@ if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
     from httpretty.core import HTTPrettyRequest
     from packaging.utils import NormalizedName
+    from poetry.core.packages.dependency import Dependency
+    from poetry.core.packages.package import Package
 
     from poetry.config.config import Config
     from poetry.config.source import Source
@@ -66,6 +68,16 @@ class ProjectFactory(Protocol):
         locker_config: dict[str, Any] | None = None,
         use_test_locker: bool = True,
     ) -> Poetry: ...
+
+
+class PackageFactory(Protocol):
+    def __call__(
+        self,
+        name: str,
+        version: str | None = None,
+        dependencies: list[Dependency] | None = None,
+        extras: dict[str, list[str]] | None = None,
+    ) -> Package: ...
 
 
 class CommandFactory(Protocol):
