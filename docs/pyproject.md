@@ -699,6 +699,27 @@ If you have multiple repositories configured, you can explicitly tell poetry whe
 requests = { version = "^2.13.0", source = "private" }
 ```
 
+You may also specify your project's compatible python versions in this section, instead of or in addition to `project.requires-python`.
+
+```toml
+[tool.poetry.dependencies]
+python = "^3.7"
+```
+
+{{% note %}}
+If you specify the compatible python versions in both `tool.poetry.dependencies` and in `project.requires-python`, then Poetry will use the information in `tool.poetry.dependencies` for locking, but the python versions must be a subset of those allowed by `project.requires-python`.
+For example, the following is invalid and will result in an error, because version `3.14` is allowed by `tool.poetry.dependencies`, but not by `project.requires-python`.
+
+```toml
+[project]
+# ...
+requires-python = ">=3.8,<4.0"
+
+[tool.poetry.dependencies]
+python = ">=3.8"
+```
+{{% /note %}}
+
 You can organize your dependencies in [groups]({{< relref "managing-dependencies#dependency-groups" >}})
 to manage them in a more granular way.
 
