@@ -278,14 +278,22 @@ def config_cache_dir(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
+def config_data_dir(tmp_path: Path) -> Path:
+    path = tmp_path / ".local" / "share" / "pypoetry"
+    path.mkdir(parents=True)
+    return path
+
+
+@pytest.fixture
 def config_virtualenvs_path(config_cache_dir: Path) -> Path:
     return config_cache_dir / "virtualenvs"
 
 
 @pytest.fixture
-def config_source(config_cache_dir: Path) -> DictConfigSource:
+def config_source(config_cache_dir: Path, config_data_dir: Path) -> DictConfigSource:
     source = DictConfigSource()
     source.add_property("cache-dir", str(config_cache_dir))
+    source.add_property("data-dir", str(config_data_dir))
 
     return source
 

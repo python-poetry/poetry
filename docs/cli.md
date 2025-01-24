@@ -726,6 +726,56 @@ Should match a repository name set by the [`config`](#config) command.
 See [Configuring Credentials]({{< relref "repositories/#configuring-credentials" >}}) for more information on how to configure credentials.
 {{% /note %}}
 
+## python
+
+The `python` namespace groups subcommands to manage Python versions.
+
+{{% warning %}}
+This is an experimental feature, and can change behaviour in upcoming releases.
+{{% /warning %}}
+
+*Introduced in 2.1.0*
+
+### python install
+
+The `python install` command installs the specified Python version from the Python Standalone Builds project.
+
+```bash
+poetry python install <PYTHON_VERSION>
+```
+
+#### Options
+
+* `--clean`: Cleanup installation if check fails.
+* `--free-threaded`: Use free-threaded version if available.
+* `--implementation`: Python implementation to use. (cpython, pypy)
+* `--reinstall`: Reinstall if installation already exists.
+
+### python list
+
+The `python list` command shows Python versions available in the environment. This includes both installed and
+discovered System Managed and Poetry Managed installations.
+
+```bash
+poetry python list
+```
+#### Options
+* `--all`: List all versions, including those available for download.
+* `--implementation`: Python implementation to search for.
+* `--managed`: List only Poetry managed Python versions.
+
+### python remove
+
+The `python remove` command removes the specified Python version if managed by Poetry.
+
+```bash
+poetry python remove <PYTHON_VERSION>
+```
+
+#### Options
+
+* `--implementation`: Python implementation to use. (cpython, pypy)
+
 ## remove
 
 The `remove` command removes a package from the current

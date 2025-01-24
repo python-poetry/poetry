@@ -173,6 +173,21 @@ Defaults to one of the following directories:
 - Windows: `C:\Users\<username>\AppData\Local\pypoetry\Cache`
 - Unix:    `~/.cache/pypoetry`
 
+### `data-dir`
+
+**Type**: `string`
+
+**Environment Variable**: `POETRY_DATA_DIR`
+
+The path to the data directory used by Poetry.
+
+- Linux: `$XDG_DATA_HOME/pypoetry` or `~/.local/share/pypoetry`
+- Windows: `%APPDATA%\pypoetry`
+- macOS: `~/Library/Application Support/pypoetry`
+
+You can override the Data directory by setting the `POETRY_DATA_DIR` or `POETRY_HOME` environment variables. If
+`POETRY_HOME` is set, it will be given higher priority.
+
 ### `installer.max-workers`
 
 **Type**: `int`
@@ -341,6 +356,18 @@ If the config option is _not_ set and the lock file is at least version 2.1
 (created by Poetry 2.0 or above), the installer will not re-resolve dependencies
 but evaluate the locked markers to decide which of the locked dependencies have to
 be installed into the target environment.
+
+### `python.installation-dir`
+
+**Type**: `string`
+
+**Default**: `{data-dir}/python`
+
+**Environment Variable**: `POETRY_PYTHON_INSTALLATION_DIR`
+
+*Introduced in 2.1.0*
+
+The directory in which Poetry managed Python versions are installed to.
 
 ### `solver.lazy-wheel`
 

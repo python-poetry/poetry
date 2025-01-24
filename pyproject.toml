@@ -28,6 +28,7 @@ dependencies = [
     "virtualenv (>=20.26.6,<21.0.0)",
     "xattr (>=1.0.0,<2.0.0) ; sys_platform == 'darwin'",
     "findpython (>=0.6.2,<0.7.0)",
+    "pbs-installer[download,install] (>=2025.1.6,<2026.0.0)",
 ]
 authors = [
     { name = "Sébastien Eustace", email = "sebastien@eustace.io" }

@@ -20,6 +20,7 @@ from poetry.config.dict_config_source import DictConfigSource
 from poetry.config.file_config_source import FileConfigSource
 from poetry.locations import CONFIG_DIR
 from poetry.locations import DEFAULT_CACHE_DIR
+from poetry.locations import data_dir
 from poetry.toml import TOMLFile
 
 
@@ -143,6 +144,7 @@ _default_config: Config | None = None
 class Config:
     default_config: ClassVar[dict[str, Any]] = {
         "cache-dir": str(DEFAULT_CACHE_DIR),
+        "data-dir": str(data_dir()),
         "virtualenvs": {
             "create": True,
             "in-project": None,
@@ -166,6 +168,7 @@ class Config:
             "only-binary": None,
             "build-config-settings": {},
         },
+        "python": {"installation-dir": os.path.join("{data-dir}", "python")},
         "solver": {
             "lazy-wheel": True,
         },
@@ -278,6 +281,13 @@ class Config:
         path = self.get("virtualenvs.path")
         if path is None:
             path = Path(self.get("cache-dir")) / "virtualenvs"
+        return Path(path).expanduser()
+
+    @property
+    def python_installation_dir(self) -> Path:
+        path = self.get("python.installation-dir")
+        if path is None:
+            path = Path(self.get("cache-dir")) / "python"
         return Path(path).expanduser()
 
     @property
