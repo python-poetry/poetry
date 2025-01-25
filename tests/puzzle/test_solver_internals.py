@@ -513,4 +513,52 @@ def test_merge_override_packages_groups(package: ProjectPackage) -> None:
     }
 
 
+def test_merge_override_packages_shortcut(package: ProjectPackage) -> None:
+    a = Package("a", "1")
+    common_marker = (
+        'extra == "test" and sys_platform == "win32" or platform_system == "Windows"'
+        ' or sys_platform == "linux" and extra == "stretch"'
+    )
+    override_marker1 = 'python_version >= "3.12" and platform_system != "Emscripten"'
+    override_marker2 = 'python_version >= "3.12" and platform_system == "Emscripten"'
+
+    packages = merge_override_packages(
+        [
+            (
+                {package: {"a": dep("b", override_marker1)}},
+                {
+                    a: TransitivePackageInfo(
+                        0,
+                        {"main"},
+                        {
+                            "main": parse_marker(
+                                f"{override_marker1} and ({common_marker})"
+                            )
+                        },
+                    )
+                },
+            ),
+            (
+                {package: {"a": dep("b", override_marker2)}},
+                {
+                    a: TransitivePackageInfo(
+                        0,
+                        {"main"},
+                        {
+                            "main": parse_marker(
+                                f"{override_marker2} and ({common_marker})"
+                            )
+                        },
+                    )
+                },
+            ),
+        ]
+    )
+    assert len(packages) == 1
+    assert packages[a].groups == {"main"}
+    assert tm(packages[a]) == {
+        "main": f'({common_marker}) and python_version >= "3.12"'
+    }
+
+
 # TODO: root extras
