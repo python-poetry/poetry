@@ -450,10 +450,7 @@ def test_merge_override_packages_multiple_deps(package: ProjectPackage) -> None:
     assert len(packages) == 1
     assert packages[a].groups == {"main"}
     assert tm(packages[a]) == {
-        "main": (
-            'python_version < "3.9" and sys_platform == "linux"'
-            ' and python_version >= "3.8"'
-        )
+        "main": 'python_version == "3.8" and sys_platform == "linux"'
     }
 
 

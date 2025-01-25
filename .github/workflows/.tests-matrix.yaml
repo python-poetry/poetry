@@ -103,7 +103,8 @@ jobs:
           persist-credentials: false
           path: poetry-plugin-export
           repository: python-poetry/poetry-plugin-export
-          ref: refs/tags/${{ steps.poetry-plugin-export-version.outputs.version }}
+          # use main for now because of poetry-core#826
+          # ref: refs/tags/${{ steps.poetry-plugin-export-version.outputs.version }}
 
       - name: Use local poetry
         working-directory: poetry-plugin-export

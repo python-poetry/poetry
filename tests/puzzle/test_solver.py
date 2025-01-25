@@ -1989,71 +1989,37 @@ def test_solver_duplicate_dependencies_with_overlapping_markers_complex(
         ],
     )
     opencv_requires = {dep.to_pep_508() for dep in ops[-1].package.requires}
-    expectation = (
-        {  # concise solution, but too expensive
-            (
-                "numpy (>=1.21.2) ;"
-                ' platform_system == "Darwin" and platform_machine == "arm64"'
-                ' and python_version >= "3.6" or python_version >= "3.10"'
-            ),
-            (
-                'numpy (>=1.19.3) ; python_version >= "3.9" and python_version < "3.10"'
-                ' and platform_system != "Darwin" or platform_system == "Linux"'
-                ' and platform_machine == "aarch64" and python_version < "3.10"'
-                ' and python_version >= "3.6" or python_version >= "3.9"'
-                ' and python_version < "3.10" and platform_machine != "arm64"'
-            ),
-            (
-                'numpy (>=1.17.3) ; python_version >= "3.8" and python_version < "3.9"'
-                ' and (platform_system != "Darwin" or platform_machine != "arm64")'
-                ' and (platform_system != "Linux" or platform_machine != "aarch64")'
-            ),
-            (
-                'numpy (>=1.14.5) ; python_version >= "3.7" and python_version < "3.8"'
-                ' and (platform_system != "Darwin" or platform_machine != "arm64")'
-                ' and (platform_system != "Linux" or platform_machine != "aarch64")'
-            ),
-            (
-                'numpy (>=1.13.3) ; python_version < "3.7"'
-                ' and (python_version < "3.6" or platform_system != "Darwin"'
-                ' or platform_machine != "arm64") and (python_version < "3.6"'
-                ' or platform_system != "Linux" or platform_machine != "aarch64")'
-            ),
-        },
-        {  # current solution
-            (
-                "numpy (>=1.21.2) ;"
-                ' python_version >= "3.6" and platform_system == "Darwin"'
-                ' and platform_machine == "arm64" or python_version >= "3.10"'
-            ),
-            (
-                'numpy (>=1.19.3) ; python_version >= "3.6"'
-                ' and (platform_system == "Linux" or python_version >= "3.9")'
-                ' and python_version < "3.10"'
-                ' and (platform_system != "Darwin" or platform_machine != "arm64")'
-                ' and (platform_machine == "aarch64" or python_version >= "3.9")'
-            ),
-            (
-                'numpy (>=1.17.3) ; python_version < "3.9"'
-                ' and (platform_system != "Darwin" or platform_machine != "arm64")'
-                ' and python_version >= "3.8"'
-                ' and (platform_system != "Linux" or platform_machine != "aarch64")'
-            ),
-            (
-                'numpy (>=1.14.5) ; python_version < "3.8"'
-                ' and (platform_system != "Darwin" or platform_machine != "arm64")'
-                ' and python_version >= "3.7"'
-                ' and (platform_system != "Linux" or platform_machine != "aarch64")'
-            ),
-            (
-                'numpy (>=1.13.3) ; python_version < "3.7"'
-                ' and (python_version < "3.6" or platform_system != "Darwin"'
-                ' or platform_machine != "arm64") and (python_version < "3.6"'
-                ' or platform_system != "Linux" or platform_machine != "aarch64")'
-            ),
-        },
-    )
-    assert opencv_requires in expectation
+
+    assert opencv_requires == {
+        (
+            "numpy (>=1.21.2) ;"
+            ' python_version >= "3.6" and platform_system == "Darwin"'
+            ' and platform_machine == "arm64" or python_version >= "3.10"'
+        ),
+        (
+            'numpy (>=1.19.3) ; platform_system == "Linux"'
+            ' and platform_machine == "aarch64" and python_version < "3.10"'
+            ' and python_version >= "3.6" or python_version == "3.9"'
+            ' and platform_system != "Darwin" or python_version == "3.9"'
+            ' and platform_machine != "arm64"'
+        ),
+        (
+            'numpy (>=1.17.3) ; python_version == "3.8"'
+            ' and (platform_system != "Darwin" or platform_machine != "arm64")'
+            ' and (platform_system != "Linux" or platform_machine != "aarch64")'
+        ),
+        (
+            'numpy (>=1.14.5) ; python_version == "3.7"'
+            ' and (platform_system != "Darwin" or platform_machine != "arm64")'
+            ' and (platform_system != "Linux" or platform_machine != "aarch64")'
+        ),
+        (
+            'numpy (>=1.13.3) ; python_version < "3.7"'
+            ' and (python_version < "3.6" or platform_system != "Darwin"'
+            ' or platform_machine != "arm64") and (python_version < "3.6"'
+            ' or platform_system != "Linux" or platform_machine != "aarch64")'
+        ),
+    }
 
 
 def test_duplicate_path_dependencies(
