@@ -66,12 +66,7 @@ class CachedRepository(Repository, ABC):
 
         return PackageInfo.load(cached)
 
-    def package(
-        self,
-        name: str,
-        version: Version,
-        extras: list[str] | None = None,
-    ) -> Package:
+    def package(self, name: str, version: Version) -> Package:
         return self.get_release_info(canonicalize_name(name), version).to_package(
-            name=name, extras=extras
+            name=name
         )

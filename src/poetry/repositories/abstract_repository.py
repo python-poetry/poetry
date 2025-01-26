@@ -26,9 +26,4 @@ class AbstractRepository(ABC):
     def search(self, query: str | list[str]) -> list[Package]: ...
 
     @abstractmethod
-    def package(
-        self,
-        name: str,
-        version: Version,
-        extras: list[str] | None = None,
-    ) -> Package: ...
+    def package(self, name: str, version: Version) -> Package: ...

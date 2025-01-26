@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import itertools
 import logging
 import re
@@ -147,6 +148,8 @@ class Provider:
                 key=lambda p: p.package.version,
                 reverse=True,
             )
+
+        self._get_package_from_pool = functools.cache(self._pool.package)
 
     @property
     def pool(self) -> RepositoryPool:
@@ -446,10 +449,9 @@ class Provider:
         else:
             dependency_package = DependencyPackage(
                 dependency,
-                self._pool.package(
+                self._get_package_from_pool(
                     package.pretty_name,
                     package.version,
-                    extras=list(dependency.extras),
                     repository_name=dependency.source_name,
                 ),
             )

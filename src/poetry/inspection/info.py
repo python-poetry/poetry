@@ -114,10 +114,7 @@ class PackageInfo:
         return cls(cache_version=cache_version, **data)
 
     def to_package(
-        self,
-        name: str | None = None,
-        extras: list[str] | None = None,
-        root_dir: Path | None = None,
+        self, name: str | None = None, root_dir: Path | None = None
     ) -> Package:
         """
         Create a new `poetry.core.packages.package.Package` instance using metadata from
