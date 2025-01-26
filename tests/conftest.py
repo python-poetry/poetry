@@ -35,6 +35,7 @@ from poetry.utils.cache import ArtifactCache
 from poetry.utils.env import EnvManager
 from poetry.utils.env import SystemEnv
 from poetry.utils.env import VirtualEnv
+from poetry.utils.password_manager import PoetryKeyring
 from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.helpers import TestLocker
 from tests.helpers import TestRepository
@@ -189,6 +190,11 @@ class ErroneousBackend(FailKeyring):
         username: str | None,
     ) -> Credential | None:
         raise KeyringError()
+
+
+@pytest.fixture()
+def poetry_keyring() -> PoetryKeyring:
+    return PoetryKeyring("poetry-repository")
 
 
 @pytest.fixture()

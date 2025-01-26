@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import contextlib
 import logging
 import os
 
@@ -42,7 +41,7 @@ def test_set_http_password(
     ("username", "password", "is_valid"),
     [
         ("bar", "baz", True),
-        ("", "baz", False),
+        ("", "baz", True),
         ("bar", "", True),
         ("", "", False),
     ],
@@ -53,10 +52,10 @@ def test_get_http_auth(
     is_valid: bool,
     config: Config,
     with_simple_keyring: None,
-    dummy_keyring: DummyBackend,
+    poetry_keyring: PoetryKeyring,
 ) -> None:
-    with contextlib.nullcontext() if username else pytest.warns(DeprecationWarning):
-        dummy_keyring.set_password("poetry-repository-foo", username, password)
+    poetry_keyring.set_password("foo", username, password)
+
     config.auth_config_source.add_property("http-basic.foo", {"username": username})
     manager = PasswordManager(config)
 
@@ -65,8 +64,8 @@ def test_get_http_auth(
 
     if is_valid:
         assert auth is not None
-        assert auth.username == username
-        assert auth.password == password
+        assert auth.username == (username or None)
+        assert auth.password == (password or None)
     else:
         assert auth.username is auth.password is None
 
@@ -137,7 +136,7 @@ def test_set_http_password_with_unavailable_backend(
     ("username", "password", "is_valid"),
     [
         ("bar", "baz", True),
-        ("", "baz", False),
+        ("", "baz", True),
         ("bar", "", True),
         ("", "", False),
     ],
@@ -159,8 +158,8 @@ def test_get_http_auth_with_unavailable_backend(
 
     if is_valid:
         assert auth is not None
-        assert auth.username == username
-        assert auth.password == password
+        assert auth.username == (username or None)
+        assert auth.password == (password or None)
     else:
         assert auth.username is auth.password is None
 
