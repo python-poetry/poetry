@@ -171,7 +171,8 @@ def test_authenticator_does_not_ignore_empty_strings_as_default_username(
     authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
 
     request = http.last_request()
-    assert request.headers["Authorization"] == "Basic OmJhcg=="
+    basic_auth = base64.b64encode(b":bar").decode()
+    assert request.headers["Authorization"] == f"Basic {basic_auth}"
 
 
 def test_authenticator_falls_back_to_keyring_url(
