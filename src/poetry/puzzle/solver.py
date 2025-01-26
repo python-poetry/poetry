@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING
 
 from poetry.core.version.markers import AnyMarker
 from poetry.core.version.markers import EmptyMarker
+from poetry.core.version.markers import MultiMarker
+from poetry.core.version.markers import SingleMarker
 from poetry.core.version.markers import parse_marker
 
 from poetry.mixology import resolve_version
@@ -428,11 +430,20 @@ def merge_override_packages(
             for dep in deps.values():
                 override_marker = override_marker.intersect(dep.marker.without_extras())
         for package, info in o_packages.items():
+            for group, marker in info.markers.items():
+                # `override_marker` is often a SingleMarker or a MultiMarker,
+                # `marker` often is a MultiMarker that contains `override_marker`.
+                # We can "remove" `override_marker` from `marker`
+                # because we will do an intersection later anyway.
+                # By removing it now, it is more likely that we hit
+                # the performance shortcut instead of the fallback algorithm.
+                info.markers[group] = remove_other_from_marker(marker, override_marker)
             all_packages.setdefault(package, []).append(
                 (package, info, override_marker)
             )
     for package_duplicates in all_packages.values():
         base = package_duplicates[0]
+        remaining = package_duplicates[1:]
         package = base[0]
         package_info = base[1]
         first_override_marker = base[2]
@@ -441,9 +452,7 @@ def merge_override_packages(
         package_info.groups = {
             g for _, info, _ in package_duplicates for g in info.groups
         }
-        if all(
-            info.markers == package_info.markers for _, info, _ in package_duplicates
-        ):
+        if all(info.markers == package_info.markers for _, info, _ in remaining):
             # performance shortcut:
             # if markers are the same for all overrides,
             # we can use less expensive marker operations
@@ -458,16 +467,28 @@ def merge_override_packages(
             # fallback / general algorithm with performance issues
             for group, marker in package_info.markers.items():
                 package_info.markers[group] = first_override_marker.intersect(marker)
-            for _, info, override_marker in package_duplicates[1:]:
+            for _, info, override_marker in remaining:
                 for group, marker in info.markers.items():
                     package_info.markers[group] = package_info.markers.get(
                         group, EmptyMarker()
                     ).union(override_marker.intersect(marker))
-        for duplicate_package, _, _ in package_duplicates[1:]:
+        for duplicate_package, _, _ in remaining:
             for dep in duplicate_package.requires:
                 if dep not in package.requires:
                     package.add_dependency(dep)
     return result
+
+
+def remove_other_from_marker(marker: BaseMarker, other: BaseMarker) -> BaseMarker:
+    if isinstance(other, SingleMarker):
+        other_markers: set[BaseMarker] = {other}
+    elif isinstance(other, MultiMarker):
+        other_markers = set(other.markers)
+    else:
+        return marker
+    if isinstance(marker, MultiMarker) and other_markers.issubset(marker.markers):
+        return MultiMarker.of(*(m for m in marker.markers if m not in other_markers))
+    return marker
 
 
 @functools.cache
