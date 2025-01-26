@@ -102,9 +102,7 @@ class Repository(AbstractRepository):
     def find_links_for_package(self, package: Package) -> list[Link]:
         return []
 
-    def package(
-        self, name: str, version: Version, extras: list[str] | None = None
-    ) -> Package:
+    def package(self, name: str, version: Version) -> Package:
         canonicalized_name = canonicalize_name(name)
         for package in self.packages:
             if canonicalized_name == package.name and package.version == version:

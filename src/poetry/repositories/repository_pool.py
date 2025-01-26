@@ -152,20 +152,14 @@ class RepositoryPool(AbstractRepository):
         return self
 
     def package(
-        self,
-        name: str,
-        version: Version,
-        extras: list[str] | None = None,
-        repository_name: str | None = None,
+        self, name: str, version: Version, repository_name: str | None = None
     ) -> Package:
         if repository_name:
-            return self.repository(repository_name).package(
-                name, version, extras=extras
-            )
+            return self.repository(repository_name).package(name, version)
 
         for repo in self.repositories:
             try:
-                return repo.package(name, version, extras=extras)
+                return repo.package(name, version)
             except PackageNotFoundError:
                 continue
         raise PackageNotFoundError(f"Package {name} ({version}) not found.")
