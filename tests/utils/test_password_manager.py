@@ -285,16 +285,18 @@ def test_fail_keyring_should_be_unavailable(
     assert not key_ring.is_available()
 
 
-def test_locked_keyring_should_be_available(with_locked_keyring: None) -> None:
+def test_locked_keyring_should_not_be_available(with_locked_keyring: None) -> None:
     key_ring = PoetryKeyring("poetry")
 
-    assert key_ring.is_available()
+    assert not key_ring.is_available()
 
 
-def test_erroneous_keyring_should_be_available(with_erroneous_keyring: None) -> None:
+def test_erroneous_keyring_should_not_be_available(
+    with_erroneous_keyring: None,
+) -> None:
     key_ring = PoetryKeyring("poetry")
 
-    assert key_ring.is_available()
+    assert not key_ring.is_available()
 
 
 def test_get_http_auth_from_environment_variables(

@@ -18,6 +18,7 @@ from keyring.credentials import SimpleCredential
 
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.authenticator import RepositoryCertificateConfig
+from poetry.utils.password_manager import PoetryKeyring
 
 
 if TYPE_CHECKING:
@@ -25,7 +26,6 @@ if TYPE_CHECKING:
     from pytest import MonkeyPatch
     from pytest_mock import MockerFixture
 
-    from poetry.utils.password_manager import PoetryKeyring
     from tests.conftest import Config
     from tests.conftest import DummyBackend
 
@@ -96,14 +96,19 @@ def test_authenticator_ignores_locked_keyring(
     http: type[httpretty.httpretty],
     with_locked_keyring: None,
     caplog: LogCaptureFixture,
+    mocker: MockerFixture,
 ) -> None:
     caplog.set_level(logging.DEBUG, logger="poetry.utils.password_manager")
+    spy_get_credential = mocker.spy(PoetryKeyring, "get_credential")
+    spy_get_password = mocker.spy(PoetryKeyring, "get_password")
     authenticator = Authenticator()
     authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
 
     request = http.last_request()
     assert request.headers["Authorization"] is None
-    assert "Keyring foo.bar is locked" in caplog.messages
+    assert "Accessing keyring failed during availability check" in caplog.messages
+    assert "Using keyring backend 'conftest LockedBackend'" in caplog.messages
+    assert spy_get_credential.call_count == spy_get_password.call_count == 0
 
 
 def test_authenticator_ignores_failing_keyring(
@@ -111,14 +116,20 @@ def test_authenticator_ignores_failing_keyring(
     http: type[httpretty.httpretty],
     with_erroneous_keyring: None,
     caplog: LogCaptureFixture,
+    mocker: MockerFixture,
 ) -> None:
     caplog.set_level(logging.DEBUG, logger="poetry.utils.password_manager")
+    spy_get_credential = mocker.spy(PoetryKeyring, "get_credential")
+    spy_get_password = mocker.spy(PoetryKeyring, "get_password")
     authenticator = Authenticator()
     authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
 
     request = http.last_request()
     assert request.headers["Authorization"] is None
-    assert "Accessing keyring foo.bar failed" in caplog.messages
+
+    assert "Using keyring backend 'conftest ErroneousBackend'" in caplog.messages
+    assert "Accessing keyring failed during availability check" in caplog.messages
+    assert spy_get_credential.call_count == spy_get_password.call_count == 0
 
 
 def test_authenticator_uses_password_only_credentials(

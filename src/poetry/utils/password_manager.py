@@ -7,11 +7,15 @@ import logging
 from contextlib import suppress
 from typing import TYPE_CHECKING
 
+from poetry.config.config import Config
+from poetry.utils.threading import atomic_cached_property
+
 
 if TYPE_CHECKING:
-    from keyring.backend import KeyringBackend
+    import keyring.backend
 
-    from poetry.config.config import Config
+    from cleo.io.io import IO
+
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +40,35 @@ class PoetryKeyring:
 
     def __init__(self, namespace: str) -> None:
         self._namespace = namespace
+
+    @staticmethod
+    def preflight_check(io: IO | None = None, config: Config | None = None) -> None:
+        """
+        Performs a preflight check to determine the availability of the keyring service
+        and logs the status if verbosity is enabled. This method is used to validate
+        the configuration setup related to the keyring functionality.
+
+        :param io: An optional input/output handler used to log messages during the
+            preflight check. If not provided, logging will be skipped.
+        :param config: An optional configuration object. If not provided, a new
+            configuration instance will be created using the default factory method.
+        :return: None
+        """
+        config = config or Config.create()
+
+        if config.get("keyring.enabled"):
+            if io and io.is_verbose():
+                io.write("Checking keyring availability: ")
+
+            message = "<fg=yellow;options=bold>Unavailable</>"
+
+            with suppress(RuntimeError, ValueError):
+                if PoetryKeyring.is_available():
+                    message = "<fg=green;options=bold>Available</>"
+
+            if io and io.is_verbose():
+                io.write(message)
+                io.write_line("")
 
     def get_credential(
         self, *names: str, username: str | None = None
@@ -70,9 +103,9 @@ class PoetryKeyring:
 
         try:
             return keyring.get_password(name, username or self._EMPTY_USERNAME_KEY)
-        except (RuntimeError, keyring.errors.KeyringError):
+        except (RuntimeError, keyring.errors.KeyringError) as e:
             raise PoetryKeyringError(
-                f"Unable to retrieve the password for {name} from the key ring"
+                f"Unable to retrieve the password for {name} from the key ring {e}"
             )
 
     def set_password(self, name: str, username: str, password: str) -> None:
@@ -104,20 +137,22 @@ class PoetryKeyring:
         return f"{self._namespace}-{name}"
 
     @classmethod
+    @functools.cache
     def is_available(cls) -> bool:
         logger.debug("Checking if keyring is available")
         try:
             import keyring
             import keyring.backend
+            import keyring.errors
         except ImportError as e:
             logger.debug("An error occurred while importing keyring: %s", e)
             return False
 
-        def backend_name(backend: KeyringBackend) -> str:
+        def backend_name(backend: keyring.backend.KeyringBackend) -> str:
             name: str = backend.name
             return name.split(" ")[0]
 
-        def backend_is_valid(backend: KeyringBackend) -> bool:
+        def backend_is_valid(backend: keyring.backend.KeyringBackend) -> bool:
             name = backend_name(backend)
             if name in ("chainer", "fail", "null"):
                 logger.debug(f"Backend {backend.name!r} is not suitable")
@@ -138,20 +173,30 @@ class PoetryKeyring:
         if valid_backend is None:
             logger.debug("No valid keyring backend was found")
             return False
-        else:
-            logger.debug(f"Using keyring backend {backend.name!r}")
-            return True
+
+        logger.debug(f"Using keyring backend {backend.name!r}")
+
+        try:
+            # unfortunately there is no clean way of checking if keyring is unlocked
+            keyring.get_password("python-poetry-check", "python-poetry")
+        except (RuntimeError, keyring.errors.KeyringError):
+            logger.debug(
+                "Accessing keyring failed during availability check", exc_info=True
+            )
+            return False
+
+        return True
 
 
 class PasswordManager:
     def __init__(self, config: Config) -> None:
         self._config = config
 
-    @functools.cached_property
+    @atomic_cached_property
     def use_keyring(self) -> bool:
         return self._config.get("keyring.enabled") and PoetryKeyring.is_available()
 
-    @functools.cached_property
+    @atomic_cached_property
     def keyring(self) -> PoetryKeyring:
         if not self.use_keyring:
             raise PoetryKeyringError(

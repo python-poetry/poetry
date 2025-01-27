@@ -43,6 +43,7 @@ from tests.helpers import get_package
 from tests.helpers import http_setup_redirect
 from tests.helpers import isolated_environment
 from tests.helpers import mock_clone
+from tests.helpers import set_keyring_backend
 from tests.helpers import switch_working_directory
 from tests.helpers import with_working_directory
 
@@ -204,29 +205,29 @@ def dummy_keyring() -> DummyBackend:
 
 @pytest.fixture()
 def with_simple_keyring(dummy_keyring: DummyBackend) -> None:
-    keyring.set_keyring(dummy_keyring)
+    set_keyring_backend(dummy_keyring)
 
 
 @pytest.fixture()
 def with_fail_keyring() -> None:
-    keyring.set_keyring(FailKeyring())  # type: ignore[no-untyped-call]
+    set_keyring_backend(FailKeyring())  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture()
 def with_locked_keyring() -> None:
-    keyring.set_keyring(LockedBackend())  # type: ignore[no-untyped-call]
+    set_keyring_backend(LockedBackend())  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture()
 def with_erroneous_keyring() -> None:
-    keyring.set_keyring(ErroneousBackend())  # type: ignore[no-untyped-call]
+    set_keyring_backend(ErroneousBackend())  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture()
 def with_null_keyring() -> None:
     from keyring.backends.null import Keyring
 
-    keyring.set_keyring(Keyring())  # type: ignore[no-untyped-call]
+    set_keyring_backend(Keyring())  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture()
@@ -237,7 +238,7 @@ def with_chained_fail_keyring(mocker: MockerFixture) -> None:
     )
     from keyring.backends.chainer import ChainerBackend
 
-    keyring.set_keyring(ChainerBackend())  # type: ignore[no-untyped-call]
+    set_keyring_backend(ChainerBackend())  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture()
@@ -250,7 +251,7 @@ def with_chained_null_keyring(mocker: MockerFixture) -> None:
     )
     from keyring.backends.chainer import ChainerBackend
 
-    keyring.set_keyring(ChainerBackend())  # type: ignore[no-untyped-call]
+    set_keyring_backend(ChainerBackend())  # type: ignore[no-untyped-call]
 
 
 @pytest.fixture
@@ -633,3 +634,8 @@ def command_factory() -> CommandFactory:
         return MockCommand()
 
     return _command_factory
+
+
+@pytest.fixture(autouse=True)
+def default_keyring(with_null_keyring: None) -> None:
+    pass
