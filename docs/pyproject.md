@@ -708,7 +708,7 @@ python = "^3.7"
 
 {{% note %}}
 If you specify the compatible python versions in both `tool.poetry.dependencies` and in `project.requires-python`, then Poetry will use the information in `tool.poetry.dependencies` for locking, but the python versions must be a subset of those allowed by `project.requires-python`.
-For example, the following is invalid and will result in an error, because version `3.14` is allowed by `tool.poetry.dependencies`, but not by `project.requires-python`.
+For example, the following is invalid and will result in an error, because versions `4.0` and greater are allowed by `tool.poetry.dependencies`, but not by `project.requires-python`.
 
 ```toml
 [project]
@@ -716,7 +716,7 @@ For example, the following is invalid and will result in an error, because versi
 requires-python = ">=3.8,<4.0"
 
 [tool.poetry.dependencies]
-python = ">=3.8"
+python = ">=3.8" # not valid!
 ```
 {{% /note %}}
 
