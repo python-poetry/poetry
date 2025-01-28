@@ -8,6 +8,8 @@ import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import keyring
+
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
 from poetry.core.vcs.git import ParsedUrl
@@ -20,6 +22,7 @@ from poetry.packages import Locker
 from poetry.repositories import Repository
 from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.utils._compat import metadata
+from poetry.utils.password_manager import PoetryKeyring
 
 
 if TYPE_CHECKING:
@@ -30,6 +33,7 @@ if TYPE_CHECKING:
     import httpretty
 
     from httpretty.core import HTTPrettyRequest
+    from keyring.backend import KeyringBackend
     from poetry.core.constraints.version import Version
     from poetry.core.packages.dependency import Dependency
     from pytest_mock import MockerFixture
@@ -356,3 +360,9 @@ def with_working_directory(source: Path, target: Path | None = None) -> Iterator
 
     with switch_working_directory(target or source, remove=use_copy) as path:
         yield path
+
+
+def set_keyring_backend(backend: KeyringBackend) -> None:
+    """Clears availability cache and sets the specified keyring backend."""
+    PoetryKeyring.is_available.cache_clear()
+    keyring.set_keyring(backend)

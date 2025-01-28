@@ -4,9 +4,12 @@ from typing import TYPE_CHECKING
 
 from poetry.console.commands.env_command import EnvCommand
 from poetry.console.commands.group_command import GroupCommand
+from poetry.utils.password_manager import PoetryKeyring
 
 
 if TYPE_CHECKING:
+    from cleo.io.io import IO
+
     from poetry.installation.installer import Installer
 
 
@@ -30,3 +33,7 @@ class InstallerCommand(GroupCommand, EnvCommand):
 
     def set_installer(self, installer: Installer) -> None:
         self._installer = installer
+
+    def execute(self, io: IO) -> int:
+        PoetryKeyring.preflight_check(io, self.poetry.config)
+        return super().execute(io)

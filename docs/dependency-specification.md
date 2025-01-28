@@ -368,6 +368,8 @@ pendulum = { git = "git@github.com/sdispater/pendulum.git" }
 {{< /tab >}}
 {{< /tabs >}}
 
+### Credentials for git dependencies
+
 To use HTTP basic authentication with your git repositories, you can configure credentials similar to
 how [repository credentials]({{< relref "repositories#configuring-credentials" >}}) are configured.
 
