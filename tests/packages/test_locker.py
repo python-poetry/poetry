@@ -1293,6 +1293,100 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
     assert content == expected
 
 
+def test_locker_dumps_extras_with_constraints(
+    locker: Locker,
+    root: ProjectPackage,
+    fixture_base: Path,
+    transitive_info: TransitivePackageInfo,
+) -> None:
+    package_a = get_package("A", "1.0.0")
+
+    package_httpx_new = Factory.create_dependency(
+        "httpx",
+        {"version": "2.0.0", "python": ">=3.7", "extras": ["brotli"]},
+        root_dir=fixture_base,
+    )
+
+    package_httpx_old = Factory.create_dependency(
+        "httpx", {"version": "1.0.0", "python": "<3.7"}, root_dir=fixture_base
+    )
+
+    package_a.extras = {
+        canonicalize_name("http"): [package_httpx_new, package_httpx_old],
+    }
+
+    locker.set_lock_data(root, {package_a: transitive_info})
+
+    with locker.lock.open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = f"""\
+# {GENERATED_COMMENT}
+
+[[package]]
+name = "A"
+version = "1.0.0"
+description = ""
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = []
+
+[package.extras]
+http = ["httpx (==1.0.0) ; python_version < \\"3.7\\"", "httpx[brotli] (==2.0.0) ; python_version >= \\"3.7\\""]
+
+[metadata]
+lock-version = "2.1"
+python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+"""
+
+    assert content == expected
+
+
+def test_locker_properly_loads_extras_with_constraints(locker: Locker) -> None:
+    content = f"""\
+# {GENERATED_COMMENT}
+
+[[package]]
+name = "A"
+version = "1.0.0"
+description = ""
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = []
+
+[package.extras]
+http = ["httpx (==1.0.0) ; python_version < \\"3.7\\"", "httpx[brotli] (==2.0.0) ; python_version >= \\"3.7\\""]
+
+[metadata]
+lock-version = "2.1"
+python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+"""
+
+    with open(locker.lock, "w", encoding="utf-8") as f:
+        f.write(content)
+
+    packages = locker.locked_repository().packages
+
+    assert len(packages) == 1
+
+    package = packages[0]
+    assert len(package.extras) == 1
+
+    httpx_deps = package.extras[canonicalize_name("http")]
+    assert len(httpx_deps) == 2
+
+    assert httpx_deps[0].constraint == Version.parse("1.0.0")
+    assert str(httpx_deps[0].python_constraint) == "<3.7"
+
+    assert httpx_deps[1].constraint == Version.parse("2.0.0")
+    assert str(httpx_deps[1].python_constraint) == ">=3.7"
+    assert httpx_deps[1].extras == {"brotli"}
+
+
 def test_locked_repository_uses_root_dir_of_package(
     locker: Locker, mocker: MockerFixture
 ) -> None:

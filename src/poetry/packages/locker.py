@@ -574,7 +574,7 @@ class Locker:
         if package.extras:
             extras = {}
             for name, deps in sorted(package.extras.items()):
-                extras[name] = sorted(dep.base_pep_508_name for dep in deps)
+                extras[name] = sorted(dep.to_pep_508(with_extras=False) for dep in deps)
 
             data["extras"] = extras
 
