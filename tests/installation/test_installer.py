@@ -7,6 +7,7 @@ import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import cast
 
 import pytest
 
@@ -41,6 +42,7 @@ if TYPE_CHECKING:
 
     from _pytest.fixtures import FixtureRequest
     from pytest_mock import MockerFixture
+    from tomlkit import TOMLDocument
 
     from poetry.repositories.legacy_repository import LegacyRepository
     from poetry.repositories.pypi_repository import PyPiRepository
@@ -172,8 +174,26 @@ def installer(
     )
 
 
-def fixture(name: str) -> dict[str, Any]:
+def fixture(name: str, data: dict[str, Any] | None = None) -> dict[str, Any]:
+    """
+    Create or load a fixture file in TOML format.
+
+    This function retrieves the contents of a test fixture file, optionally writing
+    data to it before reading, and returns the data as a dictionary. It is used to
+    manage testing fixtures for TOML-based configurations.
+
+    :param name: Name of the fixture file (without extension, default of .test is appended).
+    :param data: Dictionary to write to the file as a TOML document. If None,
+                 no data is written (use this only when generating fixtures).
+    :return: Dictionary representing the contents of the TOML fixture file.
+    """
     file = TOMLFile(Path(__file__).parent / "fixtures" / f"{name}.test")
+
+    if data:
+        # if data is provided write it, this is helpful for generating fixtures
+        # we expect lock data to be compatible with TOMLDocument for our purposes
+        file.write(cast("TOMLDocument", data))
+
     content: dict[str, Any] = file.read()
 
     return content
