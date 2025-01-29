@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import contextlib
-import shutil
 import sys
 
 from functools import cached_property
@@ -17,28 +16,15 @@ from cleo.io.null_io import NullIO
 from cleo.io.outputs.output import Verbosity
 from poetry.core.constraints.version import Version
 
-from poetry.utils.env.exceptions import NoCompatiblePythonVersionFoundError
+from poetry.utils.env.python.exceptions import NoCompatiblePythonVersionFoundError
+from poetry.utils.env.python.providers import ShutilWhichPythonProvider
 
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
-
     from cleo.io.io import IO
-    from typing_extensions import Self
 
     from poetry.config.config import Config
     from poetry.poetry import Poetry
-
-
-class ShutilWhichPythonProvider(findpython.BaseProvider):  # type: ignore[misc]
-    @classmethod
-    def create(cls) -> Self | None:
-        return cls()
-
-    def find_pythons(self) -> Iterable[findpython.PythonVersion]:
-        if path := shutil.which("python"):
-            return [findpython.PythonVersion(executable=Path(path))]
-        return []
 
 
 class Python:

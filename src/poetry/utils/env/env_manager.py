@@ -24,11 +24,11 @@ from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import encode
 from poetry.utils.env.exceptions import EnvCommandError
 from poetry.utils.env.exceptions import IncorrectEnvError
-from poetry.utils.env.exceptions import InvalidCurrentPythonVersionError
-from poetry.utils.env.exceptions import NoCompatiblePythonVersionFoundError
-from poetry.utils.env.exceptions import PythonVersionNotFoundError
 from poetry.utils.env.generic_env import GenericEnv
-from poetry.utils.env.python_manager import Python
+from poetry.utils.env.python import Python
+from poetry.utils.env.python.exceptions import InvalidCurrentPythonVersionError
+from poetry.utils.env.python.exceptions import NoCompatiblePythonVersionFoundError
+from poetry.utils.env.python.exceptions import PythonVersionNotFoundError
 from poetry.utils.env.script_strings import GET_ENV_PATH_ONELINER
 from poetry.utils.env.script_strings import GET_PYTHON_VERSION_ONELINER
 from poetry.utils.env.system_env import SystemEnv
