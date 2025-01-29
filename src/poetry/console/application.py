@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import cast
 
+from cleo._utils import find_similar_names
 from cleo.application import Application as BaseApplication
 from cleo.events.console_command_event import ConsoleCommandEvent
 from cleo.events.console_events import COMMAND
@@ -265,6 +266,32 @@ class Application(BaseApplication):
                     io.write_error_line("")
                     io.write_error_line(COMMAND_NOT_FOUND_PREFIX_MESSAGE)
                     io.write_error_line(message)
+                    return 1
+
+                if command is not None and command in self.get_namespaces():
+                    sub_commands = []
+
+                    for key in self._commands:
+                        if key.startswith(f"{command} "):
+                            sub_commands.append(key)
+
+                    suggested_names = find_similar_names(command, sub_commands)
+
+                    suggestion_lines = [
+                        f"<c1>{command}</> <b>{name.replace(command, '').strip()}</>: {self._commands[name].description}"
+                        for name in suggested_names
+                    ]
+
+                    suggestions = "\n    ".join(["", *sorted(suggestion_lines)])
+
+                    io.write_error_line(
+                        f"The requested command does not exist in the <c1>{command}</> namespace.\n\n"
+                        f"<error>Did you mean one of these perhaps?</>{suggestions}"
+                    )
+                    io.write_error_line(
+                        f"\n<b>Documentation: </>"
+                        f"<info>https://python-poetry.org/docs/cli/#{command}</>"
+                    )
                     return 1
 
                 raise e
