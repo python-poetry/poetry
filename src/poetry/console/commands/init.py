@@ -17,7 +17,7 @@ from tomlkit import inline_table
 from poetry.console.commands.command import Command
 from poetry.console.commands.env_command import EnvCommand
 from poetry.utils.dependency_specification import RequirementsParser
-from poetry.utils.env.python_manager import Python
+from poetry.utils.env.python import Python
 
 
 if TYPE_CHECKING:

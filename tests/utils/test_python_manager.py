@@ -13,7 +13,7 @@ import pytest
 
 from poetry.core.constraints.version import Version
 
-from poetry.utils.env.python_manager import Python
+from poetry.utils.env.python import Python
 
 
 if TYPE_CHECKING:
@@ -62,7 +62,7 @@ def test_get_preferred_python_use_poetry_python_disabled(
     config: Config, mocker: MockerFixture
 ) -> None:
     mocker.patch(
-        "poetry.utils.env.python_manager.Python.get_active_python",
+        "poetry.utils.env.python.Python.get_active_python",
         return_value=Python(
             python=findpython.PythonVersion(
                 executable=Path("/usr/bin/python3.7"),

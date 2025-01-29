@@ -18,10 +18,10 @@ from poetry.utils.env import GET_BASE_PREFIX
 from poetry.utils.env import GET_PYTHON_VERSION_ONELINER
 from poetry.utils.env import EnvManager
 from poetry.utils.env import IncorrectEnvError
-from poetry.utils.env import InvalidCurrentPythonVersionError
-from poetry.utils.env import NoCompatiblePythonVersionFoundError
-from poetry.utils.env import PythonVersionNotFoundError
 from poetry.utils.env.env_manager import EnvsFile
+from poetry.utils.env.python.exceptions import InvalidCurrentPythonVersionError
+from poetry.utils.env.python.exceptions import NoCompatiblePythonVersionFoundError
+from poetry.utils.env.python.exceptions import PythonVersionNotFoundError
 from poetry.utils.helpers import remove_directory
 
 
@@ -940,7 +940,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
     mocked_python_register("3.9.0")
 
     mocker.patch(
-        "poetry.utils.env.python_manager.Python.get_system_python",
+        "poetry.utils.env.python.Python.get_system_python",
         return_value=mocked_python_register("2.7.16", make_system=True),
     )
     mocked_python_register("3.5.3")
@@ -1043,7 +1043,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility(
         f"{version.major}.{version.minor}.{version.patch + 1}"
     )
     mocker.patch(
-        "poetry.utils.env.python_manager.Python.get_system_python",
+        "poetry.utils.env.python.Python.get_system_python",
         return_value=python,
     )
     m = mocker.patch(
