@@ -253,7 +253,7 @@ When a script is added or updated, run `poetry install` to make them available i
 This section describes the GUI scripts that will be installed when installing the package.
 
 ```toml
-[project.scripts]
+[project.gui-scripts]
 my_package_gui = 'my_package.gui:run'
 ```
 
