@@ -45,7 +45,7 @@ from poetry.utils.env import EnvManager
 from poetry.utils.env import MockEnv
 from poetry.utils.env import SystemEnv
 from poetry.utils.env import VirtualEnv
-from poetry.utils.env.python_manager import Python
+from poetry.utils.env.python import Python
 from poetry.utils.password_manager import PoetryKeyring
 from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.helpers import TestLocker
@@ -906,7 +906,7 @@ def mocked_python_register(
 
         if make_system:
             mocker.patch(
-                "poetry.utils.env.python_manager.Python.get_system_python",
+                "poetry.utils.env.python.Python.get_system_python",
                 return_value=Python(python=python),
             )
             mocked_pythons_version_map[""] = python
@@ -959,6 +959,6 @@ def with_mocked_findpython(
 @pytest.fixture
 def with_no_active_python(mocker: MockerFixture) -> MagicMock:
     return mocker.patch(
-        "poetry.utils.env.python_manager.Python.get_active_python",
+        "poetry.utils.env.python.Python.get_active_python",
         return_value=None,
     )
