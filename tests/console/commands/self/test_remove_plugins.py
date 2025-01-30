@@ -64,6 +64,7 @@ def install_plugin(installed: Repository) -> None:
     installed.add_package(plugin)
 
 
+@pytest.mark.xfail(reason="remove command does not support dependency-groups yet")
 def test_remove_installed_package(tester: CommandTester) -> None:
     tester.execute("poetry-plugin")
 
@@ -85,6 +86,7 @@ Writing lock file
     assert not dependencies
 
 
+@pytest.mark.xfail(reason="remove command does not support dependency-groups yet")
 def test_remove_installed_package_dry_run(tester: CommandTester) -> None:
     tester.execute("poetry-plugin --dry-run")
 

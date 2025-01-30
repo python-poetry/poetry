@@ -597,6 +597,44 @@ Writing lock file
 
 @pytest.mark.parametrize(
     "required_fixtures",
+    [["git/github.com/demo/demo"]],
+)
+def test_add_group_directory_constraint_mix_pep735(
+    app: PoetryTestApplication,
+    tester: CommandTester,
+) -> None:
+    path = "../git/github.com/demo/demo"
+    tester.execute(f"-G example -e {path}")
+
+    demo_path = app.poetry.file.path.parent.joinpath(path).resolve().as_posix()
+    expected = f"""\
+
+Updating dependencies
+Resolving dependencies...
+
+Package operations: 2 installs, 0 updates, 0 removals
+
+  - Installing pendulum (1.4.4)
+  - Installing demo (0.1.2 {demo_path})
+
+Writing lock file
+"""
+
+    assert tester.io.fetch_output() == expected
+    assert isinstance(tester.command, InstallerCommand)
+    assert tester.command.installer.executor.installations_count == 2
+
+    pyproject: dict[str, Any] = app.poetry.file.read()
+
+    assert pyproject["dependency-groups"]["example"][0] == f"demo @ file://{demo_path}"
+    assert "demo" in pyproject["tool"]["poetry"]["group"]["example"]["dependencies"]
+    assert pyproject["tool"]["poetry"]["group"]["example"]["dependencies"]["demo"] == {
+        "develop": True
+    }
+
+
+@pytest.mark.parametrize(
+    "required_fixtures",
     [["git/github.com/demo/pyproject-demo"]],
 )
 def test_add_directory_with_poetry(
@@ -1078,17 +1116,15 @@ Writing lock file
     assert tester.command.installer.executor.installations_count == 2
 
     pyproject: dict[str, Any] = app.poetry.file.read()
-    content = pyproject["tool"]["poetry"]
+    content = pyproject["dependency-groups"]
 
-    assert "cachy" in content["group"][group_name]["dependencies"]
-    assert content["group"][group_name]["dependencies"]["cachy"] == "^0.2.0"
+    assert content[group_name][0] == "cachy (>=0.2.0,<0.3.0)"
 
     escaped_group_name = f'"{group_name}"' if "." in group_name else group_name
     expected = f"""\
-
-[tool.poetry.group.{escaped_group_name}.dependencies]
-cachy = "^0.2.0"
-
+{escaped_group_name} = [
+    "cachy (>=0.2.0,<0.3.0)"
+]
 """
     string_content = content.as_string()
     if "\r\n" in string_content:
@@ -1118,15 +1154,14 @@ def test_add_creating_poetry_section_does_not_remove_existing_tools(
     assert tester.command.installer.executor.installations_count == 2
 
     pyproject: dict[str, Any] = poetry.file.read()
-    content = pyproject["tool"]["poetry"]
+    content = pyproject["dependency-groups"]
 
-    assert "cachy" in content["group"]["dev"]["dependencies"]
-    assert content["group"]["dev"]["dependencies"]["cachy"] == "^0.2.0"
+    assert content["dev"][0] == "cachy (>=0.2.0,<0.3.0)"
     assert "foo" in pyproject["tool"]
     assert pyproject["tool"]["foo"]["key"] == "value"
 
 
-def test_add_to_dev_section(app: PoetryTestApplication, tester: CommandTester) -> None:
+def test_add_to_dev_group(app: PoetryTestApplication, tester: CommandTester) -> None:
     tester.execute("cachy --dev")
 
     expected = """\
@@ -1149,10 +1184,9 @@ Writing lock file
     assert tester.command.installer.executor.installations_count == 2
 
     pyproject: dict[str, Any] = app.poetry.file.read()
-    content = pyproject["tool"]["poetry"]
+    content = pyproject["dependency-groups"]
 
-    assert "cachy" in content["group"]["dev"]["dependencies"]
-    assert content["group"]["dev"]["dependencies"]["cachy"] == "^0.2.0"
+    assert content["dev"][0] == "cachy (>=0.2.0,<0.3.0)"
 
 
 def test_add_should_not_select_prereleases(
