@@ -271,6 +271,49 @@ values, usage instructions and warnings.
 
 Use parallel execution when using the new (`>=1.1.0`) installer.
 
+### `installer.build-config-settings.<package-name>`
+
+**Type**: `Serialised JSON with string or list of string properties`
+
+**Default**: `None`
+
+**Environment Variable**: `POETRY_INSTALLER_BUILD_CONFIG_SETTINGS_<package-name>`
+
+*Introduced in 2.1.0*
+
+{{% warning %}}
+This is an **experimental** configuration and can be subject to changes in upcoming releases until it is considered
+stable.
+{{% /warning %}}
+
+Configure [PEP 517 config settings](https://peps.python.org/pep-0517/#config-settings) to be passed to a package's
+build backend if it has to be built from a directory or vcs source; or a source distribution during installation.
+
+This is only used when a compatible binary distribution (wheel) is not available for a package. This can be used along
+with [`installer.no-binary`]({{< relref "configuration#installerno-binary" >}}) option to force a build with these
+configurations when a dependency of your project with the specified name is being installed.
+
+{{% note %}}
+Poetry does not offer a similar option in the `pyproject.toml` file as these are, in majority of cases, not universal
+and vary depending on the target installation environment.
+
+If you want to use a project specific configuration it is recommended that this configuration be set locally, in your
+project's `poetry.toml` file.
+
+```bash
+poetry config --local installer.build-config-settings.grpcio \
+  '{"CC": "gcc", "--global-option": ["--some-global-option"], "--build-option": ["--build-option1", "--build-option2"]}'
+```
+
+If you want to modify a single key, you can do, by setting the same key again.
+
+```bash
+poetry config --local installer.build-config-settings.grpcio \
+  '{"CC": "g++"}'
+```
+
+{{% /note %}}
+
 ### `requests.max-retries`
 
 **Type**: `int`

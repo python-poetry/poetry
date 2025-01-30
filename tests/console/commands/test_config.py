@@ -13,6 +13,7 @@ from deepdiff.diff import DeepDiff
 from poetry.core.pyproject.exceptions import PyProjectError
 
 from poetry.config.config_source import ConfigSource
+from poetry.config.config_source import PropertyNotFoundError
 from poetry.console.commands.install import InstallCommand
 from poetry.factory import Factory
 from poetry.repositories.legacy_repository import LegacyRepository
@@ -652,3 +653,108 @@ def test_config_migrate_local_config_should_raise_if_not_found(
 ) -> None:
     with pytest.raises(RuntimeError, match="No local config file found"):
         tester.execute("--migrate --local", inputs="yes")
+
+
+def test_config_installer_build_config_settings(
+    tester: CommandTester, config: Config
+) -> None:
+    config_key = "installer.build-config-settings.demo"
+    value = {"CC": "gcc", "--build-option": ["--one", "--two"]}
+
+    tester.execute(f"{config_key} '{json.dumps(value)}'")
+    assert not DeepDiff(config.config_source.get_property(config_key), value)
+
+    value_two = {"CC": "g++"}
+    tester.execute(f"{config_key} '{json.dumps(value_two)}'")
+    assert not DeepDiff(
+        config.config_source.get_property(config_key), {**value, **value_two}
+    )
+
+    value_three = {
+        "--build-option": ["--three", "--four"],
+        "--package-option": ["--name=foo"],
+    }
+    tester.execute(f"{config_key} '{json.dumps(value_three)}'")
+    assert not DeepDiff(
+        config.config_source.get_property(config_key),
+        {
+            **value,
+            **value_two,
+            **value_three,
+        },
+    )
+
+    tester.execute(f"{config_key} --unset")
+
+    with pytest.raises(PropertyNotFoundError):
+        config.config_source.get_property(config_key)
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "BAD=VALUE",
+        "BAD",
+        json.dumps({"key": ["str", 0]}),
+    ],
+)
+def test_config_installer_build_config_settings_bad_values(
+    value: str, tester: CommandTester
+) -> None:
+    config_key = "installer.build-config-settings.demo"
+
+    with pytest.raises(ValueError) as e:
+        tester.execute(f"{config_key} '{value}'")
+
+    assert str(e.value) == (
+        f"Invalid build config setting '{value}'. "
+        f"It must be a valid JSON with each property "
+        f"a string or a list of strings."
+    )
+
+
+def test_command_config_build_config_settings_get(
+    tester: CommandTester, config: Config
+) -> None:
+    setting_group = "installer.build-config-settings"
+    setting = f"{setting_group}.foo"
+
+    # test when no values are configured
+    tester.execute(setting)
+    assert tester.io.fetch_error() == ""
+    assert (
+        tester.io.fetch_output().strip()
+        == "No build config settings configured for foo."
+    )
+
+    tester.execute(setting_group)
+    assert tester.io.fetch_error() == ""
+    assert (
+        tester.io.fetch_output().strip()
+        == "No packages configured with build config settings."
+    )
+
+    # test with one value configured
+    value = {"CC": "gcc", "--build-options": ["--one", "--two"]}
+    tester.execute(f"{setting} '{json.dumps(value)}'")
+    assert tester.status_code == 0
+    assert tester.io.fetch_output() == tester.io.fetch_error() == ""
+
+    tester.execute(setting)
+    assert tester.io.fetch_error() == ""
+    assert tester.io.fetch_output().strip() == json.dumps(value)
+
+    tester.execute(setting_group)
+    assert tester.io.fetch_error() == ""
+    assert tester.io.fetch_output().strip().splitlines() == [
+        'foo.--build-options = "[--one, --two]"',
+        'foo.CC = "gcc"',
+    ]
+
+    # test getting un-configured value
+    tester.execute(f"{setting_group}.bar")
+    assert tester.io.fetch_error() == ""
+    assert (
+        tester.io.fetch_output().strip()
+        == "No build config settings configured for bar."
+    )
