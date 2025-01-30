@@ -8,6 +8,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from cleo.io.buffered_io import BufferedIO
+from cleo.io.inputs.string_input import StringInput
 from cleo.testers.application_tester import ApplicationTester
 
 from poetry.console.application import Application
@@ -177,3 +179,28 @@ def test_application_with_relative_project_parameter(
         ProjectPath: {project_source_directory}
         WorkingDirectory: {cwd}
         """)
+
+
+@pytest.mark.parametrize(
+    ("parameter", "check", "result"),
+    [
+        ("--ansi", "is_decorated", True),
+        ("--no-ansi", "is_decorated", False),
+        ("--no-interaction", "is_interactive", False),
+        ("--verbose", "is_verbose", True),
+        ("-vv", "is_verbose", True),
+        ("-vv", "is_very_verbose", True),
+        ("-vv", "is_debug", False),
+        ("-vvv", "is_debug", True),
+    ],
+)
+def test_application_io_options_are_set(
+    parameter: str, check: str, result: bool
+) -> None:
+    # we use an actual application here to avoid cleo's testing overrides
+    application = Application()
+    application.auto_exits(False)
+    application._io = BufferedIO()
+
+    assert application.run(StringInput(f"{parameter} about")) == 0
+    assert getattr(application._io, check)() == result
