@@ -1065,9 +1065,9 @@ develop = false
 
 [package.source]
 type = "git"
-url = "https://github.com/python-poetry/poetry-core.git"
-reference = "HEAD"
-resolved_reference = "eccf08b5703f20c39282aa8be335d125aa36faab"
+url = "https://github.com/finswimmer/core.git"
+reference = "poc-pep-735"
+resolved_reference = "0a50ac360de2091776da6b6fcbf969bfe1191482"
 
 [[package]]
 name = "pre-commit"
@@ -1754,4 +1754,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<4.0"
-content-hash = "aa47753624aadb8e4086016ef73a316474c4b83c58d57c0fe978bec0bb00eab6"
+content-hash = "44eaeacea98f4f38bdb47635ec1c71c0f351e262837decf5b0963937169da1a7"
