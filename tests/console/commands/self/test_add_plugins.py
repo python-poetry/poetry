@@ -1,11 +1,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Any
-
-
-if TYPE_CHECKING:
-    from collections.abc import Mapping
 
 import pytest
 
@@ -32,13 +27,13 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
 def assert_plugin_add_result(
     tester: CommandTester,
     expected: str,
-    constraint: str | Mapping[str, str | list[str]],
+    constraint: str,
 ) -> None:
     assert tester.io.fetch_output() == expected
-    dependencies: dict[str, Any] = get_self_command_dependencies()
+    dependencies: list[str] = get_self_command_dependencies()
 
-    assert "poetry-plugin" in dependencies
-    assert dependencies["poetry-plugin"] == constraint
+    assert "poetry-plugin" in dependencies[0]
+    assert constraint in dependencies[0]
 
 
 def test_add_no_constraint(
@@ -61,7 +56,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
 Writing lock file
 """
-    assert_plugin_add_result(tester, expected, "^0.1.0")
+    assert_plugin_add_result(tester, expected, "(>=0.1.0,<0.2.0)")
 
 
 def test_add_with_constraint(
@@ -84,7 +79,7 @@ Package operations: 1 install, 0 updates, 0 removals
 Writing lock file
 """
 
-    assert_plugin_add_result(tester, expected, "^0.2.0")
+    assert_plugin_add_result(tester, expected, "(>=0.2.0,<0.3.0)")
 
 
 def test_add_with_git_constraint(
@@ -108,7 +103,7 @@ Writing lock file
 """
 
     assert_plugin_add_result(
-        tester, expected, {"git": "https://github.com/demo/poetry-plugin.git"}
+        tester, expected, "https://github.com/demo/poetry-plugin.git"
     )
 
 
@@ -134,11 +129,11 @@ Package operations: 3 installs, 0 updates, 0 removals
 Writing lock file
 """
 
-    constraint: dict[str, str | list[str]] = {
-        "git": "https://github.com/demo/poetry-plugin.git",
-        "extras": ["foo"],
-    }
-    assert_plugin_add_result(tester, expected, constraint)
+    assert_plugin_add_result(
+        tester,
+        expected,
+        "poetry-plugin[foo] @ git+https://github.com/demo/poetry-plugin.git",
+    )
 
 
 @pytest.mark.parametrize(
@@ -173,19 +168,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 Writing lock file
 """
 
-    constraint = {
-        "git": "https://github.com/demo/poetry-plugin2.git",
-        "subdirectory": "subdir",
-    }
-
-    if rev:
-        constraint["rev"] = rev
-
-    assert_plugin_add_result(
-        tester,
-        expected,
-        constraint,
-    )
+    assert_plugin_add_result(tester, expected, url)
 
 
 def test_add_existing_plugin_warns_about_no_operation(
@@ -248,8 +231,10 @@ authors = []
 [tool.poetry.dependencies]
 python = "^3.6"
 
-[tool.poetry.group.{SelfCommand.ADDITIONAL_PACKAGE_GROUP}.dependencies]
-poetry-plugin = "^1.2.3"
+[dependency-groups]
+{SelfCommand.ADDITIONAL_PACKAGE_GROUP} = [
+    "poetry-plugin (>=1.2.3,<2.0.0)"
+]
 """
         )
 
@@ -273,7 +258,7 @@ Package operations: 0 installs, 1 update, 0 removals
 Writing lock file
 """
 
-    assert_plugin_add_result(tester, expected, "^2.3.4")
+    assert_plugin_add_result(tester, expected, "(>=2.3.4,<3.0.0)")
 
 
 def test_adding_a_plugin_can_update_poetry_dependencies_if_needed(
@@ -310,4 +295,4 @@ Package operations: 1 install, 1 update, 0 removals
 Writing lock file
 """
 
-    assert_plugin_add_result(tester, expected, "^1.2.3")
+    assert_plugin_add_result(tester, expected, "(>=1.2.3,<2.0.0)")
