@@ -92,7 +92,7 @@ def test_application_execute_plugin_command_with_plugins_disabled(
     tester.execute("foo --no-plugins")
 
     assert tester.io.fetch_output() == ""
-    assert tester.io.fetch_error() == '\nThe command "foo" does not exist.\n'
+    assert "The requested command foo does not exist." in tester.io.fetch_error()
     assert tester.status_code == 1
 
 
