@@ -282,8 +282,6 @@ class Application(BaseApplication):
         :param io: The IO instance whose input and options are being read.
         :return: Nothing.
         """
-        self._sort_global_options(io)
-
         self._disable_plugins = io.input.option("no-plugins")
         self._disable_cache = io.input.option("no-cache")
 
@@ -351,7 +349,14 @@ class Application(BaseApplication):
                     tokens.append(str(value))
 
         sorted_input = ArgvInput([self._name or "", *tokens, *remaining_args])
+
+        # this is required to ensure stdin is transferred
         sorted_input.set_stream(original_input.stream)
+
+        # this is required as cleo internally checks for `io.input._interactive`
+        # when configuring io, and cleo's test applications overrides this attribute
+        # explicitly causing test setups to fail
+        sorted_input.interactive(io.input.is_interactive())
 
         with suppress(CleoError):
             sorted_input.bind(self.definition)
@@ -450,6 +455,7 @@ class Application(BaseApplication):
 
     def _configure_io(self, io: IO) -> None:
         self._configure_run_command(io)
+        self._sort_global_options(io)
         super()._configure_io(io)
 
     def register_command_loggers(
