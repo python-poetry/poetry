@@ -275,28 +275,46 @@ class Application(BaseApplication):
                         if key.startswith(f"{command} "):
                             sub_commands.append(key)
 
+                    io.write_error_line(
+                        f"The requested command does not exist in the <c1>{command}</> namespace."
+                    )
                     suggested_names = find_similar_names(command, sub_commands)
+                    self._error_write_command_suggestions(
+                        io, suggested_names, f"#{command}"
+                    )
+                    return 1
 
-                    suggestion_lines = [
-                        f"<c1>{command}</> <b>{name.replace(command, '').strip()}</>: {self._commands[name].description}"
-                        for name in suggested_names
-                    ]
-
-                    suggestions = "\n    ".join(["", *sorted(suggestion_lines)])
-
-                    io.write_error_line(
-                        f"The requested command does not exist in the <c1>{command}</> namespace.\n\n"
-                        f"<error>Did you mean one of these perhaps?</>{suggestions}"
+                if command is not None:
+                    suggested_names = find_similar_names(
+                        command, list(self._commands.keys())
                     )
                     io.write_error_line(
-                        f"\n<b>Documentation: </>"
-                        f"<info>https://python-poetry.org/docs/cli/#{command}</>"
+                        f"The requested command <c1>{command}</> does not exist."
                     )
+                    self._error_write_command_suggestions(io, suggested_names)
                     return 1
 
                 raise e
 
         return exit_code
+
+    def _error_write_command_suggestions(
+        self, io: IO, suggested_names: list[str], doc_tag: str | None = None
+    ) -> None:
+        if suggested_names:
+            suggestion_lines = [
+                f"<c1>{name.replace(' ', '</> <b>', 1)}</>: {self._commands[name].description}"
+                for name in suggested_names
+            ]
+            suggestions = "\n    ".join(["", *sorted(suggestion_lines)])
+            io.write_error_line(
+                f"\n<error>Did you mean one of these perhaps?</>{suggestions}"
+            )
+
+        io.write_error_line(
+            "\n<b>Documentation: </>"
+            f"<info>https://python-poetry.org/docs/cli/{doc_tag or ''}</>"
+        )
 
     def _configure_global_options(self, io: IO) -> None:
         """

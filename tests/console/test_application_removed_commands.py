@@ -27,7 +27,7 @@ def test_application_removed_command_default_message(
 
     stderr = tester.io.fetch_error()
     assert COMMAND_NOT_FOUND_PREFIX_MESSAGE not in stderr
-    assert 'The command "nonexistent" does not exist.' in stderr
+    assert "The requested command nonexistent does not exist." in stderr
 
 
 @pytest.mark.parametrize(

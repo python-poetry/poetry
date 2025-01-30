@@ -19,6 +19,33 @@ def tester() -> ApplicationTester:
 
 
 @pytest.mark.parametrize(
+    ("command", "suggested"),
+    [
+        ("x", None),
+        ("en", ["env activate", "env info", "env list", "env remove", "env use"]),
+        ("sou", ["source add", "source remove", "source show"]),
+    ],
+)
+def test_application_command_not_found_messages(
+    command: str,
+    suggested: list[str] | None,
+    tester: ApplicationTester,
+    command_factory: CommandFactory,
+) -> None:
+    tester.execute(f"{command}")
+    assert tester.status_code != 0
+
+    stderr = tester.io.fetch_error()
+    assert f"The requested command {command} does not exist." in stderr
+
+    if suggested is None:
+        assert "Did you mean one of these perhaps?" not in stderr
+    else:
+        for suggestion in suggested:
+            assert suggestion in stderr
+
+
+@pytest.mark.parametrize(
     "namespace",
     ["cache", "debug", "env", "self", "source"],
 )
