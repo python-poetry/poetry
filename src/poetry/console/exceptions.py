@@ -170,7 +170,10 @@ class PoetryRuntimeError(PoetryConsoleError):
             text += f"{indent}{message_text}\n{indent}\n"
 
         if has_skipped_debug:
-            text += f"{indent}You can also run your <c1>poetry</> command with <c1>-v</> to see more information.\n{indent}\n"
+            message = ConsoleMessage(
+                f"{indent}You can also run your <c1>poetry</> command with <c1>-v</> to see more information.\n{indent}\n"
+            )
+            text += message.stripped if strip else message.text
 
         return text.rstrip(f"{indent}\n")
 
