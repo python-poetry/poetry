@@ -222,3 +222,9 @@ class PoetryRuntimeError(PoetryConsoleError):
             )
 
         return cls(reason, messages)
+
+    def append(self, message: str | ConsoleMessage) -> PoetryRuntimeError:
+        if isinstance(message, str):
+            message = ConsoleMessage(message)
+        self._messages.append(message)
+        return self
