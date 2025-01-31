@@ -24,17 +24,33 @@ Poetry provides a way to **organize** your dependencies by **groups**.
 The dependencies declared in `project.dependencies` respectively `tool.poetry.dependencies`
 are part of an implicit `main` group. Those dependencies are required by your project during runtime.
 
-Beside the `main` dependencies, you might have dependencies that are only needed to test your project
+Besides the `main` dependencies, you might have dependencies that are only needed to test your project
 or to build the documentation.
 
-To declare a new dependency group, use a `tool.poetry.group.<group>` section
-where `<group>` is the name of your dependency group (for instance, `test`):
+To declare a new dependency group, use a `dependency-groups` section according to PEP 735 or
+a `tool.poetry.group.<group>` section where `<group>` is the name of your dependency group (for instance, `test`):
 
+{{< tabs tabTotal="2" tabID1="group-pep735" tabID2="group-poetry" tabName1="[dependency-groups]" tabName2="[tool.poetry]">}}
+
+{{< tab tabID="group-pep735" >}}
+```toml
+[dependency-groups]
+test = [
+    "pytest (>=6.0.0,<7.0.0)",
+    "pytest-mock",
+]
+```
+{{< /tab >}}
+
+{{< tab tabID="group-poetry" >}}
 ```toml
 [tool.poetry.group.test.dependencies]
 pytest = "^6.0.0"
 pytest-mock = "*"
 ```
+{{< /tab >}}
+{{< /tabs >}}
+
 
 {{% note %}}
 All dependencies **must be compatible with each other** across groups since they will
@@ -60,6 +76,21 @@ A dependency group can be declared as optional. This makes sense when you have
 a group of dependencies that are only required in a particular environment or for
 a specific purpose.
 
+{{< tabs tabTotal="2" tabID1="group-optional-pep735" tabID2="group-optional-poetry" tabName1="[dependency-groups]" tabName2="[tool.poetry]">}}
+
+{{< tab tabID="group-optional-pep735" >}}
+```toml
+[dependency-groups]
+docs = [
+    "mkdocs",
+]
+
+[tool.poetry.group.docs]
+optional = true
+```
+{{< /tab >}}
+
+{{< tab tabID="group-optional-poetry" >}}
 ```toml
 [tool.poetry.group.docs]
 optional = true
@@ -67,6 +98,10 @@ optional = true
 [tool.poetry.group.docs.dependencies]
 mkdocs = "*"
 ```
+{{< /tab >}}
+{{< /tabs >}}
+
+
 
 Optional groups can be installed in addition to the **default** dependencies by using the `--with`
 option of the [`install`]({{< relref "cli#install" >}}) command.
