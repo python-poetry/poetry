@@ -726,8 +726,10 @@ for more information on other keys and specifying version ranges.
 
 ### scripts
 
-**Deprecated**: Use `project.scripts` instead.
-Use `[tool.poetry.scripts]` only for scripts of type "file", because those are not supported in `[project.scripts]`.
+{{% note %}}
+**Deprecated**: Use [`project.scripts`]({{< relref "#scripts" >}}) instead for `console` and `gui` scripts. Use
+`[tool.poetry.scripts]` only for scripts of type `file`.
+{{% /note %}}
 
 This section describes the scripts or executables that will be installed when installing the package
 
