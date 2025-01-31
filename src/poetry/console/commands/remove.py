@@ -63,6 +63,7 @@ list of installed packages
 
         content: dict[str, Any] = self.poetry.file.read()
         project_content = content.get("project", {})
+        groups_content = content.get("dependency-groups", {})
         poetry_content = content.get("tool", {}).get("poetry", {})
 
         if group is None:
@@ -71,25 +72,45 @@ list of installed packages
             group_sections = []
             project_dependencies = project_content.get("dependencies", [])
             poetry_dependencies = poetry_content.get("dependencies", {})
+
             if project_dependencies or poetry_dependencies:
                 group_sections.append(
-                    (MAIN_GROUP, project_dependencies, poetry_dependencies)
+                    (MAIN_GROUP, project_dependencies, poetry_dependencies, [])
                 )
             group_sections.extend(
-                (group_name, [], group_section.get("dependencies", {}))
+                (group_name, [], {}, dependencies)
+                for group_name, dependencies in groups_content.items()
+            )
+            group_sections.extend(
+                (group_name, [], group_section.get("dependencies", {}), [])
                 for group_name, group_section in poetry_content.get("group", {}).items()
             )
 
-            for group_name, project_section, poetry_section in group_sections:
+            for (
+                group_name,
+                project_section,
+                poetry_section,
+                group_dep_section,
+            ) in group_sections:
                 removed |= self._remove_packages(
-                    packages, project_section, poetry_section, group_name
+                    packages=packages,
+                    project_section=project_section,
+                    poetry_section=poetry_section,
+                    group_section=group_dep_section,
+                    group_name=group_name,
                 )
-                if group_name != MAIN_GROUP and not poetry_section:
-                    del poetry_content["group"][group_name]
+                if group_name != MAIN_GROUP:
+                    if not poetry_section and group_name in poetry_content.get(
+                        "group", {}
+                    ):
+                        del poetry_content["group"][group_name]
+                    if not group_dep_section and group_name in groups_content:
+                        del groups_content[group_name]
+
         elif group == "dev" and "dev-dependencies" in poetry_content:
             # We need to account for the old `dev-dependencies` section
             removed = self._remove_packages(
-                packages, [], poetry_content["dev-dependencies"], "dev"
+                packages, [], poetry_content["dev-dependencies"], [], "dev"
             )
 
             if not poetry_content["dev-dependencies"]:
@@ -98,18 +119,37 @@ list of installed packages
             removed = set()
             if "group" in poetry_content:
                 if group in poetry_content["group"]:
-                    removed = self._remove_packages(
-                        packages,
-                        [],
-                        poetry_content["group"][group].get("dependencies", {}),
-                        group,
+                    removed.update(
+                        self._remove_packages(
+                            packages=packages,
+                            project_section=[],
+                            poetry_section=poetry_content["group"][group].get(
+                                "dependencies", {}
+                            ),
+                            group_section=[],
+                            group_name=group,
+                        )
                     )
 
                 if not poetry_content["group"][group]:
                     del poetry_content["group"][group]
+            if group in groups_content:
+                removed.update(
+                    self._remove_packages(
+                        packages=packages,
+                        project_section=[],
+                        poetry_section={},
+                        group_section=groups_content[group],
+                        group_name=group,
+                    )
+                )
+                if not groups_content[group]:
+                    del groups_content[group]
 
         if "group" in poetry_content and not poetry_content["group"]:
             del poetry_content["group"]
+        if "dependency-groups" in content and not content["dependency-groups"]:
+            del content["dependency-groups"]
 
         not_found = set(packages).difference(removed)
         if not_found:
@@ -140,6 +180,7 @@ list of installed packages
         packages: list[str],
         project_section: list[str],
         poetry_section: dict[str, Any],
+        group_section: list[str],
         group_name: str,
     ) -> set[str]:
         removed = set()
@@ -154,6 +195,10 @@ list of installed packages
             for existing_package in list(poetry_section):
                 if canonicalize_name(existing_package) == normalized_name:
                     del poetry_section[existing_package]
+                    removed.add(package)
+            for requirement in group_section.copy():
+                if Dependency.create_from_pep_508(requirement).name == normalized_name:
+                    group_section.remove(requirement)
                     removed.add(package)
 
         for package in removed:
