@@ -16,6 +16,7 @@ import requests
 from cleo.io.null_io import NullIO
 from keyring.credentials import SimpleCredential
 
+from poetry.console.exceptions import PoetryRuntimeError
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.authenticator import RepositoryCertificateConfig
 from poetry.utils.password_manager import PoetryKeyring
@@ -279,9 +280,10 @@ def test_authenticator_request_raises_exception_when_attempts_exhausted(
     http.register_uri(httpretty.GET, sdist_uri, body=callback)
     authenticator = Authenticator(config, NullIO())
 
-    with pytest.raises(requests.exceptions.ConnectionError):
+    with pytest.raises(PoetryRuntimeError) as e:
         authenticator.request("get", sdist_uri)
 
+    assert str(e.value) == "All attempts to connect to foo.bar failed."
     assert sleep.call_count == 5
 
 

@@ -22,6 +22,8 @@ from requests_toolbelt import user_agent
 
 from poetry.__version__ import __version__
 from poetry.config.config import Config
+from poetry.console.exceptions import ConsoleMessage
+from poetry.console.exceptions import PoetryRuntimeError
 from poetry.exceptions import PoetryError
 from poetry.utils.constants import REQUESTS_TIMEOUT
 from poetry.utils.constants import RETRY_AFTER_HEADER
@@ -230,7 +232,28 @@ class Authenticator:
                 resp = session.send(prepared_request, **send_kwargs)
             except (requests.exceptions.ConnectionError, OSError) as e:
                 if is_last_attempt:
-                    raise e
+                    parsed_url = urllib.parse.urlsplit(url)
+                    exc = PoetryRuntimeError.create(
+                        reason=f"<error>All attempts to connect to <c1>{parsed_url.netloc}</> failed.</>",
+                        exception=e,
+                    )
+                    exc.append(
+                        ConsoleMessage(
+                            "the server is not responding to requests at the moment\n"
+                            "the hostname cannot be resolved by your DNS\n"
+                            "your network is not connected to the internet\n"
+                        )
+                        .indent("    - ")
+                        .make_section("Probable Causes")
+                        .wrap("warning")
+                    )
+                    exc.append(
+                        ConsoleMessage(
+                            f"<b>Note:</> The path requested was <c1>{parsed_url.path}</>.",
+                            debug=True,
+                        )
+                    )
+                    raise exc
             else:
                 if resp.status_code not in STATUS_FORCELIST or is_last_attempt:
                     if raise_for_status:
@@ -245,7 +268,7 @@ class Authenticator:
                 continue
 
         # this should never really be hit under any sane circumstance
-        raise PoetryError("Failed HTTP {} request", method.upper())
+        raise PoetryError(f"Failed HTTP request: {method.upper()} {url}")
 
     def _get_backoff(self, response: requests.Response | None, attempt: int) -> float:
         if response is not None:
