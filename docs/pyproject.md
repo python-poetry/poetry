@@ -248,6 +248,10 @@ Here, we will have the `my_package_cli` script installed which will execute the 
 When a script is added or updated, run `poetry install` to make them available in the project's virtualenv.
 {{% /note %}}
 
+{{% note %}}
+To include a file as a script, use [`tool.poetry.scripts`]({{< relref "#scripts-1" >}}) instead.
+{{% /note %}}
+
 ### gui-scripts
 
 This section describes the GUI scripts that will be installed when installing the package.
