@@ -30,11 +30,14 @@ def assert_source_added(
     added_source: Source,
     existing_sources: Iterable[Source] = (),
 ) -> None:
-    assert tester.io.fetch_error().strip() == ""
-    assert (
-        tester.io.fetch_output().strip()
-        == f"Adding source with name {added_source.name}."
-    )
+    expected_error = ""
+    if tester.io.input.option("priority") is None:
+        expected_error = f"The default priority will change to supplemental in a future release.\n{expected_error}"
+    assert tester.io.fetch_error().strip() == expected_error.strip()
+
+    expected_output = f"Adding source with name {added_source.name}."
+    assert tester.io.fetch_output().strip() == expected_output
+
     poetry.pyproject.reload()
     sources = poetry.get_sources()
     assert sources == [*existing_sources, added_source]

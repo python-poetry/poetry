@@ -1003,7 +1003,7 @@ The `source add` command adds source configuration to the project.
 For example, to add the `pypi-test` source, you can run:
 
 ```bash
-poetry source add pypi-test https://test.pypi.org/simple/
+poetry source add --priority supplemental pypi-test https://test.pypi.org/simple/
 ```
 
 You cannot use the name `pypi` for a custom repository as it is reserved for use by
@@ -1015,7 +1015,7 @@ poetry source add --priority=explicit pypi
 
 #### Options
 
-* `--priority`: Set the priority of this source. Accepted values are: [`supplemental`]({{< relref "repositories#supplemental-package-sources" >}}), and [`explicit`]({{< relref "repositories#explicit-package-sources" >}}). Refer to the dedicated sections in [Repositories]({{< relref "repositories" >}}) for more information.
+* `--priority`: Set the priority of this source. Accepted values are: [`primary`]({{< relref "repositories#primary-package-sources" >}}), [`supplemental`]({{< relref "repositories#supplemental-package-sources" >}}), and [`explicit`]({{< relref "repositories#explicit-package-sources" >}}). Refer to the dedicated sections in [Repositories]({{< relref "repositories" >}}) for more information.
 
 ### source show
 
