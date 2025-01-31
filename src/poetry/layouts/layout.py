@@ -38,10 +38,12 @@ requires-python = ""
 dependencies = [
 ]
 
+[dependency-groups]
+dev = [
+]
+
 [tool.poetry]
 packages = []
-
-[tool.poetry.group.dev.dependencies]
 """
 
 poetry_core_version = Version.parse(importlib.metadata.version("poetry-core"))
@@ -179,11 +181,10 @@ class Layout:
 
         if self._dev_dependencies:
             for dep_name, dep_constraint in self._dev_dependencies.items():
-                poetry_content["group"]["dev"]["dependencies"][dep_name] = (
-                    dep_constraint
-                )
+                dependency = Factory.create_dependency(dep_name, dep_constraint)
+                content["dependency-groups"]["dev"].append(dependency.to_pep_508())
         else:
-            del poetry_content["group"]
+            del content["dependency-groups"]
 
         if not poetry_content:
             del content["tool"]["poetry"]
