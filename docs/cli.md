@@ -305,6 +305,25 @@ Without `--` this command will fail if `${GITLAB_JOB_TOKEN}` starts with a hyphe
 * `--local`: Set/Get settings that are specific to a project (in the local configuration file `poetry.toml`).
 * `--migrate`: Migrate outdated configuration settings.
 
+## debug
+
+The `debug` command groups subcommands that are useful for, as the name suggests, debugging issues you might have
+when using Poetry with your projects.
+
+### debug info
+
+The `debug info` command shows debug information about Poetry and your project's virtual environment.
+
+### debug resolve
+
+The `debug resolve` command helps when debugging dependency resolution issues. The command attempts to resolve your
+dependencies and list the chosen packages and versions.
+
+### debug tags
+
+The `debug tags` command is useful when you want to see the supported packaging tags for your project's active
+virtual environment. This is useful when Poetry cannot install any known binary distributions for a dependency.
+
 ## env
 
 The `env` command groups subcommands to interact with the virtualenvs
