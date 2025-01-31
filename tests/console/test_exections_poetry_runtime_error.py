@@ -139,3 +139,10 @@ def test_poetry_runtime_error_create(
 
     actual_texts = [msg.text for msg in error._messages]
     assert actual_texts == expected_message_texts
+
+
+def test_poetry_runtime_error_append() -> None:
+    """Test the append method of PoetryRuntimeError."""
+    error = PoetryRuntimeError.create("Error", info=["Hello"]).append("World")
+    actual_texts = [msg.text for msg in error._messages]
+    assert actual_texts == ["Error", "<info>Hello</>", "World"]
