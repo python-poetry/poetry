@@ -32,7 +32,7 @@ def verify_project_directory(
     path: Path,
     package_name: str,
     package_path: str | Path,
-    include_from: str | None = None,
+    is_flat: bool = False,
 ) -> Poetry:
     package_path = Path(package_path)
     assert path.is_dir()
@@ -49,13 +49,13 @@ def verify_project_directory(
     poetry = Factory().create_poetry(cwd=path)
     assert poetry.package.name == package_name
 
-    if include_from:
-        package_include = {
-            "include": package_path.relative_to(include_from).parts[0],
-            "from": include_from,
-        }
-    else:
+    if is_flat:
         package_include = {"include": package_path.parts[0]}
+    else:
+        package_include = {
+            "include": package_path.relative_to("src").parts[0],
+            "from": "src",
+        }
 
     name = poetry.package.name
     packages = poetry.local_config.get("packages")
@@ -72,81 +72,87 @@ def verify_project_directory(
 @pytest.mark.parametrize(
     "options,directory,package_name,package_path,include_from",
     [
-        ([], "package", "package", "package", None),
-        (["--src"], "package", "package", "src/package", "src"),
+        (["--flat"], "package", "package", "package", None),
+        ([], "package", "package", "src/package", "src"),
         (
-            ["--name namespace.package"],
+            ["--flat", "--name namespace.package"],
             "namespace-package",
             "namespace-package",
             "namespace/package",
             None,
         ),
         (
-            ["--src", "--name namespace.package"],
+            ["--name namespace.package"],
             "namespace-package",
             "namespace-package",
             "src/namespace/package",
             "src",
         ),
         (
-            ["--name namespace.package_a"],
+            ["--flat", "--name namespace.package_a"],
             "namespace-package_a",
             "namespace-package-a",
             "namespace/package_a",
             None,
         ),
         (
-            ["--src", "--name namespace.package_a"],
+            ["--name namespace.package_a"],
             "namespace-package_a",
             "namespace-package-a",
             "src/namespace/package_a",
             "src",
         ),
         (
-            ["--name namespace_package"],
+            ["--flat", "--name namespace_package"],
             "namespace-package",
             "namespace-package",
             "namespace_package",
             None,
         ),
         (
-            ["--name namespace_package", "--src"],
+            ["--name namespace_package"],
             "namespace-package",
             "namespace-package",
             "src/namespace_package",
             "src",
         ),
         (
-            ["--name namespace.package"],
+            ["--flat", "--name namespace.package"],
             "package",
             "namespace-package",
             "namespace/package",
             None,
         ),
         (
-            ["--name namespace.package", "--src"],
+            ["--name namespace.package"],
             "package",
             "namespace-package",
             "src/namespace/package",
             "src",
         ),
         (
-            ["--name namespace.package"],
+            ["--name namespace.package", "--flat"],
             "package",
             "namespace-package",
             "namespace/package",
             None,
         ),
         (
-            ["--name namespace.package", "--src"],
+            ["--name namespace.package"],
             "package",
             "namespace-package",
             "src/namespace/package",
             "src",
         ),
-        ([], "namespace_package", "namespace-package", "namespace_package", None),
         (
-            ["--src", "--name namespace_package"],
+            ["--flat"],
+            "namespace_package",
+            "namespace-package",
+            "namespace_package",
+            None,
+        ),
+        (
+            ["--name namespace_package"],
             "namespace_package",
             "namespace-package",
             "src/namespace_package",
@@ -166,7 +172,7 @@ def test_command_new(
     path = tmp_path / directory
     options.append(str(path))
     tester.execute(" ".join(options))
-    verify_project_directory(path, package_name, package_path, include_from)
+    verify_project_directory(path, package_name, package_path, "--flat" in options)
 
 
 @pytest.mark.parametrize(("fmt",), [(None,), ("md",), ("rst",), ("adoc",), ("creole",)])
@@ -182,7 +188,7 @@ def test_command_new_with_readme(
 
     tester.execute(" ".join(options))
 
-    poetry = verify_project_directory(path, package, package, None)
+    poetry = verify_project_directory(path, package, Path("src") / package)
     project_section = poetry.pyproject.data["project"]
     assert isinstance(project_section, dict)
     assert project_section["readme"] == f"README.{fmt or 'md'}"
@@ -222,9 +228,9 @@ requires-python = ">={python}"
 
 
 def test_basic_interactive_new(
-    tester: CommandTester, tmp_path: Path, init_basic_inputs: str, init_basic_toml: str
+    tester: CommandTester, tmp_path: Path, init_basic_inputs: str, new_basic_toml: str
 ) -> None:
     path = tmp_path / "somepackage"
     tester.execute(f"--interactive {path.as_posix()}", inputs=init_basic_inputs)
-    verify_project_directory(path, "my-package", "my_package", None)
-    assert init_basic_toml in tester.io.fetch_output()
+    verify_project_directory(path, "my-package", "src/my_package")
+    assert new_basic_toml in tester.io.fetch_output()

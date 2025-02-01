@@ -34,3 +34,24 @@ license = {text = "MIT"}
 readme = "README.md"
 requires-python = ">=3.6"
 """
+
+
+@pytest.fixture()
+def new_basic_toml() -> str:
+    return """\
+[project]
+name = "my-package"
+version = "1.2.3"
+description = "This is a description"
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.6"
+dependencies = [
+]
+
+[tool.poetry]
+packages = [{include = "my_package", from = "src"}]
+"""

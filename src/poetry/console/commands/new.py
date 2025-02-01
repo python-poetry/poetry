@@ -29,7 +29,13 @@ class NewCommand(InitCommand):
             flag=True,
         ),
         option("name", None, "Set the resulting package name.", flag=False),
-        option("src", None, "Use the src layout for the project."),
+        option(
+            "src",
+            None,
+            "Use the src layout for the project. "
+            "<warning>Deprecated</>: This is the default option now.",
+        ),
+        option("flat", None, "Use the flat layout for the project."),
         option(
             "readme",
             None,
@@ -72,9 +78,14 @@ class NewCommand(InitCommand):
                 f"Destination <fg=yellow>{path}</> exists and is not empty"
             )
 
+        if self.option("src"):
+            self.line_error(
+                "The <c1>--src</> option is now the default and will be removed in a future version."
+            )
+
         return self._init_pyproject(
             project_path=path,
             allow_interactive=self.option("interactive"),
-            layout_name="src" if self.option("src") else "standard",
+            layout_name="standard" if self.option("flat") else "src",
             readme_format=self.option("readme") or "md",
         )
