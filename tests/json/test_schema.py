@@ -2,16 +2,15 @@ from __future__ import annotations
 
 import json
 
+from importlib.resources import files
 from pathlib import Path
 from typing import Any
 
-from poetry.core.json import SCHEMA_DIR as CORE_SCHEMA_DIR
-
 from poetry.factory import Factory
-from poetry.json import SCHEMA_DIR
 from poetry.toml import TOMLFile
 
 
+SCHEMA_FILE = files("poetry.json") / "schemas" / "poetry.json"
 FIXTURE_DIR = Path(__file__).parent / "fixtures"
 SOURCE_FIXTURE_DIR = FIXTURE_DIR / "source"
 
@@ -59,12 +58,14 @@ def test_self_invalid_plugin() -> None:
 
 
 def test_dependencies_is_consistent_to_poetry_core_schema() -> None:
-    with (SCHEMA_DIR / "poetry.json").open(encoding="utf-8") as f:
+    with SCHEMA_FILE.open(encoding="utf-8") as f:
         schema = json.load(f)
     dependency_definitions = {
         key: value for key, value in schema["definitions"].items() if "depend" in key
     }
-    with (CORE_SCHEMA_DIR / "poetry-schema.json").open(encoding="utf-8") as f:
+    with (files("poetry.core") / "json" / "schemas" / "poetry-schema.json").open(
+        encoding="utf-8"
+    ) as f:
         core_schema = json.load(f)
     core_dependency_definitions = {
         key: value
