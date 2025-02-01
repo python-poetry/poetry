@@ -75,6 +75,7 @@ COMMANDS = [
     # Debug commands
     "debug info",
     "debug resolve",
+    "debug tags",
     # Env commands
     "env activate",
     "env info",
