@@ -38,8 +38,12 @@ from poetry.vcs.git import Git
 
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+    from collections.abc import Sequence
+
     from cleo.io.io import IO
     from cleo.io.outputs.section_output import SectionOutput
+    from packaging.utils import NormalizedName
     from poetry.core.packages.package import Package
 
     from poetry.config.config import Config
@@ -99,6 +103,11 @@ class Executor:
         # https://github.com/python-poetry/cleo/issues/423
         self._decorated_output: bool = self._io.output.is_decorated()
         self._max_retries = config.get("requests.max-retries", 0)
+
+        # sdist build config settings
+        self._build_config_settings: Mapping[
+            NormalizedName, Mapping[str, str | Sequence[str]]
+        ] = config.get("installer.build-config-settings")
 
     @property
     def installations_count(self) -> int:
@@ -324,6 +333,12 @@ class Executor:
                             requirement = (
                                 pkg.to_dependency().to_pep_508().split(";")[0].strip()
                             )
+
+                        if config_settings := self._build_config_settings.get(pkg.name):
+                            for setting in config_settings:
+                                for setting_value in config_settings[setting]:
+                                    pip_command += f" --config-settings='{setting}={setting_value}'"
+
                         message = e.generate_message(
                             source_string=f"{pkg.pretty_name} ({pkg.full_pretty_version})",
                             build_command=f'{pip_command} "{requirement}"',
@@ -619,7 +634,10 @@ class Executor:
         self._populate_hashes_dict(archive, package)
 
         return self._chef.prepare(
-            archive, editable=package.develop, output_dir=output_dir
+            archive,
+            editable=package.develop,
+            output_dir=output_dir,
+            config_settings=self._build_config_settings.get(operation.package.name),
         )
 
     def _prepare_git_archive(self, operation: Install | Update) -> Path:
@@ -724,7 +742,11 @@ class Executor:
             )
             self._write(operation, message)
 
-            archive = self._chef.prepare(archive, output_dir=original_archive.parent)
+            archive = self._chef.prepare(
+                archive,
+                output_dir=original_archive.parent,
+                config_settings=self._build_config_settings.get(operation.package.name),
+            )
 
         # Use the original archive to provide the correct hash.
         self._populate_hashes_dict(original_archive, package)

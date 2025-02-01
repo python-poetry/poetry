@@ -12,6 +12,9 @@ from poetry.utils.isolated_build import isolated_builder
 
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+    from collections.abc import Sequence
+
     from build import DistributionType
 
     from poetry.repositories import RepositoryPool
@@ -31,19 +34,36 @@ class Chef:
         self._artifact_cache = artifact_cache
 
     def prepare(
-        self, archive: Path, output_dir: Path | None = None, *, editable: bool = False
+        self,
+        archive: Path,
+        output_dir: Path | None = None,
+        *,
+        editable: bool = False,
+        config_settings: Mapping[str, str | Sequence[str]] | None = None,
     ) -> Path:
         if not self._should_prepare(archive):
             return archive
 
         if archive.is_dir():
             destination = output_dir or Path(tempfile.mkdtemp(prefix="poetry-chef-"))
-            return self._prepare(archive, destination=destination, editable=editable)
+            return self._prepare(
+                archive,
+                destination=destination,
+                editable=editable,
+                config_settings=config_settings,
+            )
 
-        return self._prepare_sdist(archive, destination=output_dir)
+        return self._prepare_sdist(
+            archive, destination=output_dir, config_settings=config_settings
+        )
 
     def _prepare(
-        self, directory: Path, destination: Path, *, editable: bool = False
+        self,
+        directory: Path,
+        destination: Path,
+        *,
+        editable: bool = False,
+        config_settings: Mapping[str, str | Sequence[str]] | None = None,
     ) -> Path:
         distribution: DistributionType = "editable" if editable else "wheel"
         with isolated_builder(
@@ -56,10 +76,16 @@ class Chef:
                 builder.build(
                     distribution,
                     destination.as_posix(),
+                    config_settings=config_settings,
                 )
             )
 
-    def _prepare_sdist(self, archive: Path, destination: Path | None = None) -> Path:
+    def _prepare_sdist(
+        self,
+        archive: Path,
+        destination: Path | None = None,
+        config_settings: Mapping[str, str | Sequence[str]] | None = None,
+    ) -> Path:
         from poetry.core.packages.utils.link import Link
 
         suffix = archive.suffix
@@ -88,6 +114,7 @@ class Chef:
             return self._prepare(
                 sdist_dir,
                 destination,
+                config_settings=config_settings,
             )
 
     def _should_prepare(self, archive: Path) -> bool:

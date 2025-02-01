@@ -11,13 +11,17 @@ from typing import cast
 
 from cleo.helpers import argument
 from cleo.helpers import option
+from installer.utils import canonicalize_name
 
 from poetry.config.config import PackageFilterPolicy
 from poetry.config.config import boolean_normalizer
 from poetry.config.config import boolean_validator
+from poetry.config.config import build_config_setting_normalizer
+from poetry.config.config import build_config_setting_validator
 from poetry.config.config import int_normalizer
 from poetry.config.config_source import UNSET
 from poetry.config.config_source import ConfigSourceMigration
+from poetry.config.config_source import PropertyNotFoundError
 from poetry.console.commands.command import Command
 
 
@@ -149,9 +153,28 @@ To remove a repository (repo is a short alias for repositories):
             if setting_key.split(".")[0] in self.LIST_PROHIBITED_SETTINGS:
                 raise ValueError(f"Expected a value for {setting_key} setting.")
 
-            m = re.match(r"^repos?(?:itories)?(?:\.(.+))?", self.argument("key"))
-            value: str | dict[str, Any]
-            if m:
+            value: str | dict[str, Any] | list[str]
+
+            if m := re.match(
+                r"installer\.build-config-settings(\.([^.]+))?", self.argument("key")
+            ):
+                if not m.group(1):
+                    if value := config.get("installer.build-config-settings"):
+                        self._list_configuration(value, value)
+                    else:
+                        self.line("No packages configured with build config settings.")
+                else:
+                    package_name = canonicalize_name(m.group(2))
+                    key = f"installer.build-config-settings.{package_name}"
+
+                    if value := config.get(key):
+                        self.line(json.dumps(value))
+                    else:
+                        self.line(
+                            f"No build config settings configured for <c1>{package_name}</>."
+                        )
+                return 0
+            elif m := re.match(r"^repos?(?:itories)?(?:\.(.+))?", self.argument("key")):
                 if not m.group(1):
                     value = {}
                     if config.get("repositories") is not None:
@@ -284,6 +307,35 @@ To remove a repository (repo is a short alias for repositories):
                 )
             else:
                 raise ValueError("You must pass exactly 1 value")
+
+            return 0
+
+        # handle build config settings
+        m = re.match(r"installer\.build-config-settings\.([^.]+)", self.argument("key"))
+        if m:
+            key = f"installer.build-config-settings.{canonicalize_name(m.group(1))}"
+
+            if self.option("unset"):
+                config.config_source.remove_property(key)
+                return 0
+
+            try:
+                settings = config.config_source.get_property(key)
+            except PropertyNotFoundError:
+                settings = {}
+
+            for value in values:
+                if build_config_setting_validator(value):
+                    config_settings = build_config_setting_normalizer(value)
+                    for setting_name, item in config_settings.items():
+                        settings[setting_name] = item
+                else:
+                    raise ValueError(
+                        f"Invalid build config setting '{value}'. "
+                        "It must be a valid JSON with each property a string or a list of strings."
+                    )
+
+            config.config_source.add_property(key, settings)
 
             return 0
 

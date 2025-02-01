@@ -37,6 +37,8 @@ from poetry.vcs.git.backend import Git
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from collections.abc import Mapping
+    from collections.abc import Sequence
 
     from pytest_mock import MockerFixture
 
@@ -63,7 +65,12 @@ class Chef(BaseChef):
 
         self._sdist_wheels = wheels
 
-    def _prepare_sdist(self, archive: Path, destination: Path | None = None) -> Path:
+    def _prepare_sdist(
+        self,
+        archive: Path,
+        destination: Path | None = None,
+        config_settings: Mapping[str, str | Sequence[str]] | None = None,
+    ) -> Path:
         if self._sdist_wheels is not None:
             wheel = self._sdist_wheels.pop(0)
             self._sdist_wheels.append(wheel)
@@ -73,7 +80,12 @@ class Chef(BaseChef):
         return super()._prepare_sdist(archive)
 
     def _prepare(
-        self, directory: Path, destination: Path, *, editable: bool = False
+        self,
+        directory: Path,
+        destination: Path,
+        *,
+        editable: bool = False,
+        config_settings: Mapping[str, str | Sequence[str]] | None = None,
     ) -> Path:
         if self._directory_wheels is not None:
             wheel = self._directory_wheels.pop(0)
@@ -242,8 +254,105 @@ Package operations: 4 installs, 2 updates, 1 removal
 
     assert prepare_spy.call_count == 2
     assert prepare_spy.call_args_list == [
-        mocker.call(chef, mocker.ANY, destination=mocker.ANY, editable=False),
-        mocker.call(chef, mocker.ANY, destination=mocker.ANY, editable=True),
+        mocker.call(
+            chef,
+            mocker.ANY,
+            destination=mocker.ANY,
+            editable=False,
+            config_settings=None,
+        ),
+        mocker.call(
+            chef,
+            mocker.ANY,
+            destination=mocker.ANY,
+            editable=True,
+            config_settings=None,
+        ),
+    ]
+
+
+def test_execute_build_config_settings_passed(
+    mocker: MockerFixture,
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    tmp_path: Path,
+    env: MockEnv,
+    copy_wheel: Callable[[], Path],
+    fixture_dir: FixtureDirGetter,
+) -> None:
+    wheel_install = mocker.patch.object(WheelInstaller, "install")
+
+    config_settings_demo = {"CC": "gcc", "--build-option": ["--one", "--two"]}
+
+    config.merge(
+        {
+            "cache-dir": str(tmp_path),
+            "installer": {"build-config-settings": {"demo": config_settings_demo}},
+        }
+    )
+    artifact_cache = ArtifactCache(cache_dir=config.artifacts_cache_directory)
+
+    prepare_spy = mocker.spy(Chef, "_prepare")
+    chef = Chef(artifact_cache, env, Factory.create_pool(config))
+    chef.set_directory_wheel([copy_wheel(), copy_wheel()])
+    chef.set_sdist_wheel(copy_wheel())
+
+    executor = Executor(env, pool, config, io)
+    executor._chef = chef
+
+    directory_package = Package(
+        "simple-project",
+        "1.2.3",
+        source_type="directory",
+        source_url=fixture_dir("simple_project").resolve().as_posix(),
+    )
+
+    git_package = Package(
+        "demo",
+        "0.1.0",
+        source_type="git",
+        source_reference="master",
+        source_url="https://github.com/demo/demo.git",
+        develop=True,
+    )
+
+    return_code = executor.execute(
+        [
+            Install(directory_package),
+            Install(git_package),
+        ]
+    )
+
+    expected = f"""
+Package operations: 2 installs, 0 updates, 0 removals
+
+  - Installing simple-project (1.2.3 {directory_package.source_url})
+  - Installing demo (0.1.0 master)
+"""
+
+    expected_lines = set(expected.splitlines())
+    output_lines = set(io.fetch_output().splitlines())
+    assert output_lines == expected_lines
+    assert wheel_install.call_count == 2
+    assert return_code == 0
+
+    assert prepare_spy.call_count == 2
+    assert prepare_spy.call_args_list == [
+        mocker.call(
+            chef,
+            mocker.ANY,
+            destination=mocker.ANY,
+            editable=False,
+            config_settings=None,
+        ),
+        mocker.call(
+            chef,
+            mocker.ANY,
+            destination=mocker.ANY,
+            editable=True,
+            config_settings=config_settings_demo,
+        ),
     ]
 
 

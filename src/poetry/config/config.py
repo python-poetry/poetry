@@ -1,16 +1,19 @@
 from __future__ import annotations
 
 import dataclasses
+import json
 import logging
 import os
 import re
 
 from copy import deepcopy
+from json import JSONDecodeError
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
 
+from packaging.utils import NormalizedName
 from packaging.utils import canonicalize_name
 
 from poetry.config.dict_config_source import DictConfigSource
@@ -22,6 +25,8 @@ from poetry.toml import TOMLFile
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from collections.abc import Mapping
+    from collections.abc import Sequence
 
     from poetry.config.config_source import ConfigSource
 
@@ -36,6 +41,37 @@ def boolean_normalizer(val: str) -> bool:
 
 def int_normalizer(val: str) -> int:
     return int(val)
+
+
+def build_config_setting_validator(val: str) -> bool:
+    try:
+        value = build_config_setting_normalizer(val)
+    except JSONDecodeError:
+        return False
+
+    if not isinstance(value, dict):
+        return False
+
+    for key, item in value.items():
+        # keys should be string
+        if not isinstance(key, str):
+            return False
+
+        # items are allowed to be a string
+        if isinstance(item, str):
+            continue
+
+        # list items should only contain strings
+        is_valid_list = isinstance(item, list) and all(isinstance(i, str) for i in item)
+        if not is_valid_list:
+            return False
+
+    return True
+
+
+def build_config_setting_normalizer(val: str) -> Mapping[str, str | Sequence[str]]:
+    value: Mapping[str, str | Sequence[str]] = json.loads(val)
+    return value
 
 
 @dataclasses.dataclass
@@ -128,6 +164,7 @@ class Config:
             "max-workers": None,
             "no-binary": None,
             "only-binary": None,
+            "build-config-settings": {},
         },
         "solver": {
             "lazy-wheel": True,
@@ -208,6 +245,26 @@ class Config:
 
         return repositories
 
+    @staticmethod
+    def _get_environment_build_config_settings() -> Mapping[
+        NormalizedName, Mapping[str, str | Sequence[str]]
+    ]:
+        build_config_settings = {}
+        pattern = re.compile(r"POETRY_INSTALLER_BUILD_CONFIG_SETTINGS_(?P<name>[^.]+)")
+
+        for env_key in os.environ:
+            if match := pattern.match(env_key):
+                if not build_config_setting_validator(os.environ[env_key]):
+                    logger.debug(
+                        "Invalid value set for environment variable %s", env_key
+                    )
+                    continue
+                build_config_settings[canonicalize_name(match.group("name"))] = (
+                    build_config_setting_normalizer(os.environ[env_key])
+                )
+
+        return build_config_settings
+
     @property
     def repository_cache_directory(self) -> Path:
         return Path(self.get("cache-dir")).expanduser() / "cache" / "repositories"
@@ -244,6 +301,9 @@ class Config:
         Retrieve a setting value.
         """
         keys = setting_name.split(".")
+        build_config_settings: Mapping[
+            NormalizedName, Mapping[str, str | Sequence[str]]
+        ] = {}
 
         # Looking in the environment if the setting
         # is set via a POETRY_* environment variable
@@ -254,12 +314,25 @@ class Config:
                 if repositories:
                     return repositories
 
-            env = "POETRY_" + "_".join(k.upper().replace("-", "_") for k in keys)
-            env_value = os.getenv(env)
-            if env_value is not None:
-                return self.process(self._get_normalizer(setting_name)(env_value))
+            build_config_settings_key = "installer.build-config-settings"
+            if setting_name == build_config_settings_key or setting_name.startswith(
+                f"{build_config_settings_key}."
+            ):
+                build_config_settings = self._get_environment_build_config_settings()
+            else:
+                env = "POETRY_" + "_".join(k.upper().replace("-", "_") for k in keys)
+                env_value = os.getenv(env)
+                if env_value is not None:
+                    return self.process(self._get_normalizer(setting_name)(env_value))
 
         value = self._config
+
+        # merge installer build config settings from the environment
+        for package_name in build_config_settings:
+            value["installer"]["build-config-settings"][package_name] = (
+                build_config_settings[package_name]
+            )
+
         for key in keys:
             if key not in value:
                 return self.process(default)
@@ -317,6 +390,9 @@ class Config:
 
         if name in ["installer.no-binary", "installer.only-binary"]:
             return PackageFilterPolicy.normalize
+
+        if name.startswith("installer.build-config-settings."):
+            return build_config_setting_normalizer
 
         return lambda val: val
 
