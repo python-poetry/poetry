@@ -608,39 +608,14 @@ poetry lock
 
 ## new
 
-This command will help you kickstart your new Python project by creating
-a directory structure suitable for most projects.
+This command will help you kickstart your new Python project by creating a new Poetry project. By default, a `src`
+layout is chosen.
 
 ```bash
 poetry new my-package
 ```
 
 will create a folder as follows:
-
-```text
-my-package
-├── pyproject.toml
-├── README.md
-├── my_package
-│   └── __init__.py
-└── tests
-    └── __init__.py
-```
-
-If you want to name your project differently than the folder, you can pass
-the `--name` option:
-
-```bash
-poetry new my-folder --name my-package
-```
-
-If you want to use a src folder, you can use the `--src` option:
-
-```bash
-poetry new --src my-package
-```
-
-That will create a folder structure as follows:
 
 ```text
 my-package
@@ -653,11 +628,41 @@ my-package
     └── __init__.py
 ```
 
+If you want to name your project differently than the folder, you can pass
+the `--name` option:
+
+```bash
+poetry new my-folder --name my-package
+```
+
+If you want to use a `flat` project layout, you can use the `--flat` option:
+
+```bash
+poetry new --flat my-package
+```
+
+That will create a folder structure as follows:
+
+```text
+my-package
+├── pyproject.toml
+├── README.md
+├── my_package
+│   └── __init__.py
+└── tests
+    └── __init__.py
+```
+
+{{% note %}}
+For an overview of the differences between `flat` and `src` layouts, please see
+[here](https://packaging.python.org/en/latest/discussions/src-layout-vs-flat-layout/).
+{{% /note %}}
+
 The `--name` option is smart enough to detect namespace packages and create
 the required structure for you.
 
 ```bash
-poetry new --src --name my.package my-package
+poetry new --name my.package my-package
 ```
 
 will create the following structure:
@@ -678,7 +683,7 @@ my-package
 
 * `--interactive (-i)`: Allow interactive specification of project configuration.
 * `--name`: Set the resulting package name.
-* `--src`: Use the src layout for the project.
+* `--flat`: Use the flat layout for the project.
 * `--readme`: Specify the readme file extension. Default is `md`. If you intend to publish to PyPI
   keep the [recommendations for a PyPI-friendly README](https://packaging.python.org/en/latest/guides/making-a-pypi-friendly-readme/)
   in mind.
