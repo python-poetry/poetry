@@ -18,15 +18,17 @@ from tests.console.commands.env.helpers import check_output_wrapper
 
 
 if TYPE_CHECKING:
+    from unittest.mock import MagicMock
+
     from cleo.testers.command_tester import CommandTester
     from pytest_mock import MockerFixture
 
     from tests.types import CommandTesterFactory
+    from tests.types import MockedPythonRegister
 
 
 @pytest.fixture(autouse=True)
 def setup(mocker: MockerFixture) -> None:
-    mocker.stopall()
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
@@ -56,13 +58,10 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     venv_cache: Path,
     venv_name: str,
     venvs_in_cache_config: None,
+    mocked_python_register: MockedPythonRegister,
+    with_no_active_python: MagicMock,
 ) -> None:
-    mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
-    mocker.patch(
-        "subprocess.check_output",
-        side_effect=check_output_wrapper(),
-    )
-
+    mocked_python_register("3.7.1")
     mock_build_env = mocker.patch(
         "poetry.utils.env.EnvManager.build_venv", side_effect=build_venv
     )
@@ -95,12 +94,12 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
 
 
 def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
-    mocker: MockerFixture,
     tester: CommandTester,
     current_python: tuple[int, int, int],
     venv_cache: Path,
     venv_name: str,
     venvs_in_cache_config: None,
+    mocked_python_register: MockedPythonRegister,
 ) -> None:
     os.environ["VIRTUAL_ENV"] = "/environment/prefix"
 
@@ -114,7 +113,7 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
     doc[venv_name] = {"minor": python_minor, "patch": python_patch}
     envs_file.write(doc)
 
-    mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
+    mocked_python_register(python_patch)
 
     tester.execute(python_minor)
 
@@ -132,13 +131,15 @@ def test_get_prefers_explicitly_activated_non_existing_virtualenvs_over_env_var(
     venv_cache: Path,
     venv_name: str,
     venvs_in_cache_config: None,
+    mocked_python_register: MockedPythonRegister,
 ) -> None:
     os.environ["VIRTUAL_ENV"] = "/environment/prefix"
 
     python_minor = ".".join(str(v) for v in current_python[:2])
     venv_dir = venv_cache / f"{venv_name}-py{python_minor}"
 
-    mocker.patch("shutil.which", side_effect=lambda py: f"/usr/bin/{py}")
+    mocked_python_register(python_minor)
+
     mocker.patch(
         "poetry.utils.env.EnvManager._env",
         new_callable=mocker.PropertyMock,
