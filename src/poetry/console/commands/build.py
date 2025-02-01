@@ -91,6 +91,15 @@ class BuildHandler:
 
         :returns: True if an isolated build is required, False otherwise.
         """
+        if not self._has_build_backend_defined():
+            self.io.write_error_line(
+                "<warning><b>WARNING</>: No build backend defined. Please define one in the <c1>pyproject.toml</>.\n"
+                "Falling back to using the built-in `poetry-core` version.\n"
+                "In a future release Poetry will fallback to `setuptools` as defined by PEP 517.\n"
+                "More details can be found at https://python-poetry.org/docs/libraries/#packaging</>"
+            )
+            return False
+
         if (
             self.poetry.package.build_script
             or len(self.poetry.build_system_dependencies) != 1
@@ -113,6 +122,9 @@ class BuildHandler:
             return self._isolated_build
 
         return self._build
+
+    def _has_build_backend_defined(self) -> bool:
+        return "build-backend" in self.poetry.pyproject.data.get("build-system", {})
 
     def build(self, options: BuildOptions) -> int:
         if not self.poetry.is_package_mode:
