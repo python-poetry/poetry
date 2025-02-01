@@ -49,19 +49,22 @@ def test_show_config_with_local_config_file_empty(
 
 
 def test_list_displays_default_value_if_not_set(
-    tester: CommandTester, config_cache_dir: Path
+    tester: CommandTester, config_cache_dir: Path, config_data_dir: Path
 ) -> None:
     tester.execute("--list")
 
     cache_dir = json.dumps(str(config_cache_dir))
+    data_dir = json.dumps(str(config_data_dir))
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
+data-dir = {data_dir}
 installer.max-workers = null
 installer.no-binary = null
 installer.only-binary = null
 installer.parallel = true
 installer.re-resolve = true
 keyring.enabled = true
+python.installation-dir = {json.dumps(str(Path("{data-dir}/python")))}  # {config_data_dir / "python"}
 requests.max-retries = 0
 solver.lazy-wheel = true
 system-git-client = false
@@ -79,21 +82,24 @@ virtualenvs.use-poetry-python = false
 
 
 def test_list_displays_set_get_setting(
-    tester: CommandTester, config: Config, config_cache_dir: Path
+    tester: CommandTester, config: Config, config_cache_dir: Path, config_data_dir: Path
 ) -> None:
     tester.execute("virtualenvs.create false")
 
     tester.execute("--list")
 
     cache_dir = json.dumps(str(config_cache_dir))
+    data_dir = json.dumps(str(config_data_dir))
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
+data-dir = {data_dir}
 installer.max-workers = null
 installer.no-binary = null
 installer.only-binary = null
 installer.parallel = true
 installer.re-resolve = true
 keyring.enabled = true
+python.installation-dir = {json.dumps(str(Path("{data-dir}/python")))}  # {config_data_dir / "python"}
 requests.max-retries = 0
 solver.lazy-wheel = true
 system-git-client = false
@@ -133,20 +139,23 @@ def test_cannot_unset_with_value(tester: CommandTester) -> None:
 
 
 def test_unset_setting(
-    tester: CommandTester, config: Config, config_cache_dir: Path
+    tester: CommandTester, config: Config, config_cache_dir: Path, config_data_dir: Path
 ) -> None:
     tester.execute("virtualenvs.path /some/path")
     tester.execute("virtualenvs.path --unset")
     tester.execute("--list")
     cache_dir = json.dumps(str(config_cache_dir))
+    data_dir = json.dumps(str(config_data_dir))
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
+data-dir = {data_dir}
 installer.max-workers = null
 installer.no-binary = null
 installer.only-binary = null
 installer.parallel = true
 installer.re-resolve = true
 keyring.enabled = true
+python.installation-dir = {json.dumps(str(Path("{data-dir}/python")))}  # {config_data_dir / "python"}
 requests.max-retries = 0
 solver.lazy-wheel = true
 system-git-client = false
@@ -164,20 +173,23 @@ virtualenvs.use-poetry-python = false
 
 
 def test_unset_repo_setting(
-    tester: CommandTester, config: Config, config_cache_dir: Path
+    tester: CommandTester, config: Config, config_cache_dir: Path, config_data_dir: Path
 ) -> None:
     tester.execute("repositories.foo.url https://bar.com/simple/")
     tester.execute("repositories.foo.url --unset ")
     tester.execute("--list")
     cache_dir = json.dumps(str(config_cache_dir))
+    data_dir = json.dumps(str(config_data_dir))
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
+data-dir = {data_dir}
 installer.max-workers = null
 installer.no-binary = null
 installer.only-binary = null
 installer.parallel = true
 installer.re-resolve = true
 keyring.enabled = true
+python.installation-dir = {json.dumps(str(Path("{data-dir}/python")))}  # {config_data_dir / "python"}
 requests.max-retries = 0
 solver.lazy-wheel = true
 system-git-client = false
@@ -292,21 +304,27 @@ def test_display_undefined_setting(
 
 
 def test_list_displays_set_get_local_setting(
-    tester: CommandTester, config: Config, config_cache_dir: Path
+    tester: CommandTester,
+    config: Config,
+    config_cache_dir: Path,
+    config_data_dir: Path,
 ) -> None:
     tester.execute("virtualenvs.create false --local")
 
     tester.execute("--list")
 
     cache_dir = json.dumps(str(config_cache_dir))
+    data_dir = json.dumps(str(config_data_dir))
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
+data-dir = {data_dir}
 installer.max-workers = null
 installer.no-binary = null
 installer.only-binary = null
 installer.parallel = true
 installer.re-resolve = true
 keyring.enabled = true
+python.installation-dir = {json.dumps(str(Path("{data-dir}/python")))}  # {config_data_dir / "python"}
 requests.max-retries = 0
 solver.lazy-wheel = true
 system-git-client = false
@@ -329,6 +347,7 @@ def test_list_must_not_display_sources_from_pyproject_toml(
     fixture_dir: FixtureDirGetter,
     command_tester_factory: CommandTesterFactory,
     config_cache_dir: Path,
+    config_data_dir: Path,
 ) -> None:
     source = fixture_dir("with_primary_source_implicit")
     pyproject_content = (source / "pyproject.toml").read_text(encoding="utf-8")
@@ -338,14 +357,17 @@ def test_list_must_not_display_sources_from_pyproject_toml(
     tester.execute("--list")
 
     cache_dir = json.dumps(str(config_cache_dir))
+    data_dir = json.dumps(str(config_data_dir))
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
+data-dir = {data_dir}
 installer.max-workers = null
 installer.no-binary = null
 installer.only-binary = null
 installer.parallel = true
 installer.re-resolve = true
 keyring.enabled = true
+python.installation-dir = {json.dumps(str(Path("{data-dir}/python")))}  # {config_data_dir / "python"}
 repositories.foo.url = "https://foo.bar/simple/"
 requests.max-retries = 0
 solver.lazy-wheel = true
