@@ -168,11 +168,9 @@ def test_detect_corrupted_cache_key_file(
     # original content: 9999999999"value"
 
     if isinstance(corrupt_payload, str):
-        with open(key1_path, "w", encoding="utf-8") as f:
-            f.write(corrupt_payload)  # write corrupt data
+        key1_path.write_text(corrupt_payload, encoding="utf-8")  # write corrupt data
     else:
-        with open(key1_path, "wb") as f:
-            f.write(corrupt_payload)  # write corrupt data
+        key1_path.write_bytes(corrupt_payload)  # write corrupt data
 
     assert poetry_file_cache.get("key1") is None
 

@@ -936,10 +936,10 @@ def test_init_existing_pyproject_consistent_linesep(
 [tool.black]
 line-length = 88
 """.replace("\n", linesep)
-    with open(pyproject_file, "w", newline="", encoding="utf-8") as f:
+    with pyproject_file.open("w", newline="", encoding="utf-8") as f:
         f.write(existing_section)
     tester.execute(inputs=init_basic_inputs)
-    with open(pyproject_file, newline="", encoding="utf-8") as f:
+    with pyproject_file.open(newline="", encoding="utf-8") as f:
         content = f.read()
     init_basic_toml = init_basic_toml.replace("\n", linesep)
     assert f"{existing_section}{linesep}{init_basic_toml}" in content

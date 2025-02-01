@@ -110,7 +110,7 @@ class Config:
         "virtualenvs": {
             "create": True,
             "in-project": None,
-            "path": os.path.join("{cache-dir}", "virtualenvs"),
+            "path": os.path.join("{cache-dir}", "virtualenvs"),  # noqa: PTH118
             "options": {
                 "always-copy": False,
                 "system-site-packages": False,

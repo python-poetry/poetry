@@ -83,7 +83,7 @@ class VirtualEnv(Env):
 
     def is_sane(self) -> bool:
         # A virtualenv is considered sane if "python" exists.
-        return os.path.exists(self.python)
+        return self.python.exists()
 
     def _run(self, cmd: list[str], **kwargs: Any) -> str:
         kwargs["env"] = self.get_temp_environ(environ=kwargs.get("env"))
