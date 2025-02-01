@@ -143,7 +143,7 @@ def test_disabled_keyring_is_unavailable(
         # non-string key
         ('{0: "hello"}', True),
         # non-string value in list
-        ('{"world: ["hello", 0]}', True),
+        ('{"world": ["hello", 0]}', True),
     ],
 )
 def test_config_get_from_environment_variable_build_config_settings(
