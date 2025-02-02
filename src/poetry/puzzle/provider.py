@@ -626,6 +626,27 @@ class Provider:
                 dependencies.append(deps[0])
                 continue
 
+            # Sort out irrelevant requirements
+            overrides_marker_intersection: BaseMarker = AnyMarker()
+            for dep_overrides in self._overrides.values():
+                for dep in dep_overrides.values():
+                    overrides_marker_intersection = (
+                        overrides_marker_intersection.intersect(dep.marker)
+                    )
+            deps = [
+                dep
+                for dep in deps
+                if not overrides_marker_intersection.intersect(dep.marker).is_empty()
+            ]
+            if len(deps) < 2:
+                if not deps or (len(deps) == 1 and deps[0].constraint.is_empty()):
+                    msg = f"<debug>No relevant requirements for {dep_name}</debug>"
+                else:
+                    msg = f"<debug>Only one relevant requirement for {dep_name}</debug>"
+                    dependencies.append(deps[0])
+                self.debug(msg)
+                continue
+
             # At this point, we raise an exception that will
             # tell the solver to make new resolutions with specific overrides.
             #
@@ -652,22 +673,14 @@ class Provider:
             )
 
             overrides = []
-            overrides_marker_intersection: BaseMarker = AnyMarker()
-            for dep_overrides in self._overrides.values():
-                for dep in dep_overrides.values():
-                    overrides_marker_intersection = (
-                        overrides_marker_intersection.intersect(dep.marker)
-                    )
             for dep in deps:
-                if not overrides_marker_intersection.intersect(dep.marker).is_empty():
-                    current_overrides = self._overrides.copy()
-                    package_overrides = current_overrides.get(package, {}).copy()
-                    package_overrides.update({dep.name: dep})
-                    current_overrides.update({package: package_overrides})
-                    overrides.append(current_overrides)
+                current_overrides = self._overrides.copy()
+                package_overrides = current_overrides.get(package, {}).copy()
+                package_overrides.update({dep.name: dep})
+                current_overrides.update({package: package_overrides})
+                overrides.append(current_overrides)
 
-            if overrides:
-                raise OverrideNeededError(*overrides)
+            raise OverrideNeededError(*overrides)
 
         # Modifying dependencies as needed
         clean_dependencies = []
