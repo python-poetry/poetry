@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import shutil
 import tempfile
 
@@ -77,7 +76,7 @@ def test_prepare_directory(
 
     assert wheel.parent.parent == Path(tempfile.gettempdir())
     # cleanup generated tmp dir artifact
-    os.unlink(wheel)
+    wheel.unlink()
 
 
 def test_prepare_directory_with_extensions(
@@ -99,7 +98,7 @@ def test_prepare_directory_with_extensions(
     assert wheel.name == f"extended-0.1-{env.supported_tags[0]}.whl"
 
     # cleanup generated tmp dir artifact
-    os.unlink(wheel)
+    wheel.unlink()
 
 
 def test_prepare_directory_editable(
@@ -122,7 +121,7 @@ def test_prepare_directory_editable(
         assert "simple_project.pth" in z.namelist()
 
     # cleanup generated tmp dir artifact
-    os.unlink(wheel)
+    wheel.unlink()
 
 
 def test_prepare_directory_script(
@@ -168,4 +167,4 @@ def test_prepare_directory_script(
 
     assert wheel.parent.parent == Path(tempfile.gettempdir())
     # cleanup generated tmp dir artifact
-    os.unlink(wheel)
+    wheel.unlink()

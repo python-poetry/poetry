@@ -37,7 +37,7 @@ def install_plugin(installed: Repository) -> None:
     )
     content = Factory.create_pyproject_from_package(package)
     system_pyproject_file = SelfCommand.get_default_system_pyproject_file()
-    with open(system_pyproject_file, "w", encoding="utf-8", newline="") as f:
+    with system_pyproject_file.open("w", encoding="utf-8", newline="") as f:
         f.write(content.as_string())
 
     lock_content = {

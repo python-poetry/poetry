@@ -54,7 +54,7 @@ def test_list_displays_default_value_if_not_set(
     tester.execute("--list")
 
     cache_dir = json.dumps(str(config_cache_dir))
-    venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
+    venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))  # noqa: PTH118
     expected = f"""cache-dir = {cache_dir}
 installer.max-workers = null
 installer.no-binary = null
@@ -86,7 +86,7 @@ def test_list_displays_set_get_setting(
     tester.execute("--list")
 
     cache_dir = json.dumps(str(config_cache_dir))
-    venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
+    venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))  # noqa: PTH118
     expected = f"""cache-dir = {cache_dir}
 installer.max-workers = null
 installer.no-binary = null
@@ -139,7 +139,7 @@ def test_unset_setting(
     tester.execute("virtualenvs.path --unset")
     tester.execute("--list")
     cache_dir = json.dumps(str(config_cache_dir))
-    venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
+    venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))  # noqa: PTH118
     expected = f"""cache-dir = {cache_dir}
 installer.max-workers = null
 installer.no-binary = null
@@ -170,7 +170,7 @@ def test_unset_repo_setting(
     tester.execute("repositories.foo.url --unset ")
     tester.execute("--list")
     cache_dir = json.dumps(str(config_cache_dir))
-    venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
+    venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))  # noqa: PTH118
     expected = f"""cache-dir = {cache_dir}
 installer.max-workers = null
 installer.no-binary = null
@@ -299,7 +299,7 @@ def test_list_displays_set_get_local_setting(
     tester.execute("--list")
 
     cache_dir = json.dumps(str(config_cache_dir))
-    venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
+    venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))  # noqa: PTH118
     expected = f"""cache-dir = {cache_dir}
 installer.max-workers = null
 installer.no-binary = null
@@ -338,7 +338,7 @@ def test_list_must_not_display_sources_from_pyproject_toml(
     tester.execute("--list")
 
     cache_dir = json.dumps(str(config_cache_dir))
-    venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
+    venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))  # noqa: PTH118
     expected = f"""cache-dir = {cache_dir}
 installer.max-workers = null
 installer.no-binary = null
