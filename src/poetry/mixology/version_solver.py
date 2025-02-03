@@ -426,17 +426,19 @@ class VersionSolver:
 
         raise SolveFailureError(incompatibility)
 
-    def _choose_package_version(self) -> str | None:
+    def _choose_next(self, unsatisfied: list[Dependency]) -> Dependency:
         """
-        Tries to select a version of a required package.
-
-        Returns the name of the package whose incompatibilities should be
-        propagated by _propagate(), or None indicating that version solving is
-        complete and a solution has been found.
+        The original algorithm proposes to prefer packages with as few remaining
+        versions as possible, so that if a conflict is necessary it's forced quickly.
+        https://github.com/dart-lang/pub/blob/master/doc/solver.md#decision-making
+        However, this leads to the famous boto3 vs. urllib3 issue, so we prefer
+        packages with more remaining versions (see
+        https://github.com/python-poetry/poetry/pull/8255#issuecomment-1657198242
+        for more details).
+        In order to provide results that are as deterministic as possible
+        and consistent between `poetry lock` and `poetry update`, the return value
+        of two different dependencies should not be equal if possible.
         """
-        unsatisfied = self._solution.unsatisfied
-        if not unsatisfied:
-            return None
 
         class Preference:
             """
@@ -451,16 +453,6 @@ class VersionSolver:
             LOCKED = 3
             DEFAULT = 4
 
-        # The original algorithm proposes to prefer packages with as few remaining
-        # versions as possible, so that if a conflict is necessary it's forced quickly.
-        # https://github.com/dart-lang/pub/blob/master/doc/solver.md#decision-making
-        # However, this leads to the famous boto3 vs. urllib3 issue, so we prefer
-        # packages with more remaining versions (see
-        # https://github.com/python-poetry/poetry/pull/8255#issuecomment-1657198242
-        # for more details).
-        # In order to provide results that are as deterministic as possible
-        # and consistent between `poetry lock` and `poetry update`, the return value
-        # of two different dependencies should not be equal if possible.
         def _get_min(dependency: Dependency) -> tuple[bool, int, int]:
             # Direct origin dependencies must be handled first: we don't want to resolve
             # a regular dependency for some package only to find later that we had a
@@ -490,7 +482,21 @@ class VersionSolver:
                 preference = Preference.DEFAULT
             return is_specific_marker, preference, -num_packages
 
-        dependency = min(unsatisfied, key=_get_min)
+        return min(unsatisfied, key=_get_min)
+
+    def _choose_package_version(self) -> str | None:
+        """
+        Tries to select a version of a required package.
+
+        Returns the name of the package whose incompatibilities should be
+        propagated by _propagate(), or None indicating that version solving is
+        complete and a solution has been found.
+        """
+        unsatisfied = self._solution.unsatisfied
+        if not unsatisfied:
+            return None
+
+        dependency = self._choose_next(unsatisfied)
 
         locked = self._provider.get_locked(dependency)
         if locked is None:
