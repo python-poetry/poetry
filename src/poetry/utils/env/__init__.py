@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
-
-from poetry.core.utils.helpers import temporary_directory
 
 from poetry.utils.env.base_env import Env
 from poetry.utils.env.env_manager import EnvManager
@@ -38,7 +37,7 @@ def ephemeral_environment(
     executable: Path | None = None,
     flags: dict[str, str | bool] | None = None,
 ) -> Iterator[VirtualEnv]:
-    with temporary_directory() as tmp_dir:
+    with TemporaryDirectory(ignore_cleanup_errors=True) as tmp_dir:
         # TODO: cache PEP 517 build environment corresponding to each project venv
         venv_dir = Path(tmp_dir) / ".venv"
         EnvManager.build_venv(

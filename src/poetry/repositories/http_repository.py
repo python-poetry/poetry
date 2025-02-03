@@ -6,6 +6,7 @@ import hashlib
 from contextlib import contextmanager
 from contextlib import suppress
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -15,7 +16,6 @@ import requests.adapters
 from packaging.metadata import parse_email
 from poetry.core.constraints.version import parse_constraint
 from poetry.core.packages.dependency import Dependency
-from poetry.core.utils.helpers import temporary_directory
 from poetry.core.version.markers import parse_marker
 
 from poetry.config.config import Config
@@ -110,7 +110,7 @@ class HTTPRepository(CachedRepository):
         self, link: Link, *, raise_accepts_ranges: bool = False
     ) -> Iterator[Path]:
         self._log(f"Downloading: {link.url}", level="debug")
-        with temporary_directory() as temp_dir:
+        with TemporaryDirectory(ignore_cleanup_errors=True) as temp_dir:
             filepath = Path(temp_dir) / link.filename
             self._download(
                 link.url, filepath, raise_accepts_ranges=raise_accepts_ranges
