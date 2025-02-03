@@ -514,6 +514,8 @@ class VersionSolver:
 
                 complete_name = dependency.complete_name
                 return complete_name
+
+            package.dependency.transitive_marker = dependency.transitive_marker
         else:
             package = locked
 

@@ -4329,8 +4329,13 @@ def test_solver_can_resolve_python_restricted_package_dependencies(
     )
 
 
+@pytest.mark.parametrize("virtualenv_before_pre_commit", [False, True])
 def test_solver_should_not_raise_errors_for_irrelevant_transitive_python_constraints(
-    solver: Solver, repo: Repository, package: ProjectPackage
+    solver: Solver,
+    repo: Repository,
+    package: ProjectPackage,
+    mocker: MockerFixture,
+    virtualenv_before_pre_commit: bool,
 ) -> None:
     package.python_versions = "~2.7 || ^3.5"
     set_package_python_versions(solver.provider, "~2.7 || ^3.5")
@@ -4367,6 +4372,24 @@ def test_solver_should_not_raise_errors_for_irrelevant_transitive_python_constra
     repo.add_package(pre_commit)
     repo.add_package(importlib_resources)
     repo.add_package(importlib_resources_3_2_1)
+
+    def patched_choose_next(unsatisfied: list[Dependency]) -> Dependency:
+        order = (
+            ("root", "virtualenv", "pre-commit", "importlib-resources")
+            if virtualenv_before_pre_commit
+            else ("root", "pre-commit", "virtualenv", "importlib-resources")
+        )
+        for preferred in order:
+            for dep in unsatisfied:
+                if dep.name == preferred:
+                    return dep
+        raise RuntimeError
+
+    mocker.patch(
+        "poetry.mixology.version_solver.VersionSolver._choose_next",
+        side_effect=patched_choose_next,
+    )
+
     transaction = solver.solve()
 
     check_solver_result(
