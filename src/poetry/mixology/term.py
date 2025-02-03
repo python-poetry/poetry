@@ -95,7 +95,13 @@ class Term:
                     return SetRelation.SUBSET
 
                 # foo ^1.5.0 is disjoint with not foo ^1.0.0
-                if other_constraint.allows_all(self.constraint):
+                if (
+                    other_constraint.allows_all(self.constraint)
+                    # if transitive markers are not equal we have to handle it
+                    # as overlapping so that markers are merged later
+                    and self.dependency.transitive_marker
+                    == other.dependency.transitive_marker
+                ):
                     return SetRelation.DISJOINT
 
                 # foo ^1.0.0 overlaps not foo ^1.5.0
@@ -177,7 +183,12 @@ class Term:
             and other.dependency.is_direct_origin()
             else self.dependency
         )
-        return Term(dependency.with_constraint(constraint), is_positive)
+        new_dep = dependency.with_constraint(constraint)
+        if is_positive and other.is_positive():
+            new_dep.transitive_marker = self.dependency.transitive_marker.union(
+                other.dependency.transitive_marker
+            )
+        return Term(new_dep, is_positive)
 
     def __str__(self) -> str:
         prefix = "not " if not self.is_positive() else ""
