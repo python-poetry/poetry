@@ -453,26 +453,70 @@ class VersionSolver:
             LOCKED = 3
             DEFAULT = 4
 
-        def _get_min(dependency: Dependency) -> tuple[bool, int, int]:
+        def _get_min(dependency: Dependency) -> tuple[int, int, bool, int]:
+            """
+            Returns a tuple of:
+            - preference: see Preference class
+            - num_deps_upper_bound: a dependency with an upper bound is more likely to
+                                    cause conflicts -> a package with more dependencies
+                                    with upper bounds should be chosen first
+            - has_deps: a package with dependencies should be chosen first because
+                        a package without dependencies is less likely to cause conflicts
+            - num_packages: see explanation above
+            """
             # Direct origin dependencies must be handled first: we don't want to resolve
             # a regular dependency for some package only to find later that we had a
             # direct-origin dependency.
             if dependency.is_direct_origin():
-                return False, Preference.DIRECT_ORIGIN, -1
-
-            is_specific_marker = not dependency.marker.is_any()
+                return Preference.DIRECT_ORIGIN, 0, False, 0
 
             use_latest = dependency.name in self._provider.use_latest
             if not use_latest:
                 locked = self._provider.get_locked(dependency)
                 if locked:
-                    return is_specific_marker, Preference.LOCKED, -1
+                    return Preference.LOCKED, 0, False, 0
 
-            num_packages = len(
-                self._dependency_cache.search_for(
-                    dependency, self._solution.decision_level
-                )
+            packages = self._dependency_cache.search_for(
+                dependency, self._solution.decision_level
             )
+            num_packages = len(packages)
+            if packages:
+                package = packages[0].package
+                if package.is_root():
+                    relevant_dependencies = package.all_requires
+                else:
+                    if not package.is_direct_origin():
+                        # We have to get the package from the pool,
+                        # otherwise `requires` will be empty.
+                        #
+                        # We might need `package.source_reference` as fallback
+                        # for transitive dependencies without a source
+                        # if there is a top-level dependency
+                        # for the same package with an explicit source.
+                        for repo in (dependency.source_name, package.source_reference):
+                            try:
+                                package = self._provider.get_package_from_pool(
+                                    package.pretty_name,
+                                    package.version,
+                                    repository_name=repo,
+                                )
+                            except Exception:
+                                pass
+                            else:
+                                break
+
+                    relevant_dependencies = [
+                        r
+                        for r in package.requires
+                        if not r.in_extras or r.in_extras[0] in dependency.extras
+                    ]
+                has_deps = bool(relevant_dependencies)
+                num_deps_upper_bound = sum(
+                    1 for d in relevant_dependencies if d.constraint.has_upper_bound()
+                )
+            else:
+                has_deps = False
+                num_deps_upper_bound = 0
 
             if num_packages < 2:
                 preference = Preference.NO_CHOICE
@@ -480,7 +524,7 @@ class VersionSolver:
                 preference = Preference.USE_LATEST
             else:
                 preference = Preference.DEFAULT
-            return is_specific_marker, preference, -num_packages
+            return preference, -num_deps_upper_bound, not has_deps, -num_packages
 
         return min(unsatisfied, key=_get_min)
 
