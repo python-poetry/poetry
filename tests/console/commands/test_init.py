@@ -153,10 +153,11 @@ dependencies = [
     "flask (>=2.0.0,<3.0.0)"
 ]
 
-[tool.poetry]
+[dependency-groups]
+dev = [
+    "pytest (>=3.6.0,<4.0.0)"
+]
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^3.6.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
@@ -278,10 +279,10 @@ dependencies = [
     "demo @ git+https://github.com/demo/demo.git"
 ]
 
-[tool.poetry]
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^3.6.0"
+[dependency-groups]
+dev = [
+    "pytest (>=3.6.0,<4.0.0)"
+]
 """
 
     assert expected in tester.io.fetch_output()
@@ -374,10 +375,10 @@ dependencies = [
     "demo @ git+https://github.com/demo/demo.git@develop"
 ]
 
-[tool.poetry]
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^3.6.0"
+[dependency-groups]
+dev = [
+    "pytest (>=3.6.0,<4.0.0)"
+]
 """
 
     assert expected in tester.io.fetch_output()
@@ -423,10 +424,10 @@ dependencies = [
     "demo @ git+https://github.com/demo/pyproject-demo.git"
 ]
 
-[tool.poetry]
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^3.6.0"
+[dependency-groups]
+dev = [
+    "pytest (>=3.6.0,<4.0.0)"
+]
 """
 
     assert expected in tester.io.fetch_output()
@@ -479,10 +480,10 @@ dependencies = [
     "demo @ {demo_uri}"
 ]
 
-[tool.poetry]
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^3.6.0"
+[dependency-groups]
+dev = [
+    "pytest (>=3.6.0,<4.0.0)"
+]
 """
     assert expected in tester.io.fetch_output()
 
@@ -534,10 +535,10 @@ dependencies = [
     "demo @ {demo_uri}"
 ]
 
-[tool.poetry]
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^3.6.0"
+[dependency-groups]
+dev = [
+    "pytest (>=3.6.0,<4.0.0)"
+]
 """
 
     assert expected in tester.io.fetch_output()
@@ -590,10 +591,10 @@ dependencies = [
     "demo @ {demo_uri}"
 ]
 
-[tool.poetry]
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^3.6.0"
+[dependency-groups]
+dev = [
+    "pytest (>=3.6.0,<4.0.0)"
+]
 """
 
     assert expected in tester.io.fetch_output()
@@ -639,10 +640,10 @@ dependencies = [
     "pendulum (>=2.0.0,<3.0.0)"
 ]
 
-[tool.poetry]
-
-[tool.poetry.group.dev.dependencies]
-pytest = "3.6.0"
+[dependency-groups]
+dev = [
+    "pytest (==3.6.0)"
+]
 """
 
     assert expected in tester.io.fetch_output()
@@ -786,10 +787,10 @@ requires-python = ">=3.6"
 dependencies = [
 ]
 
-[tool.poetry]
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^3.6.0"
+[dependency-groups]
+dev = [
+    "pytest (>=3.6.0,<4.0.0)"
+]
 """
 
     assert expected in tester.io.fetch_output()
@@ -833,17 +834,15 @@ requires-python = ">=3.6"
 dependencies = [
 ]
 
-[tool.poetry]
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^3.6.0"
-pytest-requests = "^0.2.0"
+[dependency-groups]
+dev = [
+    "pytest (>=3.6.0,<4.0.0)",
+    "pytest-requests (>=0.2.0,<0.3.0)"
+]
 """
 
     output = tester.io.fetch_output()
     assert expected in output
-    assert 'pytest-requests = "^0.2.0"' in output
-    assert 'pytest = "^3.6.0"' in output
 
 
 def test_predefined_all_options(tester: CommandTester, repo: TestRepository) -> None:
@@ -884,10 +883,10 @@ dependencies = [
     "pendulum (>=2.0.0,<3.0.0)"
 ]
 
-[tool.poetry]
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^3.6.0"
+[dependency-groups]
+dev = [
+    "pytest (>=3.6.0,<4.0.0)"
+]
 """
 
     output = tester.io.fetch_output()
