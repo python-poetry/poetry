@@ -149,7 +149,7 @@ class Provider:
                 reverse=True,
             )
 
-        self._get_package_from_pool = functools.cache(self._pool.package)
+        self.get_package_from_pool = functools.cache(self._pool.package)
 
     @property
     def pool(self) -> RepositoryPool:
@@ -469,7 +469,7 @@ class Provider:
         else:
             dependency_package = DependencyPackage(
                 dependency,
-                self._get_package_from_pool(
+                self.get_package_from_pool(
                     package.pretty_name,
                     package.version,
                     repository_name=dependency.source_name,
