@@ -89,6 +89,7 @@ def test_remove_installed_package_dry_run(tester: CommandTester) -> None:
     tester.execute("poetry-plugin --dry-run")
 
     expected = f"""\
+Running in DRY RUN mode
 Updating dependencies
 Resolving dependencies...
 
