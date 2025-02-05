@@ -159,9 +159,9 @@ You can override the Cache directory by setting the `POETRY_CACHE_DIR` environme
 
 ### Project Directory
 
-By default, the Poetry project directory is set to `.poetry/` in the project root. It is used by Poetry for storing project-specific 
-data. For example, the required plugins defined in `pyproject.toml` are installed by default in the `.poetry/plugins/` directory. 
-You can override the Poetry project directory by setting the `POETRY_PROJECT_DIR` environment variable. Note that it must be a relative 
+By default, the Poetry project directory is set to `.poetry/` in the project root. It is used by Poetry for storing project-specific
+data. For example, the required plugins defined in `pyproject.toml` are installed by default in the `.poetry/plugins/` directory.
+You can override the Poetry project directory by setting the `POETRY_PROJECT_DIR` environment variable. Note that it must be a relative
 folder path from the current project root, or an error will be reported.
 
 ## Available settings

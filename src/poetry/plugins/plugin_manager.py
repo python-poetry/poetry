@@ -106,7 +106,9 @@ class PluginManager:
 class ProjectPluginCache:
     PATH = Path(os.getenv("POETRY_PROJECT_DIR", ".poetry")) / "plugins"
     if PATH.is_absolute():
-        raise RuntimeError("POETRY_PROJECT_DIR env var must represent a relative path from the project directory")
+        raise RuntimeError(
+            "POETRY_PROJECT_DIR env var must represent a relative path from the project directory"
+        )
 
     def __init__(self, poetry: Poetry, io: IO) -> None:
         self._poetry = poetry
