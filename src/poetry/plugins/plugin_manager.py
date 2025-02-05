@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
 import shutil
 import sys
 
@@ -103,7 +104,7 @@ class PluginManager:
 
 
 class ProjectPluginCache:
-    PATH = Path(".poetry") / "plugins"
+    PATH = Path(os.getenv("POETRY_PLUGIN_DIR", ".poetry")) / "plugins"
 
     def __init__(self, poetry: Poetry, io: IO) -> None:
         self._poetry = poetry
