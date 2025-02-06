@@ -164,7 +164,7 @@ def test_create_pyproject_from_package(
     poetry = Factory().create_poetry(fixture_dir(project))
     package = poetry.package
 
-    pyproject: dict[str, Any] = Factory.create_pyproject_from_package(package)
+    pyproject: dict[str, Any] = Factory.create_legacy_pyproject_from_package(package)
 
     result = pyproject["tool"]["poetry"]
     expected = poetry.pyproject.poetry_config

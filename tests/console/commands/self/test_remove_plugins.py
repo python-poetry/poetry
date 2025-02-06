@@ -32,10 +32,15 @@ def install_plugin(installed: Repository) -> None:
     package = ProjectPackage("poetry-instance", __version__)
     plugin = Package("poetry-plugin", "1.2.3")
 
-    package.add_dependency(
-        Dependency(plugin.name, "^1.2.3", groups=[SelfCommand.ADDITIONAL_PACKAGE_GROUP])
+    content = Factory.create_legacy_pyproject_from_package(package)
+    content["dependency-groups"] = tomlkit.table()
+    content["dependency-groups"][SelfCommand.ADDITIONAL_PACKAGE_GROUP] = tomlkit.array(  # type: ignore[index]
+        "[\n]"
     )
-    content = Factory.create_pyproject_from_package(package)
+    content["dependency-groups"][SelfCommand.ADDITIONAL_PACKAGE_GROUP].append(  # type: ignore[index, union-attr, call-arg]
+        Dependency(plugin.name, "^1.2.3").to_pep_508()
+    )
+
     system_pyproject_file = SelfCommand.get_default_system_pyproject_file()
     with open(system_pyproject_file, "w", encoding="utf-8", newline="") as f:
         f.write(content.as_string())
@@ -64,7 +69,6 @@ def install_plugin(installed: Repository) -> None:
     installed.add_package(plugin)
 
 
-@pytest.mark.xfail(reason="remove command does not support dependency-groups yet")
 def test_remove_installed_package(tester: CommandTester) -> None:
     tester.execute("poetry-plugin")
 
@@ -82,11 +86,9 @@ Writing lock file
 
     dependencies = get_self_command_dependencies()
 
-    assert "poetry-plugin" not in dependencies
     assert not dependencies
 
 
-@pytest.mark.xfail(reason="remove command does not support dependency-groups yet")
 def test_remove_installed_package_dry_run(tester: CommandTester) -> None:
     tester.execute("poetry-plugin --dry-run")
 
@@ -105,4 +107,6 @@ installed
 
     dependencies = get_self_command_dependencies()
 
-    assert "poetry-plugin" in dependencies
+    assert dependencies
+    assert len(dependencies) == 1
+    assert "poetry-plugin" in dependencies[0]

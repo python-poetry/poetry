@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import typing
+
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
 
 from packaging.utils import canonicalize_name
 from poetry.core.packages.dependency import Dependency
@@ -62,24 +65,34 @@ class SelfCommand(InstallerCommand):
 
     def generate_system_pyproject(self) -> None:
         preserved = {}
+        preserved_groups: dict[str, Any] = {}
 
         if self.system_pyproject.exists():
-            content = PyProjectTOML(self.system_pyproject).poetry_config
+            toml_file = PyProjectTOML(self.system_pyproject)
+            content = toml_file.data
 
             for key in {"group", "source"}:
-                if key in content:
-                    preserved[key] = content[key]
+                if key in toml_file.poetry_config:
+                    preserved[key] = toml_file.poetry_config[key]
+
+            if "dependency-groups" in content:
+                preserved_groups = typing.cast(
+                    "dict[str, Any]", content["dependency-groups"]
+                )
 
         package = ProjectPackage(name="poetry-instance", version=__version__)
         package.add_dependency(Dependency(name="poetry", constraint=f"{__version__}"))
 
         package.python_versions = ".".join(str(v) for v in self.env.version_info[:3])
 
-        content = Factory.create_pyproject_from_package(package=package)
+        content = Factory.create_legacy_pyproject_from_package(package=package)
         content["tool"]["poetry"]["package-mode"] = False  # type: ignore[index]
 
         for key in preserved:
             content["tool"]["poetry"][key] = preserved[key]  # type: ignore[index]
+
+        if preserved_groups:
+            content["dependency-groups"] = preserved_groups
 
         pyproject = PyProjectTOML(self.system_pyproject)
         pyproject.file.write(content)
