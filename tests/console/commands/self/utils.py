@@ -8,7 +8,7 @@ from tomlkit.items import Array
 from poetry.factory import Factory
 
 
-def get_self_command_dependencies(locked: bool = True) -> Array:
+def get_self_command_dependencies(locked: bool = True) -> Array | None:
     from poetry.console.commands.self.self_command import SelfCommand
     from poetry.locations import CONFIG_DIR
 
@@ -23,9 +23,10 @@ def get_self_command_dependencies(locked: bool = True) -> Array:
     poetry = Factory().create_poetry(system_pyproject_file.parent, disable_plugins=True)
 
     pyproject: dict[str, Any] = poetry.file.read()
-    content = pyproject["dependency-groups"]
+    content = pyproject.get("dependency-groups", {})
 
-    assert SelfCommand.ADDITIONAL_PACKAGE_GROUP in content
+    if SelfCommand.ADDITIONAL_PACKAGE_GROUP not in content:
+        return None
 
     dependencies = content[SelfCommand.ADDITIONAL_PACKAGE_GROUP]
     assert isinstance(dependencies, Array)

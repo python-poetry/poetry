@@ -220,7 +220,7 @@ class Factory(BaseFactory):
         )
 
     @classmethod
-    def create_pyproject_from_package(cls, package: Package) -> TOMLDocument:
+    def create_legacy_pyproject_from_package(cls, package: Package) -> TOMLDocument:
         import tomlkit
 
         from poetry.utils.dependency_specification import dependency_to_specification
