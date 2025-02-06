@@ -238,7 +238,7 @@ lists all packages available."""
         show_top_level = self.option("top-level")
         width = (
             math.inf
-            if self.option("--no-truncate")
+            if self.option("no-truncate")
             else shutil.get_terminal_size().columns
         )
         name_length = version_length = latest_length = required_by_length = 0
