@@ -30,8 +30,9 @@ def assert_plugin_add_result(
     constraint: str,
 ) -> None:
     assert tester.io.fetch_output() == expected
-    dependencies: list[str] = get_self_command_dependencies()
+    dependencies: list[str] | None = get_self_command_dependencies()
 
+    assert dependencies
     assert "poetry-plugin" in dependencies[0]
     assert constraint in dependencies[0]
 
