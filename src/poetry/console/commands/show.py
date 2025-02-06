@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import math
+import sys
 
 from typing import TYPE_CHECKING
 from typing import ClassVar
@@ -237,7 +237,7 @@ lists all packages available."""
         show_all = self.option("all")
         show_top_level = self.option("top-level")
         width = (
-            math.inf
+            sys.maxsize
             if self.option("no-truncate")
             else shutil.get_terminal_size().columns
         )
