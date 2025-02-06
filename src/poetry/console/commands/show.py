@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 from typing import TYPE_CHECKING
 from typing import ClassVar
 
@@ -234,7 +236,11 @@ lists all packages available."""
         show_latest = self.option("latest")
         show_all = self.option("all")
         show_top_level = self.option("top-level")
-        width = shutil.get_terminal_size().columns
+        width = (
+            math.inf
+            if self.option("--no-truncate")
+            else shutil.get_terminal_size().columns
+        )
         name_length = version_length = latest_length = required_by_length = 0
         latest_packages = {}
         latest_statuses = {}
@@ -306,18 +312,14 @@ lists all packages available."""
                         required_by_length, len(" from " + ",".join(required_by.keys()))
                     )
 
-        if self.option("no-truncate"):
-            write_version = write_latest = write_description = True
-            write_why = self.option("why")
-        else:
-            write_version = name_length + version_length + 3 <= width
-            write_latest = name_length + version_length + latest_length + 3 <= width
+        write_version = name_length + version_length + 3 <= width
+        write_latest = name_length + version_length + latest_length + 3 <= width
 
-            why_end_column = (
-                name_length + version_length + latest_length + required_by_length
-            )
-            write_why = self.option("why") and (why_end_column + 3) <= width
-            write_description = (why_end_column + 24) <= width
+        why_end_column = (
+            name_length + version_length + latest_length + required_by_length
+        )
+        write_why = self.option("why") and (why_end_column + 3) <= width
+        write_description = (why_end_column + 24) <= width
 
         requires = root.all_requires
 
@@ -395,9 +397,7 @@ lists all packages available."""
                 if show_latest:
                     remaining -= latest_length
 
-                if len(locked.description) > remaining and not self.option(
-                    "no-truncate"
-                ):
+                if len(locked.description) > remaining:
                     description = description[: remaining - 3] + "..."
 
                 line += " " + description
