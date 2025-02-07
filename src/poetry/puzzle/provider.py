@@ -603,7 +603,9 @@ class Provider:
                 for complete_dep_name, deps_by_extra in duplicates_by_extras.items():
                     if len(deps_by_extra) > 1:
                         duplicates_by_extras[complete_dep_name] = (
-                            self._resolve_overlapping_markers(package, deps, None)
+                            self._resolve_overlapping_markers(
+                                package, deps_by_extra, None
+                            )
                         )
                 if all(len(d) == 1 for d in duplicates_by_extras.values()) and all(
                     d1[0].marker.intersect(d2[0].marker).is_empty()
