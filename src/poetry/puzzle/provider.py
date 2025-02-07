@@ -125,7 +125,7 @@ class Provider:
         self._direct_origin = DirectOrigin(self._pool.artifact_cache)
         self._io = io
         self._env: Env | None = None
-        self._python_constraint = package.python_constraint
+        self._package_python_constraint = package.python_constraint
         self._is_debugging: bool = self._io.is_debug() or self._io.is_very_verbose()
         self._overrides: dict[Package, dict[str, Dependency]] = {}
         self._deferred_cache: dict[Dependency, Package] = {}
@@ -159,11 +159,29 @@ class Provider:
     def use_latest(self) -> Collection[NormalizedName]:
         return self._use_latest
 
+    @functools.cached_property
+    def _overrides_marker_intersection(self) -> BaseMarker:
+        overrides_marker_intersection: BaseMarker = AnyMarker()
+        for dep_overrides in self._overrides.values():
+            for dep in dep_overrides.values():
+                overrides_marker_intersection = overrides_marker_intersection.intersect(
+                    dep.marker
+                )
+        return overrides_marker_intersection
+
+    @functools.cached_property
+    def _python_constraint(self) -> VersionConstraint:
+        return self._package_python_constraint.intersect(
+            get_python_constraint_from_marker(self._overrides_marker_intersection)
+        )
+
     def is_debugging(self) -> bool:
         return self._is_debugging
 
     def set_overrides(self, overrides: dict[Package, dict[str, Dependency]]) -> None:
         self._overrides = overrides
+        self.__dict__.pop("_python_constraint", None)
+        self.__dict__.pop("_overrides_marker_intersection", None)
 
     def load_deferred(self, load_deferred: bool) -> None:
         self._load_deferred = load_deferred
@@ -180,16 +198,18 @@ class Provider:
 
     @contextmanager
     def use_environment(self, env: Env) -> Iterator[Provider]:
-        original_python_constraint = self._python_constraint
+        original_python_constraint = self._package_python_constraint
 
         self._env = env
-        self._python_constraint = Version.parse(env.marker_env["python_full_version"])
+        self._package_python_constraint = Version.parse(
+            env.marker_env["python_full_version"]
+        )
 
         try:
             yield self
         finally:
             self._env = None
-            self._python_constraint = original_python_constraint
+            self._package_python_constraint = original_python_constraint
 
     @contextmanager
     def use_latest_for(self, names: Collection[NormalizedName]) -> Iterator[Provider]:
@@ -629,16 +649,12 @@ class Provider:
                 continue
 
             # Sort out irrelevant requirements
-            overrides_marker_intersection: BaseMarker = AnyMarker()
-            for dep_overrides in self._overrides.values():
-                for dep in dep_overrides.values():
-                    overrides_marker_intersection = (
-                        overrides_marker_intersection.intersect(dep.marker)
-                    )
             deps = [
                 dep
                 for dep in deps
-                if not overrides_marker_intersection.intersect(dep.marker).is_empty()
+                if not self._overrides_marker_intersection.intersect(
+                    dep.marker
+                ).is_empty()
             ]
             if len(deps) < 2:
                 if not deps or (len(deps) == 1 and deps[0].constraint.is_empty()):

@@ -58,7 +58,7 @@ DEFAULT_SOURCE_REF = (
 
 def set_package_python_versions(provider: Provider, python_versions: str) -> None:
     provider._package.python_versions = python_versions
-    provider._python_constraint = provider._package.python_constraint
+    provider._package_python_constraint = provider._package.python_constraint
 
 
 def check_solver_result(
@@ -4443,6 +4443,72 @@ def test_solver_should_not_raise_errors_for_irrelevant_transitive_python_constra
             {"job": "install", "package": virtualenv},
         ],
     )
+
+
+@pytest.mark.parametrize("numpy_before_pandas", [False, True])
+@pytest.mark.parametrize("conflict", [False, True])
+def test_solver_should_not_raise_errors_for_irrelevant_transitive_python_constraints2(
+    solver: Solver,
+    repo: Repository,
+    package: ProjectPackage,
+    mocker: MockerFixture,
+    numpy_before_pandas: bool,
+    conflict: bool,
+) -> None:
+    """This time with overrides."""
+    package.python_versions = ">=3.6.2, <3.10"
+    set_package_python_versions(solver.provider, ">=3.6.2, <3.10")
+    package.add_dependency(Factory.create_dependency("pandas", ">=1"))
+    package.add_dependency(
+        Factory.create_dependency("numpy", {"version": ">=1.20.0", "python": ">=3.7"})
+    )
+    package.add_dependency(
+        Factory.create_dependency("numpy", {"version": "*", "python": "<3.7"})
+    )
+
+    pandas = get_package("pandas", "1.1.5")
+    pandas.add_dependency(Factory.create_dependency("numpy", ">=1.15"))
+
+    numpy_19 = get_package("numpy", "1.19")
+    numpy_19.python_versions = ">=3.6"
+    numpy_20 = get_package("numpy", "1.20")
+    numpy_20.python_versions = ">=3.8" if conflict else ">=3.7"
+
+    repo.add_package(pandas)
+    repo.add_package(numpy_19)
+    repo.add_package(numpy_20)
+
+    def patched_choose_next(unsatisfied: list[Dependency]) -> Dependency:
+        order = (
+            ("root", "pandas", "numpy")
+            if numpy_before_pandas
+            else ("root", "numpy", "pandas")
+        )
+        for preferred in order:
+            for dep in unsatisfied:
+                if dep.name == preferred:
+                    return dep
+        raise RuntimeError
+
+    mocker.patch(
+        "poetry.mixology.version_solver.VersionSolver._choose_next",
+        side_effect=patched_choose_next,
+    )
+
+    if conflict:
+        with pytest.raises(SolverProblemError):
+            solver.solve()
+    else:
+        transaction = solver.solve()
+
+        check_solver_result(
+            transaction,
+            [
+                {"job": "install", "package": numpy_19},
+                {"job": "install", "package": numpy_20},
+                {"job": "install", "package": pandas},
+            ],
+        )
 
 
 @pytest.mark.parametrize("is_locked", [False, True])
