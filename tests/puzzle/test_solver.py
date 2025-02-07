@@ -515,6 +515,49 @@ def test_solver_returns_extras_if_requested(
     assert ops[0].package.marker.is_any()
 
 
+@pytest.mark.parametrize("num_groups", [0, 1, 2])
+def test_solver_returns_extras_if_requested_in_multiple_groups(
+    solver: Solver, repo: Repository, package: ProjectPackage, num_groups: int
+) -> None:
+    package.add_dependency(Factory.create_dependency("A", "*"))
+    package.add_dependency(Factory.create_dependency("B", "*"))
+    if num_groups:
+        package.add_dependency(
+            Factory.create_dependency(
+                "B",
+                {"version": "*", "extras": ["foo"]},
+                groups=[f"group{i}" for i in range(num_groups)],
+            )
+        )
+
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.0")
+    package_c = get_package("C", "1.0")
+
+    dep = get_dependency("C", "^1.0", optional=True)
+    dep.marker = parse_marker("extra == 'foo'")
+    package_b.extras = {canonicalize_name("foo"): [dep]}
+    package_b.add_dependency(dep)
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+
+    transaction = solver.solve()
+
+    expected = [
+        {"job": "install", "package": package_a},
+        {"job": "install", "package": package_b},
+    ]
+    if num_groups:
+        expected = [{"job": "install", "package": package_c}, *expected]
+
+    ops = check_solver_result(transaction, expected)
+
+    assert ops[-1].package.marker.is_any()
+    assert ops[0].package.marker.is_any()
+
+
 @pytest.mark.parametrize(
     ("enabled_extras", "expected_packages"),
     [
