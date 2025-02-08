@@ -149,3 +149,11 @@ class MockedPythonRegister(Protocol):
         parent: str | Path | None = None,
         make_system: bool = False,
     ) -> Python: ...
+
+
+class MockedPoetryPythonRegister(Protocol):
+    def __call__(
+        self,
+        version: str,
+        implementation: str,
+    ) -> Path: ...

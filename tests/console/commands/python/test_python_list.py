@@ -6,12 +6,11 @@ import pytest
 
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from cleo.testers.command_tester import CommandTester
 
     from poetry.config.config import Config
     from tests.types import CommandTesterFactory
+    from tests.types import MockedPoetryPythonRegister
     from tests.types import MockedPythonRegister
 
 
@@ -30,6 +29,13 @@ def test_list_all(tester: CommandTester) -> None:
     tester.execute("--all")
 
     assert "Available for download" in tester.io.fetch_output()
+
+
+def test_list_invalid_version(tester: CommandTester) -> None:
+    tester.execute("foo")
+
+    assert tester.status_code == 1
+    assert tester.io.fetch_error() == "Invalid Python version requested foo\n"
 
 
 def test_list(
@@ -59,10 +65,12 @@ def test_list(
 def test_list_poetry_managed(
     tester: CommandTester,
     config: Config,
-    without_mocked_findpython: None,
-    poetry_managed_pythons: list[Path],
+    mocked_poetry_managed_python_register: MockedPoetryPythonRegister,
     only_poetry_managed: bool,
 ) -> None:
+    mocked_poetry_managed_python_register("3.9.1", "cpython")
+    mocked_poetry_managed_python_register("3.10.8", "pypy")
+
     tester.execute("-m" if only_poetry_managed else "")
 
     lines = tester.io.fetch_output().splitlines()
@@ -91,7 +99,7 @@ def test_list_version(
     tester: CommandTester,
     mocked_python_register: MockedPythonRegister,
     version: str,
-    expected: str,
+    expected: int,
 ) -> None:
     mocked_python_register("2.7.13", parent="_")
     mocked_python_register("3.9.1", parent="a")

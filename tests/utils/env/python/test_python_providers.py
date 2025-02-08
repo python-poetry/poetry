@@ -8,7 +8,7 @@ from poetry.utils.env.python.providers import PoetryPythonPathProvider
 
 
 if TYPE_CHECKING:
-    from pathlib import Path
+    from tests.types import MockedPoetryPythonRegister
 
 
 def test_poetry_python_path_provider_no_pythons() -> None:
@@ -17,19 +17,24 @@ def test_poetry_python_path_provider_no_pythons() -> None:
     assert not provider.paths
 
 
-def test_poetry_python_path_provider(poetry_managed_pythons: list[Path]) -> None:
+def test_poetry_python_path_provider(
+    mocked_poetry_managed_python_register: MockedPoetryPythonRegister,
+) -> None:
+    cpython_path = mocked_poetry_managed_python_register("3.9.1", "cpython")
+    pypy_path = mocked_poetry_managed_python_register("3.10.8", "pypy")
+
     provider = PoetryPythonPathProvider.create()
 
     assert provider
 
-    assert provider.paths == poetry_managed_pythons
-    assert len(list(provider.find_pythons())) == 2
+    assert provider.paths == [cpython_path, pypy_path]
+    assert len(list(provider.find_pythons())) == 3
 
     assert provider.installation_bin_paths(Version.parse("3.9.1"), "cpython") == [
-        p for p in poetry_managed_pythons if "cpython" in p.name and "3.9.1" in p.name
+        cpython_path
     ]
     assert provider.installation_bin_paths(Version.parse("3.9.2"), "cpython") == []
     assert provider.installation_bin_paths(Version.parse("3.10.8"), "pypy") == [
-        p for p in poetry_managed_pythons if "pypy" in p.name and "3.10.8" in p.name
+        pypy_path
     ]
     assert provider.installation_bin_paths(Version.parse("3.10.8"), "cpython") == []

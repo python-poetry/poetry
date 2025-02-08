@@ -82,6 +82,7 @@ if TYPE_CHECKING:
     from tests.types import CommandFactory
     from tests.types import FixtureCopier
     from tests.types import FixtureDirGetter
+    from tests.types import MockedPoetryPythonRegister
     from tests.types import MockedPythonRegister
     from tests.types import PackageFactory
     from tests.types import ProjectFactory
@@ -1000,22 +1001,19 @@ def mock_python_version(mocker: MockerFixture) -> None:
 
 
 @pytest.fixture
-def poetry_managed_pythons(config: Config, mock_python_version: None) -> list[Path]:
+def mocked_poetry_managed_python_register(
+    config: Config, without_mocked_findpython: None, mock_python_version: None
+) -> MockedPoetryPythonRegister:
     config.python_installation_dir.mkdir()
 
-    # CPython
-    cpython_dir = config.python_installation_dir / "cpython@3.9.1"
-    if not WINDOWS:
-        cpython_dir /= "bin"
-    cpython_dir.mkdir(parents=True)
-    (cpython_dir / "python").touch()
+    def register(version: str, implementation: str) -> Path:
+        bin_dir = config.python_installation_dir / f"{implementation}@{version}"
+        if not WINDOWS:
+            bin_dir /= "bin"
+        bin_dir.mkdir(parents=True)
+        (bin_dir / "python").touch()
+        if implementation == "pypy":
+            (bin_dir / "pypy").touch()
+        return bin_dir
 
-    # PyPy
-    pypy_dir = config.python_installation_dir / "pypy@3.10.8"
-    if not WINDOWS:
-        pypy_dir /= "bin"
-    pypy_dir.mkdir(parents=True)
-    (pypy_dir / "pypy").touch()
-    (pypy_dir / "python").touch()
-
-    return [cpython_dir, pypy_dir]
+    return register

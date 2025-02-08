@@ -6,6 +6,7 @@ from typing import ClassVar
 from cleo.helpers import argument
 from cleo.helpers import option
 from poetry.core.constraints.version import parse_constraint
+from poetry.core.version.exceptions import InvalidVersionError
 
 from poetry.config.config import Config
 from poetry.console.commands.command import Command
@@ -46,9 +47,15 @@ class PythonListCommand(Command):
         constraint = None
 
         if self.argument("version"):
-            version = self.argument("version")
-            version = f"~{version}" if version.count(".") < 2 else version
-            constraint = parse_constraint(version)
+            request = self.argument("version")
+            version = f"~{request}" if request.count(".") < 2 else request
+            try:
+                constraint = parse_constraint(version)
+            except (ValueError, InvalidVersionError):
+                self.io.write_error_line(
+                    f"<error>Invalid Python version requested <b>{request}</></error>"
+                )
+                return 1
 
         for info in Python.find_all_versions(
             constraint=constraint, implementation=self.option("implementation")

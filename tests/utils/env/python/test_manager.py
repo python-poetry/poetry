@@ -11,8 +11,7 @@ from poetry.utils.env.python import Python
 
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
+    from tests.types import MockedPoetryPythonRegister
     from tests.types import MockedPythonRegister
 
 
@@ -22,11 +21,13 @@ def test_find_all(without_mocked_findpython: None) -> None:
 
 def test_find_all_with_poetry_managed(
     without_mocked_findpython: None,
-    poetry_managed_pythons: list[Path],
+    mocked_poetry_managed_python_register: MockedPoetryPythonRegister,
 ) -> None:
+    cpython_path = mocked_poetry_managed_python_register("3.9.1", "cpython")
+    pypy_path = mocked_poetry_managed_python_register("3.10.8", "pypy")
     found_pythons = list(Python.find_all())
-    assert len(found_pythons) > len(poetry_managed_pythons)
-    for poetry_python in poetry_managed_pythons:
+    assert len(found_pythons) > 3
+    for poetry_python in (cpython_path, pypy_path):
         assert any(p.executable.parent == poetry_python for p in found_pythons)
 
 
@@ -34,7 +35,12 @@ def test_find_poetry_managed_pythons_none() -> None:
     assert list(Python.find_poetry_managed_pythons()) == []
 
 
-def test_find_poetry_managed_pythons(poetry_managed_pythons: list[Path]) -> None:
+def test_find_poetry_managed_pythons(
+    mocked_poetry_managed_python_register: MockedPoetryPythonRegister,
+) -> None:
+    mocked_poetry_managed_python_register("3.9.1", "cpython")
+    mocked_poetry_managed_python_register("3.10.8", "pypy")
+
     assert len(list(Python.find_poetry_managed_pythons())) == 3
 
 
