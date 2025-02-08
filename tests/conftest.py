@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextlib
 import logging
 import os
+import platform
 import re
 import shutil
 import sys
@@ -10,6 +11,7 @@ import sys
 from collections.abc import Iterator
 from pathlib import Path
 from typing import TYPE_CHECKING
+from unittest.mock import PropertyMock
 
 import findpython
 import httpretty
@@ -908,6 +910,11 @@ def mocked_python_register(
             executable=parent / executable_name,
             _version=packaging.version.Version(version),
             _interpreter=parent / executable_name,
+        )
+        mocker.patch(
+            "findpython.PythonVersion.implementation",
+            new_callable=PropertyMock,
+            return_value=platform.python_implementation(),
         )
         mocked_pythons.append(python)
         mocked_pythons_version_map[version] = python

@@ -123,8 +123,9 @@ class Python:
     @classmethod
     def find_downloadable_versions(
         cls,
-        include_incompatible: bool = False,
         constraint: VersionConstraint | str | None = None,
+        *,
+        include_incompatible: bool = False,
     ) -> Iterator[PythonInfo]:
         if isinstance(constraint, str):
             constraint = parse_constraint(constraint)

@@ -52,7 +52,7 @@ class PythonListCommand(Command):
             rows.append(info)
 
         if self.option("all"):
-            for info in Python.find_downloadable_versions(constraint=constraint):
+            for info in Python.find_downloadable_versions(constraint):
                 rows.append(info)
 
         rows.sort(
