@@ -95,7 +95,7 @@ def test_python_installer_install(mocker: MockerFixture) -> None:
     install.assert_called_once_with(
         "3.9.1",
         installer.installation_directory,
-        True,
+        version_dir=True,
         implementation="cpython",
         free_threaded=False,
     )

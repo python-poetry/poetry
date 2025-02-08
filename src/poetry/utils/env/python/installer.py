@@ -103,7 +103,7 @@ class PythonInstaller:
             pbi.install(
                 self.request,
                 self.installation_directory,
-                True,
+                version_dir=True,
                 implementation=self.implementation,
                 free_threaded=self.free_threaded,
             )
