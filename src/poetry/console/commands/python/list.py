@@ -46,9 +46,13 @@ class PythonListCommand(Command):
         constraint = None
 
         if self.argument("version"):
-            constraint = parse_constraint(f"~{self.argument('version')}")
+            version = self.argument("version")
+            version = f"~{version}" if version.count(".") < 2 else version
+            constraint = parse_constraint(version)
 
-        for info in Python.find_all_versions(constraint=constraint):
+        for info in Python.find_all_versions(
+            constraint=constraint, implementation=self.option("implementation")
+        ):
             rows.append(info)
 
         if self.option("all"):

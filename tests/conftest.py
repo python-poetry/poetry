@@ -11,7 +11,6 @@ import sys
 from collections.abc import Iterator
 from pathlib import Path
 from typing import TYPE_CHECKING
-from unittest.mock import PropertyMock
 
 import findpython
 import httpretty
@@ -29,6 +28,7 @@ from keyring.errors import KeyringLocked
 from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import parse_constraint
 from poetry.core.packages.dependency import Dependency
+from poetry.core.utils._compat import WINDOWS
 from poetry.core.version.markers import parse_marker
 from pytest import FixtureRequest
 
@@ -896,6 +896,7 @@ def mocked_python_register(
     def register(
         version: str,
         executable_name: str | Path | None = None,
+        implementation: str | None = None,
         parent: str | Path | None = None,
         make_system: bool = False,
     ) -> Python:
@@ -906,15 +907,15 @@ def mocked_python_register(
             info = version.split(".")
             executable_name = f"python{info[0]}.{info[1]}"
 
-        python = findpython.PythonVersion(
+        class MockPythonVersion(findpython.PythonVersion):  # type: ignore[misc]
+            @property
+            def implementation(self) -> str:
+                return implementation or platform.python_implementation()
+
+        python = MockPythonVersion(
             executable=parent / executable_name,
             _version=packaging.version.Version(version),
             _interpreter=parent / executable_name,
-        )
-        mocker.patch(
-            "findpython.PythonVersion.implementation",
-            new_callable=PropertyMock,
-            return_value=platform.python_implementation(),
         )
         mocked_pythons.append(python)
         mocked_pythons_version_map[version] = python
@@ -977,3 +978,44 @@ def with_no_active_python(mocker: MockerFixture) -> MagicMock:
         "poetry.utils.env.python.Python.get_active_python",
         return_value=None,
     )
+
+
+@pytest.fixture
+def mock_python_version(mocker: MockerFixture) -> None:
+    class MockPythonVersion(findpython.PythonVersion):  # type: ignore[misc]
+        @property
+        def implementation(self) -> str:
+            return "PyPy" if "pypy" in str(self.executable) else "CPython"
+
+        def _get_version(self) -> packaging.version.Version:
+            return packaging.version.Version(self.executable.parent.name.split("@")[1])
+
+        def _get_interpreter(self) -> str:
+            return str(self.executable)
+
+    mocker.patch(
+        "poetry.utils.env.python.providers.PoetryPythonPathProvider.version_maker",
+        MockPythonVersion,
+    )
+
+
+@pytest.fixture
+def poetry_managed_pythons(config: Config, mock_python_version: None) -> list[Path]:
+    config.python_installation_dir.mkdir()
+
+    # CPython
+    cpython_dir = config.python_installation_dir / "cpython@3.9.1"
+    if not WINDOWS:
+        cpython_dir /= "bin"
+    cpython_dir.mkdir(parents=True)
+    (cpython_dir / "python").touch()
+
+    # PyPy
+    pypy_dir = config.python_installation_dir / "pypy@3.10.8"
+    if not WINDOWS:
+        pypy_dir /= "bin"
+    pypy_dir.mkdir(parents=True)
+    (pypy_dir / "pypy").touch()
+    (pypy_dir / "python").touch()
+
+    return [cpython_dir, pypy_dir]

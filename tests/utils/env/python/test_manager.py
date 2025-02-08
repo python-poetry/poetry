@@ -35,27 +35,37 @@ def test_find_poetry_managed_pythons_none() -> None:
 
 
 def test_find_poetry_managed_pythons(poetry_managed_pythons: list[Path]) -> None:
-    assert len(list(Python.find_poetry_managed_pythons())) == 2
+    assert len(list(Python.find_poetry_managed_pythons())) == 3
 
 
 @pytest.mark.parametrize(
-    ("constraint", "expected"),
+    ("constraint", "implementation", "expected"),
     [
-        (None, 3),
-        ("~3.9", 2),
-        (">=3.9.2", 2),
-        (">=3.10", 1),
-        ("~3.11", 0),
+        (None, None, 3),
+        (None, "CPython", 2),
+        (None, "cpython", 2),
+        (None, "pypy", 1),
+        ("~3.9", None, 2),
+        ("~3.9", "cpython", 2),
+        ("~3.9", "pypy", 0),
+        (">=3.9.2", None, 2),
+        (">=3.9.2", "cpython", 1),
+        (">=3.9.2", "pypy", 1),
+        (">=3.10", None, 1),
+        ("~3.11", None, 0),
     ],
 )
 def test_find_all_versions(
-    mocked_python_register: MockedPythonRegister, constraint: str | None, expected: int
+    mocked_python_register: MockedPythonRegister,
+    constraint: str | None,
+    implementation: str | None,
+    expected: int,
 ) -> None:
-    mocked_python_register("3.9.1", parent="a")
-    mocked_python_register("3.9.3", parent="b")
-    mocked_python_register("3.10.4", parent="c")
+    mocked_python_register("3.9.1", implementation="CPython", parent="a")
+    mocked_python_register("3.9.3", implementation="CPython", parent="b")
+    mocked_python_register("3.10.4", implementation="PyPy", parent="c")
 
-    assert len(list(Python.find_all_versions(constraint))) == expected
+    assert len(list(Python.find_all_versions(constraint, implementation))) == expected
 
 
 @pytest.mark.parametrize("constraint", [None, "~3.9", ">=3.10"])

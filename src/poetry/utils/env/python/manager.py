@@ -100,15 +100,23 @@ class Python:
 
     @classmethod
     def find_all_versions(
-        cls, constraint: VersionConstraint | str | None = None
+        cls,
+        constraint: VersionConstraint | str | None = None,
+        implementation: str | None = None,
     ) -> Iterator[PythonInfo]:
         if isinstance(constraint, str):
             constraint = parse_constraint(constraint)
         constraint = constraint or parse_constraint("*")
+        if implementation:
+            implementation = implementation.lower()
 
         seen = set()
         for python in cls.find_all():
-            if python.executable in seen or not constraint.allows(python.version):
+            if (
+                python.executable in seen
+                or not constraint.allows(python.version)
+                or (implementation and python.implementation.lower() != implementation)
+            ):
                 continue
 
             seen.add(python.executable)
