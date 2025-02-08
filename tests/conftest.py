@@ -989,7 +989,10 @@ def mock_python_version(mocker: MockerFixture) -> None:
             return "PyPy" if "pypy" in str(self.executable) else "CPython"
 
         def _get_version(self) -> packaging.version.Version:
-            return packaging.version.Version(self.executable.parent.name.split("@")[1])
+            install_dir = self.executable.parent
+            if not WINDOWS:
+                install_dir = install_dir.parent
+            return packaging.version.Version(install_dir.name.split("@")[1])
 
         def _get_interpreter(self) -> str:
             return str(self.executable)

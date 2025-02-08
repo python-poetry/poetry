@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from poetry.utils._compat import WINDOWS
+
 
 if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
@@ -78,10 +80,11 @@ def test_list_poetry_managed(
     poetry_lines = [line.strip() for line in lines if "Poetry" in line]
 
     install_dir = config.python_installation_dir.as_posix()
+    bin_dir = "" if WINDOWS else "bin/"
     expected = {
-        f"3.10.8  PyPy           Poetry  {install_dir}/pypy@3.10.8/pypy",
-        f"3.10.8  PyPy           Poetry  {install_dir}/pypy@3.10.8/python",
-        f"3.9.1   CPython        Poetry  {install_dir}/cpython@3.9.1/python",
+        f"3.10.8  PyPy           Poetry  {install_dir}/pypy@3.10.8/{bin_dir}pypy",
+        f"3.10.8  PyPy           Poetry  {install_dir}/pypy@3.10.8/{bin_dir}python",
+        f"3.9.1   CPython        Poetry  {install_dir}/cpython@3.9.1/{bin_dir}python",
     }
 
     assert set(poetry_lines) == expected

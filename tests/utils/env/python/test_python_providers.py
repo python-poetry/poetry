@@ -27,7 +27,7 @@ def test_poetry_python_path_provider(
 
     assert provider
 
-    assert provider.paths == [cpython_path, pypy_path]
+    assert set(provider.paths) == {cpython_path, pypy_path}
     assert len(list(provider.find_pythons())) == 3
 
     assert provider.installation_bin_paths(Version.parse("3.9.1"), "cpython") == [
