@@ -41,18 +41,15 @@ class PoetryPythonPathProvider(PathProvider):  # type: ignore[misc]
 
     @classmethod
     def _make_bin_paths(cls, base: Path | None = None) -> list[Path]:
-        bin_dir_name = (
-            "bin"
-            if not WINDOWS or sysconfig.get_platform().startswith("mingw")
-            else "Scripts"
-        )
-        return [
-            Path(p.parent if p.name == "Scripts" else p)
-            for p in Path.glob(
-                base or Config.create().python_installation_dir,
-                f"**/{bin_dir_name}",
-            )
-        ]
+        install_dir = base or Config.create().python_installation_dir
+        if WINDOWS and not sysconfig.get_platform().startswith("mingw"):
+            # On Windows Python executables are top level.
+            # (Only in virtualenvs, they are in the Scripts directory.)
+            # A python-build-standalone PyPy has no Scripts directory!
+            if base:
+                return [base] if base.is_dir() else []
+            return [p for p in Path.glob(install_dir, "*") if p.is_dir()]
+        return list(Path.glob(install_dir, "**/bin"))
 
     @classmethod
     def installation_bin_paths(
