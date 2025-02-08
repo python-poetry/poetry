@@ -37,7 +37,7 @@ class ShutilWhichPythonProvider(findpython.BaseProvider):  # type: ignore[misc]
 class PoetryPythonPathProvider(PathProvider):  # type: ignore[misc]
     @classmethod
     def installation_dir(cls, version: Version, implementation: str) -> Path:
-        return Config().python_installation_dir / f"{implementation}@{version}"
+        return Config.create().python_installation_dir / f"{implementation}@{version}"
 
     @classmethod
     def _make_bin_paths(cls, base: Path | None = None) -> list[Path]:
@@ -49,7 +49,7 @@ class PoetryPythonPathProvider(PathProvider):  # type: ignore[misc]
         return [
             Path(p.parent if p.name == "Scripts" else p)
             for p in Path.glob(
-                base or Config().python_installation_dir,
+                base or Config.create().python_installation_dir,
                 f"**/{bin_dir_name}",
             )
         ]

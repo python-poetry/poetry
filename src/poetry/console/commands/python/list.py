@@ -70,7 +70,7 @@ class PythonListCommand(Command):
         )
 
         implementations = {"cpython": "CPython", "pypy": "PyPy"}
-        python_installation_path = Config().python_installation_dir
+        python_installation_path = Config.create().python_installation_dir
 
         row_count = 0
 

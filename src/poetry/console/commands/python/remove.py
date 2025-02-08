@@ -60,7 +60,7 @@ class PythonRemoveCommand(Command):
             return 1
 
         request_title = f"<c1>{request}</> (<b>{implementation}</>)"
-        path = Config().python_installation_dir / f"{implementation}@{version}"
+        path = Config.create().python_installation_dir / f"{implementation}@{version}"
 
         if path.exists():
             if io.is_verbose():
