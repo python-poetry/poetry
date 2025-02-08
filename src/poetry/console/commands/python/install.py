@@ -32,7 +32,7 @@ class PythonInstallCommand(Command):
     options: ClassVar[list[Option]] = [
         option("clean", "c", "Cleanup installation if check fails.", flag=True),
         option(
-            "free-threaded", "f", "Use free-threaded version if available.", flag=True
+            "free-threaded", "t", "Use free-threaded version if available.", flag=True
         ),
         option(
             "implementation",
@@ -75,11 +75,11 @@ class PythonInstallCommand(Command):
 
         try:
             if installer.exists() and not reinstall:
-                self.io.write_line(
+                self.io.write_error_line(
                     "Python version already installed at "
                     f"<b>{PoetryPythonPathProvider.installation_dir(version, impl)}</>.\n"
                 )
-                self.io.write_line(
+                self.io.write_error_line(
                     f"Use <c1>--reinstall</> to install anyway, "
                     f"or use <c1>poetry python remove {version}</> first."
                 )
