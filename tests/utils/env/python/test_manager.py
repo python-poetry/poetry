@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import platform
+
 from typing import TYPE_CHECKING
 
 import pytest
@@ -76,15 +78,17 @@ def test_find_all_versions(
 
 @pytest.mark.parametrize("constraint", [None, "~3.9", ">=3.10"])
 def test_find_downloadable_versions(constraint: str | None) -> None:
-    versions = Python.find_downloadable_versions(constraint)
+    versions = list(Python.find_downloadable_versions(constraint))
+    if platform.system() == "FreeBSD":
+        assert len(versions) == 0
+    else:
+        assert len(versions) > 0
     if constraint:
         parsed_constraint = parse_constraint(constraint)
         assert all(
             parsed_constraint.allows(Version.parse(f"{v.major}.{v.minor}.{v.patch}"))
             for v in versions
         )
-    else:
-        assert len(list(versions)) > 0
 
 
 def find_downloadable_versions_include_incompatible() -> None:

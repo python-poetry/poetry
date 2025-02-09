@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import platform
+
 from typing import TYPE_CHECKING
 
 import pytest
@@ -30,7 +32,10 @@ def test_list_no_versions(tester: CommandTester) -> None:
 def test_list_all(tester: CommandTester) -> None:
     tester.execute("--all")
 
-    assert "Available for download" in tester.io.fetch_output()
+    if platform.system() == "FreeBSD":
+        assert tester.io.fetch_output() == "No Python installations found.\n"
+    else:
+        assert "Available for download" in tester.io.fetch_output()
 
 
 def test_list_invalid_version(tester: CommandTester) -> None:
