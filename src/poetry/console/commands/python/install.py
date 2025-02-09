@@ -30,7 +30,7 @@ class PythonInstallCommand(Command):
     ]
 
     options: ClassVar[list[Option]] = [
-        option("clean", "c", "Cleanup installation if check fails.", flag=True),
+        option("clean", "c", "Clean up installation if check fails.", flag=True),
         option(
             "free-threaded", "t", "Use free-threaded version if available.", flag=True
         ),
@@ -117,7 +117,9 @@ class PythonInstallCommand(Command):
             self.io.write("<fg=red>Failed</>\n")
 
             if installer.installation_directory.exists() and self.option("clean"):
-                PythonRemoveCommand.remove_python_installation(request, impl, self.io)
+                PythonRemoveCommand.remove_python_installation(
+                    str(installer.version), impl, self.io
+                )
 
             raise e
 

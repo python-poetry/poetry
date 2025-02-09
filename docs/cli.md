@@ -746,7 +746,7 @@ poetry python install <PYTHON_VERSION>
 
 #### Options
 
-* `--clean`: Cleanup installation if check fails.
+* `--clean`: Clean up installation if check fails.
 * `--free-threaded`: Use free-threaded version if available.
 * `--implementation`: Python implementation to use. (cpython, pypy)
 * `--reinstall`: Reinstall if installation already exists.

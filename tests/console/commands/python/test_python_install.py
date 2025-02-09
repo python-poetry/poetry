@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from poetry.core.constraints.version.version import Version
+
 from poetry.console.exceptions import PoetryRuntimeError
 from poetry.utils.env.python.installer import PythonDownloadNotFoundError
 from poetry.utils.env.python.installer import PythonInstallationError
@@ -15,6 +17,7 @@ if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
     from pytest_mock import MockerFixture
 
+    from poetry.config.config import Config
     from tests.types import CommandTesterFactory
 
 
@@ -89,19 +92,32 @@ def test_install_failure(tester: CommandTester, mock_installer: MagicMock) -> No
     assert "foo\n" in tester.io.fetch_error()
 
 
-def test_install_corrupt(tester: CommandTester, mock_installer: MagicMock) -> None:
+@pytest.mark.parametrize("clean", [False, True])
+def test_install_corrupt(
+    tester: CommandTester, mock_installer: MagicMock, config: Config, clean: bool
+) -> None:
+    def create_install_dir() -> None:
+        (config.python_installation_dir / "cpython@3.11.9").mkdir(parents=True)
+
     mock_installer.return_value.exists.side_effect = [False, PoetryRuntimeError("foo")]
+    mock_installer.return_value.install.side_effect = create_install_dir
+    mock_installer.return_value.version = Version.parse("3.11.9")
 
     with pytest.raises(PoetryRuntimeError):
-        tester.execute("3.11")
+        clean_opt = "-c " if clean else ""
+        tester.execute(f"{clean_opt}3.11")
 
     mock_installer.assert_called_once_with("3.11", "cpython", False)
     mock_installer.return_value.install.assert_called_once()
 
-    assert tester.io.fetch_output() == (
+    expected = (
         "Downloading and installing 3.11 (cpython) ... Done\n"
         "Testing 3.11 (cpython) ... Failed\n"
     )
+    if clean:
+        expected += "Removing installation 3.11.9 (cpython) ... Done\n"
+
+    assert tester.io.fetch_output() == expected
 
 
 def test_install_success(tester: CommandTester, mock_installer: MagicMock) -> None:
