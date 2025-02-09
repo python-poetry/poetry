@@ -139,7 +139,7 @@ Poetry uses the following default directories:
 - Windows: `%APPDATA%\pypoetry`
 - macOS: `~/Library/Application Support/pypoetry`
 
-You can override the Config directory by setting the `POETRY_CONFIG_DIR` environment variable.
+You can override the config directory by setting the `POETRY_CONFIG_DIR` environment variable.
 
 ### Data Directory
 
@@ -147,7 +147,7 @@ You can override the Config directory by setting the `POETRY_CONFIG_DIR` environ
 - Windows: `%APPDATA%\pypoetry`
 - macOS: `~/Library/Application Support/pypoetry`
 
-You can override the Data directory by setting the `POETRY_DATA_DIR` or `POETRY_HOME` environment variables. If `POETRY_HOME` is set, it will be given higher priority.
+You can override the data directory by setting the `POETRY_DATA_DIR` or `POETRY_HOME` environment variables. If `POETRY_HOME` is set, it will be given higher priority.
 
 ### Cache Directory
 
@@ -155,7 +155,7 @@ You can override the Data directory by setting the `POETRY_DATA_DIR` or `POETRY_
 - Windows: `%LOCALAPPDATA%\pypoetry`
 - macOS: `~/Library/Caches/pypoetry`
 
-You can override the Cache directory by setting the `POETRY_CACHE_DIR` environment variable.
+You can override the cache directory by setting the `POETRY_CACHE_DIR` environment variable.
 
 ## Available settings
 
@@ -185,7 +185,7 @@ The path to the data directory used by Poetry.
 - Windows: `%APPDATA%\pypoetry`
 - macOS: `~/Library/Application Support/pypoetry`
 
-You can override the Data directory by setting the `POETRY_DATA_DIR` or `POETRY_HOME` environment variables. If
+You can override the data directory by setting the `POETRY_DATA_DIR` or `POETRY_HOME` environment variables. If
 `POETRY_HOME` is set, it will be given higher priority.
 
 ### `installer.max-workers`
