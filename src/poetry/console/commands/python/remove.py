@@ -36,7 +36,10 @@ class PythonRemoveCommand(Command):
         ),
     ]
 
-    description = "Remove the specified Python version if managed by Poetry."
+    description = (
+        "Remove the specified Python version if managed by Poetry."
+        " (<warning>experimental feature</warning>)"
+    )
 
     @staticmethod
     def remove_python_installation(request: str, implementation: str, io: IO) -> int:

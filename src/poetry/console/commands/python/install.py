@@ -46,7 +46,10 @@ class PythonInstallCommand(Command):
         ),
     ]
 
-    description = "Install the specified Python version from the Python Standalone Builds project."
+    description = (
+        "Install the specified Python version from the Python Standalone Builds project."
+        " (<warning>experimental feature</warning>)"
+    )
 
     def handle(self) -> int:
         request = self.argument("python")

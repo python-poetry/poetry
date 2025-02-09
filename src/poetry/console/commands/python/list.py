@@ -40,7 +40,10 @@ class PythonListCommand(Command):
         option("managed", "m", "List only Poetry managed Python versions.", flag=True),
     ]
 
-    description = "Shows Python versions available for this environment."
+    description = (
+        "Shows Python versions available for this environment."
+        " (<warning>experimental feature</warning>)"
+    )
 
     def handle(self) -> int:
         rows: list[PythonInfo] = []

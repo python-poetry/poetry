@@ -754,7 +754,7 @@ poetry python install <PYTHON_VERSION>
 ### python list
 
 The `python list` command shows Python versions available in the environment. This includes both installed and
-discovered System Managed and Poetry Managed installations.
+discovered System managed and Poetry managed installations.
 
 ```bash
 poetry python list
