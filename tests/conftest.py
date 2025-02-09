@@ -1009,8 +1009,12 @@ def mocked_poetry_managed_python_register(
 ) -> MockedPoetryPythonRegister:
     config.python_installation_dir.mkdir()
 
-    def register(version: str, implementation: str) -> Path:
+    def register(
+        version: str, implementation: str, with_install_dir: bool = False
+    ) -> Path:
         bin_dir = config.python_installation_dir / f"{implementation}@{version}"
+        if with_install_dir:
+            bin_dir /= "install"
         if not WINDOWS:
             bin_dir /= "bin"
         bin_dir.mkdir(parents=True)

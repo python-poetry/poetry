@@ -22,13 +22,16 @@ def test_poetry_python_path_provider(
 ) -> None:
     cpython_path = mocked_poetry_managed_python_register("3.9.1", "cpython")
     pypy_path = mocked_poetry_managed_python_register("3.10.8", "pypy")
+    free_threaded_path = mocked_poetry_managed_python_register(
+        "3.13.2", "cpython", with_install_dir=True
+    )
 
     provider = PoetryPythonPathProvider.create()
 
     assert provider
 
-    assert set(provider.paths) == {cpython_path, pypy_path}
-    assert len(list(provider.find_pythons())) == 3
+    assert set(provider.paths) == {cpython_path, pypy_path, free_threaded_path}
+    assert len(list(provider.find_pythons())) == 4
 
     assert provider.installation_bin_paths(Version.parse("3.9.1"), "cpython") == [
         cpython_path
@@ -38,3 +41,6 @@ def test_poetry_python_path_provider(
         pypy_path
     ]
     assert provider.installation_bin_paths(Version.parse("3.10.8"), "cpython") == []
+    assert provider.installation_bin_paths(Version.parse("3.13.2"), "cpython") == [
+        free_threaded_path
+    ]

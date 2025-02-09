@@ -41,14 +41,32 @@ class PoetryPythonPathProvider(PathProvider):  # type: ignore[misc]
 
     @classmethod
     def _make_bin_paths(cls, base: Path | None = None) -> list[Path]:
+        # Attention:
+        # There are two versions of pbs builds,
+        # - one like a normal Python installation and
+        # - one with an additional level of folders where the expected files
+        #   are in an "install" directory.
+        # If both versions exist, the first one is preferred.
+        # However, sometimes (especially for free-threaded Python),
+        # only the second version exists!
         install_dir = base or Config.create().python_installation_dir
         if WINDOWS and not sysconfig.get_platform().startswith("mingw"):
             # On Windows Python executables are top level.
             # (Only in virtualenvs, they are in the Scripts directory.)
             # A python-build-standalone PyPy has no Scripts directory!
             if base:
-                return [base] if base.is_dir() else []
-            return [p for p in Path.glob(install_dir, "*") if p.is_dir()]
+                if not base.is_dir():
+                    return []
+                if (install_dir := base / "install").is_dir():
+                    return [install_dir]
+                return [base]
+            return [
+                *(
+                    pi if (pi := p / "install").exists() else p
+                    for p in Path.glob(install_dir, "*")
+                    if p.is_dir()
+                ),
+            ]
         return list(Path.glob(install_dir, "**/bin"))
 
     @classmethod

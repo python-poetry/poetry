@@ -156,4 +156,5 @@ class MockedPoetryPythonRegister(Protocol):
         self,
         version: str,
         implementation: str,
+        with_install_dir: bool = False,
     ) -> Path: ...
