@@ -287,7 +287,7 @@ class Config:
     def python_installation_dir(self) -> Path:
         path = self.get("python.installation-dir")
         if path is None:
-            path = Path(self.get("cache-dir")) / "python"
+            path = Path(self.get("data-dir")) / "python"
         return Path(path).expanduser()
 
     @property
