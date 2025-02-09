@@ -132,3 +132,28 @@ def test_install_reinstall(tester: CommandTester, mock_installer: MagicMock) -> 
         "Downloading and installing 3.11 (cpython) ... Done\n"
         "Testing 3.11 (cpython) ... Done\n"
     )
+
+
+@pytest.mark.parametrize("free_threaded", [False, True])
+@pytest.mark.parametrize("implementation", ["cpython", "pypy"])
+def test_install_passes_options_to_installer(
+    tester: CommandTester,
+    mock_installer: MagicMock,
+    free_threaded: bool,
+    implementation: str,
+) -> None:
+    mock_installer.return_value.exists.return_value = False
+
+    free_threaded_opt = "-t " if free_threaded else ""
+    impl_opt = f"-i {implementation} "
+    tester.execute(f"{free_threaded_opt}{impl_opt}3.13")
+
+    mock_installer.assert_called_once_with("3.13", implementation, free_threaded)
+    mock_installer.return_value.install.assert_called_once()
+
+    assert tester.status_code == 0
+    details = f"{implementation}, free-threaded" if free_threaded else implementation
+    assert tester.io.fetch_output() == (
+        f"Downloading and installing 3.13 ({details}) ... Done\n"
+        f"Testing 3.13 ({details}) ... Done\n"
+    )

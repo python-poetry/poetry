@@ -93,7 +93,10 @@ class PythonInstallCommand(Command):
             )
             return 1
 
-        request_title = f"<c1>{request}</> (<b>{impl}</>)"
+        add_info = impl
+        if free_threaded:
+            add_info += ", free-threaded"
+        request_title = f"<c1>{request}</> (<b>{add_info}</>)"
 
         try:
             self.io.write(f"Downloading and installing {request_title} ... ")
