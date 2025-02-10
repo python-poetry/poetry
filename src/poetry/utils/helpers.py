@@ -91,11 +91,12 @@ def _on_rm_error(
 
 
 def _on_rm_error(func: Callable[[str], None], path: str, exc_info: Any) -> None:
-    if not os.path.exists(path):
+    path_p = Path(path)
+    if not path_p.exists():
         return
 
-    os.chmod(path, stat.S_IWRITE)
-    func(path)
+    path_p.chmod(stat.S_IWRITE)
+    func(str(path_p))
 
 
 def remove_directory(path: Path, force: bool = False) -> None:
@@ -107,7 +108,7 @@ def remove_directory(path: Path, force: bool = False) -> None:
     Internally, all arguments are passed to `shutil.rmtree`.
     """
     if path.is_symlink():
-        return os.unlink(path)
+        return path.unlink()
 
     kwargs: dict[str, Any] = {}
     if force:

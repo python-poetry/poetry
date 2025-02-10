@@ -43,7 +43,9 @@ VERSION_3_7_1 = Version.parse("3.7.1")
 
 
 def build_venv(path: Path | str, **__: Any) -> None:
-    os.mkdir(str(path))
+    if isinstance(path, str):
+        path = Path(path)
+    path.mkdir()
 
 
 def check_output_wrapper(
@@ -65,8 +67,8 @@ def check_output_wrapper(
             return f"{version.major}.{version.minor}"
 
         if "import sys; print(sys.executable)" in python_cmd:
-            executable = cmd[0]
-            basename = os.path.basename(executable)
+            executable = Path(cmd[0])
+            basename = executable.name
             return f"/usr/bin/{basename}"
 
         if "print(sys.base_prefix)" in python_cmd:
@@ -206,7 +208,7 @@ def test_activate_fails_when_python_cannot_be_found(
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
-    os.mkdir(tmp_path / f"{venv_name}-py3.7")
+    (tmp_path / f"{venv_name}-py3.7").mkdir()
 
     config.merge({"virtualenvs": {"path": str(tmp_path)}})
 
@@ -231,7 +233,7 @@ def test_activate_activates_existing_virtualenv_no_envs_file(
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
-    os.mkdir(tmp_path / f"{venv_name}-py3.7")
+    (tmp_path / f"{venv_name}-py3.7").mkdir()
 
     config.merge({"virtualenvs": {"path": str(tmp_path)}})
 
@@ -269,7 +271,7 @@ def test_activate_activates_same_virtualenv_with_envs_file(
     doc[venv_name] = {"minor": "3.7", "patch": "3.7.1"}
     envs_file.write(doc)
 
-    os.mkdir(tmp_path / f"{venv_name}-py3.7")
+    (tmp_path / f"{venv_name}-py3.7").mkdir()
 
     config.merge({"virtualenvs": {"path": str(tmp_path)}})
 
@@ -307,7 +309,7 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     doc[venv_name] = {"minor": "3.7", "patch": "3.7.1"}
     envs_file.write(doc)
 
-    os.mkdir(tmp_path / f"{venv_name}-py3.7")
+    (tmp_path / f"{venv_name}-py3.7").mkdir()
 
     config.merge({"virtualenvs": {"path": str(tmp_path)}})
 
@@ -352,7 +354,7 @@ def test_activate_activates_recreates_for_different_patch(
     doc[venv_name] = {"minor": "3.7", "patch": "3.7.0"}
     envs_file.write(doc)
 
-    os.mkdir(tmp_path / f"{venv_name}-py3.7")
+    (tmp_path / f"{venv_name}-py3.7").mkdir()
 
     config.merge({"virtualenvs": {"path": str(tmp_path)}})
 
@@ -401,8 +403,8 @@ def test_activate_does_not_recreate_when_switching_minor(
     doc[venv_name] = {"minor": "3.7", "patch": "3.7.0"}
     envs_file.write(doc)
 
-    os.mkdir(tmp_path / f"{venv_name}-py3.7")
-    os.mkdir(tmp_path / f"{venv_name}-py3.6")
+    (tmp_path / f"{venv_name}-py3.7").mkdir()
+    (tmp_path / f"{venv_name}-py3.6").mkdir()
 
     config.merge({"virtualenvs": {"path": str(tmp_path)}})
 

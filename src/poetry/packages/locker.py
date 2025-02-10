@@ -244,7 +244,7 @@ class Locker:
             # we do that part for ourselves here, which only takes about 10 ms.
 
             # get original line endings
-            with open(self.lock, encoding="utf-8", newline="") as f:
+            with self.lock.open(encoding="utf-8", newline="") as f:
                 line = f.readline()
             linesep = "\r\n" if line.endswith("\r\n") else "\n"
 
@@ -254,7 +254,7 @@ class Locker:
                 content = content.replace("\r\n", "\n")
             elif linesep == "\r\n":
                 content = re.sub(r"(?<!\r)\n", "\r\n", content)
-            with open(self.lock, "w", encoding="utf-8", newline="") as f:
+            with self.lock.open("w", encoding="utf-8", newline="") as f:
                 f.write(content)
 
         else:

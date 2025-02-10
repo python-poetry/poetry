@@ -102,7 +102,7 @@ class EditableBuilder(Builder):
             pip_install(self._path, self._env, upgrade=True, editable=True)
         finally:
             if not has_setup:
-                os.remove(setup)
+                setup.unlink()
 
     def _add_pth(self) -> list[Path]:
         paths = {

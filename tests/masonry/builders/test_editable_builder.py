@@ -194,7 +194,7 @@ My Package
 """
     assert metadata == dist_info.joinpath("METADATA").read_text(encoding="utf-8")
 
-    with open(dist_info.joinpath("RECORD"), encoding="utf-8", newline="") as f:
+    with dist_info.joinpath("RECORD").open(encoding="utf-8", newline="") as f:
         reader = csv.reader(f)
         records = list(reader)
 

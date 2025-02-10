@@ -106,6 +106,7 @@ extend-exclude = [
     # External to the project's coding standards
     "tests/fixtures/git/*",
     "tests/fixtures/project_with_setup*/*",
+    "tests/fixtures/extended_with_no_setup/*"
 ]
 fix = true
 line-length = 88
@@ -120,6 +121,7 @@ extend-select = [
     "N",   # pep8-naming
     "PIE", # flake8-pie
     "PGH", # pygrep
+    "PTH", # flake8-use-pathlib
     "RUF", # ruff checks
     "SIM", # flake8-simplify
     "T20", # flake8-print
