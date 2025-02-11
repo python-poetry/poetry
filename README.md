@@ -10,7 +10,7 @@
 Poetry helps you declare, manage and install dependencies of Python projects,
 ensuring you have the right stack everywhere.
 
-![Poetry Install](https://raw.githubusercontent.com/python-poetry/poetry/master/assets/install.gif)
+![Poetry Install](https://raw.githubusercontent.com/python-poetry/poetry/main/assets/install.gif)
 
 Poetry replaces `setup.py`, `requirements.txt`, `setup.cfg`, `MANIFEST.in` and `Pipfile` with a simple `pyproject.toml`
 based project format.

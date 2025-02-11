@@ -172,7 +172,7 @@ class PartialSolution:
         Returns the first Assignment in this solution such that the sublist of
         assignments up to and including that entry collectively satisfies term.
         """
-        assigned_term = None
+        assigned_term: Term | None = None
 
         for assignment in self._assignments:
             if assignment.dependency.complete_name != term.dependency.complete_name:
@@ -195,6 +195,7 @@ class PartialSolution:
                 assigned_term = assigned_term.intersect(assignment)
 
             # As soon as we have enough assignments to satisfy term, return them.
+            assert assigned_term is not None
             if assigned_term.satisfies(term):
                 return assignment
 

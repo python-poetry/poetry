@@ -204,7 +204,7 @@ whose Python requirement doesn't match the whole range Poetry will tell you this
 
 ```
 The current project's supported Python range (>=3.7.0,<4.0.0) is not compatible with some of the required packages Python requirement:
-    - scipy requires Python >=3.7,<3.11, so it will not be satisfied for Python >=3.11,<4.0.0
+    - scipy requires Python >=3.7,<3.11, so it will not be installable for Python >=3.11,<4.0.0
 ```
 
 Usually you will want to match the supported Python range of your project with the upper bound of the failing dependency.
