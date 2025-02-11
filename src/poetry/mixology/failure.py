@@ -67,7 +67,7 @@ class _Writer:
                 buffer.append(
                     f"  - {incompatibility.terms[0].dependency.name} requires Python"
                     f" {incompatibility.cause.python_version}, so it will not be"
-                    f" satisfied for Python {root_constraint.difference(constraint)}"
+                    f" installable for Python {root_constraint.difference(constraint)}"
                 )
 
         if required_python_version_notification:

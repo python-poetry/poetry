@@ -215,10 +215,16 @@ class VersionSolver:
                     # decision level, so we clear [changed] and refill it with the
                     # newly-propagated assignment.
                     changed.clear()
-                    changed.add(str(self._propagate_incompatibility(root_cause)))
+                    result = self._propagate_incompatibility(root_cause)
+                    assert result is not None
+                    assert result != _conflict
+                    assert isinstance(result, str)
+                    changed.add(result)
                     break
-                elif result is not None:
-                    changed.add(str(result))
+
+                if result is not None:
+                    assert isinstance(result, str)
+                    changed.add(result)
 
     def _propagate_incompatibility(
         self, incompatibility: Incompatibility
