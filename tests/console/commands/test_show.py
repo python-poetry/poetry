@@ -1981,15 +1981,13 @@ required by
     assert actual == expected
 
 
-def test_show_entire_description_with_no_truncate(
-    tester: CommandTester, poetry: Poetry, installed: Repository
+@pytest.mark.parametrize("truncate", [False, True])
+def test_show_entire_description_truncate(
+    tester: CommandTester, poetry: Poetry, installed: Repository, truncate: str
 ) -> None:
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.2.0"))
 
     cachy2 = get_package("cachy", "0.2.0")
-    cachy2.description = (
-        "This is a veeeeeeeery long description that should not be truncated."
-    )
     cachy2.add_dependency(Factory.create_dependency("msgpack-python", ">=0.5 <0.6"))
 
     installed.add_package(cachy2)
@@ -2001,7 +1999,7 @@ def test_show_entire_description_with_no_truncate(
                 {
                     "name": "cachy",
                     "version": "0.2.0",
-                    "description": "This is a veeeeeeeery long description that should not be truncated.",
+                    "description": "This is a veeeeeeeery long description that might be truncated.",
                     "category": "main",
                     "optional": False,
                     "platform": "*",
@@ -2029,67 +2027,15 @@ def test_show_entire_description_with_no_truncate(
         }
     )
 
-    tester.execute("--no-truncate")
+    tester.execute("" if truncate else "--no-truncate")
 
-    expected = """\
-cachy              0.2.0 This is a veeeeeeeery long description that should not be truncated.
+    if truncate:
+        expected = """\
+cachy              0.2.0 This is a veeeeeeeery long description that might ...
 msgpack-python (!) 0.5.1"""
-
-    assert tester.io.fetch_output().strip() == expected
-
-
-def test_show_entire_description_with_truncate(
-    tester: CommandTester, poetry: Poetry, installed: Repository
-) -> None:
-    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.2.0"))
-
-    cachy2 = get_package("cachy", "0.2.0")
-    cachy2.description = (
-        "This is a veeeeeeeery long description that should be truncated."
-    )
-    cachy2.add_dependency(Factory.create_dependency("msgpack-python", ">=0.5 <0.6"))
-
-    installed.add_package(cachy2)
-
-    assert isinstance(poetry.locker, TestLocker)
-    poetry.locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "cachy",
-                    "version": "0.2.0",
-                    "description": "This is a veeeeeeeery long description that should be truncated.",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                    "dependencies": {"msgpack-python": ">=0.5 <0.6"},
-                },
-                {
-                    "name": "msgpack-python",
-                    "version": "0.5.1",
-                    "description": "",
-                    "category": "main",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
-                "platform": "*",
-                "content-hash": "123456789",
-                "files": {"cachy": [], "msgpack-python": []},
-            },
-        }
-    )
-
-    tester.execute()
-
-    expected = """\
-cachy              0.2.0 This is a veeeeeeeery long description that should...
+    else:
+        expected = """\
+cachy              0.2.0 This is a veeeeeeeery long description that might be truncated.
 msgpack-python (!) 0.5.1"""
 
     assert tester.io.fetch_output().strip() == expected
