@@ -1,7 +1,7 @@
 tests_task:
   # We only use Cirrus CI for FreeBSD at present; the rest of the task will assume FreeBSD.
   freebsd_instance:
-    image_family: freebsd-14-0
+    image_family: freebsd-14-2
     # Cirrus has a concurrency limit of 8 vCPUs for FreeBSD. Allow executing 4 tasks in parallel.
     cpu: 2
     memory: 2G
