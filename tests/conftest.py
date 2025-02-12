@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextlib
 import logging
 import os
+import platform
 import re
 import shutil
 import sys
@@ -27,6 +28,7 @@ from keyring.errors import KeyringLocked
 from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import parse_constraint
 from poetry.core.packages.dependency import Dependency
+from poetry.core.utils._compat import WINDOWS
 from poetry.core.version.markers import parse_marker
 from pytest import FixtureRequest
 
@@ -80,6 +82,7 @@ if TYPE_CHECKING:
     from tests.types import CommandFactory
     from tests.types import FixtureCopier
     from tests.types import FixtureDirGetter
+    from tests.types import MockedPoetryPythonRegister
     from tests.types import MockedPythonRegister
     from tests.types import PackageFactory
     from tests.types import ProjectFactory
@@ -278,14 +281,22 @@ def config_cache_dir(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
+def config_data_dir(tmp_path: Path) -> Path:
+    path = tmp_path / ".local" / "share" / "pypoetry"
+    path.mkdir(parents=True)
+    return path
+
+
+@pytest.fixture
 def config_virtualenvs_path(config_cache_dir: Path) -> Path:
     return config_cache_dir / "virtualenvs"
 
 
 @pytest.fixture
-def config_source(config_cache_dir: Path) -> DictConfigSource:
+def config_source(config_cache_dir: Path, config_data_dir: Path) -> DictConfigSource:
     source = DictConfigSource()
     source.add_property("cache-dir", str(config_cache_dir))
+    source.add_property("data-dir", str(config_data_dir))
 
     return source
 
@@ -886,6 +897,7 @@ def mocked_python_register(
     def register(
         version: str,
         executable_name: str | Path | None = None,
+        implementation: str | None = None,
         parent: str | Path | None = None,
         make_system: bool = False,
     ) -> Python:
@@ -896,7 +908,12 @@ def mocked_python_register(
             info = version.split(".")
             executable_name = f"python{info[0]}.{info[1]}"
 
-        python = findpython.PythonVersion(
+        class MockPythonVersion(findpython.PythonVersion):  # type: ignore[misc]
+            @property
+            def implementation(self) -> str:
+                return implementation or platform.python_implementation()
+
+        python = MockPythonVersion(
             executable=parent / executable_name,
             _version=packaging.version.Version(version),
             _interpreter=parent / executable_name,
@@ -962,3 +979,48 @@ def with_no_active_python(mocker: MockerFixture) -> MagicMock:
         "poetry.utils.env.python.Python.get_active_python",
         return_value=None,
     )
+
+
+@pytest.fixture
+def mock_python_version(mocker: MockerFixture) -> None:
+    class MockPythonVersion(findpython.PythonVersion):  # type: ignore[misc]
+        @property
+        def implementation(self) -> str:
+            return "PyPy" if "pypy" in str(self.executable) else "CPython"
+
+        def _get_version(self) -> packaging.version.Version:
+            install_dir = self.executable.parent
+            if not WINDOWS:
+                install_dir = install_dir.parent
+            return packaging.version.Version(install_dir.name.split("@")[1])
+
+        def _get_interpreter(self) -> str:
+            return str(self.executable)
+
+    mocker.patch(
+        "poetry.utils.env.python.providers.PoetryPythonPathProvider.version_maker",
+        MockPythonVersion,
+    )
+
+
+@pytest.fixture
+def mocked_poetry_managed_python_register(
+    config: Config, without_mocked_findpython: None, mock_python_version: None
+) -> MockedPoetryPythonRegister:
+    config.python_installation_dir.mkdir()
+
+    def register(
+        version: str, implementation: str, with_install_dir: bool = False
+    ) -> Path:
+        bin_dir = config.python_installation_dir / f"{implementation}@{version}"
+        if with_install_dir:
+            bin_dir /= "install"
+        if not WINDOWS:
+            bin_dir /= "bin"
+        bin_dir.mkdir(parents=True)
+        (bin_dir / "python").touch()
+        if implementation == "pypy":
+            (bin_dir / "pypy").touch()
+        return bin_dir
+
+    return register

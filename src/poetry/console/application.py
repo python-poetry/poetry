@@ -82,6 +82,10 @@ COMMANDS = [
     "env list",
     "env remove",
     "env use",
+    # Python commands,
+    "python install",
+    "python list",
+    "python remove",
     # Self commands
     "self add",
     "self install",
