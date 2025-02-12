@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 from typing import TYPE_CHECKING
 from typing import ClassVar
 
@@ -64,6 +66,11 @@ class ShowCommand(GroupCommand, EnvCommand):
             "Show all packages (even those not compatible with current system).",
         ),
         option("top-level", "T", "Show only top-level dependencies."),
+        option(
+            "no-truncate",
+            None,
+            "Do not truncate the output based on the terminal width.",
+        ),
     ]
 
     help = """The show command displays detailed information about a package, or
@@ -229,7 +236,11 @@ lists all packages available."""
         show_latest = self.option("latest")
         show_all = self.option("all")
         show_top_level = self.option("top-level")
-        width = shutil.get_terminal_size().columns
+        width = (
+            sys.maxsize
+            if self.option("no-truncate")
+            else shutil.get_terminal_size().columns
+        )
         name_length = version_length = latest_length = required_by_length = 0
         latest_packages = {}
         latest_statuses = {}
