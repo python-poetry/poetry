@@ -293,6 +293,8 @@ class Application(BaseApplication):
                     suggested_names = find_similar_names(
                         command, list(self._commands.keys())
                     )
+                    if command == "shell":
+                        io.write_error_line("poetry shell is not available anymore since v2.0. Please use `poetry env activate` instead.")
                     io.write_error_line(
                         f"The requested command <c1>{command}</> does not exist."
                     )
