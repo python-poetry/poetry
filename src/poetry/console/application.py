@@ -51,6 +51,38 @@ def load_command(name: str) -> Callable[[], Command]:
     return _load
 
 
+def env_activate_hint() -> str | None:
+    try:
+        import shellingham
+
+        shell = shellingham.detect_shell()[0]
+    except shellingham.ShellDetectionFailure:
+        shell = None
+
+    # See shellingham detected shells:
+    # https://github.com/sarugaku/shellingham/blob/master/src/shellingham/_core.py
+    if shell in ("sh", "bash", "dash", "ash", "zsh", "ksh", "xonsh"):
+        env_activate_command = "eval $(poetry env activate)"
+    elif shell in ("csh", "tcsh"):
+        env_activate_command = "eval `poetry env activate`"
+    elif shell in ("fish", "elvish"):
+        env_activate_command = "eval (poetry env activate)"
+    elif shell in ("powershell", "pwsh"):
+        env_activate_command = "Invoke-Expression (poetry env activate)"
+    else:
+        env_activate_command = None
+
+    if env_activate_command:
+        env_activate_hint = f"""<b>HINT</b>: Your shell appears to be {shell}. You probably need this command:
+
+    <c1>{env_activate_command}</>
+    """
+    else:
+        env_activate_hint = None
+
+    return env_activate_hint
+
+
 COMMANDS = [
     "about",
     "add",
@@ -271,6 +303,8 @@ class Application(BaseApplication):
                     io.write_error_line("")
                     io.write_error_line(COMMAND_NOT_FOUND_PREFIX_MESSAGE)
                     io.write_error_line(message)
+                    if command == "shell" and (hint := env_activate_hint()):
+                        io.write_error_line(hint)
                     return 1
 
                 if command is not None and command in self.get_namespaces():
