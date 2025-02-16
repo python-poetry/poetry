@@ -28,9 +28,15 @@ class ShutilWhichPythonProvider(findpython.BaseProvider):  # type: ignore[misc]
         return cls()
 
     def find_pythons(self) -> Iterable[findpython.PythonVersion]:
-        if path := shutil.which("python"):
-            return [findpython.PythonVersion(executable=Path(path))]
+        if python := self.find_python_by_name("python"):
+            return [python]
         return []
+
+    @classmethod
+    def find_python_by_name(cls, name: str) -> findpython.PythonVersion | None:
+        if path := shutil.which(name):
+            return findpython.PythonVersion(executable=Path(path))
+        return None
 
 
 @dataclasses.dataclass

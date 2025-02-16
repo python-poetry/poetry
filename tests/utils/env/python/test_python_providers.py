@@ -1,14 +1,25 @@
 from __future__ import annotations
 
+import sys
+
 from typing import TYPE_CHECKING
 
 from poetry.core.constraints.version import Version
 
 from poetry.utils.env.python.providers import PoetryPythonPathProvider
+from poetry.utils.env.python.providers import ShutilWhichPythonProvider
 
 
 if TYPE_CHECKING:
     from tests.types import MockedPoetryPythonRegister
+
+
+def test_shutil_which_python_provider() -> None:
+    provider = ShutilWhichPythonProvider.create()
+    assert provider
+    pythons = list(provider.find_pythons())
+    assert len(pythons) == 1
+    assert pythons[0].minor == sys.version_info.minor
 
 
 def test_poetry_python_path_provider_no_pythons() -> None:
