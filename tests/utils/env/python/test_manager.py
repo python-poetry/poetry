@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import platform
+import sys
 
 from typing import TYPE_CHECKING
 
@@ -95,3 +96,39 @@ def find_downloadable_versions_include_incompatible() -> None:
     assert len(
         list(Python.find_downloadable_versions(include_incompatible=True))
     ) > len(list(Python.find_downloadable_versions()))
+
+
+@pytest.mark.parametrize(
+    ("name", "expected_minor"),
+    [
+        ("3.9", 9),
+        ("3.10", 10),
+        ("3.11", None),
+    ],
+)
+def test_get_by_name_version(
+    mocked_python_register: MockedPythonRegister, name: str, expected_minor: int | None
+) -> None:
+    mocked_python_register("3.9.1", implementation="CPython", parent="a")
+    mocked_python_register("3.10.3", implementation="CPython", parent="b")
+
+    python = Python.get_by_name(name)
+    if expected_minor is None:
+        assert python is None
+    else:
+        assert python is not None
+        assert python.minor == expected_minor
+
+
+def test_get_by_name_python(without_mocked_findpython: None) -> None:
+    python = Python.get_by_name("python")
+    assert python is not None
+    assert python.version.major == 3
+    assert python.version.minor == sys.version_info.minor
+
+
+def test_get_by_name_path(without_mocked_findpython: None) -> None:
+    python = Python.get_by_name(sys.executable)
+    assert python is not None
+    assert python.version.major == 3
+    assert python.version.minor == sys.version_info.minor

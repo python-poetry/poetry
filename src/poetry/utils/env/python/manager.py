@@ -230,13 +230,6 @@ class Python:
         return None
 
     @classmethod
-    def from_executable(cls, path: Path | str) -> Python:
-        try:
-            return cls(python=findpython.PythonVersion(executable=Path(path)))
-        except (FileNotFoundError, NotADirectoryError, ValueError):
-            raise ValueError(f"{path} is not a valid Python executable")
-
-    @classmethod
     def get_system_python(cls) -> Python:
         """
         Creates and returns an instance of the class representing the Poetry's Python executable.
@@ -252,10 +245,10 @@ class Python:
 
     @classmethod
     def get_by_name(cls, python_name: str) -> Python | None:
-        if Path(python_name).exists():
-            with contextlib.suppress(ValueError):
-                # if it is a path try assuming it is an executable
-                return cls.from_executable(python_name)
+        # Ignore broken installations.
+        with contextlib.suppress(ValueError):
+            if python := ShutilWhichPythonProvider.find_python_by_name(python_name):
+                return cls(python=python)
 
         if python := findpython.find(python_name):
             return cls(python=python)
