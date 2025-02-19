@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import contextlib
+import os
 import sys
 
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import NamedTuple
 from typing import cast
 from typing import overload
 
@@ -14,17 +16,36 @@ import packaging.version
 
 from cleo.io.null_io import NullIO
 from cleo.io.outputs.output import Verbosity
+from pbs_installer._install import THIS_ARCH
+from pbs_installer._install import THIS_PLATFORM
+from pbs_installer._versions import PYTHON_VERSIONS
 from poetry.core.constraints.version import Version
+from poetry.core.constraints.version import VersionConstraint
+from poetry.core.constraints.version import parse_constraint
 
 from poetry.utils.env.python.exceptions import NoCompatiblePythonVersionFoundError
+from poetry.utils.env.python.providers import PoetryPythonPathProvider
 from poetry.utils.env.python.providers import ShutilWhichPythonProvider
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from cleo.io.io import IO
 
     from poetry.config.config import Config
     from poetry.poetry import Poetry
+
+# register default providers
+findpython.register_provider(PoetryPythonPathProvider)
+
+
+class PythonInfo(NamedTuple):
+    major: int
+    minor: int
+    patch: int
+    implementation: str
+    executable: Path | None
 
 
 class Python:
@@ -59,9 +80,111 @@ class Python:
         else:
             raise ValueError("Either python or executable must be provided")
 
+    @classmethod
+    def find_all(cls) -> Iterator[Python]:
+        venv_path: Path | None = (
+            Path(os.environ["VIRTUAL_ENV"]) if "VIRTUAL_ENV" in os.environ else None
+        )
+        for python in findpython.find_all():
+            if venv_path and python.executable.is_relative_to(venv_path):
+                continue
+            yield cls(python=python)
+
+    @classmethod
+    def find_poetry_managed_pythons(cls) -> Iterator[Python]:
+        finder = findpython.Finder(
+            selected_providers=[PoetryPythonPathProvider.name()],
+        )
+        for python in finder.find_all():
+            yield cls(python=python)
+
+    @classmethod
+    def find_all_versions(
+        cls,
+        constraint: VersionConstraint | str | None = None,
+        implementation: str | None = None,
+    ) -> Iterator[PythonInfo]:
+        if isinstance(constraint, str):
+            constraint = parse_constraint(constraint)
+        constraint = constraint or parse_constraint("*")
+        if implementation:
+            implementation = implementation.lower()
+
+        seen = set()
+        for python in cls.find_all():
+            if (
+                python.executable in seen
+                or not constraint.allows(python.version)
+                or (implementation and python.implementation.lower() != implementation)
+            ):
+                continue
+
+            seen.add(python.executable)
+            yield PythonInfo(
+                major=python.major,
+                minor=python.minor,
+                patch=python.patch,
+                implementation=python.implementation.lower(),
+                executable=python.executable,
+            )
+
+    @classmethod
+    def find_downloadable_versions(
+        cls,
+        constraint: VersionConstraint | str | None = None,
+        *,
+        include_incompatible: bool = False,
+    ) -> Iterator[PythonInfo]:
+        if isinstance(constraint, str):
+            constraint = parse_constraint(constraint)
+        constraint = constraint or parse_constraint("*")
+
+        for pv in PYTHON_VERSIONS:
+            for _ in {
+                k[1]
+                for k in PYTHON_VERSIONS[pv]
+                if include_incompatible or (k[0], k[1]) == (THIS_PLATFORM, THIS_ARCH)
+            }:
+                if not constraint.allows(
+                    Version.from_parts(pv.major, pv.minor, pv.micro)
+                ):
+                    continue
+
+                yield PythonInfo(
+                    major=pv.major,
+                    minor=pv.minor,
+                    patch=pv.micro,
+                    implementation=pv.implementation.lower(),
+                    executable=None,
+                )
+
+    @property
+    def python(self) -> findpython.PythonVersion:
+        return self._python
+
+    @property
+    def name(self) -> str:
+        return cast(str, self._python.name)
+
     @property
     def executable(self) -> Path:
         return cast(Path, self._python.interpreter)
+
+    @property
+    def implementation(self) -> str:
+        return cast(str, self._python.implementation.lower())
+
+    @property
+    def major(self) -> int:
+        return cast(int, self._python.major)
+
+    @property
+    def minor(self) -> int:
+        return cast(int, self._python.minor)
+
+    @property
+    def patch(self) -> int:
+        return cast(int, self._python.patch)
 
     @property
     def version(self) -> Version:
@@ -107,13 +230,6 @@ class Python:
         return None
 
     @classmethod
-    def from_executable(cls, path: Path | str) -> Python:
-        try:
-            return cls(python=findpython.PythonVersion(executable=Path(path)))
-        except (FileNotFoundError, NotADirectoryError, ValueError):
-            raise ValueError(f"{path} is not a valid Python executable")
-
-    @classmethod
     def get_system_python(cls) -> Python:
         """
         Creates and returns an instance of the class representing the Poetry's Python executable.
@@ -129,10 +245,10 @@ class Python:
 
     @classmethod
     def get_by_name(cls, python_name: str) -> Python | None:
-        if Path(python_name).exists():
-            with contextlib.suppress(ValueError):
-                # if it is a path try assuming it is an executable
-                return cls.from_executable(python_name)
+        # Ignore broken installations.
+        with contextlib.suppress(ValueError):
+            if python := ShutilWhichPythonProvider.find_python_by_name(python_name):
+                return cls(python=python)
 
         if python := findpython.find(python_name):
             return cls(python=python)
@@ -184,11 +300,10 @@ class Python:
         io = io or NullIO()
         supported_python = poetry.package.python_constraint
 
-        for candidate in findpython.find_all():
-            python = cls(python=candidate)
+        for python in cls.find_all():
             if python.version.allows_any(supported_python):
                 io.write_error_line(
-                    f"Using <c1>{candidate.name}</c1> ({python.patch_version})"
+                    f"Using <c1>{python.name}</c1> ({python.patch_version})"
                 )
                 return python
 

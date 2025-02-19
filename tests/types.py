@@ -145,6 +145,16 @@ class MockedPythonRegister(Protocol):
         self,
         version: str,
         executable_name: str | Path | None = None,
+        implementation: str | None = None,
         parent: str | Path | None = None,
         make_system: bool = False,
     ) -> Python: ...
+
+
+class MockedPoetryPythonRegister(Protocol):
+    def __call__(
+        self,
+        version: str,
+        implementation: str,
+        with_install_dir: bool = False,
+    ) -> Path: ...
