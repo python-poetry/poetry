@@ -28,8 +28,9 @@ This will create the `poetry-demo` directory with the following content:
 poetry-demo
 ├── pyproject.toml
 ├── README.md
-├── poetry_demo
-│   └── __init__.py
+├── src
+│   └── poetry_demo
+│       └── __init__.py
 └── tests
     └── __init__.py
 ```
