@@ -24,6 +24,6 @@ from poetry.console.logging.formatters.builder_formatter import BuilderLogFormat
         ("building package", "building package"),  # Edge case: Case sensitivity
     ],
 )
-def test_builder_log_formatter(input_msg, expected_output):
+def test_builder_log_formatter(input_msg: str, expected_output: str) -> None:
     formatter = BuilderLogFormatter()
     assert formatter.format(input_msg) == expected_output
