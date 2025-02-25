@@ -337,7 +337,7 @@ poetry config --local installer.build-config-settings.grpcio \
 
 **Environment Variable**: `POETRY_REQUESTS_MAX_RETRIES`
 
-*Introduced in 1.9.0*
+*Introduced in 2.0.0*
 
 Set the maximum number of retries in an unstable network.
 This setting has no effect if the server does not support HTTP range requests.
