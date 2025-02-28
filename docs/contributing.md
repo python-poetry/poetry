@@ -28,23 +28,22 @@ related reports.
 
 #### Before submitting a bug report
 
-* **Check the [FAQ]** for a list of common questions and problems.
-* **Check the [blog]** for release notes from recent releases, including steps for upgrading and known issues.
-* **Check that your issue does not already exist** in the [issue tracker].
-* **Make sure your issue is really a bug, and is not a support request or question** better suited for [Discussions]
-or [Discord].
+* **Check the [FAQ](faq.md)** for a list of common questions and problems.
+* **Check the [blog](https://python-poetry.org/blog/)** for release notes from recent releases, including steps for upgrading and known issues.
+* **Check that your issue does not already exist** in the [issue tracker]( https://github.com/python-poetry/poetry/issues).
+* **Make sure your issue is really a bug, and is not a support request or question** better suited for [Discussions](https://github.com/python-poetry/poetry/discussions)
+or [Discord](https://discord.com/invite/awxPgve).
 * **Try running your commands with the** `--no-cache` **flag**.
 * **Try clearing your cache with** `poetry cache clear --all PyPI` **and rerunning your commands**.
 
-{{% note %}}
-If you find a **Closed** issue that seems like it is the same thing that you're experiencing, open a new issue and
-include a link to the original issue in the body of your new one.
-{{% /note %}}
+*Note:
+<ins>If you find a **Closed** issue that seems like it is the same thing that you're experiencing, open a new issue and
+include a link to the original issue in the body of your new one.</ins>*
 
 #### How do I submit a bug report?
 
-Bugs concerning Poetry and poetry-core should be submitted to the main [issue tracker], using the correct
-[issue template].
+Bugs concerning Poetry and poetry-core should be submitted to the main [issue tracker](https://github.com/python-poetry/poetry/issues), using the correct
+[issue template](https://github.com/python-poetry/poetry/issues/new/choose).
 
 Explain the problem and make it easy for others to search for and understand:
 
@@ -92,13 +91,13 @@ understand your suggestion and find related suggestions.
 
 #### Before submitting a suggested enhancement
 
-* **Check the [FAQ]** for a list of common questions and problems.
-* **Check that your issue does not already exist** in the [issue tracker].
+* **Check the [FAQ](faq.md)** for a list of common questions and problems.
+* **Check that your issue does not already exist** in the [issue tracker](https://github.com/python-poetry/poetry/issues).
 
 #### How do I submit a suggested enhancement?
 
-Suggested enhancements concerning Poetry and poetry-core should be submitted to the main [issue tracker], using the
-correct [issue template].
+Suggested enhancements concerning Poetry and poetry-core should be submitted to the main [issue tracker](https://github.com/python-poetry/poetry/issues), using the
+correct [issue template](https://github.com/python-poetry/poetry/issues/new/choose).
 
 * **Use a clear and descriptive title** for the issue to identify the suggestion.
 * **Provide a detailed description of the proposed enhancement**, with specific steps or examples when possible.
@@ -110,38 +109,36 @@ One of the simplest ways to get started contributing to a project is through imp
 constantly evolving, and this means that sometimes our documentation has gaps. You can help by adding missing sections,
 editing the existing content to be more accessible, or creating new content such as tutorials, FAQs, etc.
 
-{{% note %}}
+*Note:
 GitHub [Discussions](https://github.com/python-poetry/poetry/discussions) and the
 [kind/question label](https://github.com/python-poetry/poetry/labels/kind/question) are excellent sources for FAQ
 candidates.
-{{% /note %}}
+*
 
-Issues pertaining to the documentation are usually marked with the [area/docs label], which will also trigger a preview
+Issues pertaining to the documentation are usually marked with the [area/docs label](https://github.com/python-poetry/poetry/labels/area/docs), which will also trigger a preview
 of the changes as rendered by this website.
 
 ### Code contributions
 
 #### Picking an issue
 
-{{% note %}}
-If you are a first time contributor, and are looking for an issue to take on, you might want to look for
+*Note:
+<ins>If you are a first time contributor, and are looking for an issue to take on, you might want to look for
 at the [contributing page](https://github.com/python-poetry/poetry/contribute) for candidates. We do our best to curate
 good issues for first-time contributors there, but do fall behind -- so if you don't see anything good, feel free to
-ask.
-{{% /note %}}
+ask.</ins>*
 
 If you would like to take on an issue, feel free to comment on the issue tagging `@python-poetry/triage`.
 We are more than happy to discuss solutions on the issue. If you would like help with navigating the code base, are
-looking for something to work on, or want feedback on a design or change, join us on our [Discord server][Discord] or
-start a [Discussion][Discussions].
+looking for something to work on, or want feedback on a design or change, join us on our [Discord server](https://discord.com/invite/awxPgve) or
+start a [Discussion](https://github.com/python-poetry/poetry/discussions).
 
 #### Local development
 
-Poetry is developed using Poetry. Refer to the [documentation] to install Poetry in your local environment.
+Poetry is developed using Poetry. Refer to the [documentation](_index.md) to install Poetry in your local environment.
 
-{{% note %}}
-Poetry's development toolchain requires Python 3.9 or newer.
-{{% /note %}}
+*Note:
+<ins>Poetry's development toolchain requires Python 3.9 or newer.</ins>*
 
 You should first fork the Poetry repository and then clone it locally, so that you can make pull requests against the
 project. If you are new to Git and pull request based development, GitHub provides a
@@ -154,13 +151,12 @@ poetry install
 poetry run pytest
 ```
 
-{{% note %}}
 If you want to see the coverage stats after the tests are complete, use:
 
 ```bash
 poetry run pytest --cov=src/poetry --cov-report term
 ```
-{{% /note %}}
+
 
 When you contribute to Poetry, automated tools will be run to make sure your code is suitable to be merged. Besides
 pytest, you will need to make sure your code typechecks properly using [mypy](http://mypy-lang.org/):
@@ -195,22 +191,21 @@ instead of relying on remote CI.
 * If your changes warrant a documentation change, the pull request must also update the documentation. Make sure to
 review the documentation preview generated by CI for any rendering issues.
 
-{{% note %}}
-Make sure your branch is [rebased](https://docs.github.com/en/get-started/using-git/about-git-rebase) against the latest
+
+*Note: 
+<ins>Make sure your branch is [rebased](https://docs.github.com/en/get-started/using-git/about-git-rebase) against the latest
 base branch. A maintainer might ask you to ensure the branch is up-to-date prior to merging your pull request
-(especially if there have been CI changes on the base branch), and will also ask you to fix any conflicts.
-{{% /note %}}
+(especially if there have been CI changes on the base branch), and will also ask you to fix any conflicts.</ins>*
 
 All pull requests, unless otherwise instructed, need to be first accepted into the `main` branch. Maintainers will
 generally decide if any backports to other branches are required, and carry them out as needed.
 
 ### Issue triage
 
-{{% note %}}
-If you have an issue that hasn't had any attention, you can ping us `@python-poetry/triage` on the issue. Please give us
+*Note:
+<ins>If you have an issue that hasn't had any attention, you can ping us `@python-poetry/triage` on the issue. Please give us
 reasonable time to get to your issue first, and avoid pinging any individuals directly, especially if they are not part
-of the Poetry team.
-{{% /note %}}
+of the Poetry team.</ins>*
 
 If you are helping with the triage of reported issues, this section provides some useful information to assist you in
 your contribution.
@@ -250,23 +245,15 @@ pipx install --suffix @local '/path/to/local/clone/of/poetry'
 poetry@main --version
 ```
 
-{{% note %}}
-Do not forget to `pipx upgrade poetry@main` before using it, to make sure you have the latest changes.
-{{% /note %}}
+*Note:
+<ins> Do not forget to `pipx upgrade poetry@main` before using it, to make sure you have the latest changes.</ins>*
 
-{{% note %}}
-This mechanism can also be used to test pull requests by using GitHub's pull request remote refs:
+
 ```sh
 pipx install --suffix @pr1234 git+https://github.com/python-poetry/poetry.git@refs/pull/1234/head
 ```
-{{% /note %}}
+*Note:
+<ins>This mechanism can also be used to test pull requests by using GitHub's pull request remote refs:</ins>*
 
-  [Blog]: {{< ref "/blog" >}}
-  [Documentation]: {{< ref "/docs" >}}
-  [FAQ]: {{< relref "faq" >}}
-  [Issue Tracker]: https://github.com/python-poetry/poetry/issues
-  [area/docs label]: https://github.com/python-poetry/poetry/labels/area/docs
-  [kind/question label]: https://github.com/python-poetry/poetry/labels/kind/question
-  [Issue Template]: https://github.com/python-poetry/poetry/issues/new/choose
-  [Discussions]: https://github.com/python-poetry/poetry/discussions
-  [Discord]: https://discord.com/invite/awxPgve
+
+ 
