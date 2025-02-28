@@ -181,6 +181,6 @@ poetry sync --only dev
 
 ## Layering optional groups
 
-When you using `install` command without the `--sync` option, you can install any subset of optional groups without removing
+When using the `install` command without the `--sync` option, you can install any subset of optional groups without removing
 those that are already installed.  This is very useful, for example, in multi-stage
 Docker builds, where you run `poetry install` multiple times in different build stages.
