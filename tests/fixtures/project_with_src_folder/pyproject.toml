@@ -2,8 +2,11 @@
 name = "project-with-src-folder"
 version = "1.2.3"
 description = "This is a description"
-authors = ["Your Name <you@example.com>"]
+authors = []
 license = "MIT"
 
-[tool.poetry.dependencies]
-python = ">=3.12.0,<4.0"
+
+[tool.poetry]
+packages = []
+
+[tool.poetry.group.dev.dependencies]
