@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -132,11 +131,11 @@ class CheckCommand(Command):
 
     def _validate_project_in_src(
         self, toml_data: dict[str, Any], base_path: Path | None
-    ) -> dict[str, list[str]]:
+    ) -> list[str]:
         """
         Checks the validity of projects located under src/ subdirectory.
         """
-        result: dict[str, list[str]] = {"errors": [], "warnings": []}
+        result: list[str] = []
 
         project_name = toml_data.get("project", {}).get("name") or toml_data.get(
             "tool", {}
@@ -162,7 +161,7 @@ class CheckCommand(Command):
         )
 
         if project_dir_empty and src_dir_not_empty:
-            result["warnings"].append(
+            result.append(
                 f"Found empty directory '{project_name}' in project root while the actual package is in "
                 f"'src/{project_name}'. This may cause issues with package installation. "
                 "Consider removing the empty directory."
@@ -191,9 +190,8 @@ class CheckCommand(Command):
         check_result["errors"].extend(errors)
         check_result["warnings"].extend(warnings)
 
-        cwd = Path(os.getcwd())
-        errors, warnings = self._validate_project_in_src(toml_data, cwd)
-        check_result["errors"].extend(errors)
+        project_root = poetry_file.parent
+        warnings = self._validate_project_in_src(toml_data, project_root)
         check_result["warnings"].extend(warnings)
 
         # Validate readme (files must exist)
