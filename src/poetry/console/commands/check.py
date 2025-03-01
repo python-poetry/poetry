@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -7,6 +8,7 @@ from typing import ClassVar
 from cleo.helpers import option
 
 from poetry.console.commands.command import Command
+from poetry.core.utils.helpers import module_name
 
 
 if TYPE_CHECKING:
@@ -128,6 +130,46 @@ class CheckCommand(Command):
             for source in sorted(all_referenced_sources - sources)
         ]
 
+    def _validate_project_in_src(
+        self, toml_data: dict[str, Any], base_path: Path | None
+    ) -> dict[str, list[str]]:
+        """
+        Checks the validity of projects located under src/ subdirectory.
+        """
+        result: dict[str, list[str]] = {"errors": [], "warnings": []}
+
+        project_name = toml_data.get("project", {}).get("name") or toml_data.get(
+            "tool", {}
+        ).get("poetry", {}).get("name")
+
+        if project_name is None or base_path is None:
+            return result
+
+        project_name = module_name(project_name)
+
+        project_dir = base_path / project_name
+        src_project_dir = base_path / "src" / project_name
+
+        project_dir_empty = (
+            project_dir.exists()
+            and project_dir.is_dir()
+            and not any(project_dir.iterdir())
+        )
+        src_dir_not_empty = (
+            src_project_dir.exists()
+            and src_project_dir.is_dir()
+            and any(src_project_dir.iterdir())
+        )
+
+        if project_dir_empty and src_dir_not_empty:
+            result["warnings"].append(
+                f"Found empty directory '{project_name}' in project root while the actual package is in "
+                f"'src/{project_name}'. This may cause issues with package installation. "
+                "Consider removing the empty directory."
+            )
+
+        return result
+
     def handle(self) -> int:
         from poetry.core.pyproject.toml import PyProjectTOML
 
@@ -146,6 +188,11 @@ class CheckCommand(Command):
             project.get("classifiers") or poetry_config.get("classifiers", [])
         )
         errors, warnings = self._validate_classifiers(project_classifiers)
+        check_result["errors"].extend(errors)
+        check_result["warnings"].extend(warnings)
+
+        cwd = Path(os.getcwd())
+        errors, warnings = self._validate_project_in_src(toml_data, cwd)
         check_result["errors"].extend(errors)
         check_result["warnings"].extend(warnings)
 

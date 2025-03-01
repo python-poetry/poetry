@@ -1,0 +1,9 @@
+[tool.poetry]
+name = "project-with-src-folder"
+version = "1.2.3"
+description = "This is a description"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "*"
