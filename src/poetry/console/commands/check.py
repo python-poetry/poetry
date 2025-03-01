@@ -137,19 +137,14 @@ class CheckCommand(Command):
         """
         result: list[str] = []
 
-        print(base_path)
-
         project_name = toml_data.get("project", {}).get("name") or toml_data.get(
             "tool", {}
         ).get("poetry", {}).get("name")
 
-        print(project_name)
         if project_name is None or base_path is None:
             return result
 
         project_name = module_name(project_name)
-
-        print(project_name)
 
         project_dir = base_path / project_name
         src_project_dir = base_path / "src" / project_name
@@ -164,9 +159,6 @@ class CheckCommand(Command):
             and src_project_dir.is_dir()
             and any(src_project_dir.iterdir())
         )
-
-        print(project_dir_empty)
-        print(src_dir_not_empty)
 
         if project_dir_empty and src_dir_not_empty:
             result.append(

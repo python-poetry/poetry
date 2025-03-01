@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+
 from typing import TYPE_CHECKING
 
 import pytest
@@ -329,7 +330,6 @@ def test_check_project_with_src_folder(
     poetry_file = poetry_with_src_folder.file.path
     project_root = poetry_file.parent
     project_dir = project_root / "project_with_src_folder"
-    print(project_dir)
     os.makedirs(project_dir, exist_ok=True)
     tester.execute("")
 
