@@ -320,8 +320,8 @@ def test_check_does_not_error_on_pypi_reference(
 
 
 def test_check_project_with_src_folder(
-        command_tester_factory: CommandTesterFactory,
-        poetry_with_src_folder: Poetry,
+    command_tester_factory: CommandTesterFactory,
+    poetry_with_src_folder: Poetry,
 ) -> None:
     tester = command_tester_factory("check", poetry=poetry_with_src_folder)
     tester.execute("")

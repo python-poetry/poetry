@@ -5,9 +5,9 @@ from typing import Any
 from typing import ClassVar
 
 from cleo.helpers import option
+from poetry.core.utils.helpers import module_name
 
 from poetry.console.commands.command import Command
-from poetry.core.utils.helpers import module_name
 
 
 if TYPE_CHECKING:
