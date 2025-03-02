@@ -158,7 +158,9 @@ class Solver:
             new_packages = self._solve()
             override_packages.append((override, new_packages))
 
-        return merge_override_packages(override_packages)
+        return merge_override_packages(
+            override_packages, self._package.python_constraint
+        )
 
     def _solve(self) -> dict[Package, TransitivePackageInfo]:
         if self._provider._overrides:
@@ -419,6 +421,7 @@ def merge_override_packages(
             dict[Package, dict[str, Dependency]], dict[Package, TransitivePackageInfo]
         ]
     ],
+    python_constraint: VersionConstraint,
 ) -> dict[Package, TransitivePackageInfo]:
     result: dict[Package, TransitivePackageInfo] = {}
     all_packages: dict[
@@ -429,6 +432,7 @@ def merge_override_packages(
         for deps in override.values():
             for dep in deps.values():
                 override_marker = override_marker.intersect(dep.marker.without_extras())
+        override_marker = simplify_marker(override_marker, python_constraint)
         for package, info in o_packages.items():
             for group, marker in info.markers.items():
                 # `override_marker` is often a SingleMarker or a MultiMarker,
