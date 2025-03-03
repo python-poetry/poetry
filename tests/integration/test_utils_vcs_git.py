@@ -288,6 +288,7 @@ def test_git_clone_clones_submodules_with_relative_urls_and_explicit_base(
 def test_system_git_fallback_on_http_401(
     mocker: MockerFixture,
     source_url: str,
+    tmp_path: Path,
 ) -> None:
     spy = mocker.spy(Git, "_clone_legacy")
     mocker.patch.object(
@@ -296,7 +297,10 @@ def test_system_git_fallback_on_http_401(
         side_effect=HTTPUnauthorized(None, None),
     )
 
-    with Git.clone(url=source_url, branch="0.1") as repo:
+    # use tmp_path for source_root to get a shorter path,
+    # because long paths can cause issues with the system git client on Windows
+    # despite of setting core.longpaths=true
+    with Git.clone(url=source_url, branch="0.1", source_root=tmp_path) as repo:
         path = Path(repo.path)
         assert_version(repo, BRANCH_TO_REVISION_MAP["0.1"])
 
@@ -389,12 +393,15 @@ def test_username_password_parameter_is_not_passed_to_dulwich(
 
 
 def test_system_git_called_when_configured(
-    mocker: MockerFixture, source_url: str, use_system_git_client: None
+    mocker: MockerFixture, source_url: str, use_system_git_client: None, tmp_path: Path
 ) -> None:
     spy_legacy = mocker.spy(Git, "_clone_legacy")
     spy = mocker.spy(Git, "_clone")
 
-    with Git.clone(url=source_url, branch="0.1") as repo:
+    # use tmp_path for source_root to get a shorter path,
+    # because long paths can cause issues with the system git client on Windows
+    # despite of setting core.longpaths=true
+    with Git.clone(url=source_url, branch="0.1", source_root=tmp_path) as repo:
         path = Path(repo.path)
         assert_version(repo, BRANCH_TO_REVISION_MAP["0.1"])
 
