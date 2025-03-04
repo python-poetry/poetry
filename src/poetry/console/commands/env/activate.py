@@ -44,7 +44,7 @@ class EnvActivateCommand(EnvCommand):
             command, filename = "source", "activate.fish"
         elif shell == "nu":
             command, filename = "overlay use", "activate.nu"
-        elif shell == "csh":
+        elif shell in ["csh", "tcsh"]:
             command, filename = "source", "activate.csh"
         elif shell in ["powershell", "pwsh"]:
             command, filename = ".", "Activate.ps1"
