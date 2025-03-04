@@ -28,6 +28,7 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
         ("fish", "source", ".fish"),
         ("nu", "overlay use", ".nu"),
         ("csh", "source", ".csh"),
+        ("tcsh", "source", ".csh"),
     ),
 )
 @pytest.mark.skipif(WINDOWS, reason="Only Unix shells")
