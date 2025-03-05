@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import pytest
+
 from packaging.utils import canonicalize_name
+from poetry.core.constraints.version import parse_constraint
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.version.markers import AnyMarker
@@ -378,7 +381,8 @@ def test_merge_override_packages_restricted(package: ProjectPackage) -> None:
                     )
                 },
             ),
-        ]
+        ],
+        parse_constraint("*"),
     )
     assert len(packages) == 1
     assert packages[a].groups == {"main"}
@@ -416,7 +420,8 @@ def test_merge_override_packages_extras(package: ProjectPackage) -> None:
                     )
                 },
             ),
-        ]
+        ],
+        parse_constraint("*"),
     )
     assert len(packages) == 1
     assert packages[a].groups == {"main"}
@@ -426,6 +431,43 @@ def test_merge_override_packages_extras(package: ProjectPackage) -> None:
             ' or sys_platform == "linux" and python_version >= "3.9"'
         )
     }
+
+
+@pytest.mark.parametrize(
+    ("python_constraint", "expected"),
+    [
+        (">=3.8", 'python_version > "3.8" or sys_platform != "linux"'),
+        (">=3.9", ""),
+    ],
+)
+def test_merge_override_packages_python_constraint(
+    package: ProjectPackage, python_constraint: str, expected: str
+) -> None:
+    """The resulting marker depends on the project's python constraint."""
+    a = Package("a", "1")
+
+    packages = merge_override_packages(
+        [
+            (
+                {
+                    package: {
+                        "a": dep(
+                            "b", "sys_platform == 'linux' and python_version > '3.8'"
+                        )
+                    }
+                },
+                {a: TransitivePackageInfo(0, {"main"}, {"main": AnyMarker()})},
+            ),
+            (
+                {package: {"a": dep("b", "sys_platform != 'linux'")}},
+                {a: TransitivePackageInfo(0, {"main"}, {"main": AnyMarker()})},
+            ),
+        ],
+        parse_constraint(python_constraint),
+    )
+    assert len(packages) == 1
+    assert packages[a].groups == {"main"}
+    assert tm(packages[a]) == {"main": expected}
 
 
 def test_merge_override_packages_multiple_deps(package: ProjectPackage) -> None:
@@ -444,7 +486,8 @@ def test_merge_override_packages_multiple_deps(package: ProjectPackage) -> None:
                 },
                 {a: TransitivePackageInfo(0, {"main"}, {"main": AnyMarker()})},
             ),
-        ]
+        ],
+        parse_constraint("*"),
     )
 
     assert len(packages) == 1
@@ -492,7 +535,8 @@ def test_merge_override_packages_groups(package: ProjectPackage) -> None:
                     ),
                 },
             ),
-        ]
+        ],
+        parse_constraint("*"),
     )
     assert len(packages) == 2
     assert packages[a].groups == {"main", "dev"}
@@ -552,7 +596,8 @@ def test_merge_override_packages_shortcut(package: ProjectPackage) -> None:
                     )
                 },
             ),
-        ]
+        ],
+        parse_constraint("*"),
     )
     assert len(packages) == 1
     assert packages[a].groups == {"main"}
