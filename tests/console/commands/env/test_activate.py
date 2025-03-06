@@ -54,8 +54,8 @@ def test_env_activate_prints_correct_script(
     "shell, command, ext, prefix",
     (
         ("cmd", ".", "activate.bat", ""),
-        ("pwsh", ".", "Activate.ps1", "& "),
-        ("powershell", ".", "Activate.ps1", "& "),
+        ("pwsh", ".", "activate.ps1", "& "),
+        ("powershell", ".", "activate.ps1", "& "),
     ),
 )
 @pytest.mark.skipif(not WINDOWS, reason="Only Windows shells")
