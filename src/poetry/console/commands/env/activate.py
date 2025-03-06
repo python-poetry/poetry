@@ -47,7 +47,11 @@ class EnvActivateCommand(EnvCommand):
         elif shell in ["csh", "tcsh"]:
             command, filename = "source", "activate.csh"
         elif shell in ["powershell", "pwsh"]:
-            command, filename = ".", "Activate.ps1"
+            if WINDOWS:
+                command, filename = ".", "Activate.ps1"
+            else:
+                command, filename = ".", "activate.ps1"
+
         elif shell == "cmd":
             command, filename = ".", "activate.bat"
         else:
