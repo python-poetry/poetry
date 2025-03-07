@@ -366,3 +366,9 @@ def set_keyring_backend(backend: KeyringBackend) -> None:
     """Clears availability cache and sets the specified keyring backend."""
     PoetryKeyring.is_available.cache_clear()
     keyring.set_keyring(backend)
+
+
+def pbs_installer_supported_arch(architecture: str) -> bool:
+    # Based on pbs_installer._versions and pbs_installer._utils.ARCH_MAPPING
+    supported_archs = ["arm64", "aarch64", "amd64", "x86_64", "i686", "x86"]
+    return architecture.lower() in supported_archs
