@@ -769,7 +769,7 @@ This tells Poetry to include the specified file, relative to your project direct
 In its table form, the value of each script can contain a `reference` and `type`. The supported types are
 `console` and `file`. When the value is a string, it is inferred to be a `console` script.
 
-### `extras`
+### extras
 
 **Deprecated**: Use `project.optional-dependencies` instead.
 
@@ -884,7 +884,7 @@ any custom url in the `urls` section.
 
 If you publish your package on PyPI, they will appear in the `Project Links` section.
 
-### `requires-poetry`
+### requires-poetry
 
 A constraint for the Poetry version that is required for this project.
 If you are using a Poetry version that is not allowed by this constraint,
@@ -895,7 +895,7 @@ an error will be raised.
 requires-poetry = ">=2.0"
 ```
 
-### `requires-plugins`
+### requires-plugins
 
 In this section, you can specify that certain plugins are required for your project:
 
