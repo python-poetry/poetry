@@ -11,6 +11,7 @@ from poetry.core.constraints.version import Version
 from poetry.core.constraints.version import parse_constraint
 
 from poetry.utils.env.python import Python
+from tests.helpers import pbs_installer_supported_arch
 
 
 if TYPE_CHECKING:
@@ -80,7 +81,9 @@ def test_find_all_versions(
 @pytest.mark.parametrize("constraint", [None, "~3.9", ">=3.10"])
 def test_find_downloadable_versions(constraint: str | None) -> None:
     versions = list(Python.find_downloadable_versions(constraint))
-    if platform.system() == "FreeBSD":
+    if platform.system() == "FreeBSD" or not pbs_installer_supported_arch(
+        platform.machine()
+    ):
         assert len(versions) == 0
     else:
         assert len(versions) > 0
