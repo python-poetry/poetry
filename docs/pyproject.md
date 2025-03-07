@@ -895,7 +895,7 @@ an error will be raised.
 requires-poetry = ">=2.0"
 ```
 
-## `requires-plugins`
+### `requires-plugins`
 
 In this section, you can specify that certain plugins are required for your project:
 
