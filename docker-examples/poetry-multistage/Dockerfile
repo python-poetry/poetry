@@ -8,7 +8,7 @@ ENV POETRY_VIRTUALENVS_IN_PROJECT=1
 ENV POETRY_VIRTUALENVS_CREATE=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-# Tell Poetry where to place its cache and virtual environment
+# Tell Poetry where to place its cache
 ENV POETRY_CACHE_DIR=/opt/.cache
 
 RUN pip install "poetry==${POETRY_VERSION}"
