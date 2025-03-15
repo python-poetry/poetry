@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
 
@@ -24,7 +26,7 @@ class DependencyPackage:
     def clone(self) -> DependencyPackage:
         return self.__class__(self._dependency, self._package.clone())
 
-    def with_features(self, features: list[str]) -> DependencyPackage:
+    def with_features(self, features: Iterable[str]) -> DependencyPackage:
         return self.__class__(self._dependency, self._package.with_features(features))
 
     def without_features(self) -> DependencyPackage:
