@@ -221,6 +221,8 @@ This configuration is ignored when `installer.parallel` is set to `false`.
 
 When set, this configuration allows users to disallow the use of binary distribution format for all, none or specific packages.
 
+If both `installer.no-binary` and `installer.only-binary` configurations match a package, `installer.no-binary` takes precedence.
+
 | Configuration          | Description                                                |
 |------------------------|------------------------------------------------------------|
 | `:all:` or `true`      | Disallow binary distributions for all packages.            |
@@ -268,6 +270,8 @@ across all your projects if incorrectly set.
 
 When set, this configuration allows users to enforce the use of binary distribution format for all, none or
 specific packages.
+
+If both `installer.no-binary` and `installer.only-binary` configurations match a package, `installer.no-binary` takes precedence.
 
 {{% note %}}
 Please refer to [`installer.no-binary`]({{< relref "configuration#installerno-binary" >}}) for information on allowed
