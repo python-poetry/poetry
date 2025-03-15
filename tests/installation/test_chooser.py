@@ -122,15 +122,16 @@ def test_chooser_only_binary_policy(
 @pytest.mark.parametrize(
     ("no_binary", "only_binary", "filename"),
     [
-        (":all:", ":all:", None),
+        (":all:", ":all:", "pytest-3.5.0.tar.gz"),
         (":none:", ":none:", "pytest-3.5.0-py2.py3-none-any.whl"),
         (":none:", ":all:", "pytest-3.5.0-py2.py3-none-any.whl"),
         (":all:", ":none:", "pytest-3.5.0.tar.gz"),
         ("black", "black", "pytest-3.5.0-py2.py3-none-any.whl"),
         ("black", "pytest", "pytest-3.5.0-py2.py3-none-any.whl"),
         ("pytest", "black", "pytest-3.5.0.tar.gz"),
-        ("pytest", "pytest", None),
-        ("pytest,black", "pytest,black", None),
+        ("pytest", "pytest", "pytest-3.5.0.tar.gz"),
+        ("pytest,black", "pytest,black", "pytest-3.5.0.tar.gz"),
+        ("pytest", ":all:", "pytest-3.5.0.tar.gz"),
     ],
 )
 @pytest.mark.parametrize("source_type", ["", "legacy"])
