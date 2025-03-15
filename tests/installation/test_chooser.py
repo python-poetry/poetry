@@ -122,19 +122,22 @@ def test_chooser_only_binary_policy(
 @pytest.mark.parametrize(
     ("no_binary", "only_binary", "filename"),
     [
-        # no `no_binary` for pytest
+        # no `no_binary` nor `only_binary`
         (":none:", ":none:", "pytest-3.5.0-py2.py3-none-any.whl"),
-        (":none:", ":all:", "pytest-3.5.0-py2.py3-none-any.whl"),
         ("black", "black", "pytest-3.5.0-py2.py3-none-any.whl"),
-        ("black", "pytest", "pytest-3.5.0-py2.py3-none-any.whl"),
-        # `no_binary` but no `only_binary` for pytest
+        # `no_binary` only
         (":all:", ":none:", "pytest-3.5.0.tar.gz"),
         ("pytest", "black", "pytest-3.5.0.tar.gz"),
-        # both `no_binary` and `only_binary` for pytest (`no_binary` should take precedence)
-        ("pytest", "pytest", "pytest-3.5.0.tar.gz"),
-        (":all:", ":all:", "pytest-3.5.0.tar.gz"),
+        # `only_binary` only
+        (":none:", ":all:", "pytest-3.5.0-py2.py3-none-any.whl"),
+        ("black", "pytest", "pytest-3.5.0-py2.py3-none-any.whl"),
+        # both `no_binary` and `only_binary`
+        ("pytest", "pytest", None),
+        (":all:", ":all:", None),
         ("pytest", ":all:", "pytest-3.5.0.tar.gz"),
-        ("pytest,black", "pytest,black", "pytest-3.5.0.tar.gz"),
+        (":all:", "pytest", "pytest-3.5.0-py2.py3-none-any.whl"),
+        # complex cases
+        ("pytest,black", "pytest,black", None),
     ],
 )
 @pytest.mark.parametrize("source_type", ["", "legacy"])

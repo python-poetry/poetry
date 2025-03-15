@@ -61,7 +61,10 @@ class Chooser:
             links_seen += 1
 
             if link.is_wheel:
-                if not self._no_binary_policy.allows(package.name):
+                if not self._no_binary_policy.allows(package.name) and (
+                    not self._only_binary_policy.has_exact_package(package.name)
+                    or self._no_binary_policy.has_exact_package(package.name)
+                ):
                     logger.debug(
                         "Skipping wheel for %s as requested in no binary policy for"
                         " package (%s)",
@@ -84,19 +87,22 @@ class Chooser:
                 logger.debug("Skipping unsupported distribution %s", link.filename)
                 continue
 
-            if link.is_sdist and not self._only_binary_policy.allows(package.name):
-                if not self._no_binary_policy.allows(package.name):
-                    # no-binary policy takes precedence over only-binary policy
-                    pass
-                else:
-                    logger.debug(
-                        "Skipping source distribution for %s as requested in only binary policy for"
-                        " package (%s)",
-                        link.filename,
-                        package.name,
-                    )
-                    sdists_skipped += 1
-                    continue
+            if (
+                link.is_sdist
+                and not self._only_binary_policy.allows(package.name)
+                and (
+                    not self._no_binary_policy.has_exact_package(package.name)
+                    or self._only_binary_policy.has_exact_package(package.name)
+                )
+            ):
+                logger.debug(
+                    "Skipping source distribution for %s as requested in only binary policy for"
+                    " package (%s)",
+                    link.filename,
+                    package.name,
+                )
+                sdists_skipped += 1
+                continue
 
             links.append(link)
 
