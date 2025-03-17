@@ -29,6 +29,7 @@ from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.toml.file import TOMLFile
+from poetry.utils._compat import WINDOWS
 from poetry.utils.env import MockEnv
 from poetry.utils.env import NullEnv
 from tests.helpers import MOCK_DEFAULT_GIT_REVISION
@@ -2411,8 +2412,6 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
     config: Config,
     pypi_repository: PyPiRepository,
 ) -> None:
-    mocker.patch("sys.platform", "darwin")
-
     pool = RepositoryPool()
     pool.add_repository(pypi_repository)
 
@@ -2465,7 +2464,8 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
     result = installer.run()
     assert result == 0
 
-    assert installer.executor.installations_count == 7
+    installations = 8 if WINDOWS else 7
+    assert installer.executor.installations_count == installations
     assert installer.executor.updates_count == 0
     assert installer.executor.removals_count == 0
 
