@@ -61,9 +61,14 @@ class Chooser:
             links_seen += 1
 
             if link.is_wheel:
-                if not self._no_binary_policy.allows(package.name) and (
-                    not self._only_binary_policy.has_exact_package(package.name)
-                    or self._no_binary_policy.has_exact_package(package.name)
+                if (
+                    # exact package name must reject wheel, even if `only-binary` includes it
+                    self._no_binary_policy.has_exact_package(package.name)
+                    # `:all:` reject wheel only if `only-binary` does not include it
+                    or (
+                        not self._no_binary_policy.allows(package.name)
+                        and not self._only_binary_policy.has_exact_package(package.name)
+                    )
                 ):
                     logger.debug(
                         "Skipping wheel for %s as requested in no binary policy for"
@@ -87,12 +92,13 @@ class Chooser:
                 logger.debug("Skipping unsupported distribution %s", link.filename)
                 continue
 
-            if (
-                link.is_sdist
-                and not self._only_binary_policy.allows(package.name)
-                and (
-                    not self._no_binary_policy.has_exact_package(package.name)
-                    or self._only_binary_policy.has_exact_package(package.name)
+            if link.is_sdist and (
+                # exact package name must reject sdist, even if `no-binary` includes it
+                self._only_binary_policy.has_exact_package(package.name)
+                # `:all:` reject sdist only if `no-binary` does not include it
+                or (
+                    not self._only_binary_policy.allows(package.name)
+                    and not self._no_binary_policy.has_exact_package(package.name)
                 )
             ):
                 logger.debug(
