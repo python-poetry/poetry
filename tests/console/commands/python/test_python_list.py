@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from poetry.utils._compat import WINDOWS
+from tests.helpers import pbs_installer_supported_arch
 
 
 if TYPE_CHECKING:
@@ -32,7 +33,9 @@ def test_list_no_versions(tester: CommandTester) -> None:
 def test_list_all(tester: CommandTester) -> None:
     tester.execute("--all")
 
-    if platform.system() == "FreeBSD":
+    if platform.system() == "FreeBSD" or not pbs_installer_supported_arch(
+        platform.machine()
+    ):
         assert tester.io.fetch_output() == "No Python installations found.\n"
     else:
         assert "Available for download" in tester.io.fetch_output()
