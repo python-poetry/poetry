@@ -372,7 +372,7 @@ class Application(BaseApplication):
                    and reordered.
         :return: Nothing.
         """
-        original_input = cast(ArgvInput, io.input)
+        original_input = cast("ArgvInput", io.input)
         tokens: list[str] = original_input._tokens
 
         parser = argparse.ArgumentParser(add_help=False)
@@ -425,7 +425,7 @@ class Application(BaseApplication):
         command_name = io.input.first_argument
 
         if command_name == "run":
-            original_input = cast(ArgvInput, io.input)
+            original_input = cast("ArgvInput", io.input)
             tokens: list[str] = original_input._tokens
 
             if "--" in tokens:
