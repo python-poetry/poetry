@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import cast
@@ -16,6 +15,7 @@ from poetry.utils.env.python.installer import PythonInstaller
 
 
 if TYPE_CHECKING:
+    from pathlib import Path
     from unittest.mock import MagicMock
 
     from pytest_mock import MockerFixture
@@ -68,7 +68,7 @@ def test_python_installer_exists_with_bad_executables(mocker: MockerFixture) -> 
 
         @property
         def executable(self) -> Path:
-            return cast(Path, mocker.Mock(as_posix=lambda: "/path/to/bad/python"))
+            return cast("Path", mocker.Mock(as_posix=lambda: "/path/to/bad/python"))
 
         @property
         def version(self) -> None:

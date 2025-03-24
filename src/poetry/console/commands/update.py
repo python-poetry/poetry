@@ -45,7 +45,7 @@ class UpdateCommand(InstallerCommand):
     def handle(self) -> int:
         packages = self.argument("packages")
         if packages:
-            self.installer.whitelist({name: "*" for name in packages})
+            self.installer.whitelist(dict.fromkeys(packages, "*"))
 
         self.installer.only_groups(self.activated_groups)
         self.installer.dry_run(self.option("dry-run"))
