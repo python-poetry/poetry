@@ -51,10 +51,11 @@ def test_python_get_system_python() -> None:
 
 def test_python_get_preferred_default(config: Config) -> None:
     python = Python.get_preferred_python(config)
+    version_len = 3 if sys.version_info[3] == "final" else 5
 
     assert python.executable == Path(sys.executable)
     assert python.version == Version.parse(
-        ".".join(str(v) for v in sys.version_info[:3])
+        ".".join(str(v) for v in sys.version_info[:version_len])
     )
 
 
