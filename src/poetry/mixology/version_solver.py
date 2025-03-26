@@ -488,28 +488,34 @@ class VersionSolver:
         https://github.com/python-poetry/poetry/pull/8255#issuecomment-1657198242
         for more details).
         """
+        preference = Preference.DEFAULT
+
         # Direct origin dependencies must be handled first: we don't want to resolve
         # a regular dependency for some package only to find later that we had a
         # direct-origin dependency.
         if dependency.is_direct_origin():
-            return Preference.DIRECT_ORIGIN, 0, False, 0
+            preference = Preference.DIRECT_ORIGIN
 
+        packages: list[DependencyPackage] = []
         use_latest = dependency.name in self._provider.use_latest
         if not use_latest:
             locked = self._provider.get_locked(dependency)
             if locked:
-                return Preference.LOCKED, 0, False, 0
+                if preference == Preference.DEFAULT:
+                    preference = Preference.LOCKED
+                packages = [locked]
 
-        packages = self._dependency_cache.search_for(
-            dependency, self._solution.decision_level
-        )
+        if not packages:
+            packages = self._dependency_cache.search_for(
+                dependency, self._solution.decision_level
+            )
         num_packages = len(packages)
         if packages:
             package = packages[0].package
             if package.is_root():
                 relevant_dependencies = package.all_requires
             else:
-                if not package.is_direct_origin():
+                if preference != Preference.LOCKED and not package.is_direct_origin():
                     # We have to get the package from the pool,
                     # otherwise `requires` will be empty.
                     #
@@ -542,12 +548,11 @@ class VersionSolver:
             has_deps = False
             num_deps_upper_bound = 0
 
-        if num_packages < 2:
-            preference = Preference.NO_CHOICE
-        elif use_latest:
-            preference = Preference.USE_LATEST
-        else:
-            preference = Preference.DEFAULT
+        if preference == Preference.DEFAULT:
+            if num_packages < 2:
+                preference = Preference.NO_CHOICE
+            elif use_latest:
+                preference = Preference.USE_LATEST
         return preference, -num_deps_upper_bound, not has_deps, -num_packages
 
     def _choose_next(self, unsatisfied: list[Dependency]) -> Dependency:
