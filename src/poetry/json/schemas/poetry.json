@@ -43,6 +43,10 @@
           "description": "The url of the repository.",
           "format": "uri"
         },
+        "path": {
+          "type": "string",
+          "description": "The path of the repository."
+        },
         "priority": {
           "enum": [
             "primary",
