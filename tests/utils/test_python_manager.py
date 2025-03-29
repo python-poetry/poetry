@@ -43,7 +43,7 @@ def test_python_get_version_on_the_fly() -> None:
 def test_python_get_system_python() -> None:
     python = Python.get_system_python()
 
-    assert python.executable == findpython.find().executable
+    assert python.executable.resolve() == findpython.find().executable.resolve()
     assert python.version == Version.parse(
         ".".join(str(v) for v in sys.version_info[:3])
     )
@@ -53,7 +53,7 @@ def test_python_get_preferred_default(config: Config) -> None:
     python = Python.get_preferred_python(config)
     version_len = 3 if sys.version_info[3] == "final" else 5
 
-    assert python.executable == Path(sys.executable)
+    assert python.executable.resolve() == Path(sys.executable).resolve()
     assert python.version == Version.parse(
         ".".join(str(v) for v in sys.version_info[:version_len])
     )
@@ -87,7 +87,7 @@ def test_get_preferred_python_use_poetry_python_disabled_fallback(
     python = Python.get_preferred_python(config)
 
     assert with_no_active_python.call_count == 1
-    assert python.executable == Path(sys.executable)
+    assert python.executable.resolve() == Path(sys.executable).resolve()
 
 
 def test_fallback_on_detect_active_python(with_no_active_python: MagicMock) -> None:
