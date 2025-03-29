@@ -1,0 +1,12 @@
+[project]
+name = "project-with-src-folder"
+version = "1.2.3"
+description = "This is a description"
+authors = []
+license = "MIT"
+
+
+[tool.poetry]
+packages = []
+
+[tool.poetry.group.dev.dependencies]
