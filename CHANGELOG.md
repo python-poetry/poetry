@@ -1,5 +1,37 @@
 # Change Log
 
+## [2.1.2] - 2025-03-29
+
+### Changed
+
+- Improve performance of locking dependencies ([#10275](https://github.com/python-poetry/poetry/pull/10275)).
+
+### Fixed
+
+- Fix an issue where markers were not locked correctly ([#10240](https://github.com/python-poetry/poetry/pull/10240)).
+- Fix an issue where the result of `poetry lock` was not deterministic ([#10276](https://github.com/python-poetry/poetry/pull/10276)).
+- Fix an issue where `poetry env activate` returned the wrong command for `tcsh` ([#10243](https://github.com/python-poetry/poetry/pull/10243)).
+- Fix an issue where `poetry env activate` returned the wrong command for `pwsh` on Linux ([#10256](https://github.com/python-poetry/poetry/pull/10256)).
+
+### Docs
+
+- Update basic usage section to reflect new default layout ([#10203](https://github.com/python-poetry/poetry/pull/10203)).
+
+### poetry-core ([`2.1.2`](https://github.com/python-poetry/poetry-core/releases/tag/2.1.2))
+
+- Improve performance of marker operations ([#851](https://github.com/python-poetry/poetry-core/pull/851)).
+- Fix an issue where incorrect markers were calculated when removing parts covered by the project's Python constraint ([#841](https://github.com/python-poetry/poetry-core/pull/841),
+  [#846](https://github.com/python-poetry/poetry-core/pull/846)).
+- Fix an issue where `extra` markers were not simplified ([#842](https://github.com/python-poetry/poetry-core/pull/842),
+  [#845](https://github.com/python-poetry/poetry-core/pull/845),
+  [#847](https://github.com/python-poetry/poetry-core/pull/847)).
+- Fix an issue where the intersection and union of markers was not deterministic ([#843](https://github.com/python-poetry/poetry-core/pull/843)).
+- Fix an issue where the intersection of `python_version` markers was not recognized as empty ([#849](https://github.com/python-poetry/poetry-core/pull/849)).
+- Fix an issue where `python_version` markers were not simplified ([#848](https://github.com/python-poetry/poetry-core/pull/848),
+  [#851](https://github.com/python-poetry/poetry-core/pull/851)).
+- Fix an issue where Python constraints on a package were converted into invalid markers ([#853](https://github.com/python-poetry/poetry-core/pull/853)).
+
+
 ## [2.1.1] - 2025-02-16
 
 ### Fixed
@@ -2456,7 +2488,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/2.1.1...main
+[Unreleased]: https://github.com/python-poetry/poetry/compare/2.1.2...main
+[2.1.2]: https://github.com/python-poetry/poetry/releases/tag/2.1.2
 [2.1.1]: https://github.com/python-poetry/poetry/releases/tag/2.1.1
 [2.1.0]: https://github.com/python-poetry/poetry/releases/tag/2.1.0
 [2.0.1]: https://github.com/python-poetry/poetry/releases/tag/2.0.1
