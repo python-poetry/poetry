@@ -32,11 +32,11 @@ runs:
         allow-prereleases: true
         update-environment: false
 
-    - run: >
-        pipx install \
-          ${{ inputs.python-version != 'default' && format('--python "{0}"', steps.setup-python.outputs.python-path) || '' }} \
-          '${{ inputs.poetry-spec }}'
+    - run: pipx install ${PYTHON_PATH:+--python "$PYTHON_PATH"} "${POETRY_SPEC}"
       shell: bash
+      env:
+        PYTHON_PATH: ${{ inputs.python-version != 'default' && steps.setup-python.outputs.python-path || '' }}
+        POETRY_SPEC: ${{ inputs.poetry-spec }}
 
     # Enable handling long path names (+260 char) on the Windows platform
     # https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file#maximum-path-length-limitation

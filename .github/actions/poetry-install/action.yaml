@@ -40,8 +40,10 @@ runs:
           poetry-${{ steps.get-date.outputs.date }}-
         enableCrossOsArchive: true
 
-    - run: poetry install ${{ inputs.args }}
+    - run: poetry install ${ARGS}
       shell: bash
+      env:
+        ARGS: ${{ inputs.args }}
 
     - run: poetry env info
       shell: bash
