@@ -994,6 +994,9 @@ def mock_python_version(mocker: MockerFixture) -> None:
                 install_dir = install_dir.parent
             return packaging.version.Version(install_dir.name.split("@")[1])
 
+        def _get_architecture(self) -> str:
+            return "64bit"
+
         def _get_interpreter(self) -> str:
             return str(self.executable)
 
