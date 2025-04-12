@@ -99,6 +99,8 @@ COMMANDS = [
     "source add",
     "source remove",
     "source show",
+    # Wrapper command
+    "wrapper",
 ]
 
 # these are special messages to override the default message when a command is not found
