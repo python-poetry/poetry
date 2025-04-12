@@ -1319,3 +1319,48 @@ The option `--next-phase` allows the increment of prerelease phase versions.
 * `--next-phase`: Increment the phase of the current version.
 * `--short (-s)`: Output the version number only.
 * `--dry-run`: Do not update pyproject.toml file.
+
+## wrapper
+
+The `wrapper` command generates a `poetryw` Bash script and a `poetry-wrapper.properties` file in the current directory
+to pin a specific Poetry version for project-local execution. This ensures consistent Poetry behavior across
+development, CI/CD, and production environments.
+
+### Usage
+
+```console
+poetry wrapper [options]
+```
+
+### Options
+
+* `--poetry-version=<version>`: Specifies the Poetry version to pin (e.g., 2.1.2). Defaults to the current Poetry
+  version if not provided.
+
+### Examples
+
+Generate a wrapper using the current Poetry version:
+
+```bash
+poetry wrapper
+```
+
+Generate a wrapper for a specific Poetry version:
+
+```bash
+poetry wrapper --poetry-version=2.1.2
+```
+
+### Generated Files
+
+* `poetryw`: A Bash script that installs and runs the pinned Poetry version. Run `./poetryw` to execute Poetry commands
+  with the specified version.
+* `poetry-wrapper.properties`: Stores the pinned version (e.g., `version=2.1.2`).
+
+### Notes
+
+* The `poetryw` script is designed for **Unix-like systems (Linux, macOS)**. Windows support is not currently available
+  but may be added in the future.
+* Existing `poetryw` or `poetry-wrapper.properties` files will be overwritten with a warning.
+* The command validates that the version follows the `X.Y.Z` format but does not check if the version exists in a
+  registry.
