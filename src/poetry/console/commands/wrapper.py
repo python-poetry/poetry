@@ -151,17 +151,16 @@ intended for Unix-like systems. Windows support may require additional configura
 
     def _make_executable(self, file: Path) -> None:
         """Set executable permissions for the script file on Unix-like systems."""
+        if os.name != "posix":
+            self.line(
+                "<warning>Setting executable permissions is not supported on this platform.</warning>"
+            )
+            return
         try:
             # Equivalent to chmod 755
-            file.chmod(0o755)  # Secure permissions: owner rwx, others rx
+            file.chmod(0o755)
         except OSError:
-            # Ignore permission errors on Windows or restricted systems
-            if os.name != "posix":
-                self.line(
-                    "<warning>Setting executable permissions is not supported on this platform.</warning>"
-                )
-            else:
-                raise
+            raise
 
     def _get_current_date(self) -> str:
         """Return the current date for script metadata."""

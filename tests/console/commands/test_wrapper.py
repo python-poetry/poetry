@@ -88,6 +88,25 @@ class TestWrapperCommand:
             assert mode & stat.S_IRUSR, "Owner read permission not set"
             assert mode & stat.S_IWUSR, "Owner write permission not set"
 
+    def test_make_executable_on_non_posix(self, tmp_path: Path):
+        """Test that _make_executable on non-POSIX systems does not raise errors and warns appropriately."""
+        cmd = WrapperCommand()
+        cmd._io = BufferedIO()
+
+        with patch("os.name", "nt"):  # Simulate Windows
+            script_file = tmp_path / "poetryw"
+            script_file.write_text("# script")
+
+            cmd._make_executable(script_file)
+
+            output = cmd._io.fetch_output()
+            assert "Setting executable permissions is not supported on this platform." in output, "Should warn about unsupported platform"
+
+            # Verify no unintended permission changes (file should still be readable/writable)
+            mode = script_file.stat().st_mode
+            assert mode & stat.S_IRUSR, "Owner read permission should remain"
+            assert mode & stat.S_IWUSR, "Owner write permission should remain"
+
     def test_handle_with_default_version(self, tmp_path, mock_datetime):
         """Test handle with default Poetry version creates files and outputs success."""
         cmd = WrapperCommand()
