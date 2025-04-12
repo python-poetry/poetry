@@ -9,6 +9,7 @@ menu:
     weight: 30
 ---
 
+
 # Commands
 
 You've already learned how to use the command-line interface to do some things.
@@ -19,8 +20,7 @@ then `--help` combined with any of those can give you more information.
 
 ## Global Options
 
-* `--verbose (-v|vv|vvv)`: Increase the verbosity of messages: "-v" for normal output, "-vv" for more verbose output
-  and "-vvv" for debug.
+* `--verbose (-v|vv|vvv)`: Increase the verbosity of messages: "-v" for normal output, "-vv" for more verbose output and "-vvv" for debug.
 * `--help (-h)` : Display help information.
 * `--quiet (-q)` : Do not output any message.
 * `--ansi`: Force ANSI output.
@@ -29,15 +29,12 @@ then `--help` combined with any of those can give you more information.
 * `--no-interaction (-n)`: Do not ask any interactive question.
 * `--no-plugins`: Disables plugins.
 * `--no-cache`: Disables Poetry source caches.
-* `--directory=DIRECTORY (-C)`: The working directory for the Poetry command (defaults to the current working
-  directory). All command-line arguments will be resolved relative to the given directory.
-* `--project=PROJECT (-P)`: Specify another path as the project root. All command-line arguments will be resolved
-  relative to the current working directory or directory specified using `--directory` option if used.
+* `--directory=DIRECTORY (-C)`: The working directory for the Poetry command (defaults to the current working directory). All command-line arguments will be resolved relative to the given directory.
+* `--project=PROJECT (-P)`: Specify another path as the project root. All command-line arguments will be resolved relative to the current working directory or directory specified using `--directory` option if used.
 
 ## about
 
-The `about` command displays global information about Poetry, including the current version and version of
-`poetry-core`.
+The `about` command displays global information about Poetry, including the current version and version of `poetry-core`.
 
 ```bash
 poetry about
@@ -80,8 +77,7 @@ poetry add pendulum==2.0.5
 ```
 
 {{% note %}}
-See the [Dependency specification]({{< relref "dependency-specification#using-the--operator" >}}) page for more
-information about the `@` operator.
+See the [Dependency specification]({{< relref "dependency-specification#using-the--operator" >}}) page for more information about the `@` operator.
 {{% /note %}}
 
 If you try to add a package that is already present, you will get an error.
@@ -96,8 +92,7 @@ poetry add pendulum@latest
 ```
 
 {{% note %}}
-See the [Dependency specification]({{< relref "dependency-specification" >}}) for more information on setting the
-version constraints for a package.
+See the [Dependency specification]({{< relref "dependency-specification" >}}) for more information on setting the version constraints for a package.
 {{% /note %}}
 
 You can also add `git` dependencies:
@@ -148,12 +143,11 @@ poetry add --editable ./my-package/
 poetry add --editable git+ssh://github.com/sdispater/pendulum.git#develop
 ```
 
-Alternatively, you can specify it in the `pyproject.toml` file. It means that changes in the local directory will be
-reflected directly in environment.
+Alternatively, you can specify it in the `pyproject.toml` file. It means that changes in the local directory will be reflected directly in environment.
 
 ```toml
 [tool.poetry.dependencies]
-my-package = { path = "../my/path", develop = true }
+my-package = {path = "../my/path", develop = true}
 ```
 
 {{% note %}}
@@ -171,8 +165,7 @@ poetry add "git+https://github.com/pallets/flask.git@1.1.1[dotenv,dev]"
 ```
 
 {{% warning %}}
-Some shells may treat square braces (`[` and `]`) as special characters. It is suggested to always quote arguments
-containing these characters to prevent unexpected shell expansion.
+Some shells may treat square braces (`[` and `]`) as special characters. It is suggested to always quote arguments containing these characters to prevent unexpected shell expansion.
 {{% /warning %}}
 
 If you want to add a package to a specific group of dependencies, you can use the `--group (-G)` option:
@@ -207,8 +200,7 @@ The `build` command builds the source and wheels archives.
 poetry build
 ```
 
-The command will trigger the build system defined in the `pyproject.toml` file according
-to [PEP 517](https://peps.python.org/pep-0517/).
+The command will trigger the build system defined in the `pyproject.toml` file according to [PEP 517](https://peps.python.org/pep-0517/).
 If necessary the build process happens in an isolated environment.
 
 #### Options
@@ -220,8 +212,7 @@ If necessary the build process happens in an isolated environment.
 * `--config-settings=<key>=<value> (-c)`: Config settings to be passed to the build back-end. (multiple allowed)
 
 {{% note %}}
-When using `--local-version`, the identifier must
-be [PEP 440](https://peps.python.org/pep-0440/#local-version-identifiers)
+When using `--local-version`, the identifier must be [PEP 440](https://peps.python.org/pep-0440/#local-version-identifiers)
 compliant. This is useful for adding build numbers, platform specificities etc. for private packages.
 
 `--local-version` is deprecated and will be removed in a future version of Poetry.
@@ -249,8 +240,7 @@ For example, to clear the whole cache of packages from the `PyPI` repository, ru
 poetry cache clear PyPI --all
 ```
 
-To only remove a specific package from a cache, you have to specify the cache entry in the following form
-`cache:package:version`:
+To only remove a specific package from a cache, you have to specify the cache entry in the following form `cache:package:version`:
 
 ```bash
 poetry cache clear pypi:requests:2.24.0
@@ -271,8 +261,7 @@ and its consistency with the `poetry.lock` file.
 It returns a detailed report if there are any errors.
 
 {{% note %}}
-This command is also available as a pre-commit hook. See [pre-commit hooks]({{< relref "
-pre-commit-hooks#poetry-check">}}) for more information.
+This command is also available as a pre-commit hook. See [pre-commit hooks]({{< relref "pre-commit-hooks#poetry-check">}}) for more information.
 {{% /note %}}
 
 ```bash
@@ -303,11 +292,9 @@ See [Configuration]({{< relref "configuration" >}}) for all available settings.
 
 {{% warning %}}
 Use `--` to terminate option parsing if your values may start with a hyphen (`-`), e.g.
-
 ```bash
 poetry config http-basic.custom-repo gitlab-ci-token -- ${GITLAB_JOB_TOKEN}
 ```
-
 Without `--` this command will fail if `${GITLAB_JOB_TOKEN}` starts with a hyphen.
 {{% /warning%}}
 
@@ -377,14 +364,12 @@ executables or virtual environment names to remove all matching ones. Alternativ
 virtual environments using the `--all` option.
 
 {{% note %}}
-If `virtualenvs.in-project` config is set to `true`, no argument or option is required. Your in project virtual
-environment is removed.
+If `virtualenvs.in-project` config is set to `true`, no argument or option is required. Your in project virtual environment is removed.
 {{% /note %}}
 
 #### Arguments
 
-* `python`: The python executables associated with, or names of the virtual environments which are to be removed. Can be
-  specified multiple times.
+* `python`: The python executables associated with, or names of the virtual environments which are to be removed. Can be specified multiple times.
 
 #### Options
 
@@ -396,8 +381,7 @@ The `env use` command activates or creates a new virtualenv for the current proj
 
 #### Arguments
 
-* `python`: The python executable to use. This can be a version number (if not on Windows) or a path to the python
-  binary.
+* `python`: The python executable to use. This can be a version number (if not on Windows) or a path to the python binary.
 
 ## export
 
@@ -413,7 +397,6 @@ you can also define in your `pyproject.toml` that the plugin is required for the
 [tool.poetry.requires-plugins]
 poetry-plugin-export = ">=1.8"
 ```
-
 {{% /warning %}}
 
 {{% note %}}
@@ -445,7 +428,6 @@ For instance:
 ```bash
 poetry show --help
 ```
-
 {{% /note %}}
 
 ## init
@@ -566,9 +548,7 @@ Similar to `--no-root` you can use `--no-directory` to skip directory path depen
 poetry install --no-directory
 ```
 
-This is mainly useful for caching in CI or when building Docker images. See the [FAQ entry]({{< relref "
-faq#poetry-busts-my-docker-cache-because-it-requires-me-to-copy-my-source-files-in-before-installing-3rd-party-dependencies" >}})
-for more information on this option.
+This is mainly useful for caching in CI or when building Docker images. See the [FAQ entry]({{< relref "faq#poetry-busts-my-docker-cache-because-it-requires-me-to-copy-my-source-files-in-before-installing-3rd-party-dependencies" >}}) for more information on this option.
 
 By default `poetry` does not compile Python source files to bytecode during installation.
 This speeds up the installation process, but the first execution may take a little more
@@ -586,8 +566,7 @@ poetry install --compile
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
 * `--only-root`: Install only the root project, exclude all dependencies.
-* `--sync`: Synchronize the environment with the locked packages and the specified groups. (**Deprecated**, use
-  `poetry sync` instead)
+* `--sync`: Synchronize the environment with the locked packages and the specified groups. (**Deprecated**, use `poetry sync` instead)
 * `--no-root`: Do not install the root package (your project).
 * `--no-directory`: Skip all directory path dependencies (including transitive ones).
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
@@ -616,8 +595,7 @@ This command locks (without installing) the dependencies specified in `pyproject
 By default, packages that have already been added to the lock file before will not be updated.
 To update all dependencies to the latest available compatible versions, use `poetry update --lock`
 or `poetry lock --regenerate`, which normally produce the same result.
-This command is also available as a pre-commit hook. See [pre-commit hooks]({{< relref "
-pre-commit-hooks#poetry-lock">}}) for more information.
+This command is also available as a pre-commit hook. See [pre-commit hooks]({{< relref "pre-commit-hooks#poetry-lock">}}) for more information.
 {{% /note %}}
 
 ```bash
@@ -707,8 +685,7 @@ my-package
 * `--name`: Set the resulting package name.
 * `--flat`: Use the flat layout for the project.
 * `--readme`: Specify the readme file extension. Default is `md`. If you intend to publish to PyPI
-  keep
-  the [recommendations for a PyPI-friendly README](https://packaging.python.org/en/latest/guides/making-a-pypi-friendly-readme/)
+  keep the [recommendations for a PyPI-friendly README](https://packaging.python.org/en/latest/guides/making-a-pypi-friendly-readme/)
   in mind.
 * `--description`: Description of the package.
 * `--author`: Author of the package.
@@ -729,14 +706,13 @@ poetry publish
 It can also build the package if you pass it the `--build` option.
 
 {{% note %}}
-See [Publishable Repositories]({{< relref "repositories/#publishable-repositories" >}}) for more information on how to
-configure and use publishable repositories.
+See [Publishable Repositories]({{< relref "repositories/#publishable-repositories" >}}) for more information on how to configure and use publishable repositories.
 {{% /note %}}
 
 #### Options
 
 * `--repository (-r)`: The repository to register the package to (default: `pypi`).
-  Should match a repository name set by the [`config`](#config) command.
+Should match a repository name set by the [`config`](#config) command.
 * `--username (-u)`: The username to access the repository.
 * `--password (-p)`: The password to access the repository.
 * `--cert`: Certificate authority to access the repository.
@@ -747,8 +723,7 @@ configure and use publishable repositories.
 * `--skip-existing`: Ignore errors from files already existing in the repository.
 
 {{% note %}}
-See [Configuring Credentials]({{< relref "repositories/#configuring-credentials" >}}) for more information on how to
-configure credentials.
+See [Configuring Credentials]({{< relref "repositories/#configuring-credentials" >}}) for more information on how to configure credentials.
 {{% /note %}}
 
 ## python
@@ -784,9 +759,7 @@ discovered System managed and Poetry managed installations.
 ```bash
 poetry python list
 ```
-
 #### Options
-
 * `--all`: List all versions, including those available for download.
 * `--implementation`: Python implementation to search for.
 * `--managed`: List only Poetry managed Python versions.
@@ -843,23 +816,19 @@ So, if you have a script defined like this:
 {{< tabs tabTotal="2" tabID1="script-project" tabID2=script-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
 
 {{< tab tabID="script-project" >}}
-
 ```toml
 [project]
 # ...
 [project.scripts]
 my-script = "my_module:main"
 ```
-
 {{< /tab >}}
 
 {{< tab tabID="script-poetry" >}}
-
 ```toml
 [tool.poetry.scripts]
 my-script = "my_module:main"
 ```
-
 {{< /tab >}}
 {{< /tabs >}}
 
@@ -883,8 +852,7 @@ poetry search requests pendulum
 PyPI no longer allows for the search of packages without a browser. Please use https://pypi.org/search
 (via a browser) instead.
 
-For more information please
-see [warehouse documentation](https://warehouse.pypa.io/api-reference/xml-rpc.html#deprecated-methods)
+For more information please see [warehouse documentation](https://warehouse.pypa.io/api-reference/xml-rpc.html#deprecated-methods)
 and this [discussion](https://discuss.python.org/t/fastly-interfering-with-pypi-search/73597/6).
 {{% /note %}}
 
@@ -960,8 +928,7 @@ poetry self install
 
 #### Options
 
-* `--sync`: Synchronize the environment with the locked packages and the specified groups. (**Deprecated**, use
-  `poetry self sync` instead)
+* `--sync`: Synchronize the environment with the locked packages and the specified groups. (**Deprecated**, use `poetry self sync` instead)
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
 
 ### self lock
@@ -1086,8 +1053,7 @@ required by
 #### Options
 
 * `--without`: The dependency groups to ignore.
-* `--why`: When showing the full list, or a `--tree` for a single package, display whether they are a direct dependency
-  or required by other packages.
+* `--why`: When showing the full list, or a `--tree` for a single package, display whether they are a direct dependency or required by other packages.
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
 * `--tree`: List the dependencies as a tree.
@@ -1124,11 +1090,7 @@ poetry source add --priority=explicit pypi
 
 #### Options
 
-* `--priority`: Set the priority of this source. Accepted values are: [`primary`]({{< relref "
-  repositories#primary-package-sources" >}}), [`supplemental`]({{< relref "
-  repositories#supplemental-package-sources" >}}), and [`explicit`]({{< relref "
-  repositories#explicit-package-sources" >}}). Refer to the dedicated sections in [Repositories]({{< relref "
-  repositories" >}}) for more information.
+* `--priority`: Set the priority of this source. Accepted values are: [`primary`]({{< relref "repositories#primary-package-sources" >}}), [`supplemental`]({{< relref "repositories#supplemental-package-sources" >}}), and [`explicit`]({{< relref "repositories#explicit-package-sources" >}}). Refer to the dedicated sections in [Repositories]({{< relref "repositories" >}}) for more information.
 
 ### source show
 
@@ -1245,9 +1207,7 @@ Similar to `--no-root` you can use `--no-directory` to skip directory path depen
 poetry sync --no-directory
 ```
 
-This is mainly useful for caching in CI or when building Docker images. See the [FAQ entry]({{< relref "
-faq#poetry-busts-my-docker-cache-because-it-requires-me-to-copy-my-source-files-in-before-installing-3rd-party-dependencies" >}})
-for more information on this option.
+This is mainly useful for caching in CI or when building Docker images. See the [FAQ entry]({{< relref "faq#poetry-busts-my-docker-cache-because-it-requires-me-to-copy-my-source-files-in-before-installing-3rd-party-dependencies" >}}) for more information on this option.
 
 By default `poetry` does not compile Python source files to bytecode during installation.
 This speeds up the installation process, but the first execution may take a little more
@@ -1335,7 +1295,7 @@ If you would like to use semantic versioning for your project, please see
 The table below illustrates the effect of these rules with concrete examples.
 
 | rule       | before  | after   |
-|------------|---------|---------|
+| ---------- |---------|---------|
 | major      | 1.3.0   | 2.0.0   |
 | minor      | 2.1.4   | 2.2.0   |
 | patch      | 4.1.1   | 4.1.2   |
@@ -1359,48 +1319,3 @@ The option `--next-phase` allows the increment of prerelease phase versions.
 * `--next-phase`: Increment the phase of the current version.
 * `--short (-s)`: Output the version number only.
 * `--dry-run`: Do not update pyproject.toml file.
-
-## wrapper
-
-The `wrapper` command generates a `poetryw` Bash script and a `poetry-wrapper.properties` file in the current directory
-to pin a specific Poetry version for project-local execution. This ensures consistent Poetry behavior across
-development, CI/CD, and production environments.
-
-### Usage
-
-```console
-poetry wrapper [options]
-```
-
-### Options
-
-* `--poetry-version=<version>`: Specifies the Poetry version to pin (e.g., 2.1.2). Defaults to the current Poetry
-  version if not provided.
-
-### Examples
-
-Generate a wrapper using the current Poetry version:
-
-```bash
-poetry wrapper
-```
-
-Generate a wrapper for a specific Poetry version:
-
-```bash
-poetry wrapper --poetry-version=2.1.2
-```
-
-### Generated Files
-
-* `poetryw`: A Bash script that installs and runs the pinned Poetry version. Run `./poetryw` to execute Poetry commands
-  with the specified version.
-* `poetry-wrapper.properties`: Stores the pinned version (e.g., `version=2.1.2`).
-
-### Notes
-
-* The `poetryw` script is designed for **Unix-like systems (Linux, macOS)**. Windows support is not currently available
-  but may be added in the future.
-* Existing `poetryw` or `poetry-wrapper.properties` files will be overwritten with a warning.
-* The command validates that the version follows the `X.Y.Z` format but does not check if the version exists in a
-  registry.
