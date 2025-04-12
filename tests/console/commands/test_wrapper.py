@@ -179,9 +179,9 @@ class TestWrapperCommand:
         cmd = WrapperCommand()
         cmd._io = BufferedIO()
 
-        with patch("pathlib.Path.cwd", return_value=tmp_path):
-            with patch("pathlib.Path.write_text", side_effect=IOError("Permission denied")):
-                result = cmd.handle()
+        with patch("pathlib.Path.cwd", return_value=tmp_path), patch("pathlib.Path.write_text",
+                                                                     side_effect=IOError("Permission denied")):
+            result = cmd.handle()
 
         assert result == 1, "Command should fail on write error"
         error_output = cmd._io.fetch_error()
