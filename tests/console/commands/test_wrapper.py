@@ -136,9 +136,9 @@ class TestWrapperCommand:
         cmd._io = BufferedIO()
         invalid_version = "1.2"
 
-        with patch("pathlib.Path.cwd", return_value=tmp_path):
-            with patch.object(cmd, "option", return_value=invalid_version):
-                result = cmd.handle()
+        with patch("pathlib.Path.cwd", return_value=tmp_path), patch.object(cmd, "option",
+                                                                            return_value=invalid_version):
+            result = cmd.handle()
 
         assert result == 1, "Command should fail with invalid version"
         error_output = cmd._io.fetch_error()
@@ -197,9 +197,11 @@ class TestWrapperCommand:
     def test_invalid_version_edge_cases(self, tmp_path, invalid_version, mock_datetime):
         cmd = WrapperCommand()
         cmd._io = BufferedIO()
-        with patch("pathlib.Path.cwd", return_value=tmp_path):
-            with patch.object(cmd, "option", return_value=invalid_version):
-                result = cmd.handle()
+
+        with patch("pathlib.Path.cwd", return_value=tmp_path), patch.object(cmd, "option",
+                                                                            return_value=invalid_version):
+            result = cmd.handle()
+
         assert result == 1, "Should fail with invalid version"
         error_output = cmd._io.fetch_error()
         assert f"Invalid version format: {invalid_version}" in error_output
