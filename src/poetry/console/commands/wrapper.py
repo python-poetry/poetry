@@ -1,6 +1,7 @@
 import os
 import re
 from pathlib import Path
+from typing import ClassVar
 
 from cleo.io.inputs.option import Option
 
@@ -28,7 +29,7 @@ This is useful for projects that require a consistent Poetry version across envi
 intended for Unix-like systems. Windows support may require additional configuration.
 """
 
-    options = [
+    options: ClassVar[list[Option]] = [
         Option(
             "--poetry-version",
             description="Specify the Poetry version for the wrapper (defaults to current version)",

@@ -114,9 +114,8 @@ class TestWrapperCommand:
         cmd._io = BufferedIO()
         custom_version = "2.1.2"
 
-        with patch("pathlib.Path.cwd", return_value=tmp_path):
-            with patch.object(cmd, "option", return_value=custom_version):
-                result = cmd.handle()
+        with patch("pathlib.Path.cwd", return_value=tmp_path), patch.object(cmd, "option", return_value=custom_version):
+            result = cmd.handle()
 
         assert result == 0, "Command should succeed"
         output = cmd._io.fetch_output()
