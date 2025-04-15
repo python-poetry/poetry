@@ -214,7 +214,7 @@ class EnvManager:
         # It's probably not a good idea to pollute Conda's global "base" env, since
         # most users have it activated all the time.
         in_venv = env_prefix is not None and conda_env_name != "base"
-        ignore_in_venv = self._poetry.config.get("virtualenvs.ignore_in_venv", False)
+        ignore_in_venv = self._poetry.config.get("virtualenvs.ignore-in-venv", False)
 
         if not in_venv or env is not None or ignore_in_venv:
             # Checking if a local virtualenv exists
