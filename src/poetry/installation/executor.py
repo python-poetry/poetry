@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import csv
 import functools
 import itertools
@@ -326,13 +327,17 @@ class Executor:
                         # we disable trace here explicitly to workaround incorrect context detection by crashtest
                         with_trace = False
                         pip_command = "pip wheel --no-cache-dir --use-pep517"
+                        requirement = pkg.source_url
                         if pkg.develop:
-                            requirement = pkg.source_url
                             pip_command += " --editable"
                         else:
-                            requirement = (
-                                pkg.to_dependency().to_pep_508().split(";")[0].strip()
-                            )
+                            with contextlib.suppress(ValueError):
+                                requirement = (
+                                    pkg.to_dependency()
+                                    .to_pep_508()
+                                    .split(";")[0]
+                                    .strip()
+                                )
 
                         if config_settings := self._build_config_settings.get(pkg.name):
                             for setting in config_settings:
