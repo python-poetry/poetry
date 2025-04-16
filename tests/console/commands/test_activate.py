@@ -20,6 +20,11 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("activate")
 
 
+@pytest.fixture
+def env_tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
+    return command_tester_factory("activate")
+
+
 @pytest.mark.parametrize(
     "shell, command, ext",
     (
@@ -32,10 +37,11 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     ),
 )
 @pytest.mark.skipif(WINDOWS, reason="Only Unix shells")
-def test_env_activate_prints_correct_script(
+def test_activate_prints_correct_script_and_matches_env_activate(
     tmp_venv: VirtualEnv,
     mocker: MockerFixture,
     tester: CommandTester,
+    env_tester: CommandTester,
     shell: str,
     command: str,
     ext: str,
@@ -44,10 +50,14 @@ def test_env_activate_prints_correct_script(
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=tmp_venv)
 
     tester.execute()
+    env_tester.execute()
 
     line = tester.io.fetch_output().split("\n")[0]
+    env_line = env_tester.io.fetch_output().split("\n")[0]
+
     assert line.startswith(command)
     assert line.endswith(f"activate{ext}")
+    assert line == env_line
 
 
 @pytest.mark.parametrize(
@@ -59,10 +69,11 @@ def test_env_activate_prints_correct_script(
     ),
 )
 @pytest.mark.skipif(not WINDOWS, reason="Only Windows shells")
-def test_env_activate_prints_correct_script_on_windows(
+def test_activate_prints_correct_script_on_windows(
     tmp_venv: VirtualEnv,
     mocker: MockerFixture,
     tester: CommandTester,
+    env_tester: CommandTester,
     shell: str,
     command: str,
     ext: str,
@@ -72,6 +83,10 @@ def test_env_activate_prints_correct_script_on_windows(
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=tmp_venv)
 
     tester.execute()
+    env_tester.execute()
 
     line = tester.io.fetch_output().split("\n")[0]
+    env_line = env_tester.io.fetch_output().split("\n")[0]
+
     assert line == f'{prefix}"{tmp_venv.bin_dir / ext!s}"'
+    assert line == env_line
