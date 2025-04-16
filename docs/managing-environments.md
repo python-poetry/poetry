@@ -86,6 +86,8 @@ The `poetry env activate` command prints the activate command of the virtual env
 You can run the output command manually or feed it to the eval command of your shell to activate the environment.
 This way you won't leave the current shell.
 
+The `poetry activate` command acts an alias for `poetry env activate` and is interchangeable with each other.
+
 {{< tabs tabTotal="3" tabID1="bash-csh-zsh" tabID2="fish" tabID3="powershell" tabName1="Bash/Zsh/Csh" tabName2="Fish" tabName3="Powershell" >}}
 
 {{< tab tabID="bash-csh-zsh" >}}
