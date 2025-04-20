@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import platform
 import shutil
 import zipfile
 
@@ -452,8 +451,6 @@ def test_system_site_packages(
 
     expected_system_site_packages = {"cleo"} if with_system_site_packages else set()
     expected_packages = {"standard"}
-    if platform.system() == "FreeBSD" and not with_system_site_packages:
-        expected_packages.add("sqlite3")
     expected_packages |= expected_system_site_packages
     assert {p.name for p in installed_repository.packages} == expected_packages
     assert {
