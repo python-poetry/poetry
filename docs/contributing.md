@@ -144,7 +144,7 @@ Poetry's development toolchain requires Python 3.9 or newer.
 {{% /note %}}
 
 You should first fork the Poetry repository and then clone it locally, so that you can make pull requests against the
-project. If you are new to Git and pull request based development, GitHub provides a
+project. If you are new to Git and pull request-based development, GitHub provides a
 [guide](https://docs.github.com/en/get-started/quickstart/contributing-to-projects) you will find helpful.
 
 Next, you should install Poetry's dependencies, and run the test suite to make sure everything is working as expected:

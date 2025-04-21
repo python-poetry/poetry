@@ -74,7 +74,7 @@ The `^` operator works very well with libraries following [semantic versioning](
 However, when defining an upper bound, users of your package are not able to update
 a dependency beyond the upper bound even if it does not break anything
 and is fully compatible with your package.
-You have to release a new version of your package with an increased upper bound first.
+You have to release a new version of your package with an increased upper-bound first.
 
 If your package will be used as a library in other packages, it might be better to avoid
 upper bounds and thus unnecessary dependency conflicts (unless you already know for sure

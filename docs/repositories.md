@@ -396,7 +396,7 @@ avoid having to download each candidate distribution, in order to determine asso
 is not available?*
 
 The need for this stems from the fact that Poetry's lock file is platform-agnostic. This means, in
-order to resolve dependencies for a project, Poetry needs metadata for all platform specific
+order to resolve dependencies for a project, Poetry needs metadata for all platform-specific
 distributions. And when this metadata is not readily available, downloading the distribution and
 inspecting it locally is the only remaining option.
 
@@ -425,7 +425,7 @@ well.
 
 ## Publishable Repositories
 
-Poetry treats repositories to which you publish packages as user specific and not project specific
+Poetry treats repositories to which you publish packages as user-specific and not project-specific
 configuration unlike [package sources](#package-sources). Poetry, today, only supports the
 [Legacy Upload API](https://warehouse.pypa.io/api-reference/legacy.html#upload-api) when publishing
 your project.
@@ -572,7 +572,7 @@ Poetry employs multiple caches for package sources in order to improve user expe
 requests.
 
 The first level cache is a [Cache-Control](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control)
-header based cache for almost all HTTP requests.
+header-based cache for almost all HTTP requests.
 
 Further, every HTTP backed package source caches metadata associated with a package once it is fetched or generated.
 Additionally, downloaded files (package distributions) are also cached.
