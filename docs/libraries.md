@@ -128,7 +128,7 @@ In order to publish to a private repository, you will need to add it to your
 global list of repositories. See [Adding a repository]({{< relref "repositories#adding-a-repository" >}})
 for more information.
 
-Once this is done, you can actually publish to it like so:
+Once this is done, you can publish your package to the repository like so:
 
 ```bash
 poetry publish -r my-repository
