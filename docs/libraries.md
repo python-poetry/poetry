@@ -120,7 +120,7 @@ Once this is done, your library will be available to anyone.
 
 ## Publishing to a private repository
 
-Sometimes, you may want to keep your library private but also being accessible to your team.
+Sometimes, you may want to keep your library private but also be accessible to your team.
 
 In this case, you will need to use a private repository.
 

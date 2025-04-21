@@ -76,10 +76,10 @@ a dependency beyond the upper bound even if it does not break anything
 and is fully compatible with your package.
 You have to release a new version of your package with an increased upper-bound first.
 
-If your package will be used as a library in other packages, it might be better to avoid
+If your package is used as a library in other packages, it might be better to avoid
 upper bounds and thus unnecessary dependency conflicts (unless you already know for sure
 that the next release of the dependency will break your package).
-If your package will be used as an application, it might be worth to define an upper bound.
+If your package is used as an application, it might be worth defining an upper bound.
 
 ### Is tox supported?
 
