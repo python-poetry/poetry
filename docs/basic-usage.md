@@ -100,7 +100,7 @@ poetry init
 ### Operating modes
 
 Poetry can be operated in two different modes. The default mode is the **package mode**, which is the right mode
-if you want to package your project into an sdist or a wheel and perhaps publish it to a package index.
+if you want to package your project into a sdist or a wheel and perhaps publish it to a package index.
 In this mode, some metadata such as `name` and `version`, which are required for packaging, are mandatory.
 Further, the project itself will be installed in editable mode when running `poetry install`.
 

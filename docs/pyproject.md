@@ -307,7 +307,7 @@ dependencies = [
 ]
 ```
 
-These are the dependencies that will be declared when building an sdist or a wheel.
+These are the dependencies that will be declared when building a sdist or a wheel.
 
 See [Dependency specification]({{< relref "dependency-specification" >}}) for more information
 about the relation between `project.dependencies` and `tool.poetry.dependencies`.
