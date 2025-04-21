@@ -133,7 +133,7 @@ You can specify the exact version of a package.
 `1.2.3` is an example of an exact version specification.
 
 This will tell Poetry to install this version and this version only.
-If other dependencies require a different version, the solver will ultimately fail and abort any install or update procedures.
+If other dependencies require a different version, the solver will ultimately fail and abort any installation or update procedures.
 
 Exact versions can also be specified with `==` according to [PEP 440](https://peps.python.org/pep-0440/).
 
@@ -281,7 +281,7 @@ Since we haven’t specified any other information,
 Poetry assumes that we intend to use the latest commit on the `main` branch
 to build our project.
 
-You can explicit specify which branch, commit hash or tagged ref should be usd:
+You can explicitly specify which branch, commit hash or tagged ref should be usd:
 
 {{< tabs tabTotal="2" tabID1="git-rev-project" tabID2="git-rev-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
 
@@ -679,7 +679,7 @@ priority = "explicit"
 
 ## Multiple constraints dependencies
 
-Sometimes, one of your dependency may have different version ranges depending
+Sometimes, one of your dependencies may have different version ranges depending
 on the target Python versions.
 
 Let's say you have a dependency on the package `foo` which is only compatible

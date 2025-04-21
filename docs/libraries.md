@@ -105,7 +105,7 @@ Doing so is really easy.
 poetry publish
 ```
 
-This will package and publish the library to PyPI, at the condition that you are a registered user
+This will package and publish the library to PyPI, on the condition that you are a registered user
 and you have [configured your credentials]({{< relref "repositories#configuring-credentials" >}}) properly.
 
 {{% note %}}

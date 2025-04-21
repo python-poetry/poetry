@@ -171,7 +171,7 @@ dependencies specified in `poetry.lock` into [Nox](https://nox.thea.codes/en/sta
 ### I don't want Poetry to manage my virtual environments. Can I disable it?
 
 While Poetry automatically creates virtual environments to always work isolated
-from the global Python installation, there are rare scenarios where the use a Poetry managed
+from the global Python installation, there are rare scenarios where the use of a Poetry managed
 virtual environment is not possible or preferred.
 
 In this case, you can disable this feature by setting the `virtualenvs.create` setting to `false`:
