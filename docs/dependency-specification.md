@@ -683,7 +683,7 @@ Sometimes, one of your dependencies may have different version ranges depending
 on the target Python versions.
 
 Let's say you have a dependency on the package `foo` which is only compatible
-with Python 3.6-3.7 up to version 1.9, and compatible with Python 3.8+ from version 2.0:
+with Python 3.6–3.7 up to version 1.9, and compatible with Python 3.8+ from version 2.0:
 you would declare it like so:
 
 {{< tabs tabTotal="2" tabID1="multiple-constraints-project" tabID2="multiple-constraints-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
