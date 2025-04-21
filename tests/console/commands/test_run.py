@@ -91,7 +91,10 @@ def test_run_passes_args_after_run_before_command_name_conflict(
     path.rename(path.parent / "run")
 
     app_tester.execute(f"{args} python -V", decorated=True)
-    assert app_tester.io.fetch_error() == ""
+    assert (
+        app_tester.io.remove_format(app_tester.io.fetch_error())
+        == f"Using virtualenv: {env.path}\n"
+    )
     assert env.executed == [["python", "-V"]]
 
 
