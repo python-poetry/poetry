@@ -96,7 +96,7 @@ More identifiers are listed at the [SPDX Open Source License Registry](https://s
 license = { text = "MIT" }
 ```
 {{% note %}}
-If your project is proprietary and does not use a specific licence, you can set this value as `Proprietary`.
+If your project is proprietary and does not use a specific license, you can set this value as `Proprietary`.
 {{% /note %}}
 
 You can also specify a license file. However, when doing this the complete license text

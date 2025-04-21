@@ -107,7 +107,7 @@ poetry publish --build --repository foo-pub
 By default, if you have not configured any primary source,
 Poetry is configured to use the Python ecosystem's canonical package index
 [PyPI](https://pypi.org).
-You can alter this behaviour and exclusively look up packages only from the configured
+You can alter this behavior and exclusively look up packages only from the configured
 package sources by adding at least one primary source.
 
 {{% note %}}
@@ -531,7 +531,7 @@ required to set an empty password. This is supported by Poetry.
 poetry config http-basic.foo <TOKEN> ""
 ```
 
-**Note:** Empty usernames are discouraged. However, Poetry will honour them if a password is configured without it. This
+**Note:** Empty usernames are discouraged. However, Poetry will honor them if a password is configured without it. This
 is unfortunately commonplace practice, while not best practice, for private indices that use tokens. When a password is
 stored into the system keyring with an empty username, Poetry will use a literal `__poetry_source_empty_username__` as
 the username to circumvent [keyring#687](https://github.com/jaraco/keyring/pull/687).
