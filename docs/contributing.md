@@ -23,7 +23,7 @@ your best judgement, and feel free to propose changes to this document in a pull
 ### Reporting bugs
 
 This section guides you through submitting a bug report for Poetry.
-Following these guidelines helps maintainers and the community understand your report, reproduce the behavior, and find
+Following these guidelines helps maintainers and the community understands your report, reproduces the behavior, and finds
 related reports.
 
 #### Before submitting a bug report

@@ -366,7 +366,7 @@ implement the simple repository API as described in [PEP 503](https://peps.pytho
 
 {{% warning %}}
 
-When using sources that distributes large wheels without providing file checksum in file URLs,
+When using sources that distribute large wheels without providing file checksum in file URLs,
 Poetry will download each candidate wheel at least once in order to generate the checksum. This can
 manifest as long dependency resolution times when adding packages from this source.
 
@@ -554,7 +554,7 @@ poetry config certificates.foo.client-cert /path/to/client.pem
 {{% note %}}
 The value of `certificates.<repository>.cert` can be set to `false` if certificate verification is
 required to be skipped. This is useful for cases where a package source with self-signed certificates
-are used.
+is used.
 
 ```bash
 poetry config certificates.foo.cert false
