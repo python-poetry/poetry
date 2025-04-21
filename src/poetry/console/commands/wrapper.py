@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import os
 import re
+
 from pathlib import Path
 from typing import ClassVar
 
@@ -49,7 +52,9 @@ intended for Unix-like systems. Windows support may require additional configura
             )
             return 1
 
-        project_dir: Path = Path.cwd()  # Consider self.poetry.file.path.parent for project root
+        project_dir: Path = (
+            Path.cwd()
+        )  # Consider self.poetry.file.path.parent for project root
         properties_file: Path = project_dir / "poetry-wrapper.properties"
         script_file: Path = project_dir / "poetryw"
 
@@ -62,7 +67,7 @@ intended for Unix-like systems. Windows support may require additional configura
         # Write poetry-wrapper.properties
         try:
             properties_file.write_text(f"version={version}\n", encoding="utf-8")
-        except IOError as e:
+        except OSError as e:
             self.line_error(
                 f"Failed to write <error>{properties_file}</error>: <error>{e}</error>"
             )
@@ -76,7 +81,7 @@ intended for Unix-like systems. Windows support may require additional configura
             script_file.write_text(script_content, encoding="utf-8")
             # Set executable permissions (Unix-like systems)
             self._make_executable(script_file)
-        except IOError as e:
+        except OSError as e:
             self.line_error(
                 f"Failed to write or configure <error>{script_file}</error>: <error>{e}</error>"
             )
@@ -87,9 +92,7 @@ intended for Unix-like systems. Windows support may require additional configura
         )
         self.line(f"  - Properties: <comment>{properties_file}</comment>")
         self.line(f"  - Script: <comment>{script_file}</comment>")
-        self.line(
-            "Run <info>./poetryw</info> to use Poetry with the pinned version."
-        )
+        self.line("Run <info>./poetryw</info> to use Poetry with the pinned version.")
         return 0
 
     def _is_valid_version(self, version: str) -> bool:
@@ -165,4 +168,5 @@ intended for Unix-like systems. Windows support may require additional configura
     def _get_current_date(self) -> str:
         """Return the current date for script metadata."""
         from datetime import datetime
+
         return datetime.now().strftime("%Y-%m-%d")
