@@ -213,7 +213,7 @@ If necessary the build process happens in an isolated environment.
 
 {{% note %}}
 When using `--local-version`, the identifier must be [PEP 440](https://peps.python.org/pep-0440/#local-version-identifiers)
-compliant. This is useful for adding build numbers, platform specificities etc. for private packages.
+compliant. This is useful for adding build numbers, platform specificities, etc. for private packages.
 
 `--local-version` is deprecated and will be removed in a future version of Poetry.
 Use `--config-settings local-version=<version>` instead.
@@ -852,7 +852,7 @@ poetry search requests pendulum
 PyPI no longer allows for the search of packages without a browser. Please use https://pypi.org/search
 (via a browser) instead.
 
-For more information please see [warehouse documentation](https://warehouse.pypa.io/api-reference/xml-rpc.html#deprecated-methods)
+For more information, please see [warehouse documentation](https://warehouse.pypa.io/api-reference/xml-rpc.html#deprecated-methods)
 and this [discussion](https://discuss.python.org/t/fastly-interfering-with-pypi-search/73597/6).
 {{% /note %}}
 

@@ -64,7 +64,7 @@ It is recommended to run the [`poetry-lock`](#poetry-lock) hook or [`poetry-chec
 ### Arguments
 
 The hook takes the same arguments as the poetry command.
-For more information see the [export command]({{< relref "cli#export" >}}).
+For more information, see the [export command]({{< relref "cli#export" >}}).
 
 The default arguments are `args: ["-f", "requirements.txt", "-o", "requirements.txt"]`,
 which will create/update the `requirements.txt` file in the current working directory.
@@ -96,11 +96,11 @@ to install it via `pre-commit install --install-hooks -t post-checkout -t post-m
 ### Arguments
 
 The hook takes the same arguments as the poetry command.
-For more information see the [install command]({{< relref "cli#install" >}}).
+For more information, see the [install command]({{< relref "cli#install" >}}).
 
 ## Usage
 
-For more information on how to use pre-commit please see the [official documentation](https://pre-commit.com/).
+For more information on how to use pre-commit, please see the [official documentation](https://pre-commit.com/).
 
 A minimalistic `.pre-commit-config.yaml` example:
 

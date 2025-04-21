@@ -99,7 +99,7 @@ license = { text = "MIT" }
 If your project is proprietary and does not use a specific license, you can set this value as `Proprietary`.
 {{% /note %}}
 
-You can also specify a license file. However, when doing this the complete license text
+You can also specify a license file. However, when doing this, the complete license text
 will be added to the metadata and the License classifier cannot be determined
 automatically so that you have to add it manually.
 
@@ -590,7 +590,7 @@ packages = [
 ]
 ```
 
-If you want to restrict a package to a specific build format you can specify
+If you want to restrict a package to a specific build format, you can specify
 it by using `format`:
 
 ```toml
@@ -645,7 +645,7 @@ You can explicitly specify to Poetry that a set of globs should be ignored or in
 The globs specified in the exclude field identify a set of files that are not included when a package is built.
 `include` has priority over `exclude`.
 
-If a VCS is being used for a package, the exclude field will be seeded with the VCS’ ignore settings (`.gitignore` for git for example).
+If a VCS is being used for a package, the exclude field will be seeded with the VCS’ ignore settings (`.gitignore` for git, for example).
 
 {{% note %}}
 Explicitly declaring entries in `include` will negate VCS' ignore settings.
@@ -806,7 +806,7 @@ poetry install -E mysql -E pgsql
 
 Any extras you don't specify will be removed. Note this behavior is different from
 [optional dependency groups]({{< relref "managing-dependencies#optional-groups" >}}) not
-selected for install, e.g. those not specified via `install --with`.
+selected for installation, e.g., those not specified via `install --with`.
 
 You can install all extras with the `--all-extras` option:
 
@@ -913,7 +913,7 @@ See [Project plugins]({{< relref "plugins#project-plugins" >}}) for more informa
 to define alternative build systems to build a Python project.
 
 Poetry is compliant with PEP-517, by providing a lightweight core library,
-so if you use Poetry to manage your Python project you should reference
+so if you use Poetry to manage your Python project, you should reference
 it in the `build-system` section of the `pyproject.toml` file like so:
 
 ```toml

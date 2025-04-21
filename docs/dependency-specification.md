@@ -41,7 +41,7 @@ to [PEP 508](https://peps.python.org/pep-0508/).
 In many cases, `tool.poetry.dependencies` can be replaced with `project.dependencies`.
 However, there are some cases where you might still need to use `tool.poetry.dependencies`.
 For example, if you want to define additional information that is not required for building
-but only for locking (for example an explicit source), you can enrich dependency
+but only for locking (for example, an explicit source), you can enrich dependency
 information in the `tool.poetry` section.
 
 ```toml
@@ -147,7 +147,7 @@ Not supported in `project.dependencies`.
 When using `poetry add` such constraints are automatically converted into an equivalent constraint.
 {{% /warning %}}
 
-**Caret requirements** allow [SemVer](https://semver.org/) compatible updates to a specified version. An update is allowed if the new version number does not modify the left-most non-zero digit in the major, minor, patch grouping. For instance, if we previously ran `poetry add requests@^2.13.0` and wanted to update the library and ran `poetry update requests`, poetry would update us to version `2.14.0` if it was available, but would not update us to `3.0.0`. If instead we had specified the version string as `^0.1.13`, poetry would update to `0.1.14` but not `0.2.0`. `0.0.x` is not considered compatible with any other version.
+**Caret requirements** allow [SemVer](https://semver.org/) compatible updates to a specified version. An update is allowed if the new version number does not modify the left-most non-zero digit in the major, minor, patch grouping. For instance, if we previously ran `poetry add requests@^2.13.0` and wanted to update the library and ran `poetry update requests`, poetry would update us to version `2.14.0` if it was available, but would not update us to `3.0.0`. If instead, we had specified the version string as `^0.1.13`, poetry would update to `0.1.14` but not `0.2.0`. `0.0.x` is not considered compatible with any other version.
 
 Here are some more examples of caret requirements and the versions that would be allowed with them:
 
@@ -346,7 +346,7 @@ The corresponding `add` call looks like this:
 poetry add "git+https://github.com/myorg/mypackage_with_subdirs.git#subdirectory=subdir"
 ```
 
-To use an SSH connection, for example in the case of private repositories, use the following example syntax:
+To use an SSH connection, for example, in the case of private repositories, use the following example syntax:
 
 {{< tabs tabTotal="2" tabID1="git-ssh-project" tabID2="git-ssh-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
 
@@ -424,7 +424,7 @@ my-package = { path = "../my-package/", develop = true }
 my-package = { path = "../my-package/dist/my-package-0.1.0.tar.gz" }
 ```
 
-To install directory path dependencies in editable mode use the `develop` keyword and set it to `true`.
+To install directory path dependencies in editable mode, use the `develop` keyword and set it to `true`.
 {{< /tab >}}
 {{< /tabs >}}
 
@@ -718,8 +718,8 @@ otherwise it will cause an error when resolving dependencies.
 ### Combining git / url / path dependencies with source repositories
 
 Direct origin (`git`/ `url`/ `path`) dependencies can satisfy the requirement of a dependency that
-doesn't explicitly specify a source, even when mutually exclusive markers are used. For instance
-in the following example the url package will also be a valid solution for the second requirement:
+doesn't explicitly specify a source, even when mutually exclusive markers are used. For instance,
+in the following example, the url package will also be a valid solution for the second requirement:
 ```toml
 foo = [
     { platform = "darwin", url = "https://example.com/example-1.0-py3-none-any.whl" },
@@ -728,7 +728,7 @@ foo = [
 ```
 
 Sometimes you may instead want to use a direct origin dependency for specific conditions
-(i.e. a compiled package that is not available on PyPI for a certain platform/architecture) while
+(i.e., a compiled package that is not available on PyPI for a certain platform/architecture) while
 falling back on source repositories in other cases. In this case you should explicitly ask for your
 dependency to be satisfied by another `source`. For example:
 ```toml
@@ -742,7 +742,7 @@ foo = [
 
 In the case of more complex dependency specifications, you may find that you
 end up with lines which are very long and difficult to read. In these cases,
-you can shift from using "inline table" syntax, to the "standard table" syntax.
+you can shift from using "inline table" syntax to the "standard table" syntax.
 
 An example where this might be useful is the following:
 

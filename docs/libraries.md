@@ -88,7 +88,7 @@ an isolated environment. Ensure you have specified any additional settings accor
 documentation of the build backend you are using.
 
 
-Once building is done you are ready to publish your library.
+Once building is done, you are ready to publish your library.
 
 ## Publishing to PyPI
 

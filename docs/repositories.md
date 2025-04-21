@@ -125,7 +125,7 @@ Package sources are a Poetry-specific feature and **not** included in
 [core metadata](https://packaging.python.org/en/latest/specifications/core-metadata/) produced by
 the poetry-core build backend.
 
-Consequently, when a Poetry project is e.g. installed using Pip (as a normal package or in editable
+Consequently, when a Poetry project is e.g., installed using Pip (as a normal package or in editable
 mode), package sources will be ignored and the dependencies in question downloaded from PyPI by
 default.
 
@@ -454,7 +454,7 @@ If you want to store your credentials for a specific repository, you can do so e
 poetry config http-basic.foo <username> <password>
 ```
 
-If you do not specify the password you will be prompted to write it.
+If you do not specify the password, you will be prompted to write it.
 
 {{% note %}}
 
@@ -515,7 +515,7 @@ where `FOO` is the name of the repository in uppercase (e.g. `PYPI`).
 See [Using environment variables]({{< relref "configuration#using-environment-variables" >}}) for more information
 on how to configure Poetry with environment variables.
 
-If your password starts with a dash (e.g. randomly generated tokens in a CI environment), it will be parsed as a
+If your password starts with a dash (e.g., randomly generated tokens in a CI environment), it will be parsed as a
 command line option instead of a password.
 You can prevent this by adding double dashes to prevent any following argument from being parsed as an option.
 

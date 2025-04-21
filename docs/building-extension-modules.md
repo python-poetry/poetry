@@ -79,7 +79,7 @@ script = "relative/path/to/build-extension.py"
 ```
 
 {{% note %}}
-The name of the build script is arbitrary. Common practice has been to name it `build.py`, however this is not
+The name of the build script is arbitrary. Common practice has been to name it `build.py`, however, this is not
 mandatory. You **should** consider [using a subdirectory]({{< relref "#can-i-store-the-build-script-in-a-subdirectory" >}})
 if feasible.
 {{% /note %}}
@@ -322,7 +322,7 @@ def build():
     maturin("build", "-r", *cargo_args)
 
     # We won't use the wheel built by maturin directly since
-    # we want Poetry to build it but, we need to retrieve the
+    # we want Poetry to build it, but we need to retrieve the
     # compiled extensions from the maturin wheel.
     wheel = next(iter(wheels_dir.glob("*.whl")))
     with zipfile.ZipFile(wheel.as_posix()) as whl:

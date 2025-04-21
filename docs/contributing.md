@@ -66,7 +66,7 @@ and under which conditions it normally happens.
 
 Provide more context by answering these questions:
 
-* **Did the problem start happening recently** (e.g. after updating to a new version of Poetry) or was this always a
+* **Did the problem start happening recently** (e.g., after updating to a new version of Poetry) or was this always a
 problem?
 * If the problem started happening recently, **can you reproduce the problem in an older version of Poetry?** What's the
 most recent version in which the problem does not happen?
