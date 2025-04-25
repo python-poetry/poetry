@@ -9,6 +9,7 @@ from pathlib import Path
 from threading import Thread
 from typing import TYPE_CHECKING
 
+import packaging.tags
 import pytest
 
 from deepdiff.diff import DeepDiff
@@ -92,16 +93,27 @@ def test_env_commands_with_spaces_in_their_arg_work_as_expected(
     assert re.match(r"pip \S+ from", output)
 
 
+@pytest.mark.parametrize("differing_platform", [True, False])
 def test_env_get_supported_tags_matches_inside_virtualenv(
-    tmp_path: Path, manager: EnvManager
+    tmp_path: Path, manager: EnvManager, mocker: MockerFixture, differing_platform: bool
 ) -> None:
     venv_path = tmp_path / "Virtual Env"
     manager.build_venv(venv_path)
     venv = VirtualEnv(venv_path)
 
-    import packaging.tags
+    run_python_script_spy = mocker.spy(venv, "run_python_script")
 
-    assert venv.get_supported_tags() == list(packaging.tags.sys_tags())
+    # determine expected tags before patching sysconfig!
+    expected_tags = list(packaging.tags.sys_tags())
+
+    if differing_platform:
+        mocker.patch("sysconfig.get_platform", return_value="some_other_platform")
+        expected_call_count = 2
+    else:
+        expected_call_count = 1
+
+    assert venv.get_supported_tags() == expected_tags
+    assert run_python_script_spy.call_count == expected_call_count
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Symlinks are not support for Windows")
