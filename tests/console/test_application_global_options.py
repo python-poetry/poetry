@@ -5,6 +5,7 @@ import textwrap
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import ClassVar
 
 import pytest
 
@@ -13,7 +14,10 @@ from cleo.io.inputs.string_input import StringInput
 from cleo.testers.application_tester import ApplicationTester
 
 from poetry.console.application import Application
+from poetry.console.commands.command import Command
 from poetry.console.commands.version import VersionCommand
+from poetry.plugins import ApplicationPlugin
+from tests.helpers import mock_metadata_entry_points
 from tests.helpers import switch_working_directory
 
 
@@ -27,9 +31,56 @@ if TYPE_CHECKING:
 NO_PYPROJECT_TOML_ERROR = "Poetry could not find a pyproject.toml file in"
 
 
+class CheckProjectPathCommand(Command):
+    name = "check-project-path"
+
+    description = "Check Project Path Command"
+
+    def handle(self) -> int:
+        if not self.poetry.pyproject_path.exists():
+            raise RuntimeError(
+                f"Wrong project path in handle: {self.poetry.pyproject_path}\nWorking directory: {Path.cwd()}"
+            )
+
+        return 0
+
+
+class EarlyPoetryAccessPlugin(ApplicationPlugin):
+    commands: ClassVar[list[type[Command]]] = [CheckProjectPathCommand]
+
+    def activate(self, application: Application) -> None:
+        super().activate(application)
+
+        # access application.poetry
+        # see https://github.com/nat-n/poethepoet/issues/288
+        if not application.poetry.pyproject_path.exists():
+            raise RuntimeError(
+                f"Wrong project path in activate: {application.poetry.pyproject_path}\nWorking directory: {Path.cwd()}"
+            )
+
+
+@pytest.fixture
+def with_early_poetry_access_plugin(mocker: MockerFixture) -> None:
+    mock_metadata_entry_points(mocker, EarlyPoetryAccessPlugin)
+
+
 @pytest.fixture
 def project_source_directory(fixture_copier: FixtureCopier) -> Path:
     return fixture_copier("up_to_date_lock")
+
+
+@pytest.fixture
+def relative_project_source_directory(project_source_directory: Path) -> Path:
+    # ensure pre-conditions are met
+    cwd = Path.cwd()
+    assert project_source_directory.is_relative_to(cwd)
+
+    # construct relative path
+    relative_source_directory = project_source_directory.relative_to(cwd)
+    assert relative_source_directory.as_posix() != project_source_directory.as_posix()
+    assert not relative_source_directory.is_absolute()
+
+    return relative_source_directory
 
 
 @pytest.fixture
@@ -149,20 +200,14 @@ def test_application_with_context_parameters(
 def test_application_with_relative_project_parameter(
     tester: ApplicationTester,
     project_source_directory: Path,
+    relative_project_source_directory: Path,
     with_mocked_version_command: None,
     tmp_path_factory: TempPathFactory,
 ) -> None:
-    # ensure pre-conditions are met
     cwd = Path.cwd()
-    assert project_source_directory.is_relative_to(cwd)
-
-    # construct relative path
-    relative_source_directory = project_source_directory.relative_to(cwd)
-    assert relative_source_directory.as_posix() != project_source_directory.as_posix()
-    assert not relative_source_directory.is_absolute()
-
-    # we expect application run to be executed within current cwd but project to be a subdirectory
-    args = f"--directory '{cwd}' --project {relative_source_directory} version"
+    # we expect application run to be executed within current cwd
+    # but project to be a subdirectory
+    args = f"--directory '{cwd}' --project {relative_project_source_directory} version"
 
     # we switch cwd to a new temporary directory unrelated to the project directory
     new_working_dir = tmp_path_factory.mktemp("unrelated-working-directory")
@@ -179,6 +224,19 @@ def test_application_with_relative_project_parameter(
         ProjectPath: {project_source_directory}
         WorkingDirectory: {cwd}
         """)
+
+
+def test_application_with_relative_directory_parameter_and_early_poetry_access_plugin(
+    tester: ApplicationTester,
+    with_early_poetry_access_plugin: None,
+    relative_project_source_directory: Path,
+) -> None:
+    """see https://github.com/nat-n/poethepoet/issues/288"""
+    tester.execute(
+        f"--directory {relative_project_source_directory} check-project-path"
+    )
+
+    assert tester.status_code == 0, tester.io.fetch_error()
 
 
 @pytest.mark.parametrize(
