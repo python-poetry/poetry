@@ -60,7 +60,7 @@ When both are specified, `project.dependencies` are used for metadata when build
 
 Alternatively, you can add `dependencies` to `dynamic` and define your dependencies
 completely in the `tool.poetry` section. Using only the `tool.poetry` section might
-make sense in non-package mode when you will not build a sdist or a wheel.
+make sense in non-package mode when you will not build an sdist or a wheel.
 
 ```toml
 [project]
