@@ -57,6 +57,8 @@ class MyCommandPlugin(ApplicationPlugin):
 
 
 class InvalidPlugin:
+    group = "poetry.plugin"
+
     def activate(self, poetry: Poetry, io: IO) -> None:
         io.write_line("Updating version")
         poetry.package.version = Version.parse("9.9.9")
