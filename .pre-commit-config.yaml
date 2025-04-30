@@ -28,12 +28,12 @@ repos:
       - id: validate_manifest
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.5
+    rev: v0.11.6
     hooks:
       - id: ruff
       - id: ruff-format
 
   - repo: https://github.com/woodruffw/zizmor-pre-commit
-    rev: v1.5.2
+    rev: v1.6.0
     hooks:
       - id: zizmor

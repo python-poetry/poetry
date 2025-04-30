@@ -251,11 +251,11 @@ class Application(BaseApplication):
         # display the error cleanly unless the user uses verbose or debug
         self._configure_global_options(io)
 
-        self._load_plugins(io)
-
-        exit_code: int = 1
-
         with directory(self._working_directory):
+            self._load_plugins(io)
+
+            exit_code: int = 1
+
             try:
                 exit_code = super()._run(io)
             except PoetryRuntimeError as e:
