@@ -24,7 +24,7 @@ jobs:
         )
       )
     steps:
-      - uses: actions/create-github-app-token@0d564482f06ca65fa9e77e2510873638c82206f2 # v1.11.5
+      - uses: actions/create-github-app-token@3ff1caaa28b64c9cc276ce0a02e2ff584f3900c5 # v2.0.2
         id: app-token
         with:
           app-id: ${{ secrets.POETRY_TOKEN_APP_ID }}
