@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from cleo.io.outputs.output import Verbosity
+
 from poetry.utils._compat import WINDOWS
 
 
@@ -43,11 +45,10 @@ def test_env_activate_prints_correct_script(
     mocker.patch("shellingham.detect_shell", return_value=(shell, None))
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=tmp_venv)
 
-    tester.execute()
+    tester.execute(verbosity=Verbosity.VERBOSE)
 
-    line = tester.io.fetch_output().split("\n")[0]
-    assert line.startswith(command)
-    assert line.endswith(f"activate{ext}")
+    line = tester.io.fetch_output().rstrip("\n")
+    assert line == f"{command} {tmp_venv.bin_dir}/activate{ext}"
 
 
 @pytest.mark.parametrize(
@@ -73,5 +74,5 @@ def test_env_activate_prints_correct_script_on_windows(
 
     tester.execute()
 
-    line = tester.io.fetch_output().split("\n")[0]
+    line = tester.io.fetch_output().rstrip("\n")
     assert line == f'{prefix}"{tmp_venv.bin_dir / ext!s}"'
