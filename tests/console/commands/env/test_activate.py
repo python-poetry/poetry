@@ -5,9 +5,11 @@ from typing import TYPE_CHECKING
 import pytest
 
 from poetry.utils._compat import WINDOWS
+from poetry.utils.env import MockEnv
 
 
 if TYPE_CHECKING:
+    from cleo.testers.application_tester import ApplicationTester
     from cleo.testers.command_tester import CommandTester
     from pytest_mock import MockerFixture
 
@@ -45,9 +47,8 @@ def test_env_activate_prints_correct_script(
 
     tester.execute()
 
-    line = tester.io.fetch_output().split("\n")[0]
-    assert line.startswith(command)
-    assert line.endswith(f"activate{ext}")
+    line = tester.io.fetch_output().rstrip("\n")
+    assert line == f"{command} {tmp_venv.bin_dir}/activate{ext}"
 
 
 @pytest.mark.parametrize(
@@ -73,5 +74,22 @@ def test_env_activate_prints_correct_script_on_windows(
 
     tester.execute()
 
-    line = tester.io.fetch_output().split("\n")[0]
+    line = tester.io.fetch_output().rstrip("\n")
     assert line == f'{prefix}"{tmp_venv.bin_dir / ext!s}"'
+
+
+@pytest.mark.parametrize("verbosity", ["", "-v", "-vv", "-vvv"])
+def test_no_additional_output_in_verbose_mode(
+    tmp_venv: VirtualEnv,
+    mocker: MockerFixture,
+    app_tester: ApplicationTester,
+    verbosity: str,
+) -> None:
+    mocker.patch("shellingham.detect_shell", return_value=("pwsh", None))
+    mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv(is_venv=True))
+
+    # use an AppTester instead of a CommandTester to catch additional output
+    app_tester.execute(f"env activate {verbosity}")
+
+    lines = app_tester.io.fetch_output().splitlines()
+    assert len(lines) == 1

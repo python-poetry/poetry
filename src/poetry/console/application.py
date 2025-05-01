@@ -581,7 +581,7 @@ class Application(BaseApplication):
         env = env_manager.create_venv()
 
         if env.is_venv() and io.is_verbose():
-            io.write_line(f"Using virtualenv: <comment>{env.path}</>")
+            io.write_error_line(f"Using virtualenv: <comment>{env.path}</>")
 
         command.set_env(env)
 
