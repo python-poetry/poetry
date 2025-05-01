@@ -213,7 +213,7 @@ If necessary the build process happens in an isolated environment.
 
 {{% note %}}
 When using `--local-version`, the identifier must be [PEP 440](https://peps.python.org/pep-0440/#local-version-identifiers)
-compliant. This is useful for adding build numbers, platform specificities etc. for private packages.
+compliant. This is useful for adding build numbers, platform specificities, etc. for private packages.
 
 `--local-version` is deprecated and will be removed in a future version of Poetry.
 Use `--config-settings local-version=<version>` instead.
@@ -717,7 +717,7 @@ Should match a repository name set by the [`config`](#config) command.
 * `--password (-p)`: The password to access the repository.
 * `--cert`: Certificate authority to access the repository.
 * `--client-cert`: Client certificate to access the repository.
-* `--dist-dir`: Dist directory where built artifact are stored. Default is `dist`.
+* `--dist-dir`: Dist directory where built artifacts are stored. Default is `dist`.
 * `--build`: Build the package before publishing.
 * `--dry-run`: Perform all actions except upload the package.
 * `--skip-existing`: Ignore errors from files already existing in the repository.
@@ -852,7 +852,7 @@ poetry search requests pendulum
 PyPI no longer allows for the search of packages without a browser. Please use https://pypi.org/search
 (via a browser) instead.
 
-For more information please see [warehouse documentation](https://warehouse.pypa.io/api-reference/xml-rpc.html#deprecated-methods)
+For more information, please see [warehouse documentation](https://warehouse.pypa.io/api-reference/xml-rpc.html#deprecated-methods)
 and this [discussion](https://discuss.python.org/t/fastly-interfering-with-pypi-search/73597/6).
 {{% /note %}}
 

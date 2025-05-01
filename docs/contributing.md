@@ -23,7 +23,7 @@ your best judgement, and feel free to propose changes to this document in a pull
 ### Reporting bugs
 
 This section guides you through submitting a bug report for Poetry.
-Following these guidelines helps maintainers and the community understand your report, reproduce the behavior, and find
+Following these guidelines helps maintainers and the community understands your report, reproduces the behavior, and finds
 related reports.
 
 #### Before submitting a bug report
@@ -66,7 +66,7 @@ and under which conditions it normally happens.
 
 Provide more context by answering these questions:
 
-* **Did the problem start happening recently** (e.g. after updating to a new version of Poetry) or was this always a
+* **Did the problem start happening recently** (e.g., after updating to a new version of Poetry) or was this always a
 problem?
 * If the problem started happening recently, **can you reproduce the problem in an older version of Poetry?** What's the
 most recent version in which the problem does not happen?
@@ -144,7 +144,7 @@ Poetry's development toolchain requires Python 3.9 or newer.
 {{% /note %}}
 
 You should first fork the Poetry repository and then clone it locally, so that you can make pull requests against the
-project. If you are new to Git and pull request based development, GitHub provides a
+project. If you are new to Git and pull request-based development, GitHub provides a
 [guide](https://docs.github.com/en/get-started/quickstart/contributing-to-projects) you will find helpful.
 
 Next, you should install Poetry's dependencies, and run the test suite to make sure everything is working as expected:

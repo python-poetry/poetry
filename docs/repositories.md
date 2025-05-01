@@ -107,7 +107,7 @@ poetry publish --build --repository foo-pub
 By default, if you have not configured any primary source,
 Poetry is configured to use the Python ecosystem's canonical package index
 [PyPI](https://pypi.org).
-You can alter this behaviour and exclusively look up packages only from the configured
+You can alter this behavior and exclusively look up packages only from the configured
 package sources by adding at least one primary source.
 
 {{% note %}}
@@ -125,7 +125,7 @@ Package sources are a Poetry-specific feature and **not** included in
 [core metadata](https://packaging.python.org/en/latest/specifications/core-metadata/) produced by
 the poetry-core build backend.
 
-Consequently, when a Poetry project is e.g. installed using Pip (as a normal package or in editable
+Consequently, when a Poetry project is e.g., installed using Pip (as a normal package or in editable
 mode), package sources will be ignored and the dependencies in question downloaded from PyPI by
 default.
 
@@ -366,7 +366,7 @@ implement the simple repository API as described in [PEP 503](https://peps.pytho
 
 {{% warning %}}
 
-When using sources that distributes large wheels without providing file checksum in file URLs,
+When using sources that distribute large wheels without providing file checksum in file URLs,
 Poetry will download each candidate wheel at least once in order to generate the checksum. This can
 manifest as long dependency resolution times when adding packages from this source.
 
@@ -396,7 +396,7 @@ avoid having to download each candidate distribution, in order to determine asso
 is not available?*
 
 The need for this stems from the fact that Poetry's lock file is platform-agnostic. This means, in
-order to resolve dependencies for a project, Poetry needs metadata for all platform specific
+order to resolve dependencies for a project, Poetry needs metadata for all platform-specific
 distributions. And when this metadata is not readily available, downloading the distribution and
 inspecting it locally is the only remaining option.
 
@@ -425,7 +425,7 @@ well.
 
 ## Publishable Repositories
 
-Poetry treats repositories to which you publish packages as user specific and not project specific
+Poetry treats repositories to which you publish packages as user-specific and not project-specific
 configuration unlike [package sources](#package-sources). Poetry, today, only supports the
 [Legacy Upload API](https://warehouse.pypa.io/api-reference/legacy.html#upload-api) when publishing
 your project.
@@ -454,7 +454,7 @@ If you want to store your credentials for a specific repository, you can do so e
 poetry config http-basic.foo <username> <password>
 ```
 
-If you do not specify the password you will be prompted to write it.
+If you do not specify the password, you will be prompted to write it.
 
 {{% note %}}
 
@@ -515,7 +515,7 @@ where `FOO` is the name of the repository in uppercase (e.g. `PYPI`).
 See [Using environment variables]({{< relref "configuration#using-environment-variables" >}}) for more information
 on how to configure Poetry with environment variables.
 
-If your password starts with a dash (e.g. randomly generated tokens in a CI environment), it will be parsed as a
+If your password starts with a dash (e.g., randomly generated tokens in a CI environment), it will be parsed as a
 command line option instead of a password.
 You can prevent this by adding double dashes to prevent any following argument from being parsed as an option.
 
@@ -531,7 +531,7 @@ required to set an empty password. This is supported by Poetry.
 poetry config http-basic.foo <TOKEN> ""
 ```
 
-**Note:** Empty usernames are discouraged. However, Poetry will honour them if a password is configured without it. This
+**Note:** Empty usernames are discouraged. However, Poetry will honor them if a password is configured without it. This
 is unfortunately commonplace practice, while not best practice, for private indices that use tokens. When a password is
 stored into the system keyring with an empty username, Poetry will use a literal `__poetry_source_empty_username__` as
 the username to circumvent [keyring#687](https://github.com/jaraco/keyring/pull/687).
@@ -554,7 +554,7 @@ poetry config certificates.foo.client-cert /path/to/client.pem
 {{% note %}}
 The value of `certificates.<repository>.cert` can be set to `false` if certificate verification is
 required to be skipped. This is useful for cases where a package source with self-signed certificates
-are used.
+is used.
 
 ```bash
 poetry config certificates.foo.cert false
@@ -572,7 +572,7 @@ Poetry employs multiple caches for package sources in order to improve user expe
 requests.
 
 The first level cache is a [Cache-Control](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control)
-header based cache for almost all HTTP requests.
+header-based cache for almost all HTTP requests.
 
 Further, every HTTP backed package source caches metadata associated with a package once it is fetched or generated.
 Additionally, downloaded files (package distributions) are also cached.
