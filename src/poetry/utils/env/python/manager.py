@@ -164,27 +164,27 @@ class Python:
 
     @property
     def name(self) -> str:
-        return cast(str, self._python.name)
+        return cast("str", self._python.name)
 
     @property
     def executable(self) -> Path:
-        return cast(Path, self._python.interpreter)
+        return cast("Path", self._python.interpreter)
 
     @property
     def implementation(self) -> str:
-        return cast(str, self._python.implementation.lower())
+        return cast("str", self._python.implementation.lower())
 
     @property
     def major(self) -> int:
-        return cast(int, self._python.major)
+        return cast("int", self._python.major)
 
     @property
     def minor(self) -> int:
-        return cast(int, self._python.minor)
+        return cast("int", self._python.minor)
 
     @property
     def patch(self) -> int:
-        return cast(int, self._python.patch)
+        return cast("int", self._python.patch)
 
     @property
     def version(self) -> Version:

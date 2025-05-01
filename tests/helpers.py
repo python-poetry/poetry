@@ -277,10 +277,15 @@ def mock_metadata_entry_points(
     name: str = "my-plugin",
     dist: metadata.Distribution | None = None,
 ) -> None:
+    def patched_entry_points(*args: Any, **kwargs: Any) -> list[metadata.EntryPoint]:
+        if "group" in kwargs and kwargs["group"] != getattr(cls, "group", None):
+            return []
+        return [make_entry_point_from_plugin(name, cls, dist)]
+
     mocker.patch.object(
         metadata,
         "entry_points",
-        return_value=[make_entry_point_from_plugin(name, cls, dist)],
+        side_effect=patched_entry_points,
     )
 
 
@@ -366,3 +371,9 @@ def set_keyring_backend(backend: KeyringBackend) -> None:
     """Clears availability cache and sets the specified keyring backend."""
     PoetryKeyring.is_available.cache_clear()
     keyring.set_keyring(backend)
+
+
+def pbs_installer_supported_arch(architecture: str) -> bool:
+    # Based on pbs_installer._versions and pbs_installer._utils.ARCH_MAPPING
+    supported_archs = ["arm64", "aarch64", "amd64", "x86_64", "i686", "x86"]
+    return architecture.lower() in supported_archs

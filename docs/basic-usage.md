@@ -89,7 +89,7 @@ Poetry will not install a Python interpreter for you.
 
 ### Initialising a pre-existing project
 
-Instead of creating a new project, Poetry can be used to 'initialise' a pre-populated
+Instead of creating a new project, Poetry can be used to 'initialize' a pre-populated
 directory. To interactively create a `pyproject.toml` file in directory `pre-existing-project`:
 
 ```bash

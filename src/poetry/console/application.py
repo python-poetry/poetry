@@ -251,11 +251,11 @@ class Application(BaseApplication):
         # display the error cleanly unless the user uses verbose or debug
         self._configure_global_options(io)
 
-        self._load_plugins(io)
-
-        exit_code: int = 1
-
         with directory(self._working_directory):
+            self._load_plugins(io)
+
+            exit_code: int = 1
+
             try:
                 exit_code = super()._run(io)
             except PoetryRuntimeError as e:
@@ -372,7 +372,7 @@ class Application(BaseApplication):
                    and reordered.
         :return: Nothing.
         """
-        original_input = cast(ArgvInput, io.input)
+        original_input = cast("ArgvInput", io.input)
         tokens: list[str] = original_input._tokens
 
         parser = argparse.ArgumentParser(add_help=False)
@@ -425,7 +425,7 @@ class Application(BaseApplication):
         command_name = io.input.first_argument
 
         if command_name == "run":
-            original_input = cast(ArgvInput, io.input)
+            original_input = cast("ArgvInput", io.input)
             tokens: list[str] = original_input._tokens
 
             if "--" in tokens:
@@ -581,7 +581,7 @@ class Application(BaseApplication):
         env = env_manager.create_venv()
 
         if env.is_venv() and io.is_verbose():
-            io.write_line(f"Using virtualenv: <comment>{env.path}</>")
+            io.write_error_line(f"Using virtualenv: <comment>{env.path}</>")
 
         command.set_env(env)
 

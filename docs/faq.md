@@ -14,7 +14,7 @@ menu:
 ### Why is the dependency resolution process slow?
 
 While the dependency resolver at the heart of Poetry is highly optimized and
-should be fast enough for most cases, with certain sets of dependencies
+should be fast enough for most cases, with certain sets of dependencies,
 it can take time to find a valid solution.
 
 This is due to the fact that not all libraries on PyPI have properly declared their metadata
@@ -22,9 +22,9 @@ and, as such, they are not available via the PyPI JSON API. At this point, Poetr
 but to download the packages and inspect them to get the necessary information. This is an expensive
 operation, both in bandwidth and time, which is why it seems this is a long process.
 
-At the moment there is no way around it. However, if you notice that Poetry
+At the moment, there is no way around it. However, if you notice that Poetry
 is downloading many versions of a single package, you can lessen the workload
-by constraining that one package in your pyproject.toml more narrowly. That way
+by constraining that one package in your pyproject.toml more narrowly. That way,
 Poetry does not have to sift through so many versions of it, which may speed up
 the locking process considerably in some cases.
 
@@ -40,7 +40,7 @@ Poetry uses "major.minor.micro" version identifiers as mentioned in
 
 Version bumps are done similar to Python's versioning:
 * A major version bump (incrementing the first number) is only done for breaking changes
-  if a deprecation cycle is not possible and many users have to perform some manual steps
+  if a deprecation cycle is not possible, and many users have to perform some manual steps
   to migrate from one version to the next one.
 * A minor version bump (incrementing the second number) may include new features as well
   as new deprecations and drop features deprecated in an earlier minor release.
@@ -64,22 +64,22 @@ Once a release of your package is published, you cannot tweak its dependencies a
 – you have to do a new release but the previous one stays broken.
 (Users can still work around the broken dependency by restricting it by themselves.)
 
-To avoid such issues you can define an upper bound on your constraints,
+To avoid such issues, you can define an upper bound on your constraints,
 which you can increase in a new release after testing that your package is compatible
 with the new major version of your dependency.
 
-For example instead of using `>=3.4` you can use `^3.4` which allows all versions `<4.0`.
+For example, instead of using `>=3.4` you can use `^3.4` which allows all versions `<4.0`.
 The `^` operator works very well with libraries following [semantic versioning](https://semver.org).
 
 However, when defining an upper bound, users of your package are not able to update
 a dependency beyond the upper bound even if it does not break anything
 and is fully compatible with your package.
-You have to release a new version of your package with an increased upper bound first.
+You have to release a new version of your package with an increased upper-bound first.
 
-If your package will be used as a library in other packages, it might be better to avoid
+If your package is used as a library in other packages, it might be better to avoid
 upper bounds and thus unnecessary dependency conflicts (unless you already know for sure
 that the next release of the dependency will break your package).
-If your package will be used as an application, it might be worth to define an upper bound.
+If your package is used as an application, it might be worth defining an upper bound.
 
 ### Is tox supported?
 
@@ -125,7 +125,7 @@ commands =
 ```
 
 `tox` will create an `sdist` package of the project and uses `pip` to install it in a fresh environment.
-Thus, dependencies are resolved by `pip` in the first place. But afterward we run Poetry,
+Thus, dependencies are resolved by `pip` in the first place. But afterward, we run Poetry,
  which will install the locked dependencies into the environment.
 
 #### Use case #3
@@ -171,7 +171,7 @@ dependencies specified in `poetry.lock` into [Nox](https://nox.thea.codes/en/sta
 ### I don't want Poetry to manage my virtual environments. Can I disable it?
 
 While Poetry automatically creates virtual environments to always work isolated
-from the global Python installation, there are rare scenarios where the use a Poetry managed
+from the global Python installation, there are rare scenarios where the use of a Poetry managed
 virtual environment is not possible or preferred.
 
 In this case, you can disable this feature by setting the `virtualenvs.create` setting to `false`:
@@ -189,7 +189,7 @@ The Poetry team strongly encourages the use of a virtual environment.
 
 ### Why is Poetry telling me that the current project's supported Python range is not compatible with one or more packages' Python requirements?
 
-Unlike `pip`, Poetry doesn't resolve for just the Python in the current environment. Instead it makes sure that a dependency
+Unlike `pip`, Poetry doesn't resolve for just the Python in the current environment. Instead, it makes sure that a dependency
 is resolvable within the given Python version range in `pyproject.toml`.
 
 Assume you have the following `pyproject.toml`:
@@ -200,7 +200,7 @@ python = "^3.7"
 ```
 
 This means your project aims to be compatible with any Python version >=3.7,<4.0. Whenever you try to add a dependency
-whose Python requirement doesn't match the whole range Poetry will tell you this, e.g.:
+whose Python requirement doesn't match the whole range, Poetry will tell you this, e.g.:
 
 ```
 The current project's supported Python range (>=3.7.0,<4.0.0) is not compatible with some of the required packages Python requirement:
@@ -208,7 +208,7 @@ The current project's supported Python range (>=3.7.0,<4.0.0) is not compatible 
 ```
 
 Usually you will want to match the supported Python range of your project with the upper bound of the failing dependency.
-Alternatively you can tell Poetry to install this dependency [only for a specific range of Python versions]({{< relref "dependency-specification#multiple-constraints-dependencies" >}}),
+Alternatively, you can tell Poetry to install this dependency [only for a specific range of Python versions]({{< relref "dependency-specification#multiple-constraints-dependencies" >}}),
 if you know that it's not needed in all versions.
 
 If you do not want to set an upper bound in the metadata when building your project,
@@ -228,7 +228,7 @@ python = ">=3.7,<3.11"  # used for locking dependencies
 
 This is done to be compliant with the broader Python ecosystem.
 
-For example, if Poetry builds a distribution for a project that uses a version that is not valid according to
+For example, if Poetry builds a distribution for a project that uses a version that is not valid, according to
 [PEP 440](https://peps.python.org/pep-0440), third party tools will be unable to parse the version correctly.
 
 

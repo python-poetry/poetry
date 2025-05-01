@@ -2140,7 +2140,8 @@ def test_solver_duplicate_dependencies_with_overlapping_markers_complex(
     )
     opencv_requires = {dep.to_pep_508() for dep in ops[-1].package.requires}
 
-    assert opencv_requires == {
+    # before https://github.com/python-poetry/poetry-core/pull/851
+    expected1 = {
         (
             "numpy (>=1.21.2) ;"
             ' python_version >= "3.6" and platform_system == "Darwin"'
@@ -2170,6 +2171,38 @@ def test_solver_duplicate_dependencies_with_overlapping_markers_complex(
             ' or platform_system != "Linux" or platform_machine != "aarch64")'
         ),
     }
+    # after https://github.com/python-poetry/poetry-core/pull/851
+    expected2 = {
+        (
+            "numpy (>=1.21.2) ;"
+            ' platform_system == "Darwin" and platform_machine == "arm64"'
+            ' and python_version >= "3.6" or python_version >= "3.10"'
+        ),
+        (
+            'numpy (>=1.19.3) ; python_version >= "3.6" and python_version < "3.10"'
+            ' and platform_system == "Linux" and platform_machine == "aarch64"'
+            ' or python_version == "3.9" and platform_machine != "arm64"'
+            ' or python_version == "3.9" and platform_system != "Darwin"'
+        ),
+        (
+            'numpy (>=1.17.3) ; python_version == "3.8"'
+            ' and (platform_system != "Darwin" or platform_machine != "arm64")'
+            ' and (platform_system != "Linux" or platform_machine != "aarch64")'
+        ),
+        (
+            'numpy (>=1.14.5) ; python_version == "3.7"'
+            ' and (platform_system != "Darwin" or platform_machine != "arm64")'
+            ' and (platform_system != "Linux" or platform_machine != "aarch64")'
+        ),
+        (
+            'numpy (>=1.13.3) ; python_version < "3.7"'
+            ' and (python_version < "3.6" or platform_system != "Darwin"'
+            ' or platform_machine != "arm64") and (python_version < "3.6"'
+            ' or platform_system != "Linux" or platform_machine != "aarch64")'
+        ),
+    }
+
+    assert opencv_requires in (expected1, expected2)
 
 
 def test_duplicate_path_dependencies(
@@ -3741,6 +3774,83 @@ def test_multiple_constraints_explicit_source_transitive_locked_use_latest(
     )
     assert ops[1].package.source_reference == "explicit1"
     assert ops[2].package.source_reference == "explicit2"
+
+
+@pytest.mark.parametrize("locked", [False, True])
+def test_multiple_constraints_incomplete_explicit_source_transitive_locked(
+    package: ProjectPackage,
+    repo: Repository,
+    pool: RepositoryPool,
+    io: NullIO,
+    locked: bool,
+) -> None:
+    """
+    The root package depends on
+     * lib == 1.0+cu ; sys_platform == "linux" with source=explicit
+     * lib == 1.0 ; sys_platform == "darwin" with no explicit source
+     * other >= 1.0
+    "other" depends on "lib"
+
+    Since the source for lib 1.0+cu has the priority "explicit",
+    the default source must be chosen for lib 1.0.
+    Since the multiple constraints are incomplete - they are only defined for linux
+    and darwin, there is another hidden override that also requires lib via other.
+    In this hidden override lib 1.0 from the default source must be chosen
+    (because the other source has the priority "explicit").
+    """
+    package.add_dependency(
+        Factory.create_dependency(
+            "lib",
+            {
+                "version": "1.0+cu",
+                "source": "explicit",
+                "markers": "sys_platform == 'linux'",
+            },
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency(
+            "lib",
+            {
+                "version": "1.0",
+                "markers": "sys_platform == 'darwin'",
+            },
+        )
+    )
+    package.add_dependency(Factory.create_dependency("other", {"version": ">=1.0"}))
+
+    explicit_repo = Repository("explicit")
+    pool.add_repository(explicit_repo, priority=Priority.EXPLICIT)
+
+    package_lib_explicit = Package(
+        "lib", "1.0+cu", source_type="legacy", source_reference="explicit"
+    )
+    explicit_repo.add_package(package_lib_explicit)
+    package_lib_default = Package("lib", "1.0")
+    repo.add_package(package_lib_default)
+
+    package_other = Package("other", "1.5")
+    package_other.add_dependency(Factory.create_dependency("lib", ">=1.0"))
+    repo.add_package(package_other)
+
+    if locked:
+        # order does not matter because packages are sorted in the provicer
+        # (latest first) so that the package from the explicit source is preferred
+        locked_packages = [package_lib_default, package_lib_explicit, package_other]
+    else:
+        locked_packages = []
+    solver = Solver(package, pool, [], locked_packages, io)
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": package_lib_default},
+            {"job": "install", "package": package_lib_explicit},
+            {"job": "install", "package": package_other},
+        ],
+    )
 
 
 def test_solver_discards_packages_with_empty_markers(

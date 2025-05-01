@@ -96,10 +96,10 @@ More identifiers are listed at the [SPDX Open Source License Registry](https://s
 license = { text = "MIT" }
 ```
 {{% note %}}
-If your project is proprietary and does not use a specific licence, you can set this value as `Proprietary`.
+If your project is proprietary and does not use a specific license, you can set this value as `Proprietary`.
 {{% /note %}}
 
-You can also specify a license file. However, when doing this the complete license text
+You can also specify a license file. However, when doing this, the complete license text
 will be added to the metadata and the License classifier cannot be determined
 automatically so that you have to add it manually.
 
@@ -590,7 +590,7 @@ packages = [
 ]
 ```
 
-If you want to restrict a package to a specific build format you can specify
+If you want to restrict a package to a specific build format, you can specify
 it by using `format`:
 
 ```toml
@@ -645,7 +645,7 @@ You can explicitly specify to Poetry that a set of globs should be ignored or in
 The globs specified in the exclude field identify a set of files that are not included when a package is built.
 `include` has priority over `exclude`.
 
-If a VCS is being used for a package, the exclude field will be seeded with the VCS’ ignore settings (`.gitignore` for git for example).
+If a VCS is being used for a package, the exclude field will be seeded with the VCS’ ignore settings (`.gitignore` for git, for example).
 
 {{% note %}}
 Explicitly declaring entries in `include` will negate VCS' ignore settings.
@@ -769,7 +769,7 @@ This tells Poetry to include the specified file, relative to your project direct
 In its table form, the value of each script can contain a `reference` and `type`. The supported types are
 `console` and `file`. When the value is a string, it is inferred to be a `console` script.
 
-### `extras`
+### extras
 
 **Deprecated**: Use `project.optional-dependencies` instead.
 
@@ -806,7 +806,7 @@ poetry install -E mysql -E pgsql
 
 Any extras you don't specify will be removed. Note this behavior is different from
 [optional dependency groups]({{< relref "managing-dependencies#optional-groups" >}}) not
-selected for install, e.g. those not specified via `install --with`.
+selected for installation, e.g., those not specified via `install --with`.
 
 You can install all extras with the `--all-extras` option:
 
@@ -884,7 +884,7 @@ any custom url in the `urls` section.
 
 If you publish your package on PyPI, they will appear in the `Project Links` section.
 
-## `requires-poetry`
+### requires-poetry
 
 A constraint for the Poetry version that is required for this project.
 If you are using a Poetry version that is not allowed by this constraint,
@@ -895,7 +895,7 @@ an error will be raised.
 requires-poetry = ">=2.0"
 ```
 
-## `requires-plugins`
+### requires-plugins
 
 In this section, you can specify that certain plugins are required for your project:
 
@@ -913,7 +913,7 @@ See [Project plugins]({{< relref "plugins#project-plugins" >}}) for more informa
 to define alternative build systems to build a Python project.
 
 Poetry is compliant with PEP-517, by providing a lightweight core library,
-so if you use Poetry to manage your Python project you should reference
+so if you use Poetry to manage your Python project, you should reference
 it in the `build-system` section of the `pyproject.toml` file like so:
 
 ```toml

@@ -41,7 +41,7 @@ to [PEP 508](https://peps.python.org/pep-0508/).
 In many cases, `tool.poetry.dependencies` can be replaced with `project.dependencies`.
 However, there are some cases where you might still need to use `tool.poetry.dependencies`.
 For example, if you want to define additional information that is not required for building
-but only for locking (for example an explicit source), you can enrich dependency
+but only for locking (for example, an explicit source), you can enrich dependency
 information in the `tool.poetry` section.
 
 ```toml
@@ -99,7 +99,7 @@ If you only specify a major, and minor version, then minor- and patch-level chan
 
 ### Wildcard requirements
 
-**Wildcard requirements** allow for the latest (dependency dependent) version where the wildcard is positioned.
+**Wildcard requirements** allow for the latest (dependency-dependent) version where the wildcard is positioned.
 
 `*`, `1.*` and `1.2.*` are examples of wildcard requirements.
 
@@ -133,7 +133,7 @@ You can specify the exact version of a package.
 `1.2.3` is an example of an exact version specification.
 
 This will tell Poetry to install this version and this version only.
-If other dependencies require a different version, the solver will ultimately fail and abort any install or update procedures.
+If other dependencies require a different version, the solver will ultimately fail and abort any installation or update procedures.
 
 Exact versions can also be specified with `==` according to [PEP 440](https://peps.python.org/pep-0440/).
 
@@ -147,7 +147,7 @@ Not supported in `project.dependencies`.
 When using `poetry add` such constraints are automatically converted into an equivalent constraint.
 {{% /warning %}}
 
-**Caret requirements** allow [SemVer](https://semver.org/) compatible updates to a specified version. An update is allowed if the new version number does not modify the left-most non-zero digit in the major, minor, patch grouping. For instance, if we previously ran `poetry add requests@^2.13.0` and wanted to update the library and ran `poetry update requests`, poetry would update us to version `2.14.0` if it was available, but would not update us to `3.0.0`. If instead we had specified the version string as `^0.1.13`, poetry would update to `0.1.14` but not `0.2.0`. `0.0.x` is not considered compatible with any other version.
+**Caret requirements** allow [SemVer](https://semver.org/) compatible updates to a specified version. An update is allowed if the new version number does not modify the left-most non-zero digit in the major, minor, patch grouping. For instance, if we previously ran `poetry add requests@^2.13.0` and wanted to update the library and ran `poetry update requests`, poetry would update us to version `2.14.0` if it was available, but would not update us to `3.0.0`. If instead, we had specified the version string as `^0.1.13`, poetry would update to `0.1.14` but not `0.2.0`. `0.0.x` is not considered compatible with any other version.
 
 Here are some more examples of caret requirements and the versions that would be allowed with them:
 
@@ -281,7 +281,7 @@ Since we haven’t specified any other information,
 Poetry assumes that we intend to use the latest commit on the `main` branch
 to build our project.
 
-You can explicit specify which branch, commit hash or tagged ref should be usd:
+You can explicitly specify which branch, commit hash or tagged ref should be usd:
 
 {{< tabs tabTotal="2" tabID1="git-rev-project" tabID2="git-rev-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
 
@@ -346,7 +346,7 @@ The corresponding `add` call looks like this:
 poetry add "git+https://github.com/myorg/mypackage_with_subdirs.git#subdirectory=subdir"
 ```
 
-To use an SSH connection, for example in the case of private repositories, use the following example syntax:
+To use an SSH connection, for example, in the case of private repositories, use the following example syntax:
 
 {{< tabs tabTotal="2" tabID1="git-ssh-project" tabID2="git-ssh-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
 
@@ -427,7 +427,7 @@ my-package = { path = "../my-package/", develop = true }
 my-package = { path = "../my-package/dist/my-package-0.1.0.tar.gz" }
 ```
 
-To install directory path dependencies in editable mode use the `develop` keyword and set it to `true`.
+To install directory path dependencies in editable mode, use the `develop` keyword and set it to `true`.
 {{< /tab >}}
 {{< /tabs >}}
 
@@ -682,11 +682,11 @@ priority = "explicit"
 
 ## Multiple constraints dependencies
 
-Sometimes, one of your dependency may have different version ranges depending
+Sometimes, one of your dependencies may have different version ranges depending
 on the target Python versions.
 
 Let's say you have a dependency on the package `foo` which is only compatible
-with Python 3.6-3.7 up to version 1.9, and compatible with Python 3.8+ from version 2.0:
+with Python 3.6–3.7 up to version 1.9, and compatible with Python 3.8+ from version 2.0:
 you would declare it like so:
 
 {{< tabs tabTotal="2" tabID1="multiple-constraints-project" tabID2="multiple-constraints-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
@@ -721,8 +721,8 @@ otherwise it will cause an error when resolving dependencies.
 ### Combining git / url / path dependencies with source repositories
 
 Direct origin (`git`/ `url`/ `path`) dependencies can satisfy the requirement of a dependency that
-doesn't explicitly specify a source, even when mutually exclusive markers are used. For instance
-in the following example the url package will also be a valid solution for the second requirement:
+doesn't explicitly specify a source, even when mutually exclusive markers are used. For instance,
+in the following example, the url package will also be a valid solution for the second requirement:
 ```toml
 foo = [
     { platform = "darwin", url = "https://example.com/example-1.0-py3-none-any.whl" },
@@ -731,7 +731,7 @@ foo = [
 ```
 
 Sometimes you may instead want to use a direct origin dependency for specific conditions
-(i.e. a compiled package that is not available on PyPI for a certain platform/architecture) while
+(i.e., a compiled package that is not available on PyPI for a certain platform/architecture) while
 falling back on source repositories in other cases. In this case you should explicitly ask for your
 dependency to be satisfied by another `source`. For example:
 ```toml
@@ -745,7 +745,7 @@ foo = [
 
 In the case of more complex dependency specifications, you may find that you
 end up with lines which are very long and difficult to read. In these cases,
-you can shift from using "inline table" syntax, to the "standard table" syntax.
+you can shift from using "inline table" syntax to the "standard table" syntax.
 
 An example where this might be useful is the following:
 

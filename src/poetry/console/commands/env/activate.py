@@ -27,27 +27,28 @@ class EnvActivateCommand(EnvCommand):
 
         env = EnvManager(self.poetry).get()
 
-        if command := self._get_activate_command(env):
-            self.line(command)
-            return 0
-        else:
-            raise ShellNotSupportedError(
-                "Discovered shell doesn't have an activator in virtual environment"
-            )
-
-    def _get_activate_command(self, env: Env) -> str:
         try:
             shell, _ = shellingham.detect_shell()
         except shellingham.ShellDetectionFailure:
             shell = ""
+
+        if command := self._get_activate_command(env, shell):
+            self.line(command)
+            return 0
+
+        raise ShellNotSupportedError(
+            f"Discovered shell '{shell}' doesn't have an activator in virtual environment"
+        )
+
+    def _get_activate_command(self, env: Env, shell: str) -> str:
         if shell == "fish":
             command, filename = "source", "activate.fish"
         elif shell == "nu":
             command, filename = "overlay use", "activate.nu"
-        elif shell == "csh":
+        elif shell in ["csh", "tcsh"]:
             command, filename = "source", "activate.csh"
         elif shell in ["powershell", "pwsh"]:
-            command, filename = ".", "Activate.ps1"
+            command, filename = ".", "activate.ps1"
         elif shell == "cmd":
             command, filename = ".", "activate.bat"
         else:

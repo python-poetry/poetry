@@ -30,6 +30,7 @@ from poetry.packages import DependencyPackage
 from poetry.packages.direct_origin import DirectOrigin
 from poetry.packages.package_collection import PackageCollection
 from poetry.puzzle.exceptions import OverrideNeededError
+from poetry.repositories.repository_pool import Priority
 from poetry.utils.helpers import get_file_hash
 
 
@@ -366,7 +367,7 @@ class Provider:
 
         self.validate_package_for_dependency(dependency=dependency, package=package)
 
-        for extra in dependency.extras:
+        for extra in sorted(dependency.extras):
             if extra in package.extras:
                 for dep in package.extras[extra]:
                     dep.activate()
@@ -487,7 +488,7 @@ class Provider:
         if dependency.extras:
             # Find all the optional dependencies that are wanted - taking care to allow
             # for self-referential extras.
-            stack = list(dependency.extras)
+            stack = sorted(dependency.extras)
             while stack:
                 extra = stack.pop()
                 if extra in found_extras:
@@ -497,16 +498,14 @@ class Provider:
                 extra_dependencies = package.extras.get(extra, [])
                 for extra_dependency in extra_dependencies:
                     if extra_dependency.name == dependency.name:
-                        stack += list(extra_dependency.extras)
+                        stack += sorted(extra_dependency.extras)
                     else:
                         optional_dependencies.add(extra_dependency.name)
 
             # If some extras/features were required, we need to add a special dependency
             # representing the base package to the current package.
 
-            dependency_package = dependency_package.with_features(
-                list(dependency.extras)
-            )
+            dependency_package = dependency_package.with_features(dependency.extras)
             package = dependency_package.package
             dependency = dependency_package.dependency
             new_dependency = package.without_features().to_dependency()
@@ -755,6 +754,14 @@ class Provider:
             if package.satisfies(dependency):
                 if explicit_source := self._explicit_sources.get(dependency.name):
                     dependency.source_name = explicit_source
+                elif (
+                    not dependency.source_name
+                    and package.source_type == "legacy"
+                    and package.source_reference
+                    and self._pool.get_priority(package.source_reference)
+                    == Priority.EXPLICIT
+                ):
+                    continue
                 return DependencyPackage(dependency, package)
         return None
 

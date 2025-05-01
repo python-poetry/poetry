@@ -88,7 +88,7 @@ an isolated environment. Ensure you have specified any additional settings accor
 documentation of the build backend you are using.
 
 
-Once building is done you are ready to publish your library.
+Once building is done, you are ready to publish your library.
 
 ## Publishing to PyPI
 
@@ -105,7 +105,7 @@ Doing so is really easy.
 poetry publish
 ```
 
-This will package and publish the library to PyPI, at the condition that you are a registered user
+This will package and publish the library to PyPI, on the condition that you are a registered user
 and you have [configured your credentials]({{< relref "repositories#configuring-credentials" >}}) properly.
 
 {{% note %}}
@@ -120,7 +120,7 @@ Once this is done, your library will be available to anyone.
 
 ## Publishing to a private repository
 
-Sometimes, you may want to keep your library private but also being accessible to your team.
+Sometimes, you may want to keep your library private but also be accessible to your team.
 
 In this case, you will need to use a private repository.
 
@@ -128,7 +128,7 @@ In order to publish to a private repository, you will need to add it to your
 global list of repositories. See [Adding a repository]({{< relref "repositories#adding-a-repository" >}})
 for more information.
 
-Once this is done, you can actually publish to it like so:
+Once this is done, you can publish your package to the repository like so:
 
 ```bash
 poetry publish -r my-repository

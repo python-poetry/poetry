@@ -106,7 +106,7 @@ def test_package(
     ]
     win_inet = package.extras[canonicalize_name("socks")][1]
     assert win_inet.name == "win-inet-pton"
-    assert win_inet.python_versions == "~2.7 || ~2.6"
+    assert win_inet.python_versions in {"~2.7 || ~2.6", ">=2.6 <2.8"}
 
     # Different versions of poetry-core simplify the following marker differently,
     # either is fine.
@@ -118,7 +118,11 @@ def test_package(
         'sys_platform == "win32" and python_version == "2.7" and extra == "socks" or'
         ' sys_platform == "win32" and python_version == "2.6" and extra == "socks"'
     )
-    assert str(win_inet.marker) in {marker1, marker2}
+    marker3 = (
+        'sys_platform == "win32" and python_version >= "2.6" and python_version < '
+        '"2.8" and extra == "socks"'
+    )
+    assert str(win_inet.marker) in {marker1, marker2, marker3}
 
 
 @pytest.mark.parametrize(

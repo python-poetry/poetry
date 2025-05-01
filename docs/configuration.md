@@ -337,7 +337,7 @@ poetry config --local installer.build-config-settings.grpcio \
 
 **Environment Variable**: `POETRY_REQUESTS_MAX_RETRIES`
 
-*Introduced in 1.9.0*
+*Introduced in 2.0.0*
 
 Set the maximum number of retries in an unstable network.
 This setting has no effect if the server does not support HTTP range requests.
@@ -382,7 +382,7 @@ The directory in which Poetry managed Python versions are installed to.
 Do not download entire wheels to extract metadata but use
 [HTTP range requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests)
 to only download the METADATA files of wheels.
-Especially with slow network connections this setting can speed up dependency resolution significantly.
+Especially with slow network connections, this setting can speed up dependency resolution significantly.
 If the cache has already been filled or the server does not support HTTP range requests,
 this setting makes no difference.
 
