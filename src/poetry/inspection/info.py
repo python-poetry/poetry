@@ -129,7 +129,7 @@ class PackageInfo:
         name = name or self.name
 
         if not name:
-            raise RuntimeError("Unable to create package with no name")
+            raise RuntimeError(f"Unable to create package with no name for {root_dir}")
 
         if not self.version:
             # The version could not be determined, so we raise an error since it is
