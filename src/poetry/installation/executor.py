@@ -327,7 +327,20 @@ class Executor:
                         with_trace = False
                         pip_command = "pip wheel --no-cache-dir --use-pep517"
                         if pkg.develop:
-                            requirement = pkg.source_url
+                            if pkg.source_type == "git":
+                                git_url_parts = (
+                                    pkg.to_dependency()
+                                    .to_pep_508()
+                                    .split(";", 1)[0]
+                                    .split("@", 1)[-1]
+                                    .strip()
+                                ).split("#", 1)
+                                requirement = f"{git_url_parts[0]}#egg={pkg.name}"
+                                if len(git_url_parts) > 1:
+                                    requirement += f"&{git_url_parts[1]}"
+                            else:
+                                assert pkg.source_url
+                                requirement = pkg.source_url
                             pip_command += " --editable"
                         else:
                             requirement = (
@@ -681,7 +694,12 @@ class Executor:
                 package.source_subdirectory,
             )
 
-        archive = self._prepare_archive(operation, output_dir=output_dir)
+        try:
+            archive = self._prepare_archive(operation, output_dir=output_dir)
+        except Exception:
+            # always reset source_url in case of an error for correct output
+            package._source_url = original_url
+            raise
         if not package.develop:
             package._source_url = original_url
 
