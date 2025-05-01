@@ -403,11 +403,14 @@ In the `project` section, you can only use absolute paths:
 
 ```toml
 [project]
-# ...
+# directory
+dependencies = [
+    "my-package @ file:///absolute/path/to/my-package"
+]
+# file
 dependencies = [
     "my-package @ file:///absolute/path/to/my-package/dist/my-package-0.1.0.tar.gz"
 ]
-
 ```
 {{< /tab >}}
 
