@@ -1367,10 +1367,12 @@ def test_executor_should_be_initialized_with_correct_workers(
     ],
 )
 @pytest.mark.parametrize("editable", [False, True])
+@pytest.mark.parametrize("source_type", ["directory", "git", "git subdirectory"])
 def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess(
     failing_method: str,
     exception: Exception,
     editable: bool,
+    source_type: str,
     mocker: MockerFixture,
     config: Config,
     pool: RepositoryPool,
@@ -1386,38 +1388,67 @@ def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess(
 
     package_name = "simple-project"
     package_version = "1.2.3"
-    directory_package = Package(
+    source_reference: str | None = None
+    source_sub_directory: str | None = None
+    if source_type == "directory":
+        source_url = fixture_dir("simple_project").resolve().as_posix()
+        source_resolved_reference = None
+        pip_url = path_to_url(source_url)
+        pip_editable_requirement = source_url
+    elif source_type == "git":
+        source_url = "https://github.com/demo/demo.git"
+        source_reference = "v2.0"
+        source_resolved_reference = "12345678"
+        pip_url = f"git+{source_url}@{source_reference}"
+        pip_editable_requirement = f"{pip_url}#egg={package_name}"
+    elif source_type == "git subdirectory":
+        source_type = "git"
+        source_sub_directory = "one"
+        source_url = "https://github.com/demo/subdirectories.git"
+        source_reference = "v2.0"
+        source_resolved_reference = "12345678"
+        pip_base_url = f"git+{source_url}@{source_reference}"
+        pip_url = f"{pip_base_url}#subdirectory={source_sub_directory}"
+        pip_editable_requirement = (
+            f"{pip_base_url}#egg={package_name}&subdirectory={source_sub_directory}"
+        )
+    else:
+        raise ValueError(f"Unknown source type: {source_type}")
+    package = Package(
         package_name,
         package_version,
-        source_type="directory",
-        source_url=fixture_dir("simple_project").resolve().as_posix(),
+        source_type=source_type,
+        source_url=source_url,
+        source_reference=source_reference,
+        source_resolved_reference=source_resolved_reference,
+        source_subdirectory=source_sub_directory,
         develop=editable,
     )
     # must not be included in the error message
-    directory_package.python_versions = ">=3.7"
+    package.python_versions = ">=3.7"
 
-    return_code = executor.execute([Install(directory_package)])
+    return_code = executor.execute([Install(package)])
 
     assert return_code == 1
 
-    package_url = directory_package.source_url
-
-    assert directory_package.source_url is not None
+    assert package.source_url is not None
     if editable:
         pip_command = "pip wheel --no-cache-dir --use-pep517 --editable"
-        requirement = directory_package.source_url
-        assert Path(requirement).exists()
+        requirement = pip_editable_requirement
+        if source_type == "directory":
+            assert Path(requirement).exists()
     else:
         pip_command = "pip wheel --no-cache-dir --use-pep517"
-        requirement = f"{package_name} @ {path_to_url(directory_package.source_url)}"
+        requirement = f"{package_name} @ {pip_url}"
 
-    expected_source_string = f"{package_name} ({package_version} {package_url})"
+    version_details = package.source_resolved_reference or package.source_url
+    expected_source_string = f"{package_name} ({package_version} {version_details})"
     expected_pip_command = f'{pip_command} "{requirement}"'
 
     expected_output = f"""
 Package operations: 1 install, 0 updates, 0 removals
 
-  - Installing {package_name} ({package_version} {package_url})
+  - Installing {expected_source_string}
 
 PEP517 build of a dependency failed
 
@@ -1433,7 +1464,8 @@ hide the original error
         )
 
     expected_output += f"""
-Note: This error originates from the build backend, and is likely not a problem with poetry but one of the following issues with {expected_source_string}
+Note: This error originates from the build backend, and is likely not a problem \
+with poetry but one of the following issues with {expected_source_string}
 
   - not supporting PEP 517 builds
   - not specifying PEP 517 build requirements correctly
