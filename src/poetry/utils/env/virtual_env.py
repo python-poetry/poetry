@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import sysconfig
 
 from contextlib import contextmanager
 from copy import deepcopy
@@ -15,6 +16,7 @@ from poetry.utils.env.base_env import Env
 from poetry.utils.env.script_strings import GET_BASE_PREFIX
 from poetry.utils.env.script_strings import GET_ENVIRONMENT_INFO
 from poetry.utils.env.script_strings import GET_PATHS
+from poetry.utils.env.script_strings import GET_PLATFORMS
 from poetry.utils.env.script_strings import GET_SYS_PATH
 
 
@@ -54,6 +56,7 @@ class VirtualEnv(Env):
         python = self.version_info[:3]
         interpreter_name = self.marker_env["interpreter_name"]
         interpreter_version = self.marker_env["interpreter_version"]
+        sysconfig_platform = self.marker_env["sysconfig_platform"]
 
         if interpreter_name == "pp":
             interpreter = "pp3"
@@ -62,9 +65,28 @@ class VirtualEnv(Env):
         else:
             interpreter = None
 
+        # Why using sysconfig.get_platform() and not ...
+        # ... platform.machine()
+        #  This one is also different for x86_64 Linux and aarch64 Linux,
+        #  but it is the same for a 32 Bit and a 64 Bit Python on Windows!
+        # ... platform.architecture()
+        #  This one is also different for a 32 Bit and a 64 Bit Python on Windows,
+        #  but it is the same for x86_64 Linux and aarch64 Linux!
+        platforms = None
+        if sysconfig_platform != sysconfig.get_platform():
+            # Relevant for the following use cases, for example:
+            # - using a 32 Bit Python on a 64 Bit Windows
+            # - using an emulated aarch Python on an x86_64 Linux
+            output = self.run_python_script(GET_PLATFORMS)
+            platforms = json.loads(output)
+
         return [
-            *(cpython_tags(python) if interpreter_name == "cp" else generic_tags()),
-            *compatible_tags(python, interpreter=interpreter),
+            *(
+                cpython_tags(python, platforms=platforms)
+                if interpreter_name == "cp"
+                else generic_tags(platforms=platforms)
+            ),
+            *compatible_tags(python, interpreter=interpreter, platforms=platforms),
         ]
 
     def get_marker_env(self) -> dict[str, Any]:
