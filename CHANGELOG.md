@@ -1,5 +1,28 @@
 # Change Log
 
+## [2.1.3] - 2025-05-04
+
+### Changed
+
+- Require `importlib-metadata<8.7` for Python 3.9 because of a breaking change in importlib-metadata 8.7 ([#10374](https://github.com/python-poetry/poetry/pull/10374)).
+
+### Fixed
+
+- Fix an issue where re-locking failed for incomplete multiple-constraints dependencies with explicit sources ([#10324](https://github.com/python-poetry/poetry/pull/10324)).
+- Fix an issue where the `--directory` option did not work if a plugin, which accesses the poetry instance during its activation, was installed ([#10352](https://github.com/python-poetry/poetry/pull/10352)).
+- Fix an issue where `poetry env activate -v` printed additional information to stdout instead of stderr so that the output could not be used as designed ([#10353](https://github.com/python-poetry/poetry/pull/10353)).
+- Fix an issue where the original error was not printed if building a git dependency failed ([#10366](https://github.com/python-poetry/poetry/pull/10366)).
+- Fix an issue where wheels for the wrong platform were installed in rare cases. ([#10361](https://github.com/python-poetry/poetry/pull/10361)).
+
+### poetry-core ([`2.1.3`](https://github.com/python-poetry/poetry-core/releases/tag/2.1.3))
+
+- Fix an issue where the union of specific inverse or partially inverse markers was not simplified ([#858](https://github.com/python-poetry/poetry-core/pull/858)).
+- Fix an issue where optional dependencies defined in the `project` section were treated as non-optional when a source was defined for them in the `tool.poetry` section ([#857](https://github.com/python-poetry/poetry-core/pull/857)).
+- Fix an issue where markers with `===` were not parsed correctly ([#860](https://github.com/python-poetry/poetry-core/pull/860)).
+- Fix an issue where local versions with upper case letters caused an error ([#859](https://github.com/python-poetry/poetry-core/pull/859)).
+- Fix an issue where `extra` markers with a value starting with "in" were not validated correctly ([#862](https://github.com/python-poetry/poetry-core/pull/862)).
+
+
 ## [2.1.2] - 2025-03-29
 
 ### Changed
@@ -2488,7 +2511,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/2.1.2...main
+[Unreleased]: https://github.com/python-poetry/poetry/compare/2.1.3...main
+[2.1.3]: https://github.com/python-poetry/poetry/releases/tag/2.1.3
 [2.1.2]: https://github.com/python-poetry/poetry/releases/tag/2.1.2
 [2.1.1]: https://github.com/python-poetry/poetry/releases/tag/2.1.1
 [2.1.0]: https://github.com/python-poetry/poetry/releases/tag/2.1.0
