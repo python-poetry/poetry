@@ -124,7 +124,7 @@ extend-select = [
     "RUF", # ruff checks
     "SIM", # flake8-simplify
     "T20", # flake8-print
-    "TCH", # flake8-type-checking
+    "TC",  # flake8-type-checking
     "TID", # flake8-tidy-imports
     "UP",  # pyupgrade
 ]
@@ -133,7 +133,7 @@ ignore = [
     "B905", # use explicit 'strict=' parameter with 'zip()'
 ]
 extend-safe-fixes = [
-    "TCH", # move import from and to TYPE_CHECKING blocks
+    "TC",  # move import from and to TYPE_CHECKING blocks
 ]
 unfixable = [
     "ERA", # do not autoremove commented out code
