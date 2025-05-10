@@ -437,7 +437,7 @@ def test_run_install_with_dependency_groups(
     )
 
     if groups is not None:
-        installer.only_groups(groups)
+        installer.only_groups({canonicalize_name(g) for g in groups})
 
     installer.update(update)
     installer.requires_synchronization(requires_synchronization)

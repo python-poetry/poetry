@@ -5090,8 +5090,12 @@ def test_solver_resolves_conflicting_dependency_in_root_extra(
         ),
     )
     solved_packages = transaction.get_solved_packages()
-    assert solved_packages[package_a1].markers["main"] == parse_marker("extra != 'foo'")
-    assert solved_packages[package_a2].markers["main"] == parse_marker("extra == 'foo'")
+    assert solved_packages[package_a1].markers[MAIN_GROUP] == parse_marker(
+        "extra != 'foo'"
+    )
+    assert solved_packages[package_a2].markers[MAIN_GROUP] == parse_marker(
+        "extra == 'foo'"
+    )
 
 
 def test_solver_resolves_conflicting_dependency_in_root_extras(
@@ -5136,10 +5140,10 @@ def test_solver_resolves_conflicting_dependency_in_root_extras(
         ),
     )
     solved_packages = transaction.get_solved_packages()
-    assert solved_packages[package_a1].markers["main"] == parse_marker(
+    assert solved_packages[package_a1].markers[MAIN_GROUP] == parse_marker(
         "extra != 'bar' and extra == 'foo'"
     )
-    assert solved_packages[package_a2].markers["main"] == parse_marker(
+    assert solved_packages[package_a2].markers[MAIN_GROUP] == parse_marker(
         "extra != 'foo' and extra == 'bar'"
     )
 

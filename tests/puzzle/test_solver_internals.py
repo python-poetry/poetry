@@ -7,6 +7,7 @@ import pytest
 from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import parse_constraint
 from poetry.core.packages.dependency import Dependency
+from poetry.core.packages.dependency_group import MAIN_GROUP
 from poetry.core.packages.package import Package
 from poetry.core.version.markers import AnyMarker
 from poetry.core.version.markers import parse_marker
@@ -24,6 +25,9 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from poetry.core.packages.project_package import ProjectPackage
+
+
+DEV_GROUP = canonicalize_name("dev")
 
 
 def dep(
@@ -369,7 +373,9 @@ def test_merge_override_packages_restricted(package: ProjectPackage) -> None:
                 {package: {"a": dep("b", 'python_version < "3.9"')}},
                 {
                     a: TransitivePackageInfo(
-                        0, {"main"}, {"main": parse_marker("sys_platform == 'win32'")}
+                        0,
+                        {MAIN_GROUP},
+                        {MAIN_GROUP: parse_marker("sys_platform == 'win32'")},
                     )
                 },
             ),
@@ -377,7 +383,9 @@ def test_merge_override_packages_restricted(package: ProjectPackage) -> None:
                 {package: {"a": dep("b", 'python_version >= "3.9"')}},
                 {
                     a: TransitivePackageInfo(
-                        0, {"main"}, {"main": parse_marker("sys_platform == 'linux'")}
+                        0,
+                        {MAIN_GROUP},
+                        {MAIN_GROUP: parse_marker("sys_platform == 'linux'")},
                     )
                 },
             ),
@@ -404,7 +412,9 @@ def test_merge_override_packages_extras(package: ProjectPackage) -> None:
                 {package: {"a": dep("b", 'python_version < "3.9" and extra == "foo"')}},
                 {
                     a: TransitivePackageInfo(
-                        0, {"main"}, {"main": parse_marker("sys_platform == 'win32'")}
+                        0,
+                        {MAIN_GROUP},
+                        {MAIN_GROUP: parse_marker("sys_platform == 'win32'")},
                     )
                 },
             ),
@@ -416,7 +426,9 @@ def test_merge_override_packages_extras(package: ProjectPackage) -> None:
                 },
                 {
                     a: TransitivePackageInfo(
-                        0, {"main"}, {"main": parse_marker("sys_platform == 'linux'")}
+                        0,
+                        {MAIN_GROUP},
+                        {MAIN_GROUP: parse_marker("sys_platform == 'linux'")},
                     )
                 },
             ),
@@ -456,11 +468,11 @@ def test_merge_override_packages_python_constraint(
                         )
                     }
                 },
-                {a: TransitivePackageInfo(0, {"main"}, {"main": AnyMarker()})},
+                {a: TransitivePackageInfo(0, {MAIN_GROUP}, {MAIN_GROUP: AnyMarker()})},
             ),
             (
                 {package: {"a": dep("b", "sys_platform != 'linux'")}},
-                {a: TransitivePackageInfo(0, {"main"}, {"main": AnyMarker()})},
+                {a: TransitivePackageInfo(0, {MAIN_GROUP}, {MAIN_GROUP: AnyMarker()})},
             ),
         ],
         parse_constraint(python_constraint),
@@ -484,7 +496,7 @@ def test_merge_override_packages_multiple_deps(package: ProjectPackage) -> None:
                     },
                     a: {"e": dep("f", 'python_version >= "3.8"')},
                 },
-                {a: TransitivePackageInfo(0, {"main"}, {"main": AnyMarker()})},
+                {a: TransitivePackageInfo(0, {MAIN_GROUP}, {MAIN_GROUP: AnyMarker()})},
             ),
         ],
         parse_constraint("*"),
@@ -507,14 +519,16 @@ def test_merge_override_packages_groups(package: ProjectPackage) -> None:
                 {package: {"a": dep("b", 'python_version < "3.9"')}},
                 {
                     a: TransitivePackageInfo(
-                        0, {"main"}, {"main": parse_marker("sys_platform == 'win32'")}
+                        0,
+                        {MAIN_GROUP},
+                        {MAIN_GROUP: parse_marker("sys_platform == 'win32'")},
                     ),
                     b: TransitivePackageInfo(
                         0,
-                        {"main", "dev"},
+                        {MAIN_GROUP, DEV_GROUP},
                         {
-                            "main": parse_marker("sys_platform == 'win32'"),
-                            "dev": parse_marker("sys_platform == 'linux'"),
+                            MAIN_GROUP: parse_marker("sys_platform == 'win32'"),
+                            DEV_GROUP: parse_marker("sys_platform == 'linux'"),
                         },
                     ),
                 },
@@ -523,14 +537,16 @@ def test_merge_override_packages_groups(package: ProjectPackage) -> None:
                 {package: {"a": dep("b", 'python_version >= "3.9"')}},
                 {
                     a: TransitivePackageInfo(
-                        0, {"dev"}, {"dev": parse_marker("sys_platform == 'linux'")}
+                        0,
+                        {DEV_GROUP},
+                        {DEV_GROUP: parse_marker("sys_platform == 'linux'")},
                     ),
                     b: TransitivePackageInfo(
                         0,
-                        {"main", "dev"},
+                        {MAIN_GROUP, DEV_GROUP},
                         {
-                            "main": parse_marker("platform_machine == 'amd64'"),
-                            "dev": parse_marker("platform_machine == 'aarch64'"),
+                            MAIN_GROUP: parse_marker("platform_machine == 'amd64'"),
+                            DEV_GROUP: parse_marker("platform_machine == 'aarch64'"),
                         },
                     ),
                 },
@@ -573,9 +589,9 @@ def test_merge_override_packages_shortcut(package: ProjectPackage) -> None:
                 {
                     a: TransitivePackageInfo(
                         0,
-                        {"main"},
+                        {MAIN_GROUP},
                         {
-                            "main": parse_marker(
+                            MAIN_GROUP: parse_marker(
                                 f"{override_marker1} and ({common_marker})"
                             )
                         },
@@ -587,9 +603,9 @@ def test_merge_override_packages_shortcut(package: ProjectPackage) -> None:
                 {
                     a: TransitivePackageInfo(
                         0,
-                        {"main"},
+                        {MAIN_GROUP},
                         {
-                            "main": parse_marker(
+                            MAIN_GROUP: parse_marker(
                                 f"{override_marker2} and ({common_marker})"
                             )
                         },
