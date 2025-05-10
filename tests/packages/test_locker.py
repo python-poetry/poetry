@@ -35,6 +35,9 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
 
+DEV_GROUP = canonicalize_name("dev")
+
+
 @pytest.fixture
 def locker() -> Locker:
     with tempfile.NamedTemporaryFile() as f:
@@ -466,17 +469,21 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 @pytest.mark.parametrize(
     ("groups", "marker", "expected"),
     [
+        # only main - without marker
         (["main"], None, {"main": "*"}),
+        # only main - with marker
         (
             ["main"],
             repr('python_version == "3.9"'),
             {"main": 'python_version == "3.9"'},
         ),
+        # two groups - common marker
         (
             ["main", "dev"],
             repr('python_version == "3.9"'),
             {"main": 'python_version == "3.9"', "dev": 'python_version == "3.9"'},
         ),
+        # two groups - separate marker
         (
             ["main", "dev"],
             (
@@ -485,10 +492,26 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
             ),
             {"main": 'python_version == "3.9"', "dev": 'sys_platform == "linux"'},
         ),
+        # two groups - one without marker
         (
             ["main", "dev"],
             '{"main" = \'python_version == "3.9"\'}',
             {"main": 'python_version == "3.9"', "dev": "*"},
+        ),
+        (
+            # unnormalized group - common marker
+            ["main", "DEV"],
+            repr('python_version == "3.9"'),
+            {"main": 'python_version == "3.9"', "dev": 'python_version == "3.9"'},
+        ),
+        (
+            # unnormalized group - separate marker
+            ["main", "DEV"],
+            (
+                '{"main" = \'python_version == "3.9"\','
+                ' "DEV" = \'sys_platform == "linux"\'}'
+            ),
+            {"main": 'python_version == "3.9"', "dev": 'sys_platform == "linux"'},
         ),
     ],
 )
@@ -517,7 +540,7 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 
     a = get_package("a", "1.0")
     assert len(packages) == 1
-    assert packages[a].groups == set(groups)
+    assert packages[a].groups == {canonicalize_name(g) for g in groups}
     assert packages[a].markers == {g: parse_marker(m) for g, m in expected.items()}
 
 
@@ -997,36 +1020,38 @@ def test_locker_dumps_groups_and_markers(
 ) -> None:
     packages = {
         get_package("A", "1.0"): TransitivePackageInfo(
-            0, {"main"}, {"main": AnyMarker()}
+            0, {MAIN_GROUP}, {MAIN_GROUP: AnyMarker()}
         ),
         get_package("B", "1.0"): TransitivePackageInfo(
-            0, {"main"}, {"main": parse_marker('sys_platform == "win32"')}
+            0, {MAIN_GROUP}, {MAIN_GROUP: parse_marker('sys_platform == "win32"')}
         ),
         get_package("C", "1.0"): TransitivePackageInfo(
-            0, {"main", "dev"}, {"main": AnyMarker(), "dev": AnyMarker()}
+            0,
+            {MAIN_GROUP, DEV_GROUP},
+            {MAIN_GROUP: AnyMarker(), DEV_GROUP: AnyMarker()},
         ),
         get_package("D", "1.0"): TransitivePackageInfo(
             0,
-            {"main", "dev"},
+            {MAIN_GROUP, DEV_GROUP},
             {
-                "main": parse_marker('sys_platform == "win32"'),
-                "dev": parse_marker('sys_platform == "win32"'),
+                MAIN_GROUP: parse_marker('sys_platform == "win32"'),
+                DEV_GROUP: parse_marker('sys_platform == "win32"'),
             },
         ),
         get_package("E", "1.0"): TransitivePackageInfo(
             0,
-            {"main", "dev"},
+            {MAIN_GROUP, DEV_GROUP},
             {
-                "main": parse_marker('sys_platform == "win32"'),
-                "dev": parse_marker('sys_platform == "linux"'),
+                MAIN_GROUP: parse_marker('sys_platform == "win32"'),
+                DEV_GROUP: parse_marker('sys_platform == "linux"'),
             },
         ),
         get_package("F", "1.0"): TransitivePackageInfo(
             0,
-            {"main", "dev"},
+            {MAIN_GROUP, DEV_GROUP},
             {
-                "main": parse_marker('sys_platform == "win32"'),
-                "dev": AnyMarker(),
+                MAIN_GROUP: parse_marker('sys_platform == "win32"'),
+                DEV_GROUP: AnyMarker(),
             },
         ),
     }
