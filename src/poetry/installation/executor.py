@@ -45,6 +45,7 @@ if TYPE_CHECKING:
     from cleo.io.io import IO
     from cleo.io.outputs.section_output import SectionOutput
     from packaging.utils import NormalizedName
+    from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
 
     from poetry.config.config import Config
@@ -68,6 +69,8 @@ class Executor:
         io: IO,
         parallel: bool | None = None,
         disable_cache: bool = False,
+        *,
+        build_constraints: Mapping[NormalizedName, list[Dependency]] | None = None,
     ) -> None:
         self._env = env
         self._io = io
@@ -75,6 +78,7 @@ class Executor:
         self._enabled = True
         self._verbose = False
         self._wheel_installer = WheelInstaller(self._env)
+        self._build_constraints = build_constraints or {}
 
         if parallel is None:
             parallel = config.get("installer.parallel", True)
@@ -647,11 +651,13 @@ class Executor:
 
         self._populate_hashes_dict(archive, package)
 
+        name = operation.package.name
         return self._chef.prepare(
             archive,
             editable=package.develop,
             output_dir=output_dir,
-            config_settings=self._build_config_settings.get(operation.package.name),
+            config_settings=self._build_config_settings.get(name),
+            build_constraints=self._build_constraints.get(name),
         )
 
     def _prepare_git_archive(self, operation: Install | Update) -> Path:
@@ -761,10 +767,12 @@ class Executor:
             )
             self._write(operation, message)
 
+            name = operation.package.name
             archive = self._chef.prepare(
                 archive,
                 output_dir=original_archive.parent,
-                config_settings=self._build_config_settings.get(operation.package.name),
+                config_settings=self._build_config_settings.get(name),
+                build_constraints=self._build_constraints.get(name),
             )
 
         # Use the original archive to provide the correct hash.

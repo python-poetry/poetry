@@ -924,6 +924,28 @@ my-plugin = ">=1.0,<2.0"
 
 See [Project plugins]({{< relref "plugins#project-plugins" >}}) for more information.
 
+### build-constraints
+
+In this section, you can specify additional constraints to apply when creating the build
+environment for a dependency. This is useful if a package does not provide wheels
+(or shall be built from source for other reasons)
+and specifies too loose build requirements (without an upper bound)
+and is not compatible with current versions of one of its build requirements.
+
+For example, if your project depends on `some-package`, which only provides an sdist
+and defines its build requirements as `build-requires = ["setuptools"]`,
+but is incompatible with `setuptools >= 78`, building the package will probably fail
+because per default the latest setuptools will be chosen. In this case, you can
+work around this issue of `some-package` as follows:
+
+```toml
+[tool.poetry.build-constraints]
+some-package = { setuptools = "<78" }
+```
+
+The syntax for specifying constraints is the same as for specifying dependencies
+in the `tool.poetry` section.
+
 ## Poetry and PEP-517
 
 [PEP-517](https://www.python.org/dev/peps/pep-0517/) introduces a standard way
