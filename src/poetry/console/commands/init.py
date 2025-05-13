@@ -236,7 +236,6 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
             self.line("")
 
-
         layout_ = layout(layout_name)(
             name,
             version,
