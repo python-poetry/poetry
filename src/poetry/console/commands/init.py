@@ -40,7 +40,7 @@ class InitCommand(Command):
     options: ClassVar[list[Option]] = [
         option("name", None, "Name of the package.", flag=False),
         option("description", None, "Description of the package.", flag=False),
-        option("author", None, "Author name of the package.", flag=False),
+        option("author", None, "Author name of the package.", flag=False, multiple=True),
         option("python", None, "Compatible Python versions.", flag=False),
         option(
             "dependency",
