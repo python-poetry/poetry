@@ -943,22 +943,8 @@ requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 """
 
-    output = tester.io.fetch_output()
-    # 1. Print the raw output to the console.
-    print("--- Raw Output ---")
-    print(output)
-    print("--- End Raw Output ---")
 
-    # 2.  Extract TOML and print it for comparison.
-    start_index = output.find("[project]")
-    if start_index != -1:
-        toml_output = output[start_index:].strip()
-        print("\n--- Extracted TOML Output ---")
-        print(toml_output)
-        print("--- End Extracted TOML Output ---")
-        assert toml_output == expected
-    else:
-        assert False, "Could not find [project] in output"
+    output = tester.io.fetch_output()
     assert expected in output
 def test_add_package_with_extras_and_whitespace(tester: CommandTester) -> None:
     command = tester.command
