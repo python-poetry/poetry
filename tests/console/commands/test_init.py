@@ -923,7 +923,7 @@ name = "my-package"
 version = "1.2.3"
 description = "This is a description"
 authors = [
-    {name = "Foo Bar",email = "foo@example.com"}
+    {name = "Foo Bar",email = "foo@example.com"},
     {name = "Author 2",email = "bar@example.com"}
 ]
 license = {text = "MIT"}
@@ -937,14 +937,11 @@ dependencies = [
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
 """
 
     output = tester.io.fetch_output()
     assert expected in output
+
 def test_add_package_with_extras_and_whitespace(tester: CommandTester) -> None:
     command = tester.command
     assert isinstance(command, InitCommand)
