@@ -891,6 +891,21 @@ pytest = "^3.6.0"
 """
 
     output = tester.io.fetch_output()
+    # 1. Print the raw output to the console.
+    print("--- Raw Output ---")
+    print(output)
+    print("--- End Raw Output ---")
+
+    # 2.  Extract TOML and print it for comparison.
+    start_index = output.find("[project]")
+    if start_index != -1:
+        toml_output = output[start_index:].strip()
+        print("\n--- Extracted TOML Output ---")
+        print(toml_output)
+        print("--- End Extracted TOML Output ---")
+        assert toml_output == expected
+    else:
+        assert False, "Could not find [project] in output"
     assert expected in output
 def test_predefined_2_authors(tester: CommandTester, repo: TestRepository) -> None:
     repo.add_package(get_package("pendulum", "2.0.0"))
@@ -905,14 +920,24 @@ def test_predefined_2_authors(tester: CommandTester, repo: TestRepository) -> No
     ]
 
     tester.execute(
-        "--name my-package "
-        "--description 'This is a description' "
-        "--author 'Foo Bar <foo@example.com>' "
-        "--author 'Author 2 <bar@example.com>' "
-        "--python '>=3.8' "
-        "--license MIT "
-        "--dependency pendulum "
-        "--dev-dependency pytest",
+        [
+            "--name",
+            "my-package",
+            "--description",
+            "This is a description",
+            "--author",
+            "Foo Bar <foo@example.com>",
+            "--author",
+            "Author 2 <bar@example.com>",
+            "--python",
+            ">=3.8",
+            "--license",
+            "MIT",
+            "--dependency",
+            "pendulum",
+            "--dev-dependency",
+            "pytest",
+        ],
         inputs="\n".join(inputs),
     )
 
