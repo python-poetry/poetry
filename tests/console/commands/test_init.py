@@ -937,6 +937,10 @@ dependencies = [
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
 """
 
     output = tester.io.fetch_output()
