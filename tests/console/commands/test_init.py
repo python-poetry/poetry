@@ -840,11 +840,11 @@ pytest = "^3.6.0"
 pytest-requests = "^0.2.0"
 """
 
+
     output = tester.io.fetch_output()
     assert expected in output
     assert 'pytest-requests = "^0.2.0"' in output
     assert 'pytest = "^3.6.0"' in output
-
 
 
 def test_predefined_all_options(tester: CommandTester, repo: TestRepository) -> None:
@@ -940,6 +940,10 @@ pytest = "^3.6.0"
 """
 
     output = tester.io.fetch_output()
+    # 1. Print the raw output to the console.
+    print("--- Raw Output ---")
+    print(output)
+    print("--- End Raw Output ---")
     assert expected in output
 
 def test_add_package_with_extras_and_whitespace(tester: CommandTester) -> None:

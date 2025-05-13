@@ -149,22 +149,27 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             description = self.ask(self.create_question("Description []: ", default=""))
 
         authors = self.option("author")
+        author = ""
         if not authors and vcs_config.get("user.name"):
             author = vcs_config["user.name"]
             author_email = vcs_config.get("user.email")
             if author_email:
                 author += f" <{author_email}>"
             authors = [author]
+        print(f"AUTHORS VARIABLE:     {authors}")
 
         if is_interactive:
             author_str = ", ".join(authors)
             question = self.create_question(
                 f"Author [<comment>{author_str}</comment>, n to skip]: ", default=author_str
             )
-            question.set_validator(lambda v: self._validate_author(v, authors[0]))
+            question.set_validator(lambda v: self._validate_author(v, authors))
             author = self.ask(question)
-            if author in [author_str, "n"]:
+            if author == author_str:
                 author = ""
+            if author is None:
+                authors = author
+
 
         authors = [author] if author else authors
         authors = authors if authors else []
