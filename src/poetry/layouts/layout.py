@@ -85,7 +85,7 @@ class Layout:
         self._dev_dependencies = dev_dependencies or {}
 
         if not author:
-            self._authors = "Your Name <you@example.com>"
+            self._authors = ["Your Name <you@example.com>"]
         elif isinstance(author, str): # check if only 1 author was added
             self._authors = [author]
         else:
@@ -156,8 +156,8 @@ class Layout:
                     author["email"] = email
                 project_content["authors"].append(author)
 
-            if self._license:
-                project_content["license"]["text"] = self._license
+        if self._license:
+            project_content["license"]["text"] = self._license
         else:
             project_content.remove("license")
 
