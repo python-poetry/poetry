@@ -907,7 +907,8 @@ def test_predefined_2_authors(tester: CommandTester, repo: TestRepository) -> No
     tester.execute(
         "--name my-package "
         "--description 'This is a description' "
-        "--author 'Authorname1 <foo@example.com>' --author 'Authorname2 <foo@example.com>'",
+        "--author 'Foo Bar <foo@example.com>' "
+        "--author 'Author 2 <bar@example.com>' "
         "--python '>=3.8' "
         "--license MIT "
         "--dependency pendulum "
@@ -916,29 +917,44 @@ def test_predefined_2_authors(tester: CommandTester, repo: TestRepository) -> No
     )
 
     expected = """\
-    [project]
-    name = "my-package"
-    version = "1.2.3"
-    description = "This is a description"
-    authors = [
-        {name = "Foo Bar",email = "foo@example.com"}
-    ]
-    license = {text = "MIT"}
-    readme = "README.md"
-    requires-python = ">=3.8"
-    dependencies = [
-        "pendulum (>=2.0.0,<3.0.0)"
-    ]
+[project]
+name = "my-package"
+version = "1.2.3"
+description = "This is a description"
+authors = [
+    {name = "Foo Bar",email = "foo@example.com"}
+    {name = "Author 2",email = "bar@example.com"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "pendulum (>=2.0.0,<3.0.0)"
+]
 
-    [tool.poetry]
+[tool.poetry]
 
-    [tool.poetry.group.dev.dependencies]
-    pytest = "^3.6.0"
-    """
+[tool.poetry.group.dev.dependencies]
+pytest = "^3.6.0"
+"""
 
     output = tester.io.fetch_output()
-    assert expected in output
+    # 1. Print the raw output to the console.
+    print("--- Raw Output ---")
+    print(output)
+    print("--- End Raw Output ---")
 
+    # 2.  Extract TOML and print it for comparison.
+    start_index = output.find("[project]")
+    if start_index != -1:
+        toml_output = output[start_index:].strip()
+        print("\n--- Extracted TOML Output ---")
+        print(toml_output)
+        print("--- End Extracted TOML Output ---")
+        assert toml_output == expected
+    else:
+        assert False, "Could not find [project] in output"
+    assert expected in output
 def test_add_package_with_extras_and_whitespace(tester: CommandTester) -> None:
     command = tester.command
     assert isinstance(command, InitCommand)
