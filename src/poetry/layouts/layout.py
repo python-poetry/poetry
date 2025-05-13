@@ -63,7 +63,7 @@ class Layout:
         version: str = "0.1.0",
         description: str = "",
         readme_format: str = "md",
-        author: str | None = None,
+        author: str | list[str] | None = None,
         license: str | None = None,
         python: str | None = None,
         dependencies: Mapping[str, str | Mapping[str, Any]] | None = None,
@@ -85,9 +85,11 @@ class Layout:
         self._dev_dependencies = dev_dependencies or {}
 
         if not author:
-            author = "Your Name <you@example.com>"
-
-        self._author = author
+            self._authors = "Your Name <you@example.com>"
+        elif isinstance(author, str): # check if only 1 author was added
+            self._authors = [author]
+        else:
+            self._authors = author
 
     @property
     def basedir(self) -> Path:
@@ -143,18 +145,19 @@ class Layout:
         project_content["name"] = self._project
         project_content["version"] = self._version
         project_content["description"] = self._description
-        m = AUTHOR_REGEX.match(self._author)
-        if m is None:
-            # This should not happen because author has been validated before.
-            raise ValueError(f"Invalid author: {self._author}")
-        else:
-            author = {"name": m.group("name")}
-            if email := m.group("email"):
-                author["email"] = email
-            project_content["authors"].append(author)
+        for author_string in self._authors:  # Iterate through the list of authors
+            m = AUTHOR_REGEX.match(author_string)
+            if m is None:
+                # This should not happen because author has been validated before.
+                raise ValueError(f"Invalid author: {author_string}")
+            else:
+                author = {"name": m.group("name")}
+                if email := m.group("email"):
+                    author["email"] = email
+                project_content["authors"].append(author)
 
-        if self._license:
-            project_content["license"]["text"] = self._license
+            if self._license:
+                project_content["license"]["text"] = self._license
         else:
             project_content.remove("license")
 
