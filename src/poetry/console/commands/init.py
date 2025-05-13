@@ -157,14 +157,13 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             authors = [author]
 
         if is_interactive:
-            default_author_str = ", ".join(authors) if authors else ""
             author_str = ", ".join(authors)
             question = self.create_question(
                 f"Author [<comment>{author_str}</comment>, n to skip]: ", default=author_str
             )
             question.set_validator(lambda v: self._validate_author(v, authors[0]))
             author = self.ask(question)
-            if author in [default_author_str, "n"]:
+            if author in [author_str, "n"]:
                 author = ""
 
         authors = [author] if author else authors

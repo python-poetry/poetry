@@ -943,7 +943,6 @@ requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 """
 
-
     output = tester.io.fetch_output()
     assert expected in output
 def test_add_package_with_extras_and_whitespace(tester: CommandTester) -> None:
