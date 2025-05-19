@@ -109,6 +109,10 @@ class Executor:
             NormalizedName, Mapping[str, str | Sequence[str]]
         ] = config.get("installer.build-config-settings")
 
+        self._python_version = getattr(self._env.python, "version", "<unknown-version>")
+        self._platform = self._env.marker_env.get("sys_platform", "<unknown-platform>")
+        self._architecture = self._env.marker_env.get("platform_machine", "<unknown-arch>")
+
     @property
     def installations_count(self) -> int:
         return self._executed["install"]
@@ -630,10 +634,12 @@ class Executor:
     ) -> Path:
         package = operation.package
         operation_message = self.get_operation_message(operation)
+        reason = (f"no prebuilt wheel available for Python {self._python_version} on "
+                  f"{self._platform}-{self._architecture}")
 
         message = (
             f"  <fg=blue;options=bold>-</> {operation_message}:"
-            " <info>Preparing...</info>"
+            f" <info>Building a wheel file for {package.pretty_name} ({reason})</info>"
         )
         self._write(operation, message)
 
@@ -754,9 +760,11 @@ class Executor:
             )
 
         if archive.suffix != ".whl":
+            reason = (f"no prebuilt wheel available for Python {self._python_version} on "
+                      f"{self._platform}-{self._architecture}")
             message = (
-                f"  <fg=blue;options=bold>-</> {self.get_operation_message(operation)}:"
-                " <info>Preparing...</info>"
+                f"  <fg=blue;options=bold>-</> {self.get_operation_message(operation)}:" # here
+                f" <info>Building a wheel file for {package.pretty_name} ({reason})</info>"
             )
             self._write(operation, message)
 
