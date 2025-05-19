@@ -163,13 +163,13 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             )
             question.set_validator(lambda v: self._validate_author(v, authors))
             author = self.ask(question)
-            if author == author_str:
+            if author == author_str: # user entered nothing, dont change authors
                 author = ""
-            if author is None:
-                authors = author
+            if author is None: # none is returned if user enters "n",
+                authors = author # author gets overwritted by default settings defined in question.set
 
 
-        authors = [author] if author else authors
+        authors = [author] if author else authors # checks if author = None or ""
         authors = authors if authors else []
 
         license_name = self.option("license")

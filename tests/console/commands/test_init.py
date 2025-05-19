@@ -840,7 +840,6 @@ pytest = "^3.6.0"
 pytest-requests = "^0.2.0"
 """
 
-
     output = tester.io.fetch_output()
     assert expected in output
     assert 'pytest-requests = "^0.2.0"' in output
