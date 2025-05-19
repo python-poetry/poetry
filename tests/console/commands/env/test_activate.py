@@ -86,7 +86,7 @@ def test_no_additional_output_in_verbose_mode(
     verbosity: str,
 ) -> None:
     mocker.patch("shellingham.detect_shell", return_value=("pwsh", None))
-    mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv(is_venv=True))
+    mocker.patch("poetry.utils.env.EnvManager.get", return_value=tmp_venv)
 
     # use an AppTester instead of a CommandTester to catch additional output
     app_tester.execute(f"env activate {verbosity}")
