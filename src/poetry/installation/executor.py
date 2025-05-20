@@ -34,7 +34,7 @@ from poetry.utils.helpers import pluralize
 from poetry.utils.helpers import remove_directory
 from poetry.utils.isolated_build import IsolatedBuildBackendError
 from poetry.utils.isolated_build import IsolatedBuildInstallError
-from poetry.utils.logging import format_build_wheel_log
+from poetry.utils.log_utils import format_build_wheel_log
 from poetry.vcs.git import Git
 
 

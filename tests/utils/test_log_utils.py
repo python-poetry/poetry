@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import cast
 
-from poetry.utils.logging import format_build_wheel_log
+from poetry.utils.log_utils import format_build_wheel_log
 
 
 if TYPE_CHECKING:
