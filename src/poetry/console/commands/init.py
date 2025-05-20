@@ -40,7 +40,9 @@ class InitCommand(Command):
     options: ClassVar[list[Option]] = [
         option("name", None, "Name of the package.", flag=False),
         option("description", None, "Description of the package.", flag=False),
-        option("author", None, "Author name of the package.", flag=False, multiple=True),
+        option(
+            "author", None, "Author name of the package.", flag=False, multiple=True
+        ),
         option("python", None, "Compatible Python versions.", flag=False),
         option(
             "dependency",
@@ -159,17 +161,17 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         if is_interactive:
             author_str = ", ".join(authors)
             question = self.create_question(
-                f"Author [<comment>{author_str}</comment>, n to skip]: ", default=author_str
+                f"Author [<comment>{author_str}</comment>, n to skip]: ",
+                default=author_str,
             )
             question.set_validator(lambda v: self._validate_author(v, authors))
             author = self.ask(question)
-            if author == author_str: # user entered nothing, dont change authors
+            if author == author_str:  # user entered nothing, dont change authors
                 author = ""
-            if author is None: # none is returned if user enters "n",
-                authors = author # author gets overwritted by default settings defined in question.set
+            if author is None:  # none is returned if user enters "n",
+                authors = author  # author gets overwritted by default settings defined in question.set
 
-
-        authors = [author] if author else authors # checks if author = None or ""
+        authors = [author] if author else authors  # checks if author = None or ""
         authors = authors if authors else []
 
         license_name = self.option("license")
