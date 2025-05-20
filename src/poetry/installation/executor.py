@@ -34,6 +34,7 @@ from poetry.utils.helpers import pluralize
 from poetry.utils.helpers import remove_directory
 from poetry.utils.isolated_build import IsolatedBuildBackendError
 from poetry.utils.isolated_build import IsolatedBuildInstallError
+from poetry.utils.logging import format_build_wheel_log
 from poetry.vcs.git import Git
 
 
@@ -108,10 +109,6 @@ class Executor:
         self._build_config_settings: Mapping[
             NormalizedName, Mapping[str, str | Sequence[str]]
         ] = config.get("installer.build-config-settings")
-
-        self._python_version = self._env.marker_env.get("version_info", "<unknown-version>")
-        self._platform = self._env.marker_env.get("sys_platform", "<unknown-platform>")
-        self._architecture = self._env.marker_env.get("platform_machine", "<unknown-arch>")
 
     @property
     def installations_count(self) -> int:
@@ -634,12 +631,10 @@ class Executor:
     ) -> Path:
         package = operation.package
         operation_message = self.get_operation_message(operation)
-        reason = (f"no prebuilt wheel available for Python {self._python_version} on "
-                  f"{self._platform}-{self._architecture}")
 
         message = (
             f"  <fg=blue;options=bold>-</> {operation_message}:"
-            f" <info>Building a wheel file for {package.pretty_name} ({reason})</info>"
+            f"{format_build_wheel_log(package, self._env)}"
         )
         self._write(operation, message)
 
@@ -760,11 +755,9 @@ class Executor:
             )
 
         if archive.suffix != ".whl":
-            reason = (f"no prebuilt wheel available for Python {self._python_version} on "
-                      f"{self._platform}-{self._architecture}")
             message = (
-                f"  <fg=blue;options=bold>-</> {self.get_operation_message(operation)}:" # here
-                f" <info>Building a wheel file for {package.pretty_name} ({reason})</info>"
+                f"  <fg=blue;options=bold>-</> {self.get_operation_message(operation)}:"
+                f"{format_build_wheel_log(package, self._env)}"
             )
             self._write(operation, message)
 
