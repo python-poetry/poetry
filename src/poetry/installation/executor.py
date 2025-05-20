@@ -109,7 +109,7 @@ class Executor:
             NormalizedName, Mapping[str, str | Sequence[str]]
         ] = config.get("installer.build-config-settings")
 
-        self._python_version = getattr(self._env.python, "version", "<unknown-version>")
+        self._python_version = self._env.marker_env.get("version_info", "<unknown-version>")
         self._platform = self._env.marker_env.get("sys_platform", "<unknown-platform>")
         self._architecture = self._env.marker_env.get("platform_machine", "<unknown-arch>")
 
