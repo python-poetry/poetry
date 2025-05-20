@@ -939,10 +939,6 @@ pytest = "^3.6.0"
 """
 
     output = tester.io.fetch_output()
-    # 1. Print the raw output to the console.
-    print("--- Raw Output ---")
-    print(output)
-    print("--- End Raw Output ---")
     assert expected in output
 
 def test_add_package_with_extras_and_whitespace(tester: CommandTester) -> None:
