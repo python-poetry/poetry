@@ -299,7 +299,7 @@ class PackageNode(DFSNode):
         self.depth = -1
 
         if not previous:
-            self.groups: frozenset[str] = frozenset()
+            self.groups: frozenset[NormalizedName] = frozenset()
             self.optional = True
         elif dep:
             self.groups = dep.groups
@@ -361,7 +361,7 @@ def aggregate_package_nodes(
 ) -> tuple[Package, TransitivePackageInfo]:
     package = nodes[0].package
     depth = max(node.depth for node in nodes)
-    groups: set[str] = set()
+    groups: set[NormalizedName] = set()
     for node in nodes:
         groups.update(node.groups)
 
@@ -395,7 +395,7 @@ def calculate_markers(
         for depth in range(max_depth + 1):
             for package in packages_by_depth[depth]:
                 transitive_info = packages[package]
-                transitive_marker: dict[str, BaseMarker] = {
+                transitive_marker: dict[NormalizedName, BaseMarker] = {
                     group: EmptyMarker() for group in transitive_info.groups
                 }
                 for parent, m in markers[package].items():

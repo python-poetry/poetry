@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import ClassVar
 
+from packaging.utils import NormalizedName
+from packaging.utils import canonicalize_name
 from poetry.core.packages.dependency_group import MAIN_GROUP
 
 from poetry.console.commands.install import InstallCommand
@@ -33,8 +35,8 @@ the <c1>self remove</c1> command.
 """
 
     @property
-    def activated_groups(self) -> set[str]:
-        return {MAIN_GROUP, self.default_group}
+    def activated_groups(self) -> set[NormalizedName]:
+        return {MAIN_GROUP, canonicalize_name(self.default_group)}
 
     @property
     def _alternative_sync_command(self) -> str:

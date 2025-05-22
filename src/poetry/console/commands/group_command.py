@@ -4,6 +4,8 @@ from collections import defaultdict
 from typing import TYPE_CHECKING
 
 from cleo.helpers import option
+from packaging.utils import NormalizedName
+from packaging.utils import canonicalize_name
 
 from poetry.console.commands.command import Command
 from poetry.console.exceptions import GroupNotFoundError
@@ -70,7 +72,7 @@ class GroupCommand(Command):
         return self.non_optional_groups
 
     @property
-    def activated_groups(self) -> set[str]:
+    def activated_groups(self) -> set[NormalizedName]:
         groups = {}
 
         for key in {"with", "without", "only"}:
@@ -95,9 +97,17 @@ class GroupCommand(Command):
                 "</warning>"
             )
 
-        return groups["only"] or self.default_groups.union(groups["with"]).difference(
-            groups["without"]
-        )
+        # Normalize after validating so that original names are printed
+        # in case of an error.
+        norm_groups = {
+            key: {canonicalize_name(group) for group in key_groups}
+            for key, key_groups in groups.items()
+        }
+        norm_default_groups = {canonicalize_name(name) for name in self.default_groups}
+
+        return norm_groups["only"] or norm_default_groups.union(
+            norm_groups["with"]
+        ).difference(norm_groups["without"])
 
     def project_with_activated_groups_only(self) -> ProjectPackage:
         return self.poetry.package.with_dependency_groups(

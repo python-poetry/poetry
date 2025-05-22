@@ -54,7 +54,7 @@ class Installer:
         self._requires_synchronization = False
         self._update = False
         self._verbose = False
-        self._groups: Iterable[str] | None = None
+        self._groups: Iterable[NormalizedName] | None = None
         self._skip_directory = False
         self._lock = False
 
@@ -127,7 +127,7 @@ class Installer:
     def is_verbose(self) -> bool:
         return self._verbose
 
-    def only_groups(self, groups: Iterable[str]) -> Installer:
+    def only_groups(self, groups: Iterable[NormalizedName]) -> Installer:
         self._groups = groups
 
         return self
