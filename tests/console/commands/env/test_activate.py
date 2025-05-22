@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 import pytest
 
 from poetry.utils._compat import WINDOWS
-from poetry.utils.env import MockEnv
 
 
 if TYPE_CHECKING:
