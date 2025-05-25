@@ -86,7 +86,7 @@ class Layout:
 
         if not author:
             self._authors = ["Your Name <you@example.com>"]
-        elif isinstance(author, str): # check if only 1 author was added
+        elif isinstance(author, str):  # check if only 1 author was added
             self._authors = [author]
         else:
             self._authors = author

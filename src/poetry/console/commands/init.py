@@ -40,7 +40,9 @@ class InitCommand(Command):
     options: ClassVar[list[Option]] = [
         option("name", None, "Name of the package.", flag=False),
         option("description", None, "Description of the package.", flag=False),
-        option("author", None, "Author name of the package.", flag=False, multiple=True),
+        option(
+            "author", None, "Author name of the package.", flag=False, multiple=True
+        ),
         option("python", None, "Compatible Python versions.", flag=False),
         option(
             "dependency",
@@ -156,12 +158,12 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             if author_email:
                 author += f" <{author_email}>"
             authors = [author]
-        print(f"AUTHORS VARIABLE:     {authors}")
 
         if is_interactive:
             author_str = ", ".join(authors)
             question = self.create_question(
-                f"Author [<comment>{author_str}</comment>, n to skip]: ", default=author_str
+                f"Author [<comment>{author_str}</comment>, n to skip]: ",
+                default=author_str,
             )
             question.set_validator(lambda v: self._validate_author(v, authors))
             author = self.ask(question)
@@ -169,7 +171,6 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                 author = ""
             if author is None:
                 authors = author
-
 
         authors = [author] if author else authors
         authors = authors if authors else []
