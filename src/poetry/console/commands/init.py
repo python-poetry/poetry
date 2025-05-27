@@ -172,7 +172,6 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             else:
                 authors = author
 
-        authors = [author] if author else authors
         authors = authors if authors else []
 
         license_name = self.option("license")
