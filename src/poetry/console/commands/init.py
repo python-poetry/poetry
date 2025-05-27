@@ -169,7 +169,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             author = self.ask(question)
             if author == author_str:
                 author = ""
-            if author is None:
+            else:
                 authors = author
 
         authors = [author] if author else authors
