@@ -259,8 +259,15 @@ def test_extras_are_parsed_and_populate_installer(
     assert tester.command.installer._extras == ["first", "second", "third"]
 
 
+@pytest.mark.parametrize(
+    ("options", "call_count"),
+    [
+        ("--no-plugins", 0),
+        ("", 1),
+    ],
+)
 def test_install_ensures_project_plugins(
-    tester: CommandTester, mocker: MockerFixture
+    tester: CommandTester, mocker: MockerFixture, options: str, call_count: int
 ) -> None:
     assert isinstance(tester.command, InstallerCommand)
     mocker.patch.object(tester.command.installer, "run", return_value=1)
@@ -268,9 +275,9 @@ def test_install_ensures_project_plugins(
         "poetry.plugins.plugin_manager.PluginManager.ensure_project_plugins"
     )
 
-    tester.execute("")
+    tester.execute(options)
 
-    ensure_project_plugins.assert_called_once()
+    assert ensure_project_plugins.call_count == call_count
 
 
 def test_extras_conflicts_all_extras(

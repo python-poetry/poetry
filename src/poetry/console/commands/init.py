@@ -151,7 +151,6 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             description = self.ask(self.create_question("Description []: ", default=""))
 
         authors = self.option("author")
-        author = ""
         if not authors and vcs_config.get("user.name"):
             author = vcs_config["user.name"]
             author_email = vcs_config.get("user.email")
@@ -167,7 +166,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             )
             question.set_validator(lambda v: self._validate_author(v, authors))
             author = self.ask(question)
-            if author == author_str:
+            if author == author_str:  # user entered nothing, dont change authors
                 author = ""
             else:
                 authors = author

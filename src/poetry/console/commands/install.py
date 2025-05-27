@@ -111,7 +111,8 @@ you can set the "package-mode" to false in your pyproject.toml file.
 
         from poetry.masonry.builders.editable import EditableBuilder
 
-        PluginManager.ensure_project_plugins(self.poetry, self.io)
+        if not self.option("no-plugins"):
+            PluginManager.ensure_project_plugins(self.poetry, self.io)
 
         if self.option("extras") and self.option("all-extras"):
             self.line_error(
