@@ -162,13 +162,20 @@ class Locker:
             groups = set(info["groups"])
             locked_marker = info.get("markers", "*")
             if isinstance(locked_marker, str):
-                markers = {group: parse_marker(locked_marker) for group in groups}
-            else:
                 markers = {
-                    group: parse_marker(locked_marker.get(group, "*"))
+                    canonicalize_name(group): parse_marker(locked_marker)
                     for group in groups
                 }
-            locked_packages[package] = TransitivePackageInfo(0, groups, markers)
+            else:
+                markers = {
+                    canonicalize_name(group): parse_marker(
+                        locked_marker.get(group, "*")
+                    )
+                    for group in groups
+                }
+            locked_packages[package] = TransitivePackageInfo(
+                0, {canonicalize_name(g) for g in groups}, markers
+            )
 
         return locked_packages
 
@@ -553,23 +560,23 @@ class Locker:
                     data["markers"] = str(marker)
             else:
                 data["markers"] = inline_table()
-                for k, v in sorted(
+                for group, marker in sorted(
                     transitive_info.markers.items(),
                     key=lambda x: (x[0] != "main", x[0]),
                 ):
-                    if not v.is_any():
-                        data["markers"][k] = str(v)
+                    if not marker.is_any():
+                        data["markers"][group] = str(marker)
         data["files"] = sorted(package.files, key=lambda x: x["file"])
 
         if dependencies:
             data["dependencies"] = table()
-            for k, constraints in dependencies.items():
+            for dep_name, constraints in dependencies.items():
                 if len(constraints) == 1:
-                    data["dependencies"][k] = constraints[0]
+                    data["dependencies"][dep_name] = constraints[0]
                 else:
-                    data["dependencies"][k] = array().multiline(True)
+                    data["dependencies"][dep_name] = array().multiline(True)
                     for constraint in constraints:
-                        data["dependencies"][k].append(constraint)
+                        data["dependencies"][dep_name].append(constraint)
 
         if package.extras:
             extras = {}
