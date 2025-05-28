@@ -7,6 +7,7 @@ import pytest
 
 from packaging.utils import canonicalize_name
 from poetry.core.packages.dependency import Dependency
+from poetry.core.packages.dependency_group import MAIN_GROUP
 from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.version.markers import AnyMarker
@@ -19,6 +20,9 @@ from poetry.puzzle.transaction import Transaction
 
 if TYPE_CHECKING:
     from poetry.installation.operations.operation import Operation
+
+
+DEV_GROUP = canonicalize_name("dev")
 
 
 def get_transitive_info(depth: int) -> TransitivePackageInfo:
@@ -271,11 +275,15 @@ def test_calculate_operations_with_groups(
         [Package("a", "1"), Package("b", "1"), Package("c", "1"), Package("d", "1")],
         {
             Package("a", "1"): TransitivePackageInfo(
-                0, {"main"}, {"main": AnyMarker()}
+                0, {MAIN_GROUP}, {MAIN_GROUP: AnyMarker()}
             ),
-            Package("b", "1"): TransitivePackageInfo(0, {"dev"}, {"dev": AnyMarker()}),
+            Package("b", "1"): TransitivePackageInfo(
+                0, {DEV_GROUP}, {DEV_GROUP: AnyMarker()}
+            ),
             Package("c", "1"): TransitivePackageInfo(
-                0, {"main", "dev"}, {"main": AnyMarker(), "dev": AnyMarker()}
+                0,
+                {MAIN_GROUP, DEV_GROUP},
+                {MAIN_GROUP: AnyMarker(), DEV_GROUP: AnyMarker()},
             ),
         },
         (
@@ -285,7 +293,7 @@ def test_calculate_operations_with_groups(
         ),
         None,
         {"python_version": "3.8"},
-        groups,
+        {canonicalize_name(g) for g in groups},
     )
 
     expected_ops = [
@@ -322,16 +330,16 @@ def test_calculate_operations_with_markers(
         [Package("a", "1"), Package("b", "1")],
         {
             Package("a", "1"): TransitivePackageInfo(
-                0, {"main"}, {"main": parse_marker("python_version < '3.9'")}
+                0, {MAIN_GROUP}, {MAIN_GROUP: parse_marker("python_version < '3.9'")}
             ),
             Package("b", "1"): TransitivePackageInfo(
-                0, {"main"}, {"main": parse_marker("python_version >= '3.9'")}
+                0, {MAIN_GROUP}, {MAIN_GROUP: parse_marker("python_version >= '3.9'")}
             ),
         },
         [Package("a", "1"), Package("b", "1")] if installed else [],
         None,
         {"python_version": python_version},
-        {"main"},
+        {MAIN_GROUP},
     )
 
     expected_ops = [
@@ -374,17 +382,17 @@ def test_calculate_operations_with_groups_and_markers(
         {
             Package("a", "1"): TransitivePackageInfo(
                 0,
-                {"main", "dev"},
+                {MAIN_GROUP, DEV_GROUP},
                 {
-                    "main": parse_marker("python_version < '3.9'"),
-                    "dev": parse_marker("sys_platform == 'linux'"),
+                    MAIN_GROUP: parse_marker("python_version < '3.9'"),
+                    DEV_GROUP: parse_marker("sys_platform == 'linux'"),
                 },
             ),
         },
         [],
         None,
         {"python_version": python_version, "sys_platform": sys_platform},
-        groups,
+        {canonicalize_name(g) for g in groups},
     )
 
     expected_ops = (
@@ -420,14 +428,14 @@ def test_calculate_operations_extras(
         {
             opt_a: TransitivePackageInfo(
                 0,
-                {"main"} if marker_env else set(),
-                {"main": parse_marker("extra == 'foo'")} if marker_env else {},
+                {MAIN_GROUP} if marker_env else set(),
+                {MAIN_GROUP: parse_marker("extra == 'foo'")} if marker_env else {},
             )
         },
         [Package("a", "1")] if installed else [],
         package,
         {"python_version": "3.8"} if marker_env else None,
-        {"main"} if marker_env else None,
+        {MAIN_GROUP} if marker_env else None,
     )
 
     if extras:
@@ -473,16 +481,20 @@ def test_calculate_operations_extras_no_redundant_uninstall(extra: str) -> None:
         [Package("a", "1")],
         {
             opt_a1: TransitivePackageInfo(
-                0, {"main"}, {"main": parse_marker("extra == 'foo' and extra != 'bar'")}
+                0,
+                {MAIN_GROUP},
+                {MAIN_GROUP: parse_marker("extra == 'foo' and extra != 'bar'")},
             ),
             opt_a2: TransitivePackageInfo(
-                0, {"main"}, {"main": parse_marker("extra == 'bar' and extra != 'foo'")}
+                0,
+                {MAIN_GROUP},
+                {MAIN_GROUP: parse_marker("extra == 'bar' and extra != 'foo'")},
             ),
         },
         [Package("a", "1")],
         package,
         {"python_version": "3.9"},
-        {"main"},
+        {MAIN_GROUP},
     )
 
     if not extra:
