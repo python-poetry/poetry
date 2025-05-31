@@ -1,7 +1,7 @@
 [project]
 name = "invalid"
 version = "1.0.0"
-license = { text = "INVALID" }
+license = "INVALID"
 classifiers = [
     "Environment :: Console",
     "Intended Audience :: Clowns",

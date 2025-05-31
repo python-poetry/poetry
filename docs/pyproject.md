@@ -71,7 +71,8 @@ description = "A short description of the package."
 
 ### license
 
-The license of the package.
+An [SPDX expression](https://packaging.python.org/en/latest/glossary/#term-License-Expression)
+representing the license of the package.
 
 The recommended notation for the most common licenses is (alphabetical):
 
@@ -93,19 +94,42 @@ Optional, but it is highly recommended to supply this.
 More identifiers are listed at the [SPDX Open Source License Registry](https://spdx.org/licenses/).
 
 ```toml
-license = { text = "MIT" }
+license = "MIT"
 ```
-{{% note %}}
-If your project is proprietary and does not use a specific license, you can set this value as `Proprietary`.
-{{% /note %}}
 
-You can also specify a license file. However, when doing this, the complete license text
-will be added to the metadata and the License classifier cannot be determined
-automatically so that you have to add it manually.
+{{% warning %}}
+Specifying license as a table, e.g. `{ text = "MIT" }` is deprecated.
+If you used to specify a license file, e.g. `{ file = "LICENSE" }`,
+use `license-files` instead.
+{{% /warning %}}
+
+### license-files
+
+A list of glob patterns that match the license files of the package
+relative to the root of the project source tree.
 
 ```toml
-license = { file = "LICENSE" }
+[project]
+# ...
+license-files = [
+    "*-LICENSE",
+    "CONTRIBUTORS",
+    "MY-SPECIAL-LICENSE-DIR/**/*"
+]
 ```
+
+By default, Poetry will include the following files:
+- `LICENSE*`
+- `LICENCE*`
+- `COPYING*`
+- `AUTHORS*`
+- `NOTICE*`
+- `LICENSES/**/*`
+
+{{% note %}}
+The default applies only if the `license-files` field is not specified.
+Specifying an empty list results in no license files being included.
+{{% /note %}}
 
 ### readme
 
@@ -198,7 +222,7 @@ classifiers = [
 ```
 
 {{% warning %}}
-Note that suitable classifiers based on your `python` requirement and `license`
+Note that suitable classifiers based on your `python` requirement
 are **not** automatically added for you if you define classifiers statically
 in the `project` section.
 
@@ -419,9 +443,6 @@ More identifiers are listed at the [SPDX Open Source License Registry](https://s
 ```toml
 license = "MIT"
 ```
-{{% note %}}
-If your project is proprietary and does not use a specific licence, you can set this value as `Proprietary`.
-{{% /note %}}
 
 ### authors
 
@@ -545,11 +566,8 @@ classifiers = [
 Note that Python classifiers are automatically added for you
 and are determined by your `python` requirement.
 
-The `license` property will also set the License classifier automatically.
-
 If you do not want Poetry to automatically add suitable classifiers
-based on the `python` requirement and `license` property,
-use `project.classifiers` instead of this setting.
+based on the `python` requirement, use `project.classifiers` instead of this setting.
 {{% /note %}}
 
 ### packages

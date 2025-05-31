@@ -16,7 +16,7 @@ dependencies = [
     "installer (>=0.7.0,<0.8.0)",
     "keyring (>=25.1.0,<26.0.0)",
     # packaging uses calver, so version is unclamped
-    "packaging (>=24.0)",
+    "packaging (>=24.2)",  # PEP 639 support was added in 24.2
     "pkginfo (>=1.12,<2.0)",
     "platformdirs (>=3.0.0,<5)",
     "pyproject-hooks (>=1.0.0,<2.0.0)",
@@ -44,7 +44,7 @@ maintainers = [
     { name = "finswimmer", email = "finswimmer77@gmail.com" },
     { name = "Bartosz Sokorski", email = "b.sokorski@gmail.com" },
 ]
-license = { text = "MIT" }
+license = "MIT"
 readme = "README.md"
 keywords = ["packaging", "dependency", "poetry"]
 # classifieres is dynamic because we want to create Python classifiers automatically

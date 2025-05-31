@@ -216,8 +216,6 @@ class EditableBuilder(Builder):
     def _add_dist_info(self, added_files: list[Path]) -> None:
         from poetry.core.masonry.builders.wheel import WheelBuilder
 
-        added_files = added_files[:]
-
         builder = WheelBuilder(self._poetry)
         dist_info = self._env.site_packages.mkdir(Path(builder.dist_info))
 
@@ -226,23 +224,14 @@ class EditableBuilder(Builder):
             f" <b>{dist_info.parent}</b>"
         )
 
-        with dist_info.joinpath("METADATA").open("w", encoding="utf-8") as f:
-            builder._write_metadata_file(f)
-
-        added_files.append(dist_info.joinpath("METADATA"))
+        builder.prepare_metadata(dist_info.parent)
+        for path in sorted(f for f in dist_info.rglob("*") if f.is_file()):
+            added_files.append(path)
 
         with dist_info.joinpath("INSTALLER").open("w", encoding="utf-8") as f:
             f.write("poetry")
 
         added_files.append(dist_info.joinpath("INSTALLER"))
-
-        if self.convert_entry_points():
-            with dist_info.joinpath("entry_points.txt").open(
-                "w", encoding="utf-8"
-            ) as f:
-                builder._write_entry_points(f)
-
-            added_files.append(dist_info.joinpath("entry_points.txt"))
 
         # write PEP 610 metadata
         direct_url_json = dist_info.joinpath("direct_url.json")

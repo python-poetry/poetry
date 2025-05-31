@@ -5,7 +5,7 @@ description = "Some description."
 authors = [
     { name = "Sébastien Eustace", email = "sebastien@eustace.io" }
 ]
-license = { text = "MIT" }
+license = "MIT"
 readme = "README.rst"
 keywords = ["packaging", "dependency", "poetry"]
 dynamic = [ "classifiers", "dependencies", "requires-python" ]
