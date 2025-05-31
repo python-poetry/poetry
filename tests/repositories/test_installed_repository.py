@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from pytest_mock.plugin import MockerFixture
 
     from poetry.poetry import Poetry
+    from poetry.utils.env.base_env import PythonVersion
     from tests.types import FixtureDirGetter
     from tests.types import ProjectFactory
 
@@ -205,7 +206,7 @@ def test_load_successful_with_invalid_distribution(
 
 
 def test_loads_in_correct_sys_path_order(
-    tmp_path: Path, current_python: tuple[int, int, int], fixture_dir: FixtureDirGetter
+    tmp_path: Path, current_python: PythonVersion, fixture_dir: FixtureDirGetter
 ) -> None:
     path1 = tmp_path / "path1"
     path1.mkdir()
