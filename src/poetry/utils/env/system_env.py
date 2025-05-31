@@ -7,7 +7,6 @@ import sys
 import sysconfig
 
 from pathlib import Path
-from typing import Any
 
 from packaging.tags import Tag
 from packaging.tags import interpreter_name
@@ -15,6 +14,7 @@ from packaging.tags import interpreter_version
 from packaging.tags import sys_tags
 
 from poetry.utils.env.base_env import Env
+from poetry.utils.env.base_env import MarkerEnv
 
 
 class SystemEnv(Env):
@@ -44,7 +44,7 @@ class SystemEnv(Env):
     def get_supported_tags(self) -> list[Tag]:
         return list(sys_tags())
 
-    def get_marker_env(self) -> dict[str, Any]:
+    def get_marker_env(self) -> MarkerEnv:
         if hasattr(sys, "implementation"):
             info = sys.implementation.version
             iver = f"{info.major}.{info.minor}.{info.micro}"
@@ -73,6 +73,7 @@ class SystemEnv(Env):
             "version_info": sys.version_info,
             "interpreter_name": interpreter_name(),
             "interpreter_version": interpreter_version(),
+            "sysconfig_platform": sysconfig.get_platform(),
         }
 
     def is_venv(self) -> bool:
