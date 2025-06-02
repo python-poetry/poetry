@@ -28,7 +28,7 @@ class EnvActivateCommand(EnvCommand):
         env = EnvManager(self.poetry).get()
 
         try:
-            shell, _ = shellingham.detect_shell()
+            shell, *_ = shellingham.detect_shell()
         except shellingham.ShellDetectionFailure:
             shell = ""
 
@@ -55,16 +55,20 @@ class EnvActivateCommand(EnvCommand):
             command, filename = "source", "activate"
 
         if (activation_script := env.bin_dir / filename).exists():
-            if WINDOWS:
-                return f"{self._quote(str(activation_script), shell)}"
-            return f"{command} {self._quote(str(activation_script), shell)}"
+            if shell in ["powershell", "pwsh"]:
+                return f'& "{activation_script}"'
+            elif shell == "cmd":
+                return f'"{activation_script}"'
+            else:
+                return f"{command} {self._quote(str(activation_script), shell)}"
+
         return ""
 
     @staticmethod
     def _quote(command: str, shell: str) -> str:
-        if WINDOWS:
-            if shell == "cmd":
-                return f'"{command}"'
-            if shell in ["powershell", "pwsh"]:
-                return f'& "{command}"'
-        return shlex.quote(command)
+        if WINDOWS and shell not in ["powershell", "pwsh", "cmd"]:
+            return shlex.quote(command)
+        elif shell in ["powershell", "pwsh", "cmd"]:
+            return command
+        else:
+            return shlex.quote(command)
