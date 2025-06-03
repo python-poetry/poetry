@@ -28,7 +28,7 @@ class EnvActivateCommand(EnvCommand):
         env = EnvManager(self.poetry).get()
 
         try:
-            shell, _ = shellingham.detect_shell()
+            shell, *_ = shellingham.detect_shell()
         except shellingham.ShellDetectionFailure:
             shell = ""
 
@@ -41,30 +41,39 @@ class EnvActivateCommand(EnvCommand):
         )
 
     def _get_activate_command(self, env: Env, shell: str) -> str:
-        if shell == "fish":
-            command, filename = "source", "activate.fish"
-        elif shell == "nu":
-            command, filename = "overlay use", "activate.nu"
-        elif shell in ["csh", "tcsh"]:
-            command, filename = "source", "activate.csh"
-        elif shell in ["powershell", "pwsh"]:
-            command, filename = ".", "activate.ps1"
-        elif shell == "cmd":
-            command, filename = ".", "activate.bat"
-        else:
-            command, filename = "source", "activate"
+        shell_configs = {
+            "fish": ("source", "activate.fish"),
+            "nu": ("overlay use", "activate.nu"),
+            "csh": ("source", "activate.csh"),
+            "tcsh": ("source", "activate.csh"),
+            "powershell": (".", "activate.ps1"),
+            "pwsh": (".", "activate.ps1"),
+            "cmd": (".", "activate.bat"),
+        }
 
-        if (activation_script := env.bin_dir / filename).exists():
-            if WINDOWS:
-                return f"{self._quote(str(activation_script), shell)}"
+        command, filename = shell_configs.get(shell, ("source", "activate"))
+
+        activation_script = env.bin_dir / filename
+
+        if not activation_script.exists():
+            if shell == "cmd" and not WINDOWS:
+                fallback_script = env.bin_dir / "activate"
+                if fallback_script.exists():
+                    return f"source {self._quote(str(fallback_script), 'bash')}"
+            return ""
+
+        if shell in ["powershell", "pwsh"]:
+            return f'& "{activation_script}"'
+        elif shell == "cmd":
+            return f'"{activation_script}"'
+        else:
             return f"{command} {self._quote(str(activation_script), shell)}"
-        return ""
 
     @staticmethod
     def _quote(command: str, shell: str) -> str:
-        if WINDOWS:
-            if shell == "cmd":
-                return f'"{command}"'
-            if shell in ["powershell", "pwsh"]:
-                return f'& "{command}"'
-        return shlex.quote(command)
+        if WINDOWS and shell not in ["powershell", "pwsh", "cmd"]:
+            return shlex.quote(command)
+        elif shell in ["powershell", "pwsh", "cmd"]:
+            return command
+        else:
+            return shlex.quote(command)
