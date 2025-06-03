@@ -1,6 +1,0 @@
-#!C:\Users\vaswa\Desktop\oss\poetry\venv\Scripts\python.exe
-import sys
-from poetry.console.application import main
-
-if __name__ == '__main__':
-    sys.exit(main())
