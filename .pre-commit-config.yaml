@@ -20,9 +20,7 @@ repos:
         args: [--autofix, --no-ensure-ascii, --no-sort-keys]
       - id: check-ast
       - id: debug-statements
-        exclude: ^venv/
       - id: check-docstring-first
-        exclude: ^venv/
 
   - repo: https://github.com/pre-commit/pre-commit
     rev: v4.2.0
