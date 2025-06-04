@@ -1161,12 +1161,16 @@ name = "poetry-core"
 version = "2.1.3"
 description = "Poetry PEP 517 Build Backend"
 optional = false
-python-versions = "<4.0,>=3.9"
+python-versions = ">=3.9, <4.0"
 groups = ["main"]
-files = [
-    {file = "poetry_core-2.1.3-py3-none-any.whl", hash = "sha256:2c704f05016698a54ca1d327f46ce2426d72eaca6ff614132c8477c292266771"},
-    {file = "poetry_core-2.1.3.tar.gz", hash = "sha256:0522a015477ed622c89aad56a477a57813cace0c8e7ff2a2906b7ef4a2e296a4"},
-]
+files = []
+develop = false
+
+[package.source]
+type = "git"
+url = "https://github.com/python-poetry/poetry-core.git"
+reference = "HEAD"
+resolved_reference = "12f0e00b34f97461709d8d65f9c5ec12d6f71da8"
 
 [[package]]
 name = "pre-commit"
@@ -1990,4 +1994,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<4.0"
-content-hash = "f2793aa20e4a10c4d908f759fb731f32a563497fe0799ba44ef431ff8679dce8"
+content-hash = "0e8181aa29e95d0c347dd3536f5cff519d5b4f0431f4f9ab421f52015e117c75"

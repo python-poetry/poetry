@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from packaging.utils import canonicalize_name
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.project_package import ProjectPackage
 
@@ -16,12 +17,14 @@ from poetry.utils.helpers import directory
 
 
 if TYPE_CHECKING:
+    from packaging.utils import NormalizedName
+
     from poetry.poetry import Poetry
     from poetry.utils.env import Env
 
 
 class SelfCommand(InstallerCommand):
-    ADDITIONAL_PACKAGE_GROUP = "additional"
+    ADDITIONAL_PACKAGE_GROUP = canonicalize_name("additional")
 
     @staticmethod
     def get_default_system_pyproject_file() -> Path:
@@ -54,8 +57,8 @@ class SelfCommand(InstallerCommand):
         return self.ADDITIONAL_PACKAGE_GROUP
 
     @property
-    def activated_groups(self) -> set[str]:
-        return {self.default_group}
+    def activated_groups(self) -> set[NormalizedName]:
+        return {canonicalize_name(self.default_group)}
 
     def generate_system_pyproject(self) -> None:
         preserved = {}

@@ -11,6 +11,7 @@ from poetry.plugins.plugin_manager import PluginManager
 
 if TYPE_CHECKING:
     from cleo.io.inputs.option import Option
+    from packaging.utils import NormalizedName
 
 
 class InstallCommand(InstallerCommand):
@@ -83,7 +84,7 @@ you can set the "package-mode" to false in your pyproject.toml file.
     ]
 
     @property
-    def activated_groups(self) -> set[str]:
+    def activated_groups(self) -> set[NormalizedName]:
         if self.option("only-root"):
             return set()
         else:
@@ -111,7 +112,8 @@ you can set the "package-mode" to false in your pyproject.toml file.
 
         from poetry.masonry.builders.editable import EditableBuilder
 
-        PluginManager.ensure_project_plugins(self.poetry, self.io)
+        if not self.option("no-plugins"):
+            PluginManager.ensure_project_plugins(self.poetry, self.io)
 
         if self.option("extras") and self.option("all-extras"):
             self.line_error(

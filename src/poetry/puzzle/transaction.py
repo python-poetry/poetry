@@ -23,7 +23,7 @@ class Transaction:
         installed_packages: list[Package] | None = None,
         root_package: Package | None = None,
         marker_env: dict[str, Any] | None = None,
-        groups: set[str] | None = None,
+        groups: set[NormalizedName] | None = None,
     ) -> None:
         self._current_packages = current_packages
         self._result_packages = result_packages
