@@ -11,7 +11,6 @@ def test_format_build_wheel_log() -> None:
     package = Package(name="demo", version="1.2.3")
     result = format_build_wheel_log(package, env)
     expected = (
-        " <info>Building a wheel file for demo "
-        "(no prebuilt wheel available for Python 3.13.1 on win32-AMD64)</info>"
+        " <info>Building a wheel file for demo for Python 3.13.1 on win32-AMD64</info>"
     )
     assert result == expected

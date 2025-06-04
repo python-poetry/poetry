@@ -21,5 +21,8 @@ def format_build_wheel_log(package: Package, env: Env) -> str:
     platform = marker_env.get("sys_platform", "<unknown-platform>")
     architecture = marker_env.get("platform_machine", "<unknown-arch>")
 
-    reason = f"no prebuilt wheel available for Python {python_version} on {platform}-{architecture}"
-    return f" <info>Building a wheel file for {package.pretty_name} ({reason})</info>"
+    message = (
+        f" <info>Building a wheel file for {package.pretty_name} "
+        f"for Python {python_version} on {platform}-{architecture}</info>"
+    )
+    return message
