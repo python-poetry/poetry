@@ -73,7 +73,7 @@ class EnvActivateCommand(EnvCommand):
     def _quote(command: str, shell: str) -> str:
         if WINDOWS and shell not in ["powershell", "pwsh", "cmd"]:
             return shlex.quote(command)
-        elif shell in ["powershell", "pwsh", "cmd"]:
+        elif shell in {"powershell", "pwsh", "cmd"}:
             return command
         else:
             return shlex.quote(command)

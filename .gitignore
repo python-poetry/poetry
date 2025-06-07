@@ -17,3 +17,6 @@
 
 .venv
 /poetry.toml
+
+# Ignore Python bytecode and cache directories
+__pycache__/
