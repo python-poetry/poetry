@@ -34,6 +34,7 @@ from poetry.utils.helpers import pluralize
 from poetry.utils.helpers import remove_directory
 from poetry.utils.isolated_build import IsolatedBuildBackendError
 from poetry.utils.isolated_build import IsolatedBuildInstallError
+from poetry.utils.log_utils import format_build_wheel_log
 from poetry.vcs.git import Git
 
 
@@ -633,7 +634,7 @@ class Executor:
 
         message = (
             f"  <fg=blue;options=bold>-</> {operation_message}:"
-            " <info>Preparing...</info>"
+            f"{format_build_wheel_log(package, self._env)}"
         )
         self._write(operation, message)
 
@@ -756,7 +757,7 @@ class Executor:
         if archive.suffix != ".whl":
             message = (
                 f"  <fg=blue;options=bold>-</> {self.get_operation_message(operation)}:"
-                " <info>Preparing...</info>"
+                f"{format_build_wheel_log(package, self._env)}"
             )
             self._write(operation, message)
 
