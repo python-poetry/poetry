@@ -138,7 +138,7 @@ def test_env_activate_unix_shells_get_command_with_path(
     command: str,
     ext: str,
 ) -> None:
-    mocker.patch("shellenv.detect_shell", return_value=(shell, None))
+    mocker.patch("shellingham.detect_shell", return_value=(shell, None))
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=tmp_venv)
 
     tester.execute()
