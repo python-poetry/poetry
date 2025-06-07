@@ -17,3 +17,6 @@
 
 .venv
 /poetry.toml
+
+__pycache__/
+*.pyc
