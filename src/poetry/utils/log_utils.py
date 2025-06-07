@@ -10,7 +10,8 @@ if TYPE_CHECKING:
 
 
 def format_build_wheel_log(package: Package, env: Env) -> str:
-    """Format a log message indicating that a wheel is being built for the given package and environment."""
+    """Format a log message indicating
+    that a wheel is being built for the given package and environment."""
     marker_env = env.marker_env
 
     python_version_info = marker_env.get(
