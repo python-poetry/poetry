@@ -173,6 +173,8 @@ Error: Declared README file does not exist: never/exists.md
 Error: Invalid source "not-exists" referenced in dependencies.
 Error: Invalid source "not-exists2" referenced in dependencies.
 Error: poetry.lock was not found.
+Warning: [project.license] is not a valid SPDX identifier.\
+ This is deprecated and will raise an error in the future.
 Warning: A wildcard Python dependency is ambiguous.\
  Consider specifying a more explicit one.
 Warning: The "pendulum" dependency specifies the "allows-prereleases" property,\
