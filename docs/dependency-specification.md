@@ -281,7 +281,7 @@ Since we haven’t specified any other information,
 Poetry assumes that we intend to use the latest commit on the `main` branch
 to build our project.
 
-You can explicitly specify which branch, commit hash or tagged ref should be usd:
+You can explicitly specify which branch, commit hash or tagged ref should be used:
 
 {{< tabs tabTotal="2" tabID1="git-rev-project" tabID2="git-rev-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
 
