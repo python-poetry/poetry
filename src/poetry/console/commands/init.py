@@ -127,13 +127,15 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             )
             self.line("")
 
-        name = self.option("name") or project_path.name.lower()
+        name = self.option("name")
+        if not name:
+            name = project_path.name.lower()
 
-        if is_interactive:
-            question = self.create_question(
-                f"Package name [<comment>{name}</comment>]: ", default=name
-            )
-            name = self.ask(question)
+            if is_interactive:
+                question = self.create_question(
+                    f"Package name [<comment>{name}</comment>]: ", default=name
+                )
+                name = self.ask(question)
 
         version = "0.1.0"
 
