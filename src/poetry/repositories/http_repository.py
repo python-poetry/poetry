@@ -401,7 +401,7 @@ class HTTPRepository(CachedRepository):
         return None
 
     def _get_response(self, endpoint: str) -> requests.Response | None:
-        url = self._url + endpoint
+        url = self.authenticated_url + endpoint
         try:
             response: requests.Response = self.session.get(
                 url, raise_for_status=False, timeout=REQUESTS_TIMEOUT
