@@ -7,6 +7,7 @@ import textwrap
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
 
 import pytest
 
@@ -1145,7 +1146,9 @@ def test_get_pool(mocker: MockerFixture, source_dir: Path) -> None:
     assert pool.repositories
 
 
-def build_pyproject_data(project_name: str, description: str = "A project") -> dict:
+def build_pyproject_data(
+    project_name: str, description: str = "A project"
+) -> dict[str, Any]:
     return {
         "project": {
             "name": project_name,
@@ -1174,7 +1177,7 @@ def build_pyproject_data(project_name: str, description: str = "A project") -> d
         "newproject123",
     ],
 )
-def test_valid_project_name(valid_project_name):
+def test_valid_project_name(valid_project_name: str) -> None:
     pyproject_data = build_pyproject_data(valid_project_name)
     result = InitCommand._validate(pyproject_data)
     assert result["errors"] == []
@@ -1210,7 +1213,7 @@ def test_valid_project_name(valid_project_name):
         (".", "just dot"),
     ],
 )
-def test_invalid_project_name(invalid_project_name, reason):
+def test_invalid_project_name(invalid_project_name: str, reason: str) -> None:
     pyproject_data = build_pyproject_data(invalid_project_name)
     result = InitCommand._validate(pyproject_data)
 

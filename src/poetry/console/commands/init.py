@@ -542,7 +542,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         return self._pool
 
     @staticmethod
-    def _validate(pyproject_data: dict) -> dict:
+    def _validate(pyproject_data: dict[str, Any]) -> dict[str, Any]:
         """
         Validates the given pyproject data and returns the validation results.
         """
