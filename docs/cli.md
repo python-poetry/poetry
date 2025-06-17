@@ -679,6 +679,24 @@ my-package
     └── __init__.py
 ```
 
+{{% note %}}
+**Using `poetry new` with existing directories**
+
+When using `poetry new .` in an existing empty directory, Poetry will create only a minimal project configuration that includes only `pyproject.toml` file.
+
+```bash
+poetry new .
+```
+
+This creates:
+
+```text
+my-package
+└── pyproject.toml
+```
+
+{{% /note %}}
+
 #### Options
 
 * `--interactive (-i)`: Allow interactive specification of project configuration.
