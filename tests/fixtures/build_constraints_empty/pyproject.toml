@@ -1,0 +1,5 @@
+[project]
+name = "build-constraints"
+version = "0.1.0"
+
+[tool.poetry.build-constraints]

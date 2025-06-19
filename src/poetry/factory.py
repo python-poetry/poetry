@@ -9,6 +9,7 @@ from typing import Any
 from typing import cast
 
 from cleo.io.null_io import NullIO
+from packaging.utils import NormalizedName
 from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import Version
 from poetry.core.constraints.version import parse_constraint
@@ -24,6 +25,7 @@ from poetry.plugins.plugin import Plugin
 from poetry.plugins.plugin_manager import PluginManager
 from poetry.poetry import Poetry
 from poetry.toml.file import TOMLFile
+from poetry.utils.isolated_build import CONSTRAINTS_GROUP_NAME
 
 
 if TYPE_CHECKING:
@@ -31,6 +33,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from cleo.io.io import IO
+    from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
     from tomlkit.toml_document import TOMLDocument
 
@@ -68,6 +71,23 @@ class Factory(BaseFactory):
                     f" but you are using Poetry {version}"
                 )
 
+        build_constraints: dict[NormalizedName, list[Dependency]] = {}
+        for name, constraints in base_poetry.local_config.get(
+            "build-constraints", {}
+        ).items():
+            name = canonicalize_name(name)
+            build_constraints[name] = []
+            for dep_name, constraint in constraints.items():
+                _constraints = (
+                    constraint if isinstance(constraint, list) else [constraint]
+                )
+                for _constraint in _constraints:
+                    build_constraints[name].append(
+                        Factory.create_dependency(
+                            dep_name, _constraint, groups=[CONSTRAINTS_GROUP_NAME]
+                        )
+                    )
+
         poetry_file = base_poetry.pyproject_path
         locker = Locker(poetry_file.parent / "poetry.lock", base_poetry.pyproject.data)
 
@@ -99,7 +119,8 @@ class Factory(BaseFactory):
             base_poetry.package,
             locker,
             config,
-            disable_cache,
+            disable_cache=disable_cache,
+            build_constraints=build_constraints,
         )
 
         poetry.set_pool(
