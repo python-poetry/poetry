@@ -191,6 +191,13 @@ def test_git_refspec() -> None:
             None,
             "v1.0.0",
         ),
+        (
+            GitRefSpec(revision="refs/heads/main"),
+            b"refs/heads/main",
+            "refs/heads/main",
+            None,
+            None,
+        ),
         # SHA resolution tests with realistic values
         (
             GitRefSpec(revision=SHORT_SHA),
