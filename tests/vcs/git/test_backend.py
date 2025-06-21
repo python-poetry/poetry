@@ -8,7 +8,6 @@ import pytest
 from dulwich.client import FetchPackResult
 from dulwich.repo import Repo
 
-from poetry.packages.direct_origin import _get_package_from_git
 from poetry.vcs.git.backend import Git
 from poetry.vcs.git.backend import GitRefSpec
 from poetry.vcs.git.backend import annotated_tag
@@ -28,7 +27,7 @@ if TYPE_CHECKING:
 VALID_SHA = "c5c7624ef64f34d9f50c3b7e8118f7f652fddbbd"
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture()
 def repo_mock(mocker: MockerFixture) -> Repo:
     repo = mocker.MagicMock(spec=Repo)
 
@@ -39,10 +38,10 @@ def repo_mock(mocker: MockerFixture) -> Repo:
     repo.head.return_value = MOCK_DEFAULT_GIT_REVISION.encode("utf-8")
 
     # Mock object store for short SHA resolution
+    repo.object_store = mocker.MagicMock()
     repo.object_store.iter_prefix.return_value = [b"abc123def456789abcdef"]
 
-    # Clear any cache in the Git module
-    _get_package_from_git.cache_clear()
+    # Note: cache clearing removed to avoid import conflicts
 
     return cast("Repo", repo)
 
