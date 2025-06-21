@@ -10,7 +10,7 @@ import requests.adapters
 from poetry.core.packages.package import Package
 
 from poetry.inspection.info import PackageInfo
-from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.repositories.http_repository import HTTPRepository
 from poetry.repositories.link_sources.html import HTMLPage
 from poetry.repositories.link_sources.html import SimpleRepositoryRootPage
@@ -30,6 +30,7 @@ class LegacyRepository(HTTPRepository):
         self,
         name: str,
         url: str,
+        *,
         config: Config | None = None,
         disable_cache: bool = False,
         pool_size: int = requests.adapters.DEFAULT_POOLSIZE,
@@ -37,11 +38,15 @@ class LegacyRepository(HTTPRepository):
         if name == "pypi":
             raise ValueError("The name [pypi] is reserved for repositories")
 
-        super().__init__(name, url.rstrip("/"), config, disable_cache, pool_size)
+        super().__init__(
+            name,
+            url.rstrip("/"),
+            config=config,
+            disable_cache=disable_cache,
+            pool_size=pool_size,
+        )
 
-    def package(
-        self, name: str, version: Version, extras: list[str] | None = None
-    ) -> Package:
+    def package(self, name: str, version: Version) -> Package:
         """
         Retrieve the release information.
 
@@ -58,7 +63,7 @@ class LegacyRepository(HTTPRepository):
 
             return self._packages[index]
         except ValueError:
-            package = super().package(name, version, extras)
+            package = super().package(name, version)
             package._source_type = "legacy"
             package._source_url = self._url
             package._source_reference = self.name
@@ -68,7 +73,7 @@ class LegacyRepository(HTTPRepository):
     def find_links_for_package(self, package: Package) -> list[Link]:
         try:
             page = self.get_page(package.name)
-        except PackageNotFound:
+        except PackageNotFoundError:
             return []
 
         return list(page.links_for_version(package.name, package.version))
@@ -81,7 +86,7 @@ class LegacyRepository(HTTPRepository):
         """
         try:
             page = self.get_page(name)
-        except PackageNotFound:
+        except PackageNotFoundError:
             self._log(f"No packages found for {name}", level="debug")
             return []
 
@@ -127,7 +132,7 @@ class LegacyRepository(HTTPRepository):
 
     def _get_page(self, name: NormalizedName) -> HTMLPage:
         if not (response := self._get_response(f"/{name}/")):
-            raise PackageNotFound(f"Package [{name}] not found.")
+            raise PackageNotFoundError(f"Package [{name}] not found.")
         return HTMLPage(response.url, response.text)
 
     @cached_property
@@ -141,11 +146,11 @@ class LegacyRepository(HTTPRepository):
 
         return SimpleRepositoryRootPage(response.text)
 
-    def search(self, query: str) -> list[Package]:
+    def search(self, query: str | list[str]) -> list[Package]:
         results: list[Package] = []
 
         for candidate in self.root_page.search(query):
-            with suppress(PackageNotFound):
+            with suppress(PackageNotFoundError):
                 page = self.get_page(candidate)
 
                 for package in page.packages:

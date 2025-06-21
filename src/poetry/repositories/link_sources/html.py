@@ -81,12 +81,13 @@ class SimpleRepositoryRootPage:
         parser.feed(content or "")
         self._parsed = parser.anchors
 
-    def search(self, query: str) -> list[str]:
+    def search(self, query: str | list[str]) -> list[str]:
         results: list[str] = []
+        tokens = query if isinstance(query, list) else [query]
 
         for anchor in self._parsed:
             href = anchor.get("href")
-            if href and query in href:
+            if href and any(token in href for token in tokens):
                 results.append(href.rstrip("/"))
 
         return results

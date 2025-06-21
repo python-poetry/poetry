@@ -1,0 +1,6 @@
+[tool.poetry]
+name = "foobar"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+requires-poetry = 2

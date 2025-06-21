@@ -33,6 +33,8 @@
     "home_page": "https://beeware.org/project/projects/libraries/toga/",
     "keywords": "gui,widget,cross-platform,desktop,mobile,web,macOS,cocoa,iOS,android,windows,winforms,linux,gtk",
     "license": "New BSD",
+    "license_expression": null,
+    "license_files": null,
     "maintainer": "BeeWare Team",
     "maintainer_email": "team@beeware.org",
     "name": "toga",

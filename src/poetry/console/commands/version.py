@@ -6,7 +6,7 @@ from typing import ClassVar
 
 from cleo.helpers import argument
 from cleo.helpers import option
-from poetry.core.version.exceptions import InvalidVersion
+from poetry.core.version.exceptions import InvalidVersionError
 from tomlkit.toml_document import TOMLDocument
 
 from poetry.console.commands.command import Command
@@ -69,8 +69,12 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
 
             if not self.option("dry-run"):
                 content: dict[str, Any] = self.poetry.file.read()
-                poetry_content = content["tool"]["poetry"]
-                poetry_content["version"] = version.text
+                project_content = content.get("project", {})
+                if "version" in project_content:
+                    project_content["version"] = version.text
+                poetry_content = content.get("tool", {}).get("poetry", {})
+                if "version" in poetry_content:
+                    poetry_content["version"] = version.text
 
                 assert isinstance(content, TOMLDocument)
                 self.poetry.file.write(content)
@@ -92,7 +96,7 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
 
         try:
             parsed = Version.parse(version)
-        except InvalidVersion:
+        except InvalidVersionError:
             raise ValueError("The project's version doesn't seem to follow semver")
 
         if rule in {"major", "premajor"}:

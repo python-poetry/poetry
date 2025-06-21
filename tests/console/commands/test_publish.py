@@ -10,7 +10,6 @@ import pytest
 import requests
 
 from poetry.factory import Factory
-from poetry.publishing.uploader import UploadError
 
 
 if TYPE_CHECKING:
@@ -82,9 +81,7 @@ def test_publish_returns_non_zero_code_for_connection_errors(
 
     assert exit_code == 1
 
-    expected = str(UploadError(error=requests.ConnectionError()))
-
-    assert expected in app_tester.io.fetch_error()
+    assert "Error connecting to repository" in app_tester.io.fetch_error()
 
 
 def test_publish_with_cert(

@@ -25,6 +25,14 @@ class Command(BaseCommand):
 
         return self._poetry
 
+    def set_poetry(self, poetry: Poetry) -> None:
+        """Explicitly set the current Poetry.
+
+        Useful for Plugins that extends the features of a Poetry CLI Command.
+        """
+
+        self._poetry = poetry
+
     def get_application(self) -> Application:
         from poetry.console.application import Application
 

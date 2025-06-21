@@ -24,8 +24,8 @@ def test_about(tester: CommandTester) -> None:
     expected = f"""\
 Poetry - Package Management for Python
 
-Version: {metadata.version('poetry')}
-Poetry-Core Version: {metadata.version('poetry-core')}
+Version: {metadata.version("poetry")}
+Poetry-Core Version: {metadata.version("poetry-core")}
 
 Poetry is a dependency manager tracking local dependencies of your projects and\
  libraries.

@@ -71,6 +71,25 @@ def package_distribution_lookup(
     return lookup
 
 
+@pytest.fixture
+def with_disallowed_pypi_search_html(
+    http: type[httpretty], pypi_repository: PyPiRepository
+) -> None:
+    def search_callback(
+        request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
+    ) -> HTTPrettyResponse:
+        search_html = FIXTURE_PATH_REPOSITORIES_PYPI.joinpath(
+            "search", "search-disallowed.html"
+        )
+        return 200, headers, search_html.read_bytes()
+
+    http.register_uri(
+        http.GET,
+        re.compile(r"https://pypi.org/search(\?(.*))?$"),
+        body=search_callback,
+    )
+
+
 @pytest.fixture(autouse=True)
 def pypi_repository(
     http: type[httpretty],

@@ -27,6 +27,8 @@
     "home_page": "http://ipython.org",
     "keywords": "Interactive,Interpreter,Shell,Parallel,Distributed,Web-based computing,Qt console,Embedding",
     "license": "BSD",
+    "license_expression": null,
+    "license_files": null,
     "maintainer": "",
     "maintainer_email": "",
     "name": "ipython",

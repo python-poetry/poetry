@@ -6,24 +6,23 @@ import re
 from functools import cached_property
 from typing import TYPE_CHECKING
 from typing import ClassVar
-from typing import DefaultDict
-from typing import List
 
 from poetry.core.constraints.version import Version
 from poetry.core.packages.package import Package
-from poetry.core.version.exceptions import InvalidVersion
+from poetry.core.version.exceptions import InvalidVersionError
 
 from poetry.utils.patterns import sdist_file_re
 from poetry.utils.patterns import wheel_file_re
 
 
 if TYPE_CHECKING:
+    from collections import defaultdict
     from collections.abc import Iterator
 
     from packaging.utils import NormalizedName
     from poetry.core.packages.utils.link import Link
 
-    LinkCache = DefaultDict[NormalizedName, DefaultDict[Version, List[Link]]]
+    LinkCache = defaultdict[NormalizedName, defaultdict[Version, list[Link]]]
 
 
 logger = logging.getLogger(__name__)
@@ -86,7 +85,7 @@ class LinkSource:
         if version_string:
             try:
                 version = Version.parse(version_string)
-            except InvalidVersion:
+            except InvalidVersionError:
                 logger.debug(
                     "Skipping url (%s) due to invalid version (%s)", link.url, version
                 )

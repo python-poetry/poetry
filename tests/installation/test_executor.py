@@ -37,6 +37,8 @@ from poetry.vcs.git.backend import Git
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from collections.abc import Mapping
+    from collections.abc import Sequence
 
     from pytest_mock import MockerFixture
 
@@ -63,7 +65,12 @@ class Chef(BaseChef):
 
         self._sdist_wheels = wheels
 
-    def _prepare_sdist(self, archive: Path, destination: Path | None = None) -> Path:
+    def _prepare_sdist(
+        self,
+        archive: Path,
+        destination: Path | None = None,
+        config_settings: Mapping[str, str | Sequence[str]] | None = None,
+    ) -> Path:
         if self._sdist_wheels is not None:
             wheel = self._sdist_wheels.pop(0)
             self._sdist_wheels.append(wheel)
@@ -73,7 +80,12 @@ class Chef(BaseChef):
         return super()._prepare_sdist(archive)
 
     def _prepare(
-        self, directory: Path, destination: Path, *, editable: bool = False
+        self,
+        directory: Path,
+        destination: Path,
+        *,
+        editable: bool = False,
+        config_settings: Mapping[str, str | Sequence[str]] | None = None,
     ) -> Path:
         if self._directory_wheels is not None:
             wheel = self._directory_wheels.pop(0)
@@ -242,8 +254,105 @@ Package operations: 4 installs, 2 updates, 1 removal
 
     assert prepare_spy.call_count == 2
     assert prepare_spy.call_args_list == [
-        mocker.call(chef, mocker.ANY, destination=mocker.ANY, editable=False),
-        mocker.call(chef, mocker.ANY, destination=mocker.ANY, editable=True),
+        mocker.call(
+            chef,
+            mocker.ANY,
+            destination=mocker.ANY,
+            editable=False,
+            config_settings=None,
+        ),
+        mocker.call(
+            chef,
+            mocker.ANY,
+            destination=mocker.ANY,
+            editable=True,
+            config_settings=None,
+        ),
+    ]
+
+
+def test_execute_build_config_settings_passed(
+    mocker: MockerFixture,
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    tmp_path: Path,
+    env: MockEnv,
+    copy_wheel: Callable[[], Path],
+    fixture_dir: FixtureDirGetter,
+) -> None:
+    wheel_install = mocker.patch.object(WheelInstaller, "install")
+
+    config_settings_demo = {"CC": "gcc", "--build-option": ["--one", "--two"]}
+
+    config.merge(
+        {
+            "cache-dir": str(tmp_path),
+            "installer": {"build-config-settings": {"demo": config_settings_demo}},
+        }
+    )
+    artifact_cache = ArtifactCache(cache_dir=config.artifacts_cache_directory)
+
+    prepare_spy = mocker.spy(Chef, "_prepare")
+    chef = Chef(artifact_cache, env, Factory.create_pool(config))
+    chef.set_directory_wheel([copy_wheel(), copy_wheel()])
+    chef.set_sdist_wheel(copy_wheel())
+
+    executor = Executor(env, pool, config, io)
+    executor._chef = chef
+
+    directory_package = Package(
+        "simple-project",
+        "1.2.3",
+        source_type="directory",
+        source_url=fixture_dir("simple_project").resolve().as_posix(),
+    )
+
+    git_package = Package(
+        "demo",
+        "0.1.0",
+        source_type="git",
+        source_reference="master",
+        source_url="https://github.com/demo/demo.git",
+        develop=True,
+    )
+
+    return_code = executor.execute(
+        [
+            Install(directory_package),
+            Install(git_package),
+        ]
+    )
+
+    expected = f"""
+Package operations: 2 installs, 0 updates, 0 removals
+
+  - Installing simple-project (1.2.3 {directory_package.source_url})
+  - Installing demo (0.1.0 master)
+"""
+
+    expected_lines = set(expected.splitlines())
+    output_lines = set(io.fetch_output().splitlines())
+    assert output_lines == expected_lines
+    assert wheel_install.call_count == 2
+    assert return_code == 0
+
+    assert prepare_spy.call_count == 2
+    assert prepare_spy.call_args_list == [
+        mocker.call(
+            chef,
+            mocker.ANY,
+            destination=mocker.ANY,
+            editable=False,
+            config_settings=None,
+        ),
+        mocker.call(
+            chef,
+            mocker.ANY,
+            destination=mocker.ANY,
+            editable=True,
+            config_settings=config_settings_demo,
+        ),
     ]
 
 
@@ -939,6 +1048,13 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
         download_spy.assert_not_called()
 
 
+@pytest.mark.parametrize(
+    "source_url,written_source_url",
+    [
+        ("https://github.com/demo/demo.git", "https://github.com/demo/demo.git"),
+        ("git@github.com:demo/demo.git", "ssh://git@github.com/demo/demo.git"),
+    ],
+)
 @pytest.mark.parametrize("is_artifact_cached", [False, True])
 def test_executor_should_write_pep610_url_references_for_git(
     tmp_venv: VirtualEnv,
@@ -949,6 +1065,8 @@ def test_executor_should_write_pep610_url_references_for_git(
     wheel: Path,
     mocker: MockerFixture,
     fixture_dir: FixtureDirGetter,
+    source_url: str,
+    written_source_url: str,
     is_artifact_cached: bool,
 ) -> None:
     if is_artifact_cached:
@@ -960,7 +1078,7 @@ def test_executor_should_write_pep610_url_references_for_git(
     clone_spy = mocker.spy(Git, "clone")
 
     source_resolved_reference = "123456"
-    source_url = "https://github.com/demo/demo.git"
+    source_url = source_url
 
     package = Package(
         "demo",
@@ -970,6 +1088,8 @@ def test_executor_should_write_pep610_url_references_for_git(
         source_resolved_reference=source_resolved_reference,
         source_url=source_url,
     )
+
+    assert package.source_url == written_source_url
 
     chef = Chef(artifact_cache, tmp_venv, Factory.create_pool(config))
     chef.set_directory_wheel(wheel)
@@ -996,7 +1116,9 @@ def test_executor_should_write_pep610_url_references_for_git(
         prepare_spy.assert_not_called()
     else:
         clone_spy.assert_called_once_with(
-            url=source_url, source_root=mocker.ANY, revision=source_resolved_reference
+            url=package.source_url,
+            source_root=mocker.ANY,
+            revision=source_resolved_reference,
         )
         prepare_spy.assert_called_once()
         assert prepare_spy.spy_return.exists(), "cached file should not be deleted"
@@ -1078,7 +1200,92 @@ def test_executor_should_append_subdirectory_for_git(
     executor.execute([Install(package)])
 
     archive_arg = spy.call_args[0][0]
-    assert archive_arg == tmp_venv.path / "src/demo/subdirectories/two"
+    assert archive_arg == tmp_venv.path / "src/subdirectories/two"
+
+
+def test_executor_should_install_multiple_packages_from_same_git_repository(
+    mocker: MockerFixture,
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    config: Config,
+    artifact_cache: ArtifactCache,
+    io: BufferedIO,
+    wheel: Path,
+) -> None:
+    package_a = Package(
+        "package_a",
+        "0.1.2",
+        source_type="git",
+        source_reference="master",
+        source_resolved_reference="123456",
+        source_url="https://github.com/demo/subdirectories.git",
+        source_subdirectory="package_a",
+    )
+    package_b = Package(
+        "package_b",
+        "0.1.2",
+        source_type="git",
+        source_reference="master",
+        source_resolved_reference="123456",
+        source_url="https://github.com/demo/subdirectories.git",
+        source_subdirectory="package_b",
+    )
+
+    chef = Chef(artifact_cache, tmp_venv, Factory.create_pool(config))
+    chef.set_directory_wheel(wheel)
+    spy = mocker.spy(chef, "prepare")
+
+    executor = Executor(tmp_venv, pool, config, io)
+    executor._chef = chef
+    executor.execute([Install(package_a), Install(package_b)])
+
+    archive_arg = spy.call_args_list[0][0][0]
+    assert archive_arg == tmp_venv.path / "src/subdirectories/package_a"
+
+    archive_arg = spy.call_args_list[1][0][0]
+    assert archive_arg == tmp_venv.path / "src/subdirectories/package_b"
+
+
+def test_executor_should_install_multiple_packages_from_forked_git_repository(
+    mocker: MockerFixture,
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    config: Config,
+    artifact_cache: ArtifactCache,
+    io: BufferedIO,
+    wheel: Path,
+) -> None:
+    package_a = Package(
+        "one",
+        "1.0.0",
+        source_type="git",
+        source_reference="master",
+        source_resolved_reference="123456",
+        source_url="https://github.com/demo/subdirectories.git",
+        source_subdirectory="one",
+    )
+    package_b = Package(
+        "two",
+        "2.0.0",
+        source_type="git",
+        source_reference="master",
+        source_resolved_reference="123456",
+        source_url="https://github.com/forked_demo/subdirectories.git",
+        source_subdirectory="two",
+    )
+
+    chef = Chef(artifact_cache, tmp_venv, Factory.create_pool(config))
+    chef.set_directory_wheel(wheel)
+    prepare_spy = mocker.spy(chef, "prepare")
+
+    executor = Executor(tmp_venv, pool, config, io)
+    executor._chef = chef
+    executor.execute([Install(package_a), Install(package_b)])
+
+    # Verify that the repo for package_a is not re-used for package_b.
+    # both repos must be cloned serially into separate directories.
+    # If so, executor.prepare() will be called twice.
+    assert prepare_spy.call_count == 2
 
 
 def test_executor_should_write_pep610_url_references_for_git_with_subdirectories(
@@ -1151,70 +1358,6 @@ def test_executor_should_be_initialized_with_correct_workers(
     assert executor._max_workers == expected_workers
 
 
-def test_executor_fallback_on_poetry_create_error_without_wheel_installer(
-    mocker: MockerFixture,
-    config: Config,
-    pool: RepositoryPool,
-    io: BufferedIO,
-    tmp_path: Path,
-    env: MockEnv,
-    fixture_dir: FixtureDirGetter,
-) -> None:
-    mock_pip_install = mocker.patch("poetry.installation.executor.pip_install")
-    mock_sdist_builder = mocker.patch("poetry.core.masonry.builders.sdist.SdistBuilder")
-    mock_editable_builder = mocker.patch(
-        "poetry.masonry.builders.editable.EditableBuilder"
-    )
-    mock_create_poetry = mocker.patch(
-        "poetry.factory.Factory.create_poetry", side_effect=RuntimeError
-    )
-
-    config.merge(
-        {
-            "cache-dir": str(tmp_path),
-            "installer": {"modern-installation": False},
-        }
-    )
-
-    executor = Executor(env, pool, config, io)
-    warning_lines = io.fetch_output().splitlines()
-    assert warning_lines == [
-        "Warning: Setting `installer.modern-installation` to `false` is deprecated.",
-        "The pip-based installer will be removed in a future release.",
-        "See https://github.com/python-poetry/poetry/issues/8987.",
-    ]
-
-    directory_package = Package(
-        "simple-project",
-        "1.2.3",
-        source_type="directory",
-        source_url=fixture_dir("simple_project").resolve().as_posix(),
-    )
-
-    return_code = executor.execute(
-        [
-            Install(directory_package),
-        ]
-    )
-
-    expected = f"""
-Package operations: 1 install, 0 updates, 0 removals
-
-  - Installing simple-project (1.2.3 {directory_package.source_url})
-"""
-
-    expected_lines = set(expected.splitlines())
-    output_lines = set(io.fetch_output().splitlines())
-    assert output_lines == expected_lines
-    assert return_code == 0
-    assert mock_create_poetry.call_count == 1
-    assert mock_sdist_builder.call_count == 0
-    assert mock_editable_builder.call_count == 0
-    assert mock_pip_install.call_count == 1
-    assert mock_pip_install.call_args[1].get("upgrade") is True
-    assert mock_pip_install.call_args[1].get("editable") is False
-
-
 @pytest.mark.parametrize("failing_method", ["build", "get_requires_for_build"])
 @pytest.mark.parametrize(
     "exception",
@@ -1224,10 +1367,12 @@ Package operations: 1 install, 0 updates, 0 removals
     ],
 )
 @pytest.mark.parametrize("editable", [False, True])
+@pytest.mark.parametrize("source_type", ["directory", "git", "git subdirectory"])
 def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess(
     failing_method: str,
     exception: Exception,
     editable: bool,
+    source_type: str,
     mocker: MockerFixture,
     config: Config,
     pool: RepositoryPool,
@@ -1243,52 +1388,95 @@ def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess(
 
     package_name = "simple-project"
     package_version = "1.2.3"
-    directory_package = Package(
+    source_reference: str | None = None
+    source_sub_directory: str | None = None
+    if source_type == "directory":
+        source_url = fixture_dir("simple_project").resolve().as_posix()
+        source_resolved_reference = None
+        pip_url = path_to_url(source_url)
+        pip_editable_requirement = source_url
+    elif source_type == "git":
+        source_url = "https://github.com/demo/demo.git"
+        source_reference = "v2.0"
+        source_resolved_reference = "12345678"
+        pip_url = f"git+{source_url}@{source_reference}"
+        pip_editable_requirement = f"{pip_url}#egg={package_name}"
+    elif source_type == "git subdirectory":
+        source_type = "git"
+        source_sub_directory = "one"
+        source_url = "https://github.com/demo/subdirectories.git"
+        source_reference = "v2.0"
+        source_resolved_reference = "12345678"
+        pip_base_url = f"git+{source_url}@{source_reference}"
+        pip_url = f"{pip_base_url}#subdirectory={source_sub_directory}"
+        pip_editable_requirement = (
+            f"{pip_base_url}#egg={package_name}&subdirectory={source_sub_directory}"
+        )
+    else:
+        raise ValueError(f"Unknown source type: {source_type}")
+    package = Package(
         package_name,
         package_version,
-        source_type="directory",
-        source_url=fixture_dir("simple_project").resolve().as_posix(),
+        source_type=source_type,
+        source_url=source_url,
+        source_reference=source_reference,
+        source_resolved_reference=source_resolved_reference,
+        source_subdirectory=source_sub_directory,
         develop=editable,
     )
     # must not be included in the error message
-    directory_package.python_versions = ">=3.7"
+    package.python_versions = ">=3.7"
 
-    return_code = executor.execute([Install(directory_package)])
+    return_code = executor.execute([Install(package)])
 
     assert return_code == 1
 
-    package_url = directory_package.source_url
-    expected_start = f"""
-Package operations: 1 install, 0 updates, 0 removals
-
-  - Installing {package_name} ({package_version} {package_url})
-
-  IsolatedBuildError
-
-  hide the original error
-  \
-
-  original error
-"""
-
-    assert directory_package.source_url is not None
+    assert package.source_url is not None
     if editable:
         pip_command = "pip wheel --no-cache-dir --use-pep517 --editable"
-        requirement = directory_package.source_url
-        assert Path(requirement).exists()
+        requirement = pip_editable_requirement
+        if source_type == "directory":
+            assert Path(requirement).exists()
     else:
         pip_command = "pip wheel --no-cache-dir --use-pep517"
-        requirement = f"{package_name} @ {path_to_url(directory_package.source_url)}"
-    expected_end = f"""
-Note: This error originates from the build backend, and is likely not a problem with \
-poetry but with {package_name} ({package_version} {package_url}) not supporting \
-PEP 517 builds. You can verify this by running '{pip_command} "{requirement}"'.
+        requirement = f"{package_name} @ {pip_url}"
+
+    version_details = package.source_resolved_reference or package.source_url
+    expected_source_string = f"{package_name} ({package_version} {version_details})"
+    expected_pip_command = f'{pip_command} "{requirement}"'
+
+    expected_output = f"""
+Package operations: 1 install, 0 updates, 0 removals
+
+  - Installing {expected_source_string}
+
+PEP517 build of a dependency failed
+
+hide the original error
+"""
+
+    if isinstance(exception, CalledProcessError):
+        expected_output += (
+            "\n    | Command '['pip']' returned non-zero exit status 1."
+            "\n    | "
+            "\n    | original error"
+            "\n"
+        )
+
+    expected_output += f"""
+Note: This error originates from the build backend, and is likely not a problem \
+with poetry but one of the following issues with {expected_source_string}
+
+  - not supporting PEP 517 builds
+  - not specifying PEP 517 build requirements correctly
+  - the build requirements are incompatible with your operating system or Python version
+  - the build requirements are missing system dependencies (eg: compilers, libraries, headers).
+
+You can verify this by running {expected_pip_command}.
 
 """
 
-    output = io.fetch_output()
-    assert output.startswith(expected_start)
-    assert output.endswith(expected_end)
+    assert io.fetch_output() == expected_output
 
 
 @pytest.mark.parametrize("encoding", ["utf-8", "latin-1"])
@@ -1363,7 +1551,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
   - Installing {package_name} ({package_version} {package_url})
 
-  SolveFailure
+  SolveFailureError
 
   Because -root- depends on poetry-core (0.999) which doesn't match any versions,\
  version solving failed.

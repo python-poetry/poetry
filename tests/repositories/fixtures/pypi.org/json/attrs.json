@@ -1,4 +1,5 @@
 {
+  "alternate-locations": [],
   "files": [
     {
       "core-metadata": {
@@ -9,9 +10,10 @@
       },
       "filename": "attrs-17.4.0-py2.py3-none-any.whl",
       "hashes": {
-        "md5": "9d32f2b5a93343e01f54d87740f2da60",
-        "sha256": "d38e57f381e891928357c68e300d28d3d4dcddc50486d5f8dfaf743d40477619"
+        "md5": "7fe37931797b16c7fa158017457a9ea9",
+        "sha256": "1fbfc10ebc8c876dcbab17f016b80ae1a4f0c1413461a695871427960795beb4"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 31658,
       "upload-time": "2017-12-30T08:20:05.582456Z",
@@ -26,6 +28,7 @@
         "md5": "c03e5b3608d9071fbd098850d8922668",
         "sha256": "eb7536a1e6928190b3008c5b350bdf9850d619fff212341cd096f87a27a5e564"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 97071,
       "upload-time": "2017-12-30T08:20:08.575620Z",
@@ -35,7 +38,7 @@
   ],
   "meta": {
     "_last-serial": 0,
-    "api-version": "1.1"
+    "api-version": "1.3"
   },
   "name": "attrs",
   "versions": [

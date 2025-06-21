@@ -1,20 +1,26 @@
-[tool.poetry]
+[project]
 name = "simple-project"
 version = "1.2.3"
 description = "Some description."
 authors = [
-    "Sébastien Eustace <sebastien@eustace.io>"
+    { name = "Sébastien Eustace", email = "sebastien@eustace.io" }
 ]
-license = "MIT"
+license = { text = "MIT" }
+readme = "README.rst"
+keywords = ["packaging", "dependency", "poetry"]
+dynamic = [ "classifiers", "dependencies", "requires-python" ]
 
-readme = ["README.rst"]
-
+[project.urls]
 homepage = "https://python-poetry.org"
 repository = "https://github.com/python-poetry/poetry"
 documentation = "https://python-poetry.org/docs"
 
-keywords = ["packaging", "dependency", "poetry"]
+[project.scripts]
+foo = "foo:bar"
+baz = "bar:baz.boom.bim"
+fox = "fuz.foo:bar.baz"
 
+[tool.poetry]
 classifiers = [
     "Topic :: Software Development :: Build Tools",
     "Topic :: Software Development :: Libraries :: Python Modules"
@@ -23,12 +29,6 @@ classifiers = [
 # Requirements
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.4"
-
-[tool.poetry.scripts]
-foo = "foo:bar"
-baz = "bar:baz.boom.bim"
-fox = "fuz.foo:bar.baz"
-
 
 [build-system]
 requires = ["poetry-core>=1.1.0a7"]

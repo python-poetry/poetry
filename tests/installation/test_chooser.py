@@ -8,14 +8,14 @@ import pytest
 from packaging.tags import Tag
 from poetry.core.packages.package import Package
 
+from poetry.console.exceptions import PoetryRuntimeError
 from poetry.installation.chooser import Chooser
 from poetry.repositories.legacy_repository import LegacyRepository
-from poetry.repositories.pypi_repository import PyPiRepository
-from poetry.repositories.repository_pool import RepositoryPool
 from poetry.utils.env import MockEnv
 
 
 if TYPE_CHECKING:
+    from poetry.repositories.repository_pool import RepositoryPool
     from tests.conftest import Config
     from tests.types import DistributionHashGetter
     from tests.types import SpecializedLegacyRepositoryMocker
@@ -25,30 +25,6 @@ JSON_FIXTURES = (
 )
 
 LEGACY_FIXTURES = Path(__file__).parent.parent / "repositories" / "fixtures" / "legacy"
-
-
-@pytest.fixture()
-def env() -> MockEnv:
-    return MockEnv(
-        supported_tags=[
-            Tag("cp37", "cp37", "macosx_10_15_x86_64"),
-            Tag("py3", "none", "any"),
-        ]
-    )
-
-
-@pytest.fixture()
-def pool(legacy_repository: LegacyRepository) -> RepositoryPool:
-    pool = RepositoryPool()
-
-    pool.add_repository(PyPiRepository(disable_cache=True))
-    pool.add_repository(
-        LegacyRepository("foo", "https://legacy.foo.bar/simple/", disable_cache=True)
-    )
-    pool.add_repository(
-        LegacyRepository("foo2", "https://legacy.foo2.bar/simple/", disable_cache=True)
-    )
-    return pool
 
 
 def check_chosen_link_filename(
@@ -74,7 +50,7 @@ def check_chosen_link_filename(
 
     try:
         link = chooser.choose_for(package)
-    except RuntimeError as e:
+    except PoetryRuntimeError as e:
         if filename is None:
             assert (
                 str(e)
@@ -366,9 +342,15 @@ def test_chooser_throws_an_error_if_package_hashes_do_not_match(
 
     package.files = files
 
-    with pytest.raises(RuntimeError) as e:
+    with pytest.raises(PoetryRuntimeError) as e:
         chooser.choose_for(package)
-    assert files[0]["hash"] in str(e)
+
+    reason = f"Downloaded distributions for {package.name} ({package.version}) did not match any known checksums in your lock file."
+    assert str(e.value) == reason
+
+    text = e.value.get_text(debug=True, strip=True)
+    assert reason in text
+    assert files[0]["hash"] in text
 
 
 def test_chooser_md5_remote_fallback_to_sha256_inline_calculation(

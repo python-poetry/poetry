@@ -46,6 +46,7 @@ environment.
         add_command = application.find("add")
         assert isinstance(add_command, AddCommand)
         add_command.set_env(self.env)
+        add_command.set_poetry(self.poetry)
         application.configure_installer_for_command(add_command, self.io)
 
         argv = ["add", f"poetry@{self.argument('version')}"]

@@ -15,8 +15,8 @@ class AboutCommand(Command):
             f"""\
 <info>Poetry - Package Management for Python
 
-Version: {metadata.version('poetry')}
-Poetry-Core Version: {metadata.version('poetry-core')}</info>
+Version: {metadata.version("poetry")}
+Poetry-Core Version: {metadata.version("poetry-core")}</info>
 
 <comment>Poetry is a dependency manager tracking local dependencies of your projects\
  and libraries.

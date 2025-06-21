@@ -19,7 +19,7 @@ from typing import overload
 from poetry.utils._compat import decode
 from poetry.utils._compat import encode
 from poetry.utils.helpers import get_highest_priority_hash_type
-from poetry.utils.wheel import InvalidWheelName
+from poetry.utils.wheel import InvalidWheelNameError
 from poetry.utils.wheel import Wheel
 
 
@@ -316,7 +316,7 @@ class ArtifactCache:
 
             try:
                 wheel = Wheel(archive.name)
-            except InvalidWheelName:
+            except InvalidWheelNameError:
                 continue
 
             if not wheel.is_supported_by_environment(env):

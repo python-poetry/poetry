@@ -11,7 +11,7 @@ abstract:  >-
   Poetry helps you declare, manage and install dependencies of Python projects, ensuring you have the right stack everywhere.
   Poetry replaces setup.py, requirements.txt, setup.cfg, MANIFEST.in and Pipfile with a simple pyproject.toml based project format.
 license: MIT
-license-url: "https://github.com/python-poetry/poetry/blob/master/LICENSE"
+license-url: "https://github.com/python-poetry/poetry/blob/main/LICENSE"
 repository-code: "https://github.com/python-poetry/poetry"
 keywords:
   - python

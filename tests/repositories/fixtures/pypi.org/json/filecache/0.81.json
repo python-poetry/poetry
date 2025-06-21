@@ -26,6 +26,8 @@
     "home_page": "https://github.com/ubershmekel/filecache",
     "keywords": "",
     "license": "",
+    "license_expression": null,
+    "license_files": null,
     "maintainer": "",
     "maintainer_email": "",
     "name": "filecache",

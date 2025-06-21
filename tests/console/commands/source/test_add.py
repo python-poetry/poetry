@@ -9,6 +9,8 @@ from poetry.repositories.repository_pool import Priority
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from cleo.testers.command_tester import CommandTester
 
     from poetry.poetry import Poetry
@@ -22,58 +24,23 @@ def tester(
     return command_tester_factory("source add", poetry=poetry_with_source)
 
 
-def _get_source_warning(priority: Priority) -> str:
-    if priority is Priority.SECONDARY:
-        return (
-            "Warning: Priority 'secondary' is deprecated. Consider changing the"
-            " priority to one of the non-deprecated values: 'primary',"
-            " 'supplemental', 'explicit'."
-        )
-    elif priority is Priority.DEFAULT:
-        return (
-            "Warning: Priority 'default' is deprecated. You can achieve"
-            " the same effect by changing the priority to 'primary' and putting"
-            " the source first."
-        )
-    return ""
-
-
-def assert_source_added_legacy(
-    tester: CommandTester,
-    poetry: Poetry,
-    source_existing: Source,
-    source_added: Source,
-) -> None:
-    warning = (
-        "Warning: Priority was set through a deprecated flag (--default or"
-        " --secondary). Consider using --priority next time.\n"
-        + _get_source_warning(source_added.priority)
-    )
-    assert tester.io.fetch_error().strip() == warning
-    assert (
-        tester.io.fetch_output().strip()
-        == f"Adding source with name {source_added.name}."
-    )
-    poetry.pyproject.reload()
-    sources = poetry.get_sources()
-    assert sources == [source_existing, source_added]
-    assert tester.status_code == 0
-
-
 def assert_source_added(
     tester: CommandTester,
     poetry: Poetry,
-    source_existing: Source,
-    source_added: Source,
+    added_source: Source,
+    existing_sources: Iterable[Source] = (),
 ) -> None:
-    assert tester.io.fetch_error().strip() == _get_source_warning(source_added.priority)
-    assert (
-        tester.io.fetch_output().strip()
-        == f"Adding source with name {source_added.name}."
-    )
+    expected_error = ""
+    if tester.io.input.option("priority") is None:
+        expected_error = f"The default priority will change to supplemental in a future release.\n{expected_error}"
+    assert tester.io.fetch_error().strip() == expected_error.strip()
+
+    expected_output = f"Adding source with name {added_source.name}."
+    assert tester.io.fetch_output().strip() == expected_output
+
     poetry.pyproject.reload()
     sources = poetry.get_sources()
-    assert sources == [source_existing, source_added]
+    assert sources == [*existing_sources, added_source]
     assert tester.status_code == 0
 
 
@@ -84,73 +51,25 @@ def test_source_add_simple(
     poetry_with_source: Poetry,
 ) -> None:
     tester.execute(f"{source_one.name} {source_one.url}")
-    assert_source_added(tester, poetry_with_source, source_existing, source_one)
+    assert_source_added(tester, poetry_with_source, source_one, [source_existing])
 
 
-def test_source_add_default_legacy(
+def test_source_add_simple_without_existing_sources(
     tester: CommandTester,
-    source_existing: Source,
-    source_default: Source,
-    poetry_with_source: Poetry,
+    source_one: Source,
+    poetry_without_source: Poetry,
 ) -> None:
-    tester.execute(f"--default {source_default.name} {source_default.url}")
-    assert_source_added_legacy(
-        tester, poetry_with_source, source_existing, source_default
-    )
+    tester.execute(f"{source_one.name} {source_one.url}")
+    assert_source_added(tester, poetry_without_source, source_one)
 
 
-def test_source_add_secondary_legacy(
+def test_source_add_simple_without_existing_poetry_section(
     tester: CommandTester,
-    source_existing: Source,
-    source_secondary: Source,
-    poetry_with_source: Poetry,
+    source_one: Source,
+    poetry_without_poetry_section: Poetry,
 ) -> None:
-    tester.execute(f"--secondary {source_secondary.name} {source_secondary.url}")
-    assert_source_added_legacy(
-        tester, poetry_with_source, source_existing, source_secondary
-    )
-
-
-def test_source_add_default(
-    tester: CommandTester,
-    source_existing: Source,
-    source_default: Source,
-    poetry_with_source: Poetry,
-) -> None:
-    tester.execute(f"--priority=default {source_default.name} {source_default.url}")
-    assert_source_added(tester, poetry_with_source, source_existing, source_default)
-
-
-def test_source_add_second_default_fails(
-    tester: CommandTester,
-    source_existing: Source,
-    source_default: Source,
-    poetry_with_source: Poetry,
-) -> None:
-    tester.execute(f"--priority=default {source_default.name} {source_default.url}")
-    assert_source_added(tester, poetry_with_source, source_existing, source_default)
-    poetry_with_source.pyproject.reload()
-
-    tester.execute(f"--priority=default {source_default.name}1 {source_default.url}")
-    assert (
-        tester.io.fetch_error().strip()
-        == f"{_get_source_warning(source_default.priority)}\n"
-        f"Source with name {source_default.name} is already set to default."
-        " Only one default source can be configured at a time."
-    )
-    assert tester.status_code == 1
-
-
-def test_source_add_secondary(
-    tester: CommandTester,
-    source_existing: Source,
-    source_secondary: Source,
-    poetry_with_source: Poetry,
-) -> None:
-    tester.execute(
-        f"--priority=secondary {source_secondary.name} {source_secondary.url}"
-    )
-    assert_source_added(tester, poetry_with_source, source_existing, source_secondary)
+    tester.execute(f"{source_one.name} {source_one.url}")
+    assert_source_added(tester, poetry_without_poetry_section, source_one)
 
 
 def test_source_add_supplemental(
@@ -163,7 +82,7 @@ def test_source_add_supplemental(
         f"--priority=supplemental {source_supplemental.name} {source_supplemental.url}"
     )
     assert_source_added(
-        tester, poetry_with_source, source_existing, source_supplemental
+        tester, poetry_with_source, source_supplemental, [source_existing]
     )
 
 
@@ -174,27 +93,7 @@ def test_source_add_explicit(
     poetry_with_source: Poetry,
 ) -> None:
     tester.execute(f"--priority=explicit {source_explicit.name} {source_explicit.url}")
-    assert_source_added(tester, poetry_with_source, source_existing, source_explicit)
-
-
-def test_source_add_error_default_and_secondary_legacy(tester: CommandTester) -> None:
-    tester.execute("--default --secondary error https://error.com")
-    assert (
-        tester.io.fetch_error().strip()
-        == "Cannot configure a source as both default and secondary."
-    )
-    assert tester.status_code == 1
-
-
-def test_source_add_error_priority_and_deprecated_legacy(tester: CommandTester) -> None:
-    tester.execute("--priority secondary --secondary error https://error.com")
-    assert (
-        tester.io.fetch_error().strip()
-        == "Priority was passed through both --priority and a"
-        " deprecated flag (--default or --secondary). Please only provide"
-        " one of these."
-    )
-    assert tester.status_code == 1
+    assert_source_added(tester, poetry_with_source, source_explicit, [source_existing])
 
 
 def test_source_add_error_no_url(tester: CommandTester) -> None:
@@ -223,7 +122,7 @@ def test_source_add_pypi(
     poetry_with_source: Poetry,
 ) -> None:
     tester.execute(name)
-    assert_source_added(tester, poetry_with_source, source_existing, source_pypi)
+    assert_source_added(tester, poetry_with_source, source_pypi, [source_existing])
 
 
 def test_source_add_pypi_explicit(
@@ -234,34 +133,8 @@ def test_source_add_pypi_explicit(
 ) -> None:
     tester.execute("--priority=explicit PyPI")
     assert_source_added(
-        tester, poetry_with_source, source_existing, source_pypi_explicit
+        tester, poetry_with_source, source_pypi_explicit, [source_existing]
     )
-
-
-def test_source_add_existing_legacy(
-    tester: CommandTester, source_existing: Source, poetry_with_source: Poetry
-) -> None:
-    tester.execute(f"--default {source_existing.name} {source_existing.url}")
-    assert (
-        tester.io.fetch_error().strip()
-        == "Warning: Priority was set through a deprecated flag"
-        " (--default or --secondary). Consider using --priority next"
-        f" time.\n{_get_source_warning(Priority.DEFAULT)}"
-    )
-    assert (
-        tester.io.fetch_output().strip()
-        == f"Source with name {source_existing.name} already exists. Updating."
-    )
-
-    poetry_with_source.pyproject.reload()
-    sources = poetry_with_source.get_sources()
-
-    assert len(sources) == 1
-    assert sources[0] != source_existing
-    expected_source = Source(
-        name=source_existing.name, url=source_existing.url, priority=Priority.DEFAULT
-    )
-    assert sources[0] == expected_source
 
 
 @pytest.mark.parametrize("modifier", ["lower", "upper"])
@@ -295,7 +168,7 @@ def test_source_add_existing_updating(
     poetry_with_source: Poetry,
 ) -> None:
     name = getattr(source_existing.name, modifier)()
-    tester.execute(f"--priority=default {name} {source_existing.url}")
+    tester.execute(f"--priority=supplemental {name} {source_existing.url}")
     assert (
         tester.io.fetch_output().strip()
         == f"Source with name {name} already exists. Updating."
@@ -307,31 +180,6 @@ def test_source_add_existing_updating(
     assert len(sources) == 1
     assert sources[0] != source_existing
     expected_source = Source(
-        name=name, url=source_existing.url, priority=Priority.DEFAULT
+        name=name, url=source_existing.url, priority=Priority.SUPPLEMENTAL
     )
     assert sources[0] == expected_source
-
-
-@pytest.mark.parametrize("modifier", ["lower", "upper"])
-def test_source_add_existing_fails_due_to_other_default(
-    modifier: str,
-    tester: CommandTester,
-    source_existing: Source,
-    source_default: Source,
-    poetry_with_source: Poetry,
-) -> None:
-    tester.execute(f"--priority=default {source_default.name} {source_default.url}")
-    tester.io.fetch_error()
-    tester.io.fetch_output()
-
-    name = getattr(source_existing.name, modifier)()
-    tester.execute(f"--priority=default {name} {source_existing.url}")
-
-    assert (
-        tester.io.fetch_error().strip()
-        == f"{_get_source_warning(source_default.priority)}\n"
-        f"Source with name {source_default.name} is already set to default."
-        " Only one default source can be configured at a time."
-    )
-    assert tester.io.fetch_output().strip() == ""
-    assert tester.status_code == 1

@@ -3,13 +3,14 @@ ci:
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v5.0.0
     hooks:
       - id: trailing-whitespace
         exclude: tests/repositories/fixtures/pypi.org/metadata/.*\.metadata
       - id: end-of-file-fixer
         exclude: ^.*\.egg-info/|tests/repositories/fixtures/pypi.org/metadata/.*\.metadata
       - id: check-merge-conflict
+        exclude: tests/repositories/fixtures/installed/vendor/py3.7/attrs-19.3.0.dist-info/METADATA
       - id: check-case-conflict
       - id: check-json
       - id: check-toml
@@ -22,12 +23,17 @@ repos:
       - id: check-docstring-first
 
   - repo: https://github.com/pre-commit/pre-commit
-    rev: v3.6.2
+    rev: v4.2.0
     hooks:
       - id: validate_manifest
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.3.3
+    rev: v0.11.7
     hooks:
       - id: ruff
       - id: ruff-format
+
+  - repo: https://github.com/woodruffw/zizmor-pre-commit
+    rev: v1.6.0
+    hooks:
+      - id: zizmor

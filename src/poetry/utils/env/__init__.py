@@ -11,9 +11,6 @@ from poetry.utils.env.env_manager import EnvManager
 from poetry.utils.env.exceptions import EnvCommandError
 from poetry.utils.env.exceptions import EnvError
 from poetry.utils.env.exceptions import IncorrectEnvError
-from poetry.utils.env.exceptions import InvalidCurrentPythonVersionError
-from poetry.utils.env.exceptions import NoCompatiblePythonVersionFound
-from poetry.utils.env.exceptions import PythonVersionNotFound
 from poetry.utils.env.generic_env import GenericEnv
 from poetry.utils.env.mock_env import MockEnv
 from poetry.utils.env.null_env import NullEnv
@@ -21,7 +18,6 @@ from poetry.utils.env.script_strings import GET_BASE_PREFIX
 from poetry.utils.env.script_strings import GET_ENV_PATH_ONELINER
 from poetry.utils.env.script_strings import GET_ENVIRONMENT_INFO
 from poetry.utils.env.script_strings import GET_PATHS
-from poetry.utils.env.script_strings import GET_PATHS_FOR_GENERIC_ENVS
 from poetry.utils.env.script_strings import GET_PYTHON_VERSION_ONELINER
 from poetry.utils.env.script_strings import GET_SYS_PATH
 from poetry.utils.env.site_packages import SitePackages
@@ -67,7 +63,7 @@ def build_environment(
     if not env or poetry.package.build_script:
         with ephemeral_environment(
             executable=env.python if env else None,
-            flags={"no-pip": True, "no-setuptools": True, "no-wheel": True},
+            flags={"no-pip": True},
         ) as venv:
             if io:
                 requires = [
@@ -93,25 +89,21 @@ def build_environment(
 __all__ = [
     "GET_BASE_PREFIX",
     "GET_ENVIRONMENT_INFO",
-    "GET_PATHS",
-    "GET_SYS_PATH",
     "GET_ENV_PATH_ONELINER",
+    "GET_PATHS",
     "GET_PYTHON_VERSION_ONELINER",
-    "GET_PATHS_FOR_GENERIC_ENVS",
-    "EnvError",
-    "EnvCommandError",
-    "IncorrectEnvError",
-    "InvalidCurrentPythonVersionError",
-    "NoCompatiblePythonVersionFound",
-    "PythonVersionNotFound",
+    "GET_SYS_PATH",
     "Env",
+    "EnvCommandError",
+    "EnvError",
     "EnvManager",
     "GenericEnv",
+    "IncorrectEnvError",
     "MockEnv",
     "NullEnv",
+    "SitePackages",
     "SystemEnv",
     "VirtualEnv",
-    "SitePackages",
     "build_environment",
     "ephemeral_environment",
 ]

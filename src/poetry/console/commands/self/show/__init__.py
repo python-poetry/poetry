@@ -11,6 +11,7 @@ from poetry.console.commands.show import ShowCommand
 
 if TYPE_CHECKING:
     from cleo.io.inputs.option import Option
+    from packaging.utils import NormalizedName
 
 
 class SelfShowCommand(SelfCommand, ShowCommand):
@@ -33,9 +34,8 @@ file.
 """
 
     @property
-    def activated_groups(self) -> set[str]:
+    def activated_groups(self) -> set[NormalizedName]:
         if self.option("addons", False):
             return {SelfCommand.ADDITIONAL_PACKAGE_GROUP}
 
-        groups: set[str] = super(ShowCommand, self).activated_groups
-        return groups
+        return super(ShowCommand, self).activated_groups

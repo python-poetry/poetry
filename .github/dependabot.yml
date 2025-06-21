@@ -7,3 +7,21 @@ updates:
       interval: "weekly"
     labels:
       - "area/ci"
+
+  # Grouped updates to reduce PR noise.
+  #
+  # See:
+  #   - https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/optimizing-pr-creation-version-updates#prioritizing-meaningful-updates
+  #   - https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference#groups--
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "area/project/deps"
+    groups:
+      production-dependencies:
+        dependency-type: "production"
+      development-dependencies:
+        dependency-type: "development"
+    open-pull-requests-limit: 2

@@ -1,0 +1,38 @@
+[[package]]
+name = "torch"
+version = "1.11.0+cpu"
+description = ""
+optional = true
+python-versions = "*"
+files = []
+groups = [ "main" ]
+markers = "extra == \"cpu\" and extra != \"cuda\""
+
+[package.source]
+reference = "pytorch-cpu"
+type = "legacy"
+url = "https://download.pytorch.org/whl/cpu"
+
+[[package]]
+name = "torch"
+version = "1.11.0+cuda"
+description = ""
+optional = true
+python-versions = "*"
+files = []
+groups = [ "main" ]
+markers = "extra != \"cpu\" and extra == \"cuda\""
+
+[package.source]
+reference = "pytorch-cuda"
+type = "legacy"
+url = "https://download.pytorch.org/whl/cuda"
+
+[extras]
+cpu = ["torch", "torch"]
+cuda = ["torch", "torch"]
+
+[metadata]
+python-versions = "*"
+lock-version = "2.1"
+content-hash = "123456789"

@@ -106,7 +106,7 @@ def test_package(
     ]
     win_inet = package.extras[canonicalize_name("socks")][1]
     assert win_inet.name == "win-inet-pton"
-    assert win_inet.python_versions == "~2.7 || ~2.6"
+    assert win_inet.python_versions in {"~2.7 || ~2.6", ">=2.6 <2.8"}
 
     # Different versions of poetry-core simplify the following marker differently,
     # either is fine.
@@ -118,7 +118,11 @@ def test_package(
         'sys_platform == "win32" and python_version == "2.7" and extra == "socks" or'
         ' sys_platform == "win32" and python_version == "2.6" and extra == "socks"'
     )
-    assert str(win_inet.marker) in {marker1, marker2}
+    marker3 = (
+        'sys_platform == "win32" and python_version >= "2.6" and python_version < '
+        '"2.8" and extra == "socks"'
+    )
+    assert str(win_inet.marker) in {marker1, marker2, marker3}
 
 
 @pytest.mark.parametrize(
@@ -143,6 +147,21 @@ def test_package_yanked(
     assert str(package.version) == version
     assert package.yanked is yanked
     assert package.yanked_reason == yanked_reason
+
+
+@pytest.mark.parametrize("fallback", [False, True])
+def test_package_yanked_no_dependencies(
+    pypi_repository: PyPiRepository, fallback: bool
+) -> None:
+    repo = pypi_repository
+    repo._fallback = fallback
+
+    package = repo.package("isodate", Version.parse("0.7.0"))
+
+    assert package.name == "isodate"
+    assert str(package.version) == "0.7.0"
+    assert package.yanked is True
+    assert package.yanked_reason == "fails for py2.7 but is not marked as py3 only."
 
 
 def test_package_not_canonicalized(pypi_repository: PyPiRepository) -> None:
@@ -346,3 +365,27 @@ def test_get_release_info_includes_only_supported_types(
 
     assert len(release_info["files"]) == 1
     assert release_info["files"][0]["file"] == "hbmqtt-0.9.6.tar.gz"
+
+
+@pytest.mark.parametrize(
+    ("query", "count"),
+    [
+        ("non-existent", 0),  # no match
+        ("requests", 6),  # exact match
+        ("hbmqtt==0.9.6", 1),  # exact dependency match
+        ("requests>=2.18.4", 2),  # range dependency match
+        ("request", 0),  # partial match
+        ("reques*", 0),  # bad token
+        ("reques t", 0),  # bad token
+        (["requests", "hbmqtt"], 7),  # list of tokens
+    ],
+)
+def test_search_fallbacks_to_find_packages(
+    query: str | list[str],
+    count: int,
+    pypi_repository: PyPiRepository,
+    with_disallowed_pypi_search_html: None,
+) -> None:
+    repo = pypi_repository
+    packages = repo.search(query)
+    assert len(packages) == count

@@ -1,4 +1,5 @@
 {
+  "alternate-locations": [],
   "files": [
     {
       "core-metadata": {
@@ -9,9 +10,10 @@
       },
       "filename": "isort-4.3.4-py2-none-any.whl",
       "hashes": {
-        "md5": "e84fb6f2278ee4d0bd719a4d44863d9f",
-        "sha256": "3bbfc8f6119a46a48064487afb0b3ca9daa4b09fbfd94336a24c7616b71db2ca"
+        "md5": "42bccda292eca3c91eadf3eb781a224f",
+        "sha256": "383c39c10b5db83e8d150ac5b84d74bda96e3a1b06a30257f022dcbcd21f54b9"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 45393,
       "upload-time": "2018-02-12T15:06:38.441257Z",
@@ -27,9 +29,10 @@
       },
       "filename": "isort-4.3.4-py3-none-any.whl",
       "hashes": {
-        "md5": "baa2e5dc4e89511b6bc54e969d040a08",
-        "sha256": "e7aa083302c758b358e10a3a1c707adcc9f8ab57795e99246ac72eeffe7f2b20"
+        "md5": "6c3b582d7782633ec23917b00a97a2fe",
+        "sha256": "5668dce9fb48544c57ed626982e190c8ea99e3a612850453e9c3b193b9fa2edc"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 45352,
       "upload-time": "2018-02-12T15:06:20.089641Z",
@@ -44,6 +47,7 @@
         "md5": "9244631852cf8bd8559f7ab78bf4ec78",
         "sha256": "234ad07e1e2780c27fa56364eefa734bee991b0d744337ef7e7ce3d5b1b59f39"
       },
+      "provenance": null,
       "requires-python": null,
       "size": 56070,
       "upload-time": "2018-02-12T15:06:16.498194Z",
@@ -53,7 +57,7 @@
   ],
   "meta": {
     "_last-serial": 0,
-    "api-version": "1.1"
+    "api-version": "1.3"
   },
   "name": "isort",
   "versions": [

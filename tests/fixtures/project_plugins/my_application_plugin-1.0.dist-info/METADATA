@@ -1,0 +1,7 @@
+Metadata-Version: 2.1
+Name: my-application-plugin
+Version: 1.0
+Summary: description
+Requires-Python: >=3.8,<4.0
+Requires-Dist: poetry (>=1.8.0,<3.0.0)
+Requires-Dist: some-lib (>=1.7.0,<3.0.0)

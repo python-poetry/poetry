@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import os
 import shutil
-import subprocess
 import sys
+import textwrap
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Any
 
 import pytest
 
@@ -23,9 +22,10 @@ from tests.helpers import get_package
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from unittest.mock import MagicMock
 
-    from _pytest.fixtures import FixtureRequest
     from poetry.core.packages.package import Package
+    from pytest import FixtureRequest
     from pytest_mock import MockerFixture
 
     from poetry.config.config import Config
@@ -33,6 +33,7 @@ if TYPE_CHECKING:
     from tests.helpers import PoetryTestApplication
     from tests.helpers import TestRepository
     from tests.types import FixtureDirGetter
+    from tests.types import MockedPythonRegister
 
 
 @pytest.fixture
@@ -91,9 +92,17 @@ def test_noninteractive(
     assert tester.io.fetch_output() == expected
     assert tester.io.fetch_error() == ""
 
-    toml_content = (tmp_path / "pyproject.toml").read_text()
+    toml_content = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
     assert 'name = "my-package"' in toml_content
-    assert 'pytest = "^3.6.0"' in toml_content
+    assert '"pytest (>=3.6.0,<4.0.0)"' in toml_content
+
+    expected_build_system = textwrap.dedent("""
+    [build-system]
+    requires = ["poetry-core>=2.0.0,<3.0.0"]
+    build-backend = "poetry.core.masonry.api"
+    """)
+
+    assert expected_build_system in toml_content
 
 
 def test_interactive_with_dependencies(
@@ -110,7 +119,7 @@ def test_interactive_with_dependencies(
         "This is a description",  # Description
         "n",  # Author
         "MIT",  # License
-        "~2.7 || ^3.6",  # Python
+        ">=3.6",  # Python
         "",  # Interactive packages
         "pendulu",  # Search for package
         "1",  # Second option is pendulum
@@ -129,21 +138,29 @@ def test_interactive_with_dependencies(
     tester.execute(inputs="\n".join(inputs))
 
     expected = """\
-[tool.poetry]
+[project]
 name = "my-package"
 version = "1.2.3"
 description = "This is a description"
-authors = ["Your Name <you@example.com>"]
-license = "MIT"
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
+license = {text = "MIT"}
 readme = "README.md"
+requires-python = ">=3.6"
+dependencies = [
+    "pendulum (>=2.0.0,<3.0.0)",
+    "flask (>=2.0.0,<3.0.0)"
+]
 
-[tool.poetry.dependencies]
-python = "~2.7 || ^3.6"
-pendulum = "^2.0.0"
-flask = "^2.0.0"
+[tool.poetry]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
 """
 
     assert expected in tester.io.fetch_output()
@@ -163,7 +180,7 @@ def test_interactive_with_dependencies_and_no_selection(
         "This is a description",  # Description
         "n",  # Author
         "MIT",  # License
-        "~2.7 || ^3.6",  # Python
+        ">=3.6",  # Python
         "",  # Interactive packages
         "pendulu",  # Search for package
         "",  # Do not select an option
@@ -177,16 +194,16 @@ def test_interactive_with_dependencies_and_no_selection(
     ]
     tester.execute(inputs="\n".join(inputs))
     expected = """\
-[tool.poetry]
+[project]
 name = "my-package"
 version = "1.2.3"
 description = "This is a description"
-authors = ["Your Name <you@example.com>"]
-license = "MIT"
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
+license = {text = "MIT"}
 readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "~2.7 || ^3.6"
+requires-python = ">=3.6"
 """
 
     assert expected in tester.io.fetch_output()
@@ -208,15 +225,15 @@ def test_empty_license(tester: CommandTester) -> None:
 
     python = ".".join(str(c) for c in sys.version_info[:2])
     expected = f"""\
-[tool.poetry]
+[project]
 name = "my-package"
 version = "1.2.3"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = [
+    {{name = "Your Name",email = "you@example.com"}}
+]
 readme = "README.md"
-
-[tool.poetry.dependencies]
-python = ">={python}"
+requires-python = ">={python}"
 """
     assert expected in tester.io.fetch_output()
 
@@ -233,7 +250,7 @@ def test_interactive_with_git_dependencies(
         "This is a description",  # Description
         "n",  # Author
         "MIT",  # License
-        "~2.7 || ^3.6",  # Python
+        ">=3.6",  # Python
         "",  # Interactive packages
         "git+https://github.com/demo/demo.git",  # Search for package
         "",  # Stop searching for packages
@@ -247,17 +264,21 @@ def test_interactive_with_git_dependencies(
     tester.execute(inputs="\n".join(inputs))
 
     expected = """\
-[tool.poetry]
+[project]
 name = "my-package"
 version = "1.2.3"
 description = "This is a description"
-authors = ["Your Name <you@example.com>"]
-license = "MIT"
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
+license = {text = "MIT"}
 readme = "README.md"
+requires-python = ">=3.6"
+dependencies = [
+    "demo @ git+https://github.com/demo/demo.git"
+]
 
-[tool.poetry.dependencies]
-python = "~2.7 || ^3.6"
-demo = {git = "https://github.com/demo/demo.git"}
+[tool.poetry]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
@@ -325,7 +346,7 @@ def test_interactive_with_git_dependencies_with_reference(
         "This is a description",  # Description
         "n",  # Author
         "MIT",  # License
-        "~2.7 || ^3.6",  # Python
+        ">=3.6",  # Python
         "",  # Interactive packages
         "git+https://github.com/demo/demo.git@develop",  # Search for package
         "",  # Stop searching for packages
@@ -339,17 +360,21 @@ def test_interactive_with_git_dependencies_with_reference(
     tester.execute(inputs="\n".join(inputs))
 
     expected = """\
-[tool.poetry]
+[project]
 name = "my-package"
 version = "1.2.3"
 description = "This is a description"
-authors = ["Your Name <you@example.com>"]
-license = "MIT"
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
+license = {text = "MIT"}
 readme = "README.md"
+requires-python = ">=3.6"
+dependencies = [
+    "demo @ git+https://github.com/demo/demo.git@develop"
+]
 
-[tool.poetry.dependencies]
-python = "~2.7 || ^3.6"
-demo = {git = "https://github.com/demo/demo.git", rev = "develop"}
+[tool.poetry]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
@@ -370,7 +395,7 @@ def test_interactive_with_git_dependencies_and_other_name(
         "This is a description",  # Description
         "n",  # Author
         "MIT",  # License
-        "~2.7 || ^3.6",  # Python
+        ">=3.6",  # Python
         "",  # Interactive packages
         "git+https://github.com/demo/pyproject-demo.git",  # Search for package
         "",  # Stop searching for packages
@@ -384,17 +409,21 @@ def test_interactive_with_git_dependencies_and_other_name(
     tester.execute(inputs="\n".join(inputs))
 
     expected = """\
-[tool.poetry]
+[project]
 name = "my-package"
 version = "1.2.3"
 description = "This is a description"
-authors = ["Your Name <you@example.com>"]
-license = "MIT"
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
+license = {text = "MIT"}
 readme = "README.md"
+requires-python = ">=3.6"
+dependencies = [
+    "demo @ git+https://github.com/demo/pyproject-demo.git"
+]
 
-[tool.poetry.dependencies]
-python = "~2.7 || ^3.6"
-demo = {git = "https://github.com/demo/pyproject-demo.git"}
+[tool.poetry]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
@@ -421,7 +450,7 @@ def test_interactive_with_directory_dependency(
         "This is a description",  # Description
         "n",  # Author
         "MIT",  # License
-        "~2.7 || ^3.6",  # Python
+        ">=3.6",  # Python
         "",  # Interactive packages
         "./demo",  # Search for package
         "",  # Stop searching for packages
@@ -434,18 +463,23 @@ def test_interactive_with_directory_dependency(
     ]
     tester.execute(inputs="\n".join(inputs))
 
-    expected = """\
-[tool.poetry]
+    demo_uri = (Path.cwd() / "demo").as_uri()
+    expected = f"""\
+[project]
 name = "my-package"
 version = "1.2.3"
 description = "This is a description"
-authors = ["Your Name <you@example.com>"]
-license = "MIT"
+authors = [
+    {{name = "Your Name",email = "you@example.com"}}
+]
+license = {{text = "MIT"}}
 readme = "README.md"
+requires-python = ">=3.6"
+dependencies = [
+    "demo @ {demo_uri}"
+]
 
-[tool.poetry.dependencies]
-python = "~2.7 || ^3.6"
-demo = {path = "demo"}
+[tool.poetry]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
@@ -471,7 +505,7 @@ def test_interactive_with_directory_dependency_and_other_name(
         "This is a description",  # Description
         "n",  # Author
         "MIT",  # License
-        "~2.7 || ^3.6",  # Python
+        ">=3.6",  # Python
         "",  # Interactive packages
         "./pyproject-demo",  # Search for package
         "",  # Stop searching for packages
@@ -484,18 +518,23 @@ def test_interactive_with_directory_dependency_and_other_name(
     ]
     tester.execute(inputs="\n".join(inputs))
 
-    expected = """\
-[tool.poetry]
+    demo_uri = (Path.cwd() / "pyproject-demo").as_uri()
+    expected = f"""\
+[project]
 name = "my-package"
 version = "1.2.3"
 description = "This is a description"
-authors = ["Your Name <you@example.com>"]
-license = "MIT"
+authors = [
+    {{name = "Your Name",email = "you@example.com"}}
+]
+license = {{text = "MIT"}}
 readme = "README.md"
+requires-python = ">=3.6"
+dependencies = [
+    "demo @ {demo_uri}"
+]
 
-[tool.poetry.dependencies]
-python = "~2.7 || ^3.6"
-demo = {path = "pyproject-demo"}
+[tool.poetry]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
@@ -522,7 +561,7 @@ def test_interactive_with_file_dependency(
         "This is a description",  # Description
         "n",  # Author
         "MIT",  # License
-        "~2.7 || ^3.6",  # Python
+        ">=3.6",  # Python
         "",  # Interactive packages
         "./demo-0.1.0-py2.py3-none-any.whl",  # Search for package
         "",  # Stop searching for packages
@@ -535,18 +574,23 @@ def test_interactive_with_file_dependency(
     ]
     tester.execute(inputs="\n".join(inputs))
 
-    expected = """\
-[tool.poetry]
+    demo_uri = (Path.cwd() / "demo-0.1.0-py2.py3-none-any.whl").as_uri()
+    expected = f"""\
+[project]
 name = "my-package"
 version = "1.2.3"
 description = "This is a description"
-authors = ["Your Name <you@example.com>"]
-license = "MIT"
+authors = [
+    {{name = "Your Name",email = "you@example.com"}}
+]
+license = {{text = "MIT"}}
 readme = "README.md"
+requires-python = ">=3.6"
+dependencies = [
+    "demo @ {demo_uri}"
+]
 
-[tool.poetry.dependencies]
-python = "~2.7 || ^3.6"
-demo = {path = "demo-0.1.0-py2.py3-none-any.whl"}
+[tool.poetry]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
@@ -564,7 +608,7 @@ def test_interactive_with_wrong_dependency_inputs(
         "This is a description",  # Description
         "n",  # Author
         "MIT",  # License
-        "^3.8",  # Python
+        ">=3.8",  # Python
         "",  # Interactive packages
         "foo 1.19.2",
         "pendulum 2.0.0 foo",  # Package name and constraint (invalid)
@@ -580,18 +624,22 @@ def test_interactive_with_wrong_dependency_inputs(
     tester.execute(inputs="\n".join(inputs))
 
     expected = """\
-[tool.poetry]
+[project]
 name = "my-package"
 version = "1.2.3"
 description = "This is a description"
-authors = ["Your Name <you@example.com>"]
-license = "MIT"
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
+license = {text = "MIT"}
 readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "foo (==1.19.2)",
+    "pendulum (>=2.0.0,<3.0.0)"
+]
 
-[tool.poetry.dependencies]
-python = "^3.8"
-foo = "1.19.2"
-pendulum = "^2.0.0"
+[tool.poetry]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "3.6.0"
@@ -611,19 +659,19 @@ def test_python_option(tester: CommandTester) -> None:
         "n",  # Interactive dev packages
         "\n",  # Generate
     ]
-    tester.execute("--python '~2.7 || ^3.6'", inputs="\n".join(inputs))
+    tester.execute("--python '>=3.6'", inputs="\n".join(inputs))
 
     expected = """\
-[tool.poetry]
+[project]
 name = "my-package"
 version = "1.2.3"
 description = "This is a description"
-authors = ["Your Name <you@example.com>"]
-license = "MIT"
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
+license = {text = "MIT"}
 readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "~2.7 || ^3.6"
+requires-python = ">=3.6"
 """
 
     assert expected in tester.io.fetch_output()
@@ -638,7 +686,7 @@ def test_predefined_dependency(tester: CommandTester, repo: TestRepository) -> N
         "This is a description",  # Description
         "n",  # Author
         "MIT",  # License
-        "~2.7 || ^3.6",  # Python
+        ">=3.6",  # Python
         "n",  # Interactive packages
         "n",  # Interactive dev packages
         "\n",  # Generate
@@ -646,17 +694,19 @@ def test_predefined_dependency(tester: CommandTester, repo: TestRepository) -> N
     tester.execute("--dependency pendulum", inputs="\n".join(inputs))
 
     expected = """\
-[tool.poetry]
+[project]
 name = "my-package"
 version = "1.2.3"
 description = "This is a description"
-authors = ["Your Name <you@example.com>"]
-license = "MIT"
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
+license = {text = "MIT"}
 readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "~2.7 || ^3.6"
-pendulum = "^2.0.0"
+requires-python = ">=3.6"
+dependencies = [
+    "pendulum (>=2.0.0,<3.0.0)"
+]
 """
 
     assert expected in tester.io.fetch_output()
@@ -674,7 +724,7 @@ def test_predefined_and_interactive_dependencies(
         "This is a description",  # Description
         "n",  # Author
         "MIT",  # License
-        "~2.7 || ^3.6",  # Python
+        ">=3.6",  # Python
         "",  # Interactive packages
         "pyramid",  # Search for package
         "0",  # First option
@@ -687,21 +737,22 @@ def test_predefined_and_interactive_dependencies(
     tester.execute("--dependency pendulum", inputs="\n".join(inputs))
 
     expected = """\
-[tool.poetry]
+[project]
 name = "my-package"
 version = "1.2.3"
 description = "This is a description"
-authors = ["Your Name <you@example.com>"]
-license = "MIT"
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
+license = {text = "MIT"}
 readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "~2.7 || ^3.6"
+requires-python = ">=3.6"
+dependencies = [
+    "pendulum (>=2.0.0,<3.0.0)",
+    "pyramid (>=1.10,<2.0)"
+]
 """
-    output = tester.io.fetch_output()
-    assert expected in output
-    assert 'pendulum = "^2.0.0"' in output
-    assert 'pyramid = "^1.10"' in output
+    assert expected in tester.io.fetch_output()
 
 
 def test_predefined_dev_dependency(tester: CommandTester, repo: TestRepository) -> None:
@@ -713,7 +764,7 @@ def test_predefined_dev_dependency(tester: CommandTester, repo: TestRepository) 
         "This is a description",  # Description
         "n",  # Author
         "MIT",  # License
-        "~2.7 || ^3.6",  # Python
+        ">=3.6",  # Python
         "n",  # Interactive packages
         "n",  # Interactive dev packages
         "\n",  # Generate
@@ -722,16 +773,20 @@ def test_predefined_dev_dependency(tester: CommandTester, repo: TestRepository) 
     tester.execute("--dev-dependency pytest", inputs="\n".join(inputs))
 
     expected = """\
-[tool.poetry]
+[project]
 name = "my-package"
 version = "1.2.3"
 description = "This is a description"
-authors = ["Your Name <you@example.com>"]
-license = "MIT"
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
+license = {text = "MIT"}
 readme = "README.md"
+requires-python = ">=3.6"
+dependencies = [
+]
 
-[tool.poetry.dependencies]
-python = "~2.7 || ^3.6"
+[tool.poetry]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
@@ -752,7 +807,7 @@ def test_predefined_and_interactive_dev_dependencies(
         "This is a description",  # Description
         "n",  # Author
         "MIT",  # License
-        "~2.7 || ^3.6",  # Python
+        ">=3.6",  # Python
         "n",  # Interactive packages
         "",  # Interactive dev packages
         "pytest-requests",  # Search for package
@@ -765,16 +820,20 @@ def test_predefined_and_interactive_dev_dependencies(
     tester.execute("--dev-dependency pytest", inputs="\n".join(inputs))
 
     expected = """\
-[tool.poetry]
+[project]
 name = "my-package"
 version = "1.2.3"
 description = "This is a description"
-authors = ["Your Name <you@example.com>"]
-license = "MIT"
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
+license = {text = "MIT"}
 readme = "README.md"
+requires-python = ">=3.6"
+dependencies = [
+]
 
-[tool.poetry.dependencies]
-python = "~2.7 || ^3.6"
+[tool.poetry]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
@@ -803,7 +862,7 @@ def test_predefined_all_options(tester: CommandTester, repo: TestRepository) -> 
         "--name my-package "
         "--description 'This is a description' "
         "--author 'Foo Bar <foo@example.com>' "
-        "--python '^3.8' "
+        "--python '>=3.8' "
         "--license MIT "
         "--dependency pendulum "
         "--dev-dependency pytest",
@@ -811,17 +870,21 @@ def test_predefined_all_options(tester: CommandTester, repo: TestRepository) -> 
     )
 
     expected = """\
-[tool.poetry]
+[project]
 name = "my-package"
 version = "1.2.3"
 description = "This is a description"
-authors = ["Foo Bar <foo@example.com>"]
-license = "MIT"
+authors = [
+    {name = "Foo Bar",email = "foo@example.com"}
+]
+license = {text = "MIT"}
 readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "pendulum (>=2.0.0,<3.0.0)"
+]
 
-[tool.poetry.dependencies]
-python = "^3.8"
-pendulum = "^2.0.0"
+[tool.poetry]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
@@ -853,9 +916,11 @@ def test_init_existing_pyproject_simple(
 [tool.black]
 line-length = 88
 """
-    pyproject_file.write_text(existing_section)
+    pyproject_file.write_text(existing_section, encoding="utf-8")
     tester.execute(inputs=init_basic_inputs)
-    assert f"{existing_section}\n{init_basic_toml}" in pyproject_file.read_text()
+    assert f"{existing_section}\n{init_basic_toml}" in pyproject_file.read_text(
+        encoding="utf-8"
+    )
 
 
 @pytest.mark.parametrize("linesep", ["\n", "\r\n"])
@@ -871,10 +936,10 @@ def test_init_existing_pyproject_consistent_linesep(
 [tool.black]
 line-length = 88
 """.replace("\n", linesep)
-    with open(pyproject_file, "w", newline="") as f:
+    with open(pyproject_file, "w", newline="", encoding="utf-8") as f:
         f.write(existing_section)
     tester.execute(inputs=init_basic_inputs)
-    with open(pyproject_file, newline="") as f:
+    with open(pyproject_file, newline="", encoding="utf-8") as f:
         content = f.read()
     init_basic_toml = init_basic_toml.replace("\n", linesep)
     assert f"{existing_section}{linesep}{init_basic_toml}" in content
@@ -891,31 +956,35 @@ def test_init_non_interactive_existing_pyproject_add_dependency(
 [tool.black]
 line-length = 88
 """
-    pyproject_file.write_text(existing_section)
+    pyproject_file.write_text(existing_section, encoding="utf-8")
 
     repo.add_package(get_package("foo", "1.19.2"))
 
     tester.execute(
         "--author 'Your Name <you@example.com>' "
         "--name 'my-package' "
-        "--python '^3.6' "
+        "--python '>=3.6' "
         "--dependency foo",
         interactive=False,
     )
 
     expected = """\
-[tool.poetry]
+[project]
 name = "my-package"
 version = "0.1.0"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
 readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "^3.6"
-foo = "^1.19.2"
+requires-python = ">=3.6"
+dependencies = [
+    "foo (>=1.19.2,<2.0.0)"
+]
 """
-    assert f"{existing_section}\n{expected}" in pyproject_file.read_text()
+    assert f"{existing_section}\n{expected}" in pyproject_file.read_text(
+        encoding="utf-8"
+    )
 
 
 def test_init_existing_pyproject_with_build_system_fails(
@@ -927,13 +996,13 @@ def test_init_existing_pyproject_with_build_system_fails(
 requires = ["setuptools >= 40.6.0", "wheel"]
 build-backend = "setuptools.build_meta"
 """
-    pyproject_file.write_text(existing_section)
+    pyproject_file.write_text(existing_section, encoding="utf-8")
     tester.execute(inputs=init_basic_inputs)
     assert (
         tester.io.fetch_error().strip()
         == "A pyproject.toml file with a defined build-system already exists."
     )
-    assert existing_section in pyproject_file.read_text()
+    assert existing_section in pyproject_file.read_text(encoding="utf-8")
 
 
 @pytest.mark.parametrize(
@@ -1001,7 +1070,7 @@ def test_package_include(
                 "",  # Description
                 "poetry",  # Author
                 "",  # License
-                "^3.10",  # Python
+                ">=3.10",  # Python
                 "n",  # Interactive packages
                 "n",  # Interactive dev packages
                 "\n",  # Generate
@@ -1011,52 +1080,43 @@ def test_package_include(
 
     packages = ""
     if include and module_name(package_name) != include:
-        packages = f'packages = [{{include = "{include}"}}]\n'
+        packages = f'\n[tool.poetry]\npackages = [{{include = "{include}"}}]\n'
 
     expected = (
-        f"[tool.poetry]\n"
+        "[project]\n"
         f'name = "{package_name.replace(".", "-")}"\n'  # canonicalized
-        f'version = "0.1.0"\n'
-        f'description = ""\n'
-        f'authors = ["poetry"]\n'
-        f'readme = "README.md"\n'
-        f"{packages}"  # This line is optional. Thus no newline here.
-        f"\n"
-        f"[tool.poetry.dependencies]\n"
-        f'python = "^3.10"\n'
+        'version = "0.1.0"\n'
+        'description = ""\n'
+        "authors = [\n"
+        '    {name = "poetry"}\n'
+        "]\n"
+        'readme = "README.md"\n'
+        'requires-python = ">=3.10"\n'
+        "dependencies = [\n"
+        "]\n"
+        f"{packages}"  # This line is optional. Thus, no newline here.
     )
     assert expected in tester.io.fetch_output()
 
 
 @pytest.mark.parametrize(
-    ["prefer_active", "python"],
+    ["use_poetry_python", "python"],
     [
-        (True, "1.1"),
-        (False, f"{sys.version_info[0]}.{sys.version_info[1]}"),
+        (False, "1.1"),
+        (True, f"{sys.version_info[0]}.{sys.version_info[1]}"),
     ],
 )
-def test_respect_prefer_active_on_init(
-    prefer_active: bool,
+def test_respect_use_poetry_python_on_init(
+    use_poetry_python: bool,
     python: str,
     config: Config,
-    mocker: MockerFixture,
     tester: CommandTester,
     source_dir: Path,
+    mocked_python_register: MockedPythonRegister,
+    with_no_active_python: MagicMock,
 ) -> None:
-    from poetry.utils.env import GET_PYTHON_VERSION_ONELINER
-
-    orig_check_output = subprocess.check_output
-
-    def mock_check_output(cmd: str, *_: Any, **__: Any) -> str:
-        if GET_PYTHON_VERSION_ONELINER in cmd:
-            return "1.1.1"
-
-        result: str = orig_check_output(cmd, *_, **__)
-        return result
-
-    mocker.patch("subprocess.check_output", side_effect=mock_check_output)
-
-    config.config["virtualenvs"]["prefer-active-python"] = prefer_active
+    mocked_python_register(f"{python}.1", make_system=True)
+    config.config["virtualenvs"]["use-poetry-python"] = use_poetry_python
     pyproject_file = source_dir / "pyproject.toml"
 
     tester.execute(
@@ -1065,11 +1125,10 @@ def test_respect_prefer_active_on_init(
     )
 
     expected = f"""\
-[tool.poetry.dependencies]
-python = ">={python}"
+requires-python = ">={python}"
 """
 
-    assert expected in pyproject_file.read_text()
+    assert expected in pyproject_file.read_text(encoding="utf-8")
 
 
 def test_get_pool(mocker: MockerFixture, source_dir: Path) -> None:

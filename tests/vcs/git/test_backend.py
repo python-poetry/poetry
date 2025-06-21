@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from unittest.mock import MagicMock
+from typing import TYPE_CHECKING
+from typing import cast
 
 import pytest
 
@@ -16,12 +17,19 @@ from poetry.vcs.git.backend import is_revision_sha
 from poetry.vcs.git.backend import urlpathjoin
 
 
+if TYPE_CHECKING:
+    from pathlib import Path
+    from pytest_mock import MockerFixture
+
+    from tests.vcs.git.git_fixture import TempRepoFixture
+
+
 VALID_SHA = "c5c7624ef64f34d9f50c3b7e8118f7f652fddbbd"
 
 
 @pytest.fixture(autouse=True)
-def git_mock() -> Repo:
-    repo = MagicMock(spec=Repo)
+def repo_mock(mocker: MockerFixture) -> Repo:
+    repo = mocker.MagicMock(spec=Repo)
 
     repo.get_config.return_value.get.return_value = (
         b"https://github.com/python-poetry/poetry.git"
@@ -29,24 +37,27 @@ def git_mock() -> Repo:
 
     repo.head.return_value = MOCK_DEFAULT_GIT_REVISION.encode("utf-8")
 
+    # Mock object store for short SHA resolution
+    repo.object_store.iter_prefix.return_value = [b"abc123def456789abcdef"]
+
     # Clear any cache in the Git module
     _get_package_from_git.cache_clear()
 
-    return repo
+    return cast(Repo, repo)
 
 
 @pytest.fixture()
-def fetch_pack_result() -> MagicMock:
-    mock_fetch_pack_result = MagicMock(spec=FetchPackResult)
+def fetch_pack_result(mocker: MockerFixture) -> FetchPackResult:
+    mock_fetch_pack_result = mocker.MagicMock(spec=FetchPackResult)
     mock_fetch_pack_result.refs = {
-        b"refs/heads/main": b"abc123",
-        b"refs/tags/v1.0.0": b"def456",
-        annotated_tag(b"refs/tags/v1.0.0"): b"def456",
-        b"HEAD": b"abc123",
+        b"refs/heads/main": b"abc123def456789abcdef",
+        b"refs/tags/v1.0.0": b"def456abc123789abcdef",
+        annotated_tag(b"refs/tags/v1.0.0"): b"def456abc123789abcdef",
+        b"HEAD": b"abc123def456789abcdef",
     }
     mock_fetch_pack_result.symrefs = {b"HEAD": b"refs/heads/main"}
 
-    return mock_fetch_pack_result
+    return cast(FetchPackResult, mock_fetch_pack_result)
 
 
 def test_invalid_revision_sha() -> None:
@@ -89,19 +100,18 @@ def test_annotated_tag(tag: str | bytes) -> None:
     assert tag == b"my-tag^{}"
 
 
-def test_get_remote_url(git_mock: Repo) -> None:
-    repo = git_mock
-
-    assert Git.get_remote_url(repo) == "https://github.com/python-poetry/poetry.git"
-
-
-def test_get_revision(git_mock: Repo) -> None:
-    assert Git.get_revision(git_mock) == MOCK_DEFAULT_GIT_REVISION
+def test_get_remote_url(repo_mock: Repo) -> None:
+    assert (
+        Git.get_remote_url(repo_mock) == "https://github.com/python-poetry/poetry.git"
+    )
 
 
-def test_info(git_mock: Repo) -> None:
-    repo = git_mock
-    info = Git.info(repo)
+def test_get_revision(repo_mock: Repo) -> None:
+    assert Git.get_revision(repo_mock) == MOCK_DEFAULT_GIT_REVISION
+
+
+def test_info(repo_mock: Repo) -> None:
+    info = Git.info(repo_mock)
 
     assert info.origin == "https://github.com/python-poetry/poetry.git"
     assert (
@@ -132,42 +142,82 @@ def test_git_refspec() -> None:
 
 
 @pytest.mark.parametrize(
-    "refspec_params, expected_ref, expected_branch, expected_revision, expected_tag",
+    "refspec, expected_ref, expected_branch, expected_revision, expected_tag",
     [
-        ({"branch": "main"}, b"refs/heads/main", "main", None, None),
         (
-            {"revision": "v1.0.0"},
+            GitRefSpec(branch="main"),
+            b"refs/heads/main",
+            "main",
+            None,
+            None,
+        ),
+        (
+            GitRefSpec(revision="v1.0.0"),
             annotated_tag(b"refs/tags/v1.0.0"),
             None,
             None,
             "v1.0.0",
         ),
-        ({"revision": "abc"}, b"refs/heads/main", None, "abc", None),
+        (
+            GitRefSpec(revision="abc123"),
+            b"refs/heads/main",
+            None,
+            "abc123def456789abcdef",
+            None,
+        ),
+        (
+            GitRefSpec(revision="abc123def456789abcdef"),
+            b"refs/heads/main",
+            None,
+            "abc123def456789abcdef",
+            None,
+        ),
+        (
+            GitRefSpec(branch="v1.0.0"),
+            annotated_tag(b"refs/tags/v1.0.0"),
+            None,
+            None,
+            "v1.0.0",
+        ),
     ],
 )
 def test_git_ref_spec_resolve(
     fetch_pack_result: FetchPackResult,
-    refspec_params: dict[str, str | bytes | None],
+    repo_mock: Repo,
+    refspec: GitRefSpec,
     expected_ref: bytes,
-    expected_branch: str,
-    expected_revision: str,
-    expected_tag: str,
+    expected_branch: str | None,
+    expected_revision: str | None,
+    expected_tag: str | None,
 ) -> None:
-    """
-    Parameterized test for GitRefSpec resolve with different parameters.
-
-    Args:
-        fetch_pack_result (FetchPackResult): The mocked FetchPackResult object.
-        refspec_params (dict): Parameters for creating GitRefSpec.
-        expected_ref (bytes): The expected resolved ref.
-        expected_branch (str): The expected resolved branch.
-        expected_revision (str): The expected resolved revision.
-        expected_tag (str): The expected resolved tag.
-    """
-    refspec = GitRefSpec(**refspec_params)
-    refspec.resolve(fetch_pack_result)
+    refspec.resolve(fetch_pack_result, repo_mock)
 
     assert refspec.ref == expected_ref
     assert refspec.branch == expected_branch
     assert refspec.revision == expected_revision
     assert refspec.tag == expected_tag
+
+
+@pytest.mark.skip_git_mock
+def test_clone_success(tmp_path: Path, temp_repo: TempRepoFixture) -> None:
+    source_root_dir = tmp_path / "test-repo"
+    Git.clone(
+        url=temp_repo.path.as_uri(), source_root=source_root_dir, name="clone-test"
+    )
+
+    target_dir = source_root_dir / "clone-test"
+    assert (target_dir / ".git").is_dir()
+
+
+@pytest.mark.skip_git_mock
+def test_short_sha_not_in_head(tmp_path: Path, temp_repo: TempRepoFixture) -> None:
+    source_root_dir = tmp_path / "test-repo"
+    Git.clone(
+        url=temp_repo.path.as_uri(),
+        revision=temp_repo.middle_commit[:6],
+        name="clone-test",
+        source_root=source_root_dir,
+    )
+
+    target_dir = source_root_dir / "clone-test"
+    assert (target_dir / ".git").is_dir()

@@ -1,0 +1,96 @@
+{
+  "info": {
+    "author": "Sébastien Eustace",
+    "author_email": "sebastien@eustace.io",
+    "bugtrack_url": null,
+    "classifiers": [
+      "License :: OSI Approved :: MIT License",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Programming Language :: Python :: 3.13",
+      "Programming Language :: Python :: 3.9",
+      "Topic :: Software Development :: Build Tools",
+      "Topic :: Software Development :: Libraries :: Python Modules"
+    ],
+    "description": "",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": null,
+    "home_page": null,
+    "keywords": "packaging, dependency, poetry",
+    "license": "MIT",
+    "license_expression": null,
+    "license_files": null,
+    "maintainer": "Arun Babu Neelicattu",
+    "maintainer_email": "arun.neelicattu@gmail.com",
+    "name": "poetry-core",
+    "package_url": "https://pypi.org/project/poetry-core/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/poetry-core/",
+    "project_urls": {
+      "Bug Tracker": "https://github.com/python-poetry/poetry/issues",
+      "Homepage": "https://github.com/python-poetry/poetry-core",
+      "Repository": "https://github.com/python-poetry/poetry-core"
+    },
+    "provides_extra": null,
+    "release_url": "https://pypi.org/project/poetry-core/2.0.1/",
+    "requires_dist": null,
+    "requires_python": "<4.0,>=3.9",
+    "summary": "Poetry PEP 517 Build Backend",
+    "version": "2.0.1",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 0,
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "a52cf4beef0de009e0a9a36c9e6962f5",
+        "sha256": "a3c7009536522cda4eb0fb3805c9dc935b5537f8727dd01efb9c15e51a17552b"
+      },
+      "downloads": -1,
+      "filename": "poetry_core-2.0.1-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "a52cf4beef0de009e0a9a36c9e6962f5",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": "<4.0,>=3.9",
+      "size": 544761,
+      "upload_time": "2025-01-11T18:34:58",
+      "upload_time_iso_8601": "2025-01-11T18:34:58.051401Z",
+      "url": "https://files.pythonhosted.org/packages/99/9e/b2d13aecfd3a7ea05e6eeddff7c450b8ff5233e5d0da834fbfd81b19acaf/poetry_core-2.0.1-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "1b1bb959cd760ac509de9b38ae67fc3b",
+        "sha256": "d2acdaec3b93dc1ab43adaeb0e9a8a6a6b3701c4535b5baab4b718ab12c8993c"
+      },
+      "downloads": -1,
+      "filename": "poetry_core-2.0.1.tar.gz",
+      "has_sig": false,
+      "md5_digest": "1b1bb959cd760ac509de9b38ae67fc3b",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": "<4.0,>=3.9",
+      "size": 355487,
+      "upload_time": "2025-01-11T18:35:01",
+      "upload_time_iso_8601": "2025-01-11T18:35:01.191422Z",
+      "url": "https://files.pythonhosted.org/packages/c4/f5/89d11008714e0a49cab9cba7cce89c66ea5a94f37cc6d283798cc1725fac/poetry_core-2.0.1.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

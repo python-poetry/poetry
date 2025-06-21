@@ -13,7 +13,7 @@ from poetry.utils.cache import FileCache
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from _pytest.monkeypatch import MonkeyPatch
+    from pytest import MonkeyPatch
 
     from tests.conftest import Config
 

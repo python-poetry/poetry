@@ -14,9 +14,9 @@ import requests
 
 from requests import codes
 
-from poetry.inspection.lazy_wheel import HTTPRangeRequestNotRespected
-from poetry.inspection.lazy_wheel import HTTPRangeRequestUnsupported
-from poetry.inspection.lazy_wheel import InvalidWheel
+from poetry.inspection.lazy_wheel import HTTPRangeRequestNotRespectedError
+from poetry.inspection.lazy_wheel import HTTPRangeRequestUnsupportedError
+from poetry.inspection.lazy_wheel import InvalidWheelError
 from poetry.inspection.lazy_wheel import LazyWheelUnsupportedError
 from poetry.inspection.lazy_wheel import metadata_from_wheel_url
 from tests.helpers import http_setup_redirect
@@ -377,7 +377,7 @@ def test_metadata_from_wheel_url_range_requests_not_supported_one_request(
 
     url = f"https://{domain}/poetry_core-1.5.0-py3-none-any.whl"
 
-    with pytest.raises(HTTPRangeRequestUnsupported):
+    with pytest.raises(HTTPRangeRequestUnsupportedError):
         metadata_from_wheel_url("poetry-core", url, requests.Session())
 
     latest_requests = http.latest_requests()
@@ -407,7 +407,7 @@ def test_metadata_from_wheel_url_range_requests_not_supported_two_requests(
 
     url = f"https://{domain}/poetry_core-1.5.0-py3-none-any.whl"
 
-    with pytest.raises(HTTPRangeRequestUnsupported):
+    with pytest.raises(HTTPRangeRequestUnsupportedError):
         metadata_from_wheel_url("poetry-core", url, requests.Session())
 
     latest_requests = http.latest_requests()
@@ -431,7 +431,7 @@ def test_metadata_from_wheel_url_range_requests_supported_but_not_respected(
 
     url = f"https://{domain}/poetry_core-1.5.0-py3-none-any.whl"
 
-    with pytest.raises(HTTPRangeRequestNotRespected):
+    with pytest.raises(HTTPRangeRequestNotRespectedError):
         metadata_from_wheel_url("poetry-core", url, requests.Session())
 
     latest_requests = http.latest_requests()
@@ -453,7 +453,7 @@ def test_metadata_from_wheel_url_invalid_wheel(
 
     url = f"https://{domain}/demo_missing_dist_info-0.1.0-py2.py3-none-any.whl"
 
-    with pytest.raises(InvalidWheel):
+    with pytest.raises(InvalidWheelError):
         metadata_from_wheel_url("demo-missing-dist-info", url, requests.Session())
 
     latest_requests = http.latest_requests()

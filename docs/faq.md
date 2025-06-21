@@ -14,7 +14,7 @@ menu:
 ### Why is the dependency resolution process slow?
 
 While the dependency resolver at the heart of Poetry is highly optimized and
-should be fast enough for most cases, with certain sets of dependencies
+should be fast enough for most cases, with certain sets of dependencies,
 it can take time to find a valid solution.
 
 This is due to the fact that not all libraries on PyPI have properly declared their metadata
@@ -22,9 +22,9 @@ and, as such, they are not available via the PyPI JSON API. At this point, Poetr
 but to download the packages and inspect them to get the necessary information. This is an expensive
 operation, both in bandwidth and time, which is why it seems this is a long process.
 
-At the moment there is no way around it. However, if you notice that Poetry
+At the moment, there is no way around it. However, if you notice that Poetry
 is downloading many versions of a single package, you can lessen the workload
-by constraining that one package in your pyproject.toml more narrowly. That way
+by constraining that one package in your pyproject.toml more narrowly. That way,
 Poetry does not have to sift through so many versions of it, which may speed up
 the locking process considerably in some cases.
 
@@ -40,7 +40,7 @@ Poetry uses "major.minor.micro" version identifiers as mentioned in
 
 Version bumps are done similar to Python's versioning:
 * A major version bump (incrementing the first number) is only done for breaking changes
-  if a deprecation cycle is not possible and many users have to perform some manual steps
+  if a deprecation cycle is not possible, and many users have to perform some manual steps
   to migrate from one version to the next one.
 * A minor version bump (incrementing the second number) may include new features as well
   as new deprecations and drop features deprecated in an earlier minor release.
@@ -64,22 +64,22 @@ Once a release of your package is published, you cannot tweak its dependencies a
 – you have to do a new release but the previous one stays broken.
 (Users can still work around the broken dependency by restricting it by themselves.)
 
-To avoid such issues you can define an upper bound on your constraints,
+To avoid such issues, you can define an upper bound on your constraints,
 which you can increase in a new release after testing that your package is compatible
 with the new major version of your dependency.
 
-For example instead of using `>=3.4` you can use `^3.4` which allows all versions `<4.0`.
+For example, instead of using `>=3.4` you can use `^3.4` which allows all versions `<4.0`.
 The `^` operator works very well with libraries following [semantic versioning](https://semver.org).
 
 However, when defining an upper bound, users of your package are not able to update
 a dependency beyond the upper bound even if it does not break anything
 and is fully compatible with your package.
-You have to release a new version of your package with an increased upper bound first.
+You have to release a new version of your package with an increased upper-bound first.
 
-If your package will be used as a library in other packages, it might be better to avoid
+If your package is used as a library in other packages, it might be better to avoid
 upper bounds and thus unnecessary dependency conflicts (unless you already know for sure
 that the next release of the dependency will break your package).
-If your package will be used as an application, it might be worth to define an upper bound.
+If your package is used as an application, it might be worth defining an upper bound.
 
 ### Is tox supported?
 
@@ -125,7 +125,7 @@ commands =
 ```
 
 `tox` will create an `sdist` package of the project and uses `pip` to install it in a fresh environment.
-Thus, dependencies are resolved by `pip` in the first place. But afterward we run Poetry,
+Thus, dependencies are resolved by `pip` in the first place. But afterward, we run Poetry,
  which will install the locked dependencies into the environment.
 
 #### Use case #3
@@ -171,7 +171,7 @@ dependencies specified in `poetry.lock` into [Nox](https://nox.thea.codes/en/sta
 ### I don't want Poetry to manage my virtual environments. Can I disable it?
 
 While Poetry automatically creates virtual environments to always work isolated
-from the global Python installation, there are rare scenarios where the use a Poetry managed
+from the global Python installation, there are rare scenarios where the use of a Poetry managed
 virtual environment is not possible or preferred.
 
 In this case, you can disable this feature by setting the `virtualenvs.create` setting to `false`:
@@ -189,7 +189,7 @@ The Poetry team strongly encourages the use of a virtual environment.
 
 ### Why is Poetry telling me that the current project's supported Python range is not compatible with one or more packages' Python requirements?
 
-Unlike `pip`, Poetry doesn't resolve for just the Python in the current environment. Instead it makes sure that a dependency
+Unlike `pip`, Poetry doesn't resolve for just the Python in the current environment. Instead, it makes sure that a dependency
 is resolvable within the given Python version range in `pyproject.toml`.
 
 Assume you have the following `pyproject.toml`:
@@ -200,23 +200,35 @@ python = "^3.7"
 ```
 
 This means your project aims to be compatible with any Python version >=3.7,<4.0. Whenever you try to add a dependency
-whose Python requirement doesn't match the whole range Poetry will tell you this, e.g.:
+whose Python requirement doesn't match the whole range, Poetry will tell you this, e.g.:
 
 ```
 The current project's supported Python range (>=3.7.0,<4.0.0) is not compatible with some of the required packages Python requirement:
-    - scipy requires Python >=3.7,<3.11, so it will not be satisfied for Python >=3.11,<4.0.0
+    - scipy requires Python >=3.7,<3.11, so it will not be installable for Python >=3.11,<4.0.0
 ```
 
 Usually you will want to match the supported Python range of your project with the upper bound of the failing dependency.
-Alternatively you can tell Poetry to install this dependency [only for a specific range of Python versions]({{< relref "dependency-specification#multiple-constraints-dependencies" >}}),
+Alternatively, you can tell Poetry to install this dependency [only for a specific range of Python versions]({{< relref "dependency-specification#multiple-constraints-dependencies" >}}),
 if you know that it's not needed in all versions.
+
+If you do not want to set an upper bound in the metadata when building your project,
+you can omit it in the `project` section and only set it in `tool.poetry.dependencies`:
+
+```toml
+[project]
+# ...
+requires-python = ">=3.7"  # used for metadata when building the project
+
+[tool.poetry.dependencies]
+python = ">=3.7,<3.11"  # used for locking dependencies
+```
 
 
 ### Why does Poetry enforce PEP 440 versions?
 
 This is done to be compliant with the broader Python ecosystem.
 
-For example, if Poetry builds a distribution for a project that uses a version that is not valid according to
+For example, if Poetry builds a distribution for a project that uses a version that is not valid, according to
 [PEP 440](https://peps.python.org/pep-0440), third party tools will be unable to parse the version correctly.
 
 
@@ -259,3 +271,166 @@ The two key options we are using here are `--no-root` (skips installing the proj
 Poetry's default HTTP request timeout is 15 seconds, the same as `pip`.
 Similar to `PIP_REQUESTS_TIMEOUT`, the **experimental** environment variable `POETRY_REQUESTS_TIMEOUT`
 can be set to alter this value.
+
+
+### How do I migrate an existing Poetry project using `tools.poetry` section to use the new `project` section (PEP 621)?
+
+{{% note %}}
+Poetry `>=2.0.0` should seamlessly support both `tools.poetry` section only configuration as well using the `project` section. This
+lets you decide when and if you would like to migrate to using the `project` section as [described by PyPA](https://packaging.python.org/en/latest/specifications/pyproject-toml/#declaring-project-metadata-the-project-table).
+
+See documentation on [the `pyproject.toml` file]({{< relref "pyproject" >}}), for information specific to Poetry.
+{{% /note %}}
+
+Due to the nature of this change some manual changes to your `pyproject.toml` file is unavoidable in order start using the `project` section. The following tabs
+show a transition example. If you wish to retain Poetry's richer [dependency specification]({{< relref "dependency-specification" >}}) syntax it is recommended that
+you use dynamic dependencies as described in the second tab below.
+
+{{< tabs tabTotal="3" tabID1="migrate-pep621-old" tabName1="Original" tabID2="migrate-pep621-new-dynamic" tabName2="Using Dynamic Dependencies" tabID3="migrate-pep621-new-static" tabName3="Using Static Dependencies">}}
+
+{{< tab tabID="migrate-pep621-old" >}}
+
+```toml
+[tool.poetry]
+name = "foobar"
+version = "0.1.0"
+description = ""
+authors = ["Baz Qux <baz.qux@example.com>"]
+readme = "README.md"
+packages = [{ include = "awesome", from = "src" }]
+include = [{ path = "tests", format = "sdist" }]
+homepage = "https://python-foobar.org/"
+repository = "https://github.com/python-foobar/foobar"
+documentation = "https://python-foobar.org/docs"
+keywords = ["packaging", "dependency", "foobar"]
+classifiers = [
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[tool.poetry.scripts]
+foobar = "foobar.console.application:main"
+
+[tool.poetry.dependencies]
+python = "^3.13"
+httpx = "^0.28.1"
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = ">=2.10"
+
+[tool.poetry.group.test.dependencies]
+pytest = ">=8.0"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+```
+
+{{< /tab >}}
+
+{{< tab tabID="migrate-pep621-new-static" >}}
+
+```toml
+[project]
+name = "foobar"
+version = "0.1.0"
+description = ""
+authors = [
+    { name = "Baz Qux", email = "baz.qux@example.com" }
+]
+readme = "README.md"
+requires-python = ">=3.13"
+keywords = ["packaging", "dependency", "foobar"]
+# classifiers property is dynamic because we want to create Python classifiers automatically
+# dependencies are dynamic because we want to keep Poetry's rich dependency definition format
+dynamic = ["classifiers", "dependencies"]
+
+[project.urls]
+homepage = "https://python-foobar.org/"
+repository = "https://github.com/python-foobar/foobar"
+documentation = "https://python-foobar.org/docs"
+
+[project.scripts]
+foobar = "foobar.console.application:main"
+
+[tool.poetry]
+requires-poetry = ">=2.0"
+packages = [{ include = "foobar", from = "src" }]
+include = [{ path = "tests", format = "sdist" }]
+classifiers = [
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[tool.poetry.dependencies]
+httpx = "^0.28.1"
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = ">=2.10"
+
+[tool.poetry.group.test.dependencies]
+pytest = ">=8.0"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+```
+
+{{< /tab >}}
+
+{{< tab tabID="migrate-pep621-new-static" >}}
+
+```toml
+[project]
+name = "foobar"
+version = "0.1.0"
+description = ""
+authors = [
+    { name = "Baz Qux", email = "baz.qux@example.com" }
+]
+readme = "README.md"
+requires-python = ">=3.13"
+keywords = ["packaging", "dependency", "foobar"]
+# classifiers property is dynamic because we want to create Python classifiers automatically
+dynamic = ["classifiers"]
+dependencies = [
+    "httpx (>=0.28.1,<0.29.0)"
+]
+
+[project.urls]
+homepage = "https://python-foobar.org/"
+repository = "https://github.com/python-foobar/foobar"
+documentation = "https://python-foobar.org/docs"
+
+[project.scripts]
+foobar = "foobar.console.application:main"
+
+[tool.poetry]
+requires-poetry = ">=2.0"
+packages = [{ include = "foobar", from = "src" }]
+include = [{ path = "tests", format = "sdist" }]
+classifiers = [
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = ">=2.10"
+
+[tool.poetry.group.test.dependencies]
+pytest = ">=8.0"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+```
+
+{{< /tab >}}
+
+{{< /tabs >}}
+
+{{% note %}}
+- The `classifiers` property is dynamic to allow Poetry to create and manage Python classifiers in accordance with supported Python version.
+- The `python` dependency, in this example was replaced with `project.requires-python`. However, note that if you need an upper bound on supported Python versions refer to the documentation [here]({{< relref "pyproject#requires-python" >}}).
+- The [`requires-poetry`]({{< relref "pyproject#requires-poetry" >}}) is added to the `tools.poetry` section.
+{{% /note %}}

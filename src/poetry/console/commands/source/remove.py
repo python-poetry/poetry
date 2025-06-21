@@ -25,8 +25,6 @@ class SourceRemoveCommand(Command):
     ]
 
     def handle(self) -> int:
-        from poetry.utils.source import source_to_table
-
         name = self.argument("name")
         lower_name = name.lower()
 
@@ -38,7 +36,7 @@ class SourceRemoveCommand(Command):
                 self.line(f"Removing source with name <c1>{source.name}</c1>.")
                 removed = True
                 continue
-            sources.append(source_to_table(source))
+            sources.append(source.to_toml_table())
 
         if not removed:
             self.line_error(

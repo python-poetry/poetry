@@ -167,9 +167,12 @@ def test_detect_corrupted_cache_key_file(
 
     # original content: 9999999999"value"
 
-    write_modes = {str: "w", bytes: "wb"}
-    with open(key1_path, write_modes[type(corrupt_payload)]) as f:
-        f.write(corrupt_payload)  # write corrupt data
+    if isinstance(corrupt_payload, str):
+        with open(key1_path, "w", encoding="utf-8") as f:
+            f.write(corrupt_payload)  # write corrupt data
+    else:
+        with open(key1_path, "wb") as f:
+            f.write(corrupt_payload)  # write corrupt data
 
     assert poetry_file_cache.get("key1") is None
 
@@ -333,7 +336,7 @@ def test_get_cached_archive_for_link_no_race_condition(
     def replace_file(_: str, dest: Path) -> None:
         dest.unlink(missing_ok=True)
         # write some data (so it takes a while) to provoke possible race conditions
-        dest.write_text("a" * 2**20)
+        dest.write_text("a" * 2**20, encoding="utf-8")
 
     download_mock = mocker.Mock(side_effect=replace_file)
 

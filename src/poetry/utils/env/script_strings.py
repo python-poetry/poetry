@@ -1,5 +1,29 @@
 from __future__ import annotations
 
+import packaging.tags
+
+
+GET_PLATFORMS = f"""
+import importlib.util
+import json
+import sys
+
+from pathlib import Path
+
+spec = importlib.util.spec_from_file_location(
+    "packaging", Path(r"{packaging.__file__}")
+)
+packaging = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = packaging
+
+spec = importlib.util.spec_from_file_location(
+    "packaging.tags", Path(r"{packaging.tags.__file__}")
+)
+packaging_tags = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(packaging_tags)
+
+print(json.dumps(list(packaging_tags.platform_tags())))
+"""
 
 GET_ENVIRONMENT_INFO = """\
 import json
@@ -61,6 +85,7 @@ env = {
         implementation_name, implementation_name
     ),
     "interpreter_version": interpreter_version(),
+    "sysconfig_platform": sysconfig.get_platform(),
 }
 
 print(json.dumps(env))
@@ -92,21 +117,20 @@ print(json.dumps(sys.path))
 
 GET_PATHS = """\
 import json
-import sysconfig
-
-print(json.dumps(sysconfig.get_paths()))
-"""
-
-GET_PATHS_FOR_GENERIC_ENVS = """\
-import json
 import site
 import sysconfig
 
 paths = sysconfig.get_paths().copy()
 
+paths["fallbacks"] = [
+    p for p in site.getsitepackages()
+    if p and p not in {paths.get("purelib"), paths.get("platlib")}
+]
+
 if site.check_enableusersite():
     paths["usersite"] = site.getusersitepackages()
-    paths["userbase"] = site.getuserbase()
+
+paths["userbase"] = site.getuserbase()
 
 print(json.dumps(paths))
 """

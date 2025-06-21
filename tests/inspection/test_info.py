@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import contextlib
 import shutil
+import uuid
 
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
-from typing import Iterator
 from zipfile import ZipFile
 
 import pytest
@@ -12,7 +13,7 @@ import pytest
 from build import BuildBackendException
 from build import ProjectBuilder
 from packaging.metadata import parse_email
-from pkginfo.distribution import NewMetadataVersion  # type: ignore[attr-defined]
+from pkginfo.distribution import NewMetadataVersion
 
 from poetry.inspection.info import PackageInfo
 from poetry.inspection.info import PackageInfoError
@@ -20,6 +21,7 @@ from poetry.utils.env import VirtualEnv
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from pathlib import Path
 
     from packaging.metadata import RawMetadata
@@ -60,7 +62,8 @@ def demo_setup(source_dir: Path) -> Path:
         "from setuptools import setup; "
         'setup(name="demo", '
         'version="0.1.0", '
-        'install_requires=["package"])'
+        'install_requires=["package"])',
+        encoding="utf-8",
     )
     return source_dir
 
@@ -77,7 +80,8 @@ def demo_setup_cfg(source_dir: Path) -> Path:
                 "[options]",
                 "install_requires = package",
             ]
-        )
+        ),
+        encoding="utf-8",
     )
     return source_dir
 
@@ -89,7 +93,8 @@ def demo_setup_complex(source_dir: Path) -> Path:
         "from setuptools import setup; "
         'setup(name="demo", '
         'version="0.1.0", '
-        'install_requires=[i for i in ["package"]])'
+        'install_requires=[i for i in ["package"]])',
+        encoding="utf-8",
     )
     return source_dir
 
@@ -97,7 +102,9 @@ def demo_setup_complex(source_dir: Path) -> Path:
 @pytest.fixture
 def demo_setup_complex_pep517_legacy(demo_setup_complex: Path) -> Path:
     pyproject_toml = demo_setup_complex / "pyproject.toml"
-    pyproject_toml.write_text('[build-system]\nrequires = ["setuptools", "wheel"]')
+    pyproject_toml.write_text(
+        '[build-system]\nrequires = ["setuptools", "wheel"]', encoding="utf-8"
+    )
     return demo_setup_complex
 
 
@@ -115,7 +122,8 @@ def demo_setup_complex_calls_script(
     [build-system]
     requires = ["setuptools", "scripts @ {scripts_dir.as_uri()}"]
     build-backend = "setuptools.build_meta:__legacy__"
-"""
+""",
+        encoding="utf-8",
     )
 
     setup_py = source_dir / "setup.py"
@@ -126,7 +134,8 @@ from setuptools import setup
 if subprocess.call(["exit-code"]) != 42:
     raise RuntimeError("Wrong exit code.")
 setup(name="demo", version="0.1.0", install_requires=[i for i in ["package"]])
-"""
+""",
+        encoding="utf-8",
     )
 
     return source_dir
@@ -194,12 +203,20 @@ def test_info_from_wheel(demo_wheel: Path) -> None:
     assert info._source_url == demo_wheel.resolve().as_posix()
 
 
-def test_info_from_wheel_metadata_version_23(fixture_dir: FixtureDirGetter) -> None:
+@pytest.mark.parametrize("version", ["23", "24", "299"])
+def test_info_from_wheel_metadata_versions(
+    version: str, fixture_dir: FixtureDirGetter
+) -> None:
     path = (
         fixture_dir("distributions")
-        / "demo_metadata_version_23-0.1.0-py2.py3-none-any.whl"
+        / f"demo_metadata_version_{version}-0.1.0-py2.py3-none-any.whl"
     )
-    info = PackageInfo.from_wheel(path)
+    with (
+        pytest.warns(NewMetadataVersion)
+        if version == "299"
+        else contextlib.nullcontext()
+    ):
+        info = PackageInfo.from_wheel(path)
     demo_check_info(info)
     assert info._source_type == "file"
     assert info._source_url == path.resolve().as_posix()
@@ -312,7 +329,8 @@ def test_info_no_setup_pkg_info_no_deps_dynamic(fixture_dir: FixtureDirGetter) -
 def test_info_setup_simple(mocker: MockerFixture, demo_setup: Path) -> None:
     spy = mocker.spy(VirtualEnv, "run")
     info = PackageInfo.from_directory(demo_setup)
-    assert spy.call_count == 4
+
+    assert spy.call_count == 6
     demo_check_info(info, requires_dist={"package"})
 
 
@@ -324,14 +342,23 @@ def test_info_setup_complex(demo_setup_complex: Path) -> None:
 def test_info_setup_complex_pep517_error(
     mocker: MockerFixture, demo_setup_complex: Path
 ) -> None:
+    output = uuid.uuid4().hex
     mocker.patch(
         "build.ProjectBuilder.from_isolated_env",
         autospec=True,
-        side_effect=BuildBackendException(CalledProcessError(1, "mock", output="mock")),
+        side_effect=BuildBackendException(CalledProcessError(1, "mock", output=output)),
     )
 
-    with pytest.raises(PackageInfoError):
+    with pytest.raises(PackageInfoError) as exc:
         PackageInfo.from_directory(demo_setup_complex)
+
+    text = str(exc.value)
+    assert "Command 'mock' returned non-zero exit status 1." in text
+    assert output in text
+    assert (
+        "This error originates from the build backend, and is likely not a problem with poetry"
+        in text
+    )
 
 
 def test_info_setup_complex_pep517_legacy(
@@ -359,7 +386,7 @@ def test_info_setup_missing_mandatory_should_trigger_pep517(
     setup += ")"
 
     setup_py = source_dir / "setup.py"
-    setup_py.write_text(setup)
+    setup_py.write_text(setup, encoding="utf-8")
 
     spy = mocker.spy(ProjectBuilder, "from_isolated_env")
     _ = PackageInfo.from_directory(source_dir)

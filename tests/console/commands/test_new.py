@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-import subprocess
 import sys
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Any
 
 import pytest
 
@@ -15,12 +13,14 @@ from poetry.factory import Factory
 
 
 if TYPE_CHECKING:
+    from unittest.mock import MagicMock
+
     from cleo.testers.command_tester import CommandTester
-    from pytest_mock import MockerFixture
 
     from poetry.config.config import Config
     from poetry.poetry import Poetry
     from tests.types import CommandTesterFactory
+    from tests.types import MockedPythonRegister
 
 
 @pytest.fixture
@@ -32,7 +32,7 @@ def verify_project_directory(
     path: Path,
     package_name: str,
     package_path: str | Path,
-    include_from: str | None = None,
+    is_flat: bool = False,
 ) -> Poetry:
     package_path = Path(package_path)
     assert path.is_dir()
@@ -49,15 +49,15 @@ def verify_project_directory(
     poetry = Factory().create_poetry(cwd=path)
     assert poetry.package.name == package_name
 
-    if include_from:
-        package_include = {
-            "include": package_path.relative_to(include_from).parts[0],
-            "from": include_from,
-        }
-    else:
+    if is_flat:
         package_include = {"include": package_path.parts[0]}
+    else:
+        package_include = {
+            "include": package_path.relative_to("src").parts[0],
+            "from": "src",
+        }
 
-    name = poetry.local_config.get("name", "")
+    name = poetry.package.name
     packages = poetry.local_config.get("packages")
 
     if not packages:
@@ -72,81 +72,87 @@ def verify_project_directory(
 @pytest.mark.parametrize(
     "options,directory,package_name,package_path,include_from",
     [
-        ([], "package", "package", "package", None),
-        (["--src"], "package", "package", "src/package", "src"),
+        (["--flat"], "package", "package", "package", None),
+        ([], "package", "package", "src/package", "src"),
         (
-            ["--name namespace.package"],
+            ["--flat", "--name namespace.package"],
             "namespace-package",
             "namespace-package",
             "namespace/package",
             None,
         ),
         (
-            ["--src", "--name namespace.package"],
+            ["--name namespace.package"],
             "namespace-package",
             "namespace-package",
             "src/namespace/package",
             "src",
         ),
         (
-            ["--name namespace.package_a"],
+            ["--flat", "--name namespace.package_a"],
             "namespace-package_a",
             "namespace-package-a",
             "namespace/package_a",
             None,
         ),
         (
-            ["--src", "--name namespace.package_a"],
+            ["--name namespace.package_a"],
             "namespace-package_a",
             "namespace-package-a",
             "src/namespace/package_a",
             "src",
         ),
         (
-            ["--name namespace_package"],
+            ["--flat", "--name namespace_package"],
             "namespace-package",
             "namespace-package",
             "namespace_package",
             None,
         ),
         (
-            ["--name namespace_package", "--src"],
+            ["--name namespace_package"],
             "namespace-package",
             "namespace-package",
             "src/namespace_package",
             "src",
         ),
         (
-            ["--name namespace.package"],
+            ["--flat", "--name namespace.package"],
             "package",
             "namespace-package",
             "namespace/package",
             None,
         ),
         (
-            ["--name namespace.package", "--src"],
+            ["--name namespace.package"],
             "package",
             "namespace-package",
             "src/namespace/package",
             "src",
         ),
         (
-            ["--name namespace.package"],
+            ["--name namespace.package", "--flat"],
             "package",
             "namespace-package",
             "namespace/package",
             None,
         ),
         (
-            ["--name namespace.package", "--src"],
+            ["--name namespace.package"],
             "package",
             "namespace-package",
             "src/namespace/package",
             "src",
         ),
-        ([], "namespace_package", "namespace-package", "namespace_package", None),
         (
-            ["--src", "--name namespace_package"],
+            ["--flat"],
+            "namespace_package",
+            "namespace-package",
+            "namespace_package",
+            None,
+        ),
+        (
+            ["--name namespace_package"],
             "namespace_package",
             "namespace-package",
             "src/namespace_package",
@@ -166,7 +172,7 @@ def test_command_new(
     path = tmp_path / directory
     options.append(str(path))
     tester.execute(" ".join(options))
-    verify_project_directory(path, package_name, package_path, include_from)
+    verify_project_directory(path, package_name, package_path, "--flat" in options)
 
 
 @pytest.mark.parametrize(("fmt",), [(None,), ("md",), ("rst",), ("adoc",), ("creole",)])
@@ -182,39 +188,30 @@ def test_command_new_with_readme(
 
     tester.execute(" ".join(options))
 
-    poetry = verify_project_directory(path, package, package, None)
-    assert poetry.local_config.get("readme") == f"README.{fmt or 'md'}"
+    poetry = verify_project_directory(path, package, Path("src") / package)
+    project_section = poetry.pyproject.data["project"]
+    assert isinstance(project_section, dict)
+    assert project_section["readme"] == f"README.{fmt or 'md'}"
 
 
 @pytest.mark.parametrize(
-    ["prefer_active", "python"],
+    ["use_poetry_python", "python"],
     [
-        (True, "1.1"),
-        (False, f"{sys.version_info[0]}.{sys.version_info[1]}"),
+        (False, "1.1"),
+        (True, f"{sys.version_info[0]}.{sys.version_info[1]}"),
     ],
 )
-def test_respect_prefer_active_on_new(
-    prefer_active: bool,
+def test_respect_use_poetry_python_on_new(
+    use_poetry_python: bool,
     python: str,
     config: Config,
-    mocker: MockerFixture,
     tester: CommandTester,
     tmp_path: Path,
+    mocked_python_register: MockedPythonRegister,
+    with_no_active_python: MagicMock,
 ) -> None:
-    from poetry.utils.env import GET_PYTHON_VERSION_ONELINER
-
-    orig_check_output = subprocess.check_output
-
-    def mock_check_output(cmd: str, *_: Any, **__: Any) -> str:
-        if GET_PYTHON_VERSION_ONELINER in cmd:
-            return "1.1.1"
-
-        output: str = orig_check_output(cmd, *_, **__)
-        return output
-
-    mocker.patch("subprocess.check_output", side_effect=mock_check_output)
-
-    config.config["virtualenvs"]["prefer-active-python"] = prefer_active
+    mocked_python_register(f"{python}.1", make_system=True)
+    config.config["virtualenvs"]["use-poetry-python"] = use_poetry_python
 
     package = "package"
     path = tmp_path / package
@@ -224,17 +221,16 @@ def test_respect_prefer_active_on_new(
     pyproject_file = path / "pyproject.toml"
 
     expected = f"""\
-[tool.poetry.dependencies]
-python = ">={python}"
+requires-python = ">={python}"
 """
 
-    assert expected in pyproject_file.read_text()
+    assert expected in pyproject_file.read_text(encoding="utf-8")
 
 
 def test_basic_interactive_new(
-    tester: CommandTester, tmp_path: Path, init_basic_inputs: str, init_basic_toml: str
+    tester: CommandTester, tmp_path: Path, init_basic_inputs: str, new_basic_toml: str
 ) -> None:
     path = tmp_path / "somepackage"
     tester.execute(f"--interactive {path.as_posix()}", inputs=init_basic_inputs)
-    verify_project_directory(path, "my-package", "my_package", None)
-    assert init_basic_toml in tester.io.fetch_output()
+    verify_project_directory(path, "my-package", "src/my_package")
+    assert new_basic_toml in tester.io.fetch_output()

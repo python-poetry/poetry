@@ -56,11 +56,10 @@ virtualenvs.create = true
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = true
 virtualenvs.options.no-pip = false
-virtualenvs.options.no-setuptools = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = "{cache-dir}/virtualenvs"  # /path/to/cache/directory/virtualenvs
-virtualenvs.prefer-active-python = false
 virtualenvs.prompt = "{project_name}-py{python_version}"
+virtualenvs.use-poetry-python = false
 ```
 
 ## Displaying a single configuration setting
@@ -115,6 +114,21 @@ This also works for secret settings, like credentials:
 export POETRY_HTTP_BASIC_MY_REPOSITORY_PASSWORD=secret
 ```
 
+## Migrate outdated configs
+
+If Poetry renames or remove config options it might be necessary to migrate explicit set options. This is possible
+by running:
+
+```bash
+poetry config --migrate
+```
+
+If you need to migrate a local config run:
+
+```bash
+poetry config --migrate --local
+```
+
 ## Default Directories
 
 Poetry uses the following default directories:
@@ -125,7 +139,7 @@ Poetry uses the following default directories:
 - Windows: `%APPDATA%\pypoetry`
 - macOS: `~/Library/Application Support/pypoetry`
 
-You can override the Config directory by setting the `POETRY_CONFIG_DIR` environment variable.
+You can override the config directory by setting the `POETRY_CONFIG_DIR` environment variable.
 
 ### Data Directory
 
@@ -133,7 +147,7 @@ You can override the Config directory by setting the `POETRY_CONFIG_DIR` environ
 - Windows: `%APPDATA%\pypoetry`
 - macOS: `~/Library/Application Support/pypoetry`
 
-You can override the Data directory by setting the `POETRY_DATA_DIR` or `POETRY_HOME` environment variables. If `POETRY_HOME` is set, it will be given higher priority.
+You can override the data directory by setting the `POETRY_DATA_DIR` or `POETRY_HOME` environment variables. If `POETRY_HOME` is set, it will be given higher priority.
 
 ### Cache Directory
 
@@ -141,7 +155,7 @@ You can override the Data directory by setting the `POETRY_DATA_DIR` or `POETRY_
 - Windows: `%LOCALAPPDATA%\pypoetry`
 - macOS: `~/Library/Caches/pypoetry`
 
-You can override the Cache directory by setting the `POETRY_CACHE_DIR` environment variable.
+You can override the cache directory by setting the `POETRY_CACHE_DIR` environment variable.
 
 ## Available settings
 
@@ -159,21 +173,20 @@ Defaults to one of the following directories:
 - Windows: `C:\Users\<username>\AppData\Local\pypoetry\Cache`
 - Unix:    `~/.cache/pypoetry`
 
-### `experimental.system-git-client`
+### `data-dir`
 
-**Type**: `boolean`
+**Type**: `string`
 
-**Default**: `false`
+**Environment Variable**: `POETRY_DATA_DIR`
 
-**Environment Variable**: `POETRY_EXPERIMENTAL_SYSTEM_GIT_CLIENT`
+The path to the data directory used by Poetry.
 
-*Introduced in 1.2.0*
+- Linux: `$XDG_DATA_HOME/pypoetry` or `~/.local/share/pypoetry`
+- Windows: `%APPDATA%\pypoetry`
+- macOS: `~/Library/Application Support/pypoetry`
 
-Use system git client backend for git related tasks.
-
-Poetry uses `dulwich` by default for git related tasks to not rely on the availability of a git client.
-
-If you encounter any problems with it, set to `true` to use the system git backend.
+You can override the data directory by setting the `POETRY_DATA_DIR` or `POETRY_HOME` environment variables. If
+`POETRY_HOME` is set, it will be given higher priority.
 
 ### `installer.max-workers`
 
@@ -195,21 +208,6 @@ the number of maximum workers is still limited at `number_of_cores + 4`.
 {{% note %}}
 This configuration is ignored when `installer.parallel` is set to `false`.
 {{% /note %}}
-
-### `installer.modern-installation`
-
-**Type**: `boolean`
-
-**Default**: `true`
-
-**Environment Variable**: `POETRY_INSTALLER_MODERN_INSTALLATION`
-
-*Introduced in 1.4.0*
-
-Use a more modern and faster method for package installation.
-
-If this causes issues, you can disable it by setting it to `false` and report the problems
-you encounter on the [issue tracker](https://github.com/python-poetry/poetry/issues).
 
 ### `installer.no-binary`
 
@@ -266,7 +264,7 @@ across all your projects if incorrectly set.
 
 **Environment Variable**: `POETRY_INSTALLER_ONLY_BINARY`
 
-*Introduced in 1.9.0*
+*Introduced in 2.0.0*
 
 When set, this configuration allows users to enforce the use of binary distribution format for all, none or
 specific packages.
@@ -288,6 +286,89 @@ values, usage instructions and warnings.
 
 Use parallel execution when using the new (`>=1.1.0`) installer.
 
+### `installer.build-config-settings.<package-name>`
+
+**Type**: `Serialised JSON with string or list of string properties`
+
+**Default**: `None`
+
+**Environment Variable**: `POETRY_INSTALLER_BUILD_CONFIG_SETTINGS_<package-name>`
+
+*Introduced in 2.1.0*
+
+{{% warning %}}
+This is an **experimental** configuration and can be subject to changes in upcoming releases until it is considered
+stable.
+{{% /warning %}}
+
+Configure [PEP 517 config settings](https://peps.python.org/pep-0517/#config-settings) to be passed to a package's
+build backend if it has to be built from a directory or vcs source; or a source distribution during installation.
+
+This is only used when a compatible binary distribution (wheel) is not available for a package. This can be used along
+with [`installer.no-binary`]({{< relref "configuration#installerno-binary" >}}) option to force a build with these
+configurations when a dependency of your project with the specified name is being installed.
+
+{{% note %}}
+Poetry does not offer a similar option in the `pyproject.toml` file as these are, in majority of cases, not universal
+and vary depending on the target installation environment.
+
+If you want to use a project specific configuration it is recommended that this configuration be set locally, in your
+project's `poetry.toml` file.
+
+```bash
+poetry config --local installer.build-config-settings.grpcio \
+  '{"CC": "gcc", "--global-option": ["--some-global-option"], "--build-option": ["--build-option1", "--build-option2"]}'
+```
+
+If you want to modify a single key, you can do, by setting the same key again.
+
+```bash
+poetry config --local installer.build-config-settings.grpcio \
+  '{"CC": "g++"}'
+```
+
+{{% /note %}}
+
+### `requests.max-retries`
+
+**Type**: `int`
+
+**Default**: `0`
+
+**Environment Variable**: `POETRY_REQUESTS_MAX_RETRIES`
+
+*Introduced in 2.0.0*
+
+Set the maximum number of retries in an unstable network.
+This setting has no effect if the server does not support HTTP range requests.
+
+### `installer.re-resolve`
+
+**Type**: `boolean`
+
+**Default**: `true`
+
+**Environment Variable**: `POETRY_INSTALLER_RE_RESOLVE`
+
+*Introduced in 2.0.0*
+
+If the config option is _not_ set and the lock file is at least version 2.1
+(created by Poetry 2.0 or above), the installer will not re-resolve dependencies
+but evaluate the locked markers to decide which of the locked dependencies have to
+be installed into the target environment.
+
+### `python.installation-dir`
+
+**Type**: `string`
+
+**Default**: `{data-dir}/python`
+
+**Environment Variable**: `POETRY_PYTHON_INSTALLATION_DIR`
+
+*Introduced in 2.1.0*
+
+The directory in which Poetry managed Python versions are installed to.
+
 ### `solver.lazy-wheel`
 
 **Type**: `boolean`
@@ -301,9 +382,27 @@ Use parallel execution when using the new (`>=1.1.0`) installer.
 Do not download entire wheels to extract metadata but use
 [HTTP range requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests)
 to only download the METADATA files of wheels.
-Especially with slow network connections this setting can speed up dependency resolution significantly.
+Especially with slow network connections, this setting can speed up dependency resolution significantly.
 If the cache has already been filled or the server does not support HTTP range requests,
 this setting makes no difference.
+
+### `system-git-client`
+
+**Type**: `boolean`
+
+**Default**: `false`
+
+**Environment Variable**: `POETRY_SYSTEM_GIT_CLIENT`
+
+*Renamed to `system-git-client` in 2.0.0*
+
+*Introduced in 1.2.0 as `experimental.system-git-client`*
+
+Use system git client backend for git related tasks.
+
+Poetry uses `dulwich` by default for git related tasks to not rely on the availability of a git client.
+
+If you encounter any problems with it, set to `true` to use the system git backend.
 
 ### `virtualenvs.create`
 
@@ -391,34 +490,9 @@ Poetry, for its internal operations, uses the `pip` wheel embedded in the `virtu
 in Poetry's runtime environment. If a user runs `poetry run pip` when this option is set to `true`, the `pip` the
 embedded instance of `pip` is used.
 
-You can safely set this, along with `no-setuptools`, to `true`, if you desire a virtual environment with no additional
-packages. This is desirable for production environments.
+You can safely set this to `true`, if you desire a virtual environment with no additional packages.
+This is desirable for production environments.
 {{% /note %}}
-
-### `virtualenvs.options.no-setuptools`
-
-**Type**: `boolean`
-
-**Default**: `false`
-
-**Environment Variable**: `POETRY_VIRTUALENVS_OPTIONS_NO_SETUPTOOLS`
-
-*Introduced in 1.2.0*
-
-If set to `true` the `--no-setuptools` parameter is passed to `virtualenv` on creation of the virtual environment. This
-means when a new virtual environment is created, `setuptools` will not be installed in the environment. Poetry, for its
-internal operations, does not require `setuptools` and this can safely be set to `true`.
-
-For environments using python 3.12 or later, `virtualenv` defaults to not
-installing `setuptools` when creating a virtual environment.
-In such environments this poetry configuration option therefore has no effect:
-`setuptools` is not installed either way.
-If your project relies on `setuptools`, you should declare it as a dependency.
-
-{{% warning %}}
-Some development tools like IDEs, make an assumption that `setuptools` (and other) packages are always present and
-available within a virtual environment. This can cause some features in these tools to not work as expected.
-{{% /warning %}}
 
 ### `virtualenvs.options.system-site-packages`
 
@@ -445,19 +519,6 @@ Directory where virtual environments will be created.
 This setting controls the global virtual environment storage path. It most likely will not be useful at the local level. To store virtual environments in the project root, see `virtualenvs.in-project`.
 {{% /note %}}
 
-### `virtualenvs.prefer-active-python` (experimental)
-
-**Type**: `boolean`
-
-**Default**: `false`
-
-**Environment Variable**: `POETRY_VIRTUALENVS_PREFER_ACTIVE_PYTHON`
-
-*Introduced in 1.2.0*
-
-Use currently activated Python version to create a new virtual environment.
-If set to `false`, Python version used during Poetry installation is used.
-
 ### `virtualenvs.prompt`
 
 **Type**: `string`
@@ -471,6 +532,19 @@ If set to `false`, Python version used during Poetry installation is used.
 Format string defining the prompt to be displayed when the virtual environment is activated.
 The variables `project_name` and `python_version` are available for formatting.
 
+### `virtualenvs.use-poetry-python`
+
+**Type**: `boolean`
+
+**Default**: `false`
+
+**Environment Variable**: `POETRY_VIRTUALENVS_USE_POETRY_PYTHON`
+
+*Introduced in 2.0.0*
+
+By default, Poetry will use the activated Python version to create a new virtual environment.
+If set to `true`, the Python version used during Poetry installation is used.
+
 ### `repositories.<name>.url`
 
 **Type**: `string`
@@ -481,7 +555,7 @@ Set the repository URL for `<name>`.
 
 See [Publishable Repositories]({{< relref "repositories#publishable-repositories" >}}) for more information.
 
-### `http-basic.<name>.[username|password]`:
+### `http-basic.<name>.[username|password]`
 
 **Type**: `string`
 
@@ -491,7 +565,7 @@ Set repository credentials (`username` and `password`) for `<name>`.
 See [Repositories - Configuring credentials]({{< relref "repositories#configuring-credentials" >}})
 for more information.
 
-### `pypi-token.<name>`:
+### `pypi-token.<name>`
 
 **Type**: `string`
 
@@ -501,7 +575,7 @@ Set repository credentials (using an API token) for `<name>`.
 See [Repositories - Configuring credentials]({{< relref "repositories#configuring-credentials" >}})
 for more information.
 
-### `certificates.<name>.cert`:
+### `certificates.<name>.cert`
 
 **Type**: `string | boolean`
 
@@ -514,7 +588,7 @@ for more information.
 This configuration can be set to `false`, if TLS certificate verification should be skipped for this
 repository.
 
-### `certificates.<name>.client-cert`:
+### `certificates.<name>.client-cert`
 
 **Type**: `string`
 
@@ -524,7 +598,7 @@ Set client certificate for repository `<name>`.
 See [Repositories - Configuring credentials - Custom certificate authority]({{< relref "repositories#custom-certificate-authority-and-mutual-tls-authentication" >}})
 for more information.
 
-### `keyring.enabled`:
+### `keyring.enabled`
 
 **Type**: `boolean`
 

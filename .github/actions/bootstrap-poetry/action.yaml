@@ -8,9 +8,6 @@ inputs:
   python-latest:
     description: Use an uncached Python if a newer match is available
     default: 'false'
-  python-prereleases:
-    description: Allow usage of pre-release Python versions
-    default: 'false'
   poetry-spec:
     description: pip-compatible installation specification to use for Poetry
     default: 'poetry'
@@ -26,23 +23,28 @@ outputs:
 runs:
   using: composite
   steps:
-    - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
       id: setup-python
       if: inputs.python-version != 'default'
       with:
         python-version: ${{ inputs.python-version }}
         check-latest: ${{ inputs.python-latest == 'true' }}
-        allow-prereleases: ${{ inputs.python-prereleases == 'true' }}
+        allow-prereleases: true
         update-environment: false
 
-    - run: >
-        pipx install \
-          ${{ inputs.python-version != 'default' && format('--python "{0}"', steps.setup-python.outputs.python-path) || '' }} \
-          '${{ inputs.poetry-spec }}'
+    - run: pipx install ${PYTHON_PATH:+--python "$PYTHON_PATH"} "${POETRY_SPEC}"
       shell: bash
+      env:
+        PYTHON_PATH: ${{ inputs.python-version != 'default' && steps.setup-python.outputs.python-path || '' }}
+        POETRY_SPEC: ${{ inputs.poetry-spec }}
 
     # Enable handling long path names (+260 char) on the Windows platform
     # https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file#maximum-path-length-limitation
     - run: git config --system core.longpaths true
       if: runner.os == 'Windows'
       shell: pwsh
+
+    # Use Poetry Python for virtual environments
+    # (Otherwise, the system Python will be used per default instead of the Python version we just installed)
+    - run: poetry config virtualenvs.use-poetry-python true
+      shell: bash

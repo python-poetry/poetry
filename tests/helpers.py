@@ -8,6 +8,8 @@ import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import keyring
+
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
 from poetry.core.vcs.git import ParsedUrl
@@ -18,18 +20,20 @@ from poetry.factory import Factory
 from poetry.installation.executor import Executor
 from poetry.packages import Locker
 from poetry.repositories import Repository
-from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.utils._compat import metadata
+from poetry.utils.password_manager import PoetryKeyring
 
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from collections.abc import Mapping
     from typing import Any
-    from typing import Mapping
 
     import httpretty
 
     from httpretty.core import HTTPrettyRequest
+    from keyring.backend import KeyringBackend
     from poetry.core.constraints.version import Version
     from poetry.core.packages.dependency import Dependency
     from pytest_mock import MockerFixture
@@ -113,7 +117,8 @@ def mock_clone(
     if not source_root:
         source_root = Path(Config.create().get("cache-dir")) / "src"
 
-    dest = source_root / path
+    assert parsed.name is not None
+    dest = source_root / parsed.name
     dest.mkdir(parents=True, exist_ok=True)
 
     copy_path(folder, dest)
@@ -121,6 +126,9 @@ def mock_clone(
 
 
 class TestExecutor(Executor):
+    # class name begins 'Test': tell pytest that it does not contain testcases.
+    __test__ = False
+
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
@@ -215,7 +223,7 @@ class TestRepository(Repository):
     def find_packages(self, dependency: Dependency) -> list[Package]:
         packages = super().find_packages(dependency)
         if len(packages) == 0:
-            raise PackageNotFound(f"Package [{dependency.name}] not found.")
+            raise PackageNotFoundError(f"Package [{dependency.name}] not found.")
 
         return packages
 
@@ -269,10 +277,15 @@ def mock_metadata_entry_points(
     name: str = "my-plugin",
     dist: metadata.Distribution | None = None,
 ) -> None:
+    def patched_entry_points(*args: Any, **kwargs: Any) -> list[metadata.EntryPoint]:
+        if "group" in kwargs and kwargs["group"] != getattr(cls, "group", None):
+            return []
+        return [make_entry_point_from_plugin(name, cls, dist)]
+
     mocker.patch.object(
         metadata,
         "entry_points",
-        return_value=[make_entry_point_from_plugin(name, cls, dist)],
+        side_effect=patched_entry_points,
     )
 
 
@@ -352,3 +365,15 @@ def with_working_directory(source: Path, target: Path | None = None) -> Iterator
 
     with switch_working_directory(target or source, remove=use_copy) as path:
         yield path
+
+
+def set_keyring_backend(backend: KeyringBackend) -> None:
+    """Clears availability cache and sets the specified keyring backend."""
+    PoetryKeyring.is_available.cache_clear()
+    keyring.set_keyring(backend)
+
+
+def pbs_installer_supported_arch(architecture: str) -> bool:
+    # Based on pbs_installer._versions and pbs_installer._utils.ARCH_MAPPING
+    supported_archs = ["arm64", "aarch64", "amd64", "x86_64", "i686", "x86"]
+    return architecture.lower() in supported_archs

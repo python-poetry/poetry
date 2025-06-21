@@ -8,6 +8,8 @@ from typing import Any
 
 from poetry.config.config import Config
 from poetry.config.config import PackageFilterPolicy
+from poetry.console.exceptions import ConsoleMessage
+from poetry.console.exceptions import PoetryRuntimeError
 from poetry.repositories.http_repository import HTTPRepository
 from poetry.utils.helpers import get_highest_priority_hash_type
 from poetry.utils.wheel import Wheel
@@ -48,7 +50,16 @@ class Chooser:
         Return the url of the selected archive for a given package.
         """
         links = []
+
+        # these are used only for providing insightful errors to the user
+        unsupported_wheels = set()
+        links_seen = 0
+        wheels_skipped = 0
+        sdists_skipped = 0
+
         for link in self._get_links(package):
+            links_seen += 1
+
             if link.is_wheel:
                 if not self._no_binary_policy.allows(package.name):
                     logger.debug(
@@ -57,6 +68,7 @@ class Chooser:
                         link.filename,
                         package.name,
                     )
+                    wheels_skipped += 1
                     continue
 
                 if not Wheel(link.filename).is_supported_by_environment(self._env):
@@ -65,6 +77,7 @@ class Chooser:
                         " environment",
                         link.filename,
                     )
+                    unsupported_wheels.add(link.filename)
                     continue
 
             if link.ext in {".egg", ".exe", ".msi", ".rpm", ".srpm"}:
@@ -78,17 +91,88 @@ class Chooser:
                     link.filename,
                     package.name,
                 )
+                sdists_skipped += 1
                 continue
 
             links.append(link)
 
         if not links:
-            raise RuntimeError(f"Unable to find installation candidates for {package}")
+            raise self._no_links_found_error(
+                package, links_seen, wheels_skipped, sdists_skipped, unsupported_wheels
+            )
 
         # Get the best link
         chosen = max(links, key=lambda link: self._sort_key(package, link))
 
         return chosen
+
+    def _no_links_found_error(
+        self,
+        package: Package,
+        links_seen: int,
+        wheels_skipped: int,
+        sdists_skipped: int,
+        unsupported_wheels: set[str],
+    ) -> PoetryRuntimeError:
+        messages = []
+        info = (
+            f"This is likely not a Poetry issue.\n\n"
+            f"  - {links_seen} candidate(s) were identified for the package\n"
+        )
+
+        if wheels_skipped > 0:
+            info += f"  - {wheels_skipped} wheel(s) were skipped due to your <c1>installer.no-binary</> policy\n"
+
+        if sdists_skipped > 0:
+            info += f"  - {sdists_skipped} source distribution(s) were skipped due to your <c1>installer.only-binary</> policy\n"
+
+        if unsupported_wheels:
+            info += (
+                f"  - {len(unsupported_wheels)} wheel(s) were skipped as your project's environment does not support "
+                f"the identified abi tags\n"
+            )
+
+        messages.append(ConsoleMessage(info.strip()))
+
+        if unsupported_wheels:
+            messages += [
+                ConsoleMessage(
+                    "The following wheel(s) were skipped as the current project environment does not support them "
+                    "due to abi compatibility issues.",
+                    debug=True,
+                ),
+                ConsoleMessage("\n".join(unsupported_wheels), debug=True)
+                .indent("  - ")
+                .wrap("warning"),
+                ConsoleMessage(
+                    "If you would like to see the supported tags in your project environment, you can execute "
+                    "the following command:\n\n"
+                    "    <c1>poetry debug tags</>",
+                    debug=True,
+                ),
+            ]
+
+        source_hint = ""
+        if package.source_type and package.source_reference:
+            source_hint += f" ({package.source_reference})"
+
+        messages.append(
+            ConsoleMessage(
+                f"Make sure the lockfile is up-to-date. You can try one of the following;\n\n"
+                f"    1. <b>Regenerate lockfile: </><fg=yellow>poetry lock --no-cache --regenerate</>\n"
+                f"    2. <b>Update package     : </><fg=yellow>poetry update --no-cache {package.name}</>\n\n"
+                f"If neither works, please first check to verify that the {package.name} has published wheels "
+                f"available from your configured source{source_hint} that are compatible with your environment"
+                f"- ie. operating system, architecture (x86_64, arm64 etc.), python interpreter."
+            )
+            .make_section("Solutions")
+            .wrap("info")
+        )
+
+        return PoetryRuntimeError(
+            reason=f"Unable to find installation candidates for {package}",
+            messages=messages,
+        )
 
     def _get_links(self, package: Package) -> list[Link]:
         if package.source_type:
@@ -134,11 +218,28 @@ class Chooser:
             selected_links.append(link)
 
         if links and not selected_links:
-            links_str = ", ".join(f"{link}({h})" for link, h in skipped)
-            raise RuntimeError(
-                f"Retrieved digests for links {links_str} not in poetry.lock"
-                f" metadata {locked_hashes}"
-            )
+            reason = f"Downloaded distributions for <b>{package.pretty_name} ({package.pretty_version})</> did not match any known checksums in your lock file."
+            link_hashes = "\n".join(f"  - {link}({h})" for link, h in skipped)
+            known_hashes = "\n".join(f"  - {h}" for h in locked_hashes)
+            messages = [
+                ConsoleMessage(
+                    "<options=bold>Causes:</>\n"
+                    "  - invalid or corrupt cache either during locking or installation\n"
+                    "  - network interruptions or errors causing corrupted downloads\n\n"
+                    "<b>Solutions:</>\n"
+                    "  1. Try running your command again using the <c1>--no-cache</> global option enabled.\n"
+                    "  2. Try regenerating your lock file using (<c1>poetry lock --no-cache --regenerate</>).\n\n"
+                    "If any of those solutions worked, you will have to clear your caches using (<c1>poetry cache clear --all CACHE_NAME</>)."
+                ),
+                ConsoleMessage(
+                    f"Poetry retrieved the following links:\n"
+                    f"{link_hashes}\n\n"
+                    f"The lockfile contained only the following hashes:\n"
+                    f"{known_hashes}",
+                    debug=True,
+                ),
+            ]
+            raise PoetryRuntimeError(reason, messages)
 
         return selected_links
 

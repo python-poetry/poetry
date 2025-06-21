@@ -25,8 +25,6 @@ def get_extra_package_names(
         in the `extras` section of `poetry.lock`.
     :param extra_names: A list of strings specifying names of extra groups to resolve.
     """
-    from packaging.utils import canonicalize_name
-
     if not extra_names:
         return set()
 
@@ -37,7 +35,7 @@ def get_extra_package_names(
     # extras.
     seen_package_names = set()
     stack = [
-        canonicalize_name(extra_package_name)
+        extra_package_name
         for extra_name in extra_names
         for extra_package_name in extras.get(extra_name, ())
     ]

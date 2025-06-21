@@ -4,10 +4,11 @@ from collections import defaultdict
 from typing import TYPE_CHECKING
 
 from cleo.helpers import option
-from poetry.core.packages.dependency_group import MAIN_GROUP
+from packaging.utils import NormalizedName
+from packaging.utils import canonicalize_name
 
 from poetry.console.commands.command import Command
-from poetry.console.exceptions import GroupNotFound
+from poetry.console.exceptions import GroupNotFoundError
 
 
 if TYPE_CHECKING:
@@ -71,7 +72,7 @@ class GroupCommand(Command):
         return self.non_optional_groups
 
     @property
-    def activated_groups(self) -> set[str]:
+    def activated_groups(self) -> set[NormalizedName]:
         groups = {}
 
         for key in {"with", "without", "only"}:
@@ -80,19 +81,13 @@ class GroupCommand(Command):
                 for groups in self.option(key, "")
                 for group in groups.split(",")
             }
-        self._validate_group_options(groups)
 
-        for opt, new, group in [
-            ("no-dev", "only", MAIN_GROUP),
-            ("dev", "with", "dev"),
-        ]:
-            if self.io.input.has_option(opt) and self.option(opt):
-                self.line_error(
-                    f"<warning>The `<fg=yellow;options=bold>--{opt}</>` option is"
-                    f" deprecated, use the `<fg=yellow;options=bold>--{new} {group}</>`"
-                    " notation instead.</warning>"
-                )
-                groups[new].add(group)
+        if self.option("all-groups"):
+            groups["with"] = self.poetry.package.dependency_group_names(
+                include_optional=True
+            )
+
+        self._validate_group_options(groups)
 
         if groups["only"] and (groups["with"] or groups["without"]):
             self.line_error(
@@ -102,9 +97,17 @@ class GroupCommand(Command):
                 "</warning>"
             )
 
-        return groups["only"] or self.default_groups.union(groups["with"]).difference(
-            groups["without"]
-        )
+        # Normalize after validating so that original names are printed
+        # in case of an error.
+        norm_groups = {
+            key: {canonicalize_name(group) for group in key_groups}
+            for key, key_groups in groups.items()
+        }
+        norm_default_groups = {canonicalize_name(name) for name in self.default_groups}
+
+        return norm_groups["only"] or norm_default_groups.union(
+            norm_groups["with"]
+        ).difference(norm_groups["without"])
 
     def project_with_activated_groups_only(self) -> ProjectPackage:
         return self.poetry.package.with_dependency_groups(
@@ -128,4 +131,4 @@ class GroupCommand(Command):
                     for opt in sorted(invalid_options[group])
                 )
                 message_parts.append(f"{group} (via {opts})")
-            raise GroupNotFound(f"Group(s) not found: {', '.join(message_parts)}")
+            raise GroupNotFoundError(f"Group(s) not found: {', '.join(message_parts)}")

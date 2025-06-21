@@ -22,13 +22,18 @@ defaults:
   run:
     shell: bash
 
+env:
+  PYTHONWARNDEFAULTENCODING: 'true'
+
 jobs:
   mypy:
     name: mypy
     runs-on: ${{ inputs.runner }}
     if: inputs.run-mypy
     steps:
-      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
       - uses: ./.github/actions/bootstrap-poetry
         id: bootstrap-poetry
@@ -37,7 +42,7 @@ jobs:
 
       - uses: ./.github/actions/poetry-install
 
-      - uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+      - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
           path: .mypy_cache
           key: mypy-${{ runner.os }}-py${{ steps.bootstrap-poetry.outputs.python-version }}-${{ hashFiles('pyproject.toml', 'poetry.lock') }}
@@ -52,7 +57,9 @@ jobs:
     runs-on: ${{ inputs.runner }}
     if: inputs.run-pytest
     steps:
-      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
       - uses: ./.github/actions/bootstrap-poetry
         with:
@@ -74,26 +81,58 @@ jobs:
     runs-on: ${{ inputs.runner }}
     if: inputs.run-pytest-export
     steps:
-      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          path: poetry
 
-      - uses: ./.github/actions/bootstrap-poetry
+      - uses: ./poetry/.github/actions/bootstrap-poetry
         with:
           python-version: ${{ inputs.python-version }}
 
-      - uses: ./.github/actions/poetry-install
-        with:
-          args: --with github-actions
+      - name: Get poetry-plugin-export version
+        run: |
+          PLUGIN_VERSION=$(curl -s https://pypi.org/pypi/poetry-plugin-export/json | jq -r ".info.version")
+          echo "Found version ${PLUGIN_VERSION}"
+          echo version=${PLUGIN_VERSION} >> $GITHUB_OUTPUT
+        id: poetry-plugin-export-version
 
-      - run: poetry run pip list --format json | jq -r '.[] | "\(.name)=\(.version)"' >> $GITHUB_OUTPUT
-        id: package-versions
-
-      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+      - name: Check out poetry-plugin-export
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
+          persist-credentials: false
           path: poetry-plugin-export
           repository: python-poetry/poetry-plugin-export
-          ref: refs/tags/${{ steps.package-versions.outputs.poetry-plugin-export }}
+          # use main for now because of poetry-core#826
+          # ref: refs/tags/${{ steps.poetry-plugin-export-version.outputs.version }}
 
-      - run: poetry run -C .. pytest -v
-        working-directory: ./poetry-plugin-export
+      - name: Use local poetry
+        working-directory: poetry-plugin-export
+        # Replace the python version to avoid conflicts
+        # if the plugin still supports a wider range than Poetry itself.
+        run: |
+          perl -pi -e 's/^python =.*$/python = "~'"${PYTHON_VERSION}"'"/' pyproject.toml
+          poetry remove --lock poetry-core  # use whatever poetry uses
+          poetry add --lock --group dev ../poetry
+        env:
+          PYTHON_VERSION: ${{ inputs.python-version }}
 
-      - run: git -C poetry-plugin-export diff --exit-code --stat HEAD
+      # This step can be removed after having released a poetry-plugin-export version
+      # that has cffi>=1.17.0 in its lock file.
+      - name: Force more recent cffi (workaround for Python 3.13)
+        working-directory: poetry-plugin-export
+        run: poetry update --lock cffi
+
+      - name: Install
+        working-directory: poetry-plugin-export
+        run: poetry install
+
+      - name: Run tests
+        working-directory: poetry-plugin-export
+        run: poetry run pytest -v
+
+      - name: Check for clean working tree
+        working-directory: poetry-plugin-export
+        run: |
+          git checkout -- pyproject.toml poetry.lock
+          git diff --exit-code --stat HEAD

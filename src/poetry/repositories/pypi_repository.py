@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import logging
 
 from typing import TYPE_CHECKING
@@ -9,11 +10,13 @@ import requests
 import requests.adapters
 
 from cachecontrol.controller import logger as cache_control_logger
+from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
-from poetry.core.version.exceptions import InvalidVersion
+from poetry.core.version.exceptions import InvalidVersionError
+from poetry.core.version.requirements import InvalidRequirementError
 
-from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.repositories.http_repository import HTTPRepository
 from poetry.repositories.link_sources.json import SimpleJsonPage
 from poetry.repositories.parsers.pypi_search_parser import SearchResultParser
@@ -29,6 +32,8 @@ if TYPE_CHECKING:
     from poetry.core.constraints.version import Version
     from poetry.core.constraints.version import VersionConstraint
 
+    from poetry.config.config import Config
+
 SUPPORTED_PACKAGE_TYPES = {"sdist", "bdist_wheel"}
 
 
@@ -36,13 +41,16 @@ class PyPiRepository(HTTPRepository):
     def __init__(
         self,
         url: str = "https://pypi.org/",
+        *,
+        config: Config | None = None,
         disable_cache: bool = False,
-        fallback: bool = True,
         pool_size: int = requests.adapters.DEFAULT_POOLSIZE,
+        fallback: bool = True,
     ) -> None:
         super().__init__(
             "PyPI",
             url.rstrip("/") + "/simple/",
+            config=config,
             disable_cache=disable_cache,
             pool_size=pool_size,
         )
@@ -50,7 +58,7 @@ class PyPiRepository(HTTPRepository):
         self._base_url = url
         self._fallback = fallback
 
-    def search(self, query: str) -> list[Package]:
+    def search(self, query: str | list[str]) -> list[Package]:
         results = []
 
         response = requests.get(
@@ -64,12 +72,24 @@ class PyPiRepository(HTTPRepository):
                 package = Package(result.name, result.version)
                 package.description = result.description.strip()
                 results.append(package)
-            except InvalidVersion:
+            except InvalidVersionError:
                 self._log(
                     f'Unable to parse version "{result.version}" for the'
                     f" {result.name} package, skipping",
                     level="debug",
                 )
+
+        if not results:
+            # in cases like PyPI search might not be available, we fallback to explicit searches
+            # to allow for a nicer ux rather than finding nothing at all
+            # see: https://discuss.python.org/t/fastly-interfering-with-pypi-search/73597/6
+            #
+            tokens = query if isinstance(query, list) else [query]
+            for token in tokens:
+                with contextlib.suppress(InvalidRequirementError):
+                    results.extend(
+                        self.find_packages(Dependency.create_from_pep_508(token))
+                    )
 
         return results
 
@@ -90,7 +110,7 @@ class PyPiRepository(HTTPRepository):
         """
         try:
             json_page = self.get_page(name)
-        except PackageNotFound:
+        except PackageNotFoundError:
             self._log(f"No packages found for {name}", level="debug")
             return []
 
@@ -106,7 +126,7 @@ class PyPiRepository(HTTPRepository):
         headers = {"Accept": "application/vnd.pypi.simple.v1+json"}
         info = self._get(f"simple/{name}/", headers=headers)
         if info is None:
-            raise PackageNotFound(f"Package [{name}] not found.")
+            raise PackageNotFoundError(f"Package [{name}] not found.")
 
         return info
 
@@ -132,7 +152,7 @@ class PyPiRepository(HTTPRepository):
 
         json_data = self._get(f"pypi/{name}/{version}/json")
         if json_data is None:
-            raise PackageNotFound(f"Package [{name}] not found.")
+            raise PackageNotFoundError(f"Package [{name}] not found.")
 
         info = json_data["info"]
 
@@ -174,7 +194,7 @@ class PyPiRepository(HTTPRepository):
             # dependencies by introspecting packages.
             page = self.get_page(name)
             links = list(page.links_for_version(name, version))
-            info = self._get_info_from_links(links)
+            info = self._get_info_from_links(links, ignore_yanked=not data.yanked)
 
             data.requires_dist = info.requires_dist
 

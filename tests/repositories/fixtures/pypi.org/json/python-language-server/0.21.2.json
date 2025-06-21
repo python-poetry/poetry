@@ -17,6 +17,8 @@
     "home_page": "https://github.com/palantir/python-language-server",
     "keywords": "",
     "license": "",
+    "license_expression": null,
+    "license_files": null,
     "maintainer": "",
     "maintainer_email": "",
     "name": "python-language-server",

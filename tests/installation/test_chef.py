@@ -69,7 +69,7 @@ def test_prepare_directory(
     chef = Chef(
         artifact_cache, EnvManager.get_system_env(), Factory.create_pool(config)
     )
-    archive = fixture_dir("simple_project").resolve()
+    archive = fixture_dir("simple_project_legacy").resolve()
 
     wheel = chef.prepare(archive)
 
@@ -111,7 +111,7 @@ def test_prepare_directory_editable(
     chef = Chef(
         artifact_cache, EnvManager.get_system_env(), Factory.create_pool(config)
     )
-    archive = fixture_dir("simple_project").resolve()
+    archive = fixture_dir("simple_project_legacy").resolve()
 
     wheel = chef.prepare(archive, editable=True)
 

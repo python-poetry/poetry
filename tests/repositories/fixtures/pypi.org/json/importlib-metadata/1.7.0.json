@@ -24,6 +24,8 @@
     "home_page": "http://importlib-metadata.readthedocs.io/",
     "keywords": "",
     "license": "Apache Software License",
+    "license_expression": null,
+    "license_files": null,
     "maintainer": "",
     "maintainer_email": "",
     "name": "importlib-metadata",

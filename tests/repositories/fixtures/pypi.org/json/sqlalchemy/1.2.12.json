@@ -27,6 +27,8 @@
     "home_page": "http://www.sqlalchemy.org",
     "keywords": "",
     "license": "MIT License",
+    "license_expression": null,
+    "license_files": null,
     "maintainer": "",
     "maintainer_email": "",
     "name": "SQLAlchemy",

@@ -280,8 +280,8 @@ def test_adding_a_plugin_can_update_poetry_dependencies_if_needed(
     tester: CommandTester,
     repo: TestRepository,
     installed: TestRepository,
+    poetry_package: Package,
 ) -> None:
-    poetry_package = Package("poetry", "1.2.0")
     poetry_package.add_dependency(Factory.create_dependency("tomlkit", "^0.7.0"))
 
     plugin_package = Package("poetry-plugin", "1.2.3")

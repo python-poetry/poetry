@@ -1,16 +1,21 @@
 from __future__ import annotations
 
+import importlib.metadata
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 
 from packaging.utils import canonicalize_name
+from poetry.core.constraints.version import Version
 from poetry.core.utils.helpers import module_name
+from poetry.core.utils.patterns import AUTHOR_REGEX
 from tomlkit import inline_table
 from tomlkit import loads
 from tomlkit import table
 from tomlkit.toml_document import TOMLDocument
 
+from poetry.factory import Factory
 from poetry.pyproject.toml import PyProjectTOML
 
 
@@ -21,22 +26,34 @@ if TYPE_CHECKING:
 
 
 POETRY_DEFAULT = """\
-[tool.poetry]
+[project]
 name = ""
 version = ""
 description = ""
-authors = []
-license = ""
+authors = [
+]
+license = {}
 readme = ""
-packages = []
+requires-python = ""
+dependencies = [
+]
 
-[tool.poetry.dependencies]
+[tool.poetry]
+packages = []
 
 [tool.poetry.group.dev.dependencies]
 """
 
-BUILD_SYSTEM_MIN_VERSION: str | None = None
-BUILD_SYSTEM_MAX_VERSION: str | None = None
+poetry_core_version = Version.parse(importlib.metadata.version("poetry-core"))
+
+BUILD_SYSTEM_MIN_VERSION: str | None = Version.from_parts(
+    major=poetry_core_version.major,
+    minor=poetry_core_version.minor if poetry_core_version.major == 0 else 0,
+    patch=poetry_core_version.patch
+    if (poetry_core_version.major, poetry_core_version.minor) == (0, 0)
+    else 0,
+).to_string()
+BUILD_SYSTEM_MAX_VERSION: str | None = poetry_core_version.next_breaking().to_string()
 
 
 class Layout:
@@ -48,7 +65,7 @@ class Layout:
         readme_format: str = "md",
         author: str | None = None,
         license: str | None = None,
-        python: str = "*",
+        python: str | None = None,
         dependencies: Mapping[str, str | Mapping[str, Any]] | None = None,
         dev_dependencies: Mapping[str, str | Mapping[str, Any]] | None = None,
     ) -> None:
@@ -117,33 +134,48 @@ class Layout:
         if with_pyproject:
             self._write_poetry(path)
 
-    def generate_poetry_content(self) -> TOMLDocument:
+    def generate_project_content(self) -> TOMLDocument:
         template = POETRY_DEFAULT
 
         content: dict[str, Any] = loads(template)
 
-        poetry_content = content["tool"]["poetry"]
-        poetry_content["name"] = self._project
-        poetry_content["version"] = self._version
-        poetry_content["description"] = self._description
-        poetry_content["authors"].append(self._author)
+        project_content = content["project"]
+        project_content["name"] = self._project
+        project_content["version"] = self._version
+        project_content["description"] = self._description
+        m = AUTHOR_REGEX.match(self._author)
+        if m is None:
+            # This should not happen because author has been validated before.
+            raise ValueError(f"Invalid author: {self._author}")
+        else:
+            author = {"name": m.group("name")}
+            if email := m.group("email"):
+                author["email"] = email
+            project_content["authors"].append(author)
 
         if self._license:
-            poetry_content["license"] = self._license
+            project_content["license"]["text"] = self._license
         else:
-            poetry_content.remove("license")
+            project_content.remove("license")
 
-        poetry_content["readme"] = f"README.{self._readme_format}"
+        project_content["readme"] = f"README.{self._readme_format}"
+
+        if self._python:
+            project_content["requires-python"] = self._python
+        else:
+            project_content.remove("requires-python")
+
+        for dep_name, dep_constraint in self._dependencies.items():
+            dependency = Factory.create_dependency(dep_name, dep_constraint)
+            project_content["dependencies"].append(dependency.to_pep_508())
+
+        poetry_content = content["tool"]["poetry"]
+
         packages = self.get_package_include()
         if packages:
             poetry_content["packages"].append(packages)
         else:
             poetry_content.remove("packages")
-
-        poetry_content["dependencies"]["python"] = self._python
-
-        for dep_name, dep_constraint in self._dependencies.items():
-            poetry_content["dependencies"][dep_name] = dep_constraint
 
         if self._dev_dependencies:
             for dep_name, dep_constraint in self._dev_dependencies.items():
@@ -152,6 +184,9 @@ class Layout:
                 )
         else:
             del poetry_content["group"]
+
+        if not poetry_content:
+            del content["tool"]["poetry"]
 
         # Add build system
         build_system = table()
@@ -194,7 +229,7 @@ class Layout:
 
     def _write_poetry(self, path: Path) -> None:
         pyproject = PyProjectTOML(path / "pyproject.toml")
-        content = self.generate_poetry_content()
+        content = self.generate_project_content()
         for section, item in content.items():
             pyproject.data.append(section, item)
         pyproject.save()

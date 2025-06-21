@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import shutil
 import sys
+import uuid
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -53,6 +54,38 @@ def test_isolated_env_install_success(pool: RepositoryPool) -> None:
         env.install({"poetry-core"})
         assert InstalledRepository.load(venv).find_packages(
             get_dependency("poetry-core")
+        )
+
+
+def test_isolated_env_install_discards_requirements_not_needed_by_env(
+    pool: RepositoryPool,
+) -> None:
+    with ephemeral_environment(Path(sys.executable)) as venv:
+        env = IsolatedEnv(venv, pool)
+        assert not InstalledRepository.load(venv).find_packages(
+            get_dependency("poetry-core")
+        )
+
+        venv_python_version = venv.get_marker_env().get("python_version")
+        package_one = uuid.uuid4().hex
+        package_two = uuid.uuid4().hex
+
+        env.install(
+            {
+                f"poetry-core; python_version=='{venv_python_version}'",
+                f"{package_one}>=1.0.0; python_version=='0.0'",
+                f"{package_two}>=2.0.0; platform_system=='Mirrors'",
+            }
+        )
+        assert InstalledRepository.load(venv).find_packages(
+            get_dependency("poetry-core")
+        )
+        assert not InstalledRepository.load(venv).find_packages(
+            get_dependency(package_one)
+        )
+
+        assert not InstalledRepository.load(venv).find_packages(
+            get_dependency(package_two)
         )
 
 

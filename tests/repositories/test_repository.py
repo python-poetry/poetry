@@ -10,11 +10,44 @@ from tests.helpers import get_package
 
 
 @pytest.fixture(scope="module")
-def black_repository() -> Repository:
+def repository() -> Repository:
     repo = Repository("repo")
+
+    # latest version pre-release
+    repo.add_package(get_package("foo", "1.0"))
+    repo.add_package(get_package("foo", "2.0.b0"))
+
+    # latest version yanked
     repo.add_package(get_package("black", "19.10b0"))
     repo.add_package(get_package("black", "21.11b0", yanked="reason"))
+
     return repo
+
+
+@pytest.mark.parametrize(
+    ("allow_prereleases", "constraint", "expected"),
+    [
+        (None, ">=1.0", ["1.0"]),
+        (False, ">=1.0", ["1.0"]),
+        (True, ">=1.0", ["1.0", "2.0.b0"]),
+        (None, ">=1.5", ["2.0.b0"]),
+        (False, ">=1.5", []),
+        (True, ">=1.5", ["2.0.b0"]),
+    ],
+)
+def test_find_packages_allow_prereleases(
+    repository: Repository,
+    allow_prereleases: bool | None,
+    constraint: str,
+    expected: list[str],
+) -> None:
+    packages = repository.find_packages(
+        Factory.create_dependency(
+            "foo", {"version": constraint, "allow-prereleases": allow_prereleases}
+        )
+    )
+
+    assert [str(p.version) for p in packages] == expected
 
 
 @pytest.mark.parametrize(
@@ -29,11 +62,9 @@ def black_repository() -> Repository:
     ],
 )
 def test_find_packages_yanked(
-    black_repository: Repository, constraint: str, expected: list[str]
+    repository: Repository, constraint: str, expected: list[str]
 ) -> None:
-    packages = black_repository.find_packages(
-        Factory.create_dependency("black", constraint)
-    )
+    packages = repository.find_packages(Factory.create_dependency("black", constraint))
 
     assert [str(p.version) for p in packages] == expected
 
@@ -46,13 +77,13 @@ def test_find_packages_yanked(
     ],
 )
 def test_package_yanked(
-    black_repository: Repository,
+    repository: Repository,
     package_name: str,
     version: str,
     yanked: bool,
     yanked_reason: str,
 ) -> None:
-    package = black_repository.package(package_name, Version.parse(version))
+    package = repository.package(package_name, Version.parse(version))
 
     assert package.name == package_name
     assert str(package.version) == version

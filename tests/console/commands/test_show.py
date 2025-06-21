@@ -206,12 +206,6 @@ cachy 0.1.0 Cachy package
 """,
         ),
         (
-            "--no-dev",
-            """\
-cachy 0.1.0 Cachy package
-""",
-        ),
-        (
             "--with time --without test",
             """\
 cachy    0.1.0 Cachy package
@@ -295,11 +289,11 @@ def test_show_basic_with_installed_packages_single(
 
     tester.execute("cachy")
 
-    assert [
+    assert [line.strip() for line in tester.io.fetch_output().splitlines()] == [
         "name         : cachy",
         "version      : 0.1.0",
         "description  : Cachy package",
-    ] == [line.strip() for line in tester.io.fetch_output().splitlines()]
+    ]
 
 
 def test_show_basic_with_installed_packages_single_canonicalized(
@@ -337,11 +331,11 @@ def test_show_basic_with_installed_packages_single_canonicalized(
 
     tester.execute("Foo_Bar")
 
-    assert [
+    assert [line.strip() for line in tester.io.fetch_output().splitlines()] == [
         "name         : foo-bar",
         "version      : 0.1.0",
         "description  : Foobar package",
-    ] == [line.strip() for line in tester.io.fetch_output().splitlines()]
+    ]
 
 
 def test_show_basic_with_not_installed_packages_non_decorated(
@@ -1981,10 +1975,70 @@ dependencies
  - msgpack-python >=0.5 <0.6
 
 required by
- - pendulum >=0.2.0 <0.3.0
+ - pendulum requires >=0.2.0 <0.3.0
 """.splitlines()
     actual = [line.rstrip() for line in tester.io.fetch_output().splitlines()]
     assert actual == expected
+
+
+@pytest.mark.parametrize("truncate", [False, True])
+def test_show_entire_description_truncate(
+    tester: CommandTester, poetry: Poetry, installed: Repository, truncate: str
+) -> None:
+    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.2.0"))
+
+    cachy2 = get_package("cachy", "0.2.0")
+    cachy2.add_dependency(Factory.create_dependency("msgpack-python", ">=0.5 <0.6"))
+
+    installed.add_package(cachy2)
+
+    assert isinstance(poetry.locker, TestLocker)
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.2.0",
+                    "description": "This is a veeeeeeeery long description that might be truncated.",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {"msgpack-python": ">=0.5 <0.6"},
+                },
+                {
+                    "name": "msgpack-python",
+                    "version": "0.5.1",
+                    "description": "",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "files": {"cachy": [], "msgpack-python": []},
+            },
+        }
+    )
+
+    tester.execute("" if truncate else "--no-truncate")
+
+    if truncate:
+        expected = """\
+cachy              0.2.0 This is a veeeeeeeery long description that might ...
+msgpack-python (!) 0.5.1"""
+    else:
+        expected = """\
+cachy              0.2.0 This is a veeeeeeeery long description that might be truncated.
+msgpack-python (!) 0.5.1"""
+
+    assert tester.io.fetch_output().strip() == expected
 
 
 def test_show_errors_without_lock_file(tester: CommandTester, poetry: Poetry) -> None:

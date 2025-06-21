@@ -104,17 +104,32 @@ poetry publish --build --repository foo-pub
 
 ## Package Sources
 
-By default, Poetry is configured to use the Python ecosystem's canonical package index
+By default, if you have not configured any primary source,
+Poetry is configured to use the Python ecosystem's canonical package index
 [PyPI](https://pypi.org).
+You can alter this behavior and exclusively look up packages only from the configured
+package sources by adding at least one primary source.
 
 {{% note %}}
 
-With the exception of the implicitly configured source for [PyPI](https://pypi.org) named `pypi`,
+Except for the implicitly configured source for [PyPI](https://pypi.org) named `PyPI`,
 package sources are local to a project and must be configured within the project's
 [`pyproject.toml`]({{< relref "pyproject" >}}) file. This is **not** the same configuration used
 when publishing a package.
 
 {{% /note %}}
+
+{{% warning %}}
+
+Package sources are a Poetry-specific feature and **not** included in
+[core metadata](https://packaging.python.org/en/latest/specifications/core-metadata/) produced by
+the poetry-core build backend.
+
+Consequently, when a Poetry project is e.g., installed using Pip (as a normal package or in editable
+mode), package sources will be ignored and the dependencies in question downloaded from PyPI by
+default.
+
+{{% /warning %}}
 
 ### Project Configuration
 
@@ -142,55 +157,16 @@ url = "https://foo.bar/simple/"
 priority = "primary"
 ```
 
-If `priority` is undefined, the source is considered a primary source that takes precedence over PyPI, secondary, supplemental and explicit sources.
+If `priority` is undefined, the source is considered a primary source,
+which disables the implicit PyPI source and takes precedence over supplemental sources.
 
 Package sources are considered in the following order:
-1. [default source](#default-package-source-deprecated) (DEPRECATED),
-2. [primary sources](#primary-package-sources),
-3. implicit PyPI (unless disabled by another [primary source](#primary-package-sources), [default source](#default-package-source-deprecated) or configured explicitly),
-4. [secondary sources](#secondary-package-sources-deprecated) (DEPRECATED),
-5. [supplemental sources](#supplemental-package-sources).
+1. [primary sources](#primary-package-sources) or implicit PyPI (if there are no primary sources),
+2. [supplemental sources](#supplemental-package-sources).
 
 [Explicit sources](#explicit-package-sources) are considered only for packages that explicitly [indicate their source](#package-source-constraint).
 
 Within each priority class, package sources are considered in order of appearance in `pyproject.toml`.
-
-{{% note %}}
-
-If you want to change the priority of [PyPI](https://pypi.org), you can set it explicitly, e.g.
-
-```bash
-poetry source add --priority=primary PyPI
-```
-
-If you prefer to disable PyPI completely,
-just add a [primary source](#primary-package-sources)
-or configure PyPI as [explicit source](#explicit-package-sources).
-
-{{% /note %}}
-
-
-#### Default Package Source (DEPRECATED)
-
-*Deprecated in 1.8.0*
-
-{{% warning %}}
-
-Configuring a default package source is deprecated because it is the same
-as the topmost [primary source](#primary-package-sources).
-Just configure a primary package source and put it first in the list of package sources.
-
-{{% /warning %}}
-
-By default, if you have not configured any primary source,
-Poetry will configure [PyPI](https://pypi.org) as the package source for your project.
-You can alter this behaviour and exclusively look up packages only from the configured
-package sources by adding at least one primary source (recommended)
-or a **single** source with `priority = "default"` (deprecated).
-
-```bash
-poetry source add --priority=default foo https://foo.bar/simple/
-```
 
 
 #### Primary Package Sources
@@ -234,27 +210,6 @@ with Poetry, the PyPI repository cannot be configured with a given URL. Remember
 
 {{% /warning %}}
 
-#### Secondary Package Sources (DEPRECATED)
-
-*Deprecated in 1.5.0*
-
-If package sources are configured as secondary, all it means is that these will be given a lower
-priority when selecting compatible package distribution that also exists in your default and primary package sources. If the package source should instead be searched only if higher-priority repositories did not return results, please consider a [supplemental source](#supplemental-package-sources) instead.
-
-You can configure a package source as a secondary source with `priority = "secondary"` in your package
-source configuration.
-
-```bash
-poetry source add --priority=secondary foo https://foo.bar/simple/
-```
-
-There can be more than one secondary package source.
-
-{{% warning %}}
-
-Secondary package sources are deprecated in favor of supplemental package sources.
-
-{{% /warning %}}
 
 #### Supplemental Package Sources
 
@@ -305,9 +260,10 @@ poetry add --source pytorch-gpu-src torch torchvision torchaudio
 
 #### Package Source Constraint
 
-All package sources (including secondary and possibly supplemental sources) will be searched during the package lookup
-process. These network requests will occur for all sources, regardless of if the package is
-found at one or more sources.
+All package sources (including possibly supplemental sources) will be searched
+during the package lookup process.
+These network requests will occur for all primary sources, regardless of if the package is
+found at one or more sources, and all supplemental sources until the package is found.
 
 In order to limit the search for a specific package to a particular package repository, you can specify the source explicitly.
 
@@ -398,8 +354,8 @@ httpx = {version = "^0.22.0", source = "pypi"}
 
 {{% warning %}}
 
-If any source within a project is configured with `priority = "default"`, The implicit `pypi` source will
-be disabled and not used for any packages.
+The implicit `PyPI` source will be disabled and not used for any packages
+if at least one [primary source](#primary-package-sources) is configured.
 
 {{% /warning %}}
 
@@ -410,7 +366,7 @@ implement the simple repository API as described in [PEP 503](https://peps.pytho
 
 {{% warning %}}
 
-When using sources that distributes large wheels without providing file checksum in file URLs,
+When using sources that distribute large wheels without providing file checksum in file URLs,
 Poetry will download each candidate wheel at least once in order to generate the checksum. This can
 manifest as long dependency resolution times when adding packages from this source.
 
@@ -440,7 +396,7 @@ avoid having to download each candidate distribution, in order to determine asso
 is not available?*
 
 The need for this stems from the fact that Poetry's lock file is platform-agnostic. This means, in
-order to resolve dependencies for a project, Poetry needs metadata for all platform specific
+order to resolve dependencies for a project, Poetry needs metadata for all platform-specific
 distributions. And when this metadata is not readily available, downloading the distribution and
 inspecting it locally is the only remaining option.
 
@@ -469,7 +425,7 @@ well.
 
 ## Publishable Repositories
 
-Poetry treats repositories to which you publish packages as user specific and not project specific
+Poetry treats repositories to which you publish packages as user-specific and not project-specific
 configuration unlike [package sources](#package-sources). Poetry, today, only supports the
 [Legacy Upload API](https://warehouse.pypa.io/api-reference/legacy.html#upload-api) when publishing
 your project.
@@ -498,7 +454,7 @@ If you want to store your credentials for a specific repository, you can do so e
 poetry config http-basic.foo <username> <password>
 ```
 
-If you do not specify the password you will be prompted to write it.
+If you do not specify the password, you will be prompted to write it.
 
 {{% note %}}
 
@@ -559,13 +515,27 @@ where `FOO` is the name of the repository in uppercase (e.g. `PYPI`).
 See [Using environment variables]({{< relref "configuration#using-environment-variables" >}}) for more information
 on how to configure Poetry with environment variables.
 
-If your password starts with a dash (e.g. randomly generated tokens in a CI environment), it will be parsed as a
+If your password starts with a dash (e.g., randomly generated tokens in a CI environment), it will be parsed as a
 command line option instead of a password.
 You can prevent this by adding double dashes to prevent any following argument from being parsed as an option.
 
 ```bash
 poetry config -- http-basic.pypi myUsername -myPasswordStartingWithDash
 ```
+
+{{% note %}}
+In some cases like that of [Gemfury](https://gemfury.com/help/errors/repo-url-password/) repositories, it might be
+required to set an empty password. This is supported by Poetry.
+
+```bash
+poetry config http-basic.foo <TOKEN> ""
+```
+
+**Note:** Empty usernames are discouraged. However, Poetry will honor them if a password is configured without it. This
+is unfortunately commonplace practice, while not best practice, for private indices that use tokens. When a password is
+stored into the system keyring with an empty username, Poetry will use a literal `__poetry_source_empty_username__` as
+the username to circumvent [keyring#687](https://github.com/jaraco/keyring/pull/687).
+{{% /note %}}
 
 ## Certificates
 
@@ -584,7 +554,7 @@ poetry config certificates.foo.client-cert /path/to/client.pem
 {{% note %}}
 The value of `certificates.<repository>.cert` can be set to `false` if certificate verification is
 required to be skipped. This is useful for cases where a package source with self-signed certificates
-are used.
+is used.
 
 ```bash
 poetry config certificates.foo.cert false
@@ -602,7 +572,7 @@ Poetry employs multiple caches for package sources in order to improve user expe
 requests.
 
 The first level cache is a [Cache-Control](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control)
-header based cache for almost all HTTP requests.
+header-based cache for almost all HTTP requests.
 
 Further, every HTTP backed package source caches metadata associated with a package once it is fetched or generated.
 Additionally, downloaded files (package distributions) are also cached.

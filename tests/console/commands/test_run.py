@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 
 from typing import TYPE_CHECKING
 
@@ -47,7 +48,78 @@ def poetry_with_scripts(
 
 def test_run_passes_all_args(app_tester: ApplicationTester, env: MockEnv) -> None:
     app_tester.execute("run python -V")
-    assert [["python", "-V"]] == env.executed
+    assert env.executed == [["python", "-V"]]
+
+
+def test_run_is_not_eager(app_tester: ApplicationTester, env: MockEnv) -> None:
+    app_tester.execute("--no-ansi -C run -install", decorated=True)
+    assert (
+        app_tester.io.fetch_error().strip()
+        == "Specified path 'run' is not a valid directory."
+    )
+    assert env.executed == []
+
+
+def test_run_passes_args_after_run_before_command(
+    app_tester: ApplicationTester, env: MockEnv
+) -> None:
+    app_tester.execute("run -P. python -V", decorated=True)
+    assert env.executed == [["python", "-V"]]
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        "-vP run run",
+        "run -vP run",
+        "-vPrun run",
+        "run -vPrun ",
+        "-v --project=run run",
+        "-v run --project=run",
+        "-v --directory=run run",
+        "run -v --directory=run",
+    ],
+)
+def test_run_passes_args_after_run_before_command_name_conflict(
+    args: str,
+    app_tester: ApplicationTester,
+    env: MockEnv,
+    project_factory: ProjectFactory,
+) -> None:
+    poetry = project_factory("run")
+    path = poetry.file.path.parent
+    path.rename(path.parent / "run")
+
+    app_tester.execute(f"{args} python -V", decorated=True)
+    assert (
+        app_tester.io.remove_format(app_tester.io.fetch_error())
+        == f"Using virtualenv: {env.path}\n"
+    )
+    assert env.executed == [["python", "-V"]]
+
+
+def test_run_keeps_options_passed_before_command_args_combined_short_opts(
+    app_tester: ApplicationTester, env: MockEnv
+) -> None:
+    app_tester.execute("run -VP. --no-ansi python", decorated=True)
+
+    assert not app_tester.io.is_decorated()
+    assert app_tester.io.fetch_output() == app_tester.io.remove_format(
+        app_tester.application.long_version + "\n"
+    )
+    assert env.executed == []
+
+
+def test_run_keeps_options_passed_before_command_args(
+    app_tester: ApplicationTester, env: MockEnv
+) -> None:
+    app_tester.execute("run -V --no-ansi python", decorated=True)
+
+    assert not app_tester.io.is_decorated()
+    assert app_tester.io.fetch_output() == app_tester.io.remove_format(
+        app_tester.application.long_version + "\n"
+    )
+    assert env.executed == []
 
 
 def test_run_keeps_options_passed_before_command(
@@ -59,7 +131,7 @@ def test_run_keeps_options_passed_before_command(
     assert app_tester.io.fetch_output() == app_tester.io.remove_format(
         app_tester.application.long_version + "\n"
     )
-    assert [] == env.executed
+    assert env.executed == []
 
 
 def test_run_has_helpful_error_when_command_not_found(
@@ -116,7 +188,8 @@ def test_run_console_scripts_of_editable_dependencies_on_windows(
 
     cmd_script_file = tmp_venv._bin_dir / "quix.cmd"
     # `/b` ensures we only exit the script instead of any cmd.exe proc that called it
-    cmd_script_file.write_text("exit /b 123")
+    encoding = "locale" if sys.version_info >= (3, 10) else None
+    cmd_script_file.write_text("exit /b 123", encoding=encoding)
     # We prove that the CMD script executed successfully by verifying the exit code
     # matches what we wrote in the script
     assert tester.execute("quix") == 123

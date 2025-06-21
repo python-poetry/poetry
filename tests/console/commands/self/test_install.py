@@ -14,8 +14,13 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
-    return command_tester_factory("self install")
+def command() -> str:
+    return "self install"
+
+
+@pytest.fixture
+def tester(command_tester_factory: CommandTesterFactory, command: str) -> CommandTester:
+    return command_tester_factory(command)
 
 
 @pytest.mark.parametrize(
@@ -45,18 +50,25 @@ def test_self_install(
     assert isinstance(command, SelfInstallCommand)
     pyproject_path = command.system_pyproject
     if pyproject_content:
-        pyproject_path.write_text(pyproject_content)
+        pyproject_path.write_text(pyproject_content, encoding="utf-8")
     else:
         assert not pyproject_path.exists()
 
     tester.execute()
 
-    expected_output = """\
-Updating dependencies
-Resolving dependencies...
-
-Writing lock file
-"""
-
-    assert tester.io.fetch_output() == expected_output
+    output = tester.io.fetch_output()
+    assert output.startswith("Updating dependencies")
+    assert output.endswith("Writing lock file\n")
     assert tester.io.fetch_error() == ""
+
+
+@pytest.mark.parametrize("sync", [True, False])
+def test_sync_deprecation(tester: CommandTester, sync: bool) -> None:
+    tester.execute("--sync" if sync else "")
+
+    error = tester.io.fetch_error()
+    if sync:
+        assert "deprecated" in error
+        assert "poetry self sync" in error
+    else:
+        assert error == ""

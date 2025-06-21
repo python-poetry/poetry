@@ -45,6 +45,16 @@ If you do not want to commit the lock file and you are using git, add it to the 
 
 Before you can actually publish your library, you will need to package it.
 
+You need to define a build-system according to [PEP 517](https://peps.python.org/pep-0517/) in the `pyproject.toml` file:
+
+```toml
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+```
+
+Then you can package your library by running:
+
 ```bash
 poetry build
 ```
@@ -63,7 +73,22 @@ a `wheel`, the following files are included in the `.dist-info` directory:
 When building an `sdist`, the following files will be included in the root folder:
   - `LICENSE*`
 
-Once building is done you are ready to publish your library.
+### Alternative build backends
+
+If you want to use a different build backend, you can specify it in the `pyproject.toml` file:
+
+```toml
+[build-system]
+requires = ["maturin>=0.8.1,<0.9"]
+build-backend = "maturin"
+```
+
+The `poetry build` command will then use the specified build backend to build your package in
+an isolated environment. Ensure you have specified any additional settings according to the
+documentation of the build backend you are using.
+
+
+Once building is done, you are ready to publish your library.
 
 ## Publishing to PyPI
 
@@ -80,7 +105,7 @@ Doing so is really easy.
 poetry publish
 ```
 
-This will package and publish the library to PyPI, at the condition that you are a registered user
+This will package and publish the library to PyPI, on the condition that you are a registered user
 and you have [configured your credentials]({{< relref "repositories#configuring-credentials" >}}) properly.
 
 {{% note %}}
@@ -95,7 +120,7 @@ Once this is done, your library will be available to anyone.
 
 ## Publishing to a private repository
 
-Sometimes, you may want to keep your library private but also being accessible to your team.
+Sometimes, you may want to keep your library private but also be accessible to your team.
 
 In this case, you will need to use a private repository.
 
@@ -103,7 +128,7 @@ In order to publish to a private repository, you will need to add it to your
 global list of repositories. See [Adding a repository]({{< relref "repositories#adding-a-repository" >}})
 for more information.
 
-Once this is done, you can actually publish to it like so:
+Once this is done, you can publish your package to the repository like so:
 
 ```bash
 poetry publish -r my-repository

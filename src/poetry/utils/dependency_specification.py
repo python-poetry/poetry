@@ -7,8 +7,6 @@ import urllib.parse
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Dict
-from typing import List
 from typing import TypeVar
 from typing import Union
 from typing import cast
@@ -26,7 +24,7 @@ if TYPE_CHECKING:
     from poetry.utils.env import Env
 
 
-DependencySpec = Dict[str, Union[str, bool, Dict[str, Union[str, bool]], List[str]]]
+DependencySpec = dict[str, Union[str, bool, dict[str, Union[str, bool]], list[str]]]
 BaseSpec = TypeVar("BaseSpec", DependencySpec, InlineTable)
 
 GIT_URL_SCHEMES = {"git+http", "git+https", "git+ssh"}
@@ -158,8 +156,10 @@ class RequirementsParser:
     def _parse_path(self, requirement: str) -> DependencySpec | None:
         if (os.path.sep in requirement or "/" in requirement) and (
             self._cwd.joinpath(requirement).exists()
-            or Path(requirement).expanduser().exists()
-            and Path(requirement).expanduser().is_absolute()
+            or (
+                Path(requirement).expanduser().exists()
+                and Path(requirement).expanduser().is_absolute()
+            )
         ):
             path = Path(requirement).expanduser()
             is_absolute = path.is_absolute()

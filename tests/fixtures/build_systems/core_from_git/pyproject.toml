@@ -1,0 +1,15 @@
+[project]
+name = "core-from-git"
+version = "1.2.3"
+description = "Some description."
+authors = [
+    { name = "Poetry Contributors", email = "no-reply@python-poetry.org" }
+]
+license = { text = "MIT" }
+readme = "README.md"
+keywords = ["packaging", "dependency", "poetry"]
+requires-python = ">=3.4"
+
+[build-system]
+requires = ["poetry-core @ git+https://github.com/python-poetry/poetry-core.git"]
+build-backend = "poetry.core.masonry.api"

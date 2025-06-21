@@ -39,15 +39,15 @@ def test_env_info_displays_complete_info(tester: CommandTester) -> None:
 Virtualenv
 Python:         3.7.0
 Implementation: CPython
-Path:           {Path('/prefix')}
+Path:           {Path("/prefix")}
 Executable:     {sys.executable}
 Valid:          True
 
 Base
 Platform:   darwin
 OS:         posix
-Python:     {'.'.join(str(v) for v in sys.version_info[:3])}
-Path:       {Path('/base/prefix')}
+Python:     {".".join(str(v) for v in sys.version_info[:3])}
+Path:       {Path("/base/prefix")}
 Executable: python
 """
 

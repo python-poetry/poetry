@@ -1,25 +1,13 @@
 tests_task:
   # We only use Cirrus CI for FreeBSD at present; the rest of the task will assume FreeBSD.
   freebsd_instance:
-    image_family: freebsd-14-0
+    image_family: freebsd-14-2
     # Cirrus has a concurrency limit of 8 vCPUs for FreeBSD. Allow executing 4 tasks in parallel.
     cpu: 2
     memory: 2G
 
   env:
     matrix:
-      - PYTHON: python3.8
-        PYTHON_VERSION: 3.8
-        PYTHON_PACKAGE: python38
-        SQLITE_PACKAGE: py38-sqlite3
-      - PYTHON: python3.9
-        PYTHON_VERSION: 3.9
-        PYTHON_PACKAGE: python39
-        SQLITE_PACKAGE: py39-sqlite3
-      - PYTHON: python3.10
-        PYTHON_VERSION: 3.10
-        PYTHON_PACKAGE: python310
-        SQLITE_PACKAGE: py310-sqlite3
       - PYTHON: python3.11
         PYTHON_VERSION: 3.11
         PYTHON_PACKAGE: python311
@@ -57,18 +45,11 @@ tests_task:
           format: junit
           type: text/xml
 
-    # TODO: caching
-    - alias: mypy
-      name: "Tests / FreeBSD (Python ${PYTHON_VERSION}) / mypy"
-      skip: "!changesInclude('.cirrus.yml', 'poetry.lock', 'pyproject.toml', 'src/**.py', 'tests/**')"
-      mypy_script: poetry run mypy
-
 status_task:
   name: "Tests / FreeBSD Status"
 
   depends_on:
     - pytest
-    - mypy
 
   container:
     image: alpine:latest

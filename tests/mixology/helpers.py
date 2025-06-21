@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from poetry.core.packages.package import Package
 
 from poetry.factory import Factory
-from poetry.mixology.failure import SolveFailure
+from poetry.mixology.failure import SolveFailureError
 from poetry.mixology.version_solver import VersionSolver
 
 
@@ -52,7 +52,7 @@ def check_solver_result(
     with provider.use_latest_for(use_latest or []):
         try:
             solution = solver.solve()
-        except SolveFailure as e:
+        except SolveFailureError as e:
             if error:
                 assert str(e) == error
 

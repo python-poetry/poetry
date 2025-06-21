@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import re
+
+from collections.abc import Mapping
 from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
-from typing import Dict
-from typing import Mapping
 from typing import Union
 
 from cleo.helpers import option
@@ -16,6 +17,7 @@ from tomlkit import inline_table
 from poetry.console.commands.command import Command
 from poetry.console.commands.env_command import EnvCommand
 from poetry.utils.dependency_specification import RequirementsParser
+from poetry.utils.env.python import Python
 
 
 if TYPE_CHECKING:
@@ -26,7 +28,7 @@ if TYPE_CHECKING:
 
     from poetry.repositories import RepositoryPool
 
-Requirements = Dict[str, Union[str, Mapping[str, Any]]]
+Requirements = dict[str, Union[str, Mapping[str, Any]]]
 
 
 class InitCommand(Command):
@@ -74,12 +76,10 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         project_path = Path.cwd()
 
-        if self.io.input.option("directory"):
-            project_path = Path(self.io.input.option("directory"))
+        if self.io.input.option("project"):
+            project_path = Path(self.io.input.option("project"))
             if not project_path.exists() or not project_path.is_dir():
-                self.line_error(
-                    "<error>The --directory path is not a directory.</error>"
-                )
+                self.line_error("<error>The --project path is not a directory.</error>")
                 return 1
 
         return self._init_pyproject(project_path=project_path)
@@ -96,7 +96,6 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         from poetry.config.config import Config
         from poetry.layouts import layout
         from poetry.pyproject.toml import PyProjectTOML
-        from poetry.utils.env import EnvManager
 
         is_interactive = self.io.is_interactive() and allow_interactive
 
@@ -105,8 +104,8 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         if pyproject.file.exists():
             if pyproject.is_poetry_project():
                 self.line_error(
-                    "<error>A pyproject.toml file with a poetry section already"
-                    " exists.</error>"
+                    "<error>A pyproject.toml file with a project and/or"
+                    " a poetry section already exists.</error>"
                 )
                 return 1
 
@@ -174,11 +173,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             config = Config.create()
             python = (
                 ">="
-                + EnvManager.get_python_version(
-                    precision=2,
-                    prefer_active_python=config.get("virtualenvs.prefer-active-python"),
-                    io=self.io,
-                ).to_string()
+                + Python.get_preferred_python(config, self.io).minor_version.to_string()
             )
 
             if is_interactive:
@@ -255,7 +250,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         if create_layout:
             layout_.create(project_path, with_pyproject=False)
 
-        content = layout_.generate_poetry_content()
+        content = layout_.generate_project_content()
         for section, item in content.items():
             pyproject.data.append(section, item)
 
@@ -308,7 +303,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
     def _determine_requirements(
         self,
         requires: list[str],
-        allow_prereleases: bool = False,
+        allow_prereleases: bool | None = None,
         source: str | None = None,
         is_interactive: bool | None = None,
     ) -> list[dict[str, Any]]:
@@ -445,7 +440,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         self,
         name: str,
         required_version: str | None = None,
-        allow_prereleases: bool = False,
+        allow_prereleases: bool | None = None,
         source: str | None = None,
     ) -> tuple[str, str]:
         from poetry.version.version_selector import VersionSelector
@@ -459,15 +454,16 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             # TODO: find similar
             raise ValueError(f"Could not find a matching version of package {name}")
 
-        return package.pretty_name, f"^{package.version.to_string()}"
+        version = package.version.without_local()
+        return package.pretty_name, f"^{version.to_string()}"
 
     def _parse_requirements(self, requirements: list[str]) -> list[dict[str, Any]]:
-        from poetry.core.pyproject.exceptions import PyProjectException
+        from poetry.core.pyproject.exceptions import PyProjectError
 
         try:
             cwd = self.poetry.file.path.parent
             artifact_cache = self.poetry.pool.artifact_cache
-        except (PyProjectException, RuntimeError):
+        except (PyProjectError, RuntimeError):
             cwd = Path.cwd()
             artifact_cache = self._get_pool().artifact_cache
 
@@ -476,7 +472,10 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             env=self.env if isinstance(self, EnvCommand) else None,
             cwd=cwd,
         )
-        return [parser.parse(requirement) for requirement in requirements]
+        return [
+            parser.parse(re.sub(r"@\s*latest$", "", requirement, flags=re.I))
+            for requirement in requirements
+        ]
 
     def _format_requirements(self, requirements: list[dict[str, str]]) -> Requirements:
         requires: Requirements = {}
@@ -496,8 +495,8 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
     @staticmethod
     def _validate_author(author: str, default: str) -> str | None:
-        from poetry.core.packages.package import AUTHOR_REGEX
         from poetry.core.utils.helpers import combine_unicode
+        from poetry.core.utils.patterns import AUTHOR_REGEX
 
         author = combine_unicode(author or default)
 

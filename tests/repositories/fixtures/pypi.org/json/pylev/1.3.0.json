@@ -24,6 +24,8 @@
     "home_page": "http://github.com/toastdriven/pylev",
     "keywords": null,
     "license": "UNKNOWN",
+    "license_expression": null,
+    "license_files": null,
     "maintainer": null,
     "maintainer_email": null,
     "name": "pylev",

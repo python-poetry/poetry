@@ -1,0 +1,47 @@
+{
+  "alternate-locations": [],
+  "files": [
+    {
+      "core-metadata": {
+        "sha256": "e7f80a7843aedda2ae25b1d351c9cbb50c16e45acf0596f7a6591e76d90049a4"
+      },
+      "data-dist-info-metadata": {
+        "sha256": "e7f80a7843aedda2ae25b1d351c9cbb50c16e45acf0596f7a6591e76d90049a4"
+      },
+      "filename": "isodate-0.7.0-py3-none-any.whl",
+      "hashes": {
+        "md5": "1af9e3ee3f5669186356afd2dbe7ce81",
+        "sha256": "04505f97eb100b66dff1239859e6e04ab913714c453d6ab9591adbf418285847"
+      },
+      "provenance": null,
+      "requires-python": null,
+      "size": 22286,
+      "upload-time": "2024-10-08T02:38:56.092325Z",
+      "url": "https://files.pythonhosted.org/packages/8f/90/7fba16c0bbee2ea71c135bbf5a905d4f7873ec982ffbe7305b30c555eec1/isodate-0.7.0-py3-none-any.whl",
+      "yanked": "fails for py2.7 but is not marked as py3 only."
+    },
+    {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
+      "filename": "isodate-0.7.0.tar.gz",
+      "hashes": {
+        "md5": "5668b7b7120797f03330363000afc35a",
+        "sha256": "167c3615c0bd2e498c9bae7a1aba5863a17e52299aafd89f17a3a091187dca74"
+      },
+      "provenance": null,
+      "requires-python": null,
+      "size": 29597,
+      "upload-time": "2024-10-08T02:38:58.140328Z",
+      "url": "https://files.pythonhosted.org/packages/9b/40/32ce777053517be3032bb2ab3bb216959071ee0c16c761879e75c34a323e/isodate-0.7.0.tar.gz",
+      "yanked": "fails for py2.7 but is not marked as py3 only."
+    }
+  ],
+  "meta": {
+    "_last-serial": 0,
+    "api-version": "1.3"
+  },
+  "name": "isodate",
+  "versions": [
+    "0.7.0"
+  ]
+}

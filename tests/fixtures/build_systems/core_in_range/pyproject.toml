@@ -1,0 +1,15 @@
+[project]
+name = "simple-project"
+version = "1.2.3"
+description = "Some description."
+authors = [
+    { name = "Poetry Contributors", email = "no-reply@python-poetry.org" }
+]
+license = { text = "MIT" }
+readme = "README.md"
+keywords = ["packaging", "dependency", "poetry"]
+requires-python = ">=3.4"
+
+[build-system]
+requires = ["poetry-core>=1.1.0a7"]
+build-backend = "poetry.core.masonry.api"

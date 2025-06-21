@@ -9,12 +9,9 @@ import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Mapping
-from typing import Sequence
 
 import pkginfo
 
-from build import BuildBackendException
 from poetry.core.constraints.version import Version
 from poetry.core.factory import Factory
 from poetry.core.packages.dependency import Dependency
@@ -22,15 +19,18 @@ from poetry.core.packages.package import Package
 from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.core.utils.helpers import parse_requires
 from poetry.core.utils.helpers import temporary_directory
-from poetry.core.version.markers import InvalidMarker
-from poetry.core.version.requirements import InvalidRequirement
+from poetry.core.version.markers import InvalidMarkerError
+from poetry.core.version.requirements import InvalidRequirementError
 
 from poetry.utils.helpers import extractall
+from poetry.utils.isolated_build import IsolatedBuildBackendError
 from poetry.utils.isolated_build import isolated_builder
 
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from collections.abc import Mapping
+    from collections.abc import Sequence
 
     from packaging.metadata import RawMetadata
     from packaging.utils import NormalizedName
@@ -114,10 +114,7 @@ class PackageInfo:
         return cls(cache_version=cache_version, **data)
 
     def to_package(
-        self,
-        name: str | None = None,
-        extras: list[str] | None = None,
-        root_dir: Path | None = None,
+        self, name: str | None = None, root_dir: Path | None = None
     ) -> Package:
         """
         Create a new `poetry.core.packages.package.Package` instance using metadata from
@@ -132,7 +129,7 @@ class PackageInfo:
         name = name or self.name
 
         if not name:
-            raise RuntimeError("Unable to create package with no name")
+            raise RuntimeError(f"Unable to create package with no name for {root_dir}")
 
         if not self.version:
             # The version could not be determined, so we raise an error since it is
@@ -178,7 +175,7 @@ class PackageInfo:
             try:
                 # Attempt to parse the PEP-508 requirement string
                 dependency = Dependency.create_from_pep_508(req, relative_to=root_dir)
-            except InvalidMarker:
+            except InvalidMarkerError:
                 # Invalid marker, We strip the markers hoping for the best
                 logger.warning(
                     "Stripping invalid marker (%s) found in %s-%s dependencies",
@@ -188,7 +185,7 @@ class PackageInfo:
                 )
                 req = req.split(";")[0]
                 dependency = Dependency.create_from_pep_508(req, relative_to=root_dir)
-            except InvalidRequirement:
+            except InvalidRequirementError:
                 # Unable to parse requirement so we skip it
                 logger.warning(
                     "Invalid requirement (%s) found in %s-%s dependencies, skipping",
@@ -265,9 +262,13 @@ class PackageInfo:
 
         :param dist: The distribution instance to parse information from.
         """
-        if dist.metadata_version not in pkginfo.distribution.HEADER_ATTRS:
-            # This check can be replaced once upstream implements strict parsing
-            # https://bugs.launchpad.net/pkginfo/+bug/2058697
+        # If the METADATA version is greater than the highest supported version,
+        # pkginfo prints a warning and tries to parse the fields from the highest
+        # known version. Assuming that METADATA versions adhere to semver,
+        # this should be safe for minor updates.
+        if not dist.metadata_version or dist.metadata_version.split(".")[0] not in {
+            v.split(".")[0] for v in pkginfo.distribution.HEADER_ATTRS
+        }:
             raise ValueError(f"Unknown metadata version: {dist.metadata_version}")
 
         requirements = cls._requirements_from_distribution(dist)
@@ -523,7 +524,7 @@ class PackageInfo:
             return cls.from_sdist(path=path)
 
 
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def get_pep517_metadata(path: Path) -> PackageInfo:
     """
     Helper method to use PEP-517 library to build and read package metadata.
@@ -540,9 +541,8 @@ def get_pep517_metadata(path: Path) -> PackageInfo:
                 builder.metadata_path(dest)
 
             info = PackageInfo.from_metadata_directory(dest)
-        except BuildBackendException as e:
-            logger.debug("PEP517 build failed: %s", e)
-            raise PackageInfoError(path, e, "PEP517 build failed")
+        except IsolatedBuildBackendError as e:
+            raise PackageInfoError(path, str(e)) from None
 
     if info:
         return info

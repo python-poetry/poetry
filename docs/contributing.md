@@ -23,7 +23,7 @@ your best judgement, and feel free to propose changes to this document in a pull
 ### Reporting bugs
 
 This section guides you through submitting a bug report for Poetry.
-Following these guidelines helps maintainers and the community understand your report, reproduce the behavior, and find
+Following these guidelines helps maintainers and the community understands your report, reproduces the behavior, and finds
 related reports.
 
 #### Before submitting a bug report
@@ -33,6 +33,8 @@ related reports.
 * **Check that your issue does not already exist** in the [issue tracker].
 * **Make sure your issue is really a bug, and is not a support request or question** better suited for [Discussions]
 or [Discord].
+* **Try running your commands with the** `--no-cache` **flag**.
+* **Try clearing your cache with** `poetry cache clear --all PyPI` **and rerunning your commands**.
 
 {{% note %}}
 If you find a **Closed** issue that seems like it is the same thing that you're experiencing, open a new issue and
@@ -64,7 +66,7 @@ and under which conditions it normally happens.
 
 Provide more context by answering these questions:
 
-* **Did the problem start happening recently** (e.g. after updating to a new version of Poetry) or was this always a
+* **Did the problem start happening recently** (e.g., after updating to a new version of Poetry) or was this always a
 problem?
 * If the problem started happening recently, **can you reproduce the problem in an older version of Poetry?** What's the
 most recent version in which the problem does not happen?
@@ -138,11 +140,11 @@ start a [Discussion][Discussions].
 Poetry is developed using Poetry. Refer to the [documentation] to install Poetry in your local environment.
 
 {{% note %}}
-Poetry's development toolchain requires Python 3.8 or newer.
+Poetry's development toolchain requires Python 3.9 or newer.
 {{% /note %}}
 
 You should first fork the Poetry repository and then clone it locally, so that you can make pull requests against the
-project. If you are new to Git and pull request based development, GitHub provides a
+project. If you are new to Git and pull request-based development, GitHub provides a
 [guide](https://docs.github.com/en/get-started/quickstart/contributing-to-projects) you will find helpful.
 
 Next, you should install Poetry's dependencies, and run the test suite to make sure everything is working as expected:
@@ -151,6 +153,14 @@ Next, you should install Poetry's dependencies, and run the test suite to make s
 poetry install
 poetry run pytest
 ```
+
+{{% note %}}
+If you want to see the coverage stats after the tests are complete, use:
+
+```bash
+poetry run pytest --cov=src/poetry --cov-report term
+```
+{{% /note %}}
 
 When you contribute to Poetry, automated tools will be run to make sure your code is suitable to be merged. Besides
 pytest, you will need to make sure your code typechecks properly using [mypy](http://mypy-lang.org/):

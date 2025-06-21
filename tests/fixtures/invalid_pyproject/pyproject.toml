@@ -1,22 +1,22 @@
-[tool.poetry]
+[project]
 name = "invalid"
 version = "1.0.0"
-authors = [
-    "Foo <foo@bar.com>"
-]
-readme = "never/exists.md"
-license = "INVALID"
+license = { text = "INVALID" }
 classifiers = [
     "Environment :: Console",
     "Intended Audience :: Clowns",
     "Natural Language :: Ukranian",
     "Topic :: Communications :: Chat :: AOL Instant Messenger",
 ]
+dynamic = [ "readme", "dependencies", "requires-python" ]
+
+[tool.poetry]
+readme = "never/exists.md"
 
 [tool.poetry.dependencies]
 python = "*"
 pendulum = {"version" = "^2.0.5", allows-prereleases = true}
-invalid = "1.0"
+invalid_dep = "1.0"
 invalid_source = { "version" = "*", source = "not-exists" }
 invalid_source_multi = [
     { "version" = "*", platform = "linux", source = "exists" },
@@ -26,3 +26,4 @@ invalid_source_multi = [
 [[tool.poetry.source]]
 name = "exists"
 priority = "explicit"
+url = "https://example.com"

@@ -12,7 +12,7 @@ def init_basic_inputs() -> str:
             "This is a description",  # Description
             "n",  # Author
             "MIT",  # License
-            "~2.7 || ^3.6",  # Python
+            ">=3.6",  # Python
             "n",  # Interactive packages
             "n",  # Interactive dev packages
             "\n",  # Generate
@@ -23,14 +23,35 @@ def init_basic_inputs() -> str:
 @pytest.fixture()
 def init_basic_toml() -> str:
     return """\
-[tool.poetry]
+[project]
 name = "my-package"
 version = "1.2.3"
 description = "This is a description"
-authors = ["Your Name <you@example.com>"]
-license = "MIT"
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
+license = {text = "MIT"}
 readme = "README.md"
+requires-python = ">=3.6"
+"""
 
-[tool.poetry.dependencies]
-python = "~2.7 || ^3.6"
+
+@pytest.fixture()
+def new_basic_toml() -> str:
+    return """\
+[project]
+name = "my-package"
+version = "1.2.3"
+description = "This is a description"
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.6"
+dependencies = [
+]
+
+[tool.poetry]
+packages = [{include = "my_package", from = "src"}]
 """

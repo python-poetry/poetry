@@ -24,6 +24,8 @@
     "home_page": "http://twistedmatrix.com/",
     "keywords": "",
     "license": "MIT",
+    "license_expression": null,
+    "license_files": null,
     "maintainer": "Glyph Lefkowitz",
     "maintainer_email": "glyph@twistedmatrix.com",
     "name": "Twisted",

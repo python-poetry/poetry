@@ -29,6 +29,8 @@
     "home_page": "",
     "keywords": "wheel,packaging",
     "license": "",
+    "license_expression": null,
+    "license_files": null,
     "maintainer": "",
     "maintainer_email": "Alex Grönholm <alex.gronholm@nextday.fi>",
     "name": "wheel",

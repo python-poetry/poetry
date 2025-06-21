@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 from typing import TYPE_CHECKING
 from typing import ClassVar
 
@@ -44,11 +46,6 @@ class ShowCommand(GroupCommand, EnvCommand):
     ]
     options: ClassVar[list[Option]] = [
         *GroupCommand._group_dependency_options(),
-        option(
-            "no-dev",
-            None,
-            "Do not list the development dependencies. (<warning>Deprecated</warning>)",
-        ),
         option("tree", "t", "List the dependencies as a tree."),
         option(
             "why",
@@ -69,6 +66,11 @@ class ShowCommand(GroupCommand, EnvCommand):
             "Show all packages (even those not compatible with current system).",
         ),
         option("top-level", "T", "Show only top-level dependencies."),
+        option(
+            "no-truncate",
+            None,
+            "Do not truncate the output based on the terminal width.",
+        ),
     ]
 
     help = """The show command displays detailed information about a package, or
@@ -200,7 +202,7 @@ lists all packages available."""
             self.line("")
             self.line("<info>required by</info>")
             for parent, requires_version in required_by.items():
-                self.line(f" - <c1>{parent}</c1> <b>{requires_version}</b>")
+                self.line(f" - <c1>{parent}</c1> requires <b>{requires_version}</b>")
 
         return 0
 
@@ -234,7 +236,11 @@ lists all packages available."""
         show_latest = self.option("latest")
         show_all = self.option("all")
         show_top_level = self.option("top-level")
-        width = shutil.get_terminal_size().columns
+        width = (
+            sys.maxsize
+            if self.option("no-truncate")
+            else shutil.get_terminal_size().columns
+        )
         name_length = version_length = latest_length = required_by_length = 0
         latest_packages = {}
         latest_statuses = {}
@@ -551,7 +557,7 @@ lists all packages available."""
                     provider = Provider(root, self.poetry.pool, NullIO())
                     return provider.search_for_direct_origin_dependency(dep)
 
-        allow_prereleases = False
+        allow_prereleases: bool | None = None
         for dep in requires:
             if dep.name == package.name:
                 allow_prereleases = dep.allows_prereleases()

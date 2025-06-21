@@ -32,6 +32,8 @@
     "home_page": "http://python-requests.org",
     "keywords": "",
     "license": "Apache 2.0",
+    "license_expression": null,
+    "license_files": null,
     "maintainer": "",
     "maintainer_email": "",
     "name": "requests",

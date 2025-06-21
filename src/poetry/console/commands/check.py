@@ -29,6 +29,11 @@ class CheckCommand(Command):
             "Checks that <comment>poetry.lock</> exists for the current"
             " version of <comment>pyproject.toml</>.",
         ),
+        option(
+            "strict",
+            None,
+            "Fail if check reports warnings.",
+        ),
     ]
 
     def _validate_classifiers(
@@ -94,7 +99,7 @@ class CheckCommand(Command):
 
     def _validate_dependencies_source(self, config: dict[str, Any]) -> list[str]:
         """Check dependencies's source are valid"""
-        sources = {k["name"] for k in config.get("source", [])}
+        sources = {repository.name for repository in self.poetry.pool.all_repositories}
 
         dependency_declarations: list[
             dict[str, str | dict[str, str] | list[dict[str, str]]]
@@ -130,21 +135,27 @@ class CheckCommand(Command):
 
         # Load poetry config and display errors, if any
         poetry_file = self.poetry.file.path
-        config = PyProjectTOML(poetry_file).poetry_config
-        check_result = Factory.validate(config, strict=True)
+        toml_data = PyProjectTOML(poetry_file).data
+        check_result = Factory.validate(toml_data, strict=True)
+
+        project = toml_data.get("project", {})
+        poetry_config = toml_data["tool"]["poetry"]
 
         # Validate trove classifiers
-        project_classifiers = set(config.get("classifiers", []))
+        project_classifiers = set(
+            project.get("classifiers") or poetry_config.get("classifiers", [])
+        )
         errors, warnings = self._validate_classifiers(project_classifiers)
         check_result["errors"].extend(errors)
         check_result["warnings"].extend(warnings)
 
         # Validate readme (files must exist)
-        if "readme" in config:
-            errors = self._validate_readme(config["readme"], poetry_file)
+        # TODO: consider [project.readme] as well
+        if "readme" in poetry_config:
+            errors = self._validate_readme(poetry_config["readme"], poetry_file)
             check_result["errors"].extend(errors)
 
-        check_result["errors"] += self._validate_dependencies_source(config)
+        check_result["errors"] += self._validate_dependencies_source(poetry_config)
 
         # Verify that lock file is consistent
         if self.option("lock") and not self.poetry.locker.is_locked():
@@ -152,13 +163,18 @@ class CheckCommand(Command):
         if self.poetry.locker.is_locked() and not self.poetry.locker.is_fresh():
             check_result["errors"] += [
                 "pyproject.toml changed significantly since poetry.lock was last generated. "
-                "Run `poetry lock [--no-update]` to fix the lock file."
+                "Run `poetry lock` to fix the lock file."
             ]
+
+        return_code = 0
+
+        if check_result["errors"] or (
+            check_result["warnings"] and self.option("strict")
+        ):
+            return_code = 1
 
         if not check_result["errors"] and not check_result["warnings"]:
             self.info("All set!")
-
-            return 0
 
         for error in check_result["errors"]:
             self.line_error(f"<error>Error: {error}</error>")
@@ -166,4 +182,4 @@ class CheckCommand(Command):
         for error in check_result["warnings"]:
             self.line_error(f"<warning>Warning: {error}</warning>")
 
-        return 1
+        return return_code

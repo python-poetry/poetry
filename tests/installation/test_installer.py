@@ -7,6 +7,7 @@ import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import cast
 
 import pytest
 
@@ -15,6 +16,7 @@ from cleo.io.inputs.input import Input
 from cleo.io.null_io import NullIO
 from cleo.io.outputs.output import Verbosity
 from packaging.utils import canonicalize_name
+from poetry.core.constraints.version import Version
 from poetry.core.packages.dependency_group import MAIN_GROUP
 from poetry.core.packages.dependency_group import DependencyGroup
 from poetry.core.packages.package import Package
@@ -22,7 +24,6 @@ from poetry.core.packages.project_package import ProjectPackage
 
 from poetry.factory import Factory
 from poetry.installation import Installer
-from poetry.installation.executor import Executor as BaseExecutor
 from poetry.packages import Locker as BaseLocker
 from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
@@ -31,57 +32,24 @@ from poetry.toml.file import TOMLFile
 from poetry.utils.env import MockEnv
 from poetry.utils.env import NullEnv
 from tests.helpers import MOCK_DEFAULT_GIT_REVISION
+from tests.helpers import TestExecutor
 from tests.helpers import get_dependency
 from tests.helpers import get_package
 
 
 if TYPE_CHECKING:
-    from pytest_mock import MockerFixture
+    from collections.abc import Iterator
 
-    from poetry.installation.operations.operation import Operation
+    from _pytest.fixtures import FixtureRequest
+    from pytest_mock import MockerFixture
+    from tomlkit import TOMLDocument
+
     from poetry.repositories.legacy_repository import LegacyRepository
     from poetry.repositories.pypi_repository import PyPiRepository
     from poetry.utils.env import Env
     from tests.conftest import Config
     from tests.types import FixtureDirGetter
-
-
-class Executor(BaseExecutor):
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-
-        self._installs: list[Package] = []
-        self._updates: list[Package] = []
-        self._uninstalls: list[Package] = []
-
-    @property
-    def installations(self) -> list[Package]:
-        return self._installs
-
-    @property
-    def updates(self) -> list[Package]:
-        return self._updates
-
-    @property
-    def removals(self) -> list[Package]:
-        return self._uninstalls
-
-    def _do_execute_operation(self, operation: Operation) -> int:
-        ret_val = super()._do_execute_operation(operation)
-
-        if not operation.skipped:
-            getattr(self, f"_{operation.job_type}s").append(operation.package)
-
-        return ret_val
-
-    def _execute_install(self, operation: Operation) -> int:
-        return 0
-
-    def _execute_update(self, operation: Operation) -> int:
-        return 0
-
-    def _execute_uninstall(self, operation: Operation) -> int:
-        return 0
+    from tests.types import PackageFactory
 
 
 class CustomInstalledRepository(InstalledRepository):
@@ -142,6 +110,14 @@ class Locker(BaseLocker):
         self._lock_data = data
 
 
+@pytest.fixture(autouse=True, params=[False, True])
+def config_installer_reresolve(
+    config: Config, request: FixtureRequest
+) -> Iterator[bool]:
+    config.config["installer"]["re-resolve"] = request.param
+    yield request.param
+
+
 @pytest.fixture()
 def package() -> ProjectPackage:
     p = ProjectPackage("root", "1.0")
@@ -195,15 +171,41 @@ def installer(
         pool,
         config,
         installed=installed,
-        executor=Executor(env, pool, config, NullIO()),
+        executor=TestExecutor(env, pool, config, NullIO()),
     )
 
 
-def fixture(name: str) -> dict[str, Any]:
+def fixture(name: str, data: dict[str, Any] | None = None) -> dict[str, Any]:
+    """
+    Create or load a fixture file in TOML format.
+
+    This function retrieves the contents of a test fixture file, optionally writing
+    data to it before reading, and returns the data as a dictionary. It is used to
+    manage testing fixtures for TOML-based configurations.
+
+    :param name: Name of the fixture file (without extension, default of .test is appended).
+    :param data: Dictionary to write to the file as a TOML document. If None,
+                 no data is written (use this only when generating fixtures).
+    :return: Dictionary representing the contents of the TOML fixture file.
+    """
     file = TOMLFile(Path(__file__).parent / "fixtures" / f"{name}.test")
+
+    if data:
+        # if data is provided write it, this is helpful for generating fixtures
+        # we expect lock data to be compatible with TOMLDocument for our purposes
+        file.write(cast("TOMLDocument", data))
+
     content: dict[str, Any] = file.read()
 
     return content
+
+
+def fix_lock_data(lock_data: dict[str, Any]) -> None:
+    if Version.parse(lock_data["metadata"]["lock-version"]) >= Version.parse("2.1"):
+        for locked_package in lock_data["package"]:
+            locked_package["groups"] = ["main"]
+            locked_package["files"] = []
+        del lock_data["metadata"]["files"]
 
 
 def test_run_no_dependencies(installer: Installer, locker: Locker) -> None:
@@ -220,7 +222,7 @@ def test_not_fresh_lock(installer: Installer, locker: Locker) -> None:
         ValueError,
         match=re.escape(
             "pyproject.toml changed significantly since poetry.lock was last generated. "
-            "Run `poetry lock [--no-update]` to fix the lock file."
+            "Run `poetry lock` to fix the lock file."
         ),
     ):
         installer.run()
@@ -244,50 +246,52 @@ def test_run_with_dependencies(
     assert locker.written_data == expected
 
 
+@pytest.mark.parametrize("lock_version", ("1.1", "2.1"))
 def test_run_update_after_removing_dependencies(
     installer: Installer,
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
     installed: CustomInstalledRepository,
+    lock_version: str,
 ) -> None:
-    locker.locked(True)
-    locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "A",
-                    "version": "1.0",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "B",
-                    "version": "1.1",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "C",
-                    "version": "1.2",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
+    lock_data = {
+        "package": [
+            {
+                "name": "A",
+                "version": "1.0",
+                "optional": False,
                 "platform": "*",
-                "content-hash": "123456789",
-                "files": {"A": [], "B": [], "C": []},
+                "python-versions": "*",
+                "checksum": [],
             },
-        }
-    )
+            {
+                "name": "B",
+                "version": "1.1",
+                "optional": False,
+                "platform": "*",
+                "python-versions": "*",
+                "checksum": [],
+            },
+            {
+                "name": "C",
+                "version": "1.2",
+                "optional": False,
+                "platform": "*",
+                "python-versions": "*",
+                "checksum": [],
+            },
+        ],
+        "metadata": {
+            "lock-version": lock_version,
+            "python-versions": "*",
+            "content-hash": "123456789",
+            "files": {"A": [], "B": [], "C": []},
+        },
+    }
+    fix_lock_data(lock_data)
+    locker.locked(True)
+    locker.mock_lock_data(lock_data)
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.1")
     package_c = get_package("C", "1.2")
@@ -315,6 +319,7 @@ def test_run_update_after_removing_dependencies(
 
 
 def _configure_run_install_dev(
+    lock_version: str,
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
@@ -325,43 +330,49 @@ def _configure_run_install_dev(
     """
     Perform common test setup for `test_run_install_*dev*()` methods.
     """
-    locker.locked(True)
-    locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "A",
-                    "version": "1.0",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "B",
-                    "version": "1.1",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "C",
-                    "version": "1.2",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
+    lock_data: dict[str, Any] = {
+        "package": [
+            {
+                "name": "A",
+                "version": "1.0",
+                "optional": False,
                 "platform": "*",
-                "content-hash": "123456789",
-                "files": {"A": [], "B": [], "C": []},
+                "python-versions": "*",
+                "checksum": [],
             },
-        }
-    )
+            {
+                "name": "B",
+                "version": "1.1",
+                "optional": False,
+                "platform": "*",
+                "python-versions": "*",
+                "checksum": [],
+            },
+            {
+                "name": "C",
+                "version": "1.2",
+                "optional": False,
+                "platform": "*",
+                "python-versions": "*",
+                "checksum": [],
+            },
+        ],
+        "metadata": {
+            "lock-version": lock_version,
+            "python-versions": "*",
+            "content-hash": "123456789",
+            "files": {"A": [], "B": [], "C": []},
+        },
+    }
+    if lock_version == "2.1":
+        for locked_package in lock_data["package"]:
+            locked_package["groups"] = [
+                "dev" if locked_package["name"] == "C" else "main"
+            ]
+            locked_package["files"] = []
+        del lock_data["metadata"]["files"]
+    locker.locked(True)
+    locker.mock_lock_data(lock_data)
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.1")
     package_c = get_package("C", "1.2")
@@ -382,6 +393,9 @@ def _configure_run_install_dev(
     package.add_dependency_group(group)
 
 
+@pytest.mark.parametrize("lock_version", ("1.1", "2.1"))
+@pytest.mark.parametrize("update", [False, True])
+@pytest.mark.parametrize("requires_synchronization", [False, True])
 @pytest.mark.parametrize(
     ("groups", "installs", "updates", "removals", "with_packages_installed"),
     [
@@ -408,8 +422,12 @@ def test_run_install_with_dependency_groups(
     repo: Repository,
     package: ProjectPackage,
     installed: CustomInstalledRepository,
+    update: bool,
+    requires_synchronization: bool,
+    lock_version: str,
 ) -> None:
     _configure_run_install_dev(
+        lock_version,
         locker,
         repo,
         package,
@@ -419,23 +437,28 @@ def test_run_install_with_dependency_groups(
     )
 
     if groups is not None:
-        installer.only_groups(groups)
+        installer.only_groups({canonicalize_name(g) for g in groups})
 
-    installer.requires_synchronization(True)
+    installer.update(update)
+    installer.requires_synchronization(requires_synchronization)
     result = installer.run()
     assert result == 0
 
+    if not requires_synchronization:
+        removals = 0
     assert installer.executor.installations_count == installs
     assert installer.executor.updates_count == updates
     assert installer.executor.removals_count == removals
 
 
+@pytest.mark.parametrize("lock_version", ("1.1", "2.1"))
 def test_run_install_does_not_remove_locked_packages_if_installed_but_not_required(
     installer: Installer,
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
     installed: CustomInstalledRepository,
+    lock_version: str,
 ) -> None:
     package_a = get_package("a", "1.0")
     package_b = get_package("b", "1.1")
@@ -454,43 +477,43 @@ def test_run_install_does_not_remove_locked_packages_if_installed_but_not_requir
         Factory.create_dependency(package_a.name, str(package_a.version))
     )
 
-    locker.locked(True)
-    locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": package_a.name,
-                    "version": package_a.version.text,
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": package_b.name,
-                    "version": package_b.version.text,
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": package_c.name,
-                    "version": package_c.version.text,
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
+    lock_data = {
+        "package": [
+            {
+                "name": package_a.name,
+                "version": package_a.version.text,
+                "optional": False,
                 "platform": "*",
-                "content-hash": "123456789",
-                "files": {package_a.name: [], package_b.name: [], package_c.name: []},
+                "python-versions": "*",
+                "checksum": [],
             },
-        }
-    )
+            {
+                "name": package_b.name,
+                "version": package_b.version.text,
+                "optional": False,
+                "platform": "*",
+                "python-versions": "*",
+                "checksum": [],
+            },
+            {
+                "name": package_c.name,
+                "version": package_c.version.text,
+                "optional": False,
+                "platform": "*",
+                "python-versions": "*",
+                "checksum": [],
+            },
+        ],
+        "metadata": {
+            "lock-version": lock_version,
+            "python-versions": "*",
+            "content-hash": "123456789",
+            "files": {package_a.name: [], package_b.name: [], package_c.name: []},
+        },
+    }
+    fix_lock_data(lock_data)
+    locker.locked(True)
+    locker.mock_lock_data(lock_data)
 
     result = installer.run()
     assert result == 0
@@ -500,12 +523,15 @@ def test_run_install_does_not_remove_locked_packages_if_installed_but_not_requir
     assert installer.executor.removals_count == 0
 
 
+@pytest.mark.parametrize("lock_version", ("1.1", "2.1"))
 def test_run_install_removes_locked_packages_if_installed_and_synchronization_is_required(
     installer: Installer,
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
     installed: CustomInstalledRepository,
+    lock_version: str,
+    config_installer_reresolve: bool,
 ) -> None:
     package_a = get_package("a", "1.0")
     package_b = get_package("b", "1.1")
@@ -524,44 +550,45 @@ def test_run_install_removes_locked_packages_if_installed_and_synchronization_is
         Factory.create_dependency(package_a.name, str(package_a.version))
     )
 
-    locker.locked(True)
-    locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": package_a.name,
-                    "version": package_a.version.text,
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": package_b.name,
-                    "version": package_b.version.text,
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": package_c.name,
-                    "version": package_c.version.text,
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
+    lock_data = {
+        "package": [
+            {
+                "name": package_a.name,
+                "version": package_a.version.text,
+                "optional": False,
                 "platform": "*",
-                "content-hash": "123456789",
-                "files": {package_a.name: [], package_b.name: [], package_c.name: []},
+                "python-versions": "*",
+                "checksum": [],
             },
-        }
-    )
+            {
+                "name": package_b.name,
+                "version": package_b.version.text,
+                "optional": False,
+                "platform": "*",
+                "python-versions": "*",
+                "checksum": [],
+            },
+            {
+                "name": package_c.name,
+                "version": package_c.version.text,
+                "optional": False,
+                "platform": "*",
+                "python-versions": "*",
+                "checksum": [],
+            },
+        ],
+        "metadata": {
+            "lock-version": lock_version,
+            "python-versions": "*",
+            "content-hash": "123456789",
+            "files": {package_a.name: [], package_b.name: [], package_c.name: []},
+        },
+    }
+    fix_lock_data(lock_data)
+    locker.locked(True)
+    locker.mock_lock_data(lock_data)
 
+    installer.update(True)
     installer.requires_synchronization(True)
     installer.run()
 
@@ -570,12 +597,14 @@ def test_run_install_removes_locked_packages_if_installed_and_synchronization_is
     assert installer.executor.removals_count == 2
 
 
+@pytest.mark.parametrize("lock_version", ("1.1", "2.1"))
 def test_run_install_removes_no_longer_locked_packages_if_installed(
     installer: Installer,
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
     installed: CustomInstalledRepository,
+    lock_version: str,
 ) -> None:
     package_a = get_package("a", "1.0")
     package_b = get_package("b", "1.1")
@@ -594,43 +623,43 @@ def test_run_install_removes_no_longer_locked_packages_if_installed(
         Factory.create_dependency(package_a.name, str(package_a.version))
     )
 
-    locker.locked(True)
-    locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": package_a.name,
-                    "version": package_a.version.text,
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": package_b.name,
-                    "version": package_b.version.text,
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": package_c.name,
-                    "version": package_c.version.text,
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
+    lock_data = {
+        "package": [
+            {
+                "name": package_a.name,
+                "version": package_a.version.text,
+                "optional": False,
                 "platform": "*",
-                "content-hash": "123456789",
-                "files": {package_a.name: [], package_b.name: [], package_c.name: []},
+                "python-versions": "*",
+                "checksum": [],
             },
-        }
-    )
+            {
+                "name": package_b.name,
+                "version": package_b.version.text,
+                "optional": False,
+                "platform": "*",
+                "python-versions": "*",
+                "checksum": [],
+            },
+            {
+                "name": package_c.name,
+                "version": package_c.version.text,
+                "optional": False,
+                "platform": "*",
+                "python-versions": "*",
+                "checksum": [],
+            },
+        ],
+        "metadata": {
+            "lock-version": lock_version,
+            "python-versions": "*",
+            "content-hash": "123456789",
+            "files": {package_a.name: [], package_b.name: [], package_c.name: []},
+        },
+    }
+    fix_lock_data(lock_data)
+    locker.locked(True)
+    locker.mock_lock_data(lock_data)
 
     installer.update(True)
     result = installer.run()
@@ -641,6 +670,7 @@ def test_run_install_removes_no_longer_locked_packages_if_installed(
     assert installer.executor.removals_count == 2
 
 
+@pytest.mark.parametrize("lock_version", ("1.1", "2.1"))
 @pytest.mark.parametrize(
     "managed_reserved_package_names",
     [(), ("pip",)],
@@ -652,6 +682,7 @@ def test_run_install_with_synchronization(
     repo: Repository,
     package: ProjectPackage,
     installed: CustomInstalledRepository,
+    lock_version: str,
 ) -> None:
     package_a = get_package("a", "1.0")
     package_b = get_package("b", "1.1")
@@ -680,36 +711,37 @@ def test_run_install_with_synchronization(
         Factory.create_dependency(package_a.name, str(package_a.version))
     )
 
-    locker.locked(True)
-    locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": pkg.name,
-                    "version": pkg.version,
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                }
-                for pkg in locked_packages
-            ],
-            "metadata": {
-                "python-versions": "*",
+    lock_data = {
+        "package": [
+            {
+                "name": pkg.name,
+                "version": pkg.version,
+                "optional": False,
                 "platform": "*",
-                "content-hash": "123456789",
-                "files": {pkg.name: [] for pkg in locked_packages},
-            },
-        }
-    )
+                "python-versions": "*",
+                "checksum": [],
+            }
+            for pkg in locked_packages
+        ],
+        "metadata": {
+            "lock-version": lock_version,
+            "python-versions": "*",
+            "content-hash": "123456789",
+            "files": {pkg.name: [] for pkg in locked_packages},
+        },
+    }
+    fix_lock_data(lock_data)
+    locker.locked(True)
+    locker.mock_lock_data(lock_data)
 
+    installer.update(True)
     installer.requires_synchronization(True)
     result = installer.run()
     assert result == 0
 
     assert installer.executor.installations_count == 0
     assert installer.executor.updates_count == 0
-    assert 2 + len(managed_reserved_packages) == installer.executor.removals_count
+    assert installer.executor.removals_count == 2 + len(managed_reserved_packages)
 
     expected_removals = {
         package_b.name,
@@ -717,34 +749,39 @@ def test_run_install_with_synchronization(
         *managed_reserved_package_names,
     }
 
-    assert isinstance(installer.executor, Executor)
+    assert isinstance(installer.executor, TestExecutor)
     assert {r.name for r in installer.executor.removals} == expected_removals
 
 
+@pytest.mark.parametrize("lock_version", ("1.1", "2.1"))
 def test_run_whitelist_add(
-    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    lock_version: str,
 ) -> None:
-    locker.locked(True)
-    locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "A",
-                    "version": "1.0",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                }
-            ],
-            "metadata": {
-                "python-versions": "*",
+    lock_data = {
+        "package": [
+            {
+                "name": "A",
+                "version": "1.0",
+                "optional": False,
                 "platform": "*",
-                "content-hash": "123456789",
-                "files": {"A": []},
-            },
-        }
-    )
+                "python-versions": "*",
+                "checksum": [],
+            }
+        ],
+        "metadata": {
+            "lock-version": lock_version,
+            "python-versions": "*",
+            "content-hash": "123456789",
+            "files": {"A": []},
+        },
+    }
+    fix_lock_data(lock_data)
+    locker.locked(True)
+    locker.mock_lock_data(lock_data)
     package_a = get_package("A", "1.0")
     package_a_new = get_package("A", "1.1")
     package_b = get_package("B", "1.1")
@@ -765,42 +802,44 @@ def test_run_whitelist_add(
     assert locker.written_data == expected
 
 
+@pytest.mark.parametrize("lock_version", ("1.1", "2.1"))
 def test_run_whitelist_remove(
     installer: Installer,
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
     installed: CustomInstalledRepository,
+    lock_version: str,
 ) -> None:
-    locker.locked(True)
-    locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "A",
-                    "version": "1.0",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "B",
-                    "version": "1.1",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
+    lock_data = {
+        "package": [
+            {
+                "name": "A",
+                "version": "1.0",
+                "optional": False,
                 "platform": "*",
-                "content-hash": "123456789",
-                "files": {"A": [], "B": []},
+                "python-versions": "*",
+                "checksum": [],
             },
-        }
-    )
+            {
+                "name": "B",
+                "version": "1.1",
+                "optional": False,
+                "platform": "*",
+                "python-versions": "*",
+                "checksum": [],
+            },
+        ],
+        "metadata": {
+            "lock-version": lock_version,
+            "python-versions": "*",
+            "content-hash": "123456789",
+            "files": {"A": [], "B": []},
+        },
+    }
+    fix_lock_data(lock_data)
+    locker.locked(True)
+    locker.mock_lock_data(lock_data)
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.1")
     repo.add_package(package_a)
@@ -894,9 +933,9 @@ def test_run_with_optional_and_python_restricted_dependencies(
     repo.add_package(package_d)
 
     package.extras = {canonicalize_name("foo"): [get_dependency("A", "~1.0")]}
-    package.add_dependency(
-        Factory.create_dependency("A", {"version": "~1.0", "optional": True})
-    )
+    dep_a = Factory.create_dependency("A", {"version": "~1.0", "optional": True})
+    dep_a._in_extras = [canonicalize_name("foo")]
+    package.add_dependency(dep_a)
     package.add_dependency(
         Factory.create_dependency("B", {"version": "^1.0", "python": "~2.4"})
     )
@@ -913,7 +952,7 @@ def test_run_with_optional_and_python_restricted_dependencies(
     # We should only have 2 installs:
     # C,D since python version is not compatible
     # with B's python constraint and A is optional
-    assert isinstance(installer.executor, Executor)
+    assert isinstance(installer.executor, TestExecutor)
     assert installer.executor.installations_count == 2
     assert installer.executor.installations[0].name == "d"
     assert installer.executor.installations[1].name == "c"
@@ -942,9 +981,9 @@ def test_run_with_optional_and_platform_restricted_dependencies(
     repo.add_package(package_d)
 
     package.extras = {canonicalize_name("foo"): [get_dependency("A", "~1.0")]}
-    package.add_dependency(
-        Factory.create_dependency("A", {"version": "~1.0", "optional": True})
-    )
+    dep_a = Factory.create_dependency("A", {"version": "~1.0", "optional": True})
+    dep_a._in_extras = [canonicalize_name("foo")]
+    package.add_dependency(dep_a)
     package.add_dependency(
         Factory.create_dependency("B", {"version": "^1.0", "platform": "custom"})
     )
@@ -961,7 +1000,7 @@ def test_run_with_optional_and_platform_restricted_dependencies(
     # We should only have 2 installs:
     # C,D since the mocked python version is not compatible
     # with B's python constraint and A is optional
-    assert isinstance(installer.executor, Executor)
+    assert isinstance(installer.executor, TestExecutor)
     assert installer.executor.installations_count == 2
     assert installer.executor.installations[0].name == "d"
     assert installer.executor.installations[1].name == "c"
@@ -1027,9 +1066,457 @@ def test_run_with_dependencies_nested_extras(
     assert locker.written_data == expected
 
 
+@pytest.mark.parametrize(
+    "enabled_extras",
+    [
+        ([]),
+        (["all"]),
+        (["nested"]),
+        (["install", "download"]),
+        (["install"]),
+        (["download"]),
+    ],
+)
+@pytest.mark.parametrize("top_level_dependency", [True, False])
+def test_solver_resolves_self_referential_extras(
+    enabled_extras: list[str],
+    top_level_dependency: bool,
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    create_package: PackageFactory,
+) -> None:
+    dependency = (
+        create_package(
+            "A",
+            str(package.version),
+            extras={
+                "download": ["download-package"],
+                "install": ["install-package"],
+                "py38": ["py38-package ; python_version == '3.8'"],
+                "py310": ["py310-package ; python_version > '3.8'"],
+                "all": ["a[download,install]"],
+                "py": ["a[py38,py310]"],
+                "nested": ["a[all]"],
+            },
+        )
+        .to_dependency()
+        .with_features(enabled_extras)
+    )
+
+    if not top_level_dependency:
+        dependency = create_package(
+            "B", "1.0", dependencies=[dependency]
+        ).to_dependency()
+
+    package.add_dependency(dependency)
+
+    result = installer.run()
+    assert result == 0
+
+    name = "-".join(
+        [
+            "with-self-referencing-extras",
+            *enabled_extras,
+            "top" if top_level_dependency else "deep",
+        ]
+    )
+
+    expected = fixture(name)
+    assert locker.written_data == expected
+
+
+def test_solver_resolves_self_referential_extras_with_markers(
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    create_package: PackageFactory,
+) -> None:
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "*", "extras": ["all"]})
+    )
+
+    create_package(
+        "A",
+        str(package.version),
+        extras={
+            "download": ["download-package"],
+            "install": ["install-package"],
+            "all": ["a[download,install] ; python_version < '3.9'"],
+        },
+    )
+
+    result = installer.run()
+    assert result == 0
+
+    name = "-".join(["with-self-referencing-extras", "b", "markers"])
+
+    # FIXME: At the time of writing this test case, the markers from self-ref extras are not
+    #  correctly propagated into the dependency specs. For example, given this case,
+    #  the package "install-package" should have a final marker of
+    #  "extra == 'install' or extra == 'all' and python_version < '3.9'".
+    expected = fixture(name)
+    assert locker.written_data == expected
+
+
+@pytest.mark.parametrize("root", [True, False])
+@pytest.mark.parametrize("locked", [False, True])
+@pytest.mark.parametrize("extra", [None, "extra-one", "extra-two"])
+def test_run_with_conflicting_dependency_extras(
+    installer: Installer,
+    pool: RepositoryPool,
+    locker: Locker,
+    installed: CustomInstalledRepository,
+    repo: Repository,
+    config: Config,
+    package: ProjectPackage,
+    extra: str | None,
+    locked: bool,
+    root: bool,
+) -> None:
+    """
+    - https://github.com/python-poetry/poetry/issues/6419
+
+    Tests resolution of extras with conflicting dependencies. Tests in both as direct dependencies of
+    root package and as transitive dependencies.
+    """
+    # A package with two optional dependencies, one for each extra
+    # If root, this is the root package, otherwise an intermediate package
+    main_package = package if root else get_package("intermediate-dep", "1.0.0")
+
+    # Two conflicting versions of a dependency, one in each extra
+    conflicting_dep_one_pkg = get_package("conflicting-dep", "1.1.0")
+    conflicting_dep_two_pkg = get_package("conflicting-dep", "1.2.0")
+
+    conflicting_dep_one = Factory.create_dependency(
+        "conflicting-dep",
+        {
+            "version": "1.1.0",
+            "markers": "extra == 'extra-one' and extra != 'extra-two'",
+            "optional": True,
+        },
+    )
+    conflicting_dep_two = Factory.create_dependency(
+        "conflicting-dep",
+        {
+            "version": "1.2.0",
+            "markers": "extra != 'extra-one' and extra == 'extra-two'",
+            "optional": True,
+        },
+    )
+
+    # Include both just for extra validation that our marker validation works as expected
+    main_package.extras = {
+        canonicalize_name("extra-one"): [conflicting_dep_one, conflicting_dep_two],
+        canonicalize_name("extra-two"): [conflicting_dep_one, conflicting_dep_two],
+    }
+    main_package.add_dependency(conflicting_dep_one)
+    main_package.add_dependency(conflicting_dep_two)
+
+    repo.add_package(conflicting_dep_one_pkg)
+    repo.add_package(conflicting_dep_two_pkg)
+    if not root:
+        repo.add_package(main_package)
+
+    # If we have an intermediate package, add extras to our root package
+    if not root:
+        extra_one_dep = Factory.create_dependency(
+            "intermediate-dep",
+            {
+                "version": "1.0.0",
+                "markers": "extra == 'root-extra-one' and extra != 'root-extra-two'",
+                "extras": ["extra-one"],
+                "optional": True,
+            },
+        )
+        extra_two_dep = Factory.create_dependency(
+            "intermediate-dep",
+            {
+                "version": "1.0.0",
+                "markers": "extra != 'root-extra-one' and extra == 'root-extra-two'",
+                "extras": ["extra-two"],
+                "optional": True,
+            },
+        )
+        package.add_dependency(extra_one_dep)
+        package.add_dependency(extra_two_dep)
+        # Include both just for extra validation that our marker validation works as expected
+        package.extras = {
+            canonicalize_name("root-extra-one"): [extra_one_dep, extra_two_dep],
+            canonicalize_name("root-extra-two"): [extra_one_dep, extra_two_dep],
+        }
+
+    fixture_name = "with-conflicting-dependency-extras-" + (
+        "root" if root else "transitive"
+    )
+    locker.locked(locked)
+    if locked:
+        locker.mock_lock_data(dict(fixture(fixture_name)))
+
+    if extra is not None:
+        extras = [f"root-{extra}"] if not root else [extra]
+        installer.extras(extras)
+    result = installer.run()
+    assert result == 0
+
+    if not locked:
+        expected = fixture(fixture_name)
+        assert locker.written_data == expected
+
+    # Results of installation are consistent with the 'extra' input
+    assert isinstance(installer.executor, TestExecutor)
+
+    expected_installations = []
+    if extra == "extra-one":
+        expected_installations.append(conflicting_dep_one_pkg)
+    elif extra == "extra-two":
+        expected_installations.append(conflicting_dep_two_pkg)
+    if not root and extra is not None:
+        expected_installations.append(get_package("intermediate-dep", "1.0.0"))
+
+    assert len(installer.executor.installations) == len(expected_installations)
+    assert set(installer.executor.installations) == set(expected_installations)
+
+
+@pytest.mark.parametrize("locked", [True, False])
+@pytest.mark.parametrize("extra", [None, "cpu", "cuda"])
+def test_run_with_exclusive_extras_different_sources(
+    installer: Installer,
+    locker: Locker,
+    installed: CustomInstalledRepository,
+    config: Config,
+    package: ProjectPackage,
+    extra: str | None,
+    locked: bool,
+) -> None:
+    """
+    - https://github.com/python-poetry/poetry/issues/6409
+    - https://github.com/python-poetry/poetry/issues/6419
+    - https://github.com/python-poetry/poetry/issues/7748
+    - https://github.com/python-poetry/poetry/issues/9537
+    """
+    # Setup repo for each of our sources
+    cpu_repo = Repository("pytorch-cpu")
+    cuda_repo = Repository("pytorch-cuda")
+    pool = RepositoryPool()
+    pool.add_repository(cpu_repo)
+    pool.add_repository(cuda_repo)
+    config.config["repositories"] = {
+        "pytorch-cpu": {"url": "https://download.pytorch.org/whl/cpu"},
+        "pytorch-cuda": {"url": "https://download.pytorch.org/whl/cuda"},
+    }
+
+    # Configure packages that read from each of the different sources
+    torch_cpu_pkg = get_package("torch", "1.11.0+cpu")
+    torch_cpu_pkg._source_reference = "pytorch-cpu"
+    torch_cpu_pkg._source_type = "legacy"
+    torch_cpu_pkg._source_url = "https://download.pytorch.org/whl/cpu"
+    torch_cuda_pkg = get_package("torch", "1.11.0+cuda")
+    torch_cuda_pkg._source_reference = "pytorch-cuda"
+    torch_cuda_pkg._source_type = "legacy"
+    torch_cuda_pkg._source_url = "https://download.pytorch.org/whl/cuda"
+    cpu_repo.add_package(torch_cpu_pkg)
+    cuda_repo.add_package(torch_cuda_pkg)
+
+    # Depend on each package based on exclusive extras
+    torch_cpu_dep = Factory.create_dependency(
+        "torch",
+        {
+            "version": "1.11.0+cpu",
+            "markers": "extra == 'cpu' and extra != 'cuda'",
+            "source": "pytorch-cpu",
+        },
+    )
+    torch_cuda_dep = Factory.create_dependency(
+        "torch",
+        {
+            "version": "1.11.0+cuda",
+            "markers": "extra != 'cpu' and extra == 'cuda'",
+            "source": "pytorch-cuda",
+        },
+    )
+    package.add_dependency(torch_cpu_dep)
+    package.add_dependency(torch_cuda_dep)
+    # We don't want to cheat by only including the correct dependency in the 'extra' mapping
+    package.extras = {
+        canonicalize_name("cpu"): [torch_cpu_dep, torch_cuda_dep],
+        canonicalize_name("cuda"): [torch_cpu_dep, torch_cuda_dep],
+    }
+
+    # Set locker state
+    locker.locked(locked)
+    if locked:
+        locker.mock_lock_data(dict(fixture("with-exclusive-extras")))
+
+    # Perform install
+    installer = Installer(
+        NullIO(),
+        MockEnv(),
+        package,
+        locker,
+        pool,
+        config,
+        installed=installed,
+        executor=TestExecutor(
+            MockEnv(),
+            pool,
+            config,
+            NullIO(),
+        ),
+    )
+    if extra is not None:
+        installer.extras([extra])
+    result = installer.run()
+    assert result == 0
+
+    # Results of locking are expected and installation are consistent with the 'extra' input
+    if not locked:
+        expected = fixture("with-exclusive-extras")
+        assert locker.written_data == expected
+    assert isinstance(installer.executor, TestExecutor)
+    if extra is None:
+        assert len(installer.executor.installations) == 0
+    else:
+        assert len(installer.executor.installations) == 1
+        version = f"1.11.0+{extra}"
+        source_url = f"https://download.pytorch.org/whl/{extra}"
+        source_reference = f"pytorch-{extra}"
+        assert installer.executor.installations[0] == Package(
+            "torch",
+            version,
+            source_type="legacy",
+            source_url=source_url,
+            source_reference=source_reference,
+        )
+
+
+@pytest.mark.parametrize("locked", [True, False])
+@pytest.mark.parametrize("extra", [None, "extra-one", "extra-two"])
+def test_run_with_different_dependency_extras(
+    installer: Installer,
+    pool: RepositoryPool,
+    locker: Locker,
+    installed: CustomInstalledRepository,
+    repo: Repository,
+    config: Config,
+    package: ProjectPackage,
+    extra: str | None,
+    locked: bool,
+) -> None:
+    """
+    - https://github.com/python-poetry/poetry/issues/834
+    - https://github.com/python-poetry/poetry/issues/7748
+
+    This tests different sets of extras in a dependency of the root project. These different dependency extras are
+    themselves conditioned on extras in the root project.
+    """
+    # Three packages in addition to root: demo (direct dependency) and two transitive dep packages
+    demo_pkg = get_package("demo", "1.0.0")
+    transitive_one_pkg = get_package("transitive-dep-one", "1.1.0")
+    transitive_two_pkg = get_package("transitive-dep-two", "1.2.0")
+
+    # Switch each transitive dependency based on extra markers in the 'demo' package
+    transitive_dep_one = Factory.create_dependency(
+        "transitive-dep-one",
+        {
+            "version": "1.1.0",
+            "markers": "extra == 'demo-extra-one' and extra != 'demo-extra-two'",
+            "optional": True,
+        },
+    )
+    transitive_dep_two = Factory.create_dependency(
+        "transitive-dep-two",
+        {
+            "version": "1.2.0",
+            "markers": "extra != 'demo-extra-one' and extra == 'demo-extra-two'",
+            "optional": True,
+        },
+    )
+    # Include both packages in both demo extras, to validate that they're filtered out based on extra markers alone
+    demo_pkg.extras = {
+        canonicalize_name("demo-extra-one"): [
+            get_dependency("transitive-dep-one"),
+            get_dependency("transitive-dep-two"),
+        ],
+        canonicalize_name("demo-extra-two"): [
+            get_dependency("transitive-dep-one"),
+            get_dependency("transitive-dep-two"),
+        ],
+    }
+    demo_pkg.add_dependency(transitive_dep_one)
+    demo_pkg.add_dependency(transitive_dep_two)
+
+    # Now define the demo dependency, similarly switched on extra markers in the root package
+    extra_one_dep = Factory.create_dependency(
+        "demo",
+        {
+            "version": "1.0.0",
+            "markers": "extra == 'extra-one' and extra != 'extra-two'",
+            "extras": ["demo-extra-one"],
+        },
+    )
+    extra_two_dep = Factory.create_dependency(
+        "demo",
+        {
+            "version": "1.0.0",
+            "markers": "extra != 'extra-one' and extra == 'extra-two'",
+            "extras": ["demo-extra-two"],
+        },
+    )
+    package.add_dependency(extra_one_dep)
+    package.add_dependency(extra_two_dep)
+    # Again we don't want to cheat by only including the correct dependency in the 'extra' mapping
+    package.extras = {
+        canonicalize_name("extra-one"): [extra_one_dep, extra_two_dep],
+        canonicalize_name("extra-two"): [extra_one_dep, extra_two_dep],
+    }
+
+    repo.add_package(demo_pkg)
+    repo.add_package(transitive_one_pkg)
+    repo.add_package(transitive_two_pkg)
+
+    locker.locked(locked)
+    if locked:
+        locker.mock_lock_data(dict(fixture("with-dependencies-differing-extras")))
+
+    installer = Installer(
+        NullIO(),
+        MockEnv(),
+        package,
+        locker,
+        pool,
+        config,
+        installed=installed,
+        executor=TestExecutor(
+            MockEnv(),
+            pool,
+            config,
+            NullIO(),
+        ),
+    )
+    if extra is not None:
+        installer.extras([extra])
+    result = installer.run()
+    assert result == 0
+
+    if not locked:
+        expected = fixture("with-dependencies-differing-extras")
+        assert locker.written_data == expected
+
+    # Results of installation are consistent with the 'extra' input
+    assert isinstance(installer.executor, TestExecutor)
+    if extra is None:
+        assert len(installer.executor.installations) == 0
+    else:
+        assert len(installer.executor.installations) == 2
+
+
 @pytest.mark.parametrize("is_locked", [False, True])
 @pytest.mark.parametrize("is_installed", [False, True])
 @pytest.mark.parametrize("with_extras", [False, True])
+@pytest.mark.parametrize("do_update", [False, True])
 @pytest.mark.parametrize("do_sync", [False, True])
 def test_run_installs_extras_with_deps_if_requested(
     installer: Installer,
@@ -1040,6 +1527,7 @@ def test_run_installs_extras_with_deps_if_requested(
     is_locked: bool,
     is_installed: bool,
     with_extras: bool,
+    do_update: bool,
     do_sync: bool,
 ) -> None:
     package.extras = {canonicalize_name("foo"): [get_dependency("C")]}
@@ -1055,9 +1543,9 @@ def test_run_installs_extras_with_deps_if_requested(
 
     package.add_dependency(Factory.create_dependency("A", "^1.0"))
     package.add_dependency(Factory.create_dependency("B", "^1.0"))
-    package.add_dependency(
-        Factory.create_dependency("C", {"version": "^1.0", "optional": True})
-    )
+    dep_c = Factory.create_dependency("C", {"version": "^1.0", "optional": True})
+    dep_c._in_extras = [canonicalize_name("foo")]
+    package.add_dependency(dep_c)
 
     package_c.add_dependency(Factory.create_dependency("D", "^1.0"))
 
@@ -1073,6 +1561,7 @@ def test_run_installs_extras_with_deps_if_requested(
 
     if with_extras:
         installer.extras(["foo"])
+    installer.update(do_update)
     installer.requires_synchronization(do_sync)
     result = installer.run()
     assert result == 0
@@ -1089,7 +1578,7 @@ def test_run_installs_extras_with_deps_if_requested(
         expected_installations_count = 0 if is_installed else 2
         # We only want to uninstall extras if we do a "poetry install" without extras,
         # not if we do a "poetry update" or "poetry add".
-        expected_removals_count = 2 if is_installed else 0
+        expected_removals_count = 2 if is_installed and do_sync else 0
 
     assert installer.executor.installations_count == expected_installations_count
     assert installer.executor.removals_count == expected_removals_count
@@ -1116,7 +1605,7 @@ def test_installer_with_pypi_repository(
     assert result == 0
 
     expected = fixture("with-pypi-repository")
-    assert expected == locker.written_data
+    assert locker.written_data == expected
 
 
 def test_run_installs_with_local_file(
@@ -1243,7 +1732,7 @@ def test_run_installs_with_local_poetry_directory_and_skip_directory_flag(
 
     assert locker.written_data == expected
 
-    assert isinstance(installer.executor, Executor)
+    assert isinstance(installer.executor, TestExecutor)
     directory_installs = [
         p.name for p in installer.executor.installations if p.source_type == "directory"
     ]
@@ -1323,30 +1812,35 @@ def test_run_installs_with_local_setuptools_directory(
     assert installer.executor.installations_count == 3
 
 
+@pytest.mark.parametrize("lock_version", ("1.1", "2.1"))
 def test_run_with_prereleases(
-    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    lock_version: str,
 ) -> None:
-    locker.locked(True)
-    locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "A",
-                    "version": "1.0a2",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                }
-            ],
-            "metadata": {
-                "python-versions": "*",
+    lock_data = {
+        "package": [
+            {
+                "name": "A",
+                "version": "1.0a2",
+                "optional": False,
                 "platform": "*",
-                "content-hash": "123456789",
-                "files": {"A": []},
-            },
-        }
-    )
+                "python-versions": "*",
+                "checksum": [],
+            }
+        ],
+        "metadata": {
+            "lock-version": lock_version,
+            "python-versions": "*",
+            "content-hash": "123456789",
+            "files": {"A": []},
+        },
+    }
+    fix_lock_data(lock_data)
+    locker.locked(True)
+    locker.mock_lock_data(lock_data)
     package_a = get_package("A", "1.0a2")
     package_b = get_package("B", "1.1")
     repo.add_package(package_a)
@@ -1367,30 +1861,35 @@ def test_run_with_prereleases(
     assert locker.written_data == expected
 
 
+@pytest.mark.parametrize("lock_version", ("1.1", "2.1"))
 def test_run_update_all_with_lock(
-    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    lock_version: str,
 ) -> None:
-    locker.locked(True)
-    locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "A",
-                    "version": "1.0",
-                    "optional": True,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                }
-            ],
-            "metadata": {
-                "python-versions": "*",
+    lock_data = {
+        "package": [
+            {
+                "name": "A",
+                "version": "1.0",
+                "optional": True,
                 "platform": "*",
-                "content-hash": "123456789",
-                "files": {"A": []},
-            },
-        }
-    )
+                "python-versions": "*",
+                "checksum": [],
+            }
+        ],
+        "metadata": {
+            "lock-version": lock_version,
+            "python-versions": "*",
+            "content-hash": "123456789",
+            "files": {"A": []},
+        },
+    }
+    fix_lock_data(lock_data)
+    locker.locked(True)
+    locker.mock_lock_data(lock_data)
     package_a = get_package("A", "1.1")
     repo.add_package(get_package("A", "1.0"))
     repo.add_package(package_a)
@@ -1406,48 +1905,53 @@ def test_run_update_all_with_lock(
     assert locker.written_data == expected
 
 
+@pytest.mark.parametrize("lock_version", ("1.1", "2.1"))
 def test_run_update_with_locked_extras(
-    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    lock_version: str,
 ) -> None:
-    locker.locked(True)
-    locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "A",
-                    "version": "1.0",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                    "dependencies": {"B": "^1.0", "C": "^1.0"},
-                },
-                {
-                    "name": "B",
-                    "version": "1.0",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "C",
-                    "version": "1.1",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                    "requirements": {"python": "~2.7"},
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
+    lock_data = {
+        "package": [
+            {
+                "name": "A",
+                "version": "1.0",
+                "optional": False,
                 "platform": "*",
-                "content-hash": "123456789",
-                "files": {"A": [], "B": [], "C": []},
+                "python-versions": "*",
+                "checksum": [],
+                "dependencies": {"B": "^1.0", "C": "^1.0"},
             },
-        }
-    )
+            {
+                "name": "B",
+                "version": "1.0",
+                "optional": False,
+                "platform": "*",
+                "python-versions": "*",
+                "checksum": [],
+            },
+            {
+                "name": "C",
+                "version": "1.1",
+                "optional": False,
+                "platform": "*",
+                "python-versions": "*",
+                "checksum": [],
+                "requirements": {"python": "~2.7"},
+            },
+        ],
+        "metadata": {
+            "lock-version": lock_version,
+            "python-versions": "*",
+            "content-hash": "123456789",
+            "files": {"A": [], "B": [], "C": []},
+        },
+    }
+    fix_lock_data(lock_data)
+    locker.locked(True)
+    locker.mock_lock_data(lock_data)
     package_a = get_package("A", "1.0")
     package_a.extras = {canonicalize_name("foo"): [get_dependency("B")]}
     b_dependency = get_dependency("B", "^1.0", optional=True)
@@ -1511,7 +2015,7 @@ def test_run_install_duplicate_dependencies_different_constraints(
 
     assert locker.written_data == expected
 
-    assert isinstance(installer.executor, Executor)
+    assert isinstance(installer.executor, TestExecutor)
     installs = installer.executor.installations
     assert installer.executor.installations_count == 3
     assert installs[0] == package_c12
@@ -1522,72 +2026,78 @@ def test_run_install_duplicate_dependencies_different_constraints(
     assert installer.executor.removals_count == 0
 
 
+@pytest.mark.parametrize("lock_version", ("1.1", "2.1"))
 def test_run_install_duplicate_dependencies_different_constraints_with_lock(
-    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    lock_version: str,
 ) -> None:
-    locker.locked(True)
-    locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "A",
-                    "version": "1.0",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                    "dependencies": {
-                        "B": [
-                            {"version": "^1.0", "python": "<4.0"},
-                            {"version": "^2.0", "python": ">=4.0"},
-                        ]
-                    },
-                },
-                {
-                    "name": "B",
-                    "version": "1.0",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                    "dependencies": {"C": "1.2"},
-                    "requirements": {"python": "<4.0"},
-                },
-                {
-                    "name": "B",
-                    "version": "2.0",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                    "dependencies": {"C": "1.5"},
-                    "requirements": {"python": ">=4.0"},
-                },
-                {
-                    "name": "C",
-                    "version": "1.2",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "C",
-                    "version": "1.5",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
+    lock_data = {
+        "package": [
+            {
+                "name": "A",
+                "version": "1.0",
+                "optional": False,
                 "platform": "*",
-                "content-hash": "123456789",
-                "files": {"A": [], "B": [], "C": []},
+                "python-versions": "*",
+                "checksum": [],
+                "dependencies": {
+                    "B": [
+                        {"version": "^1.0", "python": "<4.0"},
+                        {"version": "^2.0", "python": ">=4.0"},
+                    ]
+                },
             },
-        }
-    )
+            {
+                "name": "B",
+                "version": "1.0",
+                "optional": False,
+                "platform": "*",
+                "python-versions": "*",
+                "checksum": [],
+                "dependencies": {"C": "1.2"},
+                "requirements": {"python": "<4.0"},
+            },
+            {
+                "name": "B",
+                "version": "2.0",
+                "optional": False,
+                "platform": "*",
+                "python-versions": "*",
+                "checksum": [],
+                "dependencies": {"C": "1.5"},
+                "requirements": {"python": ">=4.0"},
+            },
+            {
+                "name": "C",
+                "version": "1.2",
+                "optional": False,
+                "platform": "*",
+                "python-versions": "*",
+                "checksum": [],
+            },
+            {
+                "name": "C",
+                "version": "1.5",
+                "optional": False,
+                "platform": "*",
+                "python-versions": "*",
+                "checksum": [],
+            },
+        ],
+        "metadata": {
+            "lock-version": lock_version,
+            "python-versions": "*",
+            "content-hash": "123456789",
+            "files": {"A": [], "B": [], "C": []},
+        },
+    }
+    fix_lock_data(lock_data)
+    locker.locked(True)
+    locker.mock_lock_data(lock_data)
+
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.0")
@@ -1625,43 +2135,45 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock(
     assert installer.executor.removals_count == 0
 
 
+@pytest.mark.parametrize("lock_version", ("1.1", "2.1"))
 def test_run_update_uninstalls_after_removal_transitive_dependency(
     installer: Installer,
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
     installed: CustomInstalledRepository,
+    lock_version: str,
 ) -> None:
-    locker.locked(True)
-    locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "A",
-                    "version": "1.0",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                    "dependencies": {"B": {"version": "^1.0", "python": "<2.0"}},
-                },
-                {
-                    "name": "B",
-                    "version": "1.0",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
+    lock_data = {
+        "package": [
+            {
+                "name": "A",
+                "version": "1.0",
+                "optional": False,
                 "platform": "*",
-                "content-hash": "123456789",
-                "files": {"A": [], "B": []},
+                "python-versions": "*",
+                "checksum": [],
+                "dependencies": {"B": {"version": "^1.0", "python": "<2.0"}},
             },
-        }
-    )
+            {
+                "name": "B",
+                "version": "1.0",
+                "optional": False,
+                "platform": "*",
+                "python-versions": "*",
+                "checksum": [],
+            },
+        ],
+        "metadata": {
+            "lock-version": lock_version,
+            "python-versions": "*",
+            "content-hash": "123456789",
+            "files": {"A": [], "B": []},
+        },
+    }
+    fix_lock_data(lock_data)
+    locker.locked(True)
+    locker.mock_lock_data(lock_data)
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.0")
@@ -1686,76 +2198,78 @@ def test_run_update_uninstalls_after_removal_transitive_dependency(
     assert installer.executor.removals_count == 1
 
 
+@pytest.mark.parametrize("lock_version", ("1.1", "2.1"))
 def test_run_install_duplicate_dependencies_different_constraints_with_lock_update(
     installer: Installer,
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
     installed: CustomInstalledRepository,
+    lock_version: str,
 ) -> None:
-    locker.locked(True)
-    locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "A",
-                    "version": "1.0",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                    "dependencies": {
-                        "B": [
-                            {"version": "^1.0", "python": "<2.7"},
-                            {"version": "^2.0", "python": ">=2.7"},
-                        ]
-                    },
-                },
-                {
-                    "name": "B",
-                    "version": "1.0",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                    "dependencies": {"C": "1.2"},
-                    "requirements": {"python": "<2.7"},
-                },
-                {
-                    "name": "B",
-                    "version": "2.0",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                    "dependencies": {"C": "1.5"},
-                    "requirements": {"python": ">=2.7"},
-                },
-                {
-                    "name": "C",
-                    "version": "1.2",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "C",
-                    "version": "1.5",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
+    lock_data = {
+        "package": [
+            {
+                "name": "A",
+                "version": "1.0",
+                "optional": False,
                 "platform": "*",
-                "content-hash": "123456789",
-                "files": {"A": [], "B": [], "C": []},
+                "python-versions": "*",
+                "checksum": [],
+                "dependencies": {
+                    "B": [
+                        {"version": "^1.0", "python": "<2.7"},
+                        {"version": "^2.0", "python": ">=2.7"},
+                    ]
+                },
             },
-        }
-    )
+            {
+                "name": "B",
+                "version": "1.0",
+                "optional": False,
+                "platform": "*",
+                "python-versions": "*",
+                "checksum": [],
+                "dependencies": {"C": "1.2"},
+                "requirements": {"python": "<2.7"},
+            },
+            {
+                "name": "B",
+                "version": "2.0",
+                "optional": False,
+                "platform": "*",
+                "python-versions": "*",
+                "checksum": [],
+                "dependencies": {"C": "1.5"},
+                "requirements": {"python": ">=2.7"},
+            },
+            {
+                "name": "C",
+                "version": "1.2",
+                "optional": False,
+                "platform": "*",
+                "python-versions": "*",
+                "checksum": [],
+            },
+            {
+                "name": "C",
+                "version": "1.5",
+                "optional": False,
+                "platform": "*",
+                "python-versions": "*",
+                "checksum": [],
+            },
+        ],
+        "metadata": {
+            "lock-version": lock_version,
+            "python-versions": "*",
+            "content-hash": "123456789",
+            "files": {"A": [], "B": [], "C": []},
+        },
+    }
+    fix_lock_data(lock_data)
+    locker.locked(True)
+    locker.mock_lock_data(lock_data)
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.1")
@@ -1791,9 +2305,6 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock_upda
     assert installer.executor.removals_count == 0
 
 
-@pytest.mark.skip(
-    "This is not working at the moment due to limitations in the resolver"
-)
 def test_installer_test_solver_finds_compatible_package_for_dependency_python_not_fully_compatible_with_package_python(
     installer: Installer,
     locker: Locker,
@@ -1878,7 +2389,7 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
         pool,
         config,
         installed=installed,
-        executor=Executor(env, pool, config, NullIO()),
+        executor=TestExecutor(env, pool, config, NullIO()),
     )
     installer.update(True)
     installer.whitelist(["D"])
@@ -1913,7 +2424,7 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
         pool,
         config,
         installed=installed,
-        executor=Executor(env, pool, config, NullIO()),
+        executor=TestExecutor(env, pool, config, NullIO()),
     )
 
     package.add_dependency(
@@ -1935,7 +2446,7 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
     locker.locked(True)
     locker.mock_lock_data(locker.written_data)
 
-    assert isinstance(installer.executor, Executor)
+    assert isinstance(installer.executor, TestExecutor)
     for pkg in installer.executor.installations:
         installed.add_package(pkg)
 
@@ -1947,7 +2458,7 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
         pool,
         config,
         installed=installed,
-        executor=Executor(env, pool, config, NullIO()),
+        executor=TestExecutor(env, pool, config, NullIO()),
     )
     installer.update(True)
     installer.whitelist(["pytest"])
@@ -1979,7 +2490,7 @@ def test_installer_required_extras_should_be_installed(
         pool,
         config,
         installed=installed,
-        executor=Executor(env, pool, config, NullIO()),
+        executor=TestExecutor(env, pool, config, NullIO()),
     )
     package.add_dependency(
         Factory.create_dependency(
@@ -2006,7 +2517,7 @@ def test_installer_required_extras_should_be_installed(
         pool,
         config,
         installed=installed,
-        executor=Executor(env, pool, config, NullIO()),
+        executor=TestExecutor(env, pool, config, NullIO()),
     )
     installer.update(True)
     result = installer.run()
@@ -2017,40 +2528,45 @@ def test_installer_required_extras_should_be_installed(
     assert installer.executor.removals_count == 0
 
 
+@pytest.mark.parametrize("lock_version", ("1.1", "2.1"))
 def test_update_multiple_times_with_split_dependencies_is_idempotent(
-    installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    lock_version: str,
 ) -> None:
-    locker.locked(True)
-    locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "A",
-                    "version": "1.0",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                    "dependencies": {"B": ">=1.0"},
-                },
-                {
-                    "name": "B",
-                    "version": "1.0.1",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*",
-                    "checksum": [],
-                    "dependencies": {},
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
+    lock_data = {
+        "package": [
+            {
+                "name": "A",
+                "version": "1.0",
+                "optional": False,
                 "platform": "*",
-                "content-hash": "123456789",
-                "files": {"A": [], "B": []},
+                "python-versions": "*",
+                "checksum": [],
+                "dependencies": {"B": ">=1.0"},
             },
-        }
-    )
+            {
+                "name": "B",
+                "version": "1.0.1",
+                "optional": False,
+                "platform": "*",
+                "python-versions": ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*",
+                "checksum": [],
+                "dependencies": {},
+            },
+        ],
+        "metadata": {
+            "lock-version": lock_version,
+            "python-versions": "*",
+            "content-hash": "123456789",
+            "files": {"A": [], "B": []},
+        },
+    }
+    fix_lock_data(lock_data)
+    locker.locked(True)
+    locker.mock_lock_data(lock_data)
 
     package.python_versions = "~2.7 || ^3.4"
     package.add_dependency(Factory.create_dependency("A", "^1.0"))
@@ -2123,7 +2639,7 @@ def test_installer_can_install_dependencies_from_forced_source(
         pool,
         config,
         installed=installed,
-        executor=Executor(env, pool, config, NullIO()),
+        executor=TestExecutor(env, pool, config, NullIO()),
     )
     installer.update(True)
     result = installer.run()
@@ -2185,7 +2701,7 @@ def test_run_installs_with_same_version_url_files(
         pool,
         config,
         installed=installed,
-        executor=Executor(
+        executor=TestExecutor(
             MockEnv(platform=env_platform),
             pool,
             config,
@@ -2197,7 +2713,7 @@ def test_run_installs_with_same_version_url_files(
 
     expected = fixture("with-same-version-url-dependencies")
     assert locker.written_data == expected
-    assert isinstance(installer.executor, Executor)
+    assert isinstance(installer.executor, TestExecutor)
     assert installer.executor.installations_count == 2
     demo_package = next(p for p in installer.executor.installations if p.name == "demo")
     assert demo_package.source_url == urls[env_platform]
@@ -2289,46 +2805,52 @@ def test_run_with_dependencies_quiet(
         assert output != ""
 
 
+@pytest.mark.parametrize("lock_version", ("1.1", "2.1"))
 def test_installer_should_use_the_locked_version_of_git_dependencies(
-    installer: Installer, locker: Locker, package: ProjectPackage, repo: Repository
+    installer: Installer,
+    locker: Locker,
+    package: ProjectPackage,
+    repo: Repository,
+    lock_version: str,
 ) -> None:
-    locker.locked(True)
-    locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "demo",
-                    "version": "0.1.1",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                    "dependencies": {"pendulum": ">=1.4.4"},
-                    "source": {
-                        "type": "git",
-                        "url": "https://github.com/demo/demo.git",
-                        "reference": "master",
-                        "resolved_reference": "123456",
-                    },
-                },
-                {
-                    "name": "pendulum",
-                    "version": "1.4.4",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                    "dependencies": {},
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
+    lock_data = {
+        "package": [
+            {
+                "name": "demo",
+                "version": "0.1.1",
+                "optional": False,
                 "platform": "*",
-                "content-hash": "123456789",
-                "files": {"demo": [], "pendulum": []},
+                "python-versions": "*",
+                "checksum": [],
+                "dependencies": {"pendulum": ">=1.4.4"},
+                "source": {
+                    "type": "git",
+                    "url": "https://github.com/demo/demo.git",
+                    "reference": "master",
+                    "resolved_reference": "123456",
+                },
             },
-        }
-    )
+            {
+                "name": "pendulum",
+                "version": "1.4.4",
+                "optional": False,
+                "platform": "*",
+                "python-versions": "*",
+                "checksum": [],
+                "dependencies": {},
+            },
+        ],
+        "metadata": {
+            "lock-version": lock_version,
+            "python-versions": "*",
+            "platform": "*",
+            "content-hash": "123456789",
+            "files": {"demo": [], "pendulum": []},
+        },
+    }
+    fix_lock_data(lock_data)
+    locker.locked(True)
+    locker.mock_lock_data(lock_data)
 
     package.add_dependency(
         Factory.create_dependency(
@@ -2341,8 +2863,13 @@ def test_installer_should_use_the_locked_version_of_git_dependencies(
     result = installer.run()
     assert result == 0
 
-    assert isinstance(installer.executor, Executor)
-    assert installer.executor.installations[-1] == Package(
+    assert isinstance(installer.executor, TestExecutor)
+    demo_installation = next(
+        package
+        for package in installer.executor.installations
+        if package.name == "demo"
+    )
+    assert demo_installation == Package(
         "demo",
         "0.1.1",
         source_type="git",
@@ -2384,9 +2911,14 @@ def test_installer_should_use_the_locked_version_of_git_dependencies_with_extras
     result = installer.run()
     assert result == 0
 
-    assert isinstance(installer.executor, Executor)
+    assert isinstance(installer.executor, TestExecutor)
     assert len(installer.executor.installations) == 3
-    assert installer.executor.installations[-1] == Package(
+    demo_installation = next(
+        package
+        for package in installer.executor.installations
+        if package.name == "demo"
+    )
+    assert demo_installation == Package(
         "demo",
         "0.1.2",
         source_type="git",
@@ -2424,9 +2956,14 @@ def test_installer_should_use_the_locked_version_of_git_dependencies_without_ref
     result = installer.run()
     assert result == 0
 
-    assert isinstance(installer.executor, Executor)
+    assert isinstance(installer.executor, TestExecutor)
     assert len(installer.executor.installations) == 2
-    assert installer.executor.installations[-1] == Package(
+    demo_installation = next(
+        package
+        for package in installer.executor.installations
+        if package.name == "demo"
+    )
+    assert demo_installation == Package(
         "demo",
         "0.1.2",
         source_type="git",
@@ -2436,6 +2973,7 @@ def test_installer_should_use_the_locked_version_of_git_dependencies_without_ref
     )
 
 
+@pytest.mark.parametrize("lock_version", ("2.0", "2.1"))
 @pytest.mark.parametrize("env_platform", ["darwin", "linux"])
 def test_installer_distinguishes_locked_packages_with_local_version_by_source(
     pool: RepositoryPool,
@@ -2445,6 +2983,7 @@ def test_installer_distinguishes_locked_packages_with_local_version_by_source(
     repo: Repository,
     package: ProjectPackage,
     env_platform: str,
+    lock_version: str,
 ) -> None:
     """https://github.com/python-poetry/poetry/issues/6710"""
     # Require 1.11.0+cpu from pytorch for most platforms, but specify 1.11.0 and pypi on
@@ -2471,37 +3010,41 @@ def test_installer_distinguishes_locked_packages_with_local_version_by_source(
     )
 
     # Locking finds both the pypi and the pytorch packages.
-    locker.locked(True)
-    locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "torch",
-                    "version": "1.11.0",
-                    "optional": False,
-                    "files": [],
-                    "python-versions": "*",
-                },
-                {
-                    "name": "torch",
-                    "version": "1.11.0+cpu",
-                    "optional": False,
-                    "files": [],
-                    "python-versions": "*",
-                    "source": {
-                        "type": "legacy",
-                        "url": "https://download.pytorch.org/whl",
-                        "reference": "pytorch",
-                    },
-                },
-            ],
-            "metadata": {
+    lock_data: dict[str, Any] = {
+        "package": [
+            {
+                "name": "torch",
+                "version": "1.11.0",
+                "optional": False,
+                "files": [],
                 "python-versions": "*",
-                "platform": "*",
-                "content-hash": "123456789",
             },
-        }
-    )
+            {
+                "name": "torch",
+                "version": "1.11.0+cpu",
+                "optional": False,
+                "files": [],
+                "python-versions": "*",
+                "source": {
+                    "type": "legacy",
+                    "url": "https://download.pytorch.org/whl",
+                    "reference": "pytorch",
+                },
+            },
+        ],
+        "metadata": {
+            "lock-version": lock_version,
+            "python-versions": "*",
+            "content-hash": "123456789",
+        },
+    }
+    if lock_version == "2.1":
+        lock_data["package"][0]["groups"] = ["main"]
+        lock_data["package"][0]["markers"] = "sys_platform == 'darwin'"
+        lock_data["package"][1]["groups"] = ["main"]
+        lock_data["package"][1]["markers"] = "sys_platform != 'darwin'"
+    locker.locked(True)
+    locker.mock_lock_data(lock_data)
     installer = Installer(
         NullIO(),
         MockEnv(platform=env_platform),
@@ -2510,7 +3053,7 @@ def test_installer_distinguishes_locked_packages_with_local_version_by_source(
         pool,
         config,
         installed=installed,
-        executor=Executor(
+        executor=TestExecutor(
             MockEnv(platform=env_platform),
             pool,
             config,
@@ -2528,7 +3071,7 @@ def test_installer_distinguishes_locked_packages_with_local_version_by_source(
     )
     source_reference = None if env_platform == "darwin" else "pytorch"
 
-    assert isinstance(installer.executor, Executor)
+    assert isinstance(installer.executor, TestExecutor)
     assert len(installer.executor.installations) == 1
     assert installer.executor.installations[0] == Package(
         "torch",
@@ -2539,6 +3082,7 @@ def test_installer_distinguishes_locked_packages_with_local_version_by_source(
     )
 
 
+@pytest.mark.parametrize("lock_version", ("2.0", "2.1"))
 @pytest.mark.parametrize("env_platform_machine", ["aarch64", "amd64"])
 def test_installer_distinguishes_locked_packages_with_same_version_by_source(
     pool: RepositoryPool,
@@ -2548,6 +3092,7 @@ def test_installer_distinguishes_locked_packages_with_same_version_by_source(
     repo: Repository,
     package: ProjectPackage,
     env_platform_machine: str,
+    lock_version: str,
 ) -> None:
     """https://github.com/python-poetry/poetry/issues/8303"""
     package.add_dependency(
@@ -2572,37 +3117,41 @@ def test_installer_distinguishes_locked_packages_with_same_version_by_source(
     )
 
     # Locking finds both the pypi and the pyhweels packages.
-    locker.locked(True)
-    locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "kivy",
-                    "version": "2.2.1",
-                    "optional": False,
-                    "files": [],
-                    "python-versions": "*",
-                },
-                {
-                    "name": "kivy",
-                    "version": "2.2.1",
-                    "optional": False,
-                    "files": [],
-                    "python-versions": "*",
-                    "source": {
-                        "type": "legacy",
-                        "url": "https://www.piwheels.org/simple",
-                        "reference": "pywheels",
-                    },
-                },
-            ],
-            "metadata": {
+    lock_data: dict[str, Any] = {
+        "package": [
+            {
+                "name": "kivy",
+                "version": "2.2.1",
+                "optional": False,
+                "files": [],
                 "python-versions": "*",
-                "platform": "*",
-                "content-hash": "123456789",
             },
-        }
-    )
+            {
+                "name": "kivy",
+                "version": "2.2.1",
+                "optional": False,
+                "files": [],
+                "python-versions": "*",
+                "source": {
+                    "type": "legacy",
+                    "url": "https://www.piwheels.org/simple",
+                    "reference": "pywheels",
+                },
+            },
+        ],
+        "metadata": {
+            "lock-version": lock_version,
+            "python-versions": "*",
+            "content-hash": "123456789",
+        },
+    }
+    if lock_version == "2.1":
+        lock_data["package"][0]["groups"] = ["main"]
+        lock_data["package"][0]["markers"] = "platform_machine != 'aarch64'"
+        lock_data["package"][1]["groups"] = ["main"]
+        lock_data["package"][1]["markers"] = "platform_machine == 'aarch64'"
+    locker.locked(True)
+    locker.mock_lock_data(lock_data)
     installer = Installer(
         NullIO(),
         MockEnv(platform_machine=env_platform_machine),
@@ -2611,7 +3160,7 @@ def test_installer_distinguishes_locked_packages_with_same_version_by_source(
         pool,
         config,
         installed=installed,
-        executor=Executor(
+        executor=TestExecutor(
             MockEnv(platform_machine=env_platform_machine),
             pool,
             config,
@@ -2632,7 +3181,7 @@ def test_installer_distinguishes_locked_packages_with_same_version_by_source(
         source_url = None
         source_reference = None
 
-    assert isinstance(installer.executor, Executor)
+    assert isinstance(installer.executor, TestExecutor)
     assert len(installer.executor.installations) == 1
     assert installer.executor.installations[0] == Package(
         "kivy",
@@ -2643,6 +3192,7 @@ def test_installer_distinguishes_locked_packages_with_same_version_by_source(
     )
 
 
+@pytest.mark.parametrize("lock_version", ("2.0", "2.1"))
 @pytest.mark.parametrize("env_platform", ["darwin", "linux"])
 def test_explicit_source_dependency_with_direct_origin_dependency(
     pool: RepositoryPool,
@@ -2652,6 +3202,7 @@ def test_explicit_source_dependency_with_direct_origin_dependency(
     repo: Repository,
     package: ProjectPackage,
     env_platform: str,
+    lock_version: str,
 ) -> None:
     """
     A dependency with explicit source should not be satisfied by
@@ -2684,49 +3235,54 @@ def test_explicit_source_dependency_with_direct_origin_dependency(
     repo.add_package(get_package("demo", "0.1.0"))
 
     # Locking finds both the direct origin and the explicit source packages.
-    locker.locked(True)
-    locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "demo",
-                    "version": "0.1.0",
-                    "optional": False,
-                    "files": [],
-                    "python-versions": "*",
-                    "dependencies": {"pendulum": ">=1.4.4"},
-                    "source": {
-                        "type": "url",
-                        "url": demo_url,
-                    },
-                },
-                {
-                    "name": "demo",
-                    "version": "0.1.0",
-                    "optional": False,
-                    "files": [],
-                    "python-versions": "*",
-                    "source": {
-                        "type": "legacy",
-                        "url": "https://www.demo.org/simple",
-                        "reference": "repo",
-                    },
-                },
-                {
-                    "name": "pendulum",
-                    "version": "1.4.4",
-                    "optional": False,
-                    "files": [],
-                    "python-versions": "*",
-                },
-            ],
-            "metadata": {
+    lock_data: dict[str, Any] = {
+        "package": [
+            {
+                "name": "demo",
+                "version": "0.1.0",
+                "optional": False,
+                "files": [],
                 "python-versions": "*",
-                "platform": "*",
-                "content-hash": "123456789",
+                "dependencies": {"pendulum": ">=1.4.4"},
+                "source": {
+                    "type": "url",
+                    "url": demo_url,
+                },
             },
-        }
-    )
+            {
+                "name": "demo",
+                "version": "0.1.0",
+                "optional": False,
+                "files": [],
+                "python-versions": "*",
+                "source": {
+                    "type": "legacy",
+                    "url": "https://www.demo.org/simple",
+                    "reference": "repo",
+                },
+            },
+            {
+                "name": "pendulum",
+                "version": "1.4.4",
+                "optional": False,
+                "files": [],
+                "python-versions": "*",
+            },
+        ],
+        "metadata": {
+            "lock-version": lock_version,
+            "python-versions": "*",
+            "content-hash": "123456789",
+        },
+    }
+    if lock_version == "2.1":
+        for locked_package in lock_data["package"]:
+            locked_package["groups"] = ["main"]
+        lock_data["package"][0]["markers"] = "sys_platform != 'darwin'"
+        lock_data["package"][1]["markers"] = "sys_platform == 'darwin'"
+        lock_data["package"][2]["markers"] = "sys_platform != 'darwin'"
+    locker.locked(True)
+    locker.mock_lock_data(lock_data)
     installer = Installer(
         NullIO(),
         MockEnv(platform=env_platform),
@@ -2735,7 +3291,7 @@ def test_explicit_source_dependency_with_direct_origin_dependency(
         pool,
         config,
         installed=installed,
-        executor=Executor(
+        executor=TestExecutor(
             MockEnv(platform=env_platform),
             pool,
             config,
@@ -2746,9 +3302,9 @@ def test_explicit_source_dependency_with_direct_origin_dependency(
     result = installer.run()
 
     assert result == 0
-    assert isinstance(installer.executor, Executor)
+    assert isinstance(installer.executor, TestExecutor)
     if env_platform == "linux":
-        assert installer.executor.installations == [
+        assert set(installer.executor.installations) == {
             Package("pendulum", "1.4.4"),
             Package(
                 "demo",
@@ -2756,7 +3312,7 @@ def test_explicit_source_dependency_with_direct_origin_dependency(
                 source_type="url",
                 source_url=demo_url,
             ),
-        ]
+        }
     else:
         assert installer.executor.installations == [
             Package(

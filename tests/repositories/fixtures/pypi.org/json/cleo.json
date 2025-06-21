@@ -1,4 +1,5 @@
 {
+  "alternate-locations": [],
   "files": [
     {
       "core-metadata": {
@@ -9,9 +10,10 @@
       },
       "filename": "cleo-1.0.0a5-py3-none-any.whl",
       "hashes": {
-        "md5": "eaf14b3f99b2b88c0846ecc9a5a18af4",
-        "sha256": "20dbd69ed5c27e2889a2d428b9b01771f6073e4a1483a731e3c14c07a666aa9f"
+        "md5": "19ed7de77063e8f16bc459276ccbe197",
+        "sha256": "d0cfea878b77be28be027033e6af419b705abe47278067a7c3a298f39cf825c5"
       },
+      "provenance": null,
       "requires-python": ">=3.7,<4.0",
       "size": 78701,
       "upload-time": "2022-06-03T20:16:19.386916Z",
@@ -26,6 +28,7 @@
         "md5": "92e181952976e09b9d1c583da6c3e2fc",
         "sha256": "88f0a4275a17f2ab4d013786b8b9522d4c60bd37d8fc9b3def0fb27f4ac1e694"
       },
+      "provenance": null,
       "requires-python": ">=3.7,<4.0",
       "size": 61431,
       "upload-time": "2022-06-03T20:16:21.133890Z",
@@ -35,7 +38,7 @@
   ],
   "meta": {
     "_last-serial": 0,
-    "api-version": "1.1"
+    "api-version": "1.3"
   },
   "name": "cleo",
   "versions": [

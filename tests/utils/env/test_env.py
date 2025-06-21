@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import contextlib
 import os
 import re
-import site
 import subprocess
 import sys
 
@@ -11,7 +9,11 @@ from pathlib import Path
 from threading import Thread
 from typing import TYPE_CHECKING
 
+import packaging.tags
 import pytest
+
+from deepdiff.diff import DeepDiff
+from installer.utils import SCHEME_NAMES
 
 from poetry.factory import Factory
 from poetry.repositories.installed_repository import InstalledRepository
@@ -25,10 +27,11 @@ from poetry.utils.env import SystemEnv
 from poetry.utils.env import VirtualEnv
 from poetry.utils.env import build_environment
 from poetry.utils.env import ephemeral_environment
+from poetry.utils.helpers import is_dir_writable
 
 
 if TYPE_CHECKING:
-    from typing import Iterator
+    from collections.abc import Iterator
 
     from pytest_mock import MockerFixture
 
@@ -90,16 +93,27 @@ def test_env_commands_with_spaces_in_their_arg_work_as_expected(
     assert re.match(r"pip \S+ from", output)
 
 
+@pytest.mark.parametrize("differing_platform", [True, False])
 def test_env_get_supported_tags_matches_inside_virtualenv(
-    tmp_path: Path, manager: EnvManager
+    tmp_path: Path, manager: EnvManager, mocker: MockerFixture, differing_platform: bool
 ) -> None:
     venv_path = tmp_path / "Virtual Env"
     manager.build_venv(venv_path)
     venv = VirtualEnv(venv_path)
 
-    import packaging.tags
+    run_python_script_spy = mocker.spy(venv, "run_python_script")
 
-    assert venv.get_supported_tags() == list(packaging.tags.sys_tags())
+    # determine expected tags before patching sysconfig!
+    expected_tags = list(packaging.tags.sys_tags())
+
+    if differing_platform:
+        mocker.patch("sysconfig.get_platform", return_value="some_other_platform")
+        expected_call_count = 2
+    else:
+        expected_call_count = 1
+
+    assert venv.get_supported_tags() == expected_tags
+    assert run_python_script_spy.call_count == expected_call_count
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Symlinks are not support for Windows")
@@ -186,7 +200,8 @@ def test_call_does_not_block_on_full_pipe(
 import sys
 for i in range(10000):
     print('just print a lot of text to fill the buffer', file={out})
-"""
+""",
+        encoding="utf-8",
     )
 
     def target(result: list[int]) -> None:
@@ -276,7 +291,7 @@ def test_env_system_packages(
 
     assert (
         f"include-system-site-packages = {str(with_system_site_packages).lower()}"
-        in pyvenv_cfg.read_text()
+        in pyvenv_cfg.read_text(encoding="utf-8")
     )
     assert env.includes_system_site_packages is with_system_site_packages
 
@@ -296,31 +311,38 @@ def test_env_system_packages_are_relative_to_lib(
         path=venv_path, flags={"system-site-packages": with_system_site_packages}
     )
     env = VirtualEnv(venv_path)
-    site_dir = Path(site.getsitepackages()[-1])
+
+    # These are Poetry's own dependencies.
+    # They should not be relative to the virtualenv's lib directory.
     for dist in metadata.distributions():
-        # Emulate is_relative_to, only available in 3.9+
-        with contextlib.suppress(ValueError):
-            dist._path.relative_to(site_dir)  # type: ignore[attr-defined]
-            break
-    assert (
-        env.is_path_relative_to_lib(dist._path)  # type: ignore[attr-defined]
-        is with_system_site_packages
-    )
+        assert not env.is_path_relative_to_lib(
+            Path(str(dist._path))  # type: ignore[attr-defined]
+        )
+        # Checking one package is sufficient
+        break
+    else:
+        pytest.fail("No distributions found in Poetry's own environment")
+
+    # These are the virtual environments' base env packages,
+    # in this case the system site packages.
+    for dist in env.parent_env.site_packages.distributions():
+        assert (
+            env.is_path_relative_to_lib(
+                Path(str(dist._path))  # type: ignore[attr-defined]
+            )
+            is with_system_site_packages
+        )
+        # Checking one package is sufficient
+        break
+    else:
+        pytest.fail("No distributions found in the base environment of the virtualenv")
 
 
 @pytest.mark.parametrize(
     ("flags", "packages"),
     [
         ({"no-pip": False}, {"pip"}),
-        ({"no-pip": False, "no-wheel": True}, {"pip"}),
-        ({"no-pip": False, "no-wheel": False}, {"pip", "wheel"}),
         ({"no-pip": True}, set()),
-        ({"no-setuptools": False}, {"setuptools"}),
-        ({"no-setuptools": True}, set()),
-        ({"setuptools": "bundle"}, {"setuptools"}),
-        ({"no-pip": True, "no-setuptools": False}, {"setuptools"}),
-        ({"no-wheel": False}, {"wheel"}),
-        ({"wheel": "bundle"}, {"wheel"}),
         ({}, set()),
     ],
 )
@@ -337,14 +359,6 @@ def test_env_no_pip(
         # workaround for BSD test environments
         if package.name != "sqlite3"
     }
-
-    # For python >= 3.12, virtualenv defaults to "--no-setuptools" and "--no-wheel"
-    # behaviour, so setting these values to False becomes meaningless.
-    if sys.version_info >= (3, 12):
-        if not flags.get("no-setuptools", True):
-            packages.discard("setuptools")
-        if not flags.get("no-wheel", True):
-            packages.discard("wheel")
 
     assert installed_packages == packages
 
@@ -507,36 +521,42 @@ def test_build_environment_not_called_without_build_script_specified(
         assert not env.executed  # type: ignore[attr-defined]
 
 
-def test_fallback_on_detect_active_python(
-    poetry: Poetry, mocker: MockerFixture
-) -> None:
-    m = mocker.patch(
-        "subprocess.check_output",
-        side_effect=subprocess.CalledProcessError(1, "some command"),
-    )
-    env_manager = EnvManager(poetry)
-    active_python = env_manager._detect_active_python()
-
-    assert active_python is None
-    assert m.call_count == 1
-
-
-@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
-def test_detect_active_python_with_bat(poetry: Poetry, tmp_path: Path) -> None:
-    """On Windows pyenv uses batch files for python management."""
-    python_wrapper = tmp_path / "python.bat"
-    wrapped_python = Path(r"C:\SpecialPython\python.exe")
-    with python_wrapper.open("w") as f:
-        f.write(f"@echo {wrapped_python}")
-    os.environ["PATH"] = str(python_wrapper.parent) + os.pathsep + os.environ["PATH"]
-
-    active_python = EnvManager(poetry)._detect_active_python()
-
-    assert active_python == wrapped_python
-
-
 def test_command_from_bin_preserves_relative_path(manager: EnvManager) -> None:
     # https://github.com/python-poetry/poetry/issues/7959
     env = manager.get()
     command = env.get_command_from_bin("./foo.py")
     assert command == ["./foo.py"]
+
+
+@pytest.fixture
+def system_env_read_only(system_env: SystemEnv, mocker: MockerFixture) -> SystemEnv:
+    original_is_dir_writable = is_dir_writable
+
+    read_only_paths = {system_env.paths[key] for key in SCHEME_NAMES}
+
+    def mock_is_dir_writable(path: Path, create: bool = False) -> bool:
+        if str(path) in read_only_paths:
+            return False
+        return original_is_dir_writable(path, create)
+
+    mocker.patch("poetry.utils.env.base_env.is_dir_writable", new=mock_is_dir_writable)
+
+    return system_env
+
+
+def test_env_scheme_dict_returns_original_when_writable(system_env: SystemEnv) -> None:
+    assert not DeepDiff(system_env.scheme_dict, system_env.paths, ignore_order=True)
+
+
+def test_env_scheme_dict_returns_modified_when_read_only(
+    system_env_read_only: SystemEnv,
+) -> None:
+    scheme_dict = system_env_read_only.scheme_dict
+    assert DeepDiff(scheme_dict, system_env_read_only.paths, ignore_order=True)
+
+    paths = system_env_read_only.paths
+    assert all(
+        Path(scheme_dict[scheme]).exists()
+        and scheme_dict[scheme].startswith(paths["userbase"])
+        for scheme in SCHEME_NAMES
+    )

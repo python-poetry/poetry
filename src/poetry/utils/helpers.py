@@ -20,6 +20,8 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import overload
 
+from requests.exceptions import ChunkedEncodingError
+from requests.exceptions import ConnectionError
 from requests.utils import atomic_open
 
 from poetry.utils.authenticator import get_default_authenticator
@@ -33,6 +35,7 @@ if TYPE_CHECKING:
     from types import TracebackType
 
     from poetry.core.packages.package import Package
+    from requests import Response
     from requests import Session
 
     from poetry.utils.authenticator import Authenticator
@@ -122,7 +125,7 @@ def merge_dicts(d1: dict[str, Any], d2: dict[str, Any]) -> None:
             d1[k] = d2[k]
 
 
-class HTTPRangeRequestSupported(Exception):
+class HTTPRangeRequestSupportedError(Exception):
     """Raised when server unexpectedly supports byte ranges."""
 
 
@@ -133,13 +136,14 @@ def download_file(
     session: Authenticator | Session | None = None,
     chunk_size: int = 1024,
     raise_accepts_ranges: bool = False,
+    max_retries: int = 0,
 ) -> None:
     from poetry.puzzle.provider import Indicator
 
-    downloader = Downloader(url, dest, session)
+    downloader = Downloader(url, dest, session, max_retries=max_retries)
 
     if raise_accepts_ranges and downloader.accepts_ranges:
-        raise HTTPRangeRequestSupported(f"URL {url} supports range requests.")
+        raise HTTPRangeRequestSupportedError(f"URL {url} supports range requests.")
 
     set_indicator = False
     with Indicator.context() as update_context:
@@ -168,16 +172,13 @@ class Downloader:
         url: str,
         dest: Path,
         session: Authenticator | Session | None = None,
+        max_retries: int = 0,
     ):
         self._dest = dest
-
-        session = session or get_default_authenticator()
-        headers = {"Accept-Encoding": "Identity"}
-
-        self._response = session.get(
-            url, stream=True, headers=headers, timeout=REQUESTS_TIMEOUT
-        )
-        self._response.raise_for_status()
+        self._max_retries = max_retries
+        self._session = session or get_default_authenticator()
+        self._url = url
+        self._response = self._get()
 
     @cached_property
     def accepts_ranges(self) -> bool:
@@ -191,10 +192,50 @@ class Downloader:
                 total_size = int(self._response.headers["Content-Length"])
         return total_size
 
+    def _get(self, start: int = 0) -> Response:
+        headers = {"Accept-Encoding": "Identity"}
+        if start > 0:
+            headers["Range"] = f"bytes={start}-"
+
+        response = self._session.get(
+            self._url, stream=True, headers=headers, timeout=REQUESTS_TIMEOUT
+        )
+        try:
+            response.raise_for_status()
+            return response
+        except BaseException:
+            response.close()
+            raise
+
+    def _iter_content_with_resume(self, chunk_size: int) -> Iterator[bytes]:
+        fetched_size = 0
+        retries = 0
+        while True:
+            try:
+                with self._response:
+                    for chunk in self._response.iter_content(chunk_size=chunk_size):
+                        yield chunk
+                        fetched_size += len(chunk)
+            except (ChunkedEncodingError, ConnectionError):
+                if (
+                    retries < self._max_retries
+                    and self.accepts_ranges
+                    and fetched_size > 0
+                ):
+                    # only retry if server supports byte ranges
+                    # and we have fetched at least one chunk
+                    # otherwise, we should just fail
+                    retries += 1
+                    self._response = self._get(fetched_size)
+                    continue
+                raise
+            else:
+                break
+
     def download_with_progress(self, chunk_size: int = 1024) -> Iterator[int]:
         fetched_size = 0
         with atomic_open(self._dest) as f:
-            for chunk in self._response.iter_content(chunk_size=chunk_size):
+            for chunk in self._iter_content_with_resume(chunk_size=chunk_size):
                 if chunk:
                     f.write(chunk)
                     fetched_size += len(chunk)
@@ -215,6 +256,18 @@ def get_package_version_display_string(
 
 def paths_csv(paths: list[Path]) -> str:
     return ", ".join(f'"{c!s}"' for c in paths)
+
+
+def ensure_path(path: str | Path, is_directory: bool = False) -> Path:
+    if isinstance(path, str):
+        path = Path(path)
+
+    if path.exists() and path.is_dir() == is_directory:
+        return path
+
+    raise ValueError(
+        f"Specified path '{path}' is not a valid {'directory' if is_directory else 'file'}."
+    )
 
 
 def is_dir_writable(path: Path, create: bool = False) -> bool:
@@ -362,7 +415,7 @@ def extractall(source: Path, dest: Path, zip: bool) -> None:
     else:
         # These versions of python shipped with a broken tarfile data_filter, per
         # https://github.com/python/cpython/issues/107845.
-        broken_tarfile_filter = {(3, 8, 17), (3, 9, 17), (3, 10, 12), (3, 11, 4)}
+        broken_tarfile_filter = {(3, 9, 17), (3, 10, 12), (3, 11, 4)}
         with tarfile.open(source) as archive:
             if (
                 hasattr(tarfile, "data_filter")
