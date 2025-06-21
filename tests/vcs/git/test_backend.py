@@ -26,6 +26,10 @@ if TYPE_CHECKING:
 
 VALID_SHA = "c5c7624ef64f34d9f50c3b7e8118f7f652fddbbd"
 
+FULL_SHA_MAIN = "f7c3bc1d808e04732adf679965ccc34ca7ae3441"
+FULL_SHA_TAG = "d4f6c2a8b9e1073451f28c96a5db7e3f9c2a8b7e"
+SHORT_SHA = "f7c3bc1d"
+
 
 @pytest.fixture()
 def repo_mock(mocker: MockerFixture) -> Repo:
@@ -39,9 +43,7 @@ def repo_mock(mocker: MockerFixture) -> Repo:
 
     # Mock object store for short SHA resolution
     repo.object_store = mocker.MagicMock()
-    repo.object_store.iter_prefix.return_value = [b"abc123def456789abcdef"]
-
-    # Note: cache clearing removed to avoid import conflicts
+    repo.object_store.iter_prefix.return_value = [FULL_SHA_MAIN.encode()]
 
     return cast("Repo", repo)
 
@@ -50,10 +52,11 @@ def repo_mock(mocker: MockerFixture) -> Repo:
 def fetch_pack_result(mocker: MockerFixture) -> FetchPackResult:
     mock_fetch_pack_result = mocker.MagicMock(spec=FetchPackResult)
     mock_fetch_pack_result.refs = {
-        b"refs/heads/main": b"abc123def456789abcdef",
-        b"refs/tags/v1.0.0": b"def456abc123789abcdef",
-        annotated_tag(b"refs/tags/v1.0.0"): b"def456abc123789abcdef",
-        b"HEAD": b"abc123def456789abcdef",
+        b"refs/heads/main": FULL_SHA_MAIN.encode(),
+        b"refs/heads/feature": b"a9b8c7d6e5f4321098765432109876543210abcd",
+        b"refs/tags/v1.0.0": FULL_SHA_TAG.encode(),
+        annotated_tag(b"refs/tags/v1.0.0"): FULL_SHA_TAG.encode(),
+        b"HEAD": FULL_SHA_MAIN.encode(),
     }
     mock_fetch_pack_result.symrefs = {b"HEAD": b"refs/heads/main"}
 
@@ -144,6 +147,7 @@ def test_git_refspec() -> None:
 @pytest.mark.parametrize(
     "refspec, expected_ref, expected_branch, expected_revision, expected_tag",
     [
+        # Basic parameter tests
         (
             GitRefSpec(branch="main"),
             b"refs/heads/main",
@@ -152,6 +156,21 @@ def test_git_refspec() -> None:
             None,
         ),
         (
+            GitRefSpec(tag="v1.0.0"),
+            annotated_tag(b"refs/tags/v1.0.0"),
+            None,
+            None,
+            "v1.0.0",
+        ),
+        (
+            GitRefSpec(branch="refs/heads/feature"),
+            b"refs/heads/feature",
+            "refs/heads/feature",
+            None,
+            None,
+        ),
+        # Cross-parameter resolution tests
+        (
             GitRefSpec(revision="v1.0.0"),
             annotated_tag(b"refs/tags/v1.0.0"),
             None,
@@ -159,17 +178,10 @@ def test_git_refspec() -> None:
             "v1.0.0",
         ),
         (
-            GitRefSpec(revision="abc123"),
+            GitRefSpec(revision="main"),
             b"refs/heads/main",
+            "main",
             None,
-            "abc123def456789abcdef",
-            None,
-        ),
-        (
-            GitRefSpec(revision="abc123def456789abcdef"),
-            b"refs/heads/main",
-            None,
-            "abc123def456789abcdef",
             None,
         ),
         (
@@ -178,6 +190,21 @@ def test_git_refspec() -> None:
             None,
             None,
             "v1.0.0",
+        ),
+        # SHA resolution tests with realistic values
+        (
+            GitRefSpec(revision=SHORT_SHA),
+            b"refs/heads/main",
+            None,
+            FULL_SHA_MAIN,
+            None,
+        ),
+        (
+            GitRefSpec(revision=FULL_SHA_MAIN),
+            b"refs/heads/main",
+            None,
+            FULL_SHA_MAIN,
+            None,
         ),
     ],
 )
