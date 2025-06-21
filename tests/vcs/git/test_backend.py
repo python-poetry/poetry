@@ -7,7 +7,6 @@ import pytest
 
 from dulwich.client import FetchPackResult
 from dulwich.repo import Repo
-from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 
 from poetry.packages.direct_origin import _get_package_from_git
 from poetry.vcs.git.backend import Git
@@ -15,10 +14,12 @@ from poetry.vcs.git.backend import GitRefSpec
 from poetry.vcs.git.backend import annotated_tag
 from poetry.vcs.git.backend import is_revision_sha
 from poetry.vcs.git.backend import urlpathjoin
+from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 
 
 if TYPE_CHECKING:
     from pathlib import Path
+
     from pytest_mock import MockerFixture
 
     from tests.vcs.git.git_fixture import TempRepoFixture
@@ -43,7 +44,7 @@ def repo_mock(mocker: MockerFixture) -> Repo:
     # Clear any cache in the Git module
     _get_package_from_git.cache_clear()
 
-    return cast(Repo, repo)
+    return cast("Repo", repo)
 
 
 @pytest.fixture()
@@ -57,7 +58,7 @@ def fetch_pack_result(mocker: MockerFixture) -> FetchPackResult:
     }
     mock_fetch_pack_result.symrefs = {b"HEAD": b"refs/heads/main"}
 
-    return cast(FetchPackResult, mock_fetch_pack_result)
+    return cast("FetchPackResult", mock_fetch_pack_result)
 
 
 def test_invalid_revision_sha() -> None:
