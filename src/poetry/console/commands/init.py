@@ -10,6 +10,8 @@ from typing import Any
 from typing import ClassVar
 from typing import Union
 
+import toml
+
 from cleo.helpers import option
 from packaging.utils import canonicalize_name
 from tomlkit import inline_table
@@ -266,8 +268,10 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
             return 1
 
-        # validate fields before creating pyproject.toml file. If any validations fail, throw error.
-        validation_results = self._validate(pyproject.data)
+        # Validate fields before creating pyproject.toml file. If any validations fail, throw error.
+        # Convert TOMLDocument to a dictionary for validation, as the validator expects a dict.
+        pyproject_dict = toml.loads(pyproject.data.as_string())
+        validation_results = self._validate(pyproject_dict)
         if validation_results.get("errors"):
             self.line_error(f"<error>Validation failed: {validation_results}</error>")
             return 1
