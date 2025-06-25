@@ -31,6 +31,7 @@ dependencies = [
     "xattr (>=1.0.0,<2.0.0) ; sys_platform == 'darwin'",
     "findpython (>=0.6.2,<0.7.0)",
     "pbs-installer[download,install] (>=2025.1.6,<2026.0.0)",
+    "toml (>=0.10.2,<0.11.0)",
 ]
 authors = [
     { name = "Sébastien Eustace", email = "sebastien@eustace.io" }
