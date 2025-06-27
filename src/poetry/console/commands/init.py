@@ -10,11 +10,10 @@ from typing import Any
 from typing import ClassVar
 from typing import Union
 
-import toml
-
 from cleo.helpers import option
 from packaging.utils import canonicalize_name
 from tomlkit import inline_table
+from tomlkit import parse
 
 from poetry.console.commands.command import Command
 from poetry.console.commands.env_command import EnvCommand
@@ -268,9 +267,9 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
             return 1
 
-        # Validate fields before creating pyproject.toml file. If any validations fail, throw error.
-        # Convert TOMLDocument to a dictionary for validation, as the validator expects a dict.
-        pyproject_dict = toml.loads(pyproject.data.as_string())
+        # Validate fields before creating pyproject.toml file. If any validations fail, throw an error.
+        # Convert TOML string to a TOMLDocument (a dict-like object) for validation.
+        pyproject_dict = parse(pyproject.data.as_string())
         validation_results = self._validate(pyproject_dict)
         if validation_results.get("errors"):
             self.line_error(f"<error>Validation failed: {validation_results}</error>")
