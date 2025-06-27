@@ -17,3 +17,4 @@
 
 .venv
 /poetry.toml
+.coverage*

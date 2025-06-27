@@ -1,15 +1,15 @@
 import os
 import sys
-import signal
 import pytest
 from pathlib import PurePath, PureWindowsPath
 from unittest.mock import patch, MagicMock
 
 from poetry.utils.shell import Shell, ShellDetectionFailure
 
+IS_WINDOWS = sys.platform.startswith("win")
 
 
-@pytest.mark.skipif(sys.platform != "win32", reason="Windows-only test")
+@pytest.mark.skipif(not IS_WINDOWS, reason="Windows-only test")
 def test_windows_shell_activation(monkeypatch):
     mock_env = MagicMock()
     mock_env.path = PureWindowsPath("C:/fake/venv")
@@ -19,14 +19,16 @@ def test_windows_shell_activation(monkeypatch):
 
     s = Shell("cmd", "C:/Windows/System32/cmd.exe")
 
+    # pexpect.spawn causes errors on Windows; import must be deferred
+    from unittest.mock import patch
+    monkeypatch.setattr("shutil.get_terminal_size", lambda: os.terminal_size((80, 24)))
+    monkeypatch.setattr("poetry.utils.shell.WINDOWS", True)
+
     with patch("pexpect.spawn") as mock_spawn:
         mock_child = MagicMock()
         mock_child.interact.return_value = None
         mock_child.exitstatus = 0
         mock_spawn.return_value = mock_child
-
-        monkeypatch.setattr("shutil.get_terminal_size", lambda: os.terminal_size((80, 24)))
-        monkeypatch.setattr("poetry.utils.shell.WINDOWS", True)
 
         with pytest.raises(SystemExit) as e:
             s.activate(mock_env)
@@ -34,7 +36,7 @@ def test_windows_shell_activation(monkeypatch):
         assert e.value.code == 0
 
 
-@pytest.mark.skipif(sys.platform != "win32", reason="Windows-only test")
+@pytest.mark.skipif(not IS_WINDOWS, reason="Windows-only test")
 def test_detect_shell_fallback_windows(monkeypatch):
     monkeypatch.setattr("os.name", "nt")
     monkeypatch.setenv("COMSPEC", str(PureWindowsPath("C:/Windows/System32/cmd.exe")))
@@ -55,11 +57,13 @@ def test_shell_get_raises_on_missing_shell(monkeypatch):
             Shell.get()
 
 
+@pytest.mark.skipif(IS_WINDOWS, reason="pexpect.spawn is not available on Windows")
 def test_shell_activate_spawn_failure(monkeypatch):
     s = Shell("bash", "/bin/bash")
     mock_env = MagicMock()
     mock_env.path = PurePath("/fake/venv")
 
+    # Safe to import on non-Windows platforms
     with patch("pexpect.spawn") as mock_spawn:
         mock_child = MagicMock()
         mock_child.interact.return_value = None
@@ -82,7 +86,6 @@ def test_detect_shell_fallback_to_sh(mock_detect_shell, monkeypatch):
     assert s.path in ("/bin/sh", "/bin/zsh", "/bin/bash")
 
 
-
 @patch("poetry.utils.shell.detect_shell", side_effect=ShellDetectionFailure("Shell not found"))
 def test_detect_shell_raises_when_env_missing(mock_detect_shell, monkeypatch):
     monkeypatch.delenv("SHELL", raising=False)
@@ -90,5 +93,3 @@ def test_detect_shell_raises_when_env_missing(mock_detect_shell, monkeypatch):
     Shell._shell = None  # reset cache
     with pytest.raises(RuntimeError, match="Unable to detect the current shell"):
         Shell.get()
-
-

@@ -7,16 +7,13 @@ import subprocess
 import sys
 
 from pathlib import Path
-from typing import TYPE_CHECKING
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pexpect
+import shlex
 
-from shellingham import ShellDetectionFailure
-from shellingham import detect_shell
-
+from shellingham import ShellDetectionFailure, detect_shell
 from poetry.utils._compat import WINDOWS
-
 
 if TYPE_CHECKING:
     from poetry.utils.env import VirtualEnv
@@ -65,43 +62,36 @@ class Shell:
             name, path = Path(shell).stem, shell
 
         cls._shell = cls(name, path)
-
         return cls._shell
+
+    @classmethod
+    def reset(cls) -> None:
+        """
+        Resets the cached shell instance — useful for test isolation.
+        """
+        cls._shell = None
 
     def activate(self, env: VirtualEnv) -> int | None:
         activate_script = self._get_activate_script()
         if WINDOWS:
             bin_path = env.path / "Scripts"
-            # Python innstalled via msys2 on Windows might produce a POSIX-like venv
-            # See https://github.com/python-poetry/poetry/issues/8638
             bin_dir = "Scripts" if bin_path.exists() else "bin"
         else:
             bin_dir = "bin"
         activate_path = env.path / bin_dir / activate_script
 
-        # mypy requires using sys.platform instead of WINDOWS constant
-        # in if statements to properly type check on Windows
         if sys.platform == "win32":
             args = None
             if self._name in ("powershell", "pwsh"):
                 args = ["-NoExit", "-File", str(activate_path)]
             elif self._name == "cmd":
-                # /K will execute the bat file and
-                # keep the cmd process from terminating
                 args = ["/K", str(activate_path)]
 
             if args:
-                # Using list to avoid shell=True — safe from injection.
-                completed_proc = subprocess.run([self.path, *args], check=True)
+                completed_proc = subprocess.run([self.path] + args, check=True)
                 return completed_proc.returncode
             else:
-                # If no args are set, execute the shell within the venv
-                # This activates it, but there could be some features missing:
-                # deactivate command might not work
-                # shell prompt will not be modified.
                 return env.execute(self._path)
-
-        import shlex
 
         terminal = shutil.get_terminal_size()
         cmd = f"{self._get_source_command()} {shlex.quote(str(activate_path))}"
@@ -118,20 +108,13 @@ class Shell:
                 self._path, args, dimensions=(terminal.lines, terminal.columns)
             )
 
-        if self._name in ["zsh"]:
-            c.setecho(False)
-
         if self._name == "zsh":
-            # Under ZSH the source command should be invoked in zsh's bash emulator
+            c.setecho(False)
             quoted_activate_path = shlex.quote(str(activate_path))
             c.sendline(f"emulate bash -c {shlex.quote(f'. {quoted_activate_path}')}")
         elif self._name == "xonsh":
             c.sendline(f"vox activate {shlex.quote(str(env.path))}")
-        elif self._name in ["nu", "fish"]:
-            # If this is nu or fish, we don't want to send the activation command to the
-            # command line since we already ran it via the shell's invocation.
-            pass
-        else:
+        elif self._name not in ("nu", "fish"):
             c.sendline(cmd)
 
         def resize(sig: Any, data: Any) -> None:
@@ -140,7 +123,6 @@ class Shell:
 
         signal.signal(signal.SIGWINCH, resize)
 
-        # Interact with the new shell.
         c.interact(escape_character=None)
         c.close()
 
@@ -159,8 +141,7 @@ class Shell:
             suffix = ".nu"
         else:
             suffix = ""
-
-        return "activate" + suffix
+        return f"activate{suffix}"
 
     def _get_source_command(self) -> str:
         if self._name in ("fish", "csh", "tcsh"):
