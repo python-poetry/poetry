@@ -645,12 +645,6 @@ You can explicitly specify to Poetry that a set of globs should be ignored or in
 The globs specified in the exclude field identify a set of files that are not included when a package is built.
 `include` has priority over `exclude`.
 
-If a VCS is being used for a package, the exclude field will be seeded with the VCS’ ignore settings (`.gitignore` for git, for example).
-
-{{% note %}}
-Explicitly declaring entries in `include` will negate VCS' ignore settings.
-{{% /note %}}
-
 You can also specify the formats for which these patterns have to be included, as shown here:
 
 ```toml
@@ -672,6 +666,11 @@ Pay attention to include top level files and directories with common names like
 `CHANGELOG.md`, `LICENSE`, `tests` or `docs` only in sdists and **not** in wheels.
 {{% /warning %}}
 
+If a VCS is being used for a package, the exclude field will be seeded with the VCS’ ignore settings (`.gitignore` for git, for example).
+
+{{% note %}}
+VCS ignore settings can be negated by adding entries in `include`; be sure to explicitly set the `format` as above.
+{{% /note %}}
 
 ### dependencies and dependency groups
 
