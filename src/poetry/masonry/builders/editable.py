@@ -9,6 +9,8 @@ from base64 import urlsafe_b64encode
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from installer.scripts import Script
+from installer.utils import get_launcher_kind
 from poetry.core.masonry.builders.builder import Builder
 from poetry.core.masonry.builders.sdist import SdistBuilder
 from poetry.core.masonry.utils.package_include import PackageInclude
@@ -26,15 +28,6 @@ if TYPE_CHECKING:
 
     from poetry.poetry import Poetry
     from poetry.utils.env import Env
-
-SCRIPT_TEMPLATE = """\
-#!{python}
-import sys
-from {module} import {callable_holder}
-
-if __name__ == '__main__':
-    sys.exit({callable_}())
-"""
 
 WINDOWS_CMD_TEMPLATE = """\
 @echo off\r\n"{python}" "%~dp0\\{script}" %*\r\n
@@ -176,21 +169,16 @@ class EditableBuilder(Builder):
 
                 raise ValueError(msg)
 
-            callable_holder = callable_.split(".", 1)[0]
-
             script_file = scripts_path.joinpath(name)
             self._debug(
                 f"  - Adding the <c2>{name}</c2> script to <b>{scripts_path}</b>"
             )
             with script_file.open("w", encoding="utf-8") as f:
                 f.write(
-                    decode(
-                        SCRIPT_TEMPLATE.format(
-                            python=self._env.python,
-                            module=module,
-                            callable_holder=callable_holder,
-                            callable_=callable_,
-                        )
+                    str(
+                        Script(name, module, callable_, "console")
+                        .generate(str(self._env.python), get_launcher_kind())[1]
+                        .decode()
                     )
                 )
 
