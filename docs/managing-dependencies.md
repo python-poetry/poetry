@@ -95,7 +95,7 @@ ruff = "^0.11"
 [tool.poetry.group.dev]
 include-groups = [
     "test",
-    "lint"
+    "lint",
 ]
 
 [tool.poetry.group.dev.dependencies]
