@@ -164,15 +164,15 @@ class Layout:
         if m is None:
             raise ValueError(f"Invalid author: {self._author}")
         if author_format == "object":
-            author = {"name": m.group("name")}
+            author_obj = {"name": m.group("name")}
             if email := m.group("email"):
-                author["email"] = email
-            metadata_content["authors"].append(author)
+                author_obj["email"] = email
+            metadata_content["authors"].append(author_obj)
         else:
-            author = f"{m.group('name')}"
+            author_str = f"{m.group('name')}"
             if email := m.group("email"):
-                author += f" <{email}>"
-            metadata_content["authors"].append(author)
+                author_str += f" <{email}>"
+            metadata_content["authors"].append(author_str)
 
         if self._license:
             if author_format == "object":
@@ -200,7 +200,7 @@ class Layout:
         content: dict[str, Any] = loads(template)
 
         if self._use_tool_poetry:
-            poetry_content: dict[str, Any] = loads(POETRY_TOOL_ONLY)["tool"]["poetry"]
+            poetry_content: dict[str, Any] = content["tool"]["poetry"]
             self._set_metadata_fields(poetry_content, author_format="string")
             if self._python:
                 poetry_content["dependencies"]["python"] = self._python
