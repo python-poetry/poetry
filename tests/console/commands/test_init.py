@@ -7,6 +7,7 @@ import textwrap
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
 
 import pytest
 
@@ -1143,3 +1144,78 @@ def test_get_pool(mocker: MockerFixture, source_dir: Path) -> None:
     assert isinstance(command, InitCommand)
     pool = command._get_pool()
     assert pool.repositories
+
+
+def build_pyproject_data(
+    project_name: str, description: str = "A project"
+) -> dict[str, Any]:
+    return {
+        "project": {
+            "name": project_name,
+            "version": "0.1.0",
+            "description": description,
+            "authors": [{"name": "Author Name", "email": "author@example.com"}],
+            "readme": "README.md",
+            "requires-python": ">=3.13",
+            "dependencies": [],
+        },
+        "tool": {},
+        "build-system": {
+            "requires": ["poetry-core>=2.0.0,<3.0.0"],
+            "build-backend": "poetry.core.masonry.api",
+        },
+    }
+
+
+@pytest.mark.parametrize(
+    "valid_project_name",
+    [
+        "newproject",
+        "new_project",
+        "new-project",
+        "new.project",
+        "newproject123",
+    ],
+)
+def test_valid_project_name(valid_project_name: str) -> None:
+    pyproject_data = build_pyproject_data(valid_project_name)
+    result = InitCommand._validate(pyproject_data)
+    assert result["errors"] == []
+
+
+@pytest.mark.parametrize(
+    "invalid_project_name, reason",
+    [
+        ("new+project", "plus sign"),
+        ("new/project", "slash"),
+        ("new@project", "at sign"),
+        ("new project", "space"),
+        ("", "empty string"),
+        (" newproject", "leading space"),
+        ("newproject ", "trailing space"),
+        ("new#project", "hash (#)"),
+        ("new%project", "percent (%)"),
+        ("new*project", "asterisk (*)"),
+        ("new(project)", "parentheses"),
+        ("-newproject", "leading hyphen"),
+        ("newproject-", "trailing hyphen"),
+        (".newproject", "leading dot"),
+        ("newproject.", "trailing dot"),
+        (
+            "_newproject",
+            "leading underscore (PEP 621 allows, stricter validators may reject)",
+        ),
+        (
+            "newproject_",
+            "trailing underscore (PEP 621 allows, stricter validators may reject)",
+        ),
+        ("1newproject!", "starts with digit, ends with exclamation"),
+        (".", "just dot"),
+    ],
+)
+def test_invalid_project_name(invalid_project_name: str, reason: str) -> None:
+    pyproject_data = build_pyproject_data(invalid_project_name)
+    result = InitCommand._validate(pyproject_data)
+
+    assert "errors" in result, f"Expected error for: {reason}"
+    assert any("project.name must match pattern" in err for err in result["errors"])
