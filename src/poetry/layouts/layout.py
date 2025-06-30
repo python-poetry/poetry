@@ -153,125 +153,112 @@ class Layout:
         if with_pyproject:
             self._write_poetry(path)
 
+    def _set_metadata_fields(
+        self, metadata_content: dict[str, Any], author_format: str = "object"
+    ) -> None:
+        metadata_content["name"] = self._project
+        metadata_content["version"] = self._version
+        metadata_content["description"] = self._description
+
+        m = AUTHOR_REGEX.match(self._author)
+        if m is None:
+            raise ValueError(f"Invalid author: {self._author}")
+        if author_format == "object":
+            author = {"name": m.group("name")}
+            if email := m.group("email"):
+                author["email"] = email
+            metadata_content["authors"].append(author)
+        else:
+            author = f"{m.group('name')}"
+            if email := m.group("email"):
+                author += f" <{email}>"
+            metadata_content["authors"].append(author)
+
+        if self._license:
+            if author_format == "object":
+                metadata_content["license"]["text"] = self._license
+            else:
+                metadata_content["license"] = self._license
+        else:
+            metadata_content.pop("license", None)
+
+        metadata_content["readme"] = f"README.{self._readme_format}"
+
+    def _set_dependencies(
+        self,
+        dependencies_content: dict[str, Any],
+        dev_dependencies_content: dict[str, Any],
+    ) -> None:
+        for dep_name, dep_constraint in self._dependencies.items():
+            dependency = Factory.create_dependency(dep_name, dep_constraint)
+            dependencies_content[dep_name] = dependency.to_pep_508()
+        for dep_name, dep_constraint in self._dev_dependencies.items():
+            dev_dependencies_content[dep_name] = dep_constraint
+
     def generate_project_content(self) -> TOMLDocument:
         template = POETRY_DEFAULT if not self._use_tool_poetry else POETRY_TOOL_ONLY
-
         content: dict[str, Any] = loads(template)
 
         if self._use_tool_poetry:
-            # Handle tool.poetry format
-            poetry_content = content["tool"]["poetry"]
-            poetry_content["name"] = self._project
-            poetry_content["version"] = self._version
-            poetry_content["description"] = self._description
-            
-            m = AUTHOR_REGEX.match(self._author)
-            if m is None:
-                # This should not happen because author has been validated before.
-                raise ValueError(f"Invalid author: {self._author}")
-            else:
-                author = f"{m.group('name')}"
-                if email := m.group("email"):
-                    author += f" <{email}>"
-                poetry_content["authors"].append(author)
-
-            if self._license:
-                poetry_content["license"] = self._license
-            else:
-                poetry_content.remove("license")
-
-            poetry_content["readme"] = f"README.{self._readme_format}"
-
+            poetry_content: dict[str, Any] = loads(POETRY_TOOL_ONLY)["tool"]["poetry"]
+            self._set_metadata_fields(poetry_content, author_format="string")
             if self._python:
                 poetry_content["dependencies"]["python"] = self._python
             else:
-                poetry_content["dependencies"].remove("python")
-
-            for dep_name, dep_constraint in self._dependencies.items():
-                poetry_content["dependencies"][dep_name] = dep_constraint
-
+                poetry_content["dependencies"].pop("python", None)
+            self._set_dependencies(
+                poetry_content["dependencies"],
+                poetry_content["group"]["dev"]["dependencies"],
+            )
             packages = self.get_package_include()
             if packages:
                 poetry_content["packages"].append(packages)
             else:
-                poetry_content.remove("packages")
-
+                poetry_content.pop("packages", None)
             if self._dev_dependencies:
-                for dep_name, dep_constraint in self._dev_dependencies.items():
-                    poetry_content["group"]["dev"]["dependencies"][dep_name] = (
-                        dep_constraint
-                    )
+                self._set_dependencies(
+                    {}, poetry_content["group"]["dev"]["dependencies"]
+                )
             else:
-                del poetry_content["group"]
-
+                poetry_content.pop("group", None)
         else:
-            # Handle project format (existing logic)
-            project_content = content["project"]
-            project_content["name"] = self._project
-            project_content["version"] = self._version
-            project_content["description"] = self._description
-            m = AUTHOR_REGEX.match(self._author)
-            if m is None:
-                # This should not happen because author has been validated before.
-                raise ValueError(f"Invalid author: {self._author}")
-            else:
-                author = {"name": m.group("name")}
-                if email := m.group("email"):
-                    author["email"] = email
-                project_content["authors"].append(author)
-
-            if self._license:
-                project_content["license"]["text"] = self._license
-            else:
-                project_content.remove("license")
-
-            project_content["readme"] = f"README.{self._readme_format}"
-
+            project_content: dict[str, Any] = content["project"]
+            self._set_metadata_fields(project_content, author_format="object")
             if self._python:
                 project_content["requires-python"] = self._python
             else:
-                project_content.remove("requires-python")
-
+                project_content.pop("requires-python", None)
+            project_content["dependencies"] = []
             for dep_name, dep_constraint in self._dependencies.items():
                 dependency = Factory.create_dependency(dep_name, dep_constraint)
                 project_content["dependencies"].append(dependency.to_pep_508())
-
-            poetry_content = content["tool"]["poetry"]
-
+            poetry_tool_content: dict[str, Any] = content["tool"]["poetry"]
             packages = self.get_package_include()
             if packages:
-                poetry_content["packages"].append(packages)
+                poetry_tool_content["packages"].append(packages)
             else:
-                poetry_content.remove("packages")
-
+                poetry_tool_content.pop("packages", None)
             if self._dev_dependencies:
-                for dep_name, dep_constraint in self._dev_dependencies.items():
-                    poetry_content["group"]["dev"]["dependencies"][dep_name] = (
-                        dep_constraint
-                    )
+                self._set_dependencies(
+                    {}, poetry_tool_content["group"]["dev"]["dependencies"]
+                )
             else:
-                del poetry_content["group"]
-
-            if not poetry_content:
-                del content["tool"]["poetry"]
-
+                poetry_tool_content.pop("group", None)
+            if not poetry_tool_content:
+                content["tool"].pop("poetry", None)
         # Add build system
         build_system = table()
-        build_system_version = ""
-
+        build_system_version: str = ""
         if BUILD_SYSTEM_MIN_VERSION is not None:
             build_system_version = ">=" + BUILD_SYSTEM_MIN_VERSION
         if BUILD_SYSTEM_MAX_VERSION is not None:
             if build_system_version:
                 build_system_version += ","
             build_system_version += "<" + BUILD_SYSTEM_MAX_VERSION
-
         build_system.add("requires", ["poetry-core" + build_system_version])
         build_system.add("build-backend", "poetry.core.masonry.api")
-
         assert isinstance(content, TOMLDocument)
         content.add("build-system", build_system)
-
         return content
 
     def _create_default(self, path: Path, src: bool = True) -> None:
