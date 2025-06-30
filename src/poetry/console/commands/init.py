@@ -59,11 +59,20 @@ class InitCommand(Command):
             multiple=True,
         ),
         option("license", "l", "License of the package.", flag=False),
+        option(
+            "use-tool-poetry",
+            None,
+            "Use the classic [tool.poetry] format instead of [project] format.",
+            flag=True,
+        ),
     ]
 
     help = """\
 The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the\
  current directory.
+
+By default, it uses the modern [project] format (PEP 621). Use --use-tool-poetry\
+ to generate the classic [tool.poetry] format instead.
 """
 
     def __init__(self) -> None:
@@ -243,6 +252,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             python=python,
             dependencies=requirements,
             dev_dependencies=dev_requirements,
+            use_tool_poetry=self.option("use-tool-poetry"),
         )
 
         create_layout = not project_path.exists()

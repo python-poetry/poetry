@@ -44,6 +44,23 @@ packages = []
 [tool.poetry.group.dev.dependencies]
 """
 
+POETRY_TOOL_ONLY = """\
+[tool.poetry]
+name = ""
+version = ""
+description = ""
+authors = [
+]
+license = ""
+readme = ""
+packages = []
+
+[tool.poetry.dependencies]
+python = ""
+
+[tool.poetry.group.dev.dependencies]
+"""
+
 poetry_core_version = Version.parse(importlib.metadata.version("poetry-core"))
 
 BUILD_SYSTEM_MIN_VERSION: str | None = Version.from_parts(
@@ -68,6 +85,7 @@ class Layout:
         python: str | None = None,
         dependencies: Mapping[str, str | Mapping[str, Any]] | None = None,
         dev_dependencies: Mapping[str, str | Mapping[str, Any]] | None = None,
+        use_tool_poetry: bool = False,
     ) -> None:
         self._project = canonicalize_name(project)
         self._package_path_relative = Path(
@@ -83,6 +101,7 @@ class Layout:
         self._python = python
         self._dependencies = dependencies or {}
         self._dev_dependencies = dev_dependencies or {}
+        self._use_tool_poetry = use_tool_poetry
 
         if not author:
             author = "Your Name <you@example.com>"
@@ -135,58 +154,106 @@ class Layout:
             self._write_poetry(path)
 
     def generate_project_content(self) -> TOMLDocument:
-        template = POETRY_DEFAULT
+        template = POETRY_DEFAULT if not self._use_tool_poetry else POETRY_TOOL_ONLY
 
         content: dict[str, Any] = loads(template)
 
-        project_content = content["project"]
-        project_content["name"] = self._project
-        project_content["version"] = self._version
-        project_content["description"] = self._description
-        m = AUTHOR_REGEX.match(self._author)
-        if m is None:
-            # This should not happen because author has been validated before.
-            raise ValueError(f"Invalid author: {self._author}")
+        if self._use_tool_poetry:
+            # Handle tool.poetry format
+            poetry_content = content["tool"]["poetry"]
+            poetry_content["name"] = self._project
+            poetry_content["version"] = self._version
+            poetry_content["description"] = self._description
+            
+            m = AUTHOR_REGEX.match(self._author)
+            if m is None:
+                # This should not happen because author has been validated before.
+                raise ValueError(f"Invalid author: {self._author}")
+            else:
+                author = f"{m.group('name')}"
+                if email := m.group("email"):
+                    author += f" <{email}>"
+                poetry_content["authors"].append(author)
+
+            if self._license:
+                poetry_content["license"] = self._license
+            else:
+                poetry_content.remove("license")
+
+            poetry_content["readme"] = f"README.{self._readme_format}"
+
+            if self._python:
+                poetry_content["dependencies"]["python"] = self._python
+            else:
+                poetry_content["dependencies"].remove("python")
+
+            for dep_name, dep_constraint in self._dependencies.items():
+                poetry_content["dependencies"][dep_name] = dep_constraint
+
+            packages = self.get_package_include()
+            if packages:
+                poetry_content["packages"].append(packages)
+            else:
+                poetry_content.remove("packages")
+
+            if self._dev_dependencies:
+                for dep_name, dep_constraint in self._dev_dependencies.items():
+                    poetry_content["group"]["dev"]["dependencies"][dep_name] = (
+                        dep_constraint
+                    )
+            else:
+                del poetry_content["group"]
+
         else:
-            author = {"name": m.group("name")}
-            if email := m.group("email"):
-                author["email"] = email
-            project_content["authors"].append(author)
+            # Handle project format (existing logic)
+            project_content = content["project"]
+            project_content["name"] = self._project
+            project_content["version"] = self._version
+            project_content["description"] = self._description
+            m = AUTHOR_REGEX.match(self._author)
+            if m is None:
+                # This should not happen because author has been validated before.
+                raise ValueError(f"Invalid author: {self._author}")
+            else:
+                author = {"name": m.group("name")}
+                if email := m.group("email"):
+                    author["email"] = email
+                project_content["authors"].append(author)
 
-        if self._license:
-            project_content["license"]["text"] = self._license
-        else:
-            project_content.remove("license")
+            if self._license:
+                project_content["license"]["text"] = self._license
+            else:
+                project_content.remove("license")
 
-        project_content["readme"] = f"README.{self._readme_format}"
+            project_content["readme"] = f"README.{self._readme_format}"
 
-        if self._python:
-            project_content["requires-python"] = self._python
-        else:
-            project_content.remove("requires-python")
+            if self._python:
+                project_content["requires-python"] = self._python
+            else:
+                project_content.remove("requires-python")
 
-        for dep_name, dep_constraint in self._dependencies.items():
-            dependency = Factory.create_dependency(dep_name, dep_constraint)
-            project_content["dependencies"].append(dependency.to_pep_508())
+            for dep_name, dep_constraint in self._dependencies.items():
+                dependency = Factory.create_dependency(dep_name, dep_constraint)
+                project_content["dependencies"].append(dependency.to_pep_508())
 
-        poetry_content = content["tool"]["poetry"]
+            poetry_content = content["tool"]["poetry"]
 
-        packages = self.get_package_include()
-        if packages:
-            poetry_content["packages"].append(packages)
-        else:
-            poetry_content.remove("packages")
+            packages = self.get_package_include()
+            if packages:
+                poetry_content["packages"].append(packages)
+            else:
+                poetry_content.remove("packages")
 
-        if self._dev_dependencies:
-            for dep_name, dep_constraint in self._dev_dependencies.items():
-                poetry_content["group"]["dev"]["dependencies"][dep_name] = (
-                    dep_constraint
-                )
-        else:
-            del poetry_content["group"]
+            if self._dev_dependencies:
+                for dep_name, dep_constraint in self._dev_dependencies.items():
+                    poetry_content["group"]["dev"]["dependencies"][dep_name] = (
+                        dep_constraint
+                    )
+            else:
+                del poetry_content["group"]
 
-        if not poetry_content:
-            del content["tool"]["poetry"]
+            if not poetry_content:
+                del content["tool"]["poetry"]
 
         # Add build system
         build_system = table()
