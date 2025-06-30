@@ -85,7 +85,7 @@ list of installed packages
                     packages, project_section, poetry_section, group_name
                 )
                 if group_name != MAIN_GROUP and not poetry_section:
-                    del poetry_content["group"][group_name]
+                    poetry_content.pop("group", None)[group_name]
         elif group == "dev" and "dev-dependencies" in poetry_content:
             # We need to account for the old `dev-dependencies` section
             removed = self._remove_packages(
@@ -106,10 +106,10 @@ list of installed packages
                     )
 
                 if not poetry_content["group"][group]:
-                    del poetry_content["group"][group]
+                    poetry_content.pop("group", None)[group]
 
         if "group" in poetry_content and not poetry_content["group"]:
-            del poetry_content["group"]
+            poetry_content.pop("group", None)
 
         not_found = set(packages).difference(removed)
         if not_found:
