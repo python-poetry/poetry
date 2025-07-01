@@ -549,5 +549,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         """
         Validates the given pyproject data and returns the validation results.
         """
-        factory_instance = Factory()
-        return factory_instance.validate(pyproject_data)
+        # Instantiate a new Factory to avoid relying on shared/global state,
+        # which can cause unexpected behavior in other parts of the codebase or test suite.
+        factory = Factory()
+        return factory.validate(pyproject_data)
