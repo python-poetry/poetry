@@ -87,10 +87,12 @@ def poetry_with_invalid_lockfile(
     return _project_factory("invalid_lock", project_factory, fixture_dir)
 
 
+@pytest.mark.parametrize("no_update", [True, False])
 def test_lock_does_not_update_if_not_necessary(
     command_tester_factory: CommandTesterFactory,
     poetry_with_old_lockfile: Poetry,
     repo: TestRepository,
+    no_update: bool,
 ) -> None:
     repo.add_package(get_package("sampleproject", "1.3.1"))
     repo.add_package(get_package("sampleproject", "2.0.0"))
@@ -108,7 +110,7 @@ def test_lock_does_not_update_if_not_necessary(
     )
 
     tester = command_tester_factory("lock", poetry=poetry_with_old_lockfile)
-    tester.execute()
+    tester.execute("--no-update" if no_update else "")
 
     locker = Locker(
         lock=poetry_with_old_lockfile.pyproject.file.path.parent / "poetry.lock",
@@ -122,6 +124,16 @@ def test_lock_does_not_update_if_not_necessary(
 
     for package in packages:
         assert locked_repository.find_packages(package.to_dependency())
+
+
+def test_no_update_and_regenerate_at_the_same_time(
+    command_tester_factory: CommandTesterFactory,
+) -> None:
+    tester = command_tester_factory("lock")
+    assert tester.execute("--no-update --regenerate") == 1
+    assert tester.io.fetch_error() == (
+        "You cannot set `--no-update` and `--regenerate` at the same time.\n"
+    )
 
 
 @pytest.mark.parametrize("regenerate", [True, False])
