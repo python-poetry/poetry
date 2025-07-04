@@ -90,7 +90,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         allow_interactive: bool = True,
         layout_name: str = "standard",
         readme_format: str = "md",
-        create_layout_if_empty: bool = False,
+        allow_layout_creation_on_empty: bool = False,
     ) -> int:
         from poetry.core.vcs.git import GitConfig
 
@@ -247,7 +247,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         )
 
         create_layout = not project_path.exists() or (
-            create_layout_if_empty and not any(project_path.iterdir())
+            allow_layout_creation_on_empty and not any(project_path.iterdir())
         )
 
         if create_layout:
