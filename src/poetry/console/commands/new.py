@@ -88,4 +88,5 @@ class NewCommand(InitCommand):
             allow_interactive=self.option("interactive"),
             layout_name="standard" if self.option("flat") else "src",
             readme_format=self.option("readme") or "md",
+            allow_layout_creation_on_empty=True,
         )
