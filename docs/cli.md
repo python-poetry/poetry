@@ -44,8 +44,7 @@ poetry about
 
 The `add` command adds required packages to your `pyproject.toml` and installs them.
 
-If you do not specify a version constraint,
-poetry will choose a suitable one based on the available package versions.
+If you do not specify a version constraint, poetry will attempt to use the latest version.
 
 ```bash
 poetry add requests pendulum

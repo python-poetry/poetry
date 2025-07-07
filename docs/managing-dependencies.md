@@ -80,6 +80,30 @@ Optional group dependencies will **still** be resolved alongside other dependenc
 special care should be taken to ensure they are compatible with each other.
 {{% /warning %}}
 
+### Including dependencies from other groups
+
+You can include dependencies from one group in another group.
+This is useful when you want to aggregate dependencies from multiple groups into a single group.
+
+```toml
+[tool.poetry.group.test.dependencies]
+pytest = "^8.0.0"
+
+[tool.poetry.group.lint.dependencies]
+ruff = "^0.11"
+
+[tool.poetry.group.dev]
+include-groups = [
+    "test",
+    "lint",
+]
+
+[tool.poetry.group.dev.dependencies]
+tox = "*"
+```
+
+In this example, the `dev` group includes all dependencies from the `test` and `lint` groups.
+
 ### Adding a dependency to a group
 
 The [`add`]({{< relref "cli#add" >}}) command is the preferred way to add dependencies

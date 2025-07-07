@@ -1219,3 +1219,67 @@ def test_invalid_project_name(invalid_project_name: str, reason: str) -> None:
 
     assert "errors" in result, f"Expected error for: {reason}"
     assert any("project.name must match pattern" in err for err in result["errors"])
+
+
+def test_init_does_not_create_project_structure_in_empty_directory(
+    tester: CommandTester, source_dir: Path
+) -> None:
+    """Test that poetry init does not create project structure in empty directory."""
+    inputs = [
+        "my-package",  # Package name
+        "1.0.0",  # Version
+        "",  # Description
+        "n",  # Author
+        "",  # License
+        "",  # Python
+        "n",  # Interactive packages
+        "n",  # Interactive dev packages
+        "\n",  # Generate
+    ]
+
+    tester.execute(inputs="\n".join(inputs))
+
+    # Should only create pyproject.toml
+    assert (source_dir / "pyproject.toml").exists()
+
+    # Should NOT create these
+    assert not (source_dir / "tests").exists()
+    assert not (source_dir / "my_package").exists()
+    assert not (source_dir / "src").exists()
+    assert not (source_dir / "README.md").exists()
+
+
+def test_init_does_not_create_project_structure_in_non_empty_directory(
+    tester: CommandTester, source_dir: Path
+) -> None:
+    """Test that poetry init does not create project structure in non-empty directory."""
+    # Create some existing files
+    (source_dir / "existing_file.txt").write_text("existing content")
+    (source_dir / "existing_dir").mkdir()
+
+    inputs = [
+        "my-package",  # Package name
+        "1.0.0",  # Version
+        "",  # Description
+        "n",  # Author
+        "",  # License
+        "",  # Python
+        "n",  # Interactive packages
+        "n",  # Interactive dev packages
+        "\n",  # Generate
+    ]
+
+    tester.execute(inputs="\n".join(inputs))
+
+    # Should only create pyproject.toml
+    assert (source_dir / "pyproject.toml").exists()
+
+    # Should NOT create these
+    assert not (source_dir / "tests").exists()
+    assert not (source_dir / "my_package").exists()
+    assert not (source_dir / "src").exists()
+    assert not (source_dir / "README.md").exists()
+
+    # Existing files should remain
+    assert (source_dir / "existing_file.txt").exists()
+    assert (source_dir / "existing_dir").exists()
