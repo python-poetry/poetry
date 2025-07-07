@@ -272,7 +272,11 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         pyproject_dict = parse(pyproject.data.as_string())
         validation_results = self._validate(pyproject_dict)
         if validation_results.get("errors"):
-            self.line_error(f"<error>Validation failed: {validation_results}</error>")
+            message = ""
+            for error in validation_results.get("errors", []):
+                message += f"  - {error}\n"
+
+            self.line_error(f"Validation failed: \n{message}")
             return 1
 
         pyproject.save()
