@@ -149,6 +149,7 @@ class Config:
             "create": True,
             "in-project": None,
             "path": os.path.join("{cache-dir}", "virtualenvs"),
+            "ignore-in-venv": False,
             "options": {
                 "always-copy": False,
                 "system-site-packages": False,
@@ -377,9 +378,10 @@ class Config:
         if name in {
             "virtualenvs.create",
             "virtualenvs.in-project",
+            "virtualenvs.ignore-in-venv",
             "virtualenvs.options.always-copy",
             "virtualenvs.options.no-pip",
-            "virtualenvs.options.system-site-packages",
+            "virtualenvs.system-site-packages",
             "virtualenvs.use-poetry-python",
             "installer.re-resolve",
             "installer.parallel",
