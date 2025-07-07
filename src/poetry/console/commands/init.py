@@ -553,7 +553,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         """
         Validates the given pyproject data and returns the validation results.
         """
-        # Instantiate a new Factory to avoid relying on shared/global state,
-        # which can cause unexpected behavior in other parts of the codebase or test suite.
-        factory = Factory()
-        return factory.validate(pyproject_data)
+        # Note: Factory.validate only returns the first schema validation error.
+        # This upstream limitation is acceptable for now to avoid added complexity.
+        # May be revisited if full error reporting becomes a higher priority.
+        return Factory().validate(pyproject_data)
