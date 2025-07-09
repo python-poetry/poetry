@@ -9,7 +9,6 @@ menu:
     weight: 30
 ---
 
-
 # Commands
 
 You've already learned how to use the command-line interface to do some things.
@@ -20,17 +19,17 @@ then `--help` combined with any of those can give you more information.
 
 ## Global Options
 
-* `--verbose (-v|vv|vvv)`: Increase the verbosity of messages: "-v" for normal output, "-vv" for more verbose output and "-vvv" for debug.
-* `--help (-h)` : Display help information.
-* `--quiet (-q)` : Do not output any message.
-* `--ansi`: Force ANSI output.
-* `--no-ansi`: Disable ANSI output.
-* `--version (-V)`: Display this application version.
-* `--no-interaction (-n)`: Do not ask any interactive question.
-* `--no-plugins`: Disables plugins.
-* `--no-cache`: Disables Poetry source caches.
-* `--directory=DIRECTORY (-C)`: The working directory for the Poetry command (defaults to the current working directory). All command-line arguments will be resolved relative to the given directory.
-* `--project=PROJECT (-P)`: Specify another path as the project root. All command-line arguments will be resolved relative to the current working directory or directory specified using `--directory` option if used.
+- `--verbose (-v|vv|vvv)`: Increase the verbosity of messages: "-v" for normal output, "-vv" for more verbose output and "-vvv" for debug.
+- `--help (-h)` : Display help information.
+- `--quiet (-q)` : Do not output any message.
+- `--ansi`: Force ANSI output.
+- `--no-ansi`: Disable ANSI output.
+- `--version (-V)`: Display this application version.
+- `--no-interaction (-n)`: Do not ask any interactive question.
+- `--no-plugins`: Disables plugins.
+- `--no-cache`: Disables Poetry source caches.
+- `--directory=DIRECTORY (-C)`: The working directory for the Poetry command (defaults to the current working directory). All command-line arguments will be resolved relative to the given directory.
+- `--project=PROJECT (-P)`: Specify another path as the project root. All command-line arguments will be resolved relative to the current working directory or directory specified using `--directory` option if used.
 
 ## about
 
@@ -178,18 +177,18 @@ about dependency groups.
 
 #### Options
 
-* `--group (-G)`: The group to add the dependency to.
-* `--dev (-D)`: Add package as development dependency. (shortcut for `-G dev`)
-* `--editable (-e)`: Add vcs/path dependencies as editable.
-* `--extras (-E)`: Extras to activate for the dependency. (multiple values allowed)
-* `--optional`: Add as an optional dependency to an extra.
-* `--python`: Python version for which the dependency must be installed.
-* `--platform`: Platforms for which the dependency must be installed.
-* `--markers`: Environment markers which describe when the dependency should be installed.
-* `--source`: Name of the source to use to install the package.
-* `--allow-prereleases`: Accept prereleases.
-* `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
-* `--lock`: Do not perform install (only update the lockfile).
+- `--group (-G)`: The group to add the dependency to.
+- `--dev (-D)`: Add package as development dependency. (shortcut for `-G dev`)
+- `--editable (-e)`: Add vcs/path dependencies as editable.
+- `--extras (-E)`: Extras to activate for the dependency. (multiple values allowed)
+- `--optional`: Add as an optional dependency to an extra.
+- `--python`: Python version for which the dependency must be installed.
+- `--platform`: Platforms for which the dependency must be installed.
+- `--markers`: Environment markers which describe when the dependency should be installed.
+- `--source`: Name of the source to use to install the package.
+- `--allow-prereleases`: Accept prereleases.
+- `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
+- `--lock`: Do not perform install (only update the lockfile).
 
 ## build
 
@@ -204,11 +203,11 @@ If necessary the build process happens in an isolated environment.
 
 #### Options
 
-* `--format (-f)`: Limit the format to either `wheel` or `sdist`.
-* `--clean`: Clean output directory before building.
-* `--local-version (-l)`: Add or replace a local version label to the build (deprecated).
-* `--output (-o)`: Set output directory for build artifacts. Default is `dist`.
-* `--config-settings=<key>=<value> (-c)`: Config settings to be passed to the build back-end. (multiple allowed)
+- `--format (-f)`: Limit the format to either `wheel` or `sdist`.
+- `--clean`: Clean output directory before building.
+- `--local-version (-l)`: Add or replace a local version label to the build (deprecated).
+- `--output (-o)`: Set output directory for build artifacts. Default is `dist`.
+- `--config-settings=<key>=<value> (-c)`: Config settings to be passed to the build back-end. (multiple allowed)
 
 {{% note %}}
 When using `--local-version`, the identifier must be [PEP 440](https://peps.python.org/pep-0440/#local-version-identifiers)
@@ -269,8 +268,8 @@ poetry check
 
 #### Options
 
-* `--lock`: Verifies that `poetry.lock` exists for the current `pyproject.toml`.
-* `--strict`: Fail if check reports warnings.
+- `--lock`: Verifies that `poetry.lock` exists for the current `pyproject.toml`.
+- `--strict`: Fail if check reports warnings.
 
 ## config
 
@@ -282,27 +281,29 @@ poetry config --list
 
 ### Usage
 
-````bash
+```bash
 poetry config [options] [setting-key] [setting-value1] ... [setting-valueN]
-````
+```
 
 `setting-key` is a configuration option name and `setting-value1` is a configuration value.
 See [Configuration]({{< relref "configuration" >}}) for all available settings.
 
 {{% warning %}}
 Use `--` to terminate option parsing if your values may start with a hyphen (`-`), e.g.
+
 ```bash
 poetry config http-basic.custom-repo gitlab-ci-token -- ${GITLAB_JOB_TOKEN}
 ```
+
 Without `--` this command will fail if `${GITLAB_JOB_TOKEN}` starts with a hyphen.
 {{% /warning%}}
 
 #### Options
 
-* `--unset`: Remove the configuration element named by `setting-key`.
-* `--list`: Show the list of current config variables.
-* `--local`: Set/Get settings that are specific to a project (in the local configuration file `poetry.toml`).
-* `--migrate`: Migrate outdated configuration settings.
+- `--unset`: Remove the configuration element named by `setting-key`.
+- `--list`: Show the list of current config variables.
+- `--local`: Set/Get settings that are specific to a project (in the local configuration file `poetry.toml`).
+- `--migrate`: Migrate outdated configuration settings.
 
 ## debug
 
@@ -345,8 +346,8 @@ The `env info` command displays information about the current environment.
 
 #### Options
 
-* `--path (-p)`: Only display the environment's path.
-* `--executable (-e)`: Only display the environment's python executable path.
+- `--path (-p)`: Only display the environment's path.
+- `--executable (-e)`: Only display the environment's python executable path.
 
 ### env list
 
@@ -354,7 +355,7 @@ The `env list` command lists all virtualenvs associated with the current project
 
 #### Options
 
-* `--full-path`: Output the full paths of the virtualenvs.
+- `--full-path`: Output the full paths of the virtualenvs.
 
 ### env remove
 
@@ -368,11 +369,11 @@ If `virtualenvs.in-project` config is set to `true`, no argument or option is re
 
 #### Arguments
 
-* `python`: The python executables associated with, or names of the virtual environments which are to be removed. Can be specified multiple times.
+- `python`: The python executables associated with, or names of the virtual environments which are to be removed. Can be specified multiple times.
 
 #### Options
 
-* `--all`: Remove all managed virtual environments associated with the project.
+- `--all`: Remove all managed virtual environments associated with the project.
 
 ### env use
 
@@ -380,7 +381,7 @@ The `env use` command activates or creates a new virtualenv for the current proj
 
 #### Arguments
 
-* `python`: The python executable to use. This can be a version number (if not on Windows) or a path to the python binary.
+- `python`: The python executable to use. This can be a version number (if not on Windows) or a path to the python binary.
 
 ## export
 
@@ -396,6 +397,7 @@ you can also define in your `pyproject.toml` that the plugin is required for the
 [tool.poetry.requires-plugins]
 poetry-plugin-export = ">=1.8"
 ```
+
 {{% /warning %}}
 
 {{% note %}}
@@ -427,6 +429,7 @@ For instance:
 ```bash
 poetry show --help
 ```
+
 {{% /note %}}
 
 ## init
@@ -442,12 +445,13 @@ poetry init
 
 #### Options
 
-* `--name`: Name of the package.
-* `--description`: Description of the package.
-* `--author`: Author of the package.
-* `--python` Compatible Python versions.
-* `--dependency`: Package to require with a version constraint. Should be in format `foo:1.0.0`.
-* `--dev-dependency`: Development requirements, see `--dependency`.
+- `--name`: Name of the package.
+- `--description`: Description of the package.
+- `--author`: Author of the package.
+- `--python` Compatible Python versions.
+- `--dependency`: Package to require with a version constraint. Should be in format `foo:1.0.0`.
+- `--dev-dependency`: Development requirements, see `--dependency`.
+- `--use-tool-poetry`: Use the classic [tool.poetry] format instead of the modern [project] format (PEP 621).
 
 ## install
 
@@ -485,7 +489,7 @@ You can also select optional dependency groups with the `--with` option.
 poetry install --with test,docs
 ```
 
-To install all dependency groups including the optional groups, use the ``--all-groups`` flag.
+To install all dependency groups including the optional groups, use the `--all-groups` flag.
 
 ```bash
 poetry install --all-groups
@@ -561,18 +565,18 @@ poetry install --compile
 
 #### Options
 
-* `--without`: The dependency groups to ignore.
-* `--with`: The optional dependency groups to include.
-* `--only`: The only dependency groups to include.
-* `--only-root`: Install only the root project, exclude all dependencies.
-* `--sync`: Synchronize the environment with the locked packages and the specified groups. (**Deprecated**, use `poetry sync` instead)
-* `--no-root`: Do not install the root package (your project).
-* `--no-directory`: Skip all directory path dependencies (including transitive ones).
-* `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
-* `--extras (-E)`: Features to install (multiple values allowed).
-* `--all-extras`: Install all extra features (conflicts with `--extras`).
-* `--all-groups`: Install dependencies from all groups (conflicts with `--only`, `--with`, and `--without`).
-* `--compile`: Compile Python source files to bytecode.
+- `--without`: The dependency groups to ignore.
+- `--with`: The optional dependency groups to include.
+- `--only`: The only dependency groups to include.
+- `--only-root`: Install only the root project, exclude all dependencies.
+- `--sync`: Synchronize the environment with the locked packages and the specified groups. (**Deprecated**, use `poetry sync` instead)
+- `--no-root`: Do not install the root package (your project).
+- `--no-directory`: Skip all directory path dependencies (including transitive ones).
+- `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
+- `--extras (-E)`: Features to install (multiple values allowed).
+- `--all-extras`: Install all extra features (conflicts with `--extras`).
+- `--all-groups`: Install dependencies from all groups (conflicts with `--only`, `--with`, and `--without`).
+- `--compile`: Compile Python source files to bytecode.
 
 {{% note %}}
 When `--only` is specified, `--with` and `--without` options are ignored.
@@ -603,7 +607,7 @@ poetry lock
 
 #### Options
 
-* `--regenerate`: Ignore existing lock file and overwrite it with a new lock file created from scratch.
+- `--regenerate`: Ignore existing lock file and overwrite it with a new lock file created from scratch.
 
 ## new
 
@@ -680,17 +684,17 @@ my-package
 
 #### Options
 
-* `--interactive (-i)`: Allow interactive specification of project configuration.
-* `--name`: Set the resulting package name.
-* `--flat`: Use the flat layout for the project.
-* `--readme`: Specify the readme file extension. Default is `md`. If you intend to publish to PyPI
+- `--interactive (-i)`: Allow interactive specification of project configuration.
+- `--name`: Set the resulting package name.
+- `--flat`: Use the flat layout for the project.
+- `--readme`: Specify the readme file extension. Default is `md`. If you intend to publish to PyPI
   keep the [recommendations for a PyPI-friendly README](https://packaging.python.org/en/latest/guides/making-a-pypi-friendly-readme/)
   in mind.
-* `--description`: Description of the package.
-* `--author`: Author of the package.
-* `--python` Compatible Python versions.
-* `--dependency`: Package to require with a version constraint. Should be in format `foo:1.0.0`.
-* `--dev-dependency`: Development requirements, see `--dependency`.
+- `--description`: Description of the package.
+- `--author`: Author of the package.
+- `--python` Compatible Python versions.
+- `--dependency`: Package to require with a version constraint. Should be in format `foo:1.0.0`.
+- `--dev-dependency`: Development requirements, see `--dependency`.
 
 ## publish
 
@@ -710,16 +714,16 @@ See [Publishable Repositories]({{< relref "repositories/#publishable-repositorie
 
 #### Options
 
-* `--repository (-r)`: The repository to register the package to (default: `pypi`).
-Should match a repository name set by the [`config`](#config) command.
-* `--username (-u)`: The username to access the repository.
-* `--password (-p)`: The password to access the repository.
-* `--cert`: Certificate authority to access the repository.
-* `--client-cert`: Client certificate to access the repository.
-* `--dist-dir`: Dist directory where built artifacts are stored. Default is `dist`.
-* `--build`: Build the package before publishing.
-* `--dry-run`: Perform all actions except upload the package.
-* `--skip-existing`: Ignore errors from files already existing in the repository.
+- `--repository (-r)`: The repository to register the package to (default: `pypi`).
+  Should match a repository name set by the [`config`](#config) command.
+- `--username (-u)`: The username to access the repository.
+- `--password (-p)`: The password to access the repository.
+- `--cert`: Certificate authority to access the repository.
+- `--client-cert`: Client certificate to access the repository.
+- `--dist-dir`: Dist directory where built artifacts are stored. Default is `dist`.
+- `--build`: Build the package before publishing.
+- `--dry-run`: Perform all actions except upload the package.
+- `--skip-existing`: Ignore errors from files already existing in the repository.
 
 {{% note %}}
 See [Configuring Credentials]({{< relref "repositories/#configuring-credentials" >}}) for more information on how to configure credentials.
@@ -733,7 +737,7 @@ The `python` namespace groups subcommands to manage Python versions.
 This is an experimental feature, and can change behaviour in upcoming releases.
 {{% /warning %}}
 
-*Introduced in 2.1.0*
+_Introduced in 2.1.0_
 
 ### python install
 
@@ -745,10 +749,10 @@ poetry python install <PYTHON_VERSION>
 
 #### Options
 
-* `--clean`: Clean up installation if check fails.
-* `--free-threaded`: Use free-threaded version if available.
-* `--implementation`: Python implementation to use. (cpython, pypy)
-* `--reinstall`: Reinstall if installation already exists.
+- `--clean`: Clean up installation if check fails.
+- `--free-threaded`: Use free-threaded version if available.
+- `--implementation`: Python implementation to use. (cpython, pypy)
+- `--reinstall`: Reinstall if installation already exists.
 
 ### python list
 
@@ -758,10 +762,12 @@ discovered System managed and Poetry managed installations.
 ```bash
 poetry python list
 ```
+
 #### Options
-* `--all`: List all versions, including those available for download.
-* `--implementation`: Python implementation to search for.
-* `--managed`: List only Poetry managed Python versions.
+
+- `--all`: List all versions, including those available for download.
+- `--implementation`: Python implementation to search for.
+- `--managed`: List only Poetry managed Python versions.
 
 ### python remove
 
@@ -773,7 +779,7 @@ poetry python remove <PYTHON_VERSION>
 
 #### Options
 
-* `--implementation`: Python implementation to use. (cpython, pypy)
+- `--implementation`: Python implementation to use. (cpython, pypy)
 
 ## remove
 
@@ -795,10 +801,10 @@ about dependency groups.
 
 #### Options
 
-* `--group (-G)`: The group to remove the dependency from.
-* `--dev (-D)`: Removes a package from the development dependencies. (shortcut for `-G dev`)
-* `--dry-run` : Outputs the operations but will not execute anything (implicitly enables `--verbose`).
-* `--lock`: Do not perform operations (only update the lockfile).
+- `--group (-G)`: The group to remove the dependency from.
+- `--dev (-D)`: Removes a package from the development dependencies. (shortcut for `-G dev`)
+- `--dry-run` : Outputs the operations but will not execute anything (implicitly enables `--verbose`).
+- `--lock`: Do not perform operations (only update the lockfile).
 
 ## run
 
@@ -815,19 +821,23 @@ So, if you have a script defined like this:
 {{< tabs tabTotal="2" tabID1="script-project" tabID2=script-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
 
 {{< tab tabID="script-project" >}}
+
 ```toml
 [project]
 # ...
 [project.scripts]
 my-script = "my_module:main"
 ```
+
 {{< /tab >}}
 
 {{< tab tabID="script-poetry" >}}
+
 ```toml
 [tool.poetry.scripts]
 my-script = "my_module:main"
 ```
+
 {{< /tab >}}
 {{< /tabs >}}
 
@@ -905,11 +915,11 @@ poetry self add artifacts-keyring
 
 #### Options
 
-* `--editable (-e)`: Add vcs/path dependencies as editable.
-* `--extras (-E)`: Extras to activate for the dependency. (multiple values allowed)
-* `--allow-prereleases`: Accept prereleases.
-* `--source`: Name of the source to use to install the package.
-* `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
+- `--editable (-e)`: Add vcs/path dependencies as editable.
+- `--extras (-E)`: Extras to activate for the dependency. (multiple values allowed)
+- `--allow-prereleases`: Accept prereleases.
+- `--source`: Name of the source to use to install the package.
+- `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
 
 ### self install
 
@@ -927,8 +937,8 @@ poetry self install
 
 #### Options
 
-* `--sync`: Synchronize the environment with the locked packages and the specified groups. (**Deprecated**, use `poetry self sync` instead)
-* `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
+- `--sync`: Synchronize the environment with the locked packages and the specified groups. (**Deprecated**, use `poetry self sync` instead)
+- `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
 
 ### self lock
 
@@ -941,7 +951,7 @@ poetry self lock
 
 #### Options
 
-* `--regenerate`: Ignore existing lock file and overwrite it with a new lock file created from scratch.
+- `--regenerate`: Ignore existing lock file and overwrite it with a new lock file created from scratch.
 
 ### self remove
 
@@ -953,7 +963,7 @@ poetry self remove poetry-plugin-export
 
 #### Options
 
-* `--dry-run`: Outputs the operations but will not execute anything (implicitly enables `--verbose`).
+- `--dry-run`: Outputs the operations but will not execute anything (implicitly enables `--verbose`).
 
 ### self show
 
@@ -970,10 +980,10 @@ poetry self show
 
 #### Options
 
-* `--addons`: List only add-on packages installed.
-* `--tree`: List the dependencies as a tree.
-* `--latest (-l)`: Show the latest version.
-* `--outdated (-o)`: Show the latest version but only for packages that are outdated.
+- `--addons`: List only add-on packages installed.
+- `--tree`: List the dependencies as a tree.
+- `--latest (-l)`: Show the latest version.
+- `--outdated (-o)`: Show the latest version but only for packages that are outdated.
 
 ### self show plugins
 
@@ -999,7 +1009,7 @@ poetry self sync
 
 #### Options
 
-* `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
+- `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
 
 ### self update
 
@@ -1016,8 +1026,8 @@ poetry self update
 
 #### Options
 
-* `--preview`: Allow the installation of pre-release versions.
-* `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
+- `--preview`: Allow the installation of pre-release versions.
+- `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
 
 ## shell
 
@@ -1051,16 +1061,16 @@ required by
 
 #### Options
 
-* `--without`: The dependency groups to ignore.
-* `--why`: When showing the full list, or a `--tree` for a single package, display whether they are a direct dependency or required by other packages.
-* `--with`: The optional dependency groups to include.
-* `--only`: The only dependency groups to include.
-* `--tree`: List the dependencies as a tree.
-* `--latest (-l)`: Show the latest version.
-* `--outdated (-o)`: Show the latest version but only for packages that are outdated.
-* `--all (-a)`: Show all packages (even those not compatible with current system).
-* `--top-level (-T)`: Only show explicitly defined packages.
-* `--no-truncate`: Do not truncate the output based on the terminal width.
+- `--without`: The dependency groups to ignore.
+- `--why`: When showing the full list, or a `--tree` for a single package, display whether they are a direct dependency or required by other packages.
+- `--with`: The optional dependency groups to include.
+- `--only`: The only dependency groups to include.
+- `--tree`: List the dependencies as a tree.
+- `--latest (-l)`: Show the latest version.
+- `--outdated (-o)`: Show the latest version but only for packages that are outdated.
+- `--all (-a)`: Show all packages (even those not compatible with current system).
+- `--top-level (-T)`: Only show explicitly defined packages.
+- `--no-truncate`: Do not truncate the output based on the terminal width.
 
 {{% note %}}
 When `--only` is specified, `--with` and `--without` options are ignored.
@@ -1089,7 +1099,7 @@ poetry source add --priority=explicit pypi
 
 #### Options
 
-* `--priority`: Set the priority of this source. Accepted values are: [`primary`]({{< relref "repositories#primary-package-sources" >}}), [`supplemental`]({{< relref "repositories#supplemental-package-sources" >}}), and [`explicit`]({{< relref "repositories#explicit-package-sources" >}}). Refer to the dedicated sections in [Repositories]({{< relref "repositories" >}}) for more information.
+- `--priority`: Set the priority of this source. Accepted values are: [`primary`]({{< relref "repositories#primary-package-sources" >}}), [`supplemental`]({{< relref "repositories#supplemental-package-sources" >}}), and [`explicit`]({{< relref "repositories#explicit-package-sources" >}}). Refer to the dedicated sections in [Repositories]({{< relref "repositories" >}}) for more information.
 
 ### source show
 
@@ -1146,7 +1156,7 @@ You can also select optional dependency groups with the `--with` option.
 poetry sync --with test,docs
 ```
 
-To install all dependency groups including the optional groups, use the ``--all-groups`` flag.
+To install all dependency groups including the optional groups, use the `--all-groups` flag.
 
 ```bash
 poetry sync --all-groups
@@ -1220,17 +1230,17 @@ poetry sync --compile
 
 #### Options
 
-* `--without`: The dependency groups to ignore.
-* `--with`: The optional dependency groups to include.
-* `--only`: The only dependency groups to include.
-* `--only-root`: Install only the root project, exclude all dependencies.
-* `--no-root`: Do not install the root package (your project).
-* `--no-directory`: Skip all directory path dependencies (including transitive ones).
-* `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
-* `--extras (-E)`: Features to install (multiple values allowed).
-* `--all-extras`: Install all extra features (conflicts with `--extras`).
-* `--all-groups`: Install dependencies from all groups (conflicts with `--only`, `--with`, and `--without`).
-* `--compile`: Compile Python source files to bytecode.
+- `--without`: The dependency groups to ignore.
+- `--with`: The optional dependency groups to include.
+- `--only`: The only dependency groups to include.
+- `--only-root`: Install only the root project, exclude all dependencies.
+- `--no-root`: Do not install the root package (your project).
+- `--no-directory`: Skip all directory path dependencies (including transitive ones).
+- `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
+- `--extras (-E)`: Features to install (multiple values allowed).
+- `--all-extras`: Install all extra features (conflicts with `--extras`).
+- `--all-groups`: Install dependencies from all groups (conflicts with `--only`, `--with`, and `--without`).
+- `--compile`: Compile Python source files to bytecode.
 
 {{% note %}}
 When `--only` is specified, `--with` and `--without` options are ignored.
@@ -1263,12 +1273,12 @@ You can do this using the `add` command.
 
 #### Options
 
-* `--without`: The dependency groups to ignore.
-* `--with`: The optional dependency groups to include.
-* `--only`: The only dependency groups to include.
-* `--dry-run` : Outputs the operations but will not execute anything (implicitly enables `--verbose`).
-* `--lock` : Do not perform install (only update the lockfile).
-* `--sync`: Synchronize the environment with the locked packages and the specified groups.
+- `--without`: The dependency groups to ignore.
+- `--with`: The optional dependency groups to include.
+- `--only`: The only dependency groups to include.
+- `--dry-run` : Outputs the operations but will not execute anything (implicitly enables `--verbose`).
+- `--lock` : Do not perform install (only update the lockfile).
+- `--sync`: Synchronize the environment with the locked packages and the specified groups.
 
 {{% note %}}
 When `--only` is specified, `--with` and `--without` options are ignored.
@@ -1294,7 +1304,7 @@ If you would like to use semantic versioning for your project, please see
 The table below illustrates the effect of these rules with concrete examples.
 
 | rule       | before  | after   |
-| ---------- |---------|---------|
+| ---------- | ------- | ------- |
 | major      | 1.3.0   | 2.0.0   |
 | minor      | 2.1.4   | 2.2.0   |
 | patch      | 4.1.1   | 4.1.2   |
@@ -1308,13 +1318,13 @@ The table below illustrates the effect of these rules with concrete examples.
 The option `--next-phase` allows the increment of prerelease phase versions.
 
 | rule                    | before   | after    |
-|-------------------------|----------|----------|
+| ----------------------- | -------- | -------- |
 | prerelease --next-phase | 1.0.3a0  | 1.0.3b0  |
 | prerelease --next-phase | 1.0.3b0  | 1.0.3rc0 |
 | prerelease --next-phase | 1.0.3rc0 | 1.0.3    |
 
 #### Options
 
-* `--next-phase`: Increment the phase of the current version.
-* `--short (-s)`: Output the version number only.
-* `--dry-run`: Do not update pyproject.toml file.
+- `--next-phase`: Increment the phase of the current version.
+- `--short (-s)`: Output the version number only.
+- `--dry-run`: Do not update pyproject.toml file.

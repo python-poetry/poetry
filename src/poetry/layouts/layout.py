@@ -44,6 +44,23 @@ packages = []
 [tool.poetry.group.dev.dependencies]
 """
 
+POETRY_TOOL_ONLY = """\
+[tool.poetry]
+name = ""
+version = ""
+description = ""
+authors = [
+]
+license = ""
+readme = ""
+packages = []
+
+[tool.poetry.dependencies]
+python = ""
+
+[tool.poetry.group.dev.dependencies]
+"""
+
 poetry_core_version = Version.parse(importlib.metadata.version("poetry-core"))
 
 BUILD_SYSTEM_MIN_VERSION: str | None = Version.from_parts(
@@ -68,6 +85,7 @@ class Layout:
         python: str | None = None,
         dependencies: Mapping[str, str | Mapping[str, Any]] | None = None,
         dev_dependencies: Mapping[str, str | Mapping[str, Any]] | None = None,
+        use_tool_poetry: bool = False,
     ) -> None:
         self._project = canonicalize_name(project)
         self._package_path_relative = Path(
@@ -83,6 +101,7 @@ class Layout:
         self._python = python
         self._dependencies = dependencies or {}
         self._dev_dependencies = dev_dependencies or {}
+        self._use_tool_poetry = use_tool_poetry
 
         if not author:
             author = "Your Name <you@example.com>"
@@ -134,77 +153,112 @@ class Layout:
         if with_pyproject:
             self._write_poetry(path)
 
-    def generate_project_content(self) -> TOMLDocument:
-        template = POETRY_DEFAULT
+    def _set_metadata_fields(
+        self, metadata_content: dict[str, Any], author_format: str = "object"
+    ) -> None:
+        metadata_content["name"] = self._project
+        metadata_content["version"] = self._version
+        metadata_content["description"] = self._description
 
-        content: dict[str, Any] = loads(template)
-
-        project_content = content["project"]
-        project_content["name"] = self._project
-        project_content["version"] = self._version
-        project_content["description"] = self._description
         m = AUTHOR_REGEX.match(self._author)
         if m is None:
-            # This should not happen because author has been validated before.
             raise ValueError(f"Invalid author: {self._author}")
-        else:
-            author = {"name": m.group("name")}
+        if author_format == "object":
+            author_obj = {"name": m.group("name")}
             if email := m.group("email"):
-                author["email"] = email
-            project_content["authors"].append(author)
+                author_obj["email"] = email
+            metadata_content["authors"].append(author_obj)
+        else:
+            author_str = f"{m.group('name')}"
+            if email := m.group("email"):
+                author_str += f" <{email}>"
+            metadata_content["authors"].append(author_str)
 
         if self._license:
-            project_content["license"]["text"] = self._license
+            if author_format == "object":
+                metadata_content["license"]["text"] = self._license
+            else:
+                metadata_content["license"] = self._license
         else:
-            project_content.remove("license")
+            metadata_content.pop("license", None)
 
-        project_content["readme"] = f"README.{self._readme_format}"
+        metadata_content["readme"] = f"README.{self._readme_format}"
 
-        if self._python:
-            project_content["requires-python"] = self._python
-        else:
-            project_content.remove("requires-python")
-
+    def _set_dependencies(
+        self,
+        dependencies_content: dict[str, Any],
+        dev_dependencies_content: dict[str, Any],
+    ) -> None:
         for dep_name, dep_constraint in self._dependencies.items():
             dependency = Factory.create_dependency(dep_name, dep_constraint)
-            project_content["dependencies"].append(dependency.to_pep_508())
+            dependencies_content[dep_name] = dependency.to_pep_508()
+        for dep_name, dep_constraint in self._dev_dependencies.items():
+            dev_dependencies_content[dep_name] = dep_constraint
 
-        poetry_content = content["tool"]["poetry"]
+    def generate_project_content(self) -> TOMLDocument:
+        template = POETRY_DEFAULT if not self._use_tool_poetry else POETRY_TOOL_ONLY
+        content: dict[str, Any] = loads(template)
 
-        packages = self.get_package_include()
-        if packages:
-            poetry_content["packages"].append(packages)
-        else:
-            poetry_content.remove("packages")
-
-        if self._dev_dependencies:
-            for dep_name, dep_constraint in self._dev_dependencies.items():
-                poetry_content["group"]["dev"]["dependencies"][dep_name] = (
-                    dep_constraint
+        if self._use_tool_poetry:
+            poetry_content: dict[str, Any] = content["tool"]["poetry"]
+            self._set_metadata_fields(poetry_content, author_format="string")
+            if self._python:
+                poetry_content["dependencies"]["python"] = self._python
+            else:
+                poetry_content["dependencies"].pop("python", None)
+            self._set_dependencies(
+                poetry_content["dependencies"],
+                poetry_content["group"]["dev"]["dependencies"],
+            )
+            packages = self.get_package_include()
+            if packages:
+                poetry_content["packages"].append(packages)
+            else:
+                poetry_content.pop("packages", None)
+            if self._dev_dependencies:
+                self._set_dependencies(
+                    {}, poetry_content["group"]["dev"]["dependencies"]
                 )
+            else:
+                poetry_content.pop("group", None)
         else:
-            del poetry_content["group"]
-
-        if not poetry_content:
-            del content["tool"]["poetry"]
-
+            project_content: dict[str, Any] = content["project"]
+            self._set_metadata_fields(project_content, author_format="object")
+            if self._python:
+                project_content["requires-python"] = self._python
+            else:
+                project_content.pop("requires-python", None)
+            project_content["dependencies"] = []
+            for dep_name, dep_constraint in self._dependencies.items():
+                dependency = Factory.create_dependency(dep_name, dep_constraint)
+                project_content["dependencies"].append(dependency.to_pep_508())
+            poetry_tool_content: dict[str, Any] = content["tool"]["poetry"]
+            packages = self.get_package_include()
+            if packages:
+                poetry_tool_content["packages"].append(packages)
+            else:
+                poetry_tool_content.pop("packages", None)
+            if self._dev_dependencies:
+                self._set_dependencies(
+                    {}, poetry_tool_content["group"]["dev"]["dependencies"]
+                )
+            else:
+                poetry_tool_content.pop("group", None)
+            if not poetry_tool_content:
+                content["tool"].pop("poetry", None)
         # Add build system
         build_system = table()
-        build_system_version = ""
-
+        build_system_version: str = ""
         if BUILD_SYSTEM_MIN_VERSION is not None:
             build_system_version = ">=" + BUILD_SYSTEM_MIN_VERSION
         if BUILD_SYSTEM_MAX_VERSION is not None:
             if build_system_version:
                 build_system_version += ","
             build_system_version += "<" + BUILD_SYSTEM_MAX_VERSION
-
         build_system.add("requires", ["poetry-core" + build_system_version])
         build_system.add("build-backend", "poetry.core.masonry.api")
-
         assert isinstance(content, TOMLDocument)
         content.add("build-system", build_system)
-
         return content
 
     def _create_default(self, path: Path, src: bool = True) -> None:
