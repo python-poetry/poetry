@@ -332,7 +332,9 @@ class Factory(BaseFactory):
         results = super().validate(toml_data, strict)
         poetry_config = toml_data["tool"]["poetry"]
 
-        results["errors"].extend(validate_object(poetry_config))
+        results["errors"].extend(
+            [e.replace("data.", "tool.poetry.") for e in validate_object(poetry_config)]
+        )
 
         # A project should not depend on itself.
         # TODO: consider [project.dependencies] and [project.optional-dependencies]
