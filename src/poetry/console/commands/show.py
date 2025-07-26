@@ -37,6 +37,9 @@ def reverse_deps(pkg: Package, repo: Repository) -> dict[str, str]:
     return required_by
 
 
+OUTPUT_FORMATS = ["text", "json"]
+
+
 class ShowCommand(GroupCommand, EnvCommand):
     name = "show"
     description = "Shows information about packages."
@@ -70,6 +73,13 @@ class ShowCommand(GroupCommand, EnvCommand):
             "no-truncate",
             None,
             "Do not truncate the output based on the terminal width.",
+        ),
+        option(
+            "output",
+            None,
+            "Specify the output format. JSON cannot be combined with the <info>--tree</info> option. Default is text. Supported formats: text, json.",
+            flag=False,
+            default="text",
         ),
     ]
 
@@ -114,6 +124,19 @@ lists all packages available."""
                 )
 
                 return 1
+
+        if self.option("output") not in OUTPUT_FORMATS:
+            self.line_error(
+                "<error>Error: Invalid output format. Supported formats are: text, json.</error>"
+            )
+
+            return 1
+
+        if self.option("output") == "json" and self.option("tree"):
+            self.line_error(
+                "<error>Error: JSON output format cannot be used with --tree option.</error>"
+            )
+            return 1
 
         if self.option("outdated"):
             self.io.input.set_option("latest", True)
@@ -179,6 +202,26 @@ lists all packages available."""
             else:
                 self.display_package_tree(self.io, pkg, locked_packages)
 
+            return 0
+
+        if self.option("output") == "json":
+            import json
+
+            package_info = {
+                "name": pkg.pretty_name,
+                "version": pkg.pretty_version,
+                "description": pkg.description,
+            }
+            if pkg.requires:
+                package_info["dependencies"] = {
+                    dependency.pretty_name: dependency.pretty_constraint
+                    for dependency in pkg.requires
+                }
+            if required_by:
+                package_info["required by"] = dict(required_by)
+
+            # need to get the anscii output option here
+            self.line(json.dumps(package_info))
             return 0
 
         rows: Rows = [
