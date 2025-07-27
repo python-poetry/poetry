@@ -392,13 +392,17 @@ def test_validate_fails(fixture_dir: FixtureDirGetter) -> None:
     complete = TOMLFile(fixture_dir("complete.toml"))
     pyproject: dict[str, Any] = complete.read()
     pyproject["tool"]["poetry"]["this key is not in the schema"] = ""
+    pyproject["tool"]["poetry"]["source"] = {}
 
-    expected = (
-        "Additional properties are not allowed "
-        "('this key is not in the schema' was unexpected)"
-    )
+    expected = [
+        "tool.poetry.source must be array",
+        (
+            "Additional properties are not allowed "
+            "('this key is not in the schema' was unexpected)"
+        ),
+    ]
 
-    assert Factory.validate(pyproject) == {"errors": [expected], "warnings": []}
+    assert Factory.validate(pyproject) == {"errors": expected, "warnings": []}
 
 
 def test_create_poetry_fails_on_invalid_configuration(
