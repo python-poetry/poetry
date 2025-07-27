@@ -37,7 +37,7 @@ def reverse_deps(pkg: Package, repo: Repository) -> dict[str, str]:
     return required_by
 
 
-OUTPUT_FORMATS = ["text", "json"]
+OUTPUT_FORMATS = {"text", "json"}
 
 
 class ShowCommand(GroupCommand, EnvCommand):
@@ -220,7 +220,6 @@ lists all packages available."""
             if required_by:
                 package_info["required by"] = dict(required_by)
 
-            # need to get the anscii output option here
             self.line(json.dumps(package_info))
             return 0
 
