@@ -221,6 +221,7 @@ lists all packages available."""
                 package_info["required by"] = dict(required_by)
 
             self.line(json.dumps(package_info))
+
             return 0
 
         rows: Rows = [
@@ -278,6 +279,7 @@ lists all packages available."""
         show_latest = self.option("latest")
         show_all = self.option("all")
         show_top_level = self.option("top-level")
+        show_why = self.option("why")
         width = (
             sys.maxsize
             if self.option("no-truncate")
@@ -287,6 +289,7 @@ lists all packages available."""
         latest_packages = {}
         latest_statuses = {}
         installed_repo = InstalledRepository.load(self.env)
+        requires = root.all_requires
 
         # Computing widths
         for locked in locked_packages:
@@ -331,7 +334,7 @@ lists all packages available."""
                         ),
                     )
 
-                    if self.option("why"):
+                    if show_why:
                         required_by = reverse_deps(locked, locked_repository)
                         required_by_length = max(
                             required_by_length,
@@ -348,11 +351,65 @@ lists all packages available."""
                     ),
                 )
 
-                if self.option("why"):
+                if show_why:
                     required_by = reverse_deps(locked, locked_repository)
                     required_by_length = max(
                         required_by_length, len(" from " + ",".join(required_by.keys()))
                     )
+
+        if self.option("output") == "json":
+            import json
+
+            packages = []
+
+            for locked in locked_packages:
+                if (
+                    show_latest
+                    and self.option("outdated")
+                    and latest_statuses[locked.pretty_name] == "up-to-date"
+                ):
+                    continue
+
+                if locked not in required_locked_packages and not show_all:
+                    continue
+
+                if show_top_level and not any(locked.satisfies(r) for r in requires):
+                    continue
+
+                package = {}
+                package["name"] = locked.pretty_name
+
+                installed_status = self.get_installed_status(
+                    locked, installed_repo.packages
+                )
+                package["installed_status"] = installed_status
+
+                version = get_package_version_display_string(
+                    locked, root=self.poetry.file.path.parent
+                )
+                package["version"] = version
+
+                if show_latest:
+                    latest = latest_packages[locked.pretty_name]
+                    update_status = latest_statuses[locked.pretty_name]
+                    version = get_package_version_display_string(
+                        latest, root=self.poetry.file.path.parent
+                    )
+                    package["latest_version"] = version
+
+                if show_why:
+                    required_by = reverse_deps(locked, locked_repository)
+                    if required_by:
+                        content = ",".join(required_by.keys())
+                        package["required_by"] = content
+
+                package["description"] = locked.description
+
+                packages.append(package)
+
+            self.line(json.dumps(packages))
+
+            return 0
 
         write_version = name_length + version_length + 3 <= width
         write_latest = name_length + version_length + latest_length + 3 <= width
@@ -360,10 +417,8 @@ lists all packages available."""
         why_end_column = (
             name_length + version_length + latest_length + required_by_length
         )
-        write_why = self.option("why") and (why_end_column + 3) <= width
+        write_why = show_why and (why_end_column + 3) <= width
         write_description = (why_end_column + 24) <= width
-
-        requires = root.all_requires
 
         for locked in locked_packages:
             color = "cyan"
