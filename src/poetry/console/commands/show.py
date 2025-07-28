@@ -378,24 +378,18 @@ lists all packages available."""
 
                 package = {}
                 package["name"] = locked.pretty_name
-
-                installed_status = self.get_installed_status(
+                package["installed_status"] = self.get_installed_status(
                     locked, installed_repo.packages
                 )
-                package["installed_status"] = installed_status
-
-                version = get_package_version_display_string(
+                package["version"] = get_package_version_display_string(
                     locked, root=self.poetry.file.path.parent
                 )
-                package["version"] = version
 
                 if show_latest:
                     latest = latest_packages[locked.pretty_name]
-                    update_status = latest_statuses[locked.pretty_name]
-                    version = get_package_version_display_string(
+                    package["latest_version"] = get_package_version_display_string(
                         latest, root=self.poetry.file.path.parent
                     )
-                    package["latest_version"] = version
 
                 if show_why:
                     required_by = reverse_deps(locked, locked_repository)
