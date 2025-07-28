@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 from typing import TYPE_CHECKING
 
 import pytest
@@ -28,8 +30,48 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("show")
 
 
+@pytest.mark.parametrize(
+    ("options", "expected"),
+    [
+        (
+            "",
+            """\
+cachy    0.1.0 Cachy package
+pendulum 2.0.0 Pendulum package
+pytest   3.7.3 Pytest package
+""",
+        ),
+        (
+            "--output json",
+            [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "installed_status": "installed",
+                },
+                {
+                    "name": "pendulum",
+                    "version": "2.0.0",
+                    "description": "Pendulum package",
+                    "installed_status": "installed",
+                },
+                {
+                    "name": "pytest",
+                    "version": "3.7.3",
+                    "description": "Pytest package",
+                    "installed_status": "installed",
+                },
+            ],
+        ),
+    ],
+)
 def test_show_basic_with_installed_packages(
-    tester: CommandTester, poetry: Poetry, installed: Repository
+    options: str,
+    expected: str,
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
 ) -> None:
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
@@ -91,15 +133,12 @@ def test_show_basic_with_installed_packages(
         }
     )
 
-    tester.execute()
+    tester.execute(options)
 
-    expected = """\
-cachy    0.1.0 Cachy package
-pendulum 2.0.0 Pendulum package
-pytest   3.7.3 Pytest package
-"""
-
-    assert tester.io.fetch_output() == expected
+    if options:
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        assert tester.io.fetch_output() == expected
 
 
 def _configure_project_with_groups(poetry: Poetry, installed: Repository) -> None:
