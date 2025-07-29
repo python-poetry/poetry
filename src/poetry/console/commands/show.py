@@ -363,14 +363,14 @@ lists all packages available."""
             packages = []
 
             for locked in locked_packages:
+                if locked not in required_locked_packages and not show_all:
+                    continue
+
                 if (
                     show_latest
                     and self.option("outdated")
                     and latest_statuses[locked.pretty_name] == "up-to-date"
                 ):
-                    continue
-
-                if locked not in required_locked_packages and not show_all:
                     continue
 
                 if show_top_level and not any(locked.satisfies(r) for r in requires):
