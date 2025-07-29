@@ -905,7 +905,32 @@ def test_show_latest_decorated(
     assert tester.io.fetch_output() == expected
 
 
+@pytest.mark.parametrize(
+    ("expected", "output_format"),
+    [
+        (
+            """\
+cachy 0.1.0 0.2.0 Cachy package
+""",
+            "",
+        ),
+        (
+            [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "latest_version": "0.2.0",
+                    "description": "Cachy package",
+                    "installed_status": "installed",
+                },
+            ],
+            "--output json",
+        ),
+    ],
+)
 def test_show_outdated(
+    expected: str,
+    output_format: str,
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
@@ -961,16 +986,30 @@ def test_show_outdated(
         }
     )
 
-    tester.execute("--outdated")
+    tester.execute("--outdated" if not output_format else "--outdated " + output_format)
 
-    expected = """\
-cachy 0.1.0 0.2.0 Cachy package
-"""
+    if output_format:
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        assert tester.io.fetch_output() == expected
 
-    assert tester.io.fetch_output() == expected
 
-
+@pytest.mark.parametrize(
+    ("expected", "output_format"),
+    [
+        (
+            "",
+            "",
+        ),
+        (
+            [],
+            "--output json",
+        ),
+    ],
+)
 def test_show_outdated_with_only_up_to_date_packages(
+    expected: str,
+    output_format: str,
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
@@ -1005,14 +1044,40 @@ def test_show_outdated_with_only_up_to_date_packages(
         }
     )
 
-    tester.execute("--outdated")
+    tester.execute("--outdated" if not output_format else "--outdated " + output_format)
 
-    expected = ""
+    if output_format:
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        assert tester.io.fetch_output() == expected
 
-    assert tester.io.fetch_output() == expected
 
-
+@pytest.mark.parametrize(
+    ("expected", "output_format"),
+    [
+        (
+            """\
+cachy 0.1.0 0.2.0 Cachy package
+""",
+            "",
+        ),
+        (
+            [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "latest_version": "0.2.0",
+                    "description": "Cachy package",
+                    "installed_status": "installed",
+                },
+            ],
+            "--output json",
+        ),
+    ],
+)
 def test_show_outdated_has_prerelease_but_not_allowed(
+    expected: str,
+    output_format: str,
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
@@ -1073,16 +1138,40 @@ def test_show_outdated_has_prerelease_but_not_allowed(
         }
     )
 
-    tester.execute("--outdated")
+    tester.execute("--outdated" if not output_format else "--outdated " + output_format)
 
-    expected = """\
-cachy 0.1.0 0.2.0 Cachy package
-"""
+    if output_format:
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        assert tester.io.fetch_output() == expected
 
-    assert tester.io.fetch_output() == expected
 
-
+@pytest.mark.parametrize(
+    ("expected", "output_format"),
+    [
+        (
+            """\
+cachy 0.1.0.dev1 0.3.0.dev123 Cachy package
+""",
+            "",
+        ),
+        (
+            [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0.dev1",
+                    "latest_version": "0.3.0.dev123",
+                    "description": "Cachy package",
+                    "installed_status": "installed",
+                },
+            ],
+            "--output json",
+        ),
+    ],
+)
 def test_show_outdated_has_prerelease_and_allowed(
+    expected: str,
+    output_format: str,
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
@@ -1147,16 +1236,48 @@ def test_show_outdated_has_prerelease_and_allowed(
         }
     )
 
-    tester.execute("--outdated")
+    tester.execute("--outdated" if not output_format else "--outdated " + output_format)
 
-    expected = """\
-cachy 0.1.0.dev1 0.3.0.dev123 Cachy package
-"""
+    if output_format:
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        assert tester.io.fetch_output() == expected
 
-    assert tester.io.fetch_output() == expected
 
-
+@pytest.mark.parametrize(
+    ("expected", "output_format"),
+    [
+        (
+            """\
+cachy    0.1.0 0.2.0 Cachy package
+pendulum 2.0.0 2.0.1 Pendulum package
+""",
+            "",
+        ),
+        (
+            [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "latest_version": "0.2.0",
+                    "description": "Cachy package",
+                    "installed_status": "installed",
+                },
+                {
+                    "name": "pendulum",
+                    "version": "2.0.0",
+                    "latest_version": "2.0.1",
+                    "description": "Pendulum package",
+                    "installed_status": "installed",
+                },
+            ],
+            "--output json",
+        ),
+    ],
+)
 def test_show_outdated_formatting(
+    expected: str,
+    output_format: str,
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
@@ -1215,14 +1336,12 @@ def test_show_outdated_formatting(
         }
     )
 
-    tester.execute("--outdated")
+    tester.execute("--outdated" if not output_format else "--outdated " + output_format)
 
-    expected = """\
-cachy    0.1.0 0.2.0 Cachy package
-pendulum 2.0.0 2.0.1 Pendulum package
-"""
-
-    assert tester.io.fetch_output() == expected
+    if output_format:
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        assert tester.io.fetch_output() == expected
 
 
 @pytest.mark.parametrize(
