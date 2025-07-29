@@ -209,7 +209,7 @@ def _configure_project_with_groups(poetry: Poetry, installed: Repository) -> Non
 
 
 @pytest.mark.parametrize(
-    ("options", "expected"),
+    ("options", "expected", "is_json"),
     [
         (
             "",
@@ -217,6 +217,25 @@ def _configure_project_with_groups(poetry: Poetry, installed: Repository) -> Non
 cachy  0.1.0 Cachy package
 pytest 3.7.3 Pytest package
 """,
+            False,
+        ),
+        (
+            "--output json",
+            [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "installed_status": "installed",
+                },
+                {
+                    "name": "pytest",
+                    "version": "3.7.3",
+                    "description": "Pytest package",
+                    "installed_status": "installed",
+                },
+            ],
+            True,
         ),
         (
             "--with time",
@@ -225,24 +244,88 @@ cachy    0.1.0 Cachy package
 pendulum 2.0.0 Pendulum package
 pytest   3.7.3 Pytest package
 """,
+            False,
+        ),
+        (
+            "--with time --output json",
+            [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "installed_status": "installed",
+                },
+                {
+                    "name": "pendulum",
+                    "version": "2.0.0",
+                    "description": "Pendulum package",
+                    "installed_status": "installed",
+                },
+                {
+                    "name": "pytest",
+                    "version": "3.7.3",
+                    "description": "Pytest package",
+                    "installed_status": "installed",
+                },
+            ],
+            True,
         ),
         (
             "--without test",
             """\
 cachy 0.1.0 Cachy package
 """,
+            False,
+        ),
+        (
+            "--without test --output json",
+            [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "installed_status": "installed",
+                },
+            ],
+            True,
         ),
         (
             f"--without {MAIN_GROUP}",
             """\
 pytest 3.7.3 Pytest package
 """,
+            False,
+        ),
+        (
+            f"--without {MAIN_GROUP} --output json",
+            [
+                {
+                    "name": "pytest",
+                    "version": "3.7.3",
+                    "description": "Pytest package",
+                    "installed_status": "installed",
+                },
+            ],
+            True,
         ),
         (
             f"--only {MAIN_GROUP}",
             """\
 cachy 0.1.0 Cachy package
 """,
+            False,
+        ),
+        (
+            f"--only {MAIN_GROUP} --output json",
+            [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "installed_status": "installed",
+                },
+            ],
+            True,
         ),
         (
             "--with time --without test",
@@ -250,24 +333,82 @@ cachy 0.1.0 Cachy package
 cachy    0.1.0 Cachy package
 pendulum 2.0.0 Pendulum package
 """,
+            False,
+        ),
+        (
+            "--with time --without test --output json",
+            [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "installed_status": "installed",
+                },
+                {
+                    "name": "pendulum",
+                    "version": "2.0.0",
+                    "description": "Pendulum package",
+                    "installed_status": "installed",
+                },
+            ],
+            True,
         ),
         (
             f"--with time --without {MAIN_GROUP},test",
             """\
 pendulum 2.0.0 Pendulum package
 """,
+            False,
+        ),
+        (
+            f"--with time --without {MAIN_GROUP},test --output json",
+            [
+                {
+                    "name": "pendulum",
+                    "version": "2.0.0",
+                    "description": "Pendulum package",
+                    "installed_status": "installed",
+                },
+            ],
+            True,
         ),
         (
             "--only time",
             """\
 pendulum 2.0.0 Pendulum package
 """,
+            False,
+        ),
+        (
+            "--only time --output json",
+            [
+                {
+                    "name": "pendulum",
+                    "version": "2.0.0",
+                    "description": "Pendulum package",
+                    "installed_status": "installed",
+                },
+            ],
+            True,
         ),
         (
             "--only time --with test",
             """\
 pendulum 2.0.0 Pendulum package
 """,
+            False,
+        ),
+        (
+            "--only time --with test --output json",
+            [
+                {
+                    "name": "pendulum",
+                    "version": "2.0.0",
+                    "description": "Pendulum package",
+                    "installed_status": "installed",
+                },
+            ],
+            True,
         ),
         (
             "--with time",
@@ -276,12 +417,38 @@ cachy    0.1.0 Cachy package
 pendulum 2.0.0 Pendulum package
 pytest   3.7.3 Pytest package
 """,
+            False,
+        ),
+        (
+            "--with time --output json",
+            [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "installed_status": "installed",
+                },
+                {
+                    "name": "pendulum",
+                    "version": "2.0.0",
+                    "description": "Pendulum package",
+                    "installed_status": "installed",
+                },
+                {
+                    "name": "pytest",
+                    "version": "3.7.3",
+                    "description": "Pytest package",
+                    "installed_status": "installed",
+                },
+            ],
+            True,
         ),
     ],
 )
 def test_show_basic_with_group_options(
     options: str,
     expected: str,
+    is_json: bool,
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
@@ -290,11 +457,35 @@ def test_show_basic_with_group_options(
 
     tester.execute(options)
 
-    assert tester.io.fetch_output() == expected
+    if is_json:
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        assert tester.io.fetch_output() == expected
 
 
+@pytest.mark.parametrize(
+    ("expected", "output_format"),
+    [
+        (
+            [
+                "name         : cachy",
+                "version      : 0.1.0",
+                "description  : Cachy package",
+            ],
+            "",
+        ),
+        (
+            {"name": "cachy", "version": "0.1.0", "description": "Cachy package"},
+            "--output json",
+        ),
+    ],
+)
 def test_show_basic_with_installed_packages_single(
-    tester: CommandTester, poetry: Poetry, installed: Repository
+    expected: str,
+    output_format: str,
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
 ) -> None:
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
 
@@ -326,17 +517,39 @@ def test_show_basic_with_installed_packages_single(
         }
     )
 
-    tester.execute("cachy")
+    tester.execute("cachy " + output_format if output_format else "cachy")
 
-    assert [line.strip() for line in tester.io.fetch_output().splitlines()] == [
-        "name         : cachy",
-        "version      : 0.1.0",
-        "description  : Cachy package",
-    ]
+    if output_format:
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        assert [
+            line.strip() for line in tester.io.fetch_output().splitlines()
+        ] == expected
 
 
+@pytest.mark.parametrize(
+    ("expected", "output_format"),
+    [
+        (
+            [
+                "name         : foo-bar",
+                "version      : 0.1.0",
+                "description  : Foobar package",
+            ],
+            "",
+        ),
+        (
+            {"name": "foo-bar", "version": "0.1.0", "description": "Foobar package"},
+            "--output json",
+        ),
+    ],
+)
 def test_show_basic_with_installed_packages_single_canonicalized(
-    tester: CommandTester, poetry: Poetry, installed: Repository
+    expected: str,
+    output_format: str,
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
 ) -> None:
     poetry.package.add_dependency(Factory.create_dependency("foo-bar", "^0.1.0"))
 
@@ -368,17 +581,51 @@ def test_show_basic_with_installed_packages_single_canonicalized(
         }
     )
 
-    tester.execute("Foo_Bar")
+    tester.execute("Foo_Bar " + output_format if output_format else "Foo_Bar")
 
-    assert [line.strip() for line in tester.io.fetch_output().splitlines()] == [
-        "name         : foo-bar",
-        "version      : 0.1.0",
-        "description  : Foobar package",
-    ]
+    if output_format:
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        assert [
+            line.strip() for line in tester.io.fetch_output().splitlines()
+        ] == expected
 
 
+@pytest.mark.parametrize(
+    ("expected", "output_format"),
+    [
+        (
+            """\
+cachy        0.1.0 Cachy package
+pendulum (!) 2.0.0 Pendulum package
+""",
+            "",
+        ),
+        (
+            [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "installed_status": "installed",
+                },
+                {
+                    "name": "pendulum",
+                    "version": "2.0.0",
+                    "description": "Pendulum package",
+                    "installed_status": "not-installed",
+                },
+            ],
+            "--output json",
+        ),
+    ],
+)
 def test_show_basic_with_not_installed_packages_non_decorated(
-    tester: CommandTester, poetry: Poetry, installed: Repository
+    expected: str,
+    output_format: str,
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
 ) -> None:
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
@@ -423,14 +670,12 @@ def test_show_basic_with_not_installed_packages_non_decorated(
         }
     )
 
-    tester.execute()
+    tester.execute(output_format)
 
-    expected = """\
-cachy        0.1.0 Cachy package
-pendulum (!) 2.0.0 Pendulum package
-"""
-
-    assert tester.io.fetch_output() == expected
+    if output_format:
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        assert tester.io.fetch_output() == expected
 
 
 def test_show_basic_with_not_installed_packages_decorated(
@@ -489,7 +734,40 @@ def test_show_basic_with_not_installed_packages_decorated(
     assert tester.io.fetch_output() == expected
 
 
+@pytest.mark.parametrize(
+    ("expected", "output_format"),
+    [
+        (
+            """\
+cachy    0.1.0 0.2.0 Cachy package
+pendulum 2.0.0 2.0.1 Pendulum package
+""",
+            "",
+        ),
+        (
+            [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "latest_version": "0.2.0",
+                    "description": "Cachy package",
+                    "installed_status": "installed",
+                },
+                {
+                    "name": "pendulum",
+                    "version": "2.0.0",
+                    "latest_version": "2.0.1",
+                    "description": "Pendulum package",
+                    "installed_status": "installed",
+                },
+            ],
+            "--output json",
+        ),
+    ],
+)
 def test_show_latest_non_decorated(
+    expected: str,
+    output_format: str,
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
@@ -548,14 +826,12 @@ def test_show_latest_non_decorated(
         }
     )
 
-    tester.execute("--latest")
+    tester.execute("--latest" if not output_format else "--latest " + output_format)
 
-    expected = """\
-cachy    0.1.0 0.2.0 Cachy package
-pendulum 2.0.0 2.0.1 Pendulum package
-"""
-
-    assert tester.io.fetch_output() == expected
+    if output_format:
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        assert tester.io.fetch_output() == expected
 
 
 def test_show_latest_decorated(
@@ -2430,3 +2706,21 @@ def test_show_outdated_missing_directory_dependency(
 
     with pytest.raises(ValueError, match="does not exist"):
         tester.execute("")
+
+
+def test_show_error_invalid_output_format(
+    tester: CommandTester,
+) -> None:
+    expected = "Error: Invalid output format. Supported formats are: json, text.\n"
+    tester.execute("--output invalid")
+    assert tester.io.fetch_error() == expected
+    assert tester.status_code == 1
+
+
+def test_show_error_invalid_output_format_with_tree_option(
+    tester: CommandTester,
+) -> None:
+    expected = "Error: --tree option can only be used the the text output.\n"
+    tester.execute("--output json --tree")
+    assert tester.io.fetch_error() == expected
+    assert tester.status_code == 1
