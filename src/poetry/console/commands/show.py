@@ -132,9 +132,9 @@ lists all packages available."""
 
             return 1
 
-        if self.option("output") == "json" and self.option("tree"):
+        if self.option("output") != "text" and self.option("tree"):
             self.line_error(
-                "<error>Error: JSON output format cannot be used with --tree option.</error>"
+                "<error>Error: --tree option can only be used the the text output.</error>"
             )
             return 1
 
