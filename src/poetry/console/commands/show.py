@@ -127,7 +127,7 @@ lists all packages available."""
 
         if self.option("output") not in OUTPUT_FORMATS:
             self.line_error(
-                "<error>Error: Invalid output format. Supported formats are: text, json.</error>"
+                f"<error>Error: Invalid output format. Supported formats are: {', '.join(sorted(OUTPUT_FORMATS))}.</error>"
             )
 
             return 1
