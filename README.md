@@ -16,29 +16,37 @@ Poetry replaces `setup.py`, `requirements.txt`, `setup.cfg`, `MANIFEST.in` and `
 based project format.
 
 ```toml
-[tool.poetry]
+[project]
 name = "my-package"
 version = "0.1.0"
 description = "The description of the package"
 
-license = "MIT"
+license = { text = "MIT" }
+readme = "README.md"
+
+# No python upper bound for package metadata
+requires-python = ">=3.8"
 
 authors = [
-    "Sébastien Eustace <sebastien@eustace.io>"
+    { name = "Sébastien Eustace", email = "sebastien@eustace.io" },
 ]
-
-repository = "https://github.com/python-poetry/poetry"
-homepage = "https://python-poetry.org"
-
-# README file(s) are used as the package description
-readme = ["README.md", "LICENSE"]
 
 # Keywords (translated to tags on the package index)
 keywords = ["packaging", "poetry"]
 
+dynamic = [ "dependencies" ]
+
+[project.urls]
+repository = "https://github.com/python-poetry/poetry"
+homepage = "https://python-poetry.org"
+
+# Scripts are easily expressed
+[project.scripts]
+my_package_cli = 'my_package.console:run'
+
 [tool.poetry.dependencies]
-# Compatible Python versions
-python = ">=3.8"
+# Python upper bound for locking
+python = ">=3.8,<4.0"
 # Standard dependency with semver constraints
 aiohttp = "^3.8.1"
 # Dependency with extras
@@ -60,10 +68,6 @@ pytest-cov = "^3.0"
 optional = true
 [tool.poetry.group.docs.dependencies]
 Sphinx = "^5.1.1"
-
-# Python-style entrypoints and scripts are easily expressed
-[tool.poetry.scripts]
-my-script = "my_package:main"
 ```
 
 ## Installation
