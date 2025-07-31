@@ -218,7 +218,7 @@ lists all packages available."""
                     for dependency in pkg.requires
                 }
             if required_by:
-                package_info["required by"] = dict(required_by)
+                package_info["required_by"] = dict(required_by)
 
             self.line(json.dumps(package_info))
 
