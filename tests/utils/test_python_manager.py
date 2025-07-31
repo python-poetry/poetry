@@ -51,12 +51,17 @@ def test_python_get_system_python() -> None:
 
 def test_python_get_preferred_default(config: Config) -> None:
     python = Python.get_preferred_python(config)
-    version_len = 3 if sys.version_info[3] == "final" else 5
+
+    version_info: tuple[int, int, int] | tuple[int, int, int, str, int]
+    if sys.version_info[3] == "final":
+        version_info = sys.version_info[:3]
+    elif sys.version_info[3] == "candidate":
+        version_info = (*sys.version_info[:3], "rc", sys.version_info[4])
+    else:
+        version_info = sys.version_info[:5]
 
     assert python.executable.resolve() == Path(sys.executable).resolve()
-    assert python.version == Version.parse(
-        ".".join(str(v) for v in sys.version_info[:version_len])
-    )
+    assert python.version == Version.parse(".".join(str(v) for v in version_info))
 
 
 def test_get_preferred_python_use_poetry_python_disabled(
