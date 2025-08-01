@@ -207,7 +207,7 @@ lists all packages available."""
         if self.option("output") == "json":
             import json
 
-            package_info = {
+            package_info: dict[str, str | dict[str, str]] = {
                 "name": pkg.pretty_name,
                 "version": pkg.pretty_version,
                 "description": pkg.description,
@@ -218,7 +218,7 @@ lists all packages available."""
                     for dependency in pkg.requires
                 }
             if required_by:
-                package_info["required_by"] = dict(required_by)
+                package_info["required_by"] = required_by
 
             self.line(json.dumps(package_info))
 
