@@ -481,7 +481,7 @@ def test_show_basic_with_group_options(
     ],
 )
 def test_show_basic_with_installed_packages_single(
-    expected: str,
+    expected: list[str] | dict[str, str],
     output_format: str,
     tester: CommandTester,
     poetry: Poetry,
@@ -545,7 +545,7 @@ def test_show_basic_with_installed_packages_single(
     ],
 )
 def test_show_basic_with_installed_packages_single_canonicalized(
-    expected: str,
+    expected: list[str] | dict[str, str],
     output_format: str,
     tester: CommandTester,
     poetry: Poetry,
