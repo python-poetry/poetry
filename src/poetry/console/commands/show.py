@@ -37,6 +37,9 @@ def reverse_deps(pkg: Package, repo: Repository) -> dict[str, str]:
     return required_by
 
 
+OUTPUT_FORMATS = {"text", "json"}
+
+
 class ShowCommand(GroupCommand, EnvCommand):
     name = "show"
     description = "Shows information about packages."
@@ -70,6 +73,13 @@ class ShowCommand(GroupCommand, EnvCommand):
             "no-truncate",
             None,
             "Do not truncate the output based on the terminal width.",
+        ),
+        option(
+            "output",
+            None,
+            "Specify the output format. JSON cannot be combined with the <info>--tree</info> option. Default is text. Supported formats: text, json.",
+            flag=False,
+            default="text",
         ),
     ]
 
@@ -114,6 +124,19 @@ lists all packages available."""
                 )
 
                 return 1
+
+        if self.option("output") not in OUTPUT_FORMATS:
+            self.line_error(
+                f"<error>Error: Invalid output format. Supported formats are: {', '.join(sorted(OUTPUT_FORMATS))}.</error>"
+            )
+
+            return 1
+
+        if self.option("output") != "text" and self.option("tree"):
+            self.line_error(
+                "<error>Error: --tree option can only be used with the text output option.</error>"
+            )
+            return 1
 
         if self.option("outdated"):
             self.io.input.set_option("latest", True)
@@ -181,6 +204,26 @@ lists all packages available."""
 
             return 0
 
+        if self.option("output") == "json":
+            import json
+
+            package_info: dict[str, str | dict[str, str]] = {
+                "name": pkg.pretty_name,
+                "version": pkg.pretty_version,
+                "description": pkg.description,
+            }
+            if pkg.requires:
+                package_info["dependencies"] = {
+                    dependency.pretty_name: dependency.pretty_constraint
+                    for dependency in pkg.requires
+                }
+            if required_by:
+                package_info["required_by"] = required_by
+
+            self.line(json.dumps(package_info))
+
+            return 0
+
         rows: Rows = [
             ["<info>name</>", f" : <c1>{pkg.pretty_name}</>"],
             ["<info>version</>", f" : <b>{pkg.pretty_version}</b>"],
@@ -236,6 +279,7 @@ lists all packages available."""
         show_latest = self.option("latest")
         show_all = self.option("all")
         show_top_level = self.option("top-level")
+        show_why = self.option("why")
         width = (
             sys.maxsize
             if self.option("no-truncate")
@@ -245,6 +289,7 @@ lists all packages available."""
         latest_packages = {}
         latest_statuses = {}
         installed_repo = InstalledRepository.load(self.env)
+        requires = root.all_requires
 
         # Computing widths
         for locked in locked_packages:
@@ -289,7 +334,7 @@ lists all packages available."""
                         ),
                     )
 
-                    if self.option("why"):
+                    if show_why:
                         required_by = reverse_deps(locked, locked_repository)
                         required_by_length = max(
                             required_by_length,
@@ -306,11 +351,59 @@ lists all packages available."""
                     ),
                 )
 
-                if self.option("why"):
+                if show_why:
                     required_by = reverse_deps(locked, locked_repository)
                     required_by_length = max(
                         required_by_length, len(" from " + ",".join(required_by.keys()))
                     )
+
+        if self.option("output") == "json":
+            import json
+
+            packages = []
+
+            for locked in locked_packages:
+                if locked not in required_locked_packages and not show_all:
+                    continue
+
+                if (
+                    show_latest
+                    and self.option("outdated")
+                    and latest_statuses[locked.pretty_name] == "up-to-date"
+                ):
+                    continue
+
+                if show_top_level and not any(locked.satisfies(r) for r in requires):
+                    continue
+
+                package = {}
+                package["name"] = locked.pretty_name
+                package["installed_status"] = self.get_installed_status(
+                    locked, installed_repo.packages
+                )
+                package["version"] = get_package_version_display_string(
+                    locked, root=self.poetry.file.path.parent
+                )
+
+                if show_latest:
+                    latest = latest_packages[locked.pretty_name]
+                    package["latest_version"] = get_package_version_display_string(
+                        latest, root=self.poetry.file.path.parent
+                    )
+
+                if show_why:
+                    required_by = reverse_deps(locked, locked_repository)
+                    if required_by:
+                        content = ",".join(required_by.keys())
+                        package["required_by"] = content
+
+                package["description"] = locked.description
+
+                packages.append(package)
+
+            self.line(json.dumps(packages))
+
+            return 0
 
         write_version = name_length + version_length + 3 <= width
         write_latest = name_length + version_length + latest_length + 3 <= width
@@ -318,10 +411,8 @@ lists all packages available."""
         why_end_column = (
             name_length + version_length + latest_length + required_by_length
         )
-        write_why = self.option("why") and (why_end_column + 3) <= width
+        write_why = show_why and (why_end_column + 3) <= width
         write_description = (why_end_column + 24) <= width
-
-        requires = root.all_requires
 
         for locked in locked_packages:
             color = "cyan"
