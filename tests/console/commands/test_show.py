@@ -30,45 +30,14 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("show")
 
 
-@pytest.mark.parametrize(
-    ("options", "expected"),
-    [
-        (
-            "",
-            """\
-cachy    0.1.0 Cachy package
-pendulum 2.0.0 Pendulum package
-pytest   3.7.3 Pytest package
-""",
-        ),
-        (
-            "--output json",
-            [
-                {
-                    "name": "cachy",
-                    "version": "0.1.0",
-                    "description": "Cachy package",
-                    "installed_status": "installed",
-                },
-                {
-                    "name": "pendulum",
-                    "version": "2.0.0",
-                    "description": "Pendulum package",
-                    "installed_status": "installed",
-                },
-                {
-                    "name": "pytest",
-                    "version": "3.7.3",
-                    "description": "Pytest package",
-                    "installed_status": "installed",
-                },
-            ],
-        ),
-    ],
-)
+def output_format_parametrize(func):
+    formats = ["", "--output json"]
+    return pytest.mark.parametrize("output_format", formats)(func)
+
+
+@output_format_parametrize
 def test_show_basic_with_installed_packages(
-    options: str,
-    expected: str,
+    output_format: str,
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
@@ -133,11 +102,36 @@ def test_show_basic_with_installed_packages(
         }
     )
 
-    tester.execute(options)
+    tester.execute(output_format)
 
-    if options:
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.1.0",
+                "description": "Cachy package",
+                "installed_status": "installed",
+            },
+            {
+                "name": "pendulum",
+                "version": "2.0.0",
+                "description": "Pendulum package",
+                "installed_status": "installed",
+            },
+            {
+                "name": "pytest",
+                "version": "3.7.3",
+                "description": "Pytest package",
+                "installed_status": "installed",
+            },
+        ]
         assert json.loads(tester.io.fetch_output()) == expected
     else:
+        expected = """\
+cachy    0.1.0 Cachy package
+pendulum 2.0.0 Pendulum package
+pytest   3.7.3 Pytest package
+"""
         assert tester.io.fetch_output() == expected
 
 
@@ -3181,7 +3175,7 @@ def test_show_error_invalid_output_format(
 def test_show_error_invalid_output_format_with_tree_option(
     tester: CommandTester,
 ) -> None:
-    expected = "Error: --tree option can only be used the the text output.\n"
+    expected = "Error: --tree option can only be used with the text output option.\n"
     tester.execute("--output json --tree")
     assert tester.io.fetch_error() == expected
     assert tester.status_code == 1
