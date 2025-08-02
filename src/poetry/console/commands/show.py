@@ -134,7 +134,7 @@ lists all packages available."""
 
         if self.option("output") != "text" and self.option("tree"):
             self.line_error(
-                "<error>Error: --tree option can only be used the the text output.</error>"
+                "<error>Error: --tree option can only be used with the text output option.</error>"
             )
             return 1
 
