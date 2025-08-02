@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sys
 
 from typing import TYPE_CHECKING
@@ -205,8 +206,6 @@ lists all packages available."""
             return 0
 
         if self.option("output") == "json":
-            import json
-
             package_info: dict[str, str | dict[str, str]] = {
                 "name": pkg.pretty_name,
                 "version": pkg.pretty_version,
@@ -358,8 +357,6 @@ lists all packages available."""
                     )
 
         if self.option("output") == "json":
-            import json
-
             packages = []
 
             for locked in locked_packages:
