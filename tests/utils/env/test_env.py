@@ -560,3 +560,18 @@ def test_env_scheme_dict_returns_modified_when_read_only(
         and scheme_dict[scheme].startswith(paths["userbase"])
         for scheme in SCHEME_NAMES
     )
+
+
+def test_marker_env_is_equal_for_all_envs(tmp_path: Path, manager: EnvManager) -> None:
+    venv_path = tmp_path / "Virtual Env"
+    manager.build_venv(venv_path)
+    venv = VirtualEnv(venv_path)
+    generic_env = GenericEnv(venv.path)
+    system_env = SystemEnv(Path(sys.prefix))
+
+    venv_marker_env = venv.marker_env
+    generic_marker_env = generic_env.marker_env
+    system_marker_env = system_env.marker_env
+
+    assert venv_marker_env == generic_marker_env
+    assert venv_marker_env == system_marker_env

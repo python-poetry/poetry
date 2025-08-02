@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 from poetry.utils.env.base_env import Env
+from poetry.utils.env.base_env import MarkerEnv
 from poetry.utils.env.script_strings import GET_BASE_PREFIX
 from poetry.utils.env.script_strings import GET_ENVIRONMENT_INFO
 from poetry.utils.env.script_strings import GET_PATHS
@@ -89,10 +90,12 @@ class VirtualEnv(Env):
             *compatible_tags(python, interpreter=interpreter, platforms=platforms),
         ]
 
-    def get_marker_env(self) -> dict[str, Any]:
+    def get_marker_env(self) -> MarkerEnv:
         output = self.run_python_script(GET_ENVIRONMENT_INFO)
 
-        env: dict[str, Any] = json.loads(output)
+        env: MarkerEnv = json.loads(output)
+        # Lists and tuples are the same in JSON and loaded as list.
+        env["version_info"] = tuple(env["version_info"])  # type: ignore[typeddict-item]
         return env
 
     def get_paths(self) -> dict[str, str]:
