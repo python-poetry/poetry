@@ -61,7 +61,7 @@ my-extra = ["pendulum (>=3.1.0,<4.0.0)"]
 # Python upper bound for locking
 python = ">=3.9,<4.0"
 # Version-specific dependencies with prereleases allowed
-tomli = {allow-prereleases = true, python = "<3.11"}
+tomli = { allow-prereleases = true }
 
 # Dependency groups are supported for organizing your dependencies
 [tool.poetry.group.dev.dependencies]
