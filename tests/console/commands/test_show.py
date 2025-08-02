@@ -3,6 +3,10 @@ from __future__ import annotations
 import json
 
 from typing import TYPE_CHECKING
+from typing import Any
+from typing import Callable
+from typing import TypeVar
+from typing import cast
 
 import pytest
 
@@ -30,9 +34,12 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("show")
 
 
-def output_format_parametrize(func):
+F = TypeVar("F", bound=Callable[..., Any])
+
+
+def output_format_parametrize(func: F) -> F:
     formats = ["", "--output json"]
-    return pytest.mark.parametrize("output_format", formats)(func)
+    return cast("F", pytest.mark.parametrize("output_format", formats)(func))
 
 
 @output_format_parametrize
@@ -104,6 +111,7 @@ def test_show_basic_with_installed_packages(
 
     tester.execute(output_format)
 
+    expected: str | list[dict[str, str]] = ""
     if "json" in output_format:
         expected = [
             {
@@ -203,7 +211,7 @@ def _configure_project_with_groups(poetry: Poetry, installed: Repository) -> Non
 
 
 @pytest.mark.parametrize(
-    ("options", "expected", "is_json"),
+    ("options", "expected"),
     [
         (
             "",
@@ -211,7 +219,6 @@ def _configure_project_with_groups(poetry: Poetry, installed: Repository) -> Non
 cachy  0.1.0 Cachy package
 pytest 3.7.3 Pytest package
 """,
-            False,
         ),
         (
             "--output json",
@@ -229,7 +236,6 @@ pytest 3.7.3 Pytest package
                     "installed_status": "installed",
                 },
             ],
-            True,
         ),
         (
             "--with time",
@@ -238,7 +244,6 @@ cachy    0.1.0 Cachy package
 pendulum 2.0.0 Pendulum package
 pytest   3.7.3 Pytest package
 """,
-            False,
         ),
         (
             "--with time --output json",
@@ -262,14 +267,12 @@ pytest   3.7.3 Pytest package
                     "installed_status": "installed",
                 },
             ],
-            True,
         ),
         (
             "--without test",
             """\
 cachy 0.1.0 Cachy package
 """,
-            False,
         ),
         (
             "--without test --output json",
@@ -281,14 +284,12 @@ cachy 0.1.0 Cachy package
                     "installed_status": "installed",
                 },
             ],
-            True,
         ),
         (
             f"--without {MAIN_GROUP}",
             """\
 pytest 3.7.3 Pytest package
 """,
-            False,
         ),
         (
             f"--without {MAIN_GROUP} --output json",
@@ -300,14 +301,12 @@ pytest 3.7.3 Pytest package
                     "installed_status": "installed",
                 },
             ],
-            True,
         ),
         (
             f"--only {MAIN_GROUP}",
             """\
 cachy 0.1.0 Cachy package
 """,
-            False,
         ),
         (
             f"--only {MAIN_GROUP} --output json",
@@ -319,7 +318,6 @@ cachy 0.1.0 Cachy package
                     "installed_status": "installed",
                 },
             ],
-            True,
         ),
         (
             "--with time --without test",
@@ -327,7 +325,6 @@ cachy 0.1.0 Cachy package
 cachy    0.1.0 Cachy package
 pendulum 2.0.0 Pendulum package
 """,
-            False,
         ),
         (
             "--with time --without test --output json",
@@ -345,14 +342,12 @@ pendulum 2.0.0 Pendulum package
                     "installed_status": "installed",
                 },
             ],
-            True,
         ),
         (
             f"--with time --without {MAIN_GROUP},test",
             """\
 pendulum 2.0.0 Pendulum package
 """,
-            False,
         ),
         (
             f"--with time --without {MAIN_GROUP},test --output json",
@@ -364,14 +359,12 @@ pendulum 2.0.0 Pendulum package
                     "installed_status": "installed",
                 },
             ],
-            True,
         ),
         (
             "--only time",
             """\
 pendulum 2.0.0 Pendulum package
 """,
-            False,
         ),
         (
             "--only time --output json",
@@ -383,14 +376,12 @@ pendulum 2.0.0 Pendulum package
                     "installed_status": "installed",
                 },
             ],
-            True,
         ),
         (
             "--only time --with test",
             """\
 pendulum 2.0.0 Pendulum package
 """,
-            False,
         ),
         (
             "--only time --with test --output json",
@@ -402,7 +393,6 @@ pendulum 2.0.0 Pendulum package
                     "installed_status": "installed",
                 },
             ],
-            True,
         ),
         (
             "--with time",
@@ -411,7 +401,6 @@ cachy    0.1.0 Cachy package
 pendulum 2.0.0 Pendulum package
 pytest   3.7.3 Pytest package
 """,
-            False,
         ),
         (
             "--with time --output json",
@@ -435,14 +424,12 @@ pytest   3.7.3 Pytest package
                     "installed_status": "installed",
                 },
             ],
-            True,
         ),
     ],
 )
 def test_show_basic_with_group_options(
     options: str,
-    expected: str,
-    is_json: bool,
+    expected: str | list[dict[str, str]],
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
@@ -451,31 +438,14 @@ def test_show_basic_with_group_options(
 
     tester.execute(options)
 
-    if is_json:
+    if "json" in options:
         assert json.loads(tester.io.fetch_output()) == expected
     else:
         assert tester.io.fetch_output() == expected
 
 
-@pytest.mark.parametrize(
-    ("expected", "output_format"),
-    [
-        (
-            [
-                "name         : cachy",
-                "version      : 0.1.0",
-                "description  : Cachy package",
-            ],
-            "",
-        ),
-        (
-            {"name": "cachy", "version": "0.1.0", "description": "Cachy package"},
-            "--output json",
-        ),
-    ],
-)
+@output_format_parametrize
 def test_show_basic_with_installed_packages_single(
-    expected: list[str] | dict[str, str],
     output_format: str,
     tester: CommandTester,
     poetry: Poetry,
@@ -511,35 +481,25 @@ def test_show_basic_with_installed_packages_single(
         }
     )
 
-    tester.execute("cachy " + output_format if output_format else "cachy")
+    tester.execute(f"cachy {output_format}")
 
-    if output_format:
+    expected: dict[str, str] | list[str] = {}
+    if "json" in output_format:
+        expected = {"name": "cachy", "version": "0.1.0", "description": "Cachy package"}
         assert json.loads(tester.io.fetch_output()) == expected
     else:
+        expected = [
+            "name         : cachy",
+            "version      : 0.1.0",
+            "description  : Cachy package",
+        ]
         assert [
             line.strip() for line in tester.io.fetch_output().splitlines()
         ] == expected
 
 
-@pytest.mark.parametrize(
-    ("expected", "output_format"),
-    [
-        (
-            [
-                "name         : foo-bar",
-                "version      : 0.1.0",
-                "description  : Foobar package",
-            ],
-            "",
-        ),
-        (
-            {"name": "foo-bar", "version": "0.1.0", "description": "Foobar package"},
-            "--output json",
-        ),
-    ],
-)
+@output_format_parametrize
 def test_show_basic_with_installed_packages_single_canonicalized(
-    expected: list[str] | dict[str, str],
     output_format: str,
     tester: CommandTester,
     poetry: Poetry,
@@ -575,47 +535,29 @@ def test_show_basic_with_installed_packages_single_canonicalized(
         }
     )
 
-    tester.execute("Foo_Bar " + output_format if output_format else "Foo_Bar")
+    tester.execute(f"Foo_Bar {output_format}")
 
-    if output_format:
+    expected: dict[str, str] | list[str] = {}
+    if "json" in output_format:
+        expected = {
+            "name": "foo-bar",
+            "version": "0.1.0",
+            "description": "Foobar package",
+        }
         assert json.loads(tester.io.fetch_output()) == expected
     else:
+        expected = [
+            "name         : foo-bar",
+            "version      : 0.1.0",
+            "description  : Foobar package",
+        ]
         assert [
             line.strip() for line in tester.io.fetch_output().splitlines()
         ] == expected
 
 
-@pytest.mark.parametrize(
-    ("expected", "output_format"),
-    [
-        (
-            """\
-cachy        0.1.0 Cachy package
-pendulum (!) 2.0.0 Pendulum package
-""",
-            "",
-        ),
-        (
-            [
-                {
-                    "name": "cachy",
-                    "version": "0.1.0",
-                    "description": "Cachy package",
-                    "installed_status": "installed",
-                },
-                {
-                    "name": "pendulum",
-                    "version": "2.0.0",
-                    "description": "Pendulum package",
-                    "installed_status": "not-installed",
-                },
-            ],
-            "--output json",
-        ),
-    ],
-)
+@output_format_parametrize
 def test_show_basic_with_not_installed_packages_non_decorated(
-    expected: str,
     output_format: str,
     tester: CommandTester,
     poetry: Poetry,
@@ -666,9 +608,28 @@ def test_show_basic_with_not_installed_packages_non_decorated(
 
     tester.execute(output_format)
 
-    if output_format:
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.1.0",
+                "description": "Cachy package",
+                "installed_status": "installed",
+            },
+            {
+                "name": "pendulum",
+                "version": "2.0.0",
+                "description": "Pendulum package",
+                "installed_status": "not-installed",
+            },
+        ]
         assert json.loads(tester.io.fetch_output()) == expected
     else:
+        expected = """\
+cachy        0.1.0 Cachy package
+pendulum (!) 2.0.0 Pendulum package
+"""
         assert tester.io.fetch_output() == expected
 
 
@@ -728,39 +689,8 @@ def test_show_basic_with_not_installed_packages_decorated(
     assert tester.io.fetch_output() == expected
 
 
-@pytest.mark.parametrize(
-    ("expected", "output_format"),
-    [
-        (
-            """\
-cachy    0.1.0 0.2.0 Cachy package
-pendulum 2.0.0 2.0.1 Pendulum package
-""",
-            "",
-        ),
-        (
-            [
-                {
-                    "name": "cachy",
-                    "version": "0.1.0",
-                    "latest_version": "0.2.0",
-                    "description": "Cachy package",
-                    "installed_status": "installed",
-                },
-                {
-                    "name": "pendulum",
-                    "version": "2.0.0",
-                    "latest_version": "2.0.1",
-                    "description": "Pendulum package",
-                    "installed_status": "installed",
-                },
-            ],
-            "--output json",
-        ),
-    ],
-)
+@output_format_parametrize
 def test_show_latest_non_decorated(
-    expected: str,
     output_format: str,
     tester: CommandTester,
     poetry: Poetry,
@@ -820,11 +750,32 @@ def test_show_latest_non_decorated(
         }
     )
 
-    tester.execute("--latest" if not output_format else "--latest " + output_format)
+    tester.execute(f"--latest {output_format}")
 
-    if output_format:
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.1.0",
+                "latest_version": "0.2.0",
+                "description": "Cachy package",
+                "installed_status": "installed",
+            },
+            {
+                "name": "pendulum",
+                "version": "2.0.0",
+                "latest_version": "2.0.1",
+                "description": "Pendulum package",
+                "installed_status": "installed",
+            },
+        ]
         assert json.loads(tester.io.fetch_output()) == expected
     else:
+        expected = """\
+cachy    0.1.0 0.2.0 Cachy package
+pendulum 2.0.0 2.0.1 Pendulum package
+"""
         assert tester.io.fetch_output() == expected
 
 
@@ -899,31 +850,8 @@ def test_show_latest_decorated(
     assert tester.io.fetch_output() == expected
 
 
-@pytest.mark.parametrize(
-    ("expected", "output_format"),
-    [
-        (
-            """\
-cachy 0.1.0 0.2.0 Cachy package
-""",
-            "",
-        ),
-        (
-            [
-                {
-                    "name": "cachy",
-                    "version": "0.1.0",
-                    "latest_version": "0.2.0",
-                    "description": "Cachy package",
-                    "installed_status": "installed",
-                },
-            ],
-            "--output json",
-        ),
-    ],
-)
+@output_format_parametrize
 def test_show_outdated(
-    expected: str,
     output_format: str,
     tester: CommandTester,
     poetry: Poetry,
@@ -980,29 +908,29 @@ def test_show_outdated(
         }
     )
 
-    tester.execute("--outdated" if not output_format else "--outdated " + output_format)
+    tester.execute(f"--outdated {output_format}")
 
-    if output_format:
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.1.0",
+                "latest_version": "0.2.0",
+                "description": "Cachy package",
+                "installed_status": "installed",
+            },
+        ]
         assert json.loads(tester.io.fetch_output()) == expected
     else:
+        expected = """\
+cachy 0.1.0 0.2.0 Cachy package
+"""
         assert tester.io.fetch_output() == expected
 
 
-@pytest.mark.parametrize(
-    ("expected", "output_format"),
-    [
-        (
-            "",
-            "",
-        ),
-        (
-            [],
-            "--output json",
-        ),
-    ],
-)
+@output_format_parametrize
 def test_show_outdated_with_only_up_to_date_packages(
-    expected: str,
     output_format: str,
     tester: CommandTester,
     poetry: Poetry,
@@ -1038,39 +966,19 @@ def test_show_outdated_with_only_up_to_date_packages(
         }
     )
 
-    tester.execute("--outdated" if not output_format else "--outdated " + output_format)
+    tester.execute(f"--outdated {output_format}")
 
-    if output_format:
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = []
         assert json.loads(tester.io.fetch_output()) == expected
     else:
+        expected = ""
         assert tester.io.fetch_output() == expected
 
 
-@pytest.mark.parametrize(
-    ("expected", "output_format"),
-    [
-        (
-            """\
-cachy 0.1.0 0.2.0 Cachy package
-""",
-            "",
-        ),
-        (
-            [
-                {
-                    "name": "cachy",
-                    "version": "0.1.0",
-                    "latest_version": "0.2.0",
-                    "description": "Cachy package",
-                    "installed_status": "installed",
-                },
-            ],
-            "--output json",
-        ),
-    ],
-)
+@output_format_parametrize
 def test_show_outdated_has_prerelease_but_not_allowed(
-    expected: str,
     output_format: str,
     tester: CommandTester,
     poetry: Poetry,
@@ -1132,39 +1040,29 @@ def test_show_outdated_has_prerelease_but_not_allowed(
         }
     )
 
-    tester.execute("--outdated" if not output_format else "--outdated " + output_format)
+    tester.execute(f"--outdated {output_format}")
 
-    if output_format:
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.1.0",
+                "latest_version": "0.2.0",
+                "description": "Cachy package",
+                "installed_status": "installed",
+            },
+        ]
         assert json.loads(tester.io.fetch_output()) == expected
     else:
+        expected = """\
+cachy 0.1.0 0.2.0 Cachy package
+"""
         assert tester.io.fetch_output() == expected
 
 
-@pytest.mark.parametrize(
-    ("expected", "output_format"),
-    [
-        (
-            """\
-cachy 0.1.0.dev1 0.3.0.dev123 Cachy package
-""",
-            "",
-        ),
-        (
-            [
-                {
-                    "name": "cachy",
-                    "version": "0.1.0.dev1",
-                    "latest_version": "0.3.0.dev123",
-                    "description": "Cachy package",
-                    "installed_status": "installed",
-                },
-            ],
-            "--output json",
-        ),
-    ],
-)
+@output_format_parametrize
 def test_show_outdated_has_prerelease_and_allowed(
-    expected: str,
     output_format: str,
     tester: CommandTester,
     poetry: Poetry,
@@ -1230,47 +1128,29 @@ def test_show_outdated_has_prerelease_and_allowed(
         }
     )
 
-    tester.execute("--outdated" if not output_format else "--outdated " + output_format)
+    tester.execute(f"--outdated {output_format}")
 
-    if output_format:
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.1.0.dev1",
+                "latest_version": "0.3.0.dev123",
+                "description": "Cachy package",
+                "installed_status": "installed",
+            },
+        ]
         assert json.loads(tester.io.fetch_output()) == expected
     else:
+        expected = """\
+cachy 0.1.0.dev1 0.3.0.dev123 Cachy package
+"""
         assert tester.io.fetch_output() == expected
 
 
-@pytest.mark.parametrize(
-    ("expected", "output_format"),
-    [
-        (
-            """\
-cachy    0.1.0 0.2.0 Cachy package
-pendulum 2.0.0 2.0.1 Pendulum package
-""",
-            "",
-        ),
-        (
-            [
-                {
-                    "name": "cachy",
-                    "version": "0.1.0",
-                    "latest_version": "0.2.0",
-                    "description": "Cachy package",
-                    "installed_status": "installed",
-                },
-                {
-                    "name": "pendulum",
-                    "version": "2.0.0",
-                    "latest_version": "2.0.1",
-                    "description": "Pendulum package",
-                    "installed_status": "installed",
-                },
-            ],
-            "--output json",
-        ),
-    ],
-)
+@output_format_parametrize
 def test_show_outdated_formatting(
-    expected: str,
     output_format: str,
     tester: CommandTester,
     poetry: Poetry,
@@ -1330,51 +1210,46 @@ def test_show_outdated_formatting(
         }
     )
 
-    tester.execute("--outdated" if not output_format else "--outdated " + output_format)
+    tester.execute(f"--outdated {output_format}")
 
-    if output_format:
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.1.0",
+                "latest_version": "0.2.0",
+                "description": "Cachy package",
+                "installed_status": "installed",
+            },
+            {
+                "name": "pendulum",
+                "version": "2.0.0",
+                "latest_version": "2.0.1",
+                "description": "Pendulum package",
+                "installed_status": "installed",
+            },
+        ]
         assert json.loads(tester.io.fetch_output()) == expected
     else:
+        expected = """\
+cachy    0.1.0 0.2.0 Cachy package
+pendulum 2.0.0 2.0.1 Pendulum package
+"""
         assert tester.io.fetch_output() == expected
 
 
 @pytest.mark.parametrize(
-    ("project_directory", "required_fixtures", "expected", "output_format"),
+    ("project_directory", "required_fixtures"),
     [
         (
             "project_with_local_dependencies",
             ["distributions/demo-0.1.0-py2.py3-none-any.whl", "project_with_setup"],
-            """\
-cachy              0.2.0                       0.3.0
-project-with-setup 0.1.1 ../project_with_setup 0.1.2 ../project_with_setup
-""",
-            "",
-        ),
-        (
-            "project_with_local_dependencies",
-            ["distributions/demo-0.1.0-py2.py3-none-any.whl", "project_with_setup"],
-            [
-                {
-                    "name": "cachy",
-                    "version": "0.2.0",
-                    "latest_version": "0.3.0",
-                    "description": "Cachy package",
-                    "installed_status": "installed",
-                },
-                {
-                    "name": "project-with-setup",
-                    "version": "0.1.1 ../project_with_setup",
-                    "latest_version": "0.1.2 ../project_with_setup",
-                    "description": "Demo project.",
-                    "installed_status": "installed",
-                },
-            ],
-            "--output json",
         ),
     ],
 )
+@output_format_parametrize
 def test_show_outdated_local_dependencies(
-    expected: str,
     output_format: str,
     tester: CommandTester,
     poetry: Poetry,
@@ -1475,52 +1350,41 @@ def test_show_outdated_local_dependencies(
         }
     )
 
-    tester.execute("--outdated" if not output_format else "--outdated " + output_format)
+    tester.execute(f"--outdated {output_format}")
 
-    if output_format:
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.2.0",
+                "latest_version": "0.3.0",
+                "description": "Cachy package",
+                "installed_status": "installed",
+            },
+            {
+                "name": "project-with-setup",
+                "version": "0.1.1 ../project_with_setup",
+                "latest_version": "0.1.2 ../project_with_setup",
+                "description": "Demo project.",
+                "installed_status": "installed",
+            },
+        ]
         assert json.loads(tester.io.fetch_output()) == expected
     else:
+        expected = """\
+cachy              0.2.0                       0.3.0
+project-with-setup 0.1.1 ../project_with_setup 0.1.2 ../project_with_setup
+"""
         assert (
             "\n".join(line.rstrip() for line in tester.io.fetch_output().splitlines())
             == expected.rstrip()
         )
 
 
-@pytest.mark.parametrize(
-    ("project_directory", "expected", "output_format"),
-    [
-        (
-            "project_with_git_dev_dependency",
-            """\
-cachy 0.1.0         0.2.0         Cachy package
-demo  0.1.1 9cf87a2 0.1.2 9cf87a2 Demo package
-""",
-            "",
-        ),
-        (
-            "project_with_git_dev_dependency",
-            [
-                {
-                    "name": "cachy",
-                    "version": "0.1.0",
-                    "latest_version": "0.2.0",
-                    "description": "Cachy package",
-                    "installed_status": "installed",
-                },
-                {
-                    "name": "demo",
-                    "version": "0.1.1 9cf87a2",
-                    "latest_version": "0.1.2 9cf87a2",
-                    "description": "Demo package",
-                    "installed_status": "installed",
-                },
-            ],
-            "--output json",
-        ),
-    ],
-)
+@pytest.mark.parametrize("project_directory", ["project_with_git_dev_dependency"])
+@output_format_parametrize
 def test_show_outdated_git_dev_dependency(
-    expected: str,
     output_format: str,
     tester: CommandTester,
     poetry: Poetry,
@@ -1607,41 +1471,38 @@ def test_show_outdated_git_dev_dependency(
         }
     )
 
-    tester.execute("--outdated" if not output_format else "--outdated " + output_format)
+    tester.execute(f"--outdated {output_format}")
 
-    if output_format:
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.1.0",
+                "latest_version": "0.2.0",
+                "description": "Cachy package",
+                "installed_status": "installed",
+            },
+            {
+                "name": "demo",
+                "version": "0.1.1 9cf87a2",
+                "latest_version": "0.1.2 9cf87a2",
+                "description": "Demo package",
+                "installed_status": "installed",
+            },
+        ]
         assert json.loads(tester.io.fetch_output()) == expected
     else:
+        expected = """\
+cachy 0.1.0         0.2.0         Cachy package
+demo  0.1.1 9cf87a2 0.1.2 9cf87a2 Demo package
+"""
         assert tester.io.fetch_output() == expected
 
 
-@pytest.mark.parametrize(
-    ("project_directory", "expected", "output_format"),
-    [
-        (
-            "project_with_git_dev_dependency",
-            """\
-cachy 0.1.0 0.2.0 Cachy package
-""",
-            "",
-        ),
-        (
-            "project_with_git_dev_dependency",
-            [
-                {
-                    "name": "cachy",
-                    "version": "0.1.0",
-                    "latest_version": "0.2.0",
-                    "description": "Cachy package",
-                    "installed_status": "installed",
-                },
-            ],
-            "--output json",
-        ),
-    ],
-)
+@pytest.mark.parametrize("project_directory", ["project_with_git_dev_dependency"])
+@output_format_parametrize
 def test_show_outdated_no_dev_git_dev_dependency(
-    expected: str,
     output_format: str,
     tester: CommandTester,
     poetry: Poetry,
@@ -1727,42 +1588,29 @@ def test_show_outdated_no_dev_git_dev_dependency(
         }
     )
 
-    tester.execute(
-        "--outdated"
-        if not output_format
-        else "--outdated --without dev " + output_format
-    )
+    tester.execute(f"--outdated --without dev {output_format}")
 
-    if output_format:
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.1.0",
+                "latest_version": "0.2.0",
+                "description": "Cachy package",
+                "installed_status": "installed",
+            },
+        ]
         assert json.loads(tester.io.fetch_output()) == expected
     else:
+        expected = """\
+cachy 0.1.0 0.2.0 Cachy package
+"""
         assert tester.io.fetch_output() == expected
 
 
-@pytest.mark.parametrize(
-    ("expected", "output_format"),
-    [
-        (
-            """\
-pendulum 2.0.0 Pendulum package
-""",
-            "",
-        ),
-        (
-            [
-                {
-                    "name": "pendulum",
-                    "version": "2.0.0",
-                    "description": "Pendulum package",
-                    "installed_status": "installed",
-                },
-            ],
-            "--output json",
-        ),
-    ],
-)
+@output_format_parametrize
 def test_show_hides_incompatible_package(
-    expected: str,
     output_format: str,
     tester: CommandTester,
     poetry: Poetry,
@@ -1816,43 +1664,26 @@ def test_show_hides_incompatible_package(
 
     tester.execute(output_format)
 
-    if output_format:
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "pendulum",
+                "version": "2.0.0",
+                "description": "Pendulum package",
+                "installed_status": "installed",
+            },
+        ]
         assert json.loads(tester.io.fetch_output()) == expected
     else:
+        expected = """\
+pendulum 2.0.0 Pendulum package
+"""
         assert tester.io.fetch_output() == expected
 
 
-@pytest.mark.parametrize(
-    ("expected", "output_format"),
-    [
-        (
-            """\
-cachy     0.1.0 Cachy package
-pendulum  2.0.0 Pendulum package
-""",
-            "",
-        ),
-        (
-            [
-                {
-                    "name": "cachy",
-                    "version": "0.1.0",
-                    "description": "Cachy package",
-                    "installed_status": "not-installed",
-                },
-                {
-                    "name": "pendulum",
-                    "version": "2.0.0",
-                    "description": "Pendulum package",
-                    "installed_status": "installed",
-                },
-            ],
-            "--output json",
-        ),
-    ],
-)
+@output_format_parametrize
 def test_show_all_shows_incompatible_package(
-    expected: str,
     output_format: str,
     tester: CommandTester,
     poetry: Poetry,
@@ -1900,38 +1731,35 @@ def test_show_all_shows_incompatible_package(
         }
     )
 
-    tester.execute("--all" if not output_format else "--all " + output_format)
+    tester.execute(f"--all {output_format}")
 
-    if output_format:
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.1.0",
+                "description": "Cachy package",
+                "installed_status": "not-installed",
+            },
+            {
+                "name": "pendulum",
+                "version": "2.0.0",
+                "description": "Pendulum package",
+                "installed_status": "installed",
+            },
+        ]
         assert json.loads(tester.io.fetch_output()) == expected
     else:
+        expected = """\
+cachy     0.1.0 Cachy package
+pendulum  2.0.0 Pendulum package
+"""
         assert tester.io.fetch_output() == expected
 
 
-@pytest.mark.parametrize(
-    ("expected", "output_format"),
-    [
-        (
-            """\
-cachy (!) 0.1.1 Cachy package
-""",
-            "",
-        ),
-        (
-            [
-                {
-                    "name": "cachy",
-                    "version": "0.1.1",
-                    "description": "Cachy package",
-                    "installed_status": "not-installed",
-                }
-            ],
-            "--output json",
-        ),
-    ],
-)
+@output_format_parametrize
 def test_show_hides_incompatible_package_with_duplicate(
-    expected: str,
     output_format: str,
     tester: CommandTester,
     poetry: Poetry,
@@ -1974,43 +1802,26 @@ def test_show_hides_incompatible_package_with_duplicate(
 
     tester.execute(output_format)
 
-    if output_format:
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.1.1",
+                "description": "Cachy package",
+                "installed_status": "not-installed",
+            }
+        ]
         assert json.loads(tester.io.fetch_output()) == expected
     else:
+        expected = """\
+cachy (!) 0.1.1 Cachy package
+"""
         assert tester.io.fetch_output() == expected
 
 
-@pytest.mark.parametrize(
-    ("expected", "output_format"),
-    [
-        (
-            """\
-cachy     0.1.0 Cachy package
-cachy (!) 0.1.1 Cachy package
-""",
-            "",
-        ),
-        (
-            [
-                {
-                    "name": "cachy",
-                    "version": "0.1.0",
-                    "description": "Cachy package",
-                    "installed_status": "not-installed",
-                },
-                {
-                    "name": "cachy",
-                    "version": "0.1.1",
-                    "description": "Cachy package",
-                    "installed_status": "not-installed",
-                },
-            ],
-            "--output json",
-        ),
-    ],
-)
+@output_format_parametrize
 def test_show_all_shows_all_duplicates(
-    expected: str,
     output_format: str,
     tester: CommandTester,
     poetry: Poetry,
@@ -2051,11 +1862,30 @@ def test_show_all_shows_all_duplicates(
         }
     )
 
-    tester.execute("--all" if not output_format else "--all " + output_format)
+    tester.execute(f"--all {output_format}")
 
-    if output_format:
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.1.0",
+                "description": "Cachy package",
+                "installed_status": "not-installed",
+            },
+            {
+                "name": "cachy",
+                "version": "0.1.1",
+                "description": "Cachy package",
+                "installed_status": "not-installed",
+            },
+        ]
         assert json.loads(tester.io.fetch_output()) == expected
     else:
+        expected = """\
+cachy     0.1.0 Cachy package
+cachy (!) 0.1.1 Cachy package
+"""
         assert tester.io.fetch_output() == expected
 
 
@@ -2526,37 +2356,8 @@ def test_show_tree_why(
     assert tester.io.fetch_output() == expected
 
 
-@pytest.mark.parametrize(
-    ("expected", "output_format"),
-    [
-        (
-            """\
- name         : cachy
- version      : 0.2.0
- description  :
-
-dependencies
- - msgpack-python >=0.5 <0.6
-
-required by
- - pendulum requires >=0.2.0 <0.3.0
-""",
-            "",
-        ),
-        (
-            {
-                "name": "cachy",
-                "version": "0.2.0",
-                "description": "",
-                "dependencies": {"msgpack-python": ">=0.5 <0.6"},
-                "required_by": {"pendulum": ">=0.2.0 <0.3.0"},
-            },
-            "--output json",
-        ),
-    ],
-)
+@output_format_parametrize
 def test_show_required_by_deps(
-    expected: str,
     output_format: str,
     tester: CommandTester,
     poetry: Poetry,
@@ -2617,11 +2418,30 @@ def test_show_required_by_deps(
         }
     )
 
-    tester.execute("cachy " + output_format if output_format else "cachy")
+    tester.execute(f"cachy {output_format}")
 
-    if output_format:
+    expected: str | dict[str, str | dict[str, str]] = ""
+    if "json" in output_format:
+        expected = {
+            "name": "cachy",
+            "version": "0.2.0",
+            "description": "",
+            "dependencies": {"msgpack-python": ">=0.5 <0.6"},
+            "required_by": {"pendulum": ">=0.2.0 <0.3.0"},
+        }
         assert json.loads(tester.io.fetch_output()) == expected
     else:
+        expected = """\
+ name         : cachy
+ version      : 0.2.0
+ description  :
+
+dependencies
+ - msgpack-python >=0.5 <0.6
+
+required by
+ - pendulum requires >=0.2.0 <0.3.0
+"""
         actual = [line.rstrip() for line in tester.io.fetch_output().splitlines()]
         assert actual == expected.splitlines()
 
@@ -2696,21 +2516,8 @@ def test_show_errors_without_lock_file(tester: CommandTester, poetry: Poetry) ->
     assert tester.status_code == 1
 
 
-@pytest.mark.parametrize(
-    ("expected", "output_format"),
-    [
-        (
-            "",
-            "",
-        ),
-        (
-            [],
-            "--output json",
-        ),
-    ],
-)
+@output_format_parametrize
 def test_show_dependency_installed_from_git_in_dev(
-    expected: str,
     output_format: str,
     tester: CommandTester,
     poetry: Poetry,
@@ -2774,29 +2581,18 @@ def test_show_dependency_installed_from_git_in_dev(
 
     # Nothing needs updating, there is no confusion between the git and not-git
     # packages.
-    tester.execute("--outdated" if not output_format else "--outdated " + output_format)
-
-    if output_format:
+    tester.execute(f"--outdated {output_format}")
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = []
         assert json.loads(tester.io.fetch_output()) == expected
     else:
+        expected = ""
         assert tester.io.fetch_output() == expected
 
 
-@pytest.mark.parametrize(
-    ("expected", "output_format"),
-    [
-        (
-            "",
-            "",
-        ),
-        (
-            [],
-            "--output json",
-        ),
-    ],
-)
+@output_format_parametrize
 def test_url_dependency_is_not_outdated_by_repository_package(
-    expected: str,
     output_format: str,
     tester: CommandTester,
     poetry: Poetry,
@@ -2846,36 +2642,19 @@ def test_url_dependency_is_not_outdated_by_repository_package(
 
     # The url dependency on demo is not made outdated by the existence of a newer
     # version in the repository.
-    tester.execute("--outdated" if not output_format else "--outdated " + output_format)
+    tester.execute(f"--outdated {output_format}")
 
-    if output_format:
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = []
         assert json.loads(tester.io.fetch_output()) == expected
     else:
+        expected = ""
         assert tester.io.fetch_output() == expected
 
 
-@pytest.mark.parametrize(
-    ("expected", "output_format"),
-    [
-        (
-            """cachy              0.2.0 \n""",
-            "",
-        ),
-        (
-            [
-                {
-                    "name": "cachy",
-                    "version": "0.2.0",
-                    "description": "",
-                    "installed_status": "installed",
-                },
-            ],
-            "--output json",
-        ),
-    ],
-)
+@output_format_parametrize
 def test_show_top_level(
-    expected: str,
     output_format: str,
     tester: CommandTester,
     poetry: Poetry,
@@ -2923,44 +2702,26 @@ def test_show_top_level(
         }
     )
 
-    tester.execute(
-        "--top-level" if not output_format else "--top-level " + output_format
-    )
+    tester.execute(f"--top-level {output_format}")
 
-    if output_format:
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.2.0",
+                "description": "",
+                "installed_status": "installed",
+            },
+        ]
         assert json.loads(tester.io.fetch_output()) == expected
     else:
+        expected = """cachy              0.2.0 \n"""
         assert tester.io.fetch_output() == expected
 
 
-@pytest.mark.parametrize(
-    ("expected", "output_format"),
-    [
-        (
-            """a 0.1.0 \nb 0.2.0 \n""",
-            "",
-        ),
-        (
-            [
-                {
-                    "name": "a",
-                    "version": "0.1.0",
-                    "description": "",
-                    "installed_status": "installed",
-                },
-                {
-                    "name": "b",
-                    "version": "0.2.0",
-                    "description": "",
-                    "installed_status": "installed",
-                },
-            ],
-            "--output json",
-        ),
-    ],
-)
+@output_format_parametrize
 def test_show_top_level_with_explicitly_defined_dependency(
-    expected: str,
     output_format: str,
     tester: CommandTester,
     poetry: Poetry,
@@ -3011,38 +2772,32 @@ def test_show_top_level_with_explicitly_defined_dependency(
         }
     )
 
-    tester.execute(
-        "--top-level" if not output_format else "--top-level " + output_format
-    )
+    tester.execute(f"--top-level {output_format}")
 
-    if output_format:
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "a",
+                "version": "0.1.0",
+                "description": "",
+                "installed_status": "installed",
+            },
+            {
+                "name": "b",
+                "version": "0.2.0",
+                "description": "",
+                "installed_status": "installed",
+            },
+        ]
         assert json.loads(tester.io.fetch_output()) == expected
     else:
+        expected = """a 0.1.0 \nb 0.2.0 \n"""
         assert tester.io.fetch_output() == expected
 
 
-@pytest.mark.parametrize(
-    ("expected", "output_format"),
-    [
-        (
-            """black 23.3.0 \n""",
-            "",
-        ),
-        (
-            [
-                {
-                    "name": "black",
-                    "version": "23.3.0",
-                    "description": "",
-                    "installed_status": "installed",
-                },
-            ],
-            "--output json",
-        ),
-    ],
-)
+@output_format_parametrize
 def test_show_top_level_with_extras(
-    expected: str,
     output_format: str,
     tester: CommandTester,
     poetry: Poetry,
@@ -3107,13 +2862,21 @@ def test_show_top_level_with_extras(
         }
     )
 
-    tester.execute(
-        "--top-level" if not output_format else "--top-level " + output_format
-    )
+    tester.execute(f"--top-level {output_format}")
 
-    if output_format:
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "black",
+                "version": "23.3.0",
+                "description": "",
+                "installed_status": "installed",
+            },
+        ]
         assert json.loads(tester.io.fetch_output()) == expected
     else:
+        expected = """black 23.3.0 \n"""
         assert tester.io.fetch_output() == expected
 
 
