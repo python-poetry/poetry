@@ -40,7 +40,7 @@ dependencies = [
     # dependency with extras
     "requests[security] (>=2.28,<3.0)",
     # version-specific dependency with prereleases allowed (see below)
-    "tomli (>=2.0.1,<3.0.0) ; python_version < \"3.11\"",
+    "tomli (>=2.0.1,<3.0.0) ; python_version < '3.11'",
     # git dependency with branch specified
     "cleo @ git+https://github.com/python-poetry/cleo.git@main",
 ]
