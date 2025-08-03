@@ -27,7 +27,8 @@ dependencies = [
     "tomlkit (>=0.11.4,<1.0.0)",
     # trove-classifiers uses calver, so version is unclamped
     "trove-classifiers (>=2022.5.19)",
-    "virtualenv (>=20.26.6,<21.0.0)",
+    # upper pin as quickfix for https://github.com/python-poetry/poetry/issues/10490
+    "virtualenv (>=20.26.6,<20.33.0)",
     "xattr (>=1.0.0,<2.0.0) ; sys_platform == 'darwin'",
     "findpython (>=0.6.2,<0.7.0)",
     "pbs-installer[download,install] (>=2025.1.6,<2026.0.0)",
