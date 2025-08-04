@@ -355,7 +355,7 @@ class Git:
 
         try:
             with local:
-                local.reset_index()
+                local.get_worktree().reset_index()
         except (AssertionError, KeyError) as e:
             # this implies the ref we need does not exist or is invalid
             if isinstance(e, KeyError):
