@@ -78,6 +78,7 @@ class PackageFactory(Protocol):
         version: str | None = None,
         dependencies: list[Dependency] | None = None,
         extras: dict[str, list[str]] | None = None,
+        merge_extras: bool = False,
     ) -> Package: ...
 
 

@@ -543,6 +543,7 @@ def create_package(repo: Repository) -> PackageFactory:
         version: str | None = None,
         dependencies: list[Dependency] | None = None,
         extras: dict[str, list[str]] | None = None,
+        merge_extras: bool = False,
     ) -> Package:
         version = version or "1.0"
         package = get_package(name, version)
@@ -574,16 +575,20 @@ def create_package(repo: Repository) -> PackageFactory:
 
                     extra_dependency.constraint = parse_constraint(f"^{pkg.version}")
 
-                    # if requirement already exists in the package, update the marker
-                    for requirement in package.requires:
-                        if (
-                            requirement.name == extra_dependency.name
-                            and requirement.is_optional()
-                        ):
-                            requirement.marker = requirement.marker.union(
-                                extra_dependency.marker
-                            )
-                            break
+                    if merge_extras:
+                        # if requirement already exists in the package,
+                        # update the marker
+                        for requirement in package.requires:
+                            if (
+                                requirement.name == extra_dependency.name
+                                and requirement.is_optional()
+                            ):
+                                requirement.marker = requirement.marker.union(
+                                    extra_dependency.marker
+                                )
+                                break
+                        else:
+                            package.add_dependency(extra_dependency)
                     else:
                         package.add_dependency(extra_dependency)
 

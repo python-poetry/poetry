@@ -571,6 +571,7 @@ def test_solver_returns_extras_if_requested_in_multiple_groups(
         (["py"], ["py310-package", "a"]),
     ],
 )
+@pytest.mark.parametrize("merge_extras", [True, False])
 @pytest.mark.parametrize("top_level_dependency", [True, False])
 def test_solver_resolves_self_referential_extras(
     enabled_extras: list[str],
@@ -580,6 +581,7 @@ def test_solver_resolves_self_referential_extras(
     repo: Repository,
     package: ProjectPackage,
     create_package: PackageFactory,
+    merge_extras: bool,
 ) -> None:
     dependency = (
         create_package(
@@ -587,13 +589,15 @@ def test_solver_resolves_self_referential_extras(
             str(package.version),
             extras={
                 "download": ["download-package"],
+                "download2": ["download-package"],  # same package as download
                 "install": ["install-package"],
                 "py38": ["py38-package ; python_version == '3.8'"],
                 "py310": ["py310-package ; python_version > '3.8'"],
-                "all": ["a[download,install]"],
+                "all": ["a[download,download2,install]"],
                 "py": ["a[py38,py310]"],
                 "nested": ["a[all]"],
             },
+            merge_extras=merge_extras,
         )
         .to_dependency()
         .with_features(enabled_extras)
