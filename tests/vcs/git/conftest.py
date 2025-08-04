@@ -16,12 +16,13 @@ if TYPE_CHECKING:
 def temp_repo(tmp_path: Path) -> TempRepoFixture:
     """Temporary repository with 2 commits"""
     repo = dulwich.repo.Repo.init(str(tmp_path))
+    worktree = repo.get_worktree()
 
     # init commit
     (tmp_path / "foo").write_text("foo", encoding="utf-8")
-    repo.stage(["foo"])
+    worktree.stage(["foo"])
 
-    init_commit = repo.do_commit(
+    init_commit = worktree.commit(
         committer=b"User <user@example.com>",
         author=b"User <user@example.com>",
         message=b"init",
@@ -30,8 +31,8 @@ def temp_repo(tmp_path: Path) -> TempRepoFixture:
 
     # one commit which is not "head"
     (tmp_path / "bar").write_text("bar", encoding="utf-8")
-    repo.stage(["bar"])
-    middle_commit = repo.do_commit(
+    worktree.stage(["bar"])
+    middle_commit = worktree.commit(
         committer=b"User <user@example.com>",
         author=b"User <user@example.com>",
         message=b"extra",
@@ -40,9 +41,9 @@ def temp_repo(tmp_path: Path) -> TempRepoFixture:
 
     # extra commit
     (tmp_path / "third").write_text("third file", encoding="utf-8")
-    repo.stage(["third"])
+    worktree.stage(["third"])
 
-    head_commit = repo.do_commit(
+    head_commit = worktree.commit(
         committer=b"User <user@example.com>",
         author=b"User <user@example.com>",
         message=b"extra",
