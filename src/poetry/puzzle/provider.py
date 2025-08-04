@@ -614,7 +614,7 @@ class Provider:
 
             if len(duplicates_by_extras) == 1:
                 active_extras = (
-                    self._active_root_extras if package.is_root() else dependency.extras
+                    self._active_root_extras if package.is_root() else found_extras
                 )
                 deps = self._resolve_overlapping_markers(package, deps, active_extras)
             else:
