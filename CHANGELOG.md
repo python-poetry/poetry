@@ -1,5 +1,23 @@
 # Change Log
 
+## [2.1.4] - 2025-08-05
+
+### Changed
+
+- Require `virtualenv<20.33` to work around an issue where Poetry uses the wrong Python version ([#10491](https://github.com/python-poetry/poetry/pull/10491)).
+- Improve the error messages for the validation of the `pyproject.toml` file ([#10471](https://github.com/python-poetry/poetry/pull/10471)).
+
+### Fixed
+
+- Fix an issue where project plugins were installed even though `poetry install` was called with `--no-plugins` ([#10405](https://github.com/python-poetry/poetry/pull/10405)).
+- Fix an issue where dependency resolution failed for self-referential extras with duplicate dependencies ([#10488](https://github.com/python-poetry/poetry/pull/10488)).
+
+### Docs
+
+- Clarify how to include files that were automatically excluded via VCS ignore settings ([#10442](https://github.com/python-poetry/poetry/pull/10442)).
+- Clarify the behavior of `poetry add` if no version constraint is explicitly specified ([#10445](https://github.com/python-poetry/poetry/pull/10445)).
+
+
 ## [2.1.3] - 2025-05-04
 
 ### Changed
@@ -2511,7 +2529,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/2.1.3...main
+[Unreleased]: https://github.com/python-poetry/poetry/compare/2.1.4...main
+[2.1.4]: https://github.com/python-poetry/poetry/releases/tag/2.1.4
 [2.1.3]: https://github.com/python-poetry/poetry/releases/tag/2.1.3
 [2.1.2]: https://github.com/python-poetry/poetry/releases/tag/2.1.2
 [2.1.1]: https://github.com/python-poetry/poetry/releases/tag/2.1.1
