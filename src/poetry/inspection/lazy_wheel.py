@@ -138,8 +138,8 @@ class MergeIntervals:
             right: Index after last overlapping downloaded data
         """
         lslice, rslice = self._left[left:right], self._right[left:right]
-        i = start = min([start] + lslice[:1])
-        end = max([end] + rslice[-1:])
+        i = start = min([start, *lslice[:1]])
+        end = max([end, *rslice[-1:]])
         for j, k in zip(lslice, rslice):
             if j > i:
                 yield i, j - 1
