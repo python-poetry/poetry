@@ -79,6 +79,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from poetry.poetry import Poetry
+    from poetry.utils.env.base_env import PythonVersion
     from tests.types import CommandFactory
     from tests.types import FixtureCopier
     from tests.types import FixtureDirGetter
@@ -428,12 +429,12 @@ def current_env() -> SystemEnv:
 
 
 @pytest.fixture(scope="session")
-def current_python(current_env: SystemEnv) -> tuple[int, int, int]:
-    return current_env.version_info[:3]
+def current_python(current_env: SystemEnv) -> PythonVersion:
+    return current_env.version_info
 
 
 @pytest.fixture(scope="session")
-def default_python(current_python: tuple[int, int, int]) -> str:
+def default_python(current_python: PythonVersion) -> str:
     return "^" + ".".join(str(v) for v in current_python[:2])
 
 

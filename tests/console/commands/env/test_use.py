@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
     from pytest_mock import MockerFixture
 
+    from poetry.utils.env.base_env import PythonVersion
     from tests.types import CommandTesterFactory
     from tests.types import MockedPythonRegister
 
@@ -35,11 +36,11 @@ def setup(mocker: MockerFixture) -> None:
 
 @pytest.fixture(autouse=True)
 def mock_subprocess_calls(
-    setup: None, current_python: tuple[int, int, int], mocker: MockerFixture
+    setup: None, current_python: PythonVersion, mocker: MockerFixture
 ) -> None:
     mocker.patch(
         "subprocess.check_output",
-        side_effect=check_output_wrapper(Version.from_parts(*current_python)),
+        side_effect=check_output_wrapper(Version.from_parts(*current_python[:3])),
     )
     mocker.patch(
         "subprocess.Popen.communicate",
@@ -95,7 +96,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
 
 def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
     tester: CommandTester,
-    current_python: tuple[int, int, int],
+    current_python: PythonVersion,
     venv_cache: Path,
     venv_name: str,
     venvs_in_cache_config: None,
@@ -127,7 +128,7 @@ Using virtualenv: {venv_dir}
 def test_get_prefers_explicitly_activated_non_existing_virtualenvs_over_env_var(
     mocker: MockerFixture,
     tester: CommandTester,
-    current_python: tuple[int, int, int],
+    current_python: PythonVersion,
     venv_cache: Path,
     venv_name: str,
     venvs_in_cache_config: None,
