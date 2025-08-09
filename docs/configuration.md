@@ -271,8 +271,6 @@ across all your projects if incorrectly set.
 When set, this configuration allows users to enforce the use of binary distribution format for all, none or
 specific packages.
 
-If both `installer.no-binary` and `installer.only-binary` are set, explicit package names will take precedence over `:all:`.
-
 {{% note %}}
 Please refer to [`installer.no-binary`]({{< relref "configuration#installerno-binary" >}}) for information on allowed
 values, usage instructions and warnings.
