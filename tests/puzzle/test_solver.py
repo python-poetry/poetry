@@ -564,6 +564,7 @@ def test_solver_returns_extras_if_requested_in_multiple_groups(
         ([], ["a"]),
         (["all"], ["download-package", "install-package", "a"]),
         (["nested"], ["download-package", "install-package", "a"]),
+        (["cyclic"], ["download-package", "install-package", "a"]),
         (["install", "download"], ["download-package", "install-package", "a"]),
         (["install"], ["install-package", "a"]),
         (["download"], ["download-package", "a"]),
@@ -596,6 +597,8 @@ def test_solver_resolves_self_referential_extras(
                 "all": ["a[download,download2,install]"],
                 "py": ["a[py38,py310]"],
                 "nested": ["a[all]"],
+                "cyclic": ["a[cyclic2]", "download-package"],
+                "cyclic2": ["a[cyclic]", "install-package"],
             },
             merge_extras=merge_extras,
         )
