@@ -203,7 +203,7 @@ def test_run_script_exit_code(
 ) -> None:
     mocker.patch(
         "os.execvpe",
-        lambda file, args, env: subprocess.call([file] + args[1:], env=env),
+        lambda file, args, env: subprocess.call([file, *args[1:]], env=env),
     )
     install_tester = command_tester_factory(
         "install",
@@ -235,7 +235,7 @@ def test_run_script_sys_argv0(
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=tmp_venv)
     mocker.patch(
         "os.execvpe",
-        lambda file, args, env: subprocess.call([file] + args[1:], env=env),
+        lambda file, args, env: subprocess.call([file, *args[1:]], env=env),
     )
 
     install_tester = command_tester_factory(
