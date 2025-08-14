@@ -13,7 +13,6 @@ from typing import Union
 from cleo.helpers import option
 from packaging.utils import canonicalize_name
 from tomlkit import inline_table
-from tomlkit import parse
 
 from poetry.console.commands.command import Command
 from poetry.console.commands.env_command import EnvCommand
@@ -271,9 +270,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             return 1
 
         # Validate fields before creating pyproject.toml file. If any validations fail, throw an error.
-        # Convert TOML string to a TOMLDocument (a dict-like object) for validation.
-        pyproject_dict = parse(pyproject.data.as_string())
-        validation_results = self._validate(pyproject_dict)
+        validation_results = Factory().validate(pyproject.data)
         if validation_results.get("errors"):
             message = ""
             for error in validation_results.get("errors", []):
@@ -550,13 +547,3 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             self._pool.add_repository(PyPiRepository(pool_size=pool_size))
 
         return self._pool
-
-    @staticmethod
-    def _validate(pyproject_data: dict[str, Any]) -> dict[str, Any]:
-        """
-        Validates the given pyproject data and returns the validation results.
-        """
-        # Note: Factory.validate only returns the first schema validation error.
-        # This upstream limitation is acceptable for now to avoid added complexity.
-        # May be revisited if full error reporting becomes a higher priority.
-        return Factory().validate(pyproject_data)
