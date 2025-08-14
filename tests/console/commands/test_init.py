@@ -7,7 +7,6 @@ import textwrap
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Any
 
 import pytest
 
@@ -1146,81 +1145,6 @@ def test_get_pool(mocker: MockerFixture, source_dir: Path) -> None:
     assert pool.repositories
 
 
-def build_pyproject_data(
-    project_name: str, description: str = "A project"
-) -> dict[str, Any]:
-    return {
-        "project": {
-            "name": project_name,
-            "version": "0.1.0",
-            "description": description,
-            "authors": [{"name": "Author Name", "email": "author@example.com"}],
-            "readme": "README.md",
-            "requires-python": ">=3.13",
-            "dependencies": [],
-        },
-        "tool": {},
-        "build-system": {
-            "requires": ["poetry-core>=2.0.0,<3.0.0"],
-            "build-backend": "poetry.core.masonry.api",
-        },
-    }
-
-
-@pytest.mark.parametrize(
-    "valid_project_name",
-    [
-        "newproject",
-        "new_project",
-        "new-project",
-        "new.project",
-        "newproject123",
-    ],
-)
-def test_valid_project_name(valid_project_name: str) -> None:
-    pyproject_data = build_pyproject_data(valid_project_name)
-    result = InitCommand._validate(pyproject_data)
-    assert result["errors"] == []
-
-
-@pytest.mark.parametrize(
-    "invalid_project_name, reason",
-    [
-        ("new+project", "plus sign"),
-        ("new/project", "slash"),
-        ("new@project", "at sign"),
-        ("new project", "space"),
-        ("", "empty string"),
-        (" newproject", "leading space"),
-        ("newproject ", "trailing space"),
-        ("new#project", "hash (#)"),
-        ("new%project", "percent (%)"),
-        ("new*project", "asterisk (*)"),
-        ("new(project)", "parentheses"),
-        ("-newproject", "leading hyphen"),
-        ("newproject-", "trailing hyphen"),
-        (".newproject", "leading dot"),
-        ("newproject.", "trailing dot"),
-        (
-            "_newproject",
-            "leading underscore (PEP 621 allows, stricter validators may reject)",
-        ),
-        (
-            "newproject_",
-            "trailing underscore (PEP 621 allows, stricter validators may reject)",
-        ),
-        ("1newproject!", "starts with digit, ends with exclamation"),
-        (".", "just dot"),
-    ],
-)
-def test_invalid_project_name(invalid_project_name: str, reason: str) -> None:
-    pyproject_data = build_pyproject_data(invalid_project_name)
-    result = InitCommand._validate(pyproject_data)
-
-    assert "errors" in result, f"Expected error for: {reason}"
-    assert any("project.name must match pattern" in err for err in result["errors"])
-
-
 def test_init_does_not_create_project_structure_in_empty_directory(
     tester: CommandTester, source_dir: Path
 ) -> None:
@@ -1283,3 +1207,32 @@ def test_init_does_not_create_project_structure_in_non_empty_directory(
     # Existing files should remain
     assert (source_dir / "existing_file.txt").exists()
     assert (source_dir / "existing_dir").exists()
+
+
+def test_noninteractive_validation_shows_error(
+    app: PoetryTestApplication, mocker: MockerFixture
+) -> None:
+    command = app.find("init")
+    assert isinstance(command, InitCommand)
+
+    expected_error = r"Validation failed: \n  - project.name must match pattern ^([a-zA-Z\d]|[a-zA-Z\d][\w.-]*[a-zA-Z\d])$"
+
+    # Set Factory.validate to return a mocked error message
+    # We mock Factory.validate() because this test focuses on _init_pyproject(), not on the validation logic itself.
+    mocked_validate = mocker.patch(
+        "poetry.console.commands.init.Factory.validate",
+        return_value={"errors": [expected_error]},
+    )
+
+    init_tester = CommandTester(command)
+    args = '--name "new project"'
+    result = init_tester.execute(args=args, interactive=False)
+
+    # Check that the command fails
+    assert result == 1
+
+    error_output = init_tester.io.fetch_error()
+    assert expected_error in error_output
+
+    # Verify that validate() was called
+    mocked_validate.assert_called_once()
