@@ -38,7 +38,7 @@ F = TypeVar("F", bound=Callable[..., Any])
 
 
 def output_format_parametrize(func: F) -> F:
-    formats = ["", "--output json"]
+    formats = ["", "--format json"]
     return cast("F", pytest.mark.parametrize("output_format", formats)(func))
 
 
@@ -221,7 +221,7 @@ pytest 3.7.3 Pytest package
 """,
         ),
         (
-            "--output json",
+            "--format json",
             [
                 {
                     "name": "cachy",
@@ -246,7 +246,7 @@ pytest   3.7.3 Pytest package
 """,
         ),
         (
-            "--with time --output json",
+            "--with time --format json",
             [
                 {
                     "name": "cachy",
@@ -275,7 +275,7 @@ cachy 0.1.0 Cachy package
 """,
         ),
         (
-            "--without test --output json",
+            "--without test --format json",
             [
                 {
                     "name": "cachy",
@@ -292,7 +292,7 @@ pytest 3.7.3 Pytest package
 """,
         ),
         (
-            f"--without {MAIN_GROUP} --output json",
+            f"--without {MAIN_GROUP} --format json",
             [
                 {
                     "name": "pytest",
@@ -309,7 +309,7 @@ cachy 0.1.0 Cachy package
 """,
         ),
         (
-            f"--only {MAIN_GROUP} --output json",
+            f"--only {MAIN_GROUP} --format json",
             [
                 {
                     "name": "cachy",
@@ -327,7 +327,7 @@ pendulum 2.0.0 Pendulum package
 """,
         ),
         (
-            "--with time --without test --output json",
+            "--with time --without test --format json",
             [
                 {
                     "name": "cachy",
@@ -350,7 +350,7 @@ pendulum 2.0.0 Pendulum package
 """,
         ),
         (
-            f"--with time --without {MAIN_GROUP},test --output json",
+            f"--with time --without {MAIN_GROUP},test --format json",
             [
                 {
                     "name": "pendulum",
@@ -367,7 +367,7 @@ pendulum 2.0.0 Pendulum package
 """,
         ),
         (
-            "--only time --output json",
+            "--only time --format json",
             [
                 {
                     "name": "pendulum",
@@ -384,7 +384,7 @@ pendulum 2.0.0 Pendulum package
 """,
         ),
         (
-            "--only time --with test --output json",
+            "--only time --with test --format json",
             [
                 {
                     "name": "pendulum",
@@ -403,7 +403,7 @@ pytest   3.7.3 Pytest package
 """,
         ),
         (
-            "--with time --output json",
+            "--with time --format json",
             [
                 {
                     "name": "cachy",
@@ -2930,7 +2930,7 @@ def test_show_error_invalid_output_format(
     tester: CommandTester,
 ) -> None:
     expected = "Error: Invalid output format. Supported formats are: json, text.\n"
-    tester.execute("--output invalid")
+    tester.execute("--format invalid")
     assert tester.io.fetch_error() == expected
     assert tester.status_code == 1
 
@@ -2939,6 +2939,6 @@ def test_show_error_invalid_output_format_with_tree_option(
     tester: CommandTester,
 ) -> None:
     expected = "Error: --tree option can only be used with the text output option.\n"
-    tester.execute("--output json --tree")
+    tester.execute("--format json --tree")
     assert tester.io.fetch_error() == expected
     assert tester.status_code == 1

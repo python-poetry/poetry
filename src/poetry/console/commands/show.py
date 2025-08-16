@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import sys
 
+from enum import Enum
 from typing import TYPE_CHECKING
 from typing import ClassVar
 
@@ -38,7 +39,9 @@ def reverse_deps(pkg: Package, repo: Repository) -> dict[str, str]:
     return required_by
 
 
-OUTPUT_FORMATS = {"text", "json"}
+class OutputFormats(str, Enum):
+    JSON = "json"
+    TEXT = "text"
 
 
 class ShowCommand(GroupCommand, EnvCommand):
@@ -76,9 +79,9 @@ class ShowCommand(GroupCommand, EnvCommand):
             "Do not truncate the output based on the terminal width.",
         ),
         option(
-            "output",
-            None,
-            "Specify the output format. JSON cannot be combined with the <info>--tree</info> option. Default is text. Supported formats: text, json.",
+            "format",
+            "f",
+            "Specify the output format (`json` or `text`). Default is `text`. `json` cannot be combined with the <info>--tree</info> option.",
             flag=False,
             default="text",
         ),
@@ -126,14 +129,14 @@ lists all packages available."""
 
                 return 1
 
-        if self.option("output") not in OUTPUT_FORMATS:
+        if self.option("format") not in OutputFormats:
             self.line_error(
-                f"<error>Error: Invalid output format. Supported formats are: {', '.join(sorted(OUTPUT_FORMATS))}.</error>"
+                f"<error>Error: Invalid output format. Supported formats are: {', '.join(OutputFormats)}.</error>"
             )
 
             return 1
 
-        if self.option("output") != "text" and self.option("tree"):
+        if self.option("format") != OutputFormats.TEXT and self.option("tree"):
             self.line_error(
                 "<error>Error: --tree option can only be used with the text output option.</error>"
             )
@@ -205,7 +208,7 @@ lists all packages available."""
 
             return 0
 
-        if self.option("output") == "json":
+        if self.option("format") == OutputFormats.JSON:
             package_info: dict[str, str | dict[str, str]] = {
                 "name": pkg.pretty_name,
                 "version": pkg.pretty_version,
@@ -356,7 +359,7 @@ lists all packages available."""
                         required_by_length, len(" from " + ",".join(required_by.keys()))
                     )
 
-        if self.option("output") == "json":
+        if self.option("format") == OutputFormats.JSON:
             packages = []
 
             for locked in locked_packages:
