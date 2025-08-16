@@ -8,7 +8,7 @@ dependencies = [
     "build (>=1.2.1,<2.0.0)",
     "cachecontrol[filecache] (>=0.14.0,<0.15.0)",
     "cleo (>=2.1.0,<3.0.0)",
-    "dulwich (>=0.22.6,<0.23.0)",
+    "dulwich (>=0.24.0,<0.25.0)",
     "fastjsonschema (>=2.18.0,<3.0.0)",
     # <8.7 because .metadata() (and Distribution.metadata) can now return None,
     # which requires some adaptions to our code.
