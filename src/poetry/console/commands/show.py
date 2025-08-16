@@ -376,7 +376,7 @@ lists all packages available."""
                 if show_top_level and not any(locked.satisfies(r) for r in requires):
                     continue
 
-                package = {}
+                package: dict[str, str | list[str]] = {}
                 package["name"] = locked.pretty_name
                 package["installed_status"] = self.get_installed_status(
                     locked, installed_repo.packages
@@ -394,8 +394,7 @@ lists all packages available."""
                 if show_why:
                     required_by = reverse_deps(locked, locked_repository)
                     if required_by:
-                        content = ",".join(required_by.keys())
-                        package["required_by"] = content
+                        package["required_by"] = list(required_by.keys())
 
                 package["description"] = locked.description
 

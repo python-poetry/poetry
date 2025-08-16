@@ -2307,7 +2307,7 @@ def test_show_tree_why(
     a.add_dependency(Factory.create_dependency("b", "=0.0.1"))
 
     b = get_package("b", "0.0.1")
-    a.add_dependency(Factory.create_dependency("c", "=0.0.1"))
+    b.add_dependency(Factory.create_dependency("c", "=0.0.1"))
     installed.add_package(b)
 
     c = get_package("c", "0.0.1")
@@ -2354,6 +2354,100 @@ def test_show_tree_why(
     expected = """a 0.0.1        \nb 0.0.1 from a \nc 0.0.1 from b \n"""
 
     assert tester.io.fetch_output() == expected
+
+
+@output_format_parametrize
+def test_show_why(
+    output_format: str, tester: CommandTester, poetry: Poetry, installed: Repository
+) -> None:
+    poetry.package.add_dependency(Factory.create_dependency("a", "=0.0.1"))
+
+    a = get_package("a", "0.0.1")
+    a.description = "Package A"
+    a.add_dependency(Factory.create_dependency("b", "=0.0.1"))
+    a.add_dependency(Factory.create_dependency("c", "=0.0.1"))
+    installed.add_package(a)
+
+    b = get_package("b", "0.0.1")
+    b.description = "Package B"
+    b.add_dependency(Factory.create_dependency("c", "=0.0.1"))
+    installed.add_package(b)
+
+    c = get_package("c", "0.0.1")
+    c.description = "Package C"
+    installed.add_package(c)
+
+    assert isinstance(poetry.locker, TestLocker)
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "a",
+                    "version": "0.0.1",
+                    "description": "Package A",
+                    "dependencies": {"b": "=0.0.1", "c": "=0.0.1"},
+                    "python-versions": "*",
+                    "optional": False,
+                },
+                {
+                    "name": "b",
+                    "version": "0.0.1",
+                    "description": "Package B",
+                    "dependencies": {"c": "=0.0.1"},
+                    "python-versions": "*",
+                    "optional": False,
+                },
+                {
+                    "name": "c",
+                    "version": "0.0.1",
+                    "description": "Package C",
+                    "python-versions": "*",
+                    "optional": False,
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "files": {"a": [], "b": [], "c": []},
+            },
+        }
+    )
+
+    tester.execute(f"--why {output_format}")
+
+    expected: str | list[dict[str, str | list[str]]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "a",
+                "version": "0.0.1",
+                "description": "Package A",
+                "installed_status": "installed",
+            },
+            {
+                "name": "b",
+                "version": "0.0.1",
+                "description": "Package B",
+                "installed_status": "installed",
+                "required_by": ["a"],
+            },
+            {
+                "name": "c",
+                "version": "0.0.1",
+                "description": "Package C",
+                "installed_status": "installed",
+                "required_by": ["a", "b"],
+            },
+        ]
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = """\
+a 0.0.1          Package A
+b 0.0.1 from a   Package B
+c 0.0.1 from a,b Package C
+"""
+        assert tester.io.fetch_output() == expected
 
 
 @output_format_parametrize
