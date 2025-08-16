@@ -129,7 +129,7 @@ lists all packages available."""
 
                 return 1
 
-        if self.option("format") not in OutputFormats:
+        if self.option("format") not in set(OutputFormats):
             self.line_error(
                 f"<error>Error: Invalid output format. Supported formats are: {', '.join(OutputFormats)}.</error>"
             )
