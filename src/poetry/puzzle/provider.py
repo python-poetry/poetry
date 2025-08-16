@@ -614,7 +614,7 @@ class Provider:
 
             if len(duplicates_by_extras) == 1:
                 active_extras = (
-                    self._active_root_extras if package.is_root() else dependency.extras
+                    self._active_root_extras if package.is_root() else found_extras
                 )
                 deps = self._resolve_overlapping_markers(package, deps, active_extras)
             else:
@@ -1017,7 +1017,7 @@ class Provider:
 
         :param extras: the values to add to the 'extra' marker value
         """
-        result = self._env.marker_env.copy() if self._env is not None else {}
+        result = dict(self._env.marker_env) if self._env is not None else {}
         if extras is not None:
             assert "extra" not in result, (
                 "'extra' marker key is already present in environment"

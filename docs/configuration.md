@@ -227,6 +227,8 @@ When set, this configuration allows users to disallow the use of binary distribu
 | `:none:` or `false`    | Allow binary distributions for all packages.               |
 | `package[,package,..]` | Disallow binary distributions for specified packages only. |
 
+If both `installer.no-binary` and `installer.only-binary` are set, explicit package names will take precedence over `:all:`.
+
 {{% note %}}
 As with all configurations described here, this is a user specific configuration. This means that this
 is not taken into consideration when a lockfile is generated or dependencies are resolved. This is

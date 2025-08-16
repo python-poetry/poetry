@@ -97,6 +97,9 @@ class PackageFilterPolicy:
             or canonicalize_name(package_name) not in self.packages
         )
 
+    def has_exact_package(self, package_name: str) -> bool:
+        return canonicalize_name(package_name) in self.packages
+
     @classmethod
     def is_reserved(cls, name: str) -> bool:
         return bool(re.match(r":(all|none):", name))

@@ -79,6 +79,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from poetry.poetry import Poetry
+    from poetry.utils.env.base_env import PythonVersion
     from tests.types import CommandFactory
     from tests.types import FixtureCopier
     from tests.types import FixtureDirGetter
@@ -428,12 +429,12 @@ def current_env() -> SystemEnv:
 
 
 @pytest.fixture(scope="session")
-def current_python(current_env: SystemEnv) -> tuple[int, int, int]:
-    return current_env.version_info[:3]
+def current_python(current_env: SystemEnv) -> PythonVersion:
+    return current_env.version_info
 
 
 @pytest.fixture(scope="session")
-def default_python(current_python: tuple[int, int, int]) -> str:
+def default_python(current_python: PythonVersion) -> str:
     return "^" + ".".join(str(v) for v in current_python[:2])
 
 
@@ -543,6 +544,7 @@ def create_package(repo: Repository) -> PackageFactory:
         version: str | None = None,
         dependencies: list[Dependency] | None = None,
         extras: dict[str, list[str]] | None = None,
+        merge_extras: bool = False,
     ) -> Package:
         version = version or "1.0"
         package = get_package(name, version)
@@ -574,16 +576,20 @@ def create_package(repo: Repository) -> PackageFactory:
 
                     extra_dependency.constraint = parse_constraint(f"^{pkg.version}")
 
-                    # if requirement already exists in the package, update the marker
-                    for requirement in package.requires:
-                        if (
-                            requirement.name == extra_dependency.name
-                            and requirement.is_optional()
-                        ):
-                            requirement.marker = requirement.marker.union(
-                                extra_dependency.marker
-                            )
-                            break
+                    if merge_extras:
+                        # if requirement already exists in the package,
+                        # update the marker
+                        for requirement in package.requires:
+                            if (
+                                requirement.name == extra_dependency.name
+                                and requirement.is_optional()
+                            ):
+                                requirement.marker = requirement.marker.union(
+                                    extra_dependency.marker
+                                )
+                                break
+                        else:
+                            package.add_dependency(extra_dependency)
                     else:
                         package.add_dependency(extra_dependency)
 
