@@ -1061,7 +1061,7 @@ required by
 * `--all (-a)`: Show all packages (even those not compatible with current system).
 * `--top-level (-T)`: Only show explicitly defined packages.
 * `--no-truncate`: Do not truncate the output based on the terminal width.
-* `--output`: Specify the output format. JSON cannot be combined with the `--tree` option. Default is text. Supported formats: text, json.
+* `--output`: Specify the output format (`text` or `json`). Default is `text`. `json` cannot be combined with the `--tree` option.
 
 {{% note %}}
 When `--only` is specified, `--with` and `--without` options are ignored.
