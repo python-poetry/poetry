@@ -1154,7 +1154,7 @@ develop = false
 type = "git"
 url = "https://github.com/python-poetry/poetry-core.git"
 reference = "HEAD"
-resolved_reference = "002aa3e16f98d21645bb9a45f698b55adc40f317"
+resolved_reference = "e0bd00670fd883238838d0ced7d6bfe24c733dfd"
 
 [[package]]
 name = "pre-commit"
@@ -1979,4 +1979,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<4.0"
-content-hash = "207d41932ff1199c1e7014253f2c30ba87a11325f4d2b3e0d1ce3fff6ccabc71"
+content-hash = "3c42c2d19ba942ff693da2dd016a4e5d43509d69342e762e9a528ca981f52a3b"

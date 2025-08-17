@@ -141,10 +141,12 @@ def test_builder_installs_proper_files_for_standard_packages(
 
     dist_info = tmp_venv.site_packages.find(dist_info)[0]
 
-    assert dist_info.joinpath("INSTALLER").exists()
-    assert dist_info.joinpath("METADATA").exists()
-    assert dist_info.joinpath("RECORD").exists()
     assert dist_info.joinpath("entry_points.txt").exists()
+    assert dist_info.joinpath("WHEEL").exists()
+    assert dist_info.joinpath("METADATA").exists()
+    assert dist_info.joinpath("licenses/LICENSE").exists()
+    assert dist_info.joinpath("INSTALLER").exists()
+    assert dist_info.joinpath("RECORD").exists()
     assert dist_info.joinpath("direct_url.json").exists()
 
     assert not DeepDiff(
@@ -175,6 +177,7 @@ Name: simple-project
 Version: 1.2.3
 Summary: Some description.
 License: MIT
+License-File: LICENSE
 Keywords: packaging,dependency,poetry
 Author: Sébastien Eustace
 Author-email: sebastien@eustace.io
@@ -192,7 +195,11 @@ My Package
 ==========
 
 """
-    assert metadata == dist_info.joinpath("METADATA").read_text(encoding="utf-8")
+    if project == "simple_project":
+        metadata = metadata.replace("License:", "License-Expression:").replace(
+            "Classifier: License :: OSI Approved :: MIT License\n", ""
+        )
+    assert dist_info.joinpath("METADATA").read_text(encoding="utf-8") == metadata
 
     with open(dist_info.joinpath("RECORD"), encoding="utf-8", newline="") as f:
         reader = csv.reader(f)
@@ -205,9 +212,12 @@ My Package
     assert str(tmp_venv.site_packages.find(pth_file)[0]) in record_entries
     assert str(tmp_venv._bin_dir.joinpath("foo")) in record_entries
     assert str(tmp_venv._bin_dir.joinpath("baz")) in record_entries
-    assert str(dist_info.joinpath("METADATA")) in record_entries
-    assert str(dist_info.joinpath("INSTALLER")) in record_entries
     assert str(dist_info.joinpath("entry_points.txt")) in record_entries
+    assert str(dist_info.joinpath("WHEEL")) in record_entries
+    assert str(dist_info.joinpath("METADATA")) in record_entries
+    assert str(dist_info.joinpath("licenses/LICENSE")) in record_entries
+
+    assert str(dist_info.joinpath("INSTALLER")) in record_entries
     assert str(dist_info.joinpath("RECORD")) in record_entries
     assert str(dist_info.joinpath("direct_url.json")) in record_entries
 
@@ -220,7 +230,7 @@ if __name__ == '__main__':
     sys.exit(baz.boom.bim())
 """
 
-    assert baz_script == tmp_venv._bin_dir.joinpath("baz").read_text(encoding="utf-8")
+    assert tmp_venv._bin_dir.joinpath("baz").read_text(encoding="utf-8") == baz_script
 
     foo_script = f"""\
 #!{tmp_venv.python}
@@ -231,7 +241,7 @@ if __name__ == '__main__':
     sys.exit(bar())
 """
 
-    assert foo_script == tmp_venv._bin_dir.joinpath("foo").read_text(encoding="utf-8")
+    assert tmp_venv._bin_dir.joinpath("foo").read_text(encoding="utf-8") == foo_script
 
     fox_script = f"""\
 #!{tmp_venv.python}
@@ -242,7 +252,7 @@ if __name__ == '__main__':
     sys.exit(bar.baz())
 """
 
-    assert fox_script == tmp_venv._bin_dir.joinpath("fox").read_text(encoding="utf-8")
+    assert tmp_venv._bin_dir.joinpath("fox").read_text(encoding="utf-8") == fox_script
 
 
 def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
