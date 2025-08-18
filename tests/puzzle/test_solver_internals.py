@@ -40,7 +40,7 @@ def dep(
     d = Dependency(name, "1", groups=groups, extras=extras)
     d._in_extras = [canonicalize_name(e) for e in in_extras]
     if marker:
-        d.marker = marker  # type: ignore[assignment]
+        d.marker = marker
     return d
 
 
