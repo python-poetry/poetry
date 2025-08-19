@@ -623,18 +623,19 @@ files = [
 
 [[package]]
 name = "findpython"
-version = "0.6.3"
+version = "0.7.0"
 description = "A utility to find python versions on your system"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "findpython-0.6.3-py3-none-any.whl", hash = "sha256:a85bb589b559cdf1b87227cc233736eb7cad894b9e68021ee498850611939ebc"},
-    {file = "findpython-0.6.3.tar.gz", hash = "sha256:5863ea55556d8aadc693481a14ac4f3624952719efc1c5591abb0b4a9e965c94"},
+    {file = "findpython-0.7.0-py3-none-any.whl", hash = "sha256:f53cfcc29536f5b83c962cf922bba8ff6d6a3c2a05fda6a45aa58a47d005d8fc"},
+    {file = "findpython-0.7.0.tar.gz", hash = "sha256:8b31647c76352779a3c1a0806699b68e6a7bdc0b5c2ddd9af2a07a0d40c673dc"},
 ]
 
 [package.dependencies]
 packaging = ">=20"
+platformdirs = ">=4.3.6"
 
 [[package]]
 name = "h11"
@@ -2026,4 +2027,4 @@ cffi = ["cffi (>=1.17) ; python_version >= \"3.13\" and platform_python_implemen
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<4.0"
-content-hash = "3c42c2d19ba942ff693da2dd016a4e5d43509d69342e762e9a528ca981f52a3b"
+content-hash = "daa6cd9277450d0b1210491a925245171e778f91c01acefedf994830e6ba2285"
