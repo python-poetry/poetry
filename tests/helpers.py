@@ -258,15 +258,15 @@ def make_entry_point_from_plugin(
     name: str, cls: type[Any], dist: metadata.Distribution | None = None
 ) -> metadata.EntryPoint:
     group: str | None = getattr(cls, "group", None)
-    ep = metadata.EntryPoint(
+    ep: metadata.EntryPoint = metadata.EntryPoint(
         name=name,
         group=group,  # type: ignore[arg-type]
         value=f"{cls.__module__}:{cls.__name__}",
     )
 
     if dist:
-        ep = ep._for(dist)  # type: ignore[attr-defined,no-untyped-call]
-        return ep  # type: ignore[no-any-return]
+        ep = ep._for(dist)  # type: ignore[attr-defined]
+        return ep
 
     return ep
 
