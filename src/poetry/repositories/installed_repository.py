@@ -106,18 +106,16 @@ class InstalledRepository(Repository):
             return True
 
     @classmethod
-    def create_package_from_distribution(
-        cls, distribution: metadata.Distribution, env: Env
+    def _create_package_from_distribution(
+        cls, path: Path, dist_metadata: metadata.PackageMetadata, env: Env
     ) -> Package:
         # We first check for a direct_url.json file to determine
         # the type of package.
-        path = Path(str(distribution._path))  # type: ignore[attr-defined]
-
         if (
             path.name.endswith(".dist-info")
             and path.joinpath("direct_url.json").exists()
         ):
-            return cls.create_package_from_pep610(distribution)
+            return cls._create_package_from_pep610(path, dist_metadata)
 
         is_standard_package = env.is_path_relative_to_lib(path)
 
@@ -128,9 +126,7 @@ class InstalledRepository(Repository):
         source_subdirectory = None
         if is_standard_package:
             if path.name.endswith(".dist-info"):
-                paths = cls.get_package_paths(
-                    env=env, name=distribution.metadata["name"]
-                )
+                paths = cls.get_package_paths(env=env, name=dist_metadata["name"])
                 if paths:
                     is_editable_package = False
                     for src in paths:
@@ -160,15 +156,15 @@ class InstalledRepository(Repository):
                 source_url,
                 source_reference,
             ) = cls.get_package_vcs_properties_from_path(
-                env.path / "src" / canonicalize_name(distribution.metadata["name"])
+                env.path / "src" / canonicalize_name(dist_metadata["name"])
             )
         elif is_python_project(path.parent):
             source_type = "directory"
             source_url = str(path.parent)
 
         package = Package(
-            distribution.metadata["name"],
-            distribution.metadata["version"],
+            dist_metadata["name"],
+            dist_metadata["version"],
             source_type=source_type,
             source_url=source_url,
             source_reference=source_reference,
@@ -176,7 +172,7 @@ class InstalledRepository(Repository):
             source_subdirectory=source_subdirectory,
         )
 
-        package.description = distribution.metadata.get(  # type: ignore[attr-defined]
+        package.description = dist_metadata.get(  # type: ignore[attr-defined]
             "summary",
             "",
         )
@@ -184,8 +180,9 @@ class InstalledRepository(Repository):
         return package
 
     @classmethod
-    def create_package_from_pep610(cls, distribution: metadata.Distribution) -> Package:
-        path = Path(str(distribution._path))  # type: ignore[attr-defined]
+    def _create_package_from_pep610(
+        cls, path: Path, dist_metadata: metadata.PackageMetadata
+    ) -> Package:
         source_type = None
         source_url = None
         source_reference = None
@@ -222,8 +219,8 @@ class InstalledRepository(Repository):
         source_subdirectory = url_reference.get("subdirectory")
 
         package = Package(
-            distribution.metadata["name"],
-            distribution.metadata["version"],
+            dist_metadata["name"],
+            dist_metadata["version"],
             source_type=source_type,
             source_url=source_url,
             source_reference=source_reference,
@@ -232,7 +229,7 @@ class InstalledRepository(Repository):
             develop=develop,
         )
 
-        package.description = distribution.metadata.get(  # type: ignore[attr-defined]
+        package.description = dist_metadata.get(  # type: ignore[attr-defined]
             "summary",
             "",
         )
@@ -273,8 +270,13 @@ class InstalledRepository(Repository):
                 if path in skipped:
                     continue
 
-                name = distribution.metadata.get("name")  # type: ignore[attr-defined]
-                if name is None:
+                dist_metadata = distribution.metadata  # type: ignore[attr-defined]
+                name = (
+                    dist_metadata.get("name")  # type: ignore[attr-defined]
+                    if dist_metadata
+                    else None
+                )
+                if not dist_metadata or name is None:
                     logger.warning(
                         "Project environment contains an invalid distribution"
                         " (<c1>%s</>). Consider removing it manually or recreate"
@@ -289,10 +291,12 @@ class InstalledRepository(Repository):
                 if name in seen:
                     continue
 
-                package = cls.create_package_from_distribution(distribution, env)
+                package = cls._create_package_from_distribution(
+                    path, dist_metadata, env
+                )
 
                 if with_dependencies:
-                    for require in distribution.metadata.get_all("requires-dist", []):
+                    for require in dist_metadata.get_all("requires-dist", []):
                         dep = Dependency.create_from_pep_508(require)
                         package.add_dependency(dep)
 
@@ -300,10 +304,7 @@ class InstalledRepository(Repository):
                 repo.add_package(
                     package,
                     is_system_site=bool(
-                        base_env
-                        and base_env.is_path_relative_to_lib(
-                            Path(str(distribution._path))  # type: ignore[attr-defined]
-                        )
+                        base_env and base_env.is_path_relative_to_lib(path)
                     ),
                 )
 
