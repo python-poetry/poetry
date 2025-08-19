@@ -994,6 +994,10 @@ def mock_python_version(mocker: MockerFixture) -> None:
         def implementation(self) -> str:
             return "PyPy" if "pypy" in str(self.executable) else "CPython"
 
+        @property
+        def freethreaded(self) -> bool:
+            return False
+
         def _get_version(self) -> packaging.version.Version:
             install_dir = self.executable.parent
             if not WINDOWS:
