@@ -265,7 +265,7 @@ def make_entry_point_from_plugin(
     )
 
     if dist:
-        ep = ep._for(dist)  # type: ignore[attr-defined]
+        ep = ep._for(dist)  # type: ignore[attr-defined,no-untyped-call]
         return ep
 
     return ep
