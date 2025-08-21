@@ -692,6 +692,7 @@ def verify_installed_distribution(
 
     distribution = distributions[0]
     metadata = distribution.metadata
+    assert metadata
     assert metadata["Name"] == package.name
     assert metadata["Version"] == package.version.text
 
