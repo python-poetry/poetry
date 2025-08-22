@@ -9,12 +9,15 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from poetry.core.packages.dependency import Dependency
+
 from poetry.factory import Factory
 from poetry.puzzle.exceptions import SolverProblemError
 from poetry.puzzle.provider import IncompatibleConstraintsError
 from poetry.repositories import RepositoryPool
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils.env import ephemeral_environment
+from poetry.utils.isolated_build import CONSTRAINTS_GROUP_NAME
 from poetry.utils.isolated_build import IsolatedBuildInstallError
 from poetry.utils.isolated_build import IsolatedEnv
 from poetry.utils.isolated_build import isolated_builder
@@ -55,6 +58,26 @@ def test_isolated_env_install_success(pool: RepositoryPool) -> None:
         assert InstalledRepository.load(venv).find_packages(
             get_dependency("poetry-core")
         )
+
+
+def test_isolated_env_install_with_constraints_success(pool: RepositoryPool) -> None:
+    constraints = [
+        Dependency("poetry-core", "<2", groups=[CONSTRAINTS_GROUP_NAME]),
+        Dependency("attrs", ">1", groups=[CONSTRAINTS_GROUP_NAME]),
+    ]
+
+    with ephemeral_environment(Path(sys.executable)) as venv:
+        env = IsolatedEnv(venv, pool)
+        assert not InstalledRepository.load(venv).find_packages(
+            get_dependency("poetry-core")
+        )
+        assert not InstalledRepository.load(venv).find_packages(get_dependency("attrs"))
+
+        env.install({"poetry-core"}, constraints=constraints)
+        assert InstalledRepository.load(venv).find_packages(
+            get_dependency("poetry-core")
+        )
+        assert not InstalledRepository.load(venv).find_packages(get_dependency("attrs"))
 
 
 def test_isolated_env_install_discards_requirements_not_needed_by_env(
@@ -103,6 +126,35 @@ def test_isolated_env_install_error(
         env = IsolatedEnv(venv, pool)
         with pytest.raises(exception):
             env.install(requirements)
+
+
+@pytest.mark.parametrize(
+    ("requirements", "constraints", "exception"),
+    [
+        (
+            {"poetry-core==1.5.0"},
+            [("poetry-core", "1.6.0")],
+            IncompatibleConstraintsError,
+        ),
+        ({"black==19.10b0"}, [("attrs", "17.4.0")], SolverProblemError),
+    ],
+)
+def test_isolated_env_install_with_constraints_error(
+    requirements: Collection[str],
+    constraints: list[tuple[str, str]],
+    exception: type[Exception],
+    pool: RepositoryPool,
+) -> None:
+    with ephemeral_environment(Path(sys.executable)) as venv:
+        env = IsolatedEnv(venv, pool)
+        with pytest.raises(exception):
+            env.install(
+                requirements,
+                constraints=[
+                    Dependency(name, version, groups=[CONSTRAINTS_GROUP_NAME])
+                    for name, version in constraints
+                ],
+            )
 
 
 def test_isolated_env_install_failure(

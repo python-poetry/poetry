@@ -24,6 +24,15 @@
       "items": {
         "$ref": "#/definitions/repository"
       }
+    },
+    "build-constraints": {
+      "type": "object",
+      "description": "This is a dict of package name (keys) and version constraints (values) to restrict build requirements for a package.",
+      "patternProperties": {
+        "^[a-zA-Z-_.0-9]+$": {
+          "$ref": "#/definitions/dependencies"
+        }
+      }
     }
   },
   "definitions": {
