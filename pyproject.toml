@@ -4,7 +4,7 @@ version = "2.2.0.dev0"
 description = "Python dependency management and packaging made easy."
 requires-python = ">=3.9,<4.0"
 dependencies = [
-    "poetry-core @ git+https://github.com/python-poetry/poetry-core.git",
+    "poetry-core @ git+https://github.com/radoering/poetry-core.git@fix-python-constraint-prereleases",
     "build (>=1.2.1,<2.0.0)",
     "cachecontrol[filecache] (>=0.14.0,<0.15.0)",
     "cleo (>=2.1.0,<3.0.0)",
