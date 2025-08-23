@@ -1408,7 +1408,7 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
     assert str(httpx_deps[0].python_constraint) == "<3.7"
 
     assert httpx_deps[1].constraint == Version.parse("2.0.0")
-    assert str(httpx_deps[1].python_constraint) == ">=3.7"
+    assert str(httpx_deps[1].python_constraint) == ">=3.7.dev0"
     assert httpx_deps[1].extras == {"brotli"}
 
 

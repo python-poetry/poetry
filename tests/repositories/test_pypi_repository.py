@@ -106,7 +106,7 @@ def test_package(
     ]
     win_inet = package.extras[canonicalize_name("socks")][1]
     assert win_inet.name == "win-inet-pton"
-    assert win_inet.python_versions in {"~2.7 || ~2.6", ">=2.6 <2.8"}
+    assert win_inet.python_versions == ">=2.6.dev0 <2.8"
 
     # Different versions of poetry-core simplify the following marker differently,
     # either is fine.
@@ -231,7 +231,7 @@ def test_fallback_inspects_sdist_first_if_no_matching_wheels_can_be_found(
 
     dep = package.requires[0]
     assert dep.name == "futures"
-    assert dep.python_versions == "~2.7"
+    assert dep.python_versions == "2.7.*"
 
 
 def test_fallback_pep_658_metadata(
@@ -255,7 +255,7 @@ def test_fallback_pep_658_metadata(
 
         dep = package.requires[0]
         assert dep.name == "futures"
-        assert dep.python_versions == "~2.7"
+        assert dep.python_versions == "2.7.*"
 
 
 def test_pypi_repository_supports_reading_bz2_files(

@@ -91,7 +91,7 @@ def test_create_poetry(fixture_dir: FixtureDirGetter) -> None:
 
     pathlib2 = dependencies[canonicalize_name("pathlib2")]
     assert pathlib2.pretty_constraint == "^2.2"
-    assert parse_constraint(pathlib2.python_versions) == parse_constraint("~2.7")
+    assert parse_constraint(pathlib2.python_versions) == parse_constraint("2.7.*")
     assert not pathlib2.is_optional()
 
     demo = dependencies[canonicalize_name("demo")]

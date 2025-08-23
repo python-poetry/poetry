@@ -290,7 +290,7 @@ def test_get_package_information_chooses_correct_distribution(
 
     assert package.requires == [Dependency("futures", "*")]
     futures_dep = package.requires[0]
-    assert futures_dep.python_versions == "~2.7"
+    assert futures_dep.python_versions == "2.7.*"
 
 
 def test_get_package_information_includes_python_requires(
