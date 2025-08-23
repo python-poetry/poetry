@@ -1184,9 +1184,9 @@ develop = false
 
 [package.source]
 type = "git"
-url = "https://github.com/python-poetry/poetry-core.git"
-reference = "HEAD"
-resolved_reference = "e0bd00670fd883238838d0ced7d6bfe24c733dfd"
+url = "https://github.com/radoering/poetry-core.git"
+reference = "fix-python-constraint-prereleases"
+resolved_reference = "c155ade8dd353e5c5793f37aa9a4966dd7568779"
 
 [[package]]
 name = "pre-commit"
@@ -2027,4 +2027,4 @@ cffi = ["cffi (>=1.17) ; python_version >= \"3.13\" and platform_python_implemen
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<4.0"
-content-hash = "daa6cd9277450d0b1210491a925245171e778f91c01acefedf994830e6ba2285"
+content-hash = "3e9f36b3a1948151b71eef1d5cb9138941589b48b28a50b92251aea724eb3cd7"
