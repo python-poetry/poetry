@@ -202,9 +202,12 @@ class Provider:
         original_python_constraint = self._package_python_constraint
 
         self._env = env
+        # We use the stable version here to improve support of environments of Python pre-release
+        # versions, e.g. Python 3.14rc2. Without using the stable version here, a dependency with
+        # a marker like `python_version >= "3.14"` would not be installed.
         self._package_python_constraint = Version.parse(
             env.marker_env["python_full_version"]
-        )
+        ).stable
 
         try:
             yield self
