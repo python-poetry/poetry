@@ -32,12 +32,17 @@ class SourceAddCommand(Command):
         argument(
             "url",
             "Source repository URL."
-            " Required, except for PyPI, for which it is not allowed.",
+            "Required for http repositoy, except for PyPI, for which it is not allowed.",
             optional=True,
         ),
     ]
 
     options: ClassVar[list[Option]] = [
+        option(
+            "path",
+            "Source repository path.",
+            flag=False,
+        ),
         option(
             "priority",
             "p",
@@ -55,6 +60,7 @@ class SourceAddCommand(Command):
         name: str = self.argument("name")
         lower_name = name.lower()
         url: str = self.argument("url")
+        path: str = self.option("path", "")
         priority_str: str | None = self.option("priority", None)
 
         if lower_name == "pypi":
@@ -64,7 +70,7 @@ class SourceAddCommand(Command):
                     "<error>The URL of PyPI is fixed and cannot be set.</error>"
                 )
                 return 1
-        elif not url:
+        elif not url and not path:
             self.line_error(
                 "<error>A custom source cannot be added without a URL.</error>"
             )
@@ -80,7 +86,7 @@ class SourceAddCommand(Command):
             priority = Priority[priority_str.upper()]
 
         sources = AoT([])
-        new_source = Source(name=name, url=url, priority=priority)
+        new_source = Source(name=name, url=url, path=path, priority=priority)
         is_new_source = True
 
         for source in self.poetry.get_sources():
