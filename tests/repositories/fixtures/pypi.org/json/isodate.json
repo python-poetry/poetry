@@ -38,9 +38,12 @@
   ],
   "meta": {
     "_last-serial": 0,
-    "api-version": "1.3"
+    "api-version": "1.4"
   },
   "name": "isodate",
+  "project-status": {
+    "status": "active"
+  },
   "versions": [
     "0.7.0"
   ]
