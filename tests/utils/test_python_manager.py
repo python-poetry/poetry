@@ -26,6 +26,14 @@ if TYPE_CHECKING:
     from tests.types import ProjectFactory
 
 
+@pytest.fixture(scope="session")
+def python_version() -> Version:
+    version = sys.version.split(" ", 1)[0]
+    if version[-1] == "+":
+        version = version[:-1]
+    return Version.parse(version)
+
+
 def test_python_get_version_on_the_fly() -> None:
     python = Python.get_system_python()
 
@@ -49,19 +57,11 @@ def test_python_get_system_python() -> None:
     )
 
 
-def test_python_get_preferred_default(config: Config) -> None:
+def test_python_get_preferred_default(config: Config, python_version: Version) -> None:
     python = Python.get_preferred_python(config)
 
-    version_info: tuple[int, int, int] | tuple[int, int, int, str, int]
-    if sys.version_info[3] == "final":
-        version_info = sys.version_info[:3]
-    elif sys.version_info[3] == "candidate":
-        version_info = (*sys.version_info[:3], "rc", sys.version_info[4])
-    else:
-        version_info = sys.version_info[:5]
-
     assert python.executable.resolve() == Path(sys.executable).resolve()
-    assert python.version == Version.parse(".".join(str(v) for v in version_info))
+    assert python.version == python_version
 
 
 def test_get_preferred_python_use_poetry_python_disabled(
@@ -103,7 +103,7 @@ def test_fallback_on_detect_active_python(with_no_active_python: MagicMock) -> N
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 def test_detect_active_python_with_bat(
-    tmp_path: Path, without_mocked_findpython: None
+    tmp_path: Path, without_mocked_findpython: None, python_version: Version
 ) -> None:
     """On Windows pyenv uses batch files for python management."""
     python_wrapper = tmp_path / "python.bat"
@@ -125,9 +125,7 @@ def test_detect_active_python_with_bat(
     # TODO: Asses if Poetry needs to discover real path in these cases as
     # this is not a symlink and won't be handled by findpython
     assert python.executable.as_posix() == Path(sys.executable).as_posix()
-    assert python.version == Version.parse(
-        ".".join(str(v) for v in sys.version_info[:3])
-    )
+    assert python.version == python_version
 
 
 def test_python_find_compatible(
