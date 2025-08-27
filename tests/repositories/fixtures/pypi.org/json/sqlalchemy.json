@@ -19,9 +19,12 @@
   ],
   "meta": {
     "_last-serial": 0,
-    "api-version": "1.3"
+    "api-version": "1.4"
   },
   "name": "sqlalchemy",
+  "project-status": {
+    "status": "active"
+  },
   "versions": [
     "1.2.12"
   ]
