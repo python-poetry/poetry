@@ -90,6 +90,9 @@ class Factory(BaseFactory):
             url = source.get("url")
             if name and url and name not in existing_repositories:
                 repositories[name] = {"url": url}
+            path = source.get("path")
+            if name and path and name not in existing_repositories:
+                repositories[name] = {"path": path}
 
         config.merge({"repositories": repositories})
 
@@ -146,7 +149,7 @@ class Factory(BaseFactory):
 
             if io.is_debug():
                 io.write_line(
-                    f"Adding repository {repository.name} ({repository.url})"
+                    f"Adding repository {repository.name} ({getattr(repository, 'url', repository.path)})"
                     f" and setting it as {priority.name.lower()}"
                 )
 
@@ -182,6 +185,7 @@ class Factory(BaseFactory):
         from poetry.repositories.legacy_repository import LegacyRepository
         from poetry.repositories.pypi_repository import PyPiRepository
         from poetry.repositories.single_page_repository import SinglePageRepository
+        from poetry.repositories.wheelhouse_repository import LocalPathRepository
 
         try:
             name = source["name"]
@@ -204,20 +208,25 @@ class Factory(BaseFactory):
         try:
             url = source["url"]
         except KeyError:
-            raise InvalidSourceError(f"Missing [url] in source {name!r}.")
+            try:
+                path = source["path"]
+            except KeyError:
+                raise InvalidSourceError(f"Missing [url] or [path] in source {name!r}.")
+            else:
+                return LocalPathRepository(name, path)
+        else:
+            repository_class = LegacyRepository
 
-        repository_class = LegacyRepository
+            if re.match(r".*\.(htm|html)$", url):
+                repository_class = SinglePageRepository
 
-        if re.match(r".*\.(htm|html)$", url):
-            repository_class = SinglePageRepository
-
-        return repository_class(
-            name,
-            url,
-            config=config,
-            disable_cache=disable_cache,
-            pool_size=pool_size,
-        )
+            return repository_class(
+                name,
+                url,
+                config=config,
+                disable_cache=disable_cache,
+                pool_size=pool_size,
+            )
 
     @classmethod
     def create_pyproject_from_package(cls, package: Package) -> TOMLDocument:
