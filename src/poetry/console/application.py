@@ -54,6 +54,8 @@ def load_command(name: str) -> Callable[[], Command]:
 COMMANDS = [
     "about",
     "add",
+    # Alias commands
+    "activate",
     "build",
     "check",
     "config",
