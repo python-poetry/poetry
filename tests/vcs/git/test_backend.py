@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import shutil
+
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
@@ -93,6 +95,27 @@ def test_clone_success(tmp_path: Path, temp_repo: TempRepoFixture) -> None:
 
     target_dir = source_root_dir / "clone-test"
     assert (target_dir / ".git").is_dir()
+
+
+@pytest.mark.skip_git_mock
+def test_clone_existing_locked_tag(tmp_path: Path, temp_repo: TempRepoFixture) -> None:
+    source_root_dir = tmp_path / "test-repo"
+    Git.clone(
+        url=temp_repo.path.as_uri(), source_root=source_root_dir, name="clone-test"
+    )
+
+    tag_ref = source_root_dir / "clone-test" / ".git" / "refs" / "tags" / "v1"
+    assert tag_ref.is_file()
+
+    tag_ref_lock = tag_ref.with_name("v1.lock")
+    shutil.copy(tag_ref, tag_ref_lock)
+
+    Git.clone(
+        url=temp_repo.path.as_uri(), source_root=source_root_dir, name="clone-test"
+    )
+
+    assert tag_ref.is_file()
+    assert not tag_ref_lock.is_file()
 
 
 @pytest.mark.skip_git_mock

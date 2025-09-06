@@ -17,6 +17,7 @@ from dulwich.client import get_transport_and_path
 from dulwich.config import ConfigFile
 from dulwich.config import parse_submodules
 from dulwich.errors import NotGitRepository
+from dulwich.file import FileLocked
 from dulwich.index import IndexEntry
 from dulwich.refs import ANNOTATED_TAG_SUFFIX
 from dulwich.repo import Repo
@@ -344,15 +345,23 @@ class Git:
             (b"refs/remotes/origin", b"refs/heads/"),
             (b"refs/tags", b"refs/tags"),
         }:
-            local.refs.import_refs(
-                base=base,
-                other={
-                    n[len(prefix) :]: v
-                    for (n, v) in remote_refs.refs.items()
-                    if n.startswith(prefix) and not n.endswith(ANNOTATED_TAG_SUFFIX)
-                },
-            )
-
+            for _ in range(2):
+                try:
+                    local.refs.import_refs(
+                        base=base,
+                        other={
+                            n[len(prefix) :]: v
+                            for (n, v) in remote_refs.refs.items()
+                            if n.startswith(prefix)
+                            and not n.endswith(ANNOTATED_TAG_SUFFIX)
+                        },
+                    )
+                    break
+                except FileLocked as e:
+                    logger.debug(
+                        f"Removing {e.lockfilename} lock and retrying to import refs"
+                    )
+                    Path(e.lockfilename.decode()).unlink()
         try:
             with local:
                 local.get_worktree().reset_index()
