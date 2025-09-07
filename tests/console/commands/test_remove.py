@@ -129,6 +129,84 @@ bar = "^1.0.0"
     assert expected_poetry_string in string_content
 
 
+def test_remove_from_pep735_group_and_poetry_group(
+    tester: CommandTester,
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installed: Repository,
+) -> None:
+    repo.add_package(Package("foo", "2.0.0"))
+    repo.add_package(Package("bar", "1.0.0"))
+
+    pyproject: dict[str, Any] = app.poetry.file.read()
+
+    pep735_dependencies: dict[str, Any] = tomlkit.parse(
+        """\
+[dependency-groups]
+dev = [
+    "foo>=2.0",
+    "bar>=1.0",
+]
+"""
+    )
+
+    poetry_dependencies: dict[str, Any] = tomlkit.parse(
+        """\
+[tool.poetry.group.dev.dependencies]
+foo = "^2.0.0"
+bar = "^1.0.0"
+
+"""
+    )
+
+    pyproject["dependency-groups"] = pep735_dependencies["dependency-groups"]
+    pyproject["tool"]["poetry"]["group"] = poetry_dependencies["tool"]["poetry"][
+        "group"
+    ]
+    pyproject = cast("TOMLDocument", pyproject)
+    app.poetry.file.write(pyproject)
+
+    app.poetry.package.add_dependency(
+        Factory.create_dependency("foo", "^2.0.0", groups=["dev"])
+    )
+    app.poetry.package.add_dependency(
+        Factory.create_dependency("bar", "^1.0.0", groups=["dev"])
+    )
+
+    tester.execute("foo")
+
+    pyproject = app.poetry.file.read()
+    pyproject = cast("dict[str, Any]", pyproject)
+    pep735_dependencies = pyproject["dependency-groups"]["dev"]
+    assert "foo>=2.0" not in pep735_dependencies
+    assert "bar>=1.0" in pep735_dependencies
+    poetry_dependencies = pyproject["tool"]["poetry"]["group"]["dev"]["dependencies"]
+    assert "foo" not in poetry_dependencies
+    assert "bar" in poetry_dependencies
+
+    expected_pep735_string = """\
+[dependency-groups]
+dev = [
+    "bar>=1.0",
+]
+"""
+    expected_poetry_string = """\
+
+[tool.poetry.group.dev.dependencies]
+bar = "^1.0.0"
+
+"""
+    pyproject = cast("TOMLDocument", pyproject)
+    string_content = pyproject.as_string()
+    if "\r\n" in string_content:
+        # consistent line endings
+        expected_pep735_string = expected_pep735_string.replace("\n", "\r\n")
+        expected_poetry_string = expected_poetry_string.replace("\n", "\r\n")
+
+    assert expected_pep735_string in string_content
+    assert expected_poetry_string in string_content
+
+
 @pytest.mark.parametrize("pep_735", [True, False])
 def test_remove_without_specific_group_removes_from_all_groups(
     pep_735: bool,
