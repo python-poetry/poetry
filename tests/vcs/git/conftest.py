@@ -50,6 +50,8 @@ def temp_repo(tmp_path: Path) -> TempRepoFixture:
         no_verify=True,
     )
 
+    repo[b"refs/tags/v1"] = head_commit
+
     return TempRepoFixture(
         path=tmp_path,
         repo=repo,

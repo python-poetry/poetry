@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import shutil
+
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
@@ -7,6 +9,7 @@ import pytest
 
 from dulwich.repo import Repo
 
+from poetry.console.exceptions import PoetryRuntimeError
 from poetry.vcs.git.backend import Git
 from poetry.vcs.git.backend import annotated_tag
 from poetry.vcs.git.backend import is_revision_sha
@@ -107,3 +110,35 @@ def test_short_sha_not_in_head(tmp_path: Path, temp_repo: TempRepoFixture) -> No
 
     target_dir = source_root_dir / "clone-test"
     assert (target_dir / ".git").is_dir()
+
+
+@pytest.mark.skip_git_mock
+def test_clone_existing_locked_tag(tmp_path: Path, temp_repo: TempRepoFixture) -> None:
+    source_root_dir = tmp_path / "test-repo"
+    source_url = temp_repo.path.as_uri()
+    Git.clone(url=source_url, source_root=source_root_dir, name="clone-test")
+
+    tag_ref = source_root_dir / "clone-test" / ".git" / "refs" / "tags" / "v1"
+    assert tag_ref.is_file()
+
+    tag_ref_lock = tag_ref.with_name("v1.lock")
+    shutil.copy(tag_ref, tag_ref_lock)
+
+    with pytest.raises(PoetryRuntimeError) as exc_info:
+        Git.clone(url=source_url, source_root=source_root_dir, name="clone-test")
+
+    expected_short = (
+        f"Failed to clone {source_url} at 'refs/heads/master',"
+        f" unable to acquire file lock for {tag_ref}."
+    )
+    assert str(exc_info.value) == expected_short
+    assert exc_info.value.get_text(debug=True, strip=True) == (
+        f"{expected_short}\n\n"
+        "Note: This error arises from interacting with the specified vcs source"
+        " and is likely not a Poetry issue.\n"
+        "This issue could be caused by any of the following;\n\n"
+        "- another process is holding the file lock\n"
+        "- another process crashed while holding the file lock\n\n"
+        f"Try again later or remove the {tag_ref_lock} manually"
+        " if you are sure no other process is holding it."
+    )
