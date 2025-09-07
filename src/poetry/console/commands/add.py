@@ -198,21 +198,11 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                     for dep in groups_content[group]
                 ]
 
-            if "group" not in poetry_content:
-                poetry_content["group"] = table(is_super_table=True)
-
-            groups = poetry_content["group"]
-
-            if group not in groups:
-                groups[group] = table()
-                groups.add(nl())
-
-            this_group = groups[group]
-
-            if "dependencies" not in this_group:
-                this_group["dependencies"] = table()
-
-            poetry_section = this_group["dependencies"]
+            poetry_section = (
+                poetry_content.get("group", {})
+                .get(group, {})
+                .get("dependencies", table())
+            )
             project_section = []
 
         existing_packages = self.get_existing_packages_from_input(
@@ -379,8 +369,21 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                 content["tool"] = table()
             if "poetry" not in content["tool"]:
                 content["tool"]["poetry"] = poetry_content
-            if group == MAIN_GROUP and "dependencies" not in poetry_content:
-                poetry_content["dependencies"] = poetry_section
+            if group == MAIN_GROUP:
+                if "dependencies" not in poetry_content:
+                    poetry_content["dependencies"] = poetry_section
+            else:
+                if "group" not in poetry_content:
+                    poetry_content["group"] = table(is_super_table=True)
+
+                groups = poetry_content["group"]
+
+                if group not in groups:
+                    groups[group] = table()
+                    groups.add(nl())
+
+                if "dependencies" not in groups[group]:
+                    groups[group]["dependencies"] = poetry_section
 
         if groups_content and group != MAIN_GROUP:
             if "dependency-groups" not in content:

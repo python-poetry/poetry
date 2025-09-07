@@ -633,8 +633,9 @@ Using version ^1.4.4 for pendulum
     ]
 
 
+@pytest.mark.parametrize("additional_poetry_group", [False, True])
 def test_add_to_existing_group(
-    app: PoetryTestApplication, tester: CommandTester
+    app: PoetryTestApplication, tester: CommandTester, additional_poetry_group: bool
 ) -> None:
     pyproject: dict[str, Any] = app.poetry.file.read()
     groups_content: dict[str, Any] = tomlkit.parse(
@@ -646,6 +647,16 @@ example = [
 """
     )
     pyproject["dependency-groups"] = groups_content["dependency-groups"]
+    if additional_poetry_group:
+        poetry_groups_content: dict[str, Any] = tomlkit.parse(
+            """\
+[tool.poetry.group.example.dependencies]
+cachy = { allow-prereleases = true }
+"""
+        )
+        pyproject["tool"]["poetry"]["group"] = poetry_groups_content["tool"]["poetry"][
+            "group"
+        ]
     pyproject = cast("TOMLDocument", pyproject)
     app.poetry.file.write(pyproject)
 
@@ -666,6 +677,13 @@ Using version ^1.4.4 for pendulum
         "cachy (>=0.2.0,<0.3.0)",
         "pendulum (>=1.4.4,<2.0.0)",
     ]
+    if additional_poetry_group:
+        assert "example" in pyproject["tool"]["poetry"]["group"]
+        assert pyproject["tool"]["poetry"]["group"]["example"]["dependencies"] == {
+            "cachy": {"allow-prereleases": True},
+        }
+    else:
+        assert "group" not in pyproject["tool"]["poetry"]
 
 
 def test_add_to_group_with_latest_overwrite_existing(
@@ -757,6 +775,7 @@ Using version ^0.2.0 for cachy
 
     pyproject = app.poetry.file.read()
     pyproject = cast("dict[str, Any]", pyproject)
+    assert "dependency-groups" not in pyproject
     assert "example" in pyproject["tool"]["poetry"]["group"]
     assert "pendulum" in pyproject["tool"]["poetry"]["group"]["example"]["dependencies"]
     assert "cachy" in pyproject["tool"]["poetry"]["group"]["example"]["dependencies"]
