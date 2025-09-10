@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import logging
+import os
 import re
 
 from pathlib import Path
@@ -17,6 +18,7 @@ from dulwich.client import get_transport_and_path
 from dulwich.config import ConfigFile
 from dulwich.config import parse_submodules
 from dulwich.errors import NotGitRepository
+from dulwich.file import FileLocked
 from dulwich.index import IndexEntry
 from dulwich.refs import ANNOTATED_TAG_SUFFIX
 from dulwich.repo import Repo
@@ -43,7 +45,10 @@ ERROR_MESSAGE_NOTE = (
     "Poetry issue."
 )
 ERROR_MESSAGE_PROBLEMS_SECTION_START = (
-    "This issue could be caused by any of the following;\n\n"
+    "This issue could be caused by any of the following;\n"
+)
+ERROR_MESSAGE_PROBLEMS_SECTION_START_NETWORK_ISSUES = (
+    f"{ERROR_MESSAGE_PROBLEMS_SECTION_START}\n"
     "- there are network issues in this environment"
 )
 ERROR_MESSAGE_BAD_REVISION = (
@@ -58,6 +63,12 @@ ERROR_MESSAGE_BAD_REMOTE = (
     "    - does not exist\n"
     "    - requires credentials that were either not configured or is incorrect\n"
     "    - is in accessible due to network issues"
+)
+ERROR_MESSAGE_FILE_LOCK = (
+    "- another process is holding the file lock\n"
+    "- another process crashed while holding the file lock\n\n"
+    "Try again later or remove the {lock_file} manually"
+    " if you are sure no other process is holding it."
 )
 
 
@@ -266,7 +277,7 @@ class Git:
                 exception=e,
                 info=[
                     ERROR_MESSAGE_NOTE,
-                    ERROR_MESSAGE_PROBLEMS_SECTION_START,
+                    ERROR_MESSAGE_PROBLEMS_SECTION_START_NETWORK_ISSUES,
                     ERROR_MESSAGE_BAD_REMOTE.format(remote=url),
                 ],
             )
@@ -283,7 +294,7 @@ class Git:
                 exception=e,
                 info=[
                     ERROR_MESSAGE_NOTE,
-                    ERROR_MESSAGE_PROBLEMS_SECTION_START,
+                    ERROR_MESSAGE_PROBLEMS_SECTION_START_NETWORK_ISSUES,
                     ERROR_MESSAGE_BAD_REVISION.format(revision=revision),
                 ],
             )
@@ -317,7 +328,7 @@ class Git:
                 reason=f"<error>Failed to clone {url} at '{refspec.key}', verify ref exists on remote.</>",
                 info=[
                     ERROR_MESSAGE_NOTE,
-                    ERROR_MESSAGE_PROBLEMS_SECTION_START,
+                    ERROR_MESSAGE_PROBLEMS_SECTION_START_NETWORK_ISSUES,
                     ERROR_MESSAGE_BAD_REVISION.format(revision=refspec.key),
                 ],
             )
@@ -330,7 +341,7 @@ class Git:
                 reason=f"<error>Failed to clone {url} at '{refspec.key}', verify ref exists on remote.</>",
                 info=[
                     ERROR_MESSAGE_NOTE,
-                    ERROR_MESSAGE_PROBLEMS_SECTION_START,
+                    ERROR_MESSAGE_PROBLEMS_SECTION_START_NETWORK_ISSUES,
                     ERROR_MESSAGE_BAD_REVISION.format(revision=refspec.key),
                     f"\nThis particular error is prevalent when {refspec.key} could not be resolved to a specific commit sha.",
                 ],
@@ -344,14 +355,33 @@ class Git:
             (b"refs/remotes/origin", b"refs/heads/"),
             (b"refs/tags", b"refs/tags"),
         }:
-            local.refs.import_refs(
-                base=base,
-                other={
-                    n[len(prefix) :]: v
-                    for (n, v) in remote_refs.refs.items()
-                    if n.startswith(prefix) and not n.endswith(ANNOTATED_TAG_SUFFIX)
-                },
-            )
+            try:
+                local.refs.import_refs(
+                    base=base,
+                    other={
+                        n[len(prefix) :]: v
+                        for (n, v) in remote_refs.refs.items()
+                        if n.startswith(prefix) and not n.endswith(ANNOTATED_TAG_SUFFIX)
+                    },
+                )
+            except FileLocked as e:
+
+                def to_str(path: bytes) -> str:
+                    return path.decode().replace(os.sep * 2, os.sep)
+
+                raise PoetryRuntimeError.create(
+                    reason=(
+                        f"<error>Failed to clone {url} at '{refspec.key}',"
+                        f" unable to acquire file lock for {to_str(e.filename)}.</>"
+                    ),
+                    info=[
+                        ERROR_MESSAGE_NOTE,
+                        ERROR_MESSAGE_PROBLEMS_SECTION_START,
+                        ERROR_MESSAGE_FILE_LOCK.format(
+                            lock_file=to_str(e.lockfilename)
+                        ),
+                    ],
+                )
 
         try:
             with local:
@@ -374,7 +404,7 @@ class Git:
                 reason=f"<error>Failed to clone {url} at '{refspec.key}', verify ref exists on remote.</>",
                 info=[
                     ERROR_MESSAGE_NOTE,
-                    ERROR_MESSAGE_PROBLEMS_SECTION_START,
+                    ERROR_MESSAGE_PROBLEMS_SECTION_START_NETWORK_ISSUES,
                     ERROR_MESSAGE_BAD_REVISION.format(revision=refspec.key),
                 ],
                 exception=e,
