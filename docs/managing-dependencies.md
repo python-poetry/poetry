@@ -120,6 +120,26 @@ special care should be taken to ensure they are compatible with each other.
 You can include dependencies from one group in another group.
 This is useful when you want to aggregate dependencies from multiple groups into a single group.
 
+{{< tabs tabTotal="2" tabID1="group-include-pep735" tabID2="group-include-poetry" tabName1="[dependency-groups]" tabName2="[tool.poetry]">}}
+
+{{< tab tabID="group-include-pep735" >}}
+```toml
+[dependency-groups]
+test = [
+    "pytest (>=8.0.0,<9.0.0)",
+]
+lint = [
+    "ruff (>=0.11.0,<0.12.0)",
+]
+dev = [
+    { include-group = "test" },
+    { include-group = "lint" },
+    "tox",
+]
+```
+{{< /tab >}}
+
+{{< tab tabID="group-include-poetry" >}}
 ```toml
 [tool.poetry.group.test.dependencies]
 pytest = "^8.0.0"
@@ -136,6 +156,8 @@ include-groups = [
 [tool.poetry.group.dev.dependencies]
 tox = "*"
 ```
+{{< /tab >}}
+{{< /tabs >}}
 
 In this example, the `dev` group includes all dependencies from the `test` and `lint` groups.
 
