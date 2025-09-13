@@ -1184,9 +1184,9 @@ develop = false
 
 [package.source]
 type = "git"
-url = "https://github.com/python-poetry/poetry-core.git"
-reference = "HEAD"
-resolved_reference = "2d18c0e8b05f538bbfeb56076aee7c49a54085cb"
+url = "https://github.com/radoering/poetry-core.git"
+reference = "python314"
+resolved_reference = "7b26d9067cc8195dccd793ea50ed57da6142e3dc"
 
 [[package]]
 name = "pre-commit"
@@ -2027,4 +2027,4 @@ cffi = ["cffi (>=1.17) ; python_version >= \"3.13\" and platform_python_implemen
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<4.0"
-content-hash = "cf1eefff3c1d6ea8bf1beaea7b3ea695766783a7069f4504e5ee7e1deaeea175"
+content-hash = "8bc8518d6227cd1439c2b99f1e78abdf9005b466fc5394f1e9b626e288b8883a"
