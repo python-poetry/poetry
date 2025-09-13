@@ -1174,19 +1174,15 @@ testing = ["coverage", "pytest", "pytest-benchmark"]
 
 [[package]]
 name = "poetry-core"
-version = "2.1.3"
+version = "2.2.0"
 description = "Poetry PEP 517 Build Backend"
 optional = false
-python-versions = ">=3.9, <4.0"
+python-versions = "<4.0,>=3.9"
 groups = ["main"]
-files = []
-develop = false
-
-[package.source]
-type = "git"
-url = "https://github.com/python-poetry/poetry-core.git"
-reference = "HEAD"
-resolved_reference = "614a980ebc5387e7066853822fd9cf120b505aaa"
+files = [
+    {file = "poetry_core-2.2.0-py3-none-any.whl", hash = "sha256:0edea81d07e88cbd407369eef753c722da8ff1338f554788dc04636e756318fc"},
+    {file = "poetry_core-2.2.0.tar.gz", hash = "sha256:b4033b71b99717a942030e074fec7e3082e5fde7a8ed10f02cd2413bdf940b1f"},
+]
 
 [[package]]
 name = "pre-commit"
@@ -2027,4 +2023,4 @@ cffi = ["cffi (>=1.17) ; python_version >= \"3.13\" and platform_python_implemen
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<4.0"
-content-hash = "cf1eefff3c1d6ea8bf1beaea7b3ea695766783a7069f4504e5ee7e1deaeea175"
+content-hash = "2f00eb595b5fb641435f38bc953ea094ae157576cc815ca1a39a1bcdc4f889a2"
