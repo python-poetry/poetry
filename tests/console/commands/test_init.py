@@ -1177,7 +1177,7 @@ def test_init_does_not_create_project_structure_in_non_empty_directory(
 ) -> None:
     """Test that poetry init does not create project structure in non-empty directory."""
     # Create some existing files
-    (source_dir / "existing_file.txt").write_text("existing content")
+    (source_dir / "existing_file.txt").write_text("existing content", encoding="utf-8")
     (source_dir / "existing_dir").mkdir()
 
     inputs = [
