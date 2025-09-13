@@ -1,5 +1,38 @@
 # Change Log
 
+## [2.2.0] - 2025-09-14
+
+### Added
+
+- **Add support for nesting dependency groups** ([#10166](https://github.com/python-poetry/poetry/pull/10166)).
+- **Add support for PEP 735 dependency groups** ([#10130](https://github.com/python-poetry/poetry/pull/10130)).
+- **Add support for PEP 639 license clarity** ([#10413](https://github.com/python-poetry/poetry/pull/10413)).
+- Add a `--format` option to `poetry show` to alternatively output json format ([#10487](https://github.com/python-poetry/poetry/pull/10487)).
+- Add official support for Python 3.14 ([#10514](https://github.com/python-poetry/poetry/pull/10514)).
+
+### Changed
+
+- **Normalize dependency group names** ([#10387](https://github.com/python-poetry/poetry/pull/10387)).
+- Change `installer.no-binary` and `installer.only-binary` so that explicit package names will take precedence over `:all:` ([#10278](https://github.com/python-poetry/poetry/pull/10278)).
+- Improve log output during `poetry install` when a wheel is built from source ([#10404](https://github.com/python-poetry/poetry/pull/10404)).
+- Improve error message in case a file lock could not be acquired while cloning a git repository ([#10535](https://github.com/python-poetry/poetry/pull/10535)).
+- Require `dulwich>=0.24.0` ([#10492](https://github.com/python-poetry/poetry/pull/10492)).
+- Allow `virtualenv>=20.33` again ([#10506](https://github.com/python-poetry/poetry/pull/10506)).
+- Allow `findpython>=0.7` ([#10510](https://github.com/python-poetry/poetry/pull/10510)).
+- Allow `importlib-metadata>=8.7` ([#10511](https://github.com/python-poetry/poetry/pull/10511)).
+
+### Fixed
+
+- Fix an issue where `poetry new` did not create the project structure in an existing empty directory ([#10431](https://github.com/python-poetry/poetry/pull/10431)).
+- Fix an issue where a dependency that was required for a specific Python version was not installed into an environment of a pre-release Python version ([#10516](https://github.com/python-poetry/poetry/pull/10516)).
+
+### poetry-core ([`2.2.0`](https://github.com/python-poetry/poetry-core/releases/tag/2.2.0))
+
+- Deprecate table values and values that are not valid SPDX expressions for `[project.license]` ([#870](https://github.com/python-poetry/poetry-core/pull/870)).
+- Fix an issue where explicitly included files that are in `.gitignore` were not included in the distribution ([#874](https://github.com/python-poetry/poetry-core/pull/874)).
+- Fix an issue where marker operations could result in invalid markers ([#875](https://github.com/python-poetry/poetry-core/pull/875)).
+
+
 ## [2.1.4] - 2025-08-05
 
 ### Changed
@@ -2529,7 +2562,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/2.1.4...main
+[Unreleased]: https://github.com/python-poetry/poetry/compare/2.2.0...main
+[2.2.0]: https://github.com/python-poetry/poetry/releases/tag/2.2.0
 [2.1.4]: https://github.com/python-poetry/poetry/releases/tag/2.1.4
 [2.1.3]: https://github.com/python-poetry/poetry/releases/tag/2.1.3
 [2.1.2]: https://github.com/python-poetry/poetry/releases/tag/2.1.2
