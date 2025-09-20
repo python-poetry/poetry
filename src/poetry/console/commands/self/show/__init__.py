@@ -18,7 +18,11 @@ class SelfShowCommand(SelfCommand, ShowCommand):
     name = "self show"
     options: ClassVar[list[Option]] = [
         option("addons", None, "List only add-on packages installed."),
-        *[o for o in ShowCommand.options if o.name in {"tree", "latest", "outdated"}],
+        *[
+            o
+            for o in ShowCommand.options
+            if o.name in {"tree", "latest", "outdated", "format"}
+        ],
     ]
     description = "Show packages from Poetry's runtime environment."
     help = f"""\
