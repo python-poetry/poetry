@@ -974,6 +974,7 @@ poetry self show
 * `--tree`: List the dependencies as a tree.
 * `--latest (-l)`: Show the latest version.
 * `--outdated (-o)`: Show the latest version but only for packages that are outdated.
+* `--format (-f)`: Specify the output format (`json` or `text`). Default is `text`. `json` cannot be combined with the `--tree` option.
 
 ### self show plugins
 
