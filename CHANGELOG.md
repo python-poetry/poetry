@@ -1,5 +1,19 @@
 # Change Log
 
+## [2.2.1] - 2025-09-21
+
+### Fixed
+
+- Fix an issue where `poetry self show` failed with a message about an invalid output format ([#10560](https://github.com/python-poetry/poetry/pull/10560)).
+
+### Docs
+
+- Remove outdated statements about dependency groups ([#10561](https://github.com/python-poetry/poetry/pull/10561)).
+
+### poetry-core ([`2.2.1`](https://github.com/python-poetry/poetry-core/releases/tag/2.2.1))
+
+- Fix an issue where it was not possible to declare a PEP 735 dependency group as optional ([#888](https://github.com/python-poetry/poetry-core/pull/888)).
+
 ## [2.2.0] - 2025-09-14
 
 ### Added
@@ -2562,7 +2576,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/2.2.0...main
+[Unreleased]: https://github.com/python-poetry/poetry/compare/2.2.1...main
+[2.2.1]: https://github.com/python-poetry/poetry/releases/tag/2.2.1
 [2.2.0]: https://github.com/python-poetry/poetry/releases/tag/2.2.0
 [2.1.4]: https://github.com/python-poetry/poetry/releases/tag/2.1.4
 [2.1.3]: https://github.com/python-poetry/poetry/releases/tag/2.1.3
