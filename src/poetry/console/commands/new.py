@@ -75,7 +75,7 @@ class NewCommand(InitCommand):
         if path.exists() and list(path.glob("*")):
             # Directory is not empty. Aborting.
             raise RuntimeError(
-                f"Destination <fg=yellow>{path}</> exists and is not empty"
+                f"Destination <fg=yellow>{path}</> exists and is not empty. Did you mean `poetry init`?"
             )
 
         if self.option("src"):
