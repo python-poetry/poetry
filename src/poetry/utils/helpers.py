@@ -64,6 +64,25 @@ non_prioritised_available_hash_types: frozenset[str] = frozenset(
 )
 
 
+def lock_command_hint_for(lock_path: Path) -> str:
+    """Return the appropriate lock command hint for a given lock file path.
+
+    If the lock file resides in Poetry's configuration directory, this suggests
+    using the self-locking command. Otherwise, it suggests the regular project
+    lock command.
+    """
+    try:
+        from poetry.locations import CONFIG_DIR
+    except Exception:
+        return "`poetry lock`"
+
+    return (
+        "`poetry self lock`"
+        if lock_path.parent == Path(CONFIG_DIR)
+        else "`poetry lock`"
+    )
+
+
 @contextmanager
 def directory(path: Path) -> Iterator[Path]:
     cwd = Path.cwd()

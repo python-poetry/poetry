@@ -13,6 +13,7 @@ from packaging.utils import canonicalize_name
 
 from poetry.console.commands.env_command import EnvCommand
 from poetry.console.commands.group_command import GroupCommand
+from poetry.utils.helpers import lock_command_hint_for
 
 
 if TYPE_CHECKING:
@@ -146,9 +147,9 @@ lists all packages available."""
             self.io.input.set_option("latest", True)
 
         if not self.poetry.locker.is_locked():
+            hint = lock_command_hint_for(self.poetry.locker.lock)
             self.line_error(
-                "<error>Error: poetry.lock not found. Run `poetry lock` to create"
-                " it.</error>"
+                f"<error>Error: poetry.lock not found. Run {hint} to create it.</error>"
             )
             return 1
 
