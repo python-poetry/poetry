@@ -484,6 +484,21 @@ class Env(ABC):
                 if bin_path.exists():
                     return str(bin_path)
 
+            # If the executable is 'python' and not found in the virtual environment,
+            # try to find it in Poetry's managed Python installations
+            if bin == "python" or bin.startswith("python"):
+                from poetry.utils.env.python import Python
+
+                try:
+                    # Try to find a compatible Python version
+                    for python in Python.find_poetry_managed_pythons():
+                        python_path = python.executable
+                        if python_path and python_path.exists():
+                            return str(python_path)
+                except Exception:
+                    # If we can't find Poetry-managed Python, fall back to system lookup
+                    pass
+
             return bin
 
         return str(bin_path)
