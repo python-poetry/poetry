@@ -27,7 +27,6 @@ class ValidationError(JsonSchemaValueException):
     """Alias for compatibility"""
 
 
-
 def _get_default_for_type(field_type: str) -> Any:
     """Get appropriate default value for optional fields based on type"""
     defaults = {
@@ -218,8 +217,7 @@ def _validate_with_schema(
         type_checks = {
             "string": lambda x: isinstance(x, str),
             "integer": lambda x: isinstance(x, int) and not isinstance(x, bool),
-            "number": lambda x: isinstance(x, (int, float))
-            and not isinstance(x, bool),
+            "number": lambda x: isinstance(x, (int, float)) and not isinstance(x, bool),
             "boolean": lambda x: isinstance(x, bool),
             "object": lambda x: isinstance(x, dict),
             "array": lambda x: isinstance(x, list),

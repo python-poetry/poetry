@@ -62,9 +62,7 @@ def test_enum_validation() -> None:
     """Test enum constraint validation"""
     schema = {
         "type": "object",
-        "properties": {
-            "priority": {"enum": ["primary", "supplemental", "explicit"]}
-        },
+        "properties": {"priority": {"enum": ["primary", "supplemental", "explicit"]}},
     }
 
     # Valid values
@@ -141,7 +139,8 @@ def test_poetry_repository_schema() -> None:
 
     # Valid repository config
     validate(
-        schema, {"name": "pypi", "url": "https://pypi.org/simple", "priority": "primary"}
+        schema,
+        {"name": "pypi", "url": "https://pypi.org/simple", "priority": "primary"},
     )
 
     # Missing required field
@@ -191,7 +190,12 @@ def test_nested_object_validation() -> None:
         "properties": {
             "tool": {
                 "type": "object",
-                "properties": {"poetry": {"type": "object", "properties": {"name": {"type": "string"}}}},
+                "properties": {
+                    "poetry": {
+                        "type": "object",
+                        "properties": {"name": {"type": "string"}},
+                    }
+                },
             }
         },
     }
