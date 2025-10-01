@@ -7,6 +7,7 @@ using Satya's Model and Field classes for 5.2x performance improvement.
 
 from __future__ import annotations
 
+import re
 from typing import Any
 from typing import Callable
 
@@ -253,6 +254,19 @@ def _validate_with_schema(
                 field_path = f"{path}.{key}" if path else key
                 field_errors = _validate_with_schema(value, properties[key], field_path)
                 errors.extend(field_errors)
+        
+        # Validate patternProperties
+        pattern_properties = schema.get("patternProperties", {})
+        if pattern_properties:
+            for key, value in data.items():
+                # Skip if already validated by regular properties
+                if key not in properties:
+                    for pattern, pattern_schema in pattern_properties.items():
+                        if re.match(pattern, key):
+                            field_path = f"{path}.{key}" if path else key
+                            field_errors = _validate_with_schema(value, pattern_schema, field_path)
+                            errors.extend(field_errors)
+                            break
 
     # Array validation
     if isinstance(data, list) and schema.get("type") == "array":
