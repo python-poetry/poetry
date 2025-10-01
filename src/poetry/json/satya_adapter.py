@@ -8,6 +8,7 @@ using Satya's Model and Field classes for 5.2x performance improvement.
 from __future__ import annotations
 
 import re
+
 from typing import Any
 from typing import Callable
 
@@ -68,7 +69,9 @@ def _convert_jsonschema_to_satya(schema: dict[str, Any]) -> type[Model] | None:
         # Arrays need item validation, objects need nested property validation
         if field_type == "array" and "items" in field_schema:
             return None  # Array items need validation
-        if field_type == "object" and ("properties" in field_schema or "patternProperties" in field_schema):
+        if field_type == "object" and (
+            "properties" in field_schema or "patternProperties" in field_schema
+        ):
             return None  # Nested objects need validation
 
         # Map JSON Schema types to Python types
@@ -261,7 +264,7 @@ def _validate_with_schema(
                 field_path = f"{path}.{key}" if path else key
                 field_errors = _validate_with_schema(value, properties[key], field_path)
                 errors.extend(field_errors)
-        
+
         # Validate patternProperties
         pattern_properties = schema.get("patternProperties", {})
         if pattern_properties:
@@ -271,7 +274,9 @@ def _validate_with_schema(
                     for pattern, pattern_schema in pattern_properties.items():
                         if re.match(pattern, key):
                             field_path = f"{path}.{key}" if path else key
-                            field_errors = _validate_with_schema(value, pattern_schema, field_path)
+                            field_errors = _validate_with_schema(
+                                value, pattern_schema, field_path
+                            )
                             errors.extend(field_errors)
                             break
 
