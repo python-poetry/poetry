@@ -1589,43 +1589,43 @@ requests = ">=2.0.1,<3.0.0"
 
 [[package]]
 name = "satya"
-version = "0.3.81"
+version = "0.3.82"
 description = "Blazingly fast data validation for Python, powered by Rust - 82x faster than jsonschema!"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "satya-0.3.81-cp310-cp310-macosx_10_12_x86_64.whl", hash = "sha256:38abc29dacef7a155e77a08e5fd2b749641e6058641d5ca33afa077a82cfc17b"},
-    {file = "satya-0.3.81-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:4d6a0480e3d4c2546548d2f5be2825d4a79c58dc271c5a7f173b58864d495bc6"},
-    {file = "satya-0.3.81-cp310-cp310-manylinux_2_28_aarch64.whl", hash = "sha256:06cdeb17a3175b86eb344c3e268a5e8e16af458f639040b5bf60be72b026613b"},
-    {file = "satya-0.3.81-cp310-cp310-manylinux_2_28_x86_64.whl", hash = "sha256:377415dc84e8218761ac3c17a5ffa3158a88244359963c39cfdd86ab4796c3c2"},
-    {file = "satya-0.3.81-cp310-cp310-win_amd64.whl", hash = "sha256:a92e6ec9e6a5a68b6ecebdd9672d7e53fd306d54822627e4ebdf4a7e7c3405cc"},
-    {file = "satya-0.3.81-cp311-cp311-macosx_10_12_x86_64.whl", hash = "sha256:0c94d4c2761933e2e080b527d93c27d5a700fb6816ef81203347e1802f782472"},
-    {file = "satya-0.3.81-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:0a43ffa10377b09276102603175be4d4599b46c4ac6178e098e6f13281049296"},
-    {file = "satya-0.3.81-cp311-cp311-manylinux_2_28_aarch64.whl", hash = "sha256:32689fb47543642f2c6e70e4b70d73c3be13432debe459c8005398da3bff5e53"},
-    {file = "satya-0.3.81-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:1ac56ef482b4310f234c1f69a283046f71795f89317ea74a2c1aacc6d754354a"},
-    {file = "satya-0.3.81-cp311-cp311-win_amd64.whl", hash = "sha256:aca0a477e8c2c393c569540f626afbd654fffa73ac18c7bc909affb4aa89411a"},
-    {file = "satya-0.3.81-cp312-cp312-macosx_10_12_x86_64.whl", hash = "sha256:df77a1fd422a4b0570dab5469cd59939fa8317eda1a41c35f4a9835c44f22d71"},
-    {file = "satya-0.3.81-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:458cba7345f487526e5f6924f4de3feacc5f63ce716a0fd58c787caf1d59026c"},
-    {file = "satya-0.3.81-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:eb3212fbd8480c9aaf6a8e06021e67430a5ba0ef6534470821c94b40acbacbbc"},
-    {file = "satya-0.3.81-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:333c924aec86656af9e64a615b9f7bcd49051cd9423de9daa49319e268956222"},
-    {file = "satya-0.3.81-cp312-cp312-win_amd64.whl", hash = "sha256:c6ce01b74bc0074edd7a2bf2c4faba9f45980dd1709803b3eb3168859ee2c0cb"},
-    {file = "satya-0.3.81-cp313-cp313-macosx_10_12_x86_64.whl", hash = "sha256:58c0f2d79d948b780a2d4b39dd08908a6992379816cb1e43047444e4a0c2e61c"},
-    {file = "satya-0.3.81-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:fdb5ec84d04760f8d9ce3726fa39ae7ee4914f13577b7742797af2fed74f7ed9"},
-    {file = "satya-0.3.81-cp313-cp313-manylinux_2_28_aarch64.whl", hash = "sha256:1826c8932eb88743f43f249ecd98da979fb705d4a4697ba3242986419667530f"},
-    {file = "satya-0.3.81-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:b5c0424790a4dc343067172b3fbd7a9c420143286bec603e23d29ccaefe5a653"},
-    {file = "satya-0.3.81-cp313-cp313-win_amd64.whl", hash = "sha256:c3c5df14b39c973a57c34d2839a8ddebe51efc6990ab61884b892345f1fad619"},
-    {file = "satya-0.3.81-cp38-cp38-macosx_10_12_x86_64.whl", hash = "sha256:ccb18629be6881871b5d3466946d2365d54a2d52428483e21aa12d30c61534e0"},
-    {file = "satya-0.3.81-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:b01670ef787d34463b539e0134fc5de1d4d6dc9dceed817a9e81149698683af4"},
-    {file = "satya-0.3.81-cp38-cp38-manylinux_2_28_aarch64.whl", hash = "sha256:eea90d6970fac8fe8fc3905b85ebfffd26eb2eefdfffb2cc8e25a8b95a648cf7"},
-    {file = "satya-0.3.81-cp38-cp38-manylinux_2_28_x86_64.whl", hash = "sha256:7e4f2fa777cb8fe8e88587f06c5c9271e45882526c31b6c79167539c1e63c19f"},
-    {file = "satya-0.3.81-cp38-cp38-win_amd64.whl", hash = "sha256:e7f6b4b310d598b019241a85c71fb6405ed2a65b5a12fb9f5a685d5311e03609"},
-    {file = "satya-0.3.81-cp39-cp39-macosx_10_12_x86_64.whl", hash = "sha256:616f945c764148fbad76f47d77da1cc18d3215eb1963956c88967c031201250c"},
-    {file = "satya-0.3.81-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:dfc42358480b99d30ea05c8a742c7c94870bed8ad82265f49ebc333df72b89cd"},
-    {file = "satya-0.3.81-cp39-cp39-manylinux_2_28_aarch64.whl", hash = "sha256:a15598f7ebe0d9b9189cba15df4d560a92e92d0d6a70d339379afcbf073b699b"},
-    {file = "satya-0.3.81-cp39-cp39-manylinux_2_28_x86_64.whl", hash = "sha256:c4b461df188d68a791ce8ac7e1b8851f6c9ef48ef6f96a80ad812f2abcf5d157"},
-    {file = "satya-0.3.81-cp39-cp39-win_amd64.whl", hash = "sha256:74116da1c900f744d5e8d06a0bbba7c56d40ff427a8d380c6ecbce20d22ce070"},
-    {file = "satya-0.3.81.tar.gz", hash = "sha256:a80888f729985226e1ba00a109ae7debcc90531ae630c476a7991fddcd200517"},
+    {file = "satya-0.3.82-cp310-cp310-macosx_10_12_x86_64.whl", hash = "sha256:64c48040e4828dc813bf35c59b30735c0f1ad043b1a9987cf1c1f0419c0a7100"},
+    {file = "satya-0.3.82-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:d8af41d583688390bb232c313e9dae01364858d8a34d804851f6e566cf8b4397"},
+    {file = "satya-0.3.82-cp310-cp310-manylinux_2_28_aarch64.whl", hash = "sha256:24c3f4e70707a8cb79180d594a0ef71c6707985c07e108a20f774c78e968c4f1"},
+    {file = "satya-0.3.82-cp310-cp310-manylinux_2_28_x86_64.whl", hash = "sha256:95e25c043c0acc48613501145dd8c9569f9c9e69470d977cb4cc6591bd12f586"},
+    {file = "satya-0.3.82-cp310-cp310-win_amd64.whl", hash = "sha256:35a00b268304d3bbcc6afbc7b42fe0db4d975cf969ca06e5d6beadd6cce9bb91"},
+    {file = "satya-0.3.82-cp311-cp311-macosx_10_12_x86_64.whl", hash = "sha256:815b21ce7a8284703ead1c5e732f2a2b0fab4e7c4edd90bd5e52161c0bc6e81d"},
+    {file = "satya-0.3.82-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:78184685b3d34d80142b35c8e85ac868c425cc746c50894982dc2c9b0f2968f8"},
+    {file = "satya-0.3.82-cp311-cp311-manylinux_2_28_aarch64.whl", hash = "sha256:b1fb3e2c177d4ebce7154e516196b166f66d1e9d0ef107e2831ddcb36f235530"},
+    {file = "satya-0.3.82-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:923f732cf7cfcd4400e1386656167d9d676787ac413c02586e32c42d61157b22"},
+    {file = "satya-0.3.82-cp311-cp311-win_amd64.whl", hash = "sha256:420b185ea5584f5114cc854cf38de10229dde74319975780e05d001b7d0572ca"},
+    {file = "satya-0.3.82-cp312-cp312-macosx_10_12_x86_64.whl", hash = "sha256:cab34a2249ffb0950bf0cd5b0469ea465ca28bcf17dbfa95ebd5ff6b3caad6a7"},
+    {file = "satya-0.3.82-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:daca46992baa7a784df2ba0676a33bcde5f58541832348b1b470dd63ad46c73a"},
+    {file = "satya-0.3.82-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:cd7e09586f98eea9616f612359df8ccc5079cd6fa710a0cf8becbbdc568bd4e8"},
+    {file = "satya-0.3.82-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:7370dcadc93b41344b0e5cb8f995736c5de2f89415b516312522607f42f7daea"},
+    {file = "satya-0.3.82-cp312-cp312-win_amd64.whl", hash = "sha256:3ccc97fc07cd8e96534565a5386ee57fa94832862963c0231ea4ef1acf9e0047"},
+    {file = "satya-0.3.82-cp313-cp313-macosx_10_12_x86_64.whl", hash = "sha256:1ef325ab228f59c23ea4601886346585ce6c68e15e63bab3b8487cf7fd39f87e"},
+    {file = "satya-0.3.82-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:6830743ad96cd9977d1988bf6ffc32f287daf40671aaf95f6be5eeb9d2099d9e"},
+    {file = "satya-0.3.82-cp313-cp313-manylinux_2_28_aarch64.whl", hash = "sha256:df0d017fa5dd063839e60a0352fcce6150a7e5d03d0562b85585d031f9b3f852"},
+    {file = "satya-0.3.82-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:7dfdbe7fb1d79e243b5ca1c40409474865f1f462ebf7948562cecab4b8fbdde5"},
+    {file = "satya-0.3.82-cp313-cp313-win_amd64.whl", hash = "sha256:525ebe2b2ea94f4c4c5fd3018e0c79871b319d2386c1a19d3a8ba6ed8d3abbf9"},
+    {file = "satya-0.3.82-cp38-cp38-macosx_10_12_x86_64.whl", hash = "sha256:cfc51b4ab71ddb67382bb4567290838df006c74e9f667fe75e99697781fee59b"},
+    {file = "satya-0.3.82-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:a83d66ae78bd4ba520a3b934d4e0f159c3d68ac307bda7c17f3a7ab7ce32cb3e"},
+    {file = "satya-0.3.82-cp38-cp38-manylinux_2_28_aarch64.whl", hash = "sha256:c55bf1896da2f914e73ca40664789915e51d20bc8fe75c14a3e1659c56d73eb9"},
+    {file = "satya-0.3.82-cp38-cp38-manylinux_2_28_x86_64.whl", hash = "sha256:936b44d289a3fd9ef885fae13a65abb63a1996a13f9f60eea0acdd088ba7f32a"},
+    {file = "satya-0.3.82-cp38-cp38-win_amd64.whl", hash = "sha256:73f37f7af0624a4477a582e104875285c27a6c82fb00b5723f3224799f7d811c"},
+    {file = "satya-0.3.82-cp39-cp39-macosx_10_12_x86_64.whl", hash = "sha256:3e24fe34ecb5b7d6b6b9e9ec1de79616e343507fb548751f26a2b7cfe93627c7"},
+    {file = "satya-0.3.82-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:3f1ecaebc7b7b85ab6f04bceeabf63ab1c1c747e9e3e03892df2224f8e6a3ecb"},
+    {file = "satya-0.3.82-cp39-cp39-manylinux_2_28_aarch64.whl", hash = "sha256:9002da04f491ab7ddf9f592e8638eb1d8fde2c8cf2188577daa935082769a5a5"},
+    {file = "satya-0.3.82-cp39-cp39-manylinux_2_28_x86_64.whl", hash = "sha256:7bb41b86ac81b5dcfe99f1d1a169adaa9d65309c2cbc1aee78a938cca55b8515"},
+    {file = "satya-0.3.82-cp39-cp39-win_amd64.whl", hash = "sha256:a7b5d63445e8f2cc8927fa3b2b01885103f352aaf495df193544ac4a4705ab49"},
+    {file = "satya-0.3.82.tar.gz", hash = "sha256:bdea2a492deb5df6ef65d225a5de05d2ac9c74f404d352ea80a08e9b25046c7c"},
 ]
 
 [[package]]
@@ -2049,4 +2049,4 @@ cffi = ["cffi (>=1.17) ; python_version >= \"3.13\" and platform_python_implemen
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<4.0"
-content-hash = "c49aa1d671ee391cef76dc313475958cd5b1d650a2cf3de5cf4b2b993aeabf0a"
+content-hash = "df2a0c14044a3d75588fb9559542f53ae6027729ae6c5e0219b57519e016b164"
