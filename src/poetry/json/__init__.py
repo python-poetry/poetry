@@ -5,9 +5,8 @@ import json
 from importlib.resources import files
 from typing import Any
 
-import fastjsonschema
-
-from fastjsonschema.exceptions import JsonSchemaValueException
+from poetry.json import satya_adapter as fastjsonschema
+from poetry.json.satya_adapter import JsonSchemaValueException
 
 
 def validate_object(obj: dict[str, Any]) -> list[str]:
