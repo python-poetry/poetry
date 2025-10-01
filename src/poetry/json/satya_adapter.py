@@ -64,6 +64,13 @@ def _convert_jsonschema_to_satya(schema: dict[str, Any]) -> type[Model] | None:
         field_type = field_schema.get("type", "any")
         is_required = field_name in required
 
+        # Can't handle complex nested types - fall back to manual validation
+        # Arrays need item validation, objects need nested property validation
+        if field_type == "array" and "items" in field_schema:
+            return None  # Array items need validation
+        if field_type == "object" and ("properties" in field_schema or "patternProperties" in field_schema):
+            return None  # Nested objects need validation
+
         # Map JSON Schema types to Python types
         type_map = {
             "string": str,
