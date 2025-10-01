@@ -214,7 +214,7 @@ def _validate_with_schema(
     # Type validation
     if "type" in schema:
         expected_type = schema["type"]
-        type_checks = {
+        type_checks: dict[str, Callable[[Any], bool]] = {
             "string": lambda x: isinstance(x, str),
             "integer": lambda x: isinstance(x, int) and not isinstance(x, bool),
             "number": lambda x: isinstance(x, (int, float)) and not isinstance(x, bool),
