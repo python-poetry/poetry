@@ -14,7 +14,7 @@ from satya import Field
 from satya import Model
 
 
-class JsonSchemaValueException(Exception):
+class JsonSchemaValueException(Exception):  # noqa: N818
     """fastjsonschema-compatible validation error"""
 
     def __init__(self, message: str, path: str = "") -> None:
@@ -26,7 +26,6 @@ class JsonSchemaValueException(Exception):
 class ValidationError(JsonSchemaValueException):
     """Alias for compatibility"""
 
-    pass
 
 
 def _get_default_for_type(field_type: str) -> Any:
@@ -39,7 +38,7 @@ def _get_default_for_type(field_type: str) -> Any:
         "object": dict,
         "array": list,
     }
-    return defaults.get(field_type, None)
+    return defaults.get(field_type)
 
 
 def _convert_jsonschema_to_satya(schema: dict[str, Any]) -> type[Model] | None:
@@ -116,7 +115,7 @@ def _convert_jsonschema_to_satya(schema: dict[str, Any]) -> type[Model] | None:
 
     # Create dynamic Satya Model
     try:
-        DynamicModel = type(
+        DynamicModel = type(  # noqa: N806
             "DynamicSatyaModel",
             (Model,),
             {"__annotations__": annotations, **fields},
@@ -143,7 +142,7 @@ def compile(schema: dict[str, Any]) -> Callable[[Any], Any]:
     _schema = schema
 
     # Try to convert to Satya Model for maximum performance
-    SatyaModel = _convert_jsonschema_to_satya(schema)
+    SatyaModel = _convert_jsonschema_to_satya(schema)  # noqa: N806
 
     if SatyaModel is not None:
         # Use Satya for validation - FAST PATH with actual Satya Models!
@@ -203,7 +202,7 @@ def _validate_with_schema(
     """
     Lightweight JSON Schema validator for schemas that don't map to Satya Models.
     """
-    errors = []
+    errors: list[str] = []
 
     # Handle $ref references
     if "$ref" in schema:
@@ -232,10 +231,9 @@ def _validate_with_schema(
             return errors
 
     # Enum validation
-    if "enum" in schema:
-        if data not in schema["enum"]:
-            enum_str = ", ".join(f"'{v}'" for v in schema["enum"])
-            errors.append(f"{path or 'data'} must be one of [{enum_str}]")
+    if "enum" in schema and data not in schema["enum"]:
+        enum_str = ", ".join(f"'{v}'" for v in schema["enum"])
+        errors.append(f"{path or 'data'} must be one of [{enum_str}]")
 
     # Object validation
     if isinstance(data, dict) and schema.get("type") == "object":
@@ -319,7 +317,7 @@ def validate(schema: dict[str, Any], data: Any) -> Any:
 
 
 # Create an exceptions module for compatibility
-class exceptions:
+class exceptions:  # noqa: N801
     """Namespace for exceptions to match fastjsonschema.exceptions"""
 
     JsonSchemaValueException = JsonSchemaValueException
@@ -327,9 +325,9 @@ class exceptions:
 
 # Export public API
 __all__ = [
-    "compile",
-    "validate",
     "JsonSchemaValueException",
     "ValidationError",
+    "compile",
     "exceptions",
+    "validate",
 ]
