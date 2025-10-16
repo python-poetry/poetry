@@ -63,6 +63,7 @@ list of installed packages
 
         content: dict[str, Any] = self.poetry.file.read()
         project_content = content.get("project", {})
+
         groups_content = content.get("dependency-groups", {})
         poetry_content = content.get("tool", {}).get("poetry", {})
         poetry_groups_content = poetry_content.get("group", {})
@@ -184,7 +185,11 @@ list of installed packages
         for package in packages:
             normalized_name = canonicalize_name(package)
             for requirement in standard_section.copy():
-                if Dependency.create_from_pep_508(requirement).name == normalized_name:
+                if (
+                    isinstance(requirement, str)
+                    and Dependency.create_from_pep_508(requirement).name
+                    == normalized_name
+                ):
                     standard_section.remove(requirement)
                     removed.add(package)
             for existing_package in list(poetry_section):

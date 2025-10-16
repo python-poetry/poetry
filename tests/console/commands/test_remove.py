@@ -668,3 +668,107 @@ Writing lock file
 """
 
     assert tester.io.fetch_output() == expected
+
+
+@pytest.mark.parametrize("pep_735", [True, False])
+def test_remove_from_nested_pep735_group_and_poetry_group(
+    pep_735: bool,
+    tester: CommandTester,
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installed: Repository,
+) -> None:
+    """
+    Test removing packages from nested dependency groups with `include-group`(pep735) or `include-groups`(poetry).
+    """
+    installed.add_package(Package("foo", "2.0.0"))
+    repo.add_package(Package("foo", "2.0.0"))
+    repo.add_package(Package("baz", "1.0.0"))
+
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject["tool"]["poetry"]["dependencies"]["foo"] = "^2.0.0"
+
+    if pep_735:
+        groups_content: dict[str, Any] = tomlkit.parse(
+            """\
+[dependency-groups]
+bar = [
+    "foo (>=2.0,<3.0)",
+]
+foobar = [
+    { include-group = "bar" },
+    "baz (>=1.0,<2.0)",
+]
+"""
+        )
+        pyproject["dependency-groups"] = groups_content["dependency-groups"]
+
+    else:
+        groups_content = tomlkit.parse(
+            """\
+[tool.poetry.group.bar.dependencies]
+foo = "^2.0.0"
+
+[tool.poetry.group.foobar]
+include-groups = [
+    "bar",
+]
+[tool.poetry.group.foobar.dependencies]
+baz = "^1.0.0"
+
+"""
+        )
+        groups_content = cast("dict[str, Any]", groups_content)
+        pyproject["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
+    pyproject = cast("TOMLDocument", pyproject)
+    app.poetry.file.write(pyproject)
+
+    app.poetry.package.add_dependency(Factory.create_dependency("foo", "^2.0.0"))
+    app.poetry.package.add_dependency(
+        Factory.create_dependency("foo", "^2.0.0", groups=["bar"])
+    )
+    app.poetry.package.add_dependency(
+        Factory.create_dependency("baz", "^1.0.0", groups=["foobar"])
+    )
+
+    tester.execute("foo")
+
+    pyproject = app.poetry.file.read()
+    pyproject = cast("dict[str, Any]", pyproject)
+    content = pyproject["tool"]["poetry"]
+    assert "foo" not in content["dependencies"]
+
+    if pep_735:
+        assert "bar" not in pyproject["dependency-groups"]
+        assert any("baz" in dep for dep in pyproject["dependency-groups"]["foobar"])
+        assert any(
+            isinstance(item, dict) and item.get("include-group") == "bar"
+            for item in pyproject["dependency-groups"]["foobar"]
+        )
+        expected = """\
+[dependency-groups]
+foobar = [
+    { include-group = "bar" },
+    "baz (>=1.0,<2.0)",
+]
+"""
+    else:
+        assert "bar" not in content["group"]
+        assert "baz" in content["group"]["foobar"]["dependencies"]
+        assert content["group"]["foobar"]["include-groups"] == ["bar"]
+
+        expected = """\
+[tool.poetry.group.foobar]
+include-groups = [
+    "bar",
+]
+[tool.poetry.group.foobar.dependencies]
+baz = "^1.0.0"
+"""
+    pyproject = cast("TOMLDocument", pyproject)
+    string_content = pyproject.as_string()
+    if "\r\n" in string_content:
+        # consistent line endings
+        expected = expected.replace("\n", "\r\n")
+
+    assert expected in string_content
