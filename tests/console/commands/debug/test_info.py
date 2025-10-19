@@ -27,12 +27,12 @@ def setup(mocker: MockerFixture) -> None:
         ),
     )
     mocker.patch(
-        'sys.prefix',
-        '/poetry/prefix',
+        "sys.prefix",
+        "/poetry/prefix",
     )
     mocker.patch(
-        'sys.executable',
-        '/poetry/prefix/bin/python',
+        "sys.executable",
+        "/poetry/prefix/bin/python",
     )
 
 
