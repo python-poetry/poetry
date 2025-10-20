@@ -754,6 +754,7 @@ foobar = [
 ]
 """
     else:
+        # This also checks that the include-groups section is not removed even if its explicit dependencies are empty
         assert "dependencies" not in content["group"]["foobar"]
         expected = """\
 [tool.poetry.group.bar.dependencies]
