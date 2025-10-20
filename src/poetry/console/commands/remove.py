@@ -103,7 +103,7 @@ list of installed packages
                 )
                 if group_name != MAIN_GROUP:
                     if not poetry_section and group_name in poetry_groups_content:
-                        del poetry_content["group"][group_name]
+                        del poetry_content["group"][group_name]["dependencies"]
                     if not standard_section and group_name in groups_content:
                         del groups_content[group_name]
 

@@ -682,6 +682,7 @@ def test_remove_from_nested_pep735_group_and_poetry_group(
     Test removing packages from nested dependency groups with `include-group`(pep735) or `include-groups`(poetry).
     """
     installed.add_package(Package("foo", "2.0.0"))
+    installed.add_package(Package("baz", "1.0.0"))
     repo.add_package(Package("foo", "2.0.0"))
     repo.add_package(Package("baz", "1.0.0"))
 
@@ -713,9 +714,9 @@ foo = "^2.0.0"
 include-groups = [
     "bar",
 ]
+
 [tool.poetry.group.foobar.dependencies]
 baz = "^1.0.0"
-
 """
         )
         groups_content = cast("dict[str, Any]", groups_content)
@@ -731,39 +732,37 @@ baz = "^1.0.0"
         Factory.create_dependency("baz", "^1.0.0", groups=["foobar"])
     )
 
-    tester.execute("foo")
+    tester.execute("baz")
 
     pyproject = app.poetry.file.read()
     pyproject = cast("dict[str, Any]", pyproject)
     content = pyproject["tool"]["poetry"]
-    assert "foo" not in content["dependencies"]
 
     if pep_735:
-        assert "bar" not in pyproject["dependency-groups"]
-        assert any("baz" in dep for dep in pyproject["dependency-groups"]["foobar"])
+        assert "baz" not in pyproject["dependency-groups"]["foobar"]
         assert any(
             isinstance(item, dict) and item.get("include-group") == "bar"
             for item in pyproject["dependency-groups"]["foobar"]
         )
         expected = """\
 [dependency-groups]
+bar = [
+    "foo (>=2.0,<3.0)",
+]
 foobar = [
     { include-group = "bar" },
-    "baz (>=1.0,<2.0)",
 ]
 """
     else:
-        assert "bar" not in content["group"]
-        assert "baz" in content["group"]["foobar"]["dependencies"]
-        assert content["group"]["foobar"]["include-groups"] == ["bar"]
-
+        assert "dependencies" not in content["group"]["foobar"]
         expected = """\
+[tool.poetry.group.bar.dependencies]
+foo = "^2.0.0"
+
 [tool.poetry.group.foobar]
 include-groups = [
     "bar",
 ]
-[tool.poetry.group.foobar.dependencies]
-baz = "^1.0.0"
 """
     pyproject = cast("TOMLDocument", pyproject)
     string_content = pyproject.as_string()
