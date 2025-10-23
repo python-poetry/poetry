@@ -76,6 +76,7 @@ To remove a repository (repo is a short alias for repositories):
     def unique_config_values(self) -> dict[str, tuple[Any, Any]]:
         unique_config_values = {
             "cache-dir": (str, lambda val: str(Path(val))),
+            "data-dir": (str, lambda val: str(Path(val))),
             "virtualenvs.create": (boolean_validator, boolean_normalizer),
             "virtualenvs.in-project": (boolean_validator, boolean_normalizer),
             "virtualenvs.options.always-copy": (boolean_validator, boolean_normalizer),
