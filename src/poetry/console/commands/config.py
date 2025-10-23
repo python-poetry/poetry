@@ -103,6 +103,7 @@ To remove a repository (repo is a short alias for repositories):
             ),
             "solver.lazy-wheel": (boolean_validator, boolean_normalizer),
             "keyring.enabled": (boolean_validator, boolean_normalizer),
+            "python.installation-dir": (str, lambda val: str(Path(val))),
         }
 
         return unique_config_values
