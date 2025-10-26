@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 from typing import TYPE_CHECKING
 
 import pytest
@@ -56,6 +58,14 @@ def poetry_with_invalid_pyproject(
     set_project_context: SetProjectContext,
 ) -> Iterator[Poetry]:
     with set_project_context("invalid_pyproject", in_place=False) as cwd:
+        yield Factory().create_poetry(cwd)
+
+
+@pytest.fixture
+def poetry_with_src_folder(
+    set_project_context: SetProjectContext,
+) -> Iterator[Poetry]:
+    with set_project_context("project_with_src_folder", in_place=False) as cwd:
         yield Factory().create_poetry(cwd)
 
 
@@ -311,3 +321,24 @@ def test_check_does_not_error_on_pypi_reference(
 
     assert tester.io.fetch_output() == "All set!\n"
     assert status_code == 0
+
+
+def test_check_project_with_src_folder(
+    command_tester_factory: CommandTesterFactory,
+    poetry_with_src_folder: Poetry,
+) -> None:
+    tester = command_tester_factory("check", poetry=poetry_with_src_folder)
+
+    poetry_file = poetry_with_src_folder.file.path
+    project_root = poetry_file.parent
+    project_dir = project_root / "project_with_src_folder"
+    os.makedirs(project_dir, exist_ok=True)
+    tester.execute("")
+
+    expected = """\
+Warning: Found empty directory 'project_with_src_folder' in project root while the actual package is in\
+ 'src/project_with_src_folder'. This may cause issues with package installation.\
+ Consider removing the empty directory.
+"""
+
+    assert tester.io.fetch_error() == expected
