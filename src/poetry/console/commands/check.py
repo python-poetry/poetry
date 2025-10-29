@@ -130,7 +130,6 @@ class CheckCommand(Command):
 
     def handle(self) -> int:
         from poetry.core.pyproject.toml import PyProjectTOML
-
         from poetry.factory import Factory
 
         # Load poetry config and display errors, if any
@@ -149,12 +148,28 @@ class CheckCommand(Command):
         check_result["errors"].extend(errors)
         check_result["warnings"].extend(warnings)
 
-        # Validate readme (files must exist)
-        # TODO: consider [project.readme] as well
-        if "readme" in poetry_config:
-            errors = self._validate_readme(poetry_config["readme"], poetry_file)
-            check_result["errors"].extend(errors)
+        readme_errors = []
 
+        # Check [tool.poetry.readme]
+        if "readme" in poetry_config:
+            readme_errors += self._validate_readme(poetry_config["readme"], poetry_file)
+
+        project_readme = project.get("readme")
+        if project_readme:
+            if isinstance(project_readme, dict):
+                readme_path = project_readme.get("file")
+                if readme_path:
+                    readme_errors += self._validate_readme(readme_path, poetry_file)
+            elif isinstance(project_readme, str):
+                readme_errors += self._validate_readme(project_readme, poetry_file)
+            else:
+                readme_errors.append(
+                    f"Invalid format for [project.readme]: {project_readme!r}"
+                )
+
+        check_result["errors"].extend(readme_errors)
+
+        # Validate dependencies' sources
         check_result["errors"] += self._validate_dependencies_source(poetry_config)
 
         # Verify that lock file is consistent
