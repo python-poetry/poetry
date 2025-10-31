@@ -15,7 +15,7 @@ def repository() -> Repository:
 
     # latest version pre-release
     repo.add_package(get_package("foo", "1.0"))
-    repo.add_package(get_package("foo", "2.0.b0"))
+    repo.add_package(get_package("foo", "2.0b0"))
 
     # latest version yanked
     repo.add_package(get_package("black", "19.10b0"))
@@ -29,10 +29,10 @@ def repository() -> Repository:
     [
         (None, ">=1.0", ["1.0"]),
         (False, ">=1.0", ["1.0"]),
-        (True, ">=1.0", ["1.0", "2.0.b0"]),
-        (None, ">=1.5", ["2.0.b0"]),
+        (True, ">=1.0", ["1.0", "2.0b0"]),
+        (None, ">=1.5", ["2.0b0"]),
         (False, ">=1.5", []),
-        (True, ">=1.5", ["2.0.b0"]),
+        (True, ">=1.5", ["2.0b0"]),
     ],
 )
 def test_find_packages_allow_prereleases(
