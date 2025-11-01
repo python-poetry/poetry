@@ -314,7 +314,99 @@ def test_check_does_not_error_on_pypi_reference(
     assert status_code == 0
 
 
-def test_check_project_readme_as_dict_without_file_key(
+@pytest.fixture(params=["project_str", "project_dict", "poetry_str", "poetry_array"])
+def pyproject_with_readme_file(tmp_path: Path, request: pytest.FixtureRequest) -> Path:
+    pyproject_content = """\
+[project]
+name = "test"
+version = "1.0.0"
+"""
+    if request.param == "project_str":
+        pyproject_content += 'readme = "README.md"\n'
+
+    elif request.param == "project_dict":
+        pyproject_content += (
+            'readme = { file = "README.md", content-type = "text/markdown" }\n'
+        )
+    elif request.param == "poetry_str":
+        pyproject_content += """
+[tool.poetry]
+readme = "README.md"
+"""
+    elif request.param == "poetry_array":
+        pyproject_content += """
+[tool.poetry]
+readme = ["README.md"]
+"""
+    else:
+        raise ValueError(f"Unknown readme type: {request.param}")
+    pyproject_path = tmp_path / "pyproject.toml"
+    pyproject_path.write_text(pyproject_content, encoding="utf-8")
+    return pyproject_path
+
+
+@pytest.mark.parametrize("readme_exists", [True, False])
+def test_check_readme_file_exists(
+    mocker: MockerFixture,
+    tester: CommandTester,
+    fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
+    pyproject_with_readme_file: Path,
+    readme_exists: bool,
+) -> None:
+    if readme_exists:
+        readme_path = tmp_path / "README.md"
+        readme_path.write_text("README", encoding="utf-8")
+
+    mocker.patch(
+        "poetry.poetry.Poetry.file",
+        return_value=TOMLFile(pyproject_with_readme_file),
+        new_callable=mocker.PropertyMock,
+    )
+    result = tester.execute()
+
+    if readme_exists:
+        assert result == 0
+        assert "Declared README file does not exist" not in tester.io.fetch_error()
+    else:
+        assert result == 1
+        assert (
+            "Declared README file does not exist: README.md" in tester.io.fetch_error()
+        )
+
+
+@pytest.fixture(params=["project_str", "project_dict", "poetry_str", "poetry_array"])
+def pyproject_with_empty_readme_file(
+    tmp_path: Path, request: pytest.FixtureRequest
+) -> Path:
+    pyproject_content = """\
+[project]
+name = "test"
+version = "1.0.0"
+"""
+    if request.param == "project_str":
+        pyproject_content += 'readme = ""\n'
+
+    elif request.param == "project_dict":
+        pyproject_content += 'readme = { file = "", content-type = "text/markdown" }\n'
+    elif request.param == "poetry_str":
+        pyproject_content += """
+[tool.poetry]
+readme = ""
+"""
+    elif request.param == "poetry_array":
+        pyproject_content += """
+[tool.poetry]
+readme = [""]
+"""
+    else:
+        raise ValueError(f"Unknown readme type: {request.param}")
+    pyproject_path = tmp_path / "pyproject.toml"
+    pyproject_path.write_text(pyproject_content, encoding="utf-8")
+    return pyproject_path
+
+
+def test_check_project_readme_as_text(
     mocker: MockerFixture,
     tester: CommandTester,
     fixture_dir: FixtureDirGetter,
@@ -323,11 +415,7 @@ def test_check_project_readme_as_dict_without_file_key(
     pyproject_content = """[project]
 name = "test"
 version = "1.0.0"
-readme = { content-type = "text/markdown" }
-dynamic = ["dependencies", "requires-python"]
-
-[tool.poetry.dependencies]
-python = "^3.9"
+readme = { content-type = "text/markdown", text = "README" }
 """
     pyproject_path = tmp_path / "pyproject.toml"
     pyproject_path.write_text(pyproject_content, encoding="utf-8")
@@ -337,12 +425,13 @@ python = "^3.9"
         return_value=TOMLFile(pyproject_path),
         new_callable=mocker.PropertyMock,
     )
-    tester.execute()
+    result = tester.execute()
 
+    assert result == 0
     assert "Declared README file does not exist" not in tester.io.fetch_error()
 
 
-def test_check_project_readme_as_dict_with_empty_file(
+def test_check_poetry_readme_multiple(
     mocker: MockerFixture,
     tester: CommandTester,
     fixture_dir: FixtureDirGetter,
@@ -351,20 +440,25 @@ def test_check_project_readme_as_dict_with_empty_file(
     pyproject_content = """[project]
 name = "test"
 version = "1.0.0"
-readme = { file = "" }
-dynamic = ["dependencies", "requires-python"]
+dynamic = ["readme"]
 
-[tool.poetry.dependencies]
-python = "^3.9"
+[tool.poetry]
+readme = ["README1.md", "README2.md", "README3.md", "README4.md"]
 """
     pyproject_path = tmp_path / "pyproject.toml"
     pyproject_path.write_text(pyproject_content, encoding="utf-8")
+    (tmp_path / "README2.md").write_text("README 2", encoding="utf-8")
+    (tmp_path / "README3.md").write_text("README 3", encoding="utf-8")
 
     mocker.patch(
         "poetry.poetry.Poetry.file",
         return_value=TOMLFile(pyproject_path),
         new_callable=mocker.PropertyMock,
     )
-    tester.execute()
+    result = tester.execute()
 
-    assert "Declared README file does not exist" not in tester.io.fetch_error()
+    assert result == 1
+    assert tester.io.fetch_error() == (
+        "Error: Declared README file does not exist: README1.md\n"
+        "Error: Declared README file does not exist: README4.md\n"
+    )
