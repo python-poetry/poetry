@@ -93,10 +93,19 @@ The `poetry-install` hook calls the `poetry install` command to make sure all lo
 In order to install this hook, you either need to specify `default_install_hook_types`, or you have
 to install it via `pre-commit install --install-hooks -t post-checkout -t post-merge`.
 
+{{% warning %}}
+Versions up to and including 2.2.1 incorrectly configured the `poetry-install` hook with `language: python`.
+Starting from 2.2.2, the hook uses `language: system` and includes `args: ["--sync"]` by default.
+If you are upgrading from an earlier version, you may need to update your `.pre-commit-config.yaml` accordingly.
+{{% /warning %}}
+
 ### Arguments
 
 The hook takes the same arguments as the poetry command.
 For more information, see the [install command]({{< relref "cli#install" >}}).
+
+The default arguments are `args: ["--sync"]`, which ensures that the environment is synchronized
+with the lock file by removing any packages not in the lock file.
 
 ## Usage
 
