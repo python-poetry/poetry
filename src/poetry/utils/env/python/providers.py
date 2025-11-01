@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import dataclasses
 import shutil
 import sysconfig
@@ -12,6 +13,7 @@ import findpython
 from findpython.providers.path import PathProvider
 
 from poetry.config.config import Config
+from poetry.toml import TOMLFile
 from poetry.utils._compat import WINDOWS
 
 
@@ -42,8 +44,24 @@ class ShutilWhichPythonProvider(findpython.BaseProvider):  # type: ignore[misc]
 @dataclasses.dataclass
 class PoetryPythonPathProvider(PathProvider):  # type: ignore[misc]
     @classmethod
+    def base_installation_dir(cls) -> Path:
+        from poetry.factory import Factory
+
+        config = Config.create()
+
+        # Let's check if there is a local config file.
+        with contextlib.suppress(RuntimeError):
+            pyproject = Factory.locate()
+
+            local_config_file = TOMLFile(pyproject.parent / "poetry.toml")
+            if local_config_file.exists():
+                config.merge(local_config_file.read())
+
+        return config.python_installation_dir
+
+    @classmethod
     def installation_dir(cls, version: Version, implementation: str) -> Path:
-        return Config.create().python_installation_dir / f"{implementation}@{version}"
+        return cls.base_installation_dir() / f"{implementation}@{version}"
 
     @classmethod
     def _make_bin_paths(cls, base: Path | None = None) -> list[Path]:
@@ -55,7 +73,7 @@ class PoetryPythonPathProvider(PathProvider):  # type: ignore[misc]
         # If both versions exist, the first one is preferred.
         # However, sometimes (especially for free-threaded Python),
         # only the second version exists!
-        install_dir = base or Config.create().python_installation_dir
+        install_dir = base or cls.base_installation_dir()
         if WINDOWS and not sysconfig.get_platform().startswith("mingw"):
             # On Windows Python executables are top level.
             # (Only in virtualenvs, they are in the Scripts directory.)
