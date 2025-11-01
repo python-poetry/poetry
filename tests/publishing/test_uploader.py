@@ -125,6 +125,7 @@ def test_uploader_registers_for_appropriate_400_errors(
         (409, ""),
         (400, "File already exists"),
         (400, "Repository does not allow updating assets"),
+        (400, "cannot be updated"),
         (403, "Not enough permissions to overwrite artifact"),
         (400, "file name has already been taken"),
     ],

@@ -331,6 +331,7 @@ class Uploader:
             or (status == 400 and "already exist" in reason_and_text)
             # Nexus Repository OSS (https://www.sonatype.com/nexus-repository-oss)
             or (status == 400 and "updating asset" in reason_and_text)
+            or (status == 400 and "cannot be updated" in reason_and_text)
             # Artifactory (https://jfrog.com/artifactory/)
             or (status == 403 and "overwrite artifact" in reason_and_text)
             # Gitlab Enterprise Edition (https://about.gitlab.com)
