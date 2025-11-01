@@ -311,3 +311,53 @@ def test_check_does_not_error_on_pypi_reference(
 
     assert tester.io.fetch_output() == "All set!\n"
     assert status_code == 0
+
+
+def test_check_project_readme_as_dict_without_file_key(
+    mocker: MockerFixture, tester: CommandTester, fixture_dir: FixtureDirGetter, tmp_path
+) -> None:
+    pyproject_content = """[project]
+name = "test"
+version = "1.0.0"
+readme = { content-type = "text/markdown" }
+dynamic = ["dependencies", "requires-python"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+"""
+    pyproject_path = tmp_path / "pyproject.toml"
+    pyproject_path.write_text(pyproject_content, encoding="utf-8")
+
+    mocker.patch(
+        "poetry.poetry.Poetry.file",
+        return_value=TOMLFile(pyproject_path),
+        new_callable=mocker.PropertyMock,
+    )
+    tester.execute()
+
+    assert "Declared README file does not exist" not in tester.io.fetch_error()
+
+
+def test_check_project_readme_as_dict_with_empty_file(
+    mocker: MockerFixture, tester: CommandTester, fixture_dir: FixtureDirGetter, tmp_path
+) -> None:
+    pyproject_content = """[project]
+name = "test"
+version = "1.0.0"
+readme = { file = "" }
+dynamic = ["dependencies", "requires-python"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+"""
+    pyproject_path = tmp_path / "pyproject.toml"
+    pyproject_path.write_text(pyproject_content, encoding="utf-8")
+
+    mocker.patch(
+        "poetry.poetry.Poetry.file",
+        return_value=TOMLFile(pyproject_path),
+        new_callable=mocker.PropertyMock,
+    )
+    tester.execute()
+
+    assert "Declared README file does not exist" not in tester.io.fetch_error()

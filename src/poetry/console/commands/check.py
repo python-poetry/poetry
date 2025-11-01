@@ -150,7 +150,7 @@ class CheckCommand(Command):
 
         readme_errors = []
 
-        # Check [tool.poetry.readme]
+        # Check poetry readme
         if "readme" in poetry_config:
             readme_errors += self._validate_readme(poetry_config["readme"], poetry_file)
 
