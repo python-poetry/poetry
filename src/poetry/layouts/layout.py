@@ -46,6 +46,8 @@ dev = [
 packages = []
 """
 
+POETRY_DEFAULT_AUTHOR = "Your Name <you@example.com>"
+
 poetry_core_version = Version.parse(importlib.metadata.version("poetry-core"))
 
 BUILD_SYSTEM_MIN_VERSION: str | None = Version.from_parts(
@@ -70,6 +72,7 @@ class Layout:
         python: str | None = None,
         dependencies: Mapping[str, str | Mapping[str, Any]] | None = None,
         dev_dependencies: Mapping[str, str | Mapping[str, Any]] | None = None,
+        package_mode: bool = True,
     ) -> None:
         self._project = canonicalize_name(project)
         self._package_path_relative = Path(
@@ -85,9 +88,10 @@ class Layout:
         self._python = python
         self._dependencies = dependencies or {}
         self._dev_dependencies = dev_dependencies or {}
+        self._package_mode = package_mode
 
         if not author:
-            author = "Your Name <you@example.com>"
+            author = POETRY_DEFAULT_AUTHOR
 
         self._author = author
 
@@ -154,6 +158,14 @@ class Layout:
             if email := m.group("email"):
                 author["email"] = email
             project_content["authors"].append(author)
+        if self._author == POETRY_DEFAULT_AUTHOR and not self._package_mode:
+            project_content.remove("authors")
+
+        if not self._package_mode:
+            if not project_content["version"]:
+                project_content.remove("version")
+            if not project_content["description"]:
+                project_content.remove("description")
 
         if self._license:
             project_content["license"]["text"] = self._license
@@ -185,6 +197,9 @@ class Layout:
                 content["dependency-groups"]["dev"].append(dependency.to_pep_508())
         else:
             del content["dependency-groups"]
+
+        if not self._package_mode:
+            poetry_content["package-mode"] = False
 
         if not poetry_content:
             del content["tool"]["poetry"]
