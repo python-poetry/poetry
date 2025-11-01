@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
@@ -12,6 +11,7 @@ from poetry.toml import TOMLFile
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from pathlib import Path
 
     from cleo.testers.command_tester import CommandTester
     from pytest_mock import MockerFixture
@@ -315,7 +315,10 @@ def test_check_does_not_error_on_pypi_reference(
 
 
 def test_check_project_readme_as_dict_without_file_key(
-    mocker: MockerFixture, tester: CommandTester, fixture_dir: FixtureDirGetter, tmp_path: Path
+    mocker: MockerFixture,
+    tester: CommandTester,
+    fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
 ) -> None:
     pyproject_content = """[project]
 name = "test"
@@ -340,7 +343,10 @@ python = "^3.9"
 
 
 def test_check_project_readme_as_dict_with_empty_file(
-    mocker: MockerFixture, tester: CommandTester, fixture_dir: FixtureDirGetter, tmp_path: Path
+    mocker: MockerFixture,
+    tester: CommandTester,
+    fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
 ) -> None:
     pyproject_content = """[project]
 name = "test"
