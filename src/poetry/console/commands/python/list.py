@@ -35,6 +35,9 @@ class PythonListCommand(Command):
             flag=True,
         ),
         option(
+            "free-threaded", "t", "List only free-threaded Python versions.", flag=True
+        ),
+        option(
             "implementation", "i", "Python implementation to search for.", flag=False
         ),
         option("managed", "m", "List only Poetry managed Python versions.", flag=True),
@@ -61,7 +64,9 @@ class PythonListCommand(Command):
                 return 1
 
         for info in Python.find_all_versions(
-            constraint=constraint, implementation=self.option("implementation")
+            constraint=constraint,
+            implementation=self.option("implementation"),
+            free_threaded=self.option("free-threaded") or None,
         ):
             rows.append(info)
 
@@ -70,7 +75,14 @@ class PythonListCommand(Command):
                 rows.append(info)
 
         rows.sort(
-            key=lambda x: (x.major, x.minor, x.patch, x.implementation), reverse=True
+            key=lambda x: (
+                x.major,
+                x.minor,
+                x.patch,
+                x.implementation,
+                x.free_threaded,
+            ),
+            reverse=True,
         )
 
         table = self.table(style="compact")
@@ -90,6 +102,8 @@ class PythonListCommand(Command):
 
         for pv in rows:
             version = f"{pv.major}.{pv.minor}.{pv.patch}"
+            if pv.free_threaded:
+                version += "t"
             implementation = implementations.get(
                 pv.implementation.lower(), pv.implementation
             )

@@ -9,6 +9,7 @@ from poetry.core.constraints.version.version import Version
 from poetry.core.version.exceptions import InvalidVersionError
 
 from poetry.console.commands.command import Command
+from poetry.console.commands.python import get_request_title
 from poetry.console.commands.python.remove import PythonRemoveCommand
 from poetry.console.exceptions import PoetryRuntimeError
 from poetry.utils.env.python.installer import PythonDownloadNotFoundError
@@ -56,6 +57,9 @@ class PythonInstallCommand(Command):
         impl = self.option("implementation").lower()
         reinstall = self.option("reinstall")
         free_threaded = self.option("free-threaded")
+        if request.endswith("t"):
+            free_threaded = True
+            request = request[:-1]
 
         try:
             version = Version.parse(request)
@@ -80,7 +84,7 @@ class PythonInstallCommand(Command):
             if installer.exists() and not reinstall:
                 self.io.write_error_line(
                     "Python version already installed at "
-                    f"<b>{PoetryPythonPathProvider.installation_dir(version, impl)}</>.\n"
+                    f"<b>{PoetryPythonPathProvider.installation_dir(version, impl, free_threaded)}</>.\n"
                 )
                 self.io.write_error_line(
                     f"Use <c1>--reinstall</> to install anyway, "
@@ -93,10 +97,7 @@ class PythonInstallCommand(Command):
             )
             return 1
 
-        add_info = impl
-        if free_threaded:
-            add_info += ", free-threaded"
-        request_title = f"<c1>{request}</> (<b>{add_info}</>)"
+        request_title = get_request_title(request, impl, free_threaded)
 
         try:
             self.io.write(f"Downloading and installing {request_title} ... ")
@@ -118,7 +119,7 @@ class PythonInstallCommand(Command):
 
             if installer.installation_directory.exists() and self.option("clean"):
                 PythonRemoveCommand.remove_python_installation(
-                    str(installer.version), impl, self.io
+                    str(installer.version), impl, free_threaded, self.io
                 )
 
             raise e

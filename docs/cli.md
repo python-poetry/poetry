@@ -745,10 +745,10 @@ poetry python install <PYTHON_VERSION>
 
 #### Options
 
-* `--clean`: Clean up installation if check fails.
-* `--free-threaded`: Use free-threaded version if available.
-* `--implementation`: Python implementation to use. (cpython, pypy)
-* `--reinstall`: Reinstall if installation already exists.
+* `--clean (-c)`: Clean up installation if check fails.
+* `--free-threaded (-t)`: Use free-threaded version if available. (Same as requesting a version with trailing "t".)
+* `--implementation (-i)`: Python implementation to use. (cpython, pypy)
+* `--reinstall (-r)`: Reinstall if installation already exists.
 
 ### python list
 
@@ -759,9 +759,10 @@ discovered System managed and Poetry managed installations.
 poetry python list
 ```
 #### Options
-* `--all`: List all versions, including those available for download.
-* `--implementation`: Python implementation to search for.
-* `--managed`: List only Poetry managed Python versions.
+* `--all (-a)`: List all versions, including those available for download.
+* `--free-threaded (-t)`: List only free-threaded Python versions.
+* `--implementation (-i)`: Python implementation to search for.
+* `--managed (-m)`: List only Poetry managed Python versions.
 
 ### python remove
 
@@ -773,7 +774,8 @@ poetry python remove <PYTHON_VERSION>
 
 #### Options
 
-* `--implementation`: Python implementation to use. (cpython, pypy)
+* `--free-threaded (-t)`: Remove free-threaded version (Same as requesting a version with trailing "t".)
+* `--implementation (-i)`: Python implementation to remove. (cpython, pypy)
 
 ## remove
 
