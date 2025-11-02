@@ -10,10 +10,10 @@ import pbs_installer as pbi
 
 from poetry.core.constraints.version import Version
 
-from poetry.config.config import Config
 from poetry.console.exceptions import ConsoleMessage
 from poetry.console.exceptions import PoetryRuntimeError
 from poetry.utils.env.python import Python
+from poetry.utils.env.python.providers import PoetryPythonPathProvider
 
 
 if TYPE_CHECKING:
@@ -46,7 +46,8 @@ class PythonInstaller:
     implementation: Literal["cpython", "pypy"] = dataclasses.field(default="cpython")
     free_threaded: bool = dataclasses.field(default=False)
     installation_directory: Path = dataclasses.field(
-        init=False, default_factory=lambda: Config.create().python_installation_dir
+        init=False,
+        default_factory=lambda: PoetryPythonPathProvider.base_installation_dir(),
     )
 
     @property

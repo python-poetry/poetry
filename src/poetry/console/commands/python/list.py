@@ -8,9 +8,9 @@ from cleo.helpers import option
 from poetry.core.constraints.version import parse_constraint
 from poetry.core.version.exceptions import InvalidVersionError
 
-from poetry.config.config import Config
 from poetry.console.commands.command import Command
 from poetry.utils.env.python import Python
+from poetry.utils.env.python.providers import PoetryPythonPathProvider
 
 
 if TYPE_CHECKING:
@@ -84,7 +84,7 @@ class PythonListCommand(Command):
         )
 
         implementations = {"cpython": "CPython", "pypy": "PyPy"}
-        python_installation_path = Config.create().python_installation_dir
+        python_installation_path = PoetryPythonPathProvider.base_installation_dir()
 
         row_count = 0
 

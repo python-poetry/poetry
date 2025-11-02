@@ -10,8 +10,8 @@ from cleo.helpers import option
 from poetry.core.constraints.version.version import Version
 from poetry.core.version.exceptions import InvalidVersionError
 
-from poetry.config.config import Config
 from poetry.console.commands.command import Command
+from poetry.utils.env.python.providers import PoetryPythonPathProvider
 
 
 if TYPE_CHECKING:
@@ -63,7 +63,9 @@ class PythonRemoveCommand(Command):
             return 1
 
         request_title = f"<c1>{request}</> (<b>{implementation}</>)"
-        path = Config.create().python_installation_dir / f"{implementation}@{version}"
+        path = PoetryPythonPathProvider.installation_dir(
+            version=version, implementation=implementation
+        )
 
         if path.exists():
             if io.is_verbose():
