@@ -67,7 +67,7 @@ jobs:
           npx hugo --minify --logLevel info
 
       - uses: amondnet/vercel-action@888da851026e0573da056b061931bcb765a915c4 # v41.1.4
-        with:
+        with: # Test
           vercel-version: 41.1.4
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
