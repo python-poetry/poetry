@@ -190,6 +190,10 @@ class Application(BaseApplication):
         return self._project_directory or self._working_directory
 
     @property
+    def working_directory(self) -> Path:
+        return self._working_directory
+
+    @property
     def poetry(self) -> Poetry:
         from poetry.factory import Factory
 
@@ -339,7 +343,7 @@ class Application(BaseApplication):
         # this will raise an exception if the path is invalid
         self._working_directory = ensure_path(
             io.input.option("directory") or Path.cwd(), is_directory=True
-        )
+        ).resolve()
 
         self._project_directory = io.input.option("project")
         if self._project_directory is not None:
