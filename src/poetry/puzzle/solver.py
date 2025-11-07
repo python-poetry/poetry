@@ -40,7 +40,11 @@ if TYPE_CHECKING:
     from poetry.repositories import RepositoryPool
     from poetry.utils.env import Env
 
-    MarkerOriginDict = defaultdict[Package, defaultdict[Package, BaseMarker]]
+    # markers[child_package][parent_package][groups] -> BaseMarker
+    MarkerOriginDict = defaultdict[
+        Package,
+        defaultdict[Package, defaultdict[frozenset[NormalizedName], BaseMarker]],
+    ]
 
 
 class Solver:
@@ -238,7 +242,9 @@ def depth_first_search(
     source: PackageNode,
 ) -> tuple[list[list[PackageNode]], MarkerOriginDict]:
     back_edges: dict[DFSNodeID, list[PackageNode]] = defaultdict(list)
-    markers: MarkerOriginDict = defaultdict(lambda: defaultdict(EmptyMarker))
+    markers: MarkerOriginDict = defaultdict(
+        lambda: defaultdict(lambda: defaultdict(EmptyMarker))
+    )
     visited: set[DFSNodeID] = set()
     topo_sorted_nodes: list[PackageNode] = []
 
@@ -272,11 +278,15 @@ def dfs_visit(
 
     for out_neighbor in node.reachable():
         back_edges[out_neighbor.id].append(node)
-        marker = markers[out_neighbor.package][node.package]
-        markers[out_neighbor.package][node.package] = marker.union(
+        groups = out_neighbor.groups
+        prev_marker = markers[out_neighbor.package][node.package][groups]
+        new_marker = (
             out_neighbor.marker
             if node.package.is_root()
             else out_neighbor.marker.without_extras()
+        )
+        markers[out_neighbor.package][node.package][groups] = prev_marker.union(
+            new_marker
         )
         dfs_visit(out_neighbor, back_edges, visited, sorted_nodes, markers)
     sorted_nodes.insert(0, node)
@@ -398,20 +408,36 @@ def calculate_markers(
                 transitive_marker: dict[NormalizedName, BaseMarker] = {
                     group: EmptyMarker() for group in transitive_info.groups
                 }
-                for parent, m in markers[package].items():
+                for parent, group_markers in markers[package].items():
                     parent_info = packages[parent]
                     if parent_info.groups:
+                        # If parent has groups, we need to intersect its per-group
+                        # markers with each edge marker and union into child's groups.
                         if parent_info.groups != set(parent_info.markers):
                             # there is a cycle -> we need one more iteration
                             has_incomplete_markers = True
                             continue
                         for group in parent_info.groups:
-                            transitive_marker[group] = transitive_marker[group].union(
-                                parent_info.markers[group].intersect(m)
-                            )
+                            for edge_marker in group_markers.values():
+                                transitive_marker[group] = transitive_marker[
+                                    group
+                                ].union(
+                                    parent_info.markers[group].intersect(edge_marker)
+                                )
                     else:
-                        for group in transitive_info.groups:
-                            transitive_marker[group] = transitive_marker[group].union(m)
+                        # Parent is the root (no groups). Edge markers specify which
+                        # dependency groups the edge belongs to. We should only add
+                        # the edge marker to the corresponding child groups.
+                        for groups, edge_marker in group_markers.items():
+                            assert groups, (
+                                f"Package {package.name} at depth {depth} has no groups."
+                                f" All dependencies except for the root package at depth -1 must have groups"
+                            )
+                            for group in transitive_info.groups:
+                                if group in groups:
+                                    transitive_marker[group] = transitive_marker[
+                                        group
+                                    ].union(edge_marker)
                 transitive_info.markers = transitive_marker
 
 
