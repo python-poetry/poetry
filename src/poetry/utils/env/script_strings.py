@@ -86,6 +86,7 @@ env = {
     ),
     "interpreter_version": interpreter_version(),
     "sysconfig_platform": sysconfig.get_platform(),
+    "free_threading": bool(sysconfig.get_config_var("Py_GIL_DISABLED")),
 }
 
 print(json.dumps(env))

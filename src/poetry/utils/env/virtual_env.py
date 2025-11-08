@@ -58,11 +58,15 @@ class VirtualEnv(Env):
         interpreter_name = self.marker_env["interpreter_name"]
         interpreter_version = self.marker_env["interpreter_version"]
         sysconfig_platform = self.marker_env["sysconfig_platform"]
+        free_threading = self.marker_env["free_threading"]
 
+        abis: list[str] | None = None
         if interpreter_name == "pp":
             interpreter = "pp3"
         elif interpreter_name == "cp":
             interpreter = f"{interpreter_name}{interpreter_version}"
+            if free_threading:
+                abis = [f"{interpreter}t"]
         else:
             interpreter = None
 
@@ -83,7 +87,7 @@ class VirtualEnv(Env):
 
         return [
             *(
-                cpython_tags(python, platforms=platforms)
+                cpython_tags(python, abis=abis, platforms=platforms)
                 if interpreter_name == "cp"
                 else generic_tags(platforms=platforms)
             ),
