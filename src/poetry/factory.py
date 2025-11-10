@@ -23,6 +23,7 @@ from poetry.packages.locker import Locker
 from poetry.plugins.plugin import Plugin
 from poetry.plugins.plugin_manager import PluginManager
 from poetry.poetry import Poetry
+from poetry.pyproject.toml import PyProjectTOML
 from poetry.toml.file import TOMLFile
 
 
@@ -46,6 +47,20 @@ class Factory(BaseFactory):
     Factory class to create various elements needed by Poetry.
     """
 
+    def _ensure_valid_poetry_version(self, cwd: Path | None) -> None:
+        poetry_file = self.locate(cwd)
+        pyproject = PyProjectTOML(path=poetry_file)
+        poetry_config = pyproject.data.get("tool", {}).get("poetry", {})
+
+        if version_str := poetry_config.get("requires-poetry"):
+            version_constraint = parse_constraint(version_str)
+            version = Version.parse(__version__)
+            if not version_constraint.allows(version):
+                raise PoetryError(
+                    f"This project requires Poetry {version_constraint},"
+                    f" but you are using Poetry {version}"
+                )
+
     def create_poetry(
         self,
         cwd: Path | None = None,
@@ -57,16 +72,9 @@ class Factory(BaseFactory):
         if io is None:
             io = NullIO()
 
-        base_poetry = super().create_poetry(cwd=cwd, with_groups=with_groups)
+        self._ensure_valid_poetry_version(cwd)
 
-        if version_str := base_poetry.local_config.get("requires-poetry"):
-            version_constraint = parse_constraint(version_str)
-            version = Version.parse(__version__)
-            if not version_constraint.allows(version):
-                raise PoetryError(
-                    f"This project requires Poetry {version_constraint},"
-                    f" but you are using Poetry {version}"
-                )
+        base_poetry = super().create_poetry(cwd=cwd, with_groups=with_groups)
 
         poetry_file = base_poetry.pyproject_path
         locker = Locker(poetry_file.parent / "poetry.lock", base_poetry.pyproject.data)

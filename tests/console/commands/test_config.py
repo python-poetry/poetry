@@ -14,10 +14,12 @@ from poetry.core.pyproject.exceptions import PyProjectError
 
 from poetry.config.config_source import ConfigSource
 from poetry.config.config_source import PropertyNotFoundError
+from poetry.console.commands.config import ConfigCommand
 from poetry.console.commands.install import InstallCommand
 from poetry.factory import Factory
 from poetry.repositories.legacy_repository import LegacyRepository
 from tests.conftest import Config
+from tests.helpers import flatten_dict
 
 
 if TYPE_CHECKING:
@@ -34,6 +36,12 @@ if TYPE_CHECKING:
 @pytest.fixture()
 def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("config")
+
+
+def test_config_command_in_sync_with_config_class() -> None:
+    assert set(ConfigCommand().unique_config_values) == set(
+        flatten_dict(Config.default_config)
+    )
 
 
 def test_show_config_with_local_config_file_empty(

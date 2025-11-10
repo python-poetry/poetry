@@ -88,12 +88,13 @@ class CheckCommand(Command):
 
     def _validate_readme(self, readme: str | list[str], poetry_file: Path) -> list[str]:
         """Check existence of referenced readme files"""
-
         readmes = [readme] if isinstance(readme, str) else readme
 
         errors = []
         for name in readmes:
-            if not (poetry_file.parent / name).exists():
+            if not name:
+                errors.append("Declared README file is an empty string.")
+            elif not (poetry_file.parent / name).exists():
                 errors.append(f"Declared README file does not exist: {name}")
         return errors
 
@@ -149,12 +150,29 @@ class CheckCommand(Command):
         check_result["errors"].extend(errors)
         check_result["warnings"].extend(warnings)
 
-        # Validate readme (files must exist)
-        # TODO: consider [project.readme] as well
-        if "readme" in poetry_config:
-            errors = self._validate_readme(poetry_config["readme"], poetry_file)
-            check_result["errors"].extend(errors)
+        readme_errors = []
 
+        # Check poetry readme
+        if "readme" in poetry_config:
+            readme_errors += self._validate_readme(poetry_config["readme"], poetry_file)
+
+        project_readme = project.get("readme")
+        if project_readme is not None:
+            if isinstance(project_readme, dict):
+                readme_path = project_readme.get("file")
+                if readme_path is not None:
+                    readme_errors += self._validate_readme(readme_path, poetry_file)
+            elif isinstance(project_readme, str):
+                readme_errors += self._validate_readme(project_readme, poetry_file)
+            else:
+                # should not happen due to prior schema validation, but just in case
+                readme_errors.append(
+                    f"Invalid format for [project.readme]: {project_readme!r}"
+                )
+
+        check_result["errors"].extend(readme_errors)
+
+        # Validate dependencies' sources
         check_result["errors"] += self._validate_dependencies_source(poetry_config)
 
         # Verify that lock file is consistent

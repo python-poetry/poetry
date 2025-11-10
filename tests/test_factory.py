@@ -256,6 +256,17 @@ def test_create_poetry_version_not_ok(fixture_dir: FixtureDirGetter) -> None:
     )
 
 
+def test_create_poetry_check_version_before_validation(
+    fixture_dir: FixtureDirGetter,
+) -> None:
+    with pytest.raises(PoetryError) as e:
+        Factory().create_poetry(fixture_dir("self_version_not_ok_invalid_config"))
+    assert (
+        str(e.value)
+        == f"This project requires Poetry <1.2, but you are using Poetry {__version__}"
+    )
+
+
 @pytest.mark.parametrize(
     "project",
     ("with_primary_source_implicit", "with_primary_source_explicit"),
