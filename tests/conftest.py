@@ -904,6 +904,7 @@ def mocked_python_register(
         version: str,
         executable_name: str | Path | None = None,
         implementation: str | None = None,
+        free_threaded: bool = False,
         parent: str | Path | None = None,
         make_system: bool = False,
     ) -> Python:
@@ -918,6 +919,10 @@ def mocked_python_register(
             @property
             def implementation(self) -> str:
                 return implementation or platform.python_implementation()
+
+            @property
+            def freethreaded(self) -> bool:
+                return free_threaded
 
         python = MockPythonVersion(
             executable=parent / executable_name,
@@ -996,13 +1001,20 @@ def mock_python_version(mocker: MockerFixture) -> None:
 
         @property
         def freethreaded(self) -> bool:
-            return False
+            return self._install_dir.name.endswith("t")
 
-        def _get_version(self) -> packaging.version.Version:
+        @property
+        def _install_dir(self) -> Path:
             install_dir = self.executable.parent
             if not WINDOWS:
                 install_dir = install_dir.parent
-            return packaging.version.Version(install_dir.name.split("@")[1])
+            assert isinstance(install_dir, Path)
+            return install_dir
+
+        def _get_version(self) -> packaging.version.Version:
+            return packaging.version.Version(
+                self._install_dir.name.removesuffix("t").split("@")[1]
+            )
 
         def _get_architecture(self) -> str:
             return "64bit"
@@ -1023,9 +1035,15 @@ def mocked_poetry_managed_python_register(
     config.python_installation_dir.mkdir()
 
     def register(
-        version: str, implementation: str, with_install_dir: bool = False
+        version: str,
+        implementation: str,
+        free_threaded: bool = False,
+        with_install_dir: bool = False,
     ) -> Path:
-        bin_dir = config.python_installation_dir / f"{implementation}@{version}"
+        python_dir_name = f"{implementation}@{version}"
+        if free_threaded:
+            python_dir_name += "t"
+        bin_dir = config.python_installation_dir / python_dir_name
         if with_install_dir:
             bin_dir /= "install"
         if not WINDOWS:

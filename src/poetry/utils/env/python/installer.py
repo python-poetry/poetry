@@ -73,6 +73,8 @@ class PythonInstaller:
             try:
                 if python.implementation.lower() != self.implementation:
                     continue
+                if python.free_threaded != self.free_threaded:
+                    continue
 
                 if version == python.version:
                     return True

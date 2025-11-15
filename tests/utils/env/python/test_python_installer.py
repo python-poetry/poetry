@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
+from typing import Literal
 from typing import cast
 
 import pytest
@@ -45,7 +46,11 @@ def test_python_installer_exists(mocker: MockerFixture) -> None:
     mocker.patch(
         "poetry.utils.env.python.Python.find_poetry_managed_pythons",
         return_value=[
-            mocker.Mock(implementation="cpython", version=Version.from_parts(3, 9, 1))
+            mocker.Mock(
+                implementation="cpython",
+                free_threaded=False,
+                version=Version.from_parts(3, 9, 1),
+            )
         ],
     )
     installer = PythonInstaller(request="3.9.1")
@@ -67,6 +72,10 @@ def test_python_installer_exists_with_bad_executables(mocker: MockerFixture) -> 
             return "cpython"
 
         @property
+        def free_threaded(self) -> bool:
+            return False
+
+        @property
         def executable(self) -> Path:
             return cast("Path", mocker.Mock(as_posix=lambda: "/path/to/bad/python"))
 
@@ -82,6 +91,57 @@ def test_python_installer_exists_with_bad_executables(mocker: MockerFixture) -> 
     installer = PythonInstaller(request="3.9.1")
     with pytest.raises(PoetryRuntimeError):
         assert not installer.exists()
+
+
+@pytest.mark.parametrize(
+    ("implementation", "requested", "expected"),
+    [
+        ("cpython", "pypy", False),
+        ("pypy", "pypy", True),
+    ],
+)
+def test_python_installer_exists_implementation(
+    mocker: MockerFixture,
+    implementation: Literal["cpython", "pypy"],
+    requested: Literal["cpython", "pypy"],
+    expected: bool,
+) -> None:
+    mocker.patch(
+        "poetry.utils.env.python.Python.find_poetry_managed_pythons",
+        return_value=[
+            mocker.Mock(
+                implementation=implementation,
+                free_threaded=False,
+                version=Version.from_parts(3, 9, 1),
+            )
+        ],
+    )
+    installer = PythonInstaller(request="3.9.1", implementation=requested)
+    assert installer.exists() is expected
+
+
+@pytest.mark.parametrize(
+    ("free_threaded", "requested", "expected"),
+    [
+        ("cpython", "pypy", False),
+        ("pypy", "pypy", True),
+    ],
+)
+def test_python_installer_exists_free_threaded(
+    mocker: MockerFixture, free_threaded: bool, requested: bool, expected: bool
+) -> None:
+    mocker.patch(
+        "poetry.utils.env.python.Python.find_poetry_managed_pythons",
+        return_value=[
+            mocker.Mock(
+                implementation="cpython",
+                free_threaded=free_threaded,
+                version=Version.from_parts(3, 9, 1),
+            )
+        ],
+    )
+    installer = PythonInstaller(request="3.9.1", free_threaded=requested)
+    assert installer.exists() is expected
 
 
 def test_python_installer_install(mocker: MockerFixture) -> None:

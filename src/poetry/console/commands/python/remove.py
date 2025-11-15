@@ -10,8 +10,9 @@ from cleo.helpers import option
 from poetry.core.constraints.version.version import Version
 from poetry.core.version.exceptions import InvalidVersionError
 
-from poetry.config.config import Config
 from poetry.console.commands.command import Command
+from poetry.console.commands.python import get_request_title
+from poetry.utils.env.python.providers import PoetryPythonPathProvider
 
 
 if TYPE_CHECKING:
@@ -28,6 +29,9 @@ class PythonRemoveCommand(Command):
     ]
     options: ClassVar[list[Option]] = [
         option(
+            "free-threaded", "t", "Use free-threaded version if available.", flag=True
+        ),
+        option(
             "implementation",
             "i",
             "Python implementation to use. (cpython, pypy)",
@@ -42,7 +46,12 @@ class PythonRemoveCommand(Command):
     )
 
     @staticmethod
-    def remove_python_installation(request: str, implementation: str, io: IO) -> int:
+    def remove_python_installation(
+        request: str, implementation: str, free_threaded: bool, io: IO
+    ) -> int:
+        if request.endswith("t"):
+            free_threaded = True
+            request = request[:-1]
         try:
             version = Version.parse(request)
         except (ValueError, InvalidVersionError):
@@ -51,7 +60,7 @@ class PythonRemoveCommand(Command):
             )
             return 1
 
-        if not (version.major and version.minor and version.patch):
+        if version.minor is None or version.patch is None:
             io.write_error_line(
                 f"<error>Invalid Python version requested <b>{request}</></error>\n"
             )
@@ -62,8 +71,10 @@ class PythonRemoveCommand(Command):
 
             return 1
 
-        request_title = f"<c1>{request}</> (<b>{implementation}</>)"
-        path = Config.create().python_installation_dir / f"{implementation}@{version}"
+        request_title = get_request_title(request, implementation, free_threaded)
+        path = PoetryPythonPathProvider.installation_dir(
+            version, implementation, free_threaded
+        )
 
         if path.exists():
             if io.is_verbose():
@@ -87,10 +98,13 @@ class PythonRemoveCommand(Command):
 
     def handle(self) -> int:
         implementation = self.option("implementation").lower()
+        free_threaded = self.option("free-threaded")
 
         result = 0
 
         for request in self.argument("python"):
-            result += self.remove_python_installation(request, implementation, self.io)
+            result += self.remove_python_installation(
+                request, implementation, free_threaded, self.io
+            )
 
         return result
