@@ -20,7 +20,7 @@ from poetry.repositories.legacy_repository import LegacyRepository
 
 
 if TYPE_CHECKING:
-    import httpretty
+    import responses
 
     from pytest import MonkeyPatch
     from pytest_mock import MockerFixture
@@ -540,17 +540,17 @@ def test_cached_or_downloaded_file_supports_trailing_slash(
 
 class MockHttpRepository(LegacyRepository):
     def __init__(
-        self, endpoint_responses: dict[str, int], http: type[httpretty.httpretty]
+        self, endpoint_responses: dict[str, int], http: responses.RequestsMock
     ) -> None:
         base_url = "http://legacy.foo.bar"
         super().__init__("legacy", url=base_url, disable_cache=True)
 
         for endpoint, response in endpoint_responses.items():
             url = base_url + endpoint
-            http.register_uri(http.GET, url, status=response)
+            http.get(url, status=response)
 
 
-def test_get_200_returns_page(http: type[httpretty.httpretty]) -> None:
+def test_get_200_returns_page(http: responses.RequestsMock) -> None:
     repo = MockHttpRepository({"/foo/": 200}, http)
 
     _ = repo.get_page("foo")
@@ -558,7 +558,7 @@ def test_get_200_returns_page(http: type[httpretty.httpretty]) -> None:
 
 @pytest.mark.parametrize("status_code", [401, 403, 404])
 def test_get_40x_and_returns_none(
-    http: type[httpretty.httpretty], status_code: int
+    http: responses.RequestsMock, status_code: int
 ) -> None:
     repo = MockHttpRepository({"/foo/": status_code}, http)
 
@@ -567,7 +567,7 @@ def test_get_40x_and_returns_none(
 
 
 def test_get_5xx_raises(
-    http: type[httpretty.httpretty], disable_http_status_force_list: None
+    http: responses.RequestsMock, disable_http_status_force_list: None
 ) -> None:
     repo = MockHttpRepository({"/foo/": 500}, http)
 
@@ -576,7 +576,7 @@ def test_get_5xx_raises(
 
 
 def test_get_redirected_response_url(
-    http: type[httpretty.httpretty], monkeypatch: MonkeyPatch
+    http: responses.RequestsMock, monkeypatch: MonkeyPatch
 ) -> None:
     repo = MockHttpRepository({"/foo/": 200}, http)
     redirect_url = "http://legacy.redirect.bar"
@@ -606,12 +606,11 @@ def test_get_redirected_response_url(
     ],
 )
 def test_authenticator_with_implicit_repository_configuration(
-    http: type[httpretty.httpretty],
+    http: responses.RequestsMock,
     config: Config,
     repositories: dict[str, dict[str, str]],
 ) -> None:
-    http.register_uri(
-        http.GET,
+    http.get(
         re.compile("^https?://foo.bar/(.+?)$"),
     )
 
@@ -628,7 +627,7 @@ def test_authenticator_with_implicit_repository_configuration(
     repo = LegacyRepository(name="source", url="https://foo.bar/simple", config=config)
     repo.get_page("/foo")
 
-    request = http.last_request()
+    request = http.calls[-1].request
 
     basic_auth = base64.b64encode(b"foo:bar").decode()
     assert request.headers["Authorization"] == f"Basic {basic_auth}"
