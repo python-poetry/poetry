@@ -216,7 +216,7 @@ class Installer:
         from poetry.puzzle.solver import Solver
 
         locked_repository = Repository("poetry-locked")
-        reresolve = self._config.get("installer.re-resolve", True)
+        reresolve = self._config.get("installer.re-resolve", False)
         solved_packages: dict[Package, TransitivePackageInfo] = {}
         lockfile_repo = LockfileRepository()
 
