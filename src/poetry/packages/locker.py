@@ -275,6 +275,7 @@ class Locker:
         Returns the sha256 hash of the sorted content of the pyproject file.
         """
         project_content = self._pyproject_data.get("project", {})
+        group_content = self._pyproject_data.get("dependency-groups", {})
         tool_poetry_content = self._pyproject_data.get("tool", {}).get("poetry", {})
 
         relevant_project_content = {}
@@ -289,18 +290,26 @@ class Locker:
 
             if data is None and (
                 # Special handling for legacy keys is just for backwards compatibility,
-                # and thereby not required if there is relevant content in [project].
-                key not in self._legacy_keys or relevant_project_content
+                # and thereby not required if there is relevant content in [project]
+                # or [dependency-groups].
+                key not in self._legacy_keys
+                or relevant_project_content
+                or group_content
             ):
                 continue
 
             relevant_poetry_content[key] = data
 
+        relevant_content = {}
         if relevant_project_content:
-            relevant_content = {
-                "project": relevant_project_content,
-                "tool": {"poetry": relevant_poetry_content},
-            }
+            relevant_content["project"] = relevant_project_content
+        if group_content:
+            # For backwards compatibility, we must not add dependency-groups
+            # if it is empty.
+            relevant_content["dependency-groups"] = group_content
+
+        if relevant_content:
+            relevant_content["tool"] = {"poetry": relevant_poetry_content}
         else:
             # For backwards compatibility, we have to put the relevant content
             # of the [tool.poetry] section at top level!
