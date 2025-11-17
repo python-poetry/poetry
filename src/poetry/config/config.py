@@ -164,7 +164,7 @@ class Config:
             "max-retries": 0,
         },
         "installer": {
-            "re-resolve": True,
+            "re-resolve": False,
             "parallel": True,
             "max-workers": None,
             "no-binary": None,
