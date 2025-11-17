@@ -18,6 +18,7 @@ from poetry.core.constraints.version import Version
 from poetry.core.constraints.version import parse_constraint
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
+from poetry.core.version.exceptions import InvalidVersionError
 from poetry.core.version.markers import parse_marker
 from poetry.core.version.requirements import InvalidRequirementError
 from tomlkit import array
@@ -100,6 +101,23 @@ class Locker:
 
         if "content-hash" in metadata:
             fresh: bool = self._content_hash == metadata["content-hash"]
+            if not fresh:
+                with self.lock.open("r", encoding="utf-8") as f:
+                    generated_comment = f.readline()
+                if m := re.search("Poetry ([^ ]+)", generated_comment):
+                    try:
+                        version = Version.parse(m.group(1))
+                    except InvalidVersionError:
+                        pass
+                    else:
+                        if version < Version.parse("2.3.0"):
+                            # Before Poetry 2.3.0, the content hash did not include
+                            # dependency groups, so we need to recompute it without
+                            # them for comparison.
+                            old_content_hash = self._get_content_hash(
+                                with_dependency_groups=False
+                            )
+                            fresh = old_content_hash == metadata["content-hash"]
             return fresh
 
         return False
@@ -270,12 +288,16 @@ class Locker:
 
         self._lock_data = None
 
-    def _get_content_hash(self) -> str:
+    def _get_content_hash(self, *, with_dependency_groups: bool = True) -> str:
         """
         Returns the sha256 hash of the sorted content of the pyproject file.
         """
         project_content = self._pyproject_data.get("project", {})
-        group_content = self._pyproject_data.get("dependency-groups", {})
+        group_content = (
+            self._pyproject_data.get("dependency-groups", {})
+            if with_dependency_groups
+            else {}
+        )
         tool_poetry_content = self._pyproject_data.get("tool", {}).get("poetry", {})
 
         relevant_project_content = {}

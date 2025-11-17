@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import sys
 import tempfile
 import uuid
@@ -11,6 +12,7 @@ from hashlib import sha256
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Literal
 
 import pytest
 
@@ -78,6 +80,45 @@ def test_is_fresh(
             {"tool": {"poetry": {"dependencies": {"tomli": "*"}}}}
         )
     assert locker.is_fresh() is is_fresh
+
+
+@pytest.mark.parametrize(
+    ("kind", "version", "expected"),
+    [
+        ("valid", "2.3.0", True),
+        ("legacy", "2.3.0", False),
+        ("outdated", "2.3.0", False),
+        ("valid", "2.2.1", True),
+        ("legacy", "2.2.1", True),
+        ("outdated", "2.3.0", False),
+    ],
+)
+def test_is_fresh_dependency_groups(
+    locker: Locker,
+    root: ProjectPackage,
+    transitive_info: TransitivePackageInfo,
+    kind: Literal["valid", "legacy", "outdated"],
+    version: str,
+    expected: bool,
+) -> None:
+    locker.set_lock_data(root, {})
+    locker.set_pyproject_data({"dependency-groups": {"foo": []}})
+    if kind == "valid":
+        locked_hash = locker._get_content_hash()
+    elif kind == "legacy":
+        locked_hash = locker._get_content_hash(with_dependency_groups=False)
+        assert locked_hash != locker._get_content_hash()
+    else:
+        locked_hash = "123456"
+
+    lock_content = locker.lock.read_text(encoding="utf-8")
+    lock_content = re.sub(r"Poetry [^ ]+", f"Poetry {version}", lock_content)
+    lock_content = re.sub(
+        r'content-hash = "[^"]+"', f'content-hash = "{locked_hash}"', lock_content
+    )
+    locker.lock.write_text(lock_content, encoding="utf-8")
+
+    assert locker.is_fresh() is expected
 
 
 @pytest.mark.parametrize("lock_version", [None, "2.0", "2.1"])
