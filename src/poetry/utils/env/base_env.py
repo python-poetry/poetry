@@ -51,6 +51,7 @@ class MarkerEnv(TypedDict):
     interpreter_name: str
     interpreter_version: str
     sysconfig_platform: str
+    free_threading: bool
 
 
 class Env(ABC):
