@@ -147,6 +147,7 @@ class MockedPythonRegister(Protocol):
         version: str,
         executable_name: str | Path | None = None,
         implementation: str | None = None,
+        free_threaded: bool = False,
         parent: str | Path | None = None,
         make_system: bool = False,
     ) -> Python: ...
@@ -157,5 +158,6 @@ class MockedPoetryPythonRegister(Protocol):
         self,
         version: str,
         implementation: str,
+        free_threaded: bool = False,
         with_install_dir: bool = False,
     ) -> Path: ...

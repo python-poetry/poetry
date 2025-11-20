@@ -116,6 +116,25 @@ def test_env_get_supported_tags_matches_inside_virtualenv(
     assert run_python_script_spy.call_count == expected_call_count
 
 
+@pytest.mark.skipif(
+    sys.implementation.name != "cpython",
+    reason="free threading is only relevant for CPython",
+)
+def test_env_get_supported_tags_free_threading(
+    tmp_path: Path, manager: EnvManager
+) -> None:
+    venv_path = tmp_path / "Virtual Env"
+    manager.build_venv(venv_path)
+    venv = VirtualEnv(venv_path)
+
+    if venv.marker_env["free_threading"]:
+        assert venv.get_supported_tags() == list(packaging.tags.sys_tags())
+    else:
+        assert not any(t.abi.endswith("t") for t in venv.get_supported_tags())
+        venv.marker_env["free_threading"] = True
+        assert any(t.abi.endswith("t") for t in venv.get_supported_tags())
+
+
 @pytest.mark.skipif(os.name == "nt", reason="Symlinks are not support for Windows")
 def test_env_has_symlinks_on_nix(tmp_path: Path, tmp_venv: VirtualEnv) -> None:
     assert os.path.islink(tmp_venv.python)

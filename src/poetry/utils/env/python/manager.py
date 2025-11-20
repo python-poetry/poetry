@@ -45,6 +45,7 @@ class PythonInfo(NamedTuple):
     minor: int
     patch: int
     implementation: str
+    free_threaded: bool
     executable: Path | None
 
 
@@ -103,6 +104,7 @@ class Python:
         cls,
         constraint: VersionConstraint | str | None = None,
         implementation: str | None = None,
+        free_threaded: bool | None = None,
     ) -> Iterator[PythonInfo]:
         if isinstance(constraint, str):
             constraint = parse_constraint(constraint)
@@ -116,6 +118,10 @@ class Python:
                 python.executable in seen
                 or not constraint.allows(python.version)
                 or (implementation and python.implementation.lower() != implementation)
+                or (
+                    free_threaded is not None
+                    and python.free_threaded is not free_threaded
+                )
             ):
                 continue
 
@@ -125,6 +131,7 @@ class Python:
                 minor=python.minor,
                 patch=python.patch,
                 implementation=python.implementation.lower(),
+                free_threaded=python.free_threaded,
                 executable=python.executable,
             )
 
@@ -155,6 +162,7 @@ class Python:
                     minor=pv.minor,
                     patch=pv.micro,
                     implementation=pv.implementation.lower(),
+                    free_threaded=pv.freethreaded,
                     executable=None,
                 )
 
@@ -173,6 +181,10 @@ class Python:
     @property
     def implementation(self) -> str:
         return cast("str", self._python.implementation.lower())
+
+    @property
+    def free_threaded(self) -> bool:
+        return cast("bool", self._python.freethreaded)
 
     @property
     def major(self) -> int:

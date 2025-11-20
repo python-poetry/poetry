@@ -49,33 +49,41 @@ def test_find_poetry_managed_pythons(
 
 
 @pytest.mark.parametrize(
-    ("constraint", "implementation", "expected"),
+    ("constraint", "implementation", "free_threaded", "expected"),
     [
-        (None, None, 3),
-        (None, "CPython", 2),
-        (None, "cpython", 2),
-        (None, "pypy", 1),
-        ("~3.9", None, 2),
-        ("~3.9", "cpython", 2),
-        ("~3.9", "pypy", 0),
-        (">=3.9.2", None, 2),
-        (">=3.9.2", "cpython", 1),
-        (">=3.9.2", "pypy", 1),
-        (">=3.10", None, 1),
-        ("~3.11", None, 0),
+        (None, None, None, 5),
+        (None, "CPython", None, 4),
+        (None, "cpython", None, 4),
+        (None, "pypy", None, 1),
+        ("~3.9", None, None, 2),
+        ("~3.9", "cpython", None, 2),
+        ("~3.9", "pypy", None, 0),
+        (">=3.9.2", None, None, 4),
+        (">=3.9.2", "cpython", None, 3),
+        (">=3.9.2", "pypy", None, 1),
+        (">=3.10", None, None, 3),
+        (">=3.10", None, False, 2),
+        (">=3.10", None, True, 1),
+        ("~3.11", None, None, 0),
     ],
 )
 def test_find_all_versions(
     mocked_python_register: MockedPythonRegister,
     constraint: str | None,
     implementation: str | None,
+    free_threaded: bool | None,
     expected: int,
 ) -> None:
     mocked_python_register("3.9.1", implementation="CPython", parent="a")
     mocked_python_register("3.9.3", implementation="CPython", parent="b")
     mocked_python_register("3.10.4", implementation="PyPy", parent="c")
+    mocked_python_register("3.14.0", implementation="CPython", parent="d")
+    mocked_python_register(
+        "3.14.0", implementation="CPython", free_threaded=True, parent="e"
+    )
 
-    assert len(list(Python.find_all_versions(constraint, implementation))) == expected
+    versions = list(Python.find_all_versions(constraint, implementation, free_threaded))
+    assert len(versions) == expected
 
 
 @pytest.mark.parametrize("constraint", [None, "~3.9", ">=3.10"])
@@ -87,12 +95,17 @@ def test_find_downloadable_versions(constraint: str | None) -> None:
         assert len(versions) == 0
     else:
         assert len(versions) > 0
-    if constraint:
-        parsed_constraint = parse_constraint(constraint)
-        assert all(
-            parsed_constraint.allows(Version.parse(f"{v.major}.{v.minor}.{v.patch}"))
-            for v in versions
-        )
+        if constraint:
+            parsed_constraint = parse_constraint(constraint)
+            assert all(
+                parsed_constraint.allows(
+                    Version.parse(f"{v.major}.{v.minor}.{v.patch}")
+                )
+                for v in versions
+            )
+        else:
+            assert len({v.free_threaded for v in versions}) == 2
+            assert len({v.implementation for v in versions}) >= 2
 
 
 def find_downloadable_versions_include_incompatible() -> None:

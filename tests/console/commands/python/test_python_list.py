@@ -80,6 +80,7 @@ def test_list_poetry_managed(
 ) -> None:
     mocked_poetry_managed_python_register("3.9.1", "cpython")
     mocked_poetry_managed_python_register("3.10.8", "pypy")
+    mocked_poetry_managed_python_register("3.14.0", "cpython", free_threaded=True)
 
     tester.execute("-m" if only_poetry_managed else "")
 
@@ -93,6 +94,7 @@ def test_list_poetry_managed(
         f"3.10.8  PyPy           Poetry  {install_dir}/pypy@3.10.8/{bin_dir}pypy",
         f"3.10.8  PyPy           Poetry  {install_dir}/pypy@3.10.8/{bin_dir}python",
         f"3.9.1   CPython        Poetry  {install_dir}/cpython@3.9.1/{bin_dir}python",
+        f"3.14.0t CPython        Poetry  {install_dir}/cpython@3.14.0t/{bin_dir}python",
     }
 
     assert set(poetry_lines) == expected
@@ -123,8 +125,7 @@ def test_list_version(
 
 
 @pytest.mark.parametrize(
-    ("implementation", "expected"),
-    [("PyPy", 1), ("pypy", 1), ("CPython", 2)],
+    ("implementation", "expected"), [("PyPy", 1), ("pypy", 1), ("CPython", 2)]
 )
 def test_list_implementation(
     tester: CommandTester,
@@ -137,5 +138,21 @@ def test_list_implementation(
     mocked_python_register("3.10.4", implementation="CPython", parent="c")
 
     tester.execute(f"-i {implementation}")
+
+    assert len(tester.io.fetch_output().splitlines()) - 1 == expected
+
+
+@pytest.mark.parametrize(("free_threaded", "expected"), [("-t", 1), ("", 3)])
+def test_list_free_threaded(
+    tester: CommandTester,
+    mocked_python_register: MockedPythonRegister,
+    free_threaded: str,
+    expected: int,
+) -> None:
+    mocked_python_register("3.13.0", free_threaded=False, parent="a")
+    mocked_python_register("3.14.0", free_threaded=False, parent="b")
+    mocked_python_register("3.14.0", free_threaded=True, parent="c")
+
+    tester.execute(free_threaded)
 
     assert len(tester.io.fetch_output().splitlines()) - 1 == expected
