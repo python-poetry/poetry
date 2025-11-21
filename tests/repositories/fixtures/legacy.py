@@ -4,10 +4,10 @@ import re
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Any
 from urllib.parse import urlparse
 
 import pytest
+import responses
 
 from packaging.utils import canonicalize_name
 
@@ -16,14 +16,13 @@ from tests.helpers import FIXTURE_PATH_REPOSITORIES_LEGACY
 
 
 if TYPE_CHECKING:
-    import httpretty
-
-    from httpretty.core import HTTPrettyRequest
     from packaging.utils import NormalizedName
     from pytest_mock import MockerFixture
+    from requests import PreparedRequest
 
     from poetry.repositories.link_sources.html import HTMLPage
-    from tests.types import HTTPrettyRequestCallback
+    from tests.types import HttpRequestCallback
+    from tests.types import HttpResponse
     from tests.types import NormalizedNameTransformer
     from tests.types import SpecializedLegacyRepositoryMocker
 
@@ -75,34 +74,33 @@ def legacy_repository_url() -> str:
 def legacy_repository_html_callback(
     legacy_repository_directory: Path,
     legacy_repository_index_html: str,
-) -> HTTPrettyRequestCallback:
-    def html_callback(
-        request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
-    ) -> tuple[int, dict[str, Any], bytes]:
-        if name := Path(urlparse(uri).path).name:
+) -> HttpRequestCallback:
+    def html_callback(request: PreparedRequest) -> HttpResponse:
+        assert request.url
+        if name := Path(urlparse(request.url).path).name:
             fixture = legacy_repository_directory / f"{name}.html"
 
             if not fixture.exists():
-                return 404, headers, b"Not Found"
+                return 404, {}, b"Not Found"
 
-            return 200, headers, fixture.read_bytes()
+            return 200, {}, fixture.read_bytes()
 
-        return 200, headers, legacy_repository_index_html.encode("utf-8")
+        return 200, {}, legacy_repository_index_html.encode("utf-8")
 
     return html_callback
 
 
 @pytest.fixture
 def legacy_repository(
-    http: type[httpretty],
+    http: responses.RequestsMock,
     legacy_repository_url: str,
-    legacy_repository_html_callback: HTTPrettyRequestCallback,
+    legacy_repository_html_callback: HttpRequestCallback,
     mock_files_python_hosted: None,
 ) -> LegacyRepository:
-    http.register_uri(
-        http.GET,
-        re.compile("^https://legacy.(.*)+/?(.*)?$"),
-        body=legacy_repository_html_callback,
+    http.add_callback(
+        responses.GET,
+        re.compile(r"^https://legacy\.(.*)+/?(.*)?$"),
+        callback=legacy_repository_html_callback,
     )
 
     return LegacyRepository("legacy", legacy_repository_url, disable_cache=True)

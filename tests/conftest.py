@@ -13,10 +13,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import findpython
-import httpretty
 import keyring
 import packaging.version
 import pytest
+import responses
 
 from installer.utils import SCHEME_NAMES
 from jaraco.classes import properties
@@ -377,15 +377,16 @@ def git_mock(mocker: MockerFixture, request: FixtureRequest) -> None:
 
 
 @pytest.fixture
-def http() -> Iterator[type[httpretty.httpretty]]:
-    httpretty.reset()
-    with httpretty.enabled(allow_net_connect=False, verbose=True):
-        yield httpretty
+def http() -> Iterator[responses.RequestsMock]:
+    with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
+        yield rsps
 
 
 @pytest.fixture
-def http_redirector(http: type[httpretty.httpretty]) -> None:
-    http_setup_redirect(http, http.HEAD, http.GET, http.PUT, http.POST)
+def http_redirector(http: responses.RequestsMock) -> None:
+    http_setup_redirect(
+        http, responses.HEAD, responses.GET, responses.PUT, responses.POST
+    )
 
 
 @pytest.fixture
@@ -439,11 +440,8 @@ def default_python(current_python: PythonVersion) -> str:
 
 
 @pytest.fixture
-def repo(http: type[httpretty.httpretty]) -> TestRepository:
-    http.register_uri(
-        http.GET,
-        re.compile("^https?://foo.bar/(.+?)$"),
-    )
+def repo(http: responses.RequestsMock) -> TestRepository:
+    http.get(re.compile(r"^https?://foo\.bar/(.+?)$"))
     return TestRepository(name="foo")
 
 
@@ -658,12 +656,6 @@ def venv_flags_default() -> dict[str, bool]:
         "system-site-packages": False,
         "no-pip": False,
     }
-
-
-@pytest.fixture(autouse=(os.name == "nt"))
-def httpretty_windows_mock_urllib3_wait_for_socket(mocker: MockerFixture) -> None:
-    # this is a workaround for https://github.com/gabrielfalcao/HTTPretty/issues/442
-    mocker.patch("urllib3.util.wait.select_wait_for_socket", returns=True)
 
 
 @pytest.fixture

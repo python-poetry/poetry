@@ -3,10 +3,10 @@ from __future__ import annotations
 import re
 
 from typing import TYPE_CHECKING
-from typing import Any
 from urllib.parse import urlparse
 
 import pytest
+import responses
 
 from poetry.repositories.pypi_repository import PyPiRepository
 from tests.helpers import FIXTURE_PATH_DISTRIBUTIONS
@@ -16,12 +16,10 @@ from tests.helpers import FIXTURE_PATH_REPOSITORIES_PYPI
 if TYPE_CHECKING:
     from pathlib import Path
 
-    import httpretty
+    from requests import PreparedRequest
 
-    from httpretty.core import HTTPrettyRequest
-
-    from tests.types import HTTPrettyRequestCallback
-    from tests.types import HTTPrettyResponse
+    from tests.types import HttpRequestCallback
+    from tests.types import HttpResponse
     from tests.types import PackageDistributionLookup
 
 
@@ -73,47 +71,41 @@ def package_distribution_lookup(
 
 @pytest.fixture
 def with_disallowed_pypi_search_html(
-    http: type[httpretty], pypi_repository: PyPiRepository
+    http: responses.RequestsMock, pypi_repository: PyPiRepository
 ) -> None:
-    def search_callback(
-        request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
-    ) -> HTTPrettyResponse:
+    def search_callback(request: PreparedRequest) -> HttpResponse:
         search_html = FIXTURE_PATH_REPOSITORIES_PYPI.joinpath(
             "search", "search-disallowed.html"
         )
-        return 200, headers, search_html.read_bytes()
+        return 200, {}, search_html.read_bytes()
 
-    http.register_uri(
-        http.GET,
-        re.compile(r"https://pypi.org/search(\?(.*))?$"),
-        body=search_callback,
+    search_url_regex = re.compile(r"https://pypi\.org/search(\?(.*))?$")
+    http.remove(responses.GET, search_url_regex)
+    http.add_callback(
+        responses.GET,
+        search_url_regex,
+        callback=search_callback,
     )
 
 
 @pytest.fixture(autouse=True)
 def pypi_repository(
-    http: type[httpretty],
-    legacy_repository_html_callback: HTTPrettyRequestCallback,
+    http: responses.RequestsMock,
+    legacy_repository_html_callback: HttpRequestCallback,
     package_json_locations: list[Path],
     mock_files_python_hosted: None,
 ) -> PyPiRepository:
-    def default_callback(
-        request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
-    ) -> HTTPrettyResponse:
-        return 404, headers, b"Not Found"
+    def default_callback(request: PreparedRequest) -> HttpResponse:
+        return 404, {}, b"Not Found"
 
-    def search_callback(
-        request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
-    ) -> HTTPrettyResponse:
+    def search_callback(request: PreparedRequest) -> HttpResponse:
         search_html = FIXTURE_PATH_REPOSITORIES_PYPI.joinpath("search", "search.html")
-        return 200, headers, search_html.read_bytes()
+        return 200, {}, search_html.read_bytes()
 
-    def simple_callback(
-        request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
-    ) -> HTTPrettyResponse:
-        if request.headers["Accept"] == "application/vnd.pypi.simple.v1+json":
-            return json_callback(request, uri, headers)
-        return legacy_repository_html_callback(request, uri, headers)
+    def simple_callback(request: PreparedRequest) -> HttpResponse:
+        if request.headers.get("Accept") == "application/vnd.pypi.simple.v1+json":
+            return json_callback(request)
+        return legacy_repository_html_callback(request)
 
     def _get_json_filepath(name: str, version: str | None = None) -> Path | None:
         for base in package_json_locations:
@@ -127,42 +119,41 @@ def pypi_repository(
 
         return None
 
-    def json_callback(
-        request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
-    ) -> HTTPrettyResponse:
-        path = urlparse(uri).path
+    def json_callback(request: PreparedRequest) -> HttpResponse:
+        assert request.url
+        path = urlparse(request.url).path
         parts = path.rstrip("/").split("/")[2:]
         name = parts[0]
         version = parts[1] if len(parts) == 3 else None
         fixture = _get_json_filepath(name, version)
 
         if fixture is None or not fixture.exists():
-            return default_callback(request, uri, headers)
+            return default_callback(request)
 
-        return 200, headers, fixture.read_bytes()
+        return 200, {}, fixture.read_bytes()
 
-    http.register_uri(
-        http.GET,
-        re.compile(r"https://pypi.org/search(\?(.*))?$"),
-        body=search_callback,
+    http.add_callback(
+        responses.GET,
+        re.compile(r"https://pypi\.org/search(\?(.*))?$"),
+        callback=search_callback,
     )
 
-    http.register_uri(
-        http.GET,
-        re.compile(r"https://pypi.org/pypi/(.*)?/json$"),
-        body=json_callback,
+    http.add_callback(
+        responses.GET,
+        re.compile(r"https://pypi\.org/pypi/(.*)?/json$"),
+        callback=json_callback,
     )
 
-    http.register_uri(
-        http.GET,
-        re.compile(r"https://pypi.org/pypi/(.*)?(?!/json)$"),
-        body=default_callback,
+    http.add_callback(
+        responses.GET,
+        re.compile(r"https://pypi\.org/pypi/(?!.*?/json$)(.*)$"),
+        callback=default_callback,
     )
 
-    http.register_uri(
-        http.GET,
-        re.compile(r"https://pypi.org/simple/?(.*)?$"),
-        body=simple_callback,
+    http.add_callback(
+        responses.GET,
+        re.compile(r"https://pypi\.org/simple/?(.*)?$"),
+        callback=simple_callback,
     )
 
     return PyPiRepository(disable_cache=True, fallback=False)

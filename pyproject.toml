@@ -77,14 +77,13 @@ setuptools = { version = ">=60", python = "<3.10" }
 [tool.poetry.group.test.dependencies]
 coverage = ">=7.2.0"
 deepdiff = ">=6.3"
-httpretty = ">=1.1"
+responses = ">=0.25.8"
 jaraco-classes = ">=3.3.1"
 pytest = ">=8.0"
 pytest-cov = ">=4.0"
 pytest-mock = ">=3.9"
 pytest-randomly = ">=3.12"
 pytest-xdist = { version = ">=3.1", extras = ["psutil"] }
-urllib3 = "<2.3"  # see https://github.com/gabrielfalcao/HTTPretty/issues/484
 
 [tool.poetry.group.typing.dependencies]
 mypy = ">=1.8.0"
@@ -186,7 +185,6 @@ module = [
     'deepdiff.*',
     'fastjsonschema.*',
     'findpython.*',
-    'httpretty.*',
     'requests_toolbelt.*',
     'shellingham.*',
     'virtualenv.*',
