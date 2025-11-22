@@ -1,12 +1,17 @@
 from __future__ import annotations
 
+import tarfile
+import zipfile
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Literal
 
 import requests
 
-from poetry.core.masonry.metadata import Metadata
+from packaging.metadata import RawMetadata
+from packaging.metadata import parse_email
 from poetry.core.masonry.utils.helpers import distribution_name
 from requests_toolbelt import user_agent
 from requests_toolbelt.multipart import MultipartEncoder
@@ -101,10 +106,9 @@ class Uploader:
         with session:
             self._upload(session, url, dry_run, skip_existing)
 
-    def post_data(self, file: Path) -> dict[str, Any]:
-        meta = Metadata.from_package(self._package)
-
-        file_type = self._get_type(file)
+    @classmethod
+    def post_data(cls, file: Path) -> dict[str, Any]:
+        file_type = cls._get_type(file)
 
         hash_manager = HashManager()
         hash_manager.hash(file)
@@ -119,51 +123,38 @@ class Uploader:
             wheel_info = wheel_file_re.match(file.name)
             if wheel_info is not None:
                 py_version = wheel_info.group("pyver")
+        else:
+            py_version = "source"
 
-        data = {
-            # identify release
-            "name": meta.name,
-            "version": meta.version,
-            # file content
-            "filetype": file_type,
-            "pyversion": py_version,
-            # additional meta-data
-            "metadata_version": meta.metadata_version,
-            "summary": meta.summary,
-            "home_page": meta.home_page,
-            "author": meta.author,
-            "author_email": meta.author_email,
-            "maintainer": meta.maintainer,
-            "maintainer_email": meta.maintainer_email,
-            "license": meta.license,
-            "description": meta.description,
-            "keywords": meta.keywords,
-            "platform": meta.platforms,
-            "classifiers": meta.classifiers,
-            "download_url": meta.download_url,
-            "supported_platform": meta.supported_platforms,
-            "comment": None,
+        data: dict[str, Any] = {
+            # Upload API (https://docs.pypi.org/api/upload/)
+            # ":action", "protocol_version" and "content are added later
             "md5_digest": md5_digest,
             "sha256_digest": sha2_digest,
             "blake2_256_digest": blake2_256_digest,
-            # PEP 314
-            "provides": meta.provides,
-            "requires": meta.requires,
-            "obsoletes": meta.obsoletes,
-            # Metadata 1.2
-            "project_urls": meta.project_urls,
-            "provides_dist": meta.provides_dist,
-            "obsoletes_dist": meta.obsoletes_dist,
-            "requires_dist": meta.requires_dist,
-            "requires_external": meta.requires_external,
-            "requires_python": meta.requires_python,
+            "filetype": file_type,
+            "pyversion": py_version,
         }
 
-        # Metadata 2.1
-        if meta.description_content_type:
-            data["description_content_type"] = meta.description_content_type
+        for key, value in cls._get_metadata(file).items():
+            # strip trailing 's' to match API field names
+            # see https://docs.pypi.org/api/upload/
+            if key in {"platforms", "supported_platforms", "license_files"}:
+                key = key[:-1]
 
-        # TODO: Provides extra
+            # revert some special cases from packaging.metadata.parse_email()
+
+            # "keywords" is not "multiple use" but a comma-separated string
+            if key == "keywords":
+                assert isinstance(value, list)
+                value = ", ".join(value)
+
+            # "project_urls" is not a dict
+            if key == "project_urls":
+                assert isinstance(value, dict)
+                value = [f"{k}, {v}" for k, v in value.items()]
+
+            data[key] = value
 
         return data
 
@@ -191,13 +182,7 @@ class Uploader:
             raise UploadError(f"Archive ({file}) does not exist")
 
         data = self.post_data(file)
-        data.update(
-            {
-                # action
-                ":action": "file_upload",
-                "protocol_version": "1",
-            }
-        )
+        data.update({":action": "file_upload", "protocol_version": "1"})
 
         data_to_send: list[tuple[str, Any]] = self._prepare_data(data)
 
@@ -308,14 +293,44 @@ class Uploader:
 
         return data_to_send
 
-    def _get_type(self, file: Path) -> str:
+    @staticmethod
+    def _get_type(file: Path) -> Literal["bdist_wheel", "sdist"]:
         exts = file.suffixes
-        if exts[-1] == ".whl":
+        if exts and exts[-1] == ".whl":
             return "bdist_wheel"
         elif len(exts) >= 2 and "".join(exts[-2:]) == ".tar.gz":
             return "sdist"
 
         raise ValueError("Unknown distribution format " + "".join(exts))
+
+    @staticmethod
+    def _get_metadata(file: Path) -> RawMetadata:
+        if file.suffix == ".whl":
+            with zipfile.ZipFile(file) as z:
+                for name in z.namelist():
+                    parts = Path(name).parts
+                    if (
+                        len(parts) == 2
+                        and parts[1] == "METADATA"
+                        and parts[0].endswith(".dist-info")
+                    ):
+                        with z.open(name) as mf:
+                            return parse_email(mf.read().decode("utf-8"))[0]
+            raise FileNotFoundError("METADATA not found in wheel")
+
+        elif file.suffixes[-2:] == [".tar", ".gz"]:
+            with tarfile.open(file, "r:gz") as tar:
+                for member in tar.getmembers():
+                    parts = Path(member.name).parts
+                    if (
+                        len(parts) == 2
+                        and parts[1] == "PKG-INFO"
+                        and (pf := tar.extractfile(member))
+                    ):
+                        return parse_email(pf.read().decode("utf-8"))[0]
+            raise FileNotFoundError("PKG-INFO not found in sdist")
+
+        raise ValueError(f"Unsupported file type: {file}")
 
     def _is_file_exists_error(self, response: requests.Response) -> bool:
         # based on https://github.com/pypa/twine/blob/a6dd69c79f7b5abfb79022092a5d3776a499e31b/twine/commands/upload.py#L32

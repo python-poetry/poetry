@@ -5,31 +5,31 @@ import re
 from collections.abc import Iterator
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Any
 from urllib.parse import urlparse
 
 import pytest
+import responses
 
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    import httpretty
+    from requests import PreparedRequest
 
-    from httpretty.core import HTTPrettyRequest
-
+    from tests.types import HttpResponse
     from tests.types import PythonHostedFileMocker
 
 
 @pytest.fixture
-def mock_files_python_hosted_factory(http: type[httpretty]) -> PythonHostedFileMocker:
+def mock_files_python_hosted_factory(
+    http: responses.RequestsMock,
+) -> PythonHostedFileMocker:
     def factory(
         distribution_locations: list[Path], metadata_locations: list[Path]
     ) -> None:
-        def file_callback(
-            request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
-        ) -> list[int | dict[str, Any] | bytes | str]:
-            name = Path(urlparse(uri).path).name
+        def file_callback(request: PreparedRequest) -> HttpResponse:
+            assert request.url
+            name = Path(urlparse(request.url).path).name
 
             locations = (
                 metadata_locations
@@ -40,25 +40,23 @@ def mock_files_python_hosted_factory(http: type[httpretty]) -> PythonHostedFileM
             for location in locations:
                 fixture = location / name
                 if fixture.exists():
-                    return [200, headers, fixture.read_bytes()]
+                    return 200, {}, fixture.read_bytes()
 
-            return [404, headers, b"Not Found"]
+            return 404, {}, b"Not Found"
 
-        def mock_file_callback(
-            request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
-        ) -> list[int | dict[str, Any] | bytes | str]:
-            return [200, headers, b""]
+        def mock_file_callback(request: PreparedRequest) -> HttpResponse:
+            return 200, {}, b""
 
-        http.register_uri(
-            http.GET,
-            re.compile("^https://files.pythonhosted.org/.*$"),
-            body=file_callback,
+        http.add_callback(
+            responses.GET,
+            re.compile(r"^https://files\.pythonhosted\.org/.*$"),
+            callback=file_callback,
         )
 
-        http.register_uri(
-            http.GET,
-            re.compile("^https://mock.pythonhosted.org/.*$"),
-            body=mock_file_callback,
+        http.add_callback(
+            responses.GET,
+            re.compile(r"^https://mock\.pythonhosted\.org/.*$"),
+            callback=mock_file_callback,
         )
 
     return factory

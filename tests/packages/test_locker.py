@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import sys
 import tempfile
 import uuid
@@ -10,6 +11,8 @@ import uuid
 from hashlib import sha256
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
+from typing import Literal
 
 import pytest
 
@@ -77,6 +80,45 @@ def test_is_fresh(
             {"tool": {"poetry": {"dependencies": {"tomli": "*"}}}}
         )
     assert locker.is_fresh() is is_fresh
+
+
+@pytest.mark.parametrize(
+    ("kind", "version", "expected"),
+    [
+        ("valid", "2.3.0", True),
+        ("legacy", "2.3.0", False),
+        ("outdated", "2.3.0", False),
+        ("valid", "2.2.1", True),
+        ("legacy", "2.2.1", True),
+        ("outdated", "2.3.0", False),
+    ],
+)
+def test_is_fresh_dependency_groups(
+    locker: Locker,
+    root: ProjectPackage,
+    transitive_info: TransitivePackageInfo,
+    kind: Literal["valid", "legacy", "outdated"],
+    version: str,
+    expected: bool,
+) -> None:
+    locker.set_lock_data(root, {})
+    locker.set_pyproject_data({"dependency-groups": {"foo": []}})
+    if kind == "valid":
+        locked_hash = locker._get_content_hash()
+    elif kind == "legacy":
+        locked_hash = locker._get_content_hash(with_dependency_groups=False)
+        assert locked_hash != locker._get_content_hash()
+    else:
+        locked_hash = "123456"
+
+    lock_content = locker.lock.read_text(encoding="utf-8")
+    lock_content = re.sub(r"Poetry [^ ]+", f"Poetry {version}", lock_content)
+    lock_content = re.sub(
+        r'content-hash = "[^"]+"', f'content-hash = "{locked_hash}"', lock_content
+    )
+    locker.lock.write_text(lock_content, encoding="utf-8")
+
+    assert locker.is_fresh() is expected
 
 
 @pytest.mark.parametrize("lock_version", [None, "2.0", "2.1"])
@@ -1460,10 +1502,12 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 
 
 @pytest.mark.parametrize(
-    ("local_config", "fresh"),
+    ("local_config", "legacy"),
     [
         ({}, True),
         ({"dependencies": [uuid.uuid4().hex]}, True),
+        ({"dependencies": [uuid.uuid4().hex], "source": [uuid.uuid4().hex]}, True),
+        ({"dependencies": [uuid.uuid4().hex], "extras": [uuid.uuid4().hex]}, True),
         (
             {
                 "dependencies": [uuid.uuid4().hex],
@@ -1478,28 +1522,179 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
             },
             True,
         ),
-        ({"dependencies": [uuid.uuid4().hex], "groups": [uuid.uuid4().hex]}, False),
+        ({"dependencies": [uuid.uuid4().hex], "group": [uuid.uuid4().hex]}, False),
     ],
 )
 def test_content_hash_with_legacy_is_compatible(
-    local_config: dict[str, list[str]], fresh: bool, locker: Locker
+    local_config: dict[str, list[str]], legacy: bool, locker: Locker
 ) -> None:
-    # old hash generation
-    relevant_content = {}
-    for key in locker._legacy_keys:
-        relevant_content[key] = local_config.get(key)
+    """Legacy generation if there is no group."""
+
+    def _get_legacy_content_hash() -> str:
+        relevant_content = {}
+        for key in locker._legacy_keys:
+            relevant_content[key] = local_config.get(key)
+
+        content_hash = sha256(
+            json.dumps(relevant_content, sort_keys=True).encode()
+        ).hexdigest()
+
+        return content_hash
 
     locker = locker.__class__(
         lock=locker.lock,
         pyproject_data={"tool": {"poetry": local_config}},
     )
 
-    old_content_hash = sha256(
-        json.dumps(relevant_content, sort_keys=True).encode()
-    ).hexdigest()
+    old_content_hash = _get_legacy_content_hash()
     content_hash = locker._get_content_hash()
 
-    assert (content_hash == old_content_hash) or fresh
+    if legacy:
+        assert content_hash == old_content_hash
+    else:
+        assert content_hash != old_content_hash
+
+
+@pytest.mark.parametrize(
+    ("project", "legacy"),
+    [
+        ({"name": "foo"}, True),  # irrelevant key
+        ({"requires-python": ">=3.9"}, False),
+        ({"dependencies": ["bar"]}, False),
+        ({"dependencies": []}, False),  # relevant even if empty
+        ({"optional-dependencies": "..."}, False),
+    ],
+)
+@pytest.mark.parametrize(
+    "local_config",
+    [
+        {},  # empty
+        {"dependencies": [uuid.uuid4().hex]},  # only legacy
+        {
+            "dependencies": [uuid.uuid4().hex],
+            "group": [uuid.uuid4().hex],
+        },  # legacy and new
+    ],
+)
+def test_content_hash_with_project_section(
+    project: dict[str, Any],
+    local_config: dict[str, list[str]],
+    legacy: bool,
+    locker: Locker,
+) -> None:
+    """Legacy generation if there is no project section."""
+
+    def _get_legacy_content_hash() -> str:
+        relevant_content = {}
+        for key in locker._relevant_keys:
+            data = local_config.get(key)
+
+            if data is None and key not in locker._legacy_keys:
+                continue
+
+            relevant_content[key] = data
+
+        return sha256(json.dumps(relevant_content, sort_keys=True).encode()).hexdigest()
+
+    locker = locker.__class__(
+        lock=locker.lock,
+        pyproject_data={"project": project, "tool": {"poetry": local_config}},
+    )
+
+    old_content_hash = _get_legacy_content_hash()
+    content_hash = locker._get_content_hash()
+
+    if legacy:
+        assert content_hash == old_content_hash
+    else:
+        assert content_hash != old_content_hash
+
+
+@pytest.mark.parametrize(
+    ("groups", "legacy"),
+    [
+        ({}, True),
+        ({"foo": []}, False),
+    ],
+)
+@pytest.mark.parametrize(
+    "project",
+    [
+        {"name": "foo"},  # irrelevant key
+        {"requires-python": ">=3.9"},  # relevant key
+    ],
+)
+@pytest.mark.parametrize(
+    "local_config",
+    [
+        {},  # empty
+        {"dependencies": [uuid.uuid4().hex]},  # only legacy
+        {
+            "dependencies": [uuid.uuid4().hex],
+            "group": [uuid.uuid4().hex],
+        },  # legacy and new
+    ],
+)
+def test_content_hash_with_dependency_groups_section(
+    groups: dict[str, Any],
+    project: dict[str, Any],
+    local_config: dict[str, Any],
+    legacy: bool,
+    locker: Locker,
+) -> None:
+    """Legacy generation if there is no dependency-groups section."""
+
+    def _get_legacy_content_hash() -> str:
+        project_content = project
+        tool_poetry_content = local_config
+
+        relevant_project_content = {}
+        for key in locker._relevant_project_keys:
+            data = project_content.get(key)
+            if data is not None:
+                relevant_project_content[key] = data
+
+        relevant_poetry_content: dict[str, Any] = {}
+        for key in locker._relevant_keys:
+            data = tool_poetry_content.get(key)
+
+            if data is None and (
+                # Special handling for legacy keys is just for backwards compatibility,
+                # and thereby not required if there is relevant content in [project].
+                key not in locker._legacy_keys or relevant_project_content
+            ):
+                continue
+
+            relevant_poetry_content[key] = data
+
+        if relevant_project_content:
+            relevant_content = {
+                "project": relevant_project_content,
+                "tool": {"poetry": relevant_poetry_content},
+            }
+        else:
+            # For backwards compatibility, we have to put the relevant content
+            # of the [tool.poetry] section at top level!
+            relevant_content = relevant_poetry_content
+
+        return sha256(json.dumps(relevant_content, sort_keys=True).encode()).hexdigest()
+
+    locker = locker.__class__(
+        lock=locker.lock,
+        pyproject_data={
+            "project": project,
+            "dependency-groups": groups,
+            "tool": {"poetry": local_config},
+        },
+    )
+
+    old_content_hash = _get_legacy_content_hash()
+    content_hash = locker._get_content_hash()
+
+    if legacy:
+        assert content_hash == old_content_hash
+    else:
+        assert content_hash != old_content_hash
 
 
 def test_lock_file_resolves_file_url_symlinks(

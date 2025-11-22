@@ -36,7 +36,7 @@ from tests.helpers import get_package
 
 
 if TYPE_CHECKING:
-    import httpretty
+    import responses
 
     from cleo.io.null_io import NullIO
     from poetry.core.packages.project_package import ProjectPackage
@@ -4158,7 +4158,7 @@ def test_solver_cannot_choose_another_version_for_url_dependencies(
     solver: Solver,
     repo: Repository,
     package: ProjectPackage,
-    http: type[httpretty.httpretty],
+    http: responses.RequestsMock,
     fixture_dir: FixtureDirGetter,
     tmp_path: Path,
 ) -> None:
@@ -4168,11 +4168,9 @@ def test_solver_cannot_choose_another_version_for_url_dependencies(
         fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl", project_dir
     )
 
-    http.register_uri(
-        "GET",
+    http.get(
         "https://files.pythonhosted.org/demo-0.1.0-py2.py3-none-any.whl",
         body=Path(path).read_bytes(),
-        streaming=True,
     )
     pendulum = get_package("pendulum", "2.0.3")
     demo = get_package("demo", "0.0.8")
