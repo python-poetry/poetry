@@ -19,6 +19,7 @@ from poetry.utils.helpers import download_file
 from poetry.utils.helpers import ensure_path
 from poetry.utils.helpers import get_file_hash
 from poetry.utils.helpers import get_highest_priority_hash_type
+from poetry.utils.helpers import pluralize
 
 
 if TYPE_CHECKING:
@@ -27,6 +28,14 @@ if TYPE_CHECKING:
     from tests.conftest import Config
     from tests.types import FixtureDirGetter
     from tests.types import HttpResponse
+
+
+def test_pluralize() -> None:
+    assert pluralize(1, "apple") == "apple"
+    assert pluralize(0, "apple") == "apples"
+    assert pluralize(2, "apple") == "apples"
+    assert pluralize(3, "") == "s"
+
 
 
 def test_parse_requires() -> None:
