@@ -57,6 +57,11 @@ def test_self_invalid_plugin() -> None:
     }
 
 
+def test_build_constraints() -> None:
+    toml: dict[str, Any] = TOMLFile(FIXTURE_DIR / "build_constraints.toml").read()
+    assert Factory.validate(toml) == {"errors": [], "warnings": []}
+
+
 def test_dependencies_is_consistent_to_poetry_core_schema() -> None:
     with SCHEMA_FILE.open(encoding="utf-8") as f:
         schema = json.load(f)
