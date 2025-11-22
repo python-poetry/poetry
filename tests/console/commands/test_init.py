@@ -1206,3 +1206,32 @@ def test_init_does_not_create_project_structure_in_non_empty_directory(
     # Existing files should remain
     assert (source_dir / "existing_file.txt").exists()
     assert (source_dir / "existing_dir").exists()
+
+
+def test_noninteractive_validation_shows_error(
+    app: PoetryTestApplication, mocker: MockerFixture
+) -> None:
+    command = app.find("init")
+    assert isinstance(command, InitCommand)
+
+    expected_error = r"Validation failed: \n  - project.name must match pattern ^([a-zA-Z\d]|[a-zA-Z\d][\w.-]*[a-zA-Z\d])$"
+
+    # Set Factory.validate to return a mocked error message
+    # We mock Factory.validate() because this test focuses on _init_pyproject(), not on the validation logic itself.
+    mocked_validate = mocker.patch(
+        "poetry.console.commands.init.Factory.validate",
+        return_value={"errors": [expected_error]},
+    )
+
+    init_tester = CommandTester(command)
+    args = '--name "new project"'
+    result = init_tester.execute(args=args, interactive=False)
+
+    # Check that the command fails
+    assert result == 1
+
+    error_output = init_tester.io.fetch_error()
+    assert expected_error in error_output
+
+    # Verify that validate() was called
+    mocked_validate.assert_called_once()
