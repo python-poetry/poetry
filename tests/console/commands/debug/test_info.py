@@ -48,14 +48,14 @@ def test_debug_info_displays_complete_info(tester: CommandTester) -> None:
 Poetry
 Version:    {__version__}
 Python:     {".".join(str(v) for v in sys.version_info[:3])}
-Path:       /poetry/prefix
-Executable: /poetry/prefix/bin/python
+Path:       {Path("/poetry/prefix")}
+Executable: {Path("/poetry/prefix/bin/python")}
 
 Virtualenv
 Python:         3.7.0
 Implementation: CPython
 Path:           {Path("/prefix")}
-Executable:     {sys.executable}
+Executable:     {Path(sys.executable)}
 Valid:          True
 
 Base

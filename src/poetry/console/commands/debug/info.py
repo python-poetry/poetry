@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import sys
 
+from pathlib import Path
+
 from poetry.console.commands.command import Command
 
 
@@ -19,8 +21,8 @@ class DebugInfoCommand(Command):
                 [
                     f"<info>Version</info>:    <comment>{self.poetry.VERSION}</>",
                     f"<info>Python</info>:     <comment>{poetry_python_version}</>",
-                    f"<info>Path</info>:       <comment>{sys.prefix}</>",
-                    f"<info>Executable</info>: <comment>{sys.executable or 'Unknown'}</>",
+                    f"<info>Path</info>:       <comment>{Path(sys.prefix)}</>",
+                    f"<info>Executable</info>: <comment>{Path(sys.executable) if sys.executable else 'Unknown'}</>",
                 ]
             )
         )
