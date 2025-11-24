@@ -26,64 +26,55 @@ def tester() -> ApplicationTester:
     return tester
 
 
+@pytest.mark.parametrize("inputs", ["yes", "no"])
 def test_cache_clear_all(
     tester: ApplicationTester,
-    repository_one: str,
     repository_cache_dir: Path,
-    cache: FileCache[T],
+    repositories: list[str],
+    repository_dirs: list[Path],
+    caches: list[FileCache[dict[str, str]]],
+    inputs: str,
 ) -> None:
-    exit_code = tester.execute(f"cache clear {repository_one} --all", inputs="yes")
-    repository_one_dir = repository_cache_dir / repository_one
+    exit_code = tester.execute(f"cache clear {repositories[0]} --all", inputs=inputs)
 
     assert exit_code == 0
     assert tester.io.fetch_output() == ""
-    # ensure directory is empty or doesn't exist
-    assert not repository_one_dir.exists() or not any(repository_one_dir.iterdir())
-    assert not cache.has("cachy:0.1")
-    assert not cache.has("cleo:0.2")
+
+    if inputs == "yes":
+        assert not repository_dirs[0].exists() or not any(repository_dirs[0].iterdir())
+        assert not caches[0].has("cachy:0.1")
+        assert not caches[0].has("cleo:0.2")
+    else:
+        assert any((repository_cache_dir / repositories[0]).iterdir())
+        assert caches[0].has("cachy:0.1")
+        assert caches[0].has("cleo:0.2")
+
+    assert any((repository_cache_dir / repositories[1]).iterdir())
+    assert caches[1].has("cachy:0.1")
+    assert caches[1].has("cashy:0.2")
 
 
-def test_cache_clear_all_no(
-    tester: ApplicationTester,
-    repository_one: str,
-    repository_cache_dir: Path,
-    cache: FileCache[T],
-) -> None:
-    exit_code = tester.execute(f"cache clear {repository_one} --all", inputs="no")
-
-    assert exit_code == 0
-    assert tester.io.fetch_output() == ""
-    # ensure directory is not empty
-    assert any((repository_cache_dir / repository_one).iterdir())
-    assert cache.has("cachy:0.1")
-    assert cache.has("cleo:0.2")
-
-
+@pytest.mark.parametrize("inputs", ["yes", "no"])
 @pytest.mark.parametrize("package_name", ["cachy", "Cachy"])
 def test_cache_clear_pkg(
     tester: ApplicationTester,
-    repository_one: str,
-    cache: FileCache[T],
+    repositories: list[str],
+    caches: list[FileCache[dict[str, str]]],
     package_name: str,
+    inputs: str,
 ) -> None:
     exit_code = tester.execute(
-        f"cache clear {repository_one}:{package_name}:0.1", inputs="yes"
+        f"cache clear {repositories[1]}:{package_name}:0.1", inputs=inputs
     )
 
     assert exit_code == 0
     assert tester.io.fetch_output() == ""
-    assert not cache.has("cachy:0.1")
-    assert cache.has("cleo:0.2")
 
+    if inputs == "yes":
+        assert not caches[1].has("cachy:0.1")
+        assert caches[1].has("cashy:0.2")
+    else:
+        assert caches[1].has("cachy:0.1")
+        assert caches[1].has("cashy:0.2")
 
-def test_cache_clear_pkg_no(
-    tester: ApplicationTester,
-    repository_one: str,
-    cache: FileCache[T],
-) -> None:
-    exit_code = tester.execute(f"cache clear {repository_one}:cachy:0.1", inputs="no")
-
-    assert exit_code == 0
-    assert tester.io.fetch_output() == ""
-    assert cache.has("cachy:0.1")
-    assert cache.has("cleo:0.2")
+    assert caches[0].has("cachy:0.1")
