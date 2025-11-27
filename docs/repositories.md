@@ -43,7 +43,7 @@ poetry config http-basic.foo <username> <password>
 ```
 {{% warning %}}
 🐉 HERE LIE DRAGONS 🐉
-If you have completed configuring credentials and are receiving authorization failures, check for the presence of `~/.netrc` which has been known to conflict with poetry's configured authentication.
+If you have completed configuring credentials and are receiving authorization failures, check for the presence of `~/.netrc`, which has been known to conflict with Poetry's configured authentication.
 {{% /warning %}}
 
 {{% warning %}}
