@@ -7,6 +7,7 @@ import shutil
 import sys
 
 from functools import cached_property
+from importlib import metadata
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -21,7 +22,6 @@ from poetry.plugins.application_plugin import ApplicationPlugin
 from poetry.plugins.plugin import Plugin
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.toml import TOMLFile
-from poetry.utils._compat import metadata
 from poetry.utils._compat import tomllib
 from poetry.utils.env import Env
 from poetry.utils.env import EnvManager

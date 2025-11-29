@@ -4,6 +4,7 @@ import itertools
 import json
 import logging
 
+from importlib import metadata
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -15,7 +16,6 @@ from poetry.core.utils.helpers import module_name
 
 from poetry.repositories.repository import Repository
 from poetry.utils._compat import getencoding
-from poetry.utils._compat import metadata
 from poetry.utils.env import VirtualEnv
 
 

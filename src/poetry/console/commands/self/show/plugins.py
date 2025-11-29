@@ -8,9 +8,9 @@ from poetry.console.commands.self.self_command import SelfCommand
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages.package import Package
+    from importlib import metadata
 
-    from poetry.utils._compat import metadata
+    from poetry.core.packages.package import Package
 
 
 @dataclasses.dataclass

@@ -6,7 +6,6 @@ import time
 
 from enum import IntEnum
 from typing import TYPE_CHECKING
-from typing import Optional
 
 from poetry.core.packages.dependency import Dependency
 
@@ -48,9 +47,7 @@ class Preference(IntEnum):
 
 CompKey = tuple[Preference, int, bool, int]
 
-DependencyCacheKey = tuple[
-    str, Optional[str], Optional[str], Optional[str], Optional[str]
-]
+DependencyCacheKey = tuple[str, str | None, str | None, str | None, str | None]
 
 
 class DependencyCache:

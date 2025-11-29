@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
 
 import pytest
 
@@ -15,6 +14,7 @@ from poetry.utils.env import EnvManager
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from collections.abc import Iterable
 
     import responses

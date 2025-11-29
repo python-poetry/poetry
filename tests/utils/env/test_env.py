@@ -5,6 +5,7 @@ import re
 import subprocess
 import sys
 
+from importlib import metadata
 from pathlib import Path
 from threading import Thread
 from typing import TYPE_CHECKING
@@ -18,7 +19,6 @@ from installer.utils import SCHEME_NAMES
 from poetry.factory import Factory
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils._compat import WINDOWS
-from poetry.utils._compat import metadata
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import EnvManager
 from poetry.utils.env import GenericEnv

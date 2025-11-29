@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
 from typing import cast
 
 import pytest
@@ -16,6 +15,8 @@ from tests.helpers import get_package
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from cleo.testers.command_tester import CommandTester
     from pytest_mock import MockerFixture
     from tomlkit import TOMLDocument

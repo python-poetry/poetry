@@ -17,7 +17,7 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
 
 
 def test_about(tester: CommandTester) -> None:
-    from poetry.utils._compat import metadata
+    from importlib import metadata
 
     tester.execute()
 

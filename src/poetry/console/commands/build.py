@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 
+from importlib import metadata
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -13,7 +14,6 @@ from poetry.core.constraints.version import Version
 
 from poetry.console.commands.env_command import EnvCommand
 from poetry.masonry.builders import BUILD_FORMATS
-from poetry.utils._compat import metadata
 from poetry.utils.helpers import remove_directory
 from poetry.utils.isolated_build import isolated_builder
 

@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import json
 
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
 from typing import TypeVar
 from typing import cast
 

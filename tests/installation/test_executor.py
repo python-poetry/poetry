@@ -10,7 +10,6 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
 
 import pytest
 
@@ -36,6 +35,7 @@ from poetry.vcs.git.backend import Git
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from collections.abc import Iterator
     from collections.abc import Mapping
     from collections.abc import Sequence
