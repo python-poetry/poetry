@@ -182,7 +182,7 @@ class Chooser:
                 # `poetry cache clear {package.source_reference}:{package.name}:{package.version}`
                 # but `package.source_reference` currently resolves to `None` because
                 # repository names are case sensitive at the moment (`PyPI` vs `pypi`).
-                f"If any of those solutions worked, you will have to clear your caches using (<c1>poetry cache clear --all .</>).\n\n"
+                f"If any of those solutions worked, you will have to clear your caches using (<c1>poetry cache clear --all</>).\n\n"
                 f"If neither works, please first check to verify that the {package.name} has published wheels "
                 f"available from your configured source{source_hint} that are compatible with your environment"
                 f"- ie. operating system, architecture (x86_64, arm64 etc.), python interpreter."
