@@ -935,7 +935,7 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
     with open(locker.lock, "w", encoding="utf-8") as f:
         f.write(content)
 
-    with pytest.raises(RuntimeError, match="^The lock file is not compatible"):
+    with pytest.raises(RuntimeError, match=r"^The lock file is not compatible"):
         _ = locker.lock_data
 
 
@@ -953,7 +953,7 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
     with open(locker.lock, "w", encoding="utf-8") as f:
         f.write(content)
 
-    with pytest.raises(RuntimeError, match="^The lock file is not compatible"):
+    with pytest.raises(RuntimeError, match=r"^The lock file is not compatible"):
         _ = locker.lock_data
 
 

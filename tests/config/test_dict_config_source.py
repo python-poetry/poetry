@@ -63,6 +63,6 @@ def test_dict_config_source_get_property_should_raise_if_not_found() -> None:
     config_source = DictConfigSource()
 
     with pytest.raises(
-        PropertyNotFoundError, match="Key virtualenvs.use-poetry-python not in config"
+        PropertyNotFoundError, match=r"Key virtualenvs\.use-poetry-python not in config"
     ):
         _ = config_source.get_property("virtualenvs.use-poetry-python")

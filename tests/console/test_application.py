@@ -185,7 +185,7 @@ def test_application_verify_cache_flag_at_install(
         # The third call is the default authenticator, which ignores the cache flag.
         assert spy.call_count == 3
         for call in spy.mock_calls[:2]:
-            (name, args, kwargs) = call
+            (_name, _args, kwargs) = call
             assert "disable_cache" in kwargs
             assert disable_cache is kwargs["disable_cache"]
 
