@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import locale
 import sys
+import warnings
 
 from contextlib import suppress
 
@@ -11,6 +12,8 @@ if sys.version_info < (3, 11):
     import tomli as tomllib
 else:
     import tomllib
+
+from importlib import metadata as _metadata
 
 
 WINDOWS = sys.platform == "win32"
@@ -47,6 +50,18 @@ def getencoding() -> str:
         return locale.getpreferredencoding()
     else:
         return locale.getencoding()
+
+
+def __getattr__(name: str) -> object:
+    if name == "metadata":
+        warnings.warn(
+            "Importing `metadata` from `poetry.utils._compat` is deprecated;"
+            " use `importlib.metadata` directly.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return _metadata
+    raise AttributeError
 
 
 __all__ = [
