@@ -177,6 +177,12 @@ class Chooser:
                 f"Make sure the lockfile is up-to-date. You can try one of the following;\n\n"
                 f"    1. <b>Regenerate lockfile: </><fg=yellow>poetry lock --no-cache --regenerate</>\n"
                 f"    2. <b>Update package     : </><fg=yellow>poetry update --no-cache {package.name}</>\n\n"
+                # FIXME: In the future, it would be better to suggest a more targeted
+                # cache clear command for just the package in question. E.g.
+                # `poetry cache clear {package.source_reference}:{package.name}:{package.version}`
+                # but `package.source_reference` currently resolves to `None` because
+                # repository names are case sensitive at the moment (`PyPI` vs `pypi`).
+                f"If any of those solutions worked, you will have to clear your caches using (<c1>poetry cache clear --all</>).\n\n"
                 f"If neither works, please first check to verify that the {package.name} has published wheels "
                 f"available from your configured source{source_hint} that are compatible with your environment"
                 f"- ie. operating system, architecture (x86_64, arm64 etc.), python interpreter."
