@@ -2,7 +2,7 @@
 name = "poetry"
 version = "2.2.1"
 description = "Python dependency management and packaging made easy."
-requires-python = ">=3.9,<4.0"
+requires-python = ">=3.10,<4.0"
 dependencies = [
     "poetry-core (==2.2.1)",
     "build (>=1.2.1,<2.0.0)",
@@ -10,7 +10,6 @@ dependencies = [
     "cleo (>=2.1.0,<3.0.0)",
     "dulwich (>=0.24.0,<0.25.0)",
     "fastjsonschema (>=2.18.0,<3.0.0)",
-    "importlib-metadata (>=4.4) ; python_version < '3.10'",
     "installer (>=0.7.0,<0.8.0)",
     "keyring (>=25.1.0,<26.0.0)",
     # packaging uses calver, so version is unclamped
@@ -69,10 +68,6 @@ include = [{ path = "tests", format = "sdist" }]
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = ">=2.10"
-# add setuptools for PyCharm
-# see https://youtrack.jetbrains.com/issue/PY-48909
-# and https://github.com/JetBrains/intellij-community/commit/3f37786ec0bf5066e4527690d1068b5a00680ea3
-setuptools = { version = ">=60", python = "<3.10" }
 
 [tool.poetry.group.test.dependencies]
 coverage = ">=7.2.0"
@@ -110,7 +105,6 @@ extend-exclude = [
 ]
 fix = true
 line-length = 88
-target-version = "py39"
 
 [tool.ruff.lint]
 extend-select = [

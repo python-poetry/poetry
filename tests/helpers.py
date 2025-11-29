@@ -5,6 +5,7 @@ import os
 import re
 import shutil
 
+from importlib import metadata
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -21,7 +22,6 @@ from poetry.installation.executor import Executor
 from poetry.packages import Locker
 from poetry.repositories import Repository
 from poetry.repositories.exceptions import PackageNotFoundError
-from poetry.utils._compat import metadata
 from poetry.utils.password_manager import PoetryKeyring
 
 

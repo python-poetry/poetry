@@ -5,6 +5,7 @@ import shutil
 import zipfile
 
 from functools import cached_property
+from importlib import metadata
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import NamedTuple
@@ -13,7 +14,6 @@ import pytest
 
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils._compat import getencoding
-from poetry.utils._compat import metadata
 from poetry.utils.env import EnvManager
 from poetry.utils.env import MockEnv
 from poetry.utils.env import VirtualEnv
@@ -135,7 +135,7 @@ def repository(
     installed_results: list[metadata.PathDistribution],
 ) -> InstalledRepository:
     mocker.patch(
-        "poetry.utils._compat.metadata.Distribution.discover",
+        "importlib.metadata.Distribution.discover",
         return_value=installed_results,
     )
     return InstalledRepository.load(env)
@@ -192,7 +192,7 @@ def test_load_successful_with_invalid_distribution(
     invalid_dist_info = tmp_path / "site-packages" / "invalid-0.1.0.dist-info"
     invalid_dist_info.mkdir(parents=True)
     mocker.patch(
-        "poetry.utils._compat.metadata.Distribution.discover",
+        "importlib.metadata.Distribution.discover",
         return_value=[*installed_results, metadata.PathDistribution(invalid_dist_info)],
     )
     repository_with_invalid_distribution = InstalledRepository.load(env)

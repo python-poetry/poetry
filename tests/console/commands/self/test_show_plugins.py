@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from importlib import metadata
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
 
 import pytest
 
@@ -11,10 +11,10 @@ from poetry.core.packages.package import Package
 
 from poetry.plugins.application_plugin import ApplicationPlugin
 from poetry.plugins.plugin import Plugin
-from poetry.utils._compat import metadata
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from os import PathLike
     from pathlib import Path
 

@@ -108,8 +108,7 @@ def test_detect_active_python_with_bat(
     """On Windows pyenv uses batch files for python management."""
     python_wrapper = tmp_path / "python.bat"
 
-    encoding = "locale" if sys.version_info >= (3, 10) else None
-    with python_wrapper.open("w", encoding=encoding) as f:
+    with python_wrapper.open("w", encoding="locale") as f:
         f.write(
             textwrap.dedent(f"""
             @echo off

@@ -284,9 +284,8 @@ class EnvManager:
         if python_path.is_file():
             # Validate env name if provided env is a full path to python
             try:
-                encoding = "locale" if sys.version_info >= (3, 10) else None
                 env_dir = subprocess.check_output(
-                    [python, "-c", GET_ENV_PATH_ONELINER], text=True, encoding=encoding
+                    [python, "-c", GET_ENV_PATH_ONELINER], text=True, encoding="locale"
                 ).strip("\n")
                 env_name = Path(env_dir).name
                 if not self.check_env_is_for_current_project(
@@ -329,11 +328,10 @@ class EnvManager:
             pass
 
         try:
-            encoding = "locale" if sys.version_info >= (3, 10) else None
             python_version_string = subprocess.check_output(
                 [python, "-c", GET_PYTHON_VERSION_ONELINER],
                 text=True,
-                encoding=encoding,
+                encoding="locale",
             )
         except CalledProcessError as e:
             raise EnvCommandError(e)

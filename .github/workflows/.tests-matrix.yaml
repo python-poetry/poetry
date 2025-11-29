@@ -111,7 +111,7 @@ jobs:
         # Replace the python version to avoid conflicts
         # if the plugin still supports a wider range than Poetry itself.
         run: |
-          perl -pi -e 's/^python =.*$/python = "~'"${PYTHON_VERSION}"'"/' pyproject.toml
+          perl -pi -e 's/^requires-python =.*$/requires-python = "~='"${PYTHON_VERSION}"'"/' pyproject.toml
           poetry remove --lock poetry-core  # use whatever poetry uses
           poetry add --lock --group dev ../poetry
         env:

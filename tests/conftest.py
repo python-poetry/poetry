@@ -62,10 +62,10 @@ from tests.helpers import with_working_directory
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from collections.abc import Iterator
     from collections.abc import Mapping
     from typing import Any
-    from typing import Callable
     from unittest.mock import MagicMock
 
     from cleo.io.inputs.argument import Argument
