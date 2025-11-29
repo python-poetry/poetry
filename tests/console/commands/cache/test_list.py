@@ -10,6 +10,7 @@ if TYPE_CHECKING:
 
     from cleo.testers.command_tester import CommandTester
 
+    from poetry.utils.cache import FileCache
     from tests.types import CommandTesterFactory
 
 
@@ -19,13 +20,15 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
 
 
 def test_cache_list(
-    tester: CommandTester, mock_caches: None, repository_one: str, repository_two: str
+    tester: CommandTester,
+    caches: list[FileCache[dict[str, str]]],
+    repositories: list[str],
 ) -> None:
     tester.execute()
 
     expected = f"""\
-{repository_one}
-{repository_two}
+{repositories[0]}
+{repositories[1]}
 """
 
     assert tester.io.fetch_output() == expected

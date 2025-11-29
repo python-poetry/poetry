@@ -30,18 +30,18 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
     from typing import Any
 
-    import httpretty
+    import responses
 
-    from httpretty.core import HTTPrettyRequest
     from keyring.backend import KeyringBackend
     from poetry.core.constraints.version import Version
     from poetry.core.packages.dependency import Dependency
     from pytest_mock import MockerFixture
+    from requests import PreparedRequest
     from tomlkit.toml_document import TOMLDocument
 
     from poetry.installation.operations.operation import Operation
     from poetry.poetry import Poetry
-    from tests.types import HTTPrettyResponse
+    from tests.types import HttpResponse
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures"
 FIXTURE_PATH_INSTALLATION = Path(__file__).parent / "installation" / "fixtures"
@@ -320,24 +320,22 @@ def flatten_dict(obj: Mapping[str, Any], delimiter: str = ".") -> Mapping[str, A
 
 
 def http_setup_redirect(
-    http: type[httpretty.httpretty], *methods: str, status_code: int = 301
+    http: responses.RequestsMock, *methods: str, status_code: int = 301
 ) -> None:
-    redirect_uri_regex = re.compile("^(?P<protocol>https?)://redirect.(?P<uri>.*)$")
+    redirect_uri_regex = re.compile(r"^(?P<protocol>https?)://redirect\.(?P<uri>.*)$")
 
-    def redirect_request_callback(
-        request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
-    ) -> HTTPrettyResponse:
-        redirect_uri_match = redirect_uri_regex.match(uri)
+    def redirect_request_callback(request: PreparedRequest) -> HttpResponse:
+        assert request.url
+        redirect_uri_match = redirect_uri_regex.match(request.url)
         assert redirect_uri_match is not None
         redirect_uri = f"{redirect_uri_match.group('protocol')}://{redirect_uri_match.group('uri')}"
         return status_code, {"Location": redirect_uri}, b""
 
     for method in methods:
-        http.register_uri(
+        http.add_callback(
             method,
             redirect_uri_regex,
-            status=status_code,
-            body=redirect_request_callback,
+            callback=redirect_request_callback,
         )
 
 

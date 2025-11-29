@@ -18,6 +18,7 @@ from poetry.core.constraints.version import Version
 from poetry.core.constraints.version import parse_constraint
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
+from poetry.core.version.exceptions import InvalidVersionError
 from poetry.core.version.markers import parse_marker
 from poetry.core.version.requirements import InvalidRequirementError
 from tomlkit import array
@@ -100,6 +101,23 @@ class Locker:
 
         if "content-hash" in metadata:
             fresh: bool = self._content_hash == metadata["content-hash"]
+            if not fresh:
+                with self.lock.open("r", encoding="utf-8") as f:
+                    generated_comment = f.readline()
+                if m := re.search("Poetry ([^ ]+)", generated_comment):
+                    try:
+                        version = Version.parse(m.group(1))
+                    except InvalidVersionError:
+                        pass
+                    else:
+                        if version < Version.parse("2.3.0"):
+                            # Before Poetry 2.3.0, the content hash did not include
+                            # dependency groups, so we need to recompute it without
+                            # them for comparison.
+                            old_content_hash = self._get_content_hash(
+                                with_dependency_groups=False
+                            )
+                            fresh = old_content_hash == metadata["content-hash"]
             return fresh
 
         return False
@@ -270,11 +288,16 @@ class Locker:
 
         self._lock_data = None
 
-    def _get_content_hash(self) -> str:
+    def _get_content_hash(self, *, with_dependency_groups: bool = True) -> str:
         """
         Returns the sha256 hash of the sorted content of the pyproject file.
         """
         project_content = self._pyproject_data.get("project", {})
+        group_content = (
+            self._pyproject_data.get("dependency-groups", {})
+            if with_dependency_groups
+            else {}
+        )
         tool_poetry_content = self._pyproject_data.get("tool", {}).get("poetry", {})
 
         relevant_project_content = {}
@@ -289,18 +312,26 @@ class Locker:
 
             if data is None and (
                 # Special handling for legacy keys is just for backwards compatibility,
-                # and thereby not required if there is relevant content in [project].
-                key not in self._legacy_keys or relevant_project_content
+                # and thereby not required if there is relevant content in [project]
+                # or [dependency-groups].
+                key not in self._legacy_keys
+                or relevant_project_content
+                or group_content
             ):
                 continue
 
             relevant_poetry_content[key] = data
 
+        relevant_content = {}
         if relevant_project_content:
-            relevant_content = {
-                "project": relevant_project_content,
-                "tool": {"poetry": relevant_poetry_content},
-            }
+            relevant_content["project"] = relevant_project_content
+        if group_content:
+            # For backwards compatibility, we must not add dependency-groups
+            # if it is empty.
+            relevant_content["dependency-groups"] = group_content
+
+        if relevant_content:
+            relevant_content["tool"] = {"poetry": relevant_poetry_content}
         else:
             # For backwards compatibility, we have to put the relevant content
             # of the [tool.poetry] section at top level!
