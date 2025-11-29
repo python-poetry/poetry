@@ -76,7 +76,7 @@ class LinkSource:
             name = m.group("name")
             version_string = m.group("ver")
         else:
-            info, ext = link.splitext()
+            info, _ext = link.splitext()
             match = cls.VERSION_REGEX.match(info)
             if match:
                 name = match.group(1)
