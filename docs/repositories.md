@@ -41,6 +41,9 @@ Then, assuming the repository requires authentication, configure credentials for
 ```bash
 poetry config http-basic.foo <username> <password>
 ```
+{{% warning %}}
+If you have completed configuring credentials and are receiving authorization failures, check for the presence of `~/.netrc`, which has been known to conflict with Poetry's configured authentication.
+{{% /warning %}}
 
 {{% warning %}}
 Depending on your system configuration, credentials might be saved in your command line history.
