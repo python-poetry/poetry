@@ -12,16 +12,102 @@ from poetry.publishing.uploader import UploadError
 
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     import responses
 
     from pytest_mock import MockerFixture
 
+    from poetry.poetry import Poetry
     from tests.types import FixtureDirGetter
 
 
 @pytest.fixture
-def uploader(fixture_dir: FixtureDirGetter) -> Uploader:
-    return Uploader(Factory().create_poetry(fixture_dir("simple_project")), NullIO())
+def poetry(fixture_dir: FixtureDirGetter) -> Poetry:
+    return Factory().create_poetry(fixture_dir("simple_project"))
+
+
+@pytest.fixture
+def uploader(poetry: Poetry) -> Uploader:
+    return Uploader(poetry, NullIO())
+
+
+@pytest.mark.parametrize(
+    ("files", "expected_files", "expected_version"),
+    [
+        (
+            ["simple_project-1.2.3.tar.gz", "simple_project-1.2.3-py3-none-any.whl"],
+            ["simple_project-1.2.3.tar.gz", "simple_project-1.2.3-py3-none-any.whl"],
+            "1.2.3",
+        ),
+        (  # other names are ignored
+            [
+                "simple_project-1.2.3.tar.gz",
+                "other_project-1.2.3.tar.gz",
+                "simple_project-1.2.3-py3-none-any.whl",
+                "other_project-1.2.3-py3-none-any.whl",
+            ],
+            ["simple_project-1.2.3.tar.gz", "simple_project-1.2.3-py3-none-any.whl"],
+            "1.2.3",
+        ),
+        (  # older versions are ignored
+            [
+                "simple_project-1.2.3.tar.gz",
+                "simple_project-1.2.4.tar.gz",
+                "simple_project-1.2.3-py3-none-any.whl",
+                "simple_project-1.2.4-py3-none-any.whl",
+            ],
+            ["simple_project-1.2.4.tar.gz", "simple_project-1.2.4-py3-none-any.whl"],
+            "1.2.4",
+        ),
+        (  # older versions are ignored - only new sdist
+            [
+                "simple_project-1.2.3.tar.gz",
+                "simple_project-1.2.4.tar.gz",
+                "simple_project-1.2.3-py3-none-any.whl",
+            ],
+            ["simple_project-1.2.4.tar.gz"],
+            "1.2.4",
+        ),
+        (  # older versions are ignored - only new wheel
+            [
+                "simple_project-1.2.3.tar.gz",
+                "simple_project-1.2.3-py3-none-any.whl",
+                "simple_project-1.2.4-py3-none-any.whl",
+            ],
+            ["simple_project-1.2.4-py3-none-any.whl"],
+            "1.2.4",
+        ),
+        (  # older versions are ignored - local version
+            [
+                "simple_project-1.2.3.tar.gz",
+                "simple_project-1.2.3+hash1.tar.gz",
+                "simple_project-1.2.3+hash2.tar.gz",
+                "simple_project-1.2.3-py3-none-any.whl",
+                "simple_project-1.2.3+hash1-py3-none-any.whl",
+                "simple_project-1.2.3+hash2-py3-none-any.whl",
+            ],
+            [
+                "simple_project-1.2.3+hash2.tar.gz",
+                "simple_project-1.2.3+hash2-py3-none-any.whl",
+            ],
+            "1.2.3+hash2",
+        ),
+    ],
+)
+def test_uploader_files_only_latest(
+    poetry: Poetry,
+    tmp_path: Path,
+    files: list[str],
+    expected_files: list[str],
+    expected_version: str,
+) -> None:
+    for file in files:
+        (tmp_path / file).touch()
+    uploader = Uploader(poetry, NullIO(), dist_dir=tmp_path)
+
+    assert uploader.files == [tmp_path / f for f in expected_files]
+    assert uploader.version == expected_version
 
 
 def test_uploader_properly_handles_400_errors(
@@ -106,15 +192,18 @@ def test_uploader_properly_handles_301_redirects(
 
 
 def test_uploader_registers_for_appropriate_400_errors(
-    mocker: MockerFixture, http: responses.RequestsMock, uploader: Uploader
+    http: responses.RequestsMock, uploader: Uploader
 ) -> None:
-    register = mocker.patch("poetry.publishing.uploader.Uploader._register")
     http.post("https://foo.com", status=400, body="No package was ever registered")
 
     with pytest.raises(UploadError):
         uploader.upload("https://foo.com")
 
-    assert register.call_count == 1
+    assert len(http.calls) == 2
+    assert b'name=":action"\r\n\r\nfile_upload\r\n' in (
+        http.calls[0].request.body or b""
+    )
+    assert b'name=":action"\r\n\r\nsubmit\r\n' in (http.calls[1].request.body or b"")
 
 
 @pytest.mark.parametrize(
