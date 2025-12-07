@@ -184,7 +184,7 @@ For example, these commands should output the same python path:
 conda activate your_env_name
 which python
 poetry run which python
-poetry env activate
+eval "$(poetry env activate)"
 which python
 ```
 
