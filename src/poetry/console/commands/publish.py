@@ -82,8 +82,9 @@ the config command.
 
             self.call("build", args=f"--output {dist_dir}")
 
-        files = publisher.files
-        if not files:
+            publisher = Publisher(self.poetry, self.io, Path(dist_dir))
+
+        if not publisher.files:
             self.line_error(
                 "<error>No files to publish. "
                 "Run poetry build first or use the --build option.</error>"

@@ -50,6 +50,8 @@ def test_publish_can_publish_to_given_repository(
     config: Config,
     fixture_name: str,
 ) -> None:
+    uploader_version = "1.2.3+test"
+    mocker.patch("poetry.publishing.uploader.Uploader.version", uploader_version)
     uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
     uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
 
@@ -62,6 +64,9 @@ def test_publish_can_publish_to_given_repository(
 
     mocker.patch("poetry.config.config.Config.create", return_value=config)
     poetry = Factory().create_poetry(fixture_dir(fixture_name))
+    # Normally both versions are equal, but we want to check that the correct version
+    # is displayed in the output if they are different.
+    assert poetry.package.version != uploader_version
 
     io = BufferedIO()
     publisher = Publisher(poetry, io)
@@ -74,7 +79,7 @@ def test_publish_can_publish_to_given_repository(
         {"cert": True, "client_cert": None, "dry_run": False, "skip_existing": False},
     ]
     project_name = canonicalize_name(fixture_name)
-    assert f"Publishing {project_name} (1.2.3) to foo" in io.fetch_output()
+    assert f"Publishing {project_name} ({uploader_version}) to foo" in io.fetch_output()
 
 
 def test_publish_raises_error_for_undefined_repository(
