@@ -423,7 +423,7 @@ def test_env_finds_the_correct_executables_for_generic_env(
     venv = GenericEnv(parent_venv.path, child_env=VirtualEnv(child_venv_path))
 
     expected_executable = (
-        "python.exe"
+        f"python{sys.version_info[0]}.exe"
         if WINDOWS
         else f"python{sys.version_info[0]}.{sys.version_info[1]}"
     )
@@ -468,7 +468,7 @@ def test_env_finds_fallback_executables_for_generic_env(
         expected_pip_executable = default_pip_executable
 
     else:
-        expected_executable = default_executable if WINDOWS else major_executable
+        expected_executable = major_executable
         expected_pip_executable = major_pip_executable
 
     venv = GenericEnv(parent_venv.path, child_env=VirtualEnv(child_venv_path))
