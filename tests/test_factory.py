@@ -11,6 +11,7 @@ from deepdiff.diff import DeepDiff
 from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import Version
 from poetry.core.constraints.version import parse_constraint
+from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.packages.vcs_dependency import VCSDependency
 
@@ -390,6 +391,29 @@ def test_poetry_with_pypi_explicit_only(
     with pytest.raises(PoetryError) as e:
         Factory().create_poetry(fixture_dir(project))
     assert str(e.value) == "At least one source must not be configured as 'explicit'."
+
+
+def test_poetry_with_build_constraints(fixture_dir: FixtureDirGetter) -> None:
+    poetry = Factory().create_poetry(fixture_dir("build_constraints"))
+    assert set(poetry.build_constraints) == {
+        "legacy-lib",
+        "no-constraints",
+        "c-ext-lib",
+    }
+    assert poetry.build_constraints[canonicalize_name("legacy-lib")] == [
+        Dependency("setuptools", "<75")
+    ]
+    assert poetry.build_constraints[canonicalize_name("no-constraints")] == []
+    assert poetry.build_constraints[canonicalize_name("c-ext-lib")] == [
+        Dependency("Cython", "<3.1"),
+        Dependency("setuptools", ">=60,<75"),
+        Dependency("setuptools", ">=75"),
+    ]
+
+
+def test_poetry_with_empty_build_constraints(fixture_dir: FixtureDirGetter) -> None:
+    poetry = Factory().create_poetry(fixture_dir("build_constraints_empty"))
+    assert set(poetry.build_constraints) == set()
 
 
 def test_validate(fixture_dir: FixtureDirGetter) -> None:

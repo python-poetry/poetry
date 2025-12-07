@@ -12,8 +12,11 @@ from poetry.pyproject.toml import PyProjectTOML
 
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
     from pathlib import Path
 
+    from packaging.utils import NormalizedName
+    from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.project_package import ProjectPackage
 
     from poetry.config.config import Config
@@ -34,6 +37,8 @@ class Poetry(BasePoetry):
         locker: Locker,
         config: Config,
         disable_cache: bool = False,
+        *,
+        build_constraints: Mapping[NormalizedName, list[Dependency]] | None = None,
     ) -> None:
         from poetry.repositories.repository_pool import RepositoryPool
 
@@ -44,6 +49,7 @@ class Poetry(BasePoetry):
         self._pool = RepositoryPool(config=config)
         self._plugin_manager: PluginManager | None = None
         self._disable_cache = disable_cache
+        self._build_constraints = build_constraints or {}
 
     @property
     def pyproject(self) -> PyProjectTOML:
@@ -69,6 +75,10 @@ class Poetry(BasePoetry):
     @property
     def disable_cache(self) -> bool:
         return self._disable_cache
+
+    @property
+    def build_constraints(self) -> Mapping[NormalizedName, list[Dependency]]:
+        return self._build_constraints
 
     def set_locker(self, locker: Locker) -> Poetry:
         self._locker = locker

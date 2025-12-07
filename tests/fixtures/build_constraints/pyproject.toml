@@ -1,0 +1,14 @@
+[project]
+name = "build-constraints"
+version = "0.1.0"
+
+[tool.poetry.build-constraints]
+Legacy-Lib = { setuptools = "<75" }
+no-constraints = {}
+
+[tool.poetry.build-constraints.c-ext-lib]
+Cython = { version = "<3.1", source = "pypi" }
+setuptools = [
+    { version = ">=60,<75", python = "<3.9" },
+    { version = ">=75", python = ">=3.8" }
+]
