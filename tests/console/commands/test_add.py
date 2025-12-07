@@ -643,7 +643,9 @@ def test_add_to_existing_group(
 [dependency-groups]
 example = [
     "cachy (>=0.2.0,<0.3.0)",
+    {include-group = "included"},
 ]
+included = []
 """
     )
     pyproject["dependency-groups"] = groups_content["dependency-groups"]
@@ -675,6 +677,7 @@ Using version ^1.4.4 for pendulum
     assert "example" in pyproject["dependency-groups"]
     assert pyproject["dependency-groups"]["example"] == [
         "cachy (>=0.2.0,<0.3.0)",
+        {"include-group": "included"},
         "pendulum (>=1.4.4,<2.0.0)",
     ]
     if additional_poetry_group:
@@ -694,9 +697,11 @@ def test_add_to_group_with_latest_overwrite_existing(
         """\
 [dependency-groups]
 example = [
+    {include-group = "included"},
     "cachy (>=0.1.0,<0.2.0)",
     "pendulum (>=1.4.4,<2.0.0)",
 ]
+included = []
 """
     )
     pyproject["dependency-groups"] = groups_content["dependency-groups"]
@@ -718,6 +723,7 @@ Using version ^0.2.0 for cachy
     pyproject = cast("dict[str, Any]", pyproject)
     assert "example" in pyproject["dependency-groups"]
     assert pyproject["dependency-groups"]["example"] == [
+        {"include-group": "included"},
         "cachy (>=0.2.0,<0.3.0)",
         "pendulum (>=1.4.4,<2.0.0)",
     ]

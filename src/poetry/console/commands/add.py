@@ -5,6 +5,7 @@ import contextlib
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
+from typing import Literal
 
 from cleo.helpers import argument
 from cleo.helpers import option
@@ -161,7 +162,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
         use_project_section = False
         use_groups_section = False
-        project_dependency_names = []
+        project_dependency_names: list[NormalizedName | Literal["<include-group>"]] = []
 
         # Run-Time Deps incl. extras
         if group == MAIN_GROUP:
@@ -195,6 +196,11 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
                 project_dependency_names = [
                     Dependency.create_from_pep_508(dep).name
+                    if isinstance(dep, str)
+                    # We have to add an entry for "include-group" items because
+                    # later the index of the dependency is used to replace it.
+                    # We just choose a name that cannot be a package's name.
+                    else "<include-group>"
                     for dep in groups_content[group]
                 ]
 
@@ -416,7 +422,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
         self,
         packages: list[str],
         section: dict[str, Any],
-        project_dependencies: Collection[NormalizedName],
+        project_dependencies: Collection[NormalizedName | Literal["<include-group>"]],
     ) -> list[str]:
         existing_packages = []
 
