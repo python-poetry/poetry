@@ -8,6 +8,7 @@ import subprocess
 from typing import TYPE_CHECKING
 from typing import Any
 
+from poetry.utils._compat import WINDOWS
 from poetry.utils.env.script_strings import GET_PATHS
 from poetry.utils.env.virtual_env import VirtualEnv
 
@@ -38,6 +39,9 @@ class GenericEnv(VirtualEnv):
                 (f"python{minor_version}", f"pip{minor_version}"),
                 (f"python{major_version}", f"pip{major_version}"),
             ]
+
+        if WINDOWS:
+            patterns = [(f"{p[0]}.exe", f"{p[1]}.exe") for p in patterns]
 
         python_executable = None
         pip_executable = None
