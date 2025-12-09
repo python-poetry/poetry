@@ -23,6 +23,7 @@ from poetry.__version__ import __version__
 from poetry.console.command_loader import CommandLoader
 from poetry.console.commands.command import Command
 from poetry.console.exceptions import PoetryRuntimeError
+from poetry.toml import TOMLError
 from poetry.utils.helpers import directory
 from poetry.utils.helpers import ensure_path
 
@@ -196,12 +197,15 @@ class Application(BaseApplication):
         if self._poetry is not None:
             return self._poetry
 
-        self._poetry = Factory().create_poetry(
-            cwd=self.project_directory,
-            io=self._io,
-            disable_plugins=self._disable_plugins,
-            disable_cache=self._disable_cache,
-        )
+        try:
+            self._poetry = Factory().create_poetry(
+                cwd=self.project_directory,
+                io=self._io,
+                disable_plugins=self._disable_plugins,
+                disable_cache=self._disable_cache,
+            )
+        except TOMLError as e:
+            raise PoetryRuntimeError(f"Problem processing TOML configuration: {e}") from e
 
         return self._poetry
 
