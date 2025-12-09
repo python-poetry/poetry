@@ -18,8 +18,8 @@ import virtualenv
 
 from cleo.io.null_io import NullIO
 from poetry.core.constraints.version import Version
-from poetry.exceptions import PoetryError
 
+from poetry.exceptions import PoetryError
 from poetry.toml.file import TOMLFile
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import encode
@@ -450,8 +450,11 @@ class EnvManager:
             except KeyError as e:
                 raise PoetryError(
                     f'Invalid template variable "{e.args[0]}" in '
-                    'global configuration option "virtualenvs.prompt". '
-                    'Please check your Poetry configuration file.'
+                    'global configuration option "virtualenvs.prompt".\n\n'
+                    "Supported variables are: project_name, python_version.\n"
+                    "You can update this setting via:\n"
+                    "  - ~/.config/pypoetry/config.toml\n"
+                    "  - or run `poetry config --list` to inspect current values."
                 ) from e
 
         if not venv.exists():
