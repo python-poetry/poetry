@@ -11,6 +11,8 @@ from typing import Any
 import pytest
 import tomlkit
 
+from poetry.config.config import Config
+from poetry.console.exceptions import PoetryRuntimeError
 from poetry.core.constraints.version import Version
 
 from poetry.toml.file import TOMLFile
@@ -1302,3 +1304,22 @@ def test_generate_env_name_uses_real_path(
     venv_name1 = EnvManager.generate_env_name("simple-project", "the_real_dir")
     venv_name2 = EnvManager.generate_env_name("simple-project", "linked_dir")
     assert venv_name1 == venv_name2
+
+
+def test_create_venv_invalid_prompt_template_variable(
+    manager: EnvManager,
+    poetry: Poetry,
+    config: Config,
+    mocker: MockerFixture,
+    mocked_python_register: MockedPythonRegister,
+) -> None:
+    config.merge({"virtualenvs": {"prompt": "{project_name}-{invalid_var}"}})
+
+    mocked_python_register("3.9.0", make_system=True)
+
+    with pytest.raises(PoetryRuntimeError) as exc_info:
+        manager.create_venv()
+
+    assert "Invalid template variable" in str(exc_info.value)
+    assert "invalid_var" in str(exc_info.value)
+    assert "virtualenvs.prompt" in str(exc_info.value)
