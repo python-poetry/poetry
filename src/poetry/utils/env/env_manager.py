@@ -441,10 +441,18 @@ class EnvManager:
             venv = venv_path / name
 
         if venv_prompt is not None:
-            venv_prompt = venv_prompt.format(
-                project_name=self._poetry.package.name or "virtualenv",
-                python_version=python.minor_version.to_string(),
-            )
+            try:
+                venv_prompt = venv_prompt.format(
+                    project_name=self._poetry.package.name or "virtualenv",
+                    python_version=python.minor_version.to_string(),
+                )
+            except KeyError as e:
+                from poetry.console.exceptions import PoetryRuntimeError
+
+                raise PoetryRuntimeError(
+                    f"Invalid template variable {e} in 'virtualenvs.prompt' setting.\n"
+                    "Valid variables are: {project_name}, {python_version}"
+                ) from e
 
         if not venv.exists():
             if create_venv is False:
