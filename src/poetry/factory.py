@@ -26,6 +26,8 @@ from poetry.plugins.plugin_manager import PluginManager
 from poetry.poetry import Poetry
 from poetry.pyproject.toml import PyProjectTOML
 from poetry.toml.file import TOMLFile
+from poetry.toml.exceptions import TOMLError
+from poetry.console.exceptions import PoetryRuntimeError
 from poetry.utils.isolated_build import CONSTRAINTS_GROUP_NAME
 
 
@@ -108,7 +110,11 @@ class Factory(BaseFactory):
             if io.is_debug():
                 io.write_line(f"Loading configuration file {local_config_file.path}")
 
-            config.merge(local_config_file.read())
+            try:
+                config.merge(local_config_file.read())
+            except TOMLError as e:
+                raise PoetryRuntimeError(f"Invalid TOML configuration file {local_config_file.path}: {e}") from e
+
 
         # Load local sources
         repositories = {}
