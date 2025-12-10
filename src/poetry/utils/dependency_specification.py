@@ -28,6 +28,10 @@ BaseSpec = TypeVar("BaseSpec", DependencySpec, InlineTable)
 
 GIT_URL_SCHEMES = {"git+http", "git+https", "git+ssh"}
 
+# Regex pattern to match extras in package names like "package[extra1,extra2]"
+# Character class includes: word chars (\w), comma, hyphen, underscore
+EXTRAS_PATTERN = re.compile(r"\[([-\w,]+)\]$")
+
 
 def dependency_to_specification(
     dependency: Dependency, specification: BaseSpec
@@ -182,11 +186,24 @@ class RequirementsParser:
 
         return None
 
+    @staticmethod
+    def _extract_extras(name: str) -> tuple[str, list[str]]:
+        """Extract extras from a package name like 'package[extra1,extra2]'.
+
+        Returns:
+            A tuple of (clean_name, extras_list).
+        """
+        extras_m = EXTRAS_PATTERN.search(name)
+        if extras_m:
+            extras = [e.strip() for e in extras_m.group(1).split(",")]
+            name, _ = name.split("[")
+            return name, extras
+        return name, []
+
     def _parse_simple(
         self,
         requirement: str,
     ) -> DependencySpec | None:
-        extras: list[str] = []
         require: DependencySpec = {}
 
         # First, try to match standard version constraints (e.g., package>=1.0)
@@ -199,10 +216,7 @@ class RequirementsParser:
         )
         if m:
             name, constraint = m.group(1), m.group(2)
-            extras_m = re.search(r"\[([\w\d,-_]+)\]$", name)
-            if extras_m:
-                extras = [e.strip() for e in extras_m.group(1).split(",")]
-                name, _ = name.split("[")
+            name, extras = self._extract_extras(name)
 
             require["name"] = name
             require["version"] = constraint
@@ -220,20 +234,13 @@ class RequirementsParser:
 
         if " " in pair:
             name, version = pair.split(" ", 1)
-            extras_m = re.search(r"\[([\w\d,-_]+)\]$", name)
-            if extras_m:
-                extras = [e.strip() for e in extras_m.group(1).split(",")]
-                name, _ = name.split("[")
+            name, extras = self._extract_extras(name)
 
             require["name"] = name
             if version != "latest":
                 require["version"] = version
         else:
-            extras_m = re.search(r"\[([\w\d,-_]+)\]$", pair)
-            if extras_m:
-                extras = [e.strip() for e in extras_m.group(1).split(",")]
-                pair, _ = pair.split("[")
-
+            pair, extras = self._extract_extras(pair)
             require["name"] = pair
 
         if extras:

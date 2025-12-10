@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 @pytest.mark.parametrize(
     ("requirement", "expected"),
     [
-        # Issue #10569: || operator with spaces
+        # Issue #10569: || operator with various spacing patterns
         (
             "cachy>=0.1.0 || <0.3.0",
             {"name": "cachy", "version": ">=0.1.0 || <0.3.0"},
@@ -29,6 +29,25 @@ if TYPE_CHECKING:
         (
             "requests>=2.0 || <3.0",
             {"name": "requests", "version": ">=2.0 || <3.0"},
+        ),
+        # No spaces around ||
+        (
+            "cachy>=0.1.0||<0.3.0",
+            {"name": "cachy", "version": ">=0.1.0||<0.3.0"},
+        ),
+        # Extra spaces around ||
+        (
+            "cachy>=0.1.0  ||  <0.3.0",
+            {"name": "cachy", "version": ">=0.1.0  ||  <0.3.0"},
+        ),
+        # Asymmetric spacing
+        (
+            "cachy>=0.1.0 ||<0.3.0",
+            {"name": "cachy", "version": ">=0.1.0 ||<0.3.0"},
+        ),
+        (
+            "cachy>=0.1.0|| <0.3.0",
+            {"name": "cachy", "version": ">=0.1.0|| <0.3.0"},
         ),
         # Ensure existing formats still work
         ("cachy>=0.1.0", {"name": "cachy", "version": ">=0.1.0"}),
@@ -48,6 +67,11 @@ if TYPE_CHECKING:
         (
             "cachy[extra1,extra2]>=0.1.0",
             {"name": "cachy", "version": ">=0.1.0", "extras": ["extra1", "extra2"]},
+        ),
+        # Extras with hyphen in name
+        (
+            "cachy[extra-name]>=0.1.0",
+            {"name": "cachy", "version": ">=0.1.0", "extras": ["extra-name"]},
         ),
     ],
 )
