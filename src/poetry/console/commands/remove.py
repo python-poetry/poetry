@@ -105,6 +105,7 @@ list of installed packages
                     if not poetry_section and group_name in poetry_groups_content:
                         del poetry_content["group"][group_name]["dependencies"]
                     if not standard_section and group_name in groups_content:
+                        self._remove_references_to_group(group_name, content)
                         del groups_content[group_name]
 
         elif group == "dev" and "dev-dependencies" in poetry_content:
@@ -119,19 +120,22 @@ list of installed packages
             removed = set()
             if "group" in poetry_content:
                 if group in poetry_content["group"]:
+                    poetry_section = poetry_content["group"][group].get("dependencies", {})
                     removed.update(
                         self._remove_packages(
                             packages=packages,
                             standard_section=[],
-                            poetry_section=poetry_content["group"][group].get(
-                                "dependencies", {}
-                            ),
+                            poetry_section=poetry_section,
                             group_name=group,
                         )
                     )
 
-                if not poetry_content["group"][group]:
-                    del poetry_content["group"][group]
+                    if not poetry_section and "dependencies" in poetry_content["group"][group]:
+                        del poetry_content["group"][group]["dependencies"]
+
+                    if not poetry_content["group"][group]:
+                        self._remove_references_to_group(group, content)
+                        del poetry_content["group"][group]
             if group in groups_content:
                 removed.update(
                     self._remove_packages(
@@ -142,6 +146,7 @@ list of installed packages
                     )
                 )
                 if not groups_content[group]:
+                    self._remove_references_to_group(group, content)
                     del groups_content[group]
 
         if "group" in poetry_content and not poetry_content["group"]:
@@ -200,3 +205,38 @@ list of installed packages
             group.remove_dependency(package)
 
         return removed
+
+    def _remove_references_to_group(
+        self,
+        group_name: str,
+        content: dict[str, Any],
+    ) -> None:
+        """
+        Removes references to the given group from other groups.
+        """
+        # 1. PEP 735: [dependency-groups]
+        if "dependency-groups" in content:
+            for group_content in content["dependency-groups"].values():
+                if not isinstance(group_content, list):
+                    continue
+
+                to_remove = []
+                for item in group_content:
+                    if isinstance(item, dict) and item.get("include-group") == group_name:
+                        to_remove.append(item)
+
+                for item in to_remove:
+                    group_content.remove(item)
+
+        # 2. Legacy: [tool.poetry.group.<name>] include-groups = [...]
+        poetry_content = content.get("tool", {}).get("poetry", {})
+        if "group" in poetry_content:
+            for group_content in poetry_content["group"].values():
+                if "include-groups" not in group_content:
+                    continue
+
+                if group_name in group_content["include-groups"]:
+                    group_content["include-groups"].remove(group_name)
+
+                if not group_content["include-groups"]:
+                    del group_content["include-groups"]
