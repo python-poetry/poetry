@@ -187,12 +187,36 @@ class RequirementsParser:
         requirement: str,
     ) -> DependencySpec | None:
         extras: list[str] = []
+        require: DependencySpec = {}
+
+        # First, try to match standard version constraints (e.g., package>=1.0)
+        # This handles cases like "package>=1.0 || <2.0" where spaces exist in
+        # the version constraint but should not be used for splitting.
+        # Note: @ is excluded from package name to avoid matching "package@^1.0.0"
+        # which should be handled by the space-based splitting below.
+        m = re.match(
+            r"^([^><=!:@ ]+)((?:>=|<=|>|<|!=|~=|~|\^).*)$", requirement.strip()
+        )
+        if m:
+            name, constraint = m.group(1), m.group(2)
+            extras_m = re.search(r"\[([\w\d,-_]+)\]$", name)
+            if extras_m:
+                extras = [e.strip() for e in extras_m.group(1).split(",")]
+                name, _ = name.split("[")
+
+            require["name"] = name
+            require["version"] = constraint
+
+            if extras:
+                require["extras"] = extras
+
+            return require
+
+        # Fall back to space-based splitting for other formats
         pair = re.sub(
             "^([^@=: ]+)(?:@|==|(?<![<>~!])=|:| )(.*)$", "\\1 \\2", requirement
         )
         pair = pair.strip()
-
-        require: DependencySpec = {}
 
         if " " in pair:
             name, version = pair.split(" ", 1)
@@ -205,25 +229,12 @@ class RequirementsParser:
             if version != "latest":
                 require["version"] = version
         else:
-            m = re.match(
-                r"^([^><=!: ]+)((?:>=|<=|>|<|!=|~=|~|\^).*)$", requirement.strip()
-            )
-            if m:
-                name, constraint = m.group(1), m.group(2)
-                extras_m = re.search(r"\[([\w\d,-_]+)\]$", name)
-                if extras_m:
-                    extras = [e.strip() for e in extras_m.group(1).split(",")]
-                    name, _ = name.split("[")
+            extras_m = re.search(r"\[([\w\d,-_]+)\]$", pair)
+            if extras_m:
+                extras = [e.strip() for e in extras_m.group(1).split(",")]
+                pair, _ = pair.split("[")
 
-                require["name"] = name
-                require["version"] = constraint
-            else:
-                extras_m = re.search(r"\[([\w\d,-_]+)\]$", pair)
-                if extras_m:
-                    extras = [e.strip() for e in extras_m.group(1).split(",")]
-                    pair, _ = pair.split("[")
-
-                require["name"] = pair
+            require["name"] = pair
 
         if extras:
             require["extras"] = extras
