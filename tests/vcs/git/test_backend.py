@@ -276,7 +276,7 @@ def test_clone_existing_locked_tag(tmp_path: Path, temp_repo: TempRepoFixture) -
         Git.clone(url=source_url, source_root=source_root_dir, name="clone-test")
 
     expected_short = (
-        f"Failed to clone {source_url} at 'refs/heads/master',"
+        f"Failed to clone {source_url} at 'refs/heads/main',"
         f" unable to acquire file lock for {tag_ref}."
     )
     assert str(exc_info.value) == expected_short
