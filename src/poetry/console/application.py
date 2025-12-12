@@ -205,7 +205,9 @@ class Application(BaseApplication):
                 disable_cache=self._disable_cache,
             )
         except TOMLError as e:
-            raise PoetryRuntimeError(f"Problem processing TOML configuration: {e}") from e
+            raise PoetryRuntimeError(
+                f"Problem processing TOML configuration in {self.project_directory}: {e}"
+            ) from e
 
         return self._poetry
 
