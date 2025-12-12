@@ -50,6 +50,7 @@ def test_publish_can_publish_to_given_repository(
     config: Config,
     fixture_name: str,
 ) -> None:
+    mocker.patch("poetry.publishing.uploader.Uploader.version", "1.2.3")
     uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
     uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
 
