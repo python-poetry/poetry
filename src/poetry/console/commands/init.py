@@ -57,6 +57,7 @@ class InitCommand(Command):
             flag=False,
             multiple=True,
         ),
+        option("disable-package-mode", "-N", "Disables package mode.", flag=True),
         option("license", "l", "License of the package.", flag=False),
     ]
 
@@ -140,9 +141,12 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         if is_interactive:
             question = self.create_question(
-                f"Version [<comment>{version}</comment>]: ", default=version
+                f"Version [<comment>{version}</comment>]: ",
+                default=version if not self.option("disable-package-mode") else "",
             )
             version = self.ask(question)
+        else:
+            version = version if not self.option("disable-package-mode") else ""
 
         description = self.option("description") or ""
         if not description and is_interactive:
@@ -243,6 +247,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             python=python,
             dependencies=requirements,
             dev_dependencies=dev_requirements,
+            package_mode=not self.option("disable-package-mode"),
         )
 
         create_layout = not project_path.exists() or (
