@@ -94,9 +94,11 @@ def with_mocked_version_command(mocker: MockerFixture) -> None:
 
     def mock_handle(command: VersionCommand) -> int:
         exit_code = orig_version_command(command)
+        application = command.application
+        assert isinstance(application, Application)
 
         command.io.write_line(f"ProjectPath: {command.poetry.pyproject_path.parent}")
-        command.io.write_line(f"WorkingDirectory: {Path.cwd()}")
+        command.io.write_line(f"WorkingDirectory: {application.working_directory}")
 
         return exit_code
 
@@ -224,6 +226,28 @@ def test_application_with_relative_project_parameter(
         ProjectPath: {project_source_directory}
         WorkingDirectory: {cwd}
         """)
+
+
+def test_application_with_relative_directory_parameter(
+    tester: ApplicationTester,
+    project_source_directory: Path,
+    relative_project_source_directory: Path,
+    with_mocked_version_command: None,
+) -> None:
+    args = f"--directory '{relative_project_source_directory}' version"
+
+    tester.execute(args)
+    assert tester.io.fetch_error() == ""
+    assert tester.status_code == 0
+
+    output = tester.io.fetch_output()
+
+    # relative directory parameter results in absolute path for working directory
+    assert output == textwrap.dedent(f"""\
+    foobar 0.1.0
+    ProjectPath: {project_source_directory}
+    WorkingDirectory: {project_source_directory}
+    """)
 
 
 def test_application_with_relative_directory_parameter_and_early_poetry_access_plugin(
