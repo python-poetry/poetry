@@ -611,3 +611,38 @@ for more information.
 Enable the system keyring for storing credentials.
 See [Repositories - Configuring credentials]({{< relref "repositories#configuring-credentials" >}})
 for more information.
+
+### `default-group-optionality`
+
+**Type**: `boolean`
+
+**Default**: `false`
+
+**Environment Variable**: `POETRY_DEFAULT_GROUP_OPTIONALITY`
+
+*Introduced in 2.3.0*
+
+When set to `true`, all dependency groups (except the implicit `main` group) are treated as optional by default.
+This means that `poetry install` will only install the main dependencies unless groups are explicitly requested
+with `--with` or `--only` options.
+
+This setting allows developers to omit the `optional = true` declaration from `pyproject.toml` for most
+dependency groups, reducing configuration verbosity when working with projects that have many optional groups.
+
+{{% note %}}
+This is a user-specific configuration and does not affect the `pyproject.toml` file or how dependencies
+are resolved. It only changes which groups are installed by default.
+{{% /note %}}
+
+**Example usage:**
+
+```bash
+# Enable default-group-optionality
+poetry config default-group-optionality true
+
+# Now only main dependencies are installed by default
+poetry install
+
+# Explicitly include specific groups
+poetry install --with test,docs
+```
