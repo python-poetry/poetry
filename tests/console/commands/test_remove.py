@@ -442,8 +442,9 @@ baz = "^1.0.0"
         assert "bar" not in pyproject.get("dependency-groups", {})
         assert "dependency-groups" not in pyproject
     else:
-        assert "foo" not in content["group"]["bar"]["dependencies"]
-        assert "baz" not in content["group"]["bar"]["dependencies"]
+        # The group 'bar' should be removed entirely from the configuration
+        if "group" in content:
+            assert "bar" not in content["group"]
         content = cast("TOMLDocument", content)
         assert "[tool.poetry.group.bar]" not in content.as_string()
         assert "[tool.poetry.group]" not in content.as_string()
