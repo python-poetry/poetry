@@ -601,7 +601,13 @@ class Locker:
                 ):
                     if not marker.is_any():
                         data["markers"][group] = str(marker)
-        data["files"] = sorted(package.files, key=lambda x: x["file"])
+        data["files"] = sorted(
+            [
+                {k: v for k, v in f.items() if k in {"file", "hash"}}
+                for f in package.files
+            ],
+            key=lambda x: x["file"],
+        )
 
         if dependencies:
             data["dependencies"] = table()

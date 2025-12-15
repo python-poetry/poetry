@@ -16,6 +16,8 @@ from poetry.repositories.pypi_repository import PyPiRepository
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from pytest_mock import MockerFixture
 
     from tests.types import DistributionHashGetter
@@ -82,7 +84,9 @@ def test_find_packages_yanked(
 
 
 def test_package(
-    pypi_repository: PyPiRepository, dist_hash_getter: DistributionHashGetter
+    pypi_repository: PyPiRepository,
+    dist_hash_getter: DistributionHashGetter,
+    get_pypi_dist_url: Callable[[str], str],
 ) -> None:
     repo = pypi_repository
 
@@ -97,7 +101,8 @@ def test_package(
     assert package.files == [
         {
             "file": filename,
-            "hash": (f"sha256:{dist_hash_getter(filename).sha256}"),
+            "hash": f"sha256:{dist_hash_getter(filename).sha256}",
+            "url": get_pypi_dist_url(filename),
         }
         for filename in [
             f"{package.name}-{package.version}-py2.py3-none-any.whl",

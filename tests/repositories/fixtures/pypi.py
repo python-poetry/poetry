@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 
 from typing import TYPE_CHECKING
@@ -8,12 +9,16 @@ from urllib.parse import urlparse
 import pytest
 import responses
 
+from packaging.utils import parse_sdist_filename
+from packaging.utils import parse_wheel_filename
+
 from poetry.repositories.pypi_repository import PyPiRepository
 from tests.helpers import FIXTURE_PATH_DISTRIBUTIONS
 from tests.helpers import FIXTURE_PATH_REPOSITORIES_PYPI
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from pathlib import Path
 
     from requests import PreparedRequest
@@ -157,3 +162,32 @@ def pypi_repository(
     )
 
     return PyPiRepository(disable_cache=True, fallback=False)
+
+
+@pytest.fixture
+def get_pypi_dist_url(package_json_locations: list[Path]) -> Callable[[str], str]:
+    def get_url(name: str) -> str:
+        if name.endswith(".whl"):
+            package_name, version, _build, _tags = parse_wheel_filename(name)
+        else:
+            package_name, version = parse_sdist_filename(name)
+        path = package_json_locations[0] / package_name
+        if not path.exists():
+            raise RuntimeError(
+                f"Fixture for {package_name} not found in pypi.org json fixtures"
+            )
+        path /= f"{version}.json"
+        if not path.exists():
+            raise RuntimeError(
+                f"Fixture for {package_name} {version} not found in pypi.org json fixtures"
+            )
+        with path.open("rb") as f:
+            content = json.load(f)
+        for url in content["urls"]:
+            if url["filename"] == name:
+                url = url["url"]
+                assert isinstance(url, str)
+                return url
+        raise RuntimeError(f"No URL in pypi.org json fixture of {name} {version}")
+
+    return get_url
