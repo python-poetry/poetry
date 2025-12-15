@@ -178,6 +178,7 @@ class PyPiRepository(HTTPRepository):
                     {
                         "file": file_info["filename"],
                         "hash": "sha256:" + file_info["digests"]["sha256"],
+                        "url": file_info["url"],
                     }
                 )
         data.files = files

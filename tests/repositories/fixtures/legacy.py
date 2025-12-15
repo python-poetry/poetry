@@ -19,6 +19,8 @@ from tests.helpers import FIXTURE_PATH_REPOSITORIES_PYPI
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from packaging.utils import NormalizedName
     from pytest import FixtureRequest
     from pytest_mock import MockerFixture
@@ -219,3 +221,23 @@ def legacy_repository_partial_yank(
     specialized_legacy_repository_mocker: SpecializedLegacyRepositoryMocker,
 ) -> LegacyRepository:
     return specialized_legacy_repository_mocker("-partial-yank")
+
+
+@pytest.fixture
+def get_legacy_dist_url(legacy_repository_directory: Path) -> Callable[[str], str]:
+    def get_url(name: str) -> str:
+        package_name = name.split("-", 1)[0]
+        path = legacy_repository_directory / f"{package_name}.html"
+        if not path.exists():
+            raise RuntimeError(
+                f"Fixture for {package_name}.html not found in legacy fixtures"
+            )
+        content = path.read_text(encoding="utf-8")
+        match = re.search(rf'<a href="(?P<url>[^"]+{re.escape(name)}[^"]*)"', content)
+        if not match:
+            raise RuntimeError(
+                f"No URL for {name} found in legacy fixture {package_name}.html"
+            )
+        return match.group("url").split("#", 1)[0]
+
+    return get_url
