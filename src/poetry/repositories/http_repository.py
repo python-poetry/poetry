@@ -371,7 +371,13 @@ class HTTPRepository(CachedRepository):
                     level="warning",
                 )
             else:
-                files.append({"file": link.filename, "hash": file_hash})
+                files.append(
+                    {
+                        "file": link.filename,
+                        "hash": file_hash,
+                        "url": link.url_without_fragment,
+                    }
+                )
 
         if not files:
             raise PackageNotFoundError(

@@ -701,7 +701,7 @@ demo = [
             package.files = []
 
 
-def test_lock_packages_with_null_description(
+def test_locker_dumps_packages_with_null_description(
     locker: Locker, root: ProjectPackage, transitive_info: TransitivePackageInfo
 ) -> None:
     package_a = get_package("A", "1.0.0")
@@ -723,6 +723,46 @@ optional = false
 python-versions = "*"
 groups = ["main"]
 files = []
+
+[metadata]
+lock-version = "2.1"
+python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+"""
+
+    assert content == expected
+
+
+def test_locker_does_not_dump_file_urls(
+    locker: Locker, root: ProjectPackage, transitive_info: TransitivePackageInfo
+) -> None:
+    package_a = get_package("A", "1.0")
+    package_a.files = [
+        {
+            "file": "a-1.0.whl",
+            "hash": "sha256:abcdef1234567890",
+            "url": "https://example.org/a-1.0.whl",
+        },
+    ]
+
+    locker.set_lock_data(root, {package_a: transitive_info})
+
+    with locker.lock.open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = f"""\
+# {GENERATED_COMMENT}
+
+[[package]]
+name = "A"
+version = "1.0"
+description = ""
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {{file = "a-1.0.whl", hash = "sha256:abcdef1234567890"}},
+]
 
 [metadata]
 lock-version = "2.1"
