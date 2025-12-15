@@ -10,13 +10,11 @@ from typing import Any
 
 import pytest
 import tomlkit
-import virtualenv
 
-from cleo.io.null_io import NullIO
-from poetry.config.config import Config
-from poetry.console.exceptions import PoetryRuntimeError
 from poetry.core.constraints.version import Version
 
+from poetry.config.config import Config
+from poetry.console.exceptions import PoetryConsoleError
 from poetry.toml.file import TOMLFile
 from poetry.utils.env import GET_BASE_PREFIX
 from poetry.utils.env import GET_PYTHON_VERSION_ONELINER
@@ -1312,32 +1310,34 @@ def test_create_venv_invalid_prompt_template_variable(
     manager: EnvManager,
     poetry: Poetry,
     config: Config,
-    mocker: MockerFixture,
     mocked_python_register: MockedPythonRegister,
 ) -> None:
     config.merge({"virtualenvs": {"prompt": "{project_name}-{invalid_var}"}})
 
     mocked_python_register("3.9.0", make_system=True)
 
-    with pytest.raises(PoetryRuntimeError) as exc_info:
+    with pytest.raises(PoetryConsoleError) as exc_info:
         manager.create_venv()
 
     assert "Invalid template variable 'invalid_var'" in str(exc_info.value)
-    assert "Valid variables are: {project_name}, {python_version}" in str(exc_info.value)
+    assert "Valid variables are: {project_name}, {python_version}" in str(
+        exc_info.value
+    )
 
 
 def test_create_venv_malformed_prompt_template(
     manager: EnvManager,
     poetry: Poetry,
     config: Config,
-    mocker: MockerFixture,
     mocked_python_register: MockedPythonRegister,
 ) -> None:
     config.merge({"virtualenvs": {"prompt": "{project_name"}})  # Missing closing brace
 
     mocked_python_register("3.9.0", make_system=True)
 
-    with pytest.raises(PoetryRuntimeError) as exc_info:
+    with pytest.raises(PoetryConsoleError) as exc_info:
         manager.create_venv()
 
-    assert "Invalid template string in 'virtualenvs.prompt' setting" in str(exc_info.value)
+    assert "Invalid template string in 'virtualenvs.prompt' setting" in str(
+        exc_info.value
+    )

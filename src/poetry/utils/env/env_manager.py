@@ -17,10 +17,9 @@ import tomlkit
 import virtualenv
 
 from cleo.io.null_io import NullIO
-from poetry.config.config import Config
-from poetry.console.exceptions import PoetryRuntimeError
 from poetry.core.constraints.version import Version
 
+from poetry.console.exceptions import PoetryConsoleError
 from poetry.toml.file import TOMLFile
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import encode
@@ -449,12 +448,12 @@ class EnvManager:
                     python_version=python.minor_version.to_string(),
                 )
             except KeyError as e:
-                raise PoetryRuntimeError(
+                raise PoetryConsoleError(
                     f"Invalid template variable '{e.args[0]}' in 'virtualenvs.prompt' setting.\n"
                     f"Valid variables are: {{project_name}}, {{python_version}}"
                 ) from e
             except ValueError as e:
-                raise PoetryRuntimeError(
+                raise PoetryConsoleError(
                     f"Invalid template string in 'virtualenvs.prompt' setting: {e}"
                 ) from e
 
