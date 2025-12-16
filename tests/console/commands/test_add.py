@@ -1998,3 +1998,109 @@ def test_add_poetry_dependencies_if_necessary(
             "allow-prereleases": True,
         }
     }
+
+
+def test_add_union_constraint_skips_project_dependencies(
+    project_factory: ProjectFactory,
+    repo: TestRepository,
+    command_tester_factory: CommandTesterFactory,
+) -> None:
+    """
+    Test that union constraints (e.g., ^0.1|^0.3) are NOT written to
+    project.dependencies since PEP 508 does not support the || operator.
+    Instead, they should only be written to tool.poetry.dependencies.
+
+    Note: We use non-adjacent versions (^0.1|^0.3) because adjacent versions
+    like ^0.1|^0.2 get merged into a single range (>=0.1,<0.3).
+
+    Regression test for issue #10569.
+    """
+    pyproject_content = """\
+    [project]
+    name = "simple-project"
+    version = "1.2.3"
+    dependencies = [
+        "tomlkit >= 0.5",
+    ]
+    """
+
+    poetry = project_factory(name="simple-project", pyproject_content=pyproject_content)
+
+    # Add non-adjacent versions so they don't get merged into a single range
+    repo.add_package(get_package("cachy", "0.1.0"))
+    repo.add_package(get_package("cachy", "0.3.0"))
+
+    tester = command_tester_factory("add", poetry=poetry)
+    tester.execute("cachy@^0.1|^0.3")
+
+    # Verify the warning is shown
+    error_output = tester.io.fetch_error()
+    assert "union syntax" in error_output
+    assert "cannot be represented in PEP 508" in error_output
+    assert "[tool.poetry.dependencies]" in error_output
+
+    updated_pyproject: dict[str, Any] = poetry.file.read()
+
+    # The union constraint should NOT be in project.dependencies
+    project_deps = updated_pyproject["project"]["dependencies"]
+    assert len(project_deps) == 1  # Only the original tomlkit dependency
+    assert "tomlkit >= 0.5" in project_deps[0]
+
+    # The union constraint SHOULD be in tool.poetry.dependencies
+    assert "cachy" in updated_pyproject["tool"]["poetry"]["dependencies"]
+    assert updated_pyproject["tool"]["poetry"]["dependencies"]["cachy"] == "^0.1|^0.3"
+
+
+def test_add_union_constraint_skips_dependency_groups(
+    project_factory: ProjectFactory,
+    repo: TestRepository,
+    command_tester_factory: CommandTesterFactory,
+) -> None:
+    """
+    Test that union constraints are NOT written to dependency-groups (PEP 735)
+    since PEP 508 does not support the || operator.
+    Instead, they should only be written to tool.poetry.group.<name>.dependencies.
+
+    Note: We use non-adjacent versions (^0.1|^0.3) because adjacent versions
+    like ^0.1|^0.2 get merged into a single range.
+
+    Regression test for issue #10569.
+    """
+    pyproject_content = """\
+    [project]
+    name = "simple-project"
+    version = "1.2.3"
+
+    [dependency-groups]
+    dev = [
+        "tomlkit >= 0.5",
+    ]
+    """
+
+    poetry = project_factory(name="simple-project", pyproject_content=pyproject_content)
+
+    # Add non-adjacent versions so they don't get merged into a single range
+    repo.add_package(get_package("cachy", "0.1.0"))
+    repo.add_package(get_package("cachy", "0.3.0"))
+
+    tester = command_tester_factory("add", poetry=poetry)
+    tester.execute("cachy@^0.1|^0.3 --group dev")
+
+    # Verify the warning is shown
+    error_output = tester.io.fetch_error()
+    assert "union syntax" in error_output
+    assert "cannot be represented in PEP 508" in error_output
+
+    updated_pyproject: dict[str, Any] = poetry.file.read()
+
+    # The union constraint should NOT be in dependency-groups
+    dev_deps = updated_pyproject["dependency-groups"]["dev"]
+    assert len(dev_deps) == 1  # Only the original tomlkit dependency
+    assert "tomlkit >= 0.5" in dev_deps[0]
+
+    # The union constraint SHOULD be in tool.poetry.group.dev.dependencies
+    assert "cachy" in updated_pyproject["tool"]["poetry"]["group"]["dev"]["dependencies"]
+    assert (
+        updated_pyproject["tool"]["poetry"]["group"]["dev"]["dependencies"]["cachy"]
+        == "^0.1|^0.3"
+    )
