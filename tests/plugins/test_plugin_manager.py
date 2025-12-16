@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import shutil
 
+from importlib import metadata
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import ClassVar
@@ -158,6 +159,78 @@ def test_load_plugins_with_invalid_plugin(
 
     with pytest.raises(ValueError):
         manager.load_plugins()
+
+
+def test_load_plugins_with_pth_file(
+    manager_factory: ManagerFactory, mocker: MockerFixture, tmp_path: Path
+) -> None:
+    pth_file_path = tmp_path / "my_plugin.pth"
+    pth_file_path.write_text("# mock pth content\n", encoding="utf-8")
+
+    mock_pth_file = mocker.MagicMock()
+    mock_pth_file.suffix = ".pth"
+
+    mock_dist = mocker.MagicMock(spec=metadata.Distribution)
+    mock_dist.files = [mock_pth_file]
+    mock_dist.locate_file.return_value = pth_file_path
+
+    mock_ep = mocker.MagicMock(spec=metadata.EntryPoint)
+    mock_ep.name = "my-plugin"
+    mock_ep.dist = mock_dist
+    mock_ep.load.return_value = MyPlugin
+
+    mock_addpackage = mocker.patch("site.addpackage")
+    mocker.patch.object(metadata, "entry_points", return_value=[mock_ep])
+
+    manager = manager_factory()
+    manager.load_plugins()
+
+    mock_addpackage.assert_called_once_with(
+        str(pth_file_path.parent), pth_file_path.name, None
+    )
+    assert len(manager._plugins) == 1
+
+
+def test_load_plugins_without_pth_file(
+    manager_factory: ManagerFactory, mocker: MockerFixture
+) -> None:
+    mock_dist = mocker.MagicMock(spec=metadata.Distribution)
+    mock_dist.files = []
+
+    mock_ep = mocker.MagicMock(spec=metadata.EntryPoint)
+    mock_ep.name = "my-plugin"
+    mock_ep.dist = mock_dist
+    mock_ep.load.return_value = MyPlugin
+
+    mock_addpackage = mocker.patch("site.addpackage")
+    mocker.patch.object(metadata, "entry_points", return_value=[mock_ep])
+
+    manager = manager_factory()
+    manager.load_plugins()
+
+    mock_addpackage.assert_not_called()
+    assert len(manager._plugins) == 1
+
+
+def test_load_plugins_with_none_dist_files(
+    manager_factory: ManagerFactory, mocker: MockerFixture
+) -> None:
+    mock_dist = mocker.MagicMock(spec=metadata.Distribution)
+    mock_dist.files = None
+
+    mock_ep = mocker.MagicMock(spec=metadata.EntryPoint)
+    mock_ep.name = "my-plugin"
+    mock_ep.dist = mock_dist
+    mock_ep.load.return_value = MyPlugin
+
+    mock_addpackage = mocker.patch("site.addpackage")
+    mocker.patch.object(metadata, "entry_points", return_value=[mock_ep])
+
+    manager = manager_factory()
+    manager.load_plugins()
+
+    mock_addpackage.assert_not_called()
+    assert len(manager._plugins) == 1
 
 
 def test_add_project_plugin_path(
