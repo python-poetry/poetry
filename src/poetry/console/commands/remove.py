@@ -216,7 +216,8 @@ list of installed packages
         """
         # 1. PEP 735: [dependency-groups]
         if "dependency-groups" in content:
-            for group_content in content["dependency-groups"].values():
+            groups_to_remove = []
+            for group_key, group_content in content["dependency-groups"].items():
                 if not isinstance(group_content, list):
                     continue
 
@@ -227,6 +228,15 @@ list of installed packages
 
                 for item in to_remove:
                     group_content.remove(item)
+
+                # Clean up now-empty lists (normalize with legacy behavior)
+                # Only remove groups that became empty due to include-group cleanup,
+                # not the target group itself (which is handled by the caller)
+                if not group_content and group_key != group_name:
+                    groups_to_remove.append(group_key)
+
+            for group_key in groups_to_remove:
+                del content["dependency-groups"][group_key]
 
         # 2. Legacy: [tool.poetry.group.<name>] include-groups = [...]
         poetry_content = content.get("tool", {}).get("poetry", {})

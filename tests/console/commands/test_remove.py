@@ -443,8 +443,7 @@ baz = "^1.0.0"
         assert "dependency-groups" not in pyproject
     else:
         # The group 'bar' should be removed entirely from the configuration
-        if "group" in content:
-            assert "bar" not in content["group"]
+        assert "group" not in content
         content = cast("TOMLDocument", content)
         assert "[tool.poetry.group.bar]" not in content.as_string()
         assert "[tool.poetry.group]" not in content.as_string()
@@ -774,3 +773,80 @@ include-groups = [
         expected = expected.replace("\n", "\r\n")
 
     assert expected in string_content
+
+
+@pytest.mark.parametrize("pep_735", [True, False])
+def test_remove_group_cleans_up_include_group_references(
+    pep_735: bool,
+    tester: CommandTester,
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installed: Repository,
+) -> None:
+    """
+    When a group is removed, any `include-group` references to it in other
+    groups should also be cleaned up.
+    """
+    installed.add_package(Package("foo", "2.0.0"))
+    installed.add_package(Package("baz", "1.0.0"))
+    repo.add_package(Package("foo", "2.0.0"))
+    repo.add_package(Package("baz", "1.0.0"))
+
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject["tool"]["poetry"]["dependencies"]["baz"] = "^1.0.0"
+
+    if pep_735:
+        groups_content: dict[str, Any] = tomlkit.parse(
+            """\
+[dependency-groups]
+bar = [
+    "foo (>=2.0,<3.0)",
+]
+foobar = [
+    { include-group = "bar" },
+]
+"""
+        )
+        pyproject["dependency-groups"] = groups_content["dependency-groups"]
+    else:
+        groups_content = tomlkit.parse(
+            """\
+[tool.poetry.group.bar.dependencies]
+foo = "^2.0.0"
+
+[tool.poetry.group.foobar]
+include-groups = [
+    "bar",
+]
+"""
+        )
+        groups_content = cast("dict[str, Any]", groups_content)
+        pyproject["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
+
+    pyproject = cast("TOMLDocument", pyproject)
+    app.poetry.file.write(pyproject)
+
+    app.poetry.package.add_dependency(Factory.create_dependency("baz", "^1.0.0"))
+    app.poetry.package.add_dependency(
+        Factory.create_dependency("foo", "^2.0.0", groups=["bar"])
+    )
+
+    # Remove all packages from the "bar" group, which should delete the group
+    # and also clean up references to it in "foobar"
+    tester.execute("foo --group bar")
+
+    pyproject = app.poetry.file.read()
+    pyproject = cast("dict[str, Any]", pyproject)
+    content = pyproject["tool"]["poetry"]
+
+    if pep_735:
+        # "bar" group should be removed
+        assert "bar" not in pyproject.get("dependency-groups", {})
+        # "foobar" group should also be removed since it only had include-group
+        assert "foobar" not in pyproject.get("dependency-groups", {})
+    else:
+        # "bar" group should be removed
+        assert "bar" not in content.get("group", {})
+        # "foobar" should have its include-groups cleaned up
+        if "foobar" in content.get("group", {}):
+            assert "include-groups" not in content["group"]["foobar"]
