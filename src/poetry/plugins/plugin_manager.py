@@ -9,6 +9,7 @@ import sys
 from functools import cached_property
 from importlib import metadata
 from pathlib import Path
+from site import addpackage
 from typing import TYPE_CHECKING
 
 import tomlkit
@@ -89,15 +90,25 @@ class PluginManager:
 
         self._plugins.append(plugin)
 
+    @staticmethod
+    def _get_pth_files(dist: metadata.Distribution | None) -> list[Path]:
+        """Extract .pth files from a distribution."""
+        if not dist or not dist.files:
+            return []
+        
+        pth_files = []
+        for file in dist.files:
+            if file.suffix == ".pth":
+                pth_files.append(Path(str(dist.locate_file(file))))
+        return pth_files
+
     def _load_plugin_entry_point(self, ep: metadata.EntryPoint) -> None:
         logger.debug("Loading the %s plugin", ep.name)
         
         # In case the plugin installed in editable/develop mode, we need to
-        # process its .pth file to ensure that its dependencies are available.
-        if ep.dist and (pth_file := next((f for f in (ep.dist.files or []) if f.suffix == ".pth"), None)):
-            pth_path = Path(str(ep.dist.locate_file(pth_file)))
+        # process its .pth files to ensure that its dependencies are available.
+        for pth_path in self._get_pth_files(ep.dist):
             logger.debug("Processing .pth file: %s", pth_path)
-            from site import addpackage
             addpackage(str(pth_path.parent), pth_path.name, None)
             
         plugin = ep.load()

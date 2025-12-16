@@ -177,9 +177,17 @@ def test_load_plugins_with_pth_file(
     mock_ep = mocker.MagicMock(spec=metadata.EntryPoint)
     mock_ep.name = "my-plugin"
     mock_ep.dist = mock_dist
-    mock_ep.load.return_value = MyPlugin
 
-    mock_addpackage = mocker.patch("site.addpackage")
+    call_order = []
+    mock_addpackage = mocker.patch(
+        "poetry.plugins.plugin_manager.addpackage",
+        side_effect=lambda *args: call_order.append("addpackage"),
+    )
+    mock_load = mocker.patch.object(
+        mock_ep,
+        "load",
+        side_effect=lambda: (call_order.append("load"), MyPlugin)[1],
+    )
     mocker.patch.object(metadata, "entry_points", return_value=[mock_ep])
 
     manager = manager_factory()
@@ -188,6 +196,56 @@ def test_load_plugins_with_pth_file(
     mock_addpackage.assert_called_once_with(
         str(pth_file_path.parent), pth_file_path.name, None
     )
+    mock_load.assert_called_once()
+    assert call_order == ["addpackage", "load"]
+    assert len(manager._plugins) == 1
+
+
+def test_load_plugins_with_multiple_pth_files(
+    manager_factory: ManagerFactory, mocker: MockerFixture, tmp_path: Path
+) -> None:
+    pth_file_path1 = tmp_path / "plugin1.pth"
+    pth_file_path2 = tmp_path / "plugin2.pth"
+    pth_file_path1.write_text("# pth 1\n", encoding="utf-8")
+    pth_file_path2.write_text("# pth 2\n", encoding="utf-8")
+
+    mock_pth_file1 = mocker.MagicMock()
+    mock_pth_file1.suffix = ".pth"
+    mock_pth_file2 = mocker.MagicMock()
+    mock_pth_file2.suffix = ".pth"
+
+    mock_dist = mocker.MagicMock(spec=metadata.Distribution)
+    mock_dist.files = [mock_pth_file1, mock_pth_file2]
+    mock_dist.locate_file.side_effect = [pth_file_path1, pth_file_path2]
+
+    mock_ep = mocker.MagicMock(spec=metadata.EntryPoint)
+    mock_ep.name = "my-plugin"
+    mock_ep.dist = mock_dist
+
+    call_order = []
+    mock_addpackage = mocker.patch(
+        "poetry.plugins.plugin_manager.addpackage",
+        side_effect=lambda *args: call_order.append("addpackage"),
+    )
+    mock_load = mocker.patch.object(
+        mock_ep,
+        "load",
+        side_effect=lambda: (call_order.append("load"), MyPlugin)[1],
+    )
+    mocker.patch.object(metadata, "entry_points", return_value=[mock_ep])
+
+    manager = manager_factory()
+    manager.load_plugins()
+
+    assert mock_addpackage.call_count == 2
+    mock_addpackage.assert_any_call(
+        str(pth_file_path1.parent), pth_file_path1.name, None
+    )
+    mock_addpackage.assert_any_call(
+        str(pth_file_path2.parent), pth_file_path2.name, None
+    )
+    mock_load.assert_called_once()
+    assert call_order == ["addpackage", "addpackage", "load"]
     assert len(manager._plugins) == 1
 
 
@@ -202,7 +260,7 @@ def test_load_plugins_without_pth_file(
     mock_ep.dist = mock_dist
     mock_ep.load.return_value = MyPlugin
 
-    mock_addpackage = mocker.patch("site.addpackage")
+    mock_addpackage = mocker.patch("poetry.plugins.plugin_manager.addpackage")
     mocker.patch.object(metadata, "entry_points", return_value=[mock_ep])
 
     manager = manager_factory()
@@ -223,7 +281,7 @@ def test_load_plugins_with_none_dist_files(
     mock_ep.dist = mock_dist
     mock_ep.load.return_value = MyPlugin
 
-    mock_addpackage = mocker.patch("site.addpackage")
+    mock_addpackage = mocker.patch("poetry.plugins.plugin_manager.addpackage")
     mocker.patch.object(metadata, "entry_points", return_value=[mock_ep])
 
     manager = manager_factory()
