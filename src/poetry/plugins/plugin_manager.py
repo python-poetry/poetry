@@ -95,7 +95,7 @@ class PluginManager:
         # In case the plugin installed in editable/develop mode, we need to
         # process its .pth file to ensure that its dependencies are available.
         if ep.dist and (pth_file := next((f for f in (ep.dist.files or []) if f.suffix == ".pth"), None)):
-            pth_path = Path(ep.dist.locate_file(pth_file))
+            pth_path = Path(str(ep.dist.locate_file(pth_file)))
             logger.debug("Processing .pth file: %s", pth_path)
             from site import addpackage
             addpackage(str(pth_path.parent), pth_path.name, None)
