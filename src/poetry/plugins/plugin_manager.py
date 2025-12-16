@@ -91,7 +91,15 @@ class PluginManager:
 
     def _load_plugin_entry_point(self, ep: metadata.EntryPoint) -> None:
         logger.debug("Loading the %s plugin", ep.name)
-
+        
+        # In case the plugin installed in editable/develop mode, we need to
+        # process its .pth file to ensure that its dependencies are available.
+        if pth_file := next((f for f in (ep.dist.files or []) if f.suffix == ".pth"), None):
+            pth_path = Path(ep.dist.locate_file(pth_file))
+            logger.debug("Processing .pth file: %s", pth_path)
+            from site import addpackage
+            addpackage(str(pth_path.parent), pth_path.name, None)
+            
         plugin = ep.load()
 
         if not issubclass(plugin, (Plugin, ApplicationPlugin)):
