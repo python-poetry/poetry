@@ -179,14 +179,22 @@ def test_load_plugins_with_pth_file(
     mock_ep.dist = mock_dist
 
     call_order = []
+
+    def addpackage_side_effect(*args: object) -> None:
+        call_order.append("addpackage")
+
+    def load_side_effect() -> type[MyPlugin]:
+        call_order.append("load")
+        return MyPlugin
+
     mock_addpackage = mocker.patch(
         "poetry.plugins.plugin_manager.addpackage",
-        side_effect=lambda *args: call_order.append("addpackage"),
+        side_effect=addpackage_side_effect,
     )
     mock_load = mocker.patch.object(
         mock_ep,
         "load",
-        side_effect=lambda: (call_order.append("load"), MyPlugin)[1],
+        side_effect=load_side_effect,
     )
     mocker.patch.object(metadata, "entry_points", return_value=[mock_ep])
 
@@ -223,14 +231,22 @@ def test_load_plugins_with_multiple_pth_files(
     mock_ep.dist = mock_dist
 
     call_order = []
+
+    def addpackage_side_effect(*args: object) -> None:
+        call_order.append("addpackage")
+
+    def load_side_effect() -> type[MyPlugin]:
+        call_order.append("load")
+        return MyPlugin
+
     mock_addpackage = mocker.patch(
         "poetry.plugins.plugin_manager.addpackage",
-        side_effect=lambda *args: call_order.append("addpackage"),
+        side_effect=addpackage_side_effect,
     )
     mock_load = mocker.patch.object(
         mock_ep,
         "load",
-        side_effect=lambda: (call_order.append("load"), MyPlugin)[1],
+        side_effect=load_side_effect,
     )
     mocker.patch.object(metadata, "entry_points", return_value=[mock_ep])
 
