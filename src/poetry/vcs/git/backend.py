@@ -20,7 +20,7 @@ from dulwich.config import parse_submodules
 from dulwich.errors import NotGitRepository
 from dulwich.file import FileLocked
 from dulwich.index import IndexEntry
-from dulwich.refs import ANNOTATED_TAG_SUFFIX
+from dulwich.protocol import PEELED_TAG_SUFFIX
 from dulwich.repo import Repo
 
 from poetry.console.exceptions import PoetryRuntimeError
@@ -79,7 +79,7 @@ def is_revision_sha(revision: str | None) -> bool:
 def annotated_tag(ref: str | bytes) -> bytes:
     if isinstance(ref, str):
         ref = ref.encode("utf-8")
-    return ref + ANNOTATED_TAG_SUFFIX
+    return ref + PEELED_TAG_SUFFIX
 
 
 @dataclasses.dataclass
@@ -361,7 +361,7 @@ class Git:
                     other={
                         n[len(prefix) :]: v
                         for (n, v) in remote_refs.refs.items()
-                        if n.startswith(prefix) and not n.endswith(ANNOTATED_TAG_SUFFIX)
+                        if n.startswith(prefix) and not n.endswith(PEELED_TAG_SUFFIX)
                     },
                 )
             except FileLocked as e:
