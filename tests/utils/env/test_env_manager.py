@@ -1307,14 +1307,9 @@ def test_generate_env_name_uses_real_path(
 
 
 def test_create_venv_invalid_prompt_template_variable(
-    manager: EnvManager,
-    poetry: Poetry,
-    config: Config,
-    mocked_python_register: MockedPythonRegister,
+    manager: EnvManager, poetry: Poetry, config: Config
 ) -> None:
     config.merge({"virtualenvs": {"prompt": "{project_name}-{invalid_var}"}})
-
-    mocked_python_register("3.9.0", make_system=True)
 
     with pytest.raises(PoetryConsoleError) as exc_info:
         manager.create_venv()
@@ -1326,14 +1321,9 @@ def test_create_venv_invalid_prompt_template_variable(
 
 
 def test_create_venv_malformed_prompt_template(
-    manager: EnvManager,
-    poetry: Poetry,
-    config: Config,
-    mocked_python_register: MockedPythonRegister,
+    manager: EnvManager, poetry: Poetry, config: Config
 ) -> None:
     config.merge({"virtualenvs": {"prompt": "{project_name"}})  # Missing closing brace
-
-    mocked_python_register("3.9.0", make_system=True)
 
     with pytest.raises(PoetryConsoleError) as exc_info:
         manager.create_venv()
