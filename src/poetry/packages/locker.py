@@ -29,6 +29,7 @@ from tomlkit import table
 
 from poetry.__version__ import __version__
 from poetry.packages.transitive_package_info import TransitivePackageInfo
+from poetry.packages.transitive_package_info import group_sort_key
 from poetry.toml.file import TOMLFile
 from poetry.utils._compat import tomllib
 
@@ -583,7 +584,7 @@ class Locker:
             "description": package.description or "",
             "optional": package.optional,
             "python-versions": package.python_versions,
-            "groups": sorted(transitive_info.groups, key=lambda x: (x != "main", x)),
+            "groups": sorted(transitive_info.groups, key=group_sort_key),
         }
         if transitive_info.markers:
             if len(markers := set(transitive_info.markers.values())) == 1:
@@ -593,7 +594,7 @@ class Locker:
                 data["markers"] = inline_table()
                 for group, marker in sorted(
                     transitive_info.markers.items(),
-                    key=lambda x: (x[0] != "main", x[0]),
+                    key=lambda x: group_sort_key(x[0]),
                 ):
                     if not marker.is_any():
                         data["markers"][group] = str(marker)
