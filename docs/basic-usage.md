@@ -25,8 +25,20 @@ Once the installation is complete, you can work inside the project’s virtual e
 Alternatively, if you prefer not to activate a subshell, you can run individual commands through Poetry. This allows you to execute Python, test runners, or other tools within the project environment without manually activating it.
 
 While contributing, you may need to add new dependencies. This can be done using Poetry’s dependency management commands, which will update the project configuration and lock file automatically. For development-only dependencies, the project may define a dedicated development dependency group.
-Some projects may prefer contributors to edit the `pyproject.toml`file manually instead of adding dependencies via commands. Always follow the contribution guidelines of the project you are working on.
+Some projects may prefer contributors to edit the `pyproject.toml` file manually instead of adding dependencies via commands. Always follow the contribution guidelines of the project you are working on.
 If your goal is to create a new Poetry-managed project rather than contribute to an existing one, refer to the sections below that describe project creation and initialization.
+
+# Install project dependencies
+poetry install
+
+# Activate the virtual environment
+poetry shell
+
+# Run commands within the environment
+poetry run pytest
+
+# Add a new dependency
+poetry add <package> --group dev
 
 ## Project setup
 
