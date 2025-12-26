@@ -14,6 +14,20 @@ menu:
 For the basic usage introduction we will be installing `pendulum`, a datetime library.
 If you have not yet installed Poetry, refer to the [Introduction]({{< relref "docs" >}} "Introduction") chapter.
 
+# Using Poetry in an Existing Project (For Contributors)
+
+If you are contributing to a project that already uses Poetry, you usually do not need to create a new project or initialize Poetry again.
+In most cases, the project already contains a configured `pyproject.toml` file that defines its dependencies and development setup. Poetry can be used to quickly create a virtual environment that matches the project’s declared requirements.
+
+To install all project dependencies, navigate to the project directory and run the install command. This will create a virtual environment if one does not already exist and install all required dependencies. Development dependencies will also be installed if they are defined by the project.
+Once the installation is complete, you can work inside the project’s virtual environment by activating it. Activating the environment opens a new subshell where all commands use the project’s configured Python and dependencies.
+
+Alternatively, if you prefer not to activate a subshell, you can run individual commands through Poetry. This allows you to execute Python, test runners, or other tools within the project environment without manually activating it.
+
+While contributing, you may need to add new dependencies. This can be done using Poetry’s dependency management commands, which will update the project configuration and lock file automatically. For development-only dependencies, the project may define a dedicated development dependency group.
+Some projects may prefer contributors to edit the `pyproject.toml`file manually instead of adding dependencies via commands. Always follow the contribution guidelines of the project you are working on.
+If your goal is to create a new Poetry-managed project rather than contribute to an existing one, refer to the sections below that describe project creation and initialization.
+
 ## Project setup
 
 First, let's create our new project, let's call it `poetry-demo`:
