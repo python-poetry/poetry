@@ -2104,3 +2104,59 @@ def test_add_union_constraint_skips_dependency_groups(
         updated_pyproject["tool"]["poetry"]["group"]["dev"]["dependencies"]["cachy"]
         == "^0.1|^0.3"
     )
+
+
+@pytest.mark.parametrize(
+    "constraint",
+    [
+        "^0.1|^0.3",  # No spaces around pipe
+        "^0.1 | ^0.3",  # Spaces around pipe
+        "^0.1  |  ^0.3",  # Multiple spaces around pipe
+        "^0.1| ^0.3",  # Space only on right
+        "^0.1 |^0.3",  # Space only on left
+    ],
+)
+def test_add_union_constraint_with_various_spacing(
+    constraint: str,
+    project_factory: ProjectFactory,
+    repo: TestRepository,
+    command_tester_factory: CommandTesterFactory,
+) -> None:
+    """
+    Test that union constraints with various spacing patterns around the pipe
+    operator are all correctly detected and skipped from project.dependencies.
+
+    Regression test for issue #10569.
+    """
+    pyproject_content = """\
+    [project]
+    name = "simple-project"
+    version = "1.2.3"
+    dependencies = [
+        "tomlkit >= 0.5",
+    ]
+    """
+
+    poetry = project_factory(name="simple-project", pyproject_content=pyproject_content)
+
+    # Add non-adjacent versions so they don't get merged into a single range
+    repo.add_package(get_package("cachy", "0.1.0"))
+    repo.add_package(get_package("cachy", "0.3.0"))
+
+    tester = command_tester_factory("add", poetry=poetry)
+    # Quote the constraint to handle spaces in the version string
+    tester.execute(f'"cachy@{constraint}"')
+
+    # Verify the warning is shown
+    error_output = tester.io.fetch_error()
+    assert "union syntax" in error_output
+    assert "cannot be represented in PEP 508" in error_output
+
+    updated_pyproject: dict[str, Any] = poetry.file.read()
+
+    # The union constraint should NOT be in project.dependencies
+    project_deps = updated_pyproject["project"]["dependencies"]
+    assert len(project_deps) == 1  # Only the original tomlkit dependency
+
+    # The union constraint SHOULD be in tool.poetry.dependencies
+    assert "cachy" in updated_pyproject["tool"]["poetry"]["dependencies"]
