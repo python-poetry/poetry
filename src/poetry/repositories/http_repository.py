@@ -26,6 +26,7 @@ from poetry.repositories.cached_repository import CachedRepository
 from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.repositories.exceptions import RepositoryError
 from poetry.repositories.link_sources.html import HTMLPage
+from poetry.repositories.link_sources.json import SimpleJsonPage
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.constants import REQUESTS_TIMEOUT
 from poetry.utils.helpers import HTTPRangeRequestSupportedError
@@ -417,11 +418,13 @@ class HTTPRepository(CachedRepository):
                 return f"{required_hash.name}:{required_hash.hexdigest()}"
         return None
 
-    def _get_response(self, endpoint: str) -> requests.Response | None:
+    def _get_response(
+        self, endpoint: str, *, headers: dict[str, str] | None = None
+    ) -> requests.Response | None:
         url = self._url + endpoint
         try:
             response: requests.Response = self.session.get(
-                url, raise_for_status=False, timeout=REQUESTS_TIMEOUT
+                url, raise_for_status=False, timeout=REQUESTS_TIMEOUT, headers=headers
             )
             if response.status_code in (401, 403):
                 self._log(
@@ -442,8 +445,25 @@ class HTTPRepository(CachedRepository):
             )
         return response
 
+    def _get_prefer_json_header(self) -> dict[str, str]:
+        # Prefer json, but accept anything for backwards compatibility.
+        # Although the more specific value should be preferred to the less specific one
+        # according to https://developer.mozilla.org/en-US/docs/Glossary/Quality_values,
+        # we add a quality value because some servers still prefer html without one.
+        return {"Accept": "application/vnd.pypi.simple.v1+json, */*;q=0.1"}
+
+    def _is_json_response(self, response: requests.Response) -> bool:
+        return (
+            response.headers.get("Content-Type", "").split(";")[0].strip()
+            == "application/vnd.pypi.simple.v1+json"
+        )
+
     def _get_page(self, name: NormalizedName) -> LinkSource:
-        response = self._get_response(f"/{name}/")
+        response = self._get_response(
+            f"/{name}/", headers=self._get_prefer_json_header()
+        )
         if not response:
             raise PackageNotFoundError(f"Package [{name}] not found.")
+        if self._is_json_response(response):
+            return SimpleJsonPage(response.url, response.json())
         return HTMLPage(response.url, response.text)

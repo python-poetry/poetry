@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 from poetry.core.packages.utils.link import Link
 
 from poetry.repositories.link_sources.base import LinkSource
+from poetry.repositories.link_sources.base import SimpleRepositoryRootPage
 from poetry.repositories.parsers.html_page_parser import HTMLPageParser
 
 
@@ -68,10 +69,11 @@ class HTMLPage(LinkSource):
         return links
 
 
-class SimpleRepositoryRootPage:
+class SimpleRepositoryHTMLRootPage(SimpleRepositoryRootPage):
     """
-    This class represents the parsed content of a "simple" repository's root page. This follows the
-    specification laid out in PEP 503.
+    This class represents the parsed content of the HTML version
+    of a "simple" repository's root page.
+    This follows the specification laid out in PEP 503.
 
     See: https://peps.python.org/pep-0503/
     """
@@ -80,17 +82,6 @@ class SimpleRepositoryRootPage:
         parser = HTMLPageParser()
         parser.feed(content or "")
         self._parsed = parser.anchors
-
-    def search(self, query: str | list[str]) -> list[str]:
-        results: list[str] = []
-        tokens = query if isinstance(query, list) else [query]
-
-        for anchor in self._parsed:
-            href = anchor.get("href")
-            if href and any(token in href for token in tokens):
-                results.append(href.rstrip("/"))
-
-        return results
 
     @cached_property
     def package_names(self) -> list[str]:

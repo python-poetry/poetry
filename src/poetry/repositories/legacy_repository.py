@@ -12,8 +12,9 @@ from poetry.core.packages.package import Package
 from poetry.inspection.info import PackageInfo
 from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.repositories.http_repository import HTTPRepository
-from poetry.repositories.link_sources.html import HTMLPage
-from poetry.repositories.link_sources.html import SimpleRepositoryRootPage
+from poetry.repositories.link_sources.base import SimpleRepositoryRootPage
+from poetry.repositories.link_sources.html import SimpleRepositoryHTMLRootPage
+from poetry.repositories.link_sources.json import SimpleRepositoryJsonRootPage
 
 
 if TYPE_CHECKING:
@@ -130,21 +131,21 @@ class LegacyRepository(HTTPRepository):
             ),
         )
 
-    def _get_page(self, name: NormalizedName) -> HTMLPage:
-        if not (response := self._get_response(f"/{name}/")):
-            raise PackageNotFoundError(f"Package [{name}] not found.")
-        return HTMLPage(response.url, response.text)
-
     @cached_property
     def root_page(self) -> SimpleRepositoryRootPage:
-        if not (response := self._get_response("/")):
+        if not (
+            response := self._get_response("/", headers=self._get_prefer_json_header())
+        ):
             self._log(
                 f"Unable to retrieve package listing from package source {self.name}",
                 level="error",
             )
             return SimpleRepositoryRootPage()
 
-        return SimpleRepositoryRootPage(response.text)
+        if self._is_json_response(response):
+            return SimpleRepositoryJsonRootPage(response.json())
+
+        return SimpleRepositoryHTMLRootPage(response.text)
 
     def search(self, query: str | list[str]) -> list[Package]:
         results: list[Package] = []

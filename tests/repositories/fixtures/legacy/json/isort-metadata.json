@@ -1,0 +1,19 @@
+{
+  "name": "isort-metadata",
+  "files": [
+    {
+      "filename": "isort-metadata-4.3.4-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/1f/2c/non-existent/isort-metadata-4.3.4-py3-none-any.whl",
+      "dist-info-metadata": {
+        "sha256": "e360bf0ed8a06390513d50dd5b7e9d635c789853a93b84163f9de4ae0647580c"
+      },
+      "hashes": {
+        "sha256": "1153601da39a25b14ddc54955dbbacbb6b2d19135386699e2ad58517953b34af"
+      }
+    }
+  ],
+  "meta": {
+    "api-version": "1.0",
+    "_last-serial": 3575149
+  }
+}

@@ -56,6 +56,16 @@ DEFAULT_SOURCE_REF = (
 )
 
 
+@pytest.fixture
+def legacy_repository(legacy_repository_html: LegacyRepository) -> LegacyRepository:
+    """
+    Override fixture to only test with the html version of the legacy repository
+    because the json version has the same packages as the PyPI repository and thus
+    cause different results in the tests that rely on differences.
+    """
+    return legacy_repository_html
+
+
 def set_package_python_versions(provider: Provider, python_versions: str) -> None:
     provider._package.python_versions = python_versions
     provider._package_python_constraint = provider._package.python_constraint
