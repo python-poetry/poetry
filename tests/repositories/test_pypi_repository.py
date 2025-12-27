@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from io import BytesIO
 from typing import TYPE_CHECKING
+from typing import Any
 
 import pytest
 
@@ -86,7 +87,7 @@ def test_find_packages_yanked(
 def test_package(
     pypi_repository: PyPiRepository,
     dist_hash_getter: DistributionHashGetter,
-    get_pypi_dist_url: Callable[[str], str],
+    get_pypi_file_info: Callable[[str], dict[str, Any]],
 ) -> None:
     repo = pypi_repository
 
@@ -102,7 +103,9 @@ def test_package(
         {
             "file": filename,
             "hash": f"sha256:{dist_hash_getter(filename).sha256}",
-            "url": get_pypi_dist_url(filename),
+            "url": (file_info := get_pypi_file_info(filename))["url"],
+            "size": file_info["size"],
+            "upload_time": file_info["upload_time_iso_8601"],
         }
         for filename in [
             f"{package.name}-{package.version}-py2.py3-none-any.whl",
