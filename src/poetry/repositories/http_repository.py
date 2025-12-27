@@ -378,6 +378,10 @@ class HTTPRepository(CachedRepository):
                         "url": link.url_without_fragment,
                     }
                 )
+                if link.size is not None:
+                    files[-1]["size"] = link.size
+                if link.upload_time_isoformat is not None:
+                    files[-1]["upload_time"] = link.upload_time_isoformat
 
         if not files:
             raise PackageNotFoundError(
