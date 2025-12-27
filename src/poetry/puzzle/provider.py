@@ -31,7 +31,6 @@ from poetry.packages.direct_origin import DirectOrigin
 from poetry.packages.package_collection import PackageCollection
 from poetry.puzzle.exceptions import OverrideNeededError
 from poetry.repositories.repository_pool import Priority
-from poetry.utils.helpers import get_file_hash
 
 
 if TYPE_CHECKING:
@@ -343,13 +342,6 @@ class Provider:
 
         if dependency.base is not None:
             package.root_dir = dependency.base
-
-        package.files = [
-            {
-                "file": dependency.path.name,
-                "hash": "sha256:" + get_file_hash(dependency.full_path),
-            }
-        ]
 
         return package
 

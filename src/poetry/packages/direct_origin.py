@@ -73,6 +73,14 @@ class DirectOrigin:
                 f"Unable to determine package info from path: {file_path}"
             )
 
+        package.files = [
+            {
+                "file": file_path.name,
+                "hash": "sha256:" + get_file_hash(file_path),
+                "size": file_path.stat().st_size,
+            }
+        ]
+
         return package
 
     @classmethod
@@ -91,9 +99,6 @@ class DirectOrigin:
         )
 
         package = self.get_package_from_file(artifact)
-        package.files = [
-            {"file": link.filename, "hash": "sha256:" + get_file_hash(artifact)}
-        ]
 
         package._source_type = "url"
         package._source_url = url

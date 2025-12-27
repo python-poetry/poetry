@@ -544,6 +544,13 @@ def test_search_for_file_sdist(
 
     assert package.name == "demo"
     assert package.version.text == "0.1.0"
+    assert package.files == [
+        {
+            "file": "demo-0.1.0.tar.gz",
+            "hash": "sha256:9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad",
+            "size": 1003,
+        }
+    ]
 
     required = {
         r for r in sorted(package.requires, key=lambda r: r.name) if not r.is_optional()
@@ -575,6 +582,13 @@ def test_search_for_file_sdist_with_extras(
 
     assert package.name == "demo"
     assert package.version.text == "0.1.0"
+    assert package.files == [
+        {
+            "file": "demo-0.1.0.tar.gz",
+            "hash": "sha256:9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad",
+            "size": 1003,
+        }
+    ]
 
     required = {
         r for r in sorted(package.requires, key=lambda r: r.name) if not r.is_optional()
@@ -605,6 +619,13 @@ def test_search_for_file_wheel(
 
     assert package.name == "demo"
     assert package.version.text == "0.1.0"
+    assert package.files == [
+        {
+            "file": "demo-0.1.0-py2.py3-none-any.whl",
+            "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",
+            "size": 1116,
+        }
+    ]
 
     required = {
         r for r in sorted(package.requires, key=lambda r: r.name) if not r.is_optional()
@@ -636,6 +657,13 @@ def test_search_for_file_wheel_with_extras(
 
     assert package.name == "demo"
     assert package.version.text == "0.1.0"
+    assert package.files == [
+        {
+            "file": "demo-0.1.0-py2.py3-none-any.whl",
+            "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",
+            "size": 1116,
+        }
+    ]
 
     required = {
         r for r in sorted(package.requires, key=lambda r: r.name) if not r.is_optional()
