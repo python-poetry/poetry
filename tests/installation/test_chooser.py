@@ -216,7 +216,7 @@ def test_chooser_chooses_distributions_that_match_the_package_hashes(
     files: list[PackageFile] = [
         {
             "file": filename,
-            "hash": (f"sha256:{dist_hash_getter(filename).sha256}"),
+            "hash": f"sha256:{dist_hash_getter(filename).sha256}",
         }
         for filename in [
             f"{package.name}-{package.version}.tar.gz",
@@ -291,7 +291,7 @@ def test_chooser_does_not_choose_yanked_if_others(
     files: list[PackageFile] = [
         {
             "file": filename,
-            "hash": (f"sha256:{dist_hash_getter(filename).sha256}"),
+            "hash": f"sha256:{dist_hash_getter(filename).sha256}",
         }
         for filename in [
             f"{package.name}-{package.version}-py2-none-any.whl",
