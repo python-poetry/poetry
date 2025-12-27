@@ -181,6 +181,10 @@ class PyPiRepository(HTTPRepository):
                         "url": file_info["url"],
                     }
                 )
+                if (size := file_info.get("size")) is not None:
+                    files[-1]["size"] = size
+                if upload_time := file_info.get("upload_time_iso_8601"):
+                    files[-1]["upload_time"] = upload_time
         data.files = files
 
         if self._fallback and data.requires_dist is None:

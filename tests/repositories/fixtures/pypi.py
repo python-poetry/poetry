@@ -4,6 +4,7 @@ import json
 import re
 
 from typing import TYPE_CHECKING
+from typing import Any
 from urllib.parse import urlparse
 
 import pytest
@@ -162,8 +163,10 @@ def pypi_repository(
 
 
 @pytest.fixture
-def get_pypi_dist_url(package_json_locations: list[Path]) -> Callable[[str], str]:
-    def get_url(name: str) -> str:
+def get_pypi_file_info(
+    package_json_locations: list[Path],
+) -> Callable[[str], dict[str, Any]]:
+    def get_file_info(name: str) -> dict[str, Any]:
         if name.endswith(".whl"):
             package_name, version, _ = name.split("-", 2)
         else:
@@ -182,9 +185,7 @@ def get_pypi_dist_url(package_json_locations: list[Path]) -> Callable[[str], str
             content = json.load(f)
         for url in content["urls"]:
             if url["filename"] == name:
-                url = url["url"]
-                assert isinstance(url, str)
-                return url
+                return url  # type: ignore[no-any-return]
         raise RuntimeError(f"No URL in pypi.org json fixture of {name} {version}")
 
-    return get_url
+    return get_file_info

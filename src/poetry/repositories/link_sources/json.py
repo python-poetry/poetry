@@ -32,6 +32,8 @@ class SimpleJsonPage(LinkSource):
             requires_python = file.get("requires-python")
             hashes = file.get("hashes", {})
             yanked = file.get("yanked", False)
+            size = file.get("size")
+            upload_time = file.get("upload-time")
 
             # see https://peps.python.org/pep-0714/#clients
             # and https://peps.python.org/pep-0691/#project-detail
@@ -51,6 +53,8 @@ class SimpleJsonPage(LinkSource):
                 hashes=hashes,
                 yanked=yanked,
                 metadata=metadata,
+                size=size,
+                upload_time=upload_time,
             )
 
             if link.ext not in self.SUPPORTED_FORMATS:

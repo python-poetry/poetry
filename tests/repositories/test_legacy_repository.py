@@ -29,6 +29,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from poetry.config.config import Config
+    from tests.repositories.fixtures.legacy import TestLegacyRepository
     from tests.types import DistributionHashGetter
 
 
@@ -311,15 +312,18 @@ def test_get_package_information_includes_python_requires(
 
 
 def test_get_package_information_includes_files(
-    legacy_repository: LegacyRepository,
+    legacy_repository: TestLegacyRepository,
     dist_hash_getter: DistributionHashGetter,
     get_legacy_dist_url: Callable[[str], str],
+    get_legacy_dist_size_and_upload_time: Callable[
+        [str], tuple[int | None, str | None]
+    ],
 ) -> None:
     repo = legacy_repository
 
     package = repo.package("futures", Version.parse("3.2.0"))
 
-    assert package.files == [
+    expected: list[dict[str, Any]] = [
         {
             "file": filename,
             "hash": f"sha256:{dist_hash_getter(filename).sha256}",
@@ -330,6 +334,15 @@ def test_get_package_information_includes_files(
             f"{package.name}-{package.version}.tar.gz",
         ]
     ]
+    if repo.json:
+        for file_info in expected:
+            size, upload_time = get_legacy_dist_size_and_upload_time(file_info["file"])
+            if size is not None:
+                file_info["size"] = size
+            if upload_time is not None:
+                file_info["upload_time"] = upload_time
+
+    assert package.files == expected
 
 
 def test_get_package_information_sets_appropriate_python_versions_if_wheels_only(
@@ -427,15 +440,18 @@ def test_get_package_with_dist_and_universal_py3_wheel(
 
 
 def test_get_package_retrieves_non_sha256_hashes(
-    legacy_repository: LegacyRepository,
+    legacy_repository: TestLegacyRepository,
     dist_hash_getter: DistributionHashGetter,
     get_legacy_dist_url: Callable[[str], str],
+    get_legacy_dist_size_and_upload_time: Callable[
+        [str], tuple[int | None, str | None]
+    ],
 ) -> None:
     repo = legacy_repository
 
     package = repo.package("ipython", Version.parse("7.5.0"))
 
-    expected = [
+    expected: list[dict[str, Any]] = [
         {
             "file": filename,
             "hash": f"sha256:{dist_hash_getter(filename).sha256}",
@@ -446,20 +462,30 @@ def test_get_package_retrieves_non_sha256_hashes(
             f"{package.name}-{package.version}.tar.gz",
         ]
     ]
+    if repo.json:
+        for file_info in expected:
+            size, upload_time = get_legacy_dist_size_and_upload_time(file_info["file"])
+            if size is not None:
+                file_info["size"] = size
+            if upload_time is not None:
+                file_info["upload_time"] = upload_time
 
     assert package.files == expected
 
 
 def test_get_package_retrieves_non_sha256_hashes_mismatching_known_hash(
-    legacy_repository: LegacyRepository,
+    legacy_repository: TestLegacyRepository,
     dist_hash_getter: DistributionHashGetter,
     get_legacy_dist_url: Callable[[str], str],
+    get_legacy_dist_size_and_upload_time: Callable[
+        [str], tuple[int | None, str | None]
+    ],
 ) -> None:
     repo = legacy_repository
 
     package = repo.package("ipython", Version.parse("5.7.0"))
 
-    expected = [
+    expected: list[dict[str, Any]] = [
         {
             "file": "ipython-5.7.0-py2-none-any.whl",
             # in the links provided by the legacy repository, this file only has a md5 hash,
@@ -478,6 +504,13 @@ def test_get_package_retrieves_non_sha256_hashes_mismatching_known_hash(
             "url": get_legacy_dist_url("ipython-5.7.0.tar.gz"),
         },
     ]
+    if repo.json:
+        for file_info in expected:
+            size, upload_time = get_legacy_dist_size_and_upload_time(file_info["file"])
+            if size is not None:
+                file_info["size"] = size
+            if upload_time is not None:
+                file_info["upload_time"] = upload_time
 
     assert package.files == expected
 
