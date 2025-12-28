@@ -29,11 +29,11 @@ from poetry.utils.isolated_build import isolated_builder
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
-    from collections.abc import Mapping
     from collections.abc import Sequence
 
     from packaging.metadata import RawMetadata
     from packaging.utils import NormalizedName
+    from poetry.core.packages.package import PackageFile
     from poetry.core.packages.project_package import ProjectPackage
 
 
@@ -57,7 +57,7 @@ class PackageInfo:
         summary: str | None = None,
         requires_dist: list[str] | None = None,
         requires_python: str | None = None,
-        files: Sequence[Mapping[str, str]] | None = None,
+        files: Sequence[PackageFile] | None = None,
         yanked: str | bool = False,
         cache_version: str | None = None,
     ) -> None:

@@ -420,7 +420,10 @@ class Locker:
             package.files = package_files
         elif "hashes" in metadata:
             hashes = cast("dict[str, Any]", metadata["hashes"])
-            package.files = [{"name": h, "hash": h} for h in hashes[name]]
+            # Strictly speaking, this is not correct,
+            # but we do not know the file names here,
+            # so we just set both file and hash.
+            package.files = [{"file": h, "hash": h} for h in hashes[name]]
         elif source_type in {"git", "directory", "url"}:
             package.files = []
         else:
