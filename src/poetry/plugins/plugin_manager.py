@@ -9,7 +9,7 @@ import sys
 from functools import cached_property
 from importlib import metadata
 from pathlib import Path
-from site import addpackage
+from site import addsitedir
 from typing import TYPE_CHECKING
 
 import tomlkit
@@ -64,6 +64,7 @@ class PluginManager:
         plugin_path = pyproject_toml.parent / ProjectPluginCache.PATH
         if plugin_path.exists():
             EnvManager.get_system_env(naive=True).sys_path.insert(0, str(plugin_path))
+            addsitedir(str(plugin_path))
 
     @classmethod
     def ensure_project_plugins(cls, poetry: Poetry, io: IO) -> None:
@@ -90,26 +91,8 @@ class PluginManager:
 
         self._plugins.append(plugin)
 
-    @staticmethod
-    def _get_pth_files(dist: metadata.Distribution | None) -> list[Path]:
-        """Extract .pth files from a distribution."""
-        if not dist or not dist.files:
-            return []
-
-        pth_files = []
-        for file in dist.files:
-            if file.suffix == ".pth":
-                pth_files.append(Path(str(dist.locate_file(file))))
-        return pth_files
-
     def _load_plugin_entry_point(self, ep: metadata.EntryPoint) -> None:
         logger.debug("Loading the %s plugin", ep.name)
-
-        # In case the plugin installed in editable/develop mode, we need to
-        # process its .pth files to ensure that its dependencies are available.
-        for pth_path in self._get_pth_files(ep.dist):
-            logger.debug("Processing .pth file: %s", pth_path)
-            addpackage(str(pth_path.parent), pth_path.name, None)
 
         plugin = ep.load()
 
