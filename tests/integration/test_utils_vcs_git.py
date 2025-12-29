@@ -15,6 +15,7 @@ import pytest
 
 from dulwich.client import HTTPUnauthorized
 from dulwich.client import get_transport_and_path
+from dulwich.config import CaseInsensitiveOrderedMultiDict
 from dulwich.config import ConfigFile
 from dulwich.repo import Repo
 
@@ -108,7 +109,9 @@ def _remote_refs(source_url: str, local_repo: Repo) -> FetchPackResult:
     path: str
     client, path = get_transport_and_path(source_url)
     return client.fetch(
-        path, local_repo, determine_wants=local_repo.object_store.determine_wants_all
+        path.encode(),
+        local_repo,
+        determine_wants=local_repo.object_store.determine_wants_all,
     )
 
 
@@ -141,7 +144,9 @@ def test_git_local_info(
     with Git.clone(url=source_url) as repo:
         info = Git.info(repo=repo)
         assert info.origin == source_url
-        assert info.revision == remote_refs.refs[remote_default_ref].decode("utf-8")
+        ref = remote_refs.refs[remote_default_ref]
+        assert ref is not None
+        assert info.revision == ref.decode("utf-8")
 
 
 @pytest.mark.parametrize(
@@ -294,7 +299,7 @@ def test_system_git_fallback_on_http_401(
     mocker.patch.object(
         Git,
         "_clone",
-        side_effect=HTTPUnauthorized(None, None),
+        side_effect=HTTPUnauthorized(None, source_url),
     )
 
     # use tmp_path for source_root to get a shorter path,
@@ -428,9 +433,10 @@ def test_relative_submodules_with_ssh(
     )
 
     # construct fake git config
-    fake_config = ConfigFile(
-        {(b"remote", b"origin"): {b"url": ssh_source_url.encode("utf-8")}}
+    values = CaseInsensitiveOrderedMultiDict.make(
+        {b"url": ssh_source_url.encode("utf-8")}
     )
+    fake_config = ConfigFile({(b"remote", b"origin"): values})
     # trick Git into thinking remote.origin is an ssh url
     mock_get_config = mocker.patch.object(repo_with_unresolved_submodules, "get_config")
     mock_get_config.return_value = fake_config

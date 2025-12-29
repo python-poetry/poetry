@@ -131,7 +131,7 @@ class GitRefSpec:
             # revision is a short sha, resolve to full sha
             short_sha = self.revision.encode("utf-8")
             for sha in remote_refs.refs.values():
-                if sha.startswith(short_sha):
+                if sha is not None and sha.startswith(short_sha):
                     self.revision = sha.decode("utf-8")
                     return
 
@@ -147,6 +147,7 @@ class GitRefSpec:
         """
         self.ref = remote_refs.symrefs[b"HEAD"]
 
+        head: bytes | None
         if self.revision:
             head = self.revision.encode("utf-8")
         else:
@@ -234,21 +235,24 @@ class Git:
         client: GitClient
         path: str
 
-        kwargs: dict[str, str] = {}
         credentials = get_default_authenticator().get_credentials_for_git_url(url=url)
 
+        username = None
+        password = None
         if credentials.password and credentials.username:
             # we do this conditionally as otherwise, dulwich might complain if these
             # parameters are passed in for an ssh url
-            kwargs["username"] = credentials.username
-            kwargs["password"] = credentials.password
+            username = credentials.username
+            password = credentials.password
 
         config = local.get_config_stack()
-        client, path = get_transport_and_path(url, config=config, **kwargs)
+        client, path = get_transport_and_path(
+            url, config=config, username=username, password=password
+        )
 
         with local:
             result: FetchPackResult = client.fetch(
-                path,
+                path.encode(),
                 local,
                 determine_wants=local.object_store.determine_wants_all,
             )
@@ -335,7 +339,9 @@ class Git:
 
         try:
             # ensure local HEAD matches remote
-            local.refs[b"HEAD"] = remote_refs.refs[b"HEAD"]
+            ref = remote_refs.refs[b"HEAD"]
+            if ref is not None:
+                local.refs[b"HEAD"] = ref
         except ValueError:
             raise PoetryRuntimeError.create(
                 reason=f"<error>Failed to clone {url} at '{refspec.key}', verify ref exists on remote.</>",
@@ -361,18 +367,24 @@ class Git:
                     other={
                         n[len(prefix) :]: v
                         for (n, v) in remote_refs.refs.items()
-                        if n.startswith(prefix) and not n.endswith(ANNOTATED_TAG_SUFFIX)
+                        if n.startswith(prefix)
+                        and not n.endswith(ANNOTATED_TAG_SUFFIX)
+                        and v is not None
                     },
                 )
             except FileLocked as e:
 
-                def to_str(path: bytes) -> str:
-                    return path.decode().replace(os.sep * 2, os.sep)
+                def to_str(path: bytes | str) -> str:
+                    if isinstance(path, bytes):
+                        path = path.decode()
+                    return path.replace(os.sep * 2, os.sep)
 
                 raise PoetryRuntimeError.create(
+                    # <https://github.com/jelmer/dulwich/pull/2045> should clean up the
+                    # ignore.
                     reason=(
                         f"<error>Failed to clone {url} at '{refspec.key}',"
-                        f" unable to acquire file lock for {to_str(e.filename)}.</>"
+                        f" unable to acquire file lock for {to_str(e.filename)}.</>"  # type: ignore[arg-type]
                     ),
                     info=[
                         ERROR_MESSAGE_NOTE,
