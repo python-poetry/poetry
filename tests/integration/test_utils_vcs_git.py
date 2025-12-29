@@ -17,6 +17,7 @@ from dulwich.client import HTTPUnauthorized
 from dulwich.client import get_transport_and_path
 from dulwich.config import CaseInsensitiveOrderedMultiDict
 from dulwich.config import ConfigFile
+from dulwich.refs import Ref
 from dulwich.repo import Repo
 
 from poetry.console.exceptions import PoetryConsoleError
@@ -121,8 +122,8 @@ def remote_refs(_remote_refs: FetchPackResult) -> FetchPackResult:
 
 
 @pytest.fixture(scope="module")
-def remote_default_ref(_remote_refs: FetchPackResult) -> bytes:
-    ref: bytes = _remote_refs.symrefs[b"HEAD"]
+def remote_default_ref(_remote_refs: FetchPackResult) -> Ref:
+    ref: Ref = _remote_refs.symrefs[Ref(b"HEAD")]
     return ref
 
 
@@ -139,7 +140,7 @@ def test_use_system_git_client_from_environment_variables() -> None:
 
 
 def test_git_local_info(
-    source_url: str, remote_refs: FetchPackResult, remote_default_ref: bytes
+    source_url: str, remote_refs: FetchPackResult, remote_default_ref: Ref
 ) -> None:
     with Git.clone(url=source_url) as repo:
         info = Git.info(repo=repo)
@@ -156,7 +157,7 @@ def test_git_clone_default_branch_head(
     specification: GitCloneKwargs,
     source_url: str,
     remote_refs: FetchPackResult,
-    remote_default_ref: bytes,
+    remote_default_ref: Ref,
     mocker: MockerFixture,
 ) -> None:
     spy = mocker.spy(Git, "_clone")
@@ -312,7 +313,7 @@ def test_system_git_fallback_on_http_401(
     spy.assert_called_with(
         url="https://github.com/python-poetry/test-fixture-vcs-repository.git",
         target=path,
-        refspec=GitRefSpec(branch="0.1", revision=None, tag=None, ref=b"HEAD"),
+        refspec=GitRefSpec(branch="0.1", revision=None, tag=None, ref=Ref(b"HEAD")),
     )
     spy.assert_called_once()
 
@@ -393,6 +394,8 @@ def test_username_password_parameter_is_not_passed_to_dulwich(
     spy_get_transport_and_path.assert_called_with(
         location=source_url,
         config=dummy_git_config,
+        username=None,
+        password=None,
     )
     spy_get_transport_and_path.assert_called_once()
 
@@ -416,7 +419,7 @@ def test_system_git_called_when_configured(
     spy_legacy.assert_called_with(
         url=source_url,
         target=path,
-        refspec=GitRefSpec(branch="0.1", revision=None, tag=None, ref=b"HEAD"),
+        refspec=GitRefSpec(branch="0.1", revision=None, tag=None, ref=Ref(b"HEAD")),
     )
 
 

@@ -20,7 +20,9 @@ from dulwich.config import parse_submodules
 from dulwich.errors import NotGitRepository
 from dulwich.file import FileLocked
 from dulwich.index import IndexEntry
-from dulwich.refs import ANNOTATED_TAG_SUFFIX
+from dulwich.objects import ObjectID
+from dulwich.protocol import PEELED_TAG_SUFFIX
+from dulwich.refs import Ref
 from dulwich.repo import Repo
 
 from poetry.console.exceptions import PoetryRuntimeError
@@ -76,10 +78,10 @@ def is_revision_sha(revision: str | None) -> bool:
     return re.match(r"^\b[0-9a-f]{5,40}\b$", revision or "") is not None
 
 
-def annotated_tag(ref: str | bytes) -> bytes:
+def peeled_tag(ref: str | bytes) -> Ref:
     if isinstance(ref, str):
         ref = ref.encode("utf-8")
-    return ref + ANNOTATED_TAG_SUFFIX
+    return Ref(ref + PEELED_TAG_SUFFIX)
 
 
 @dataclasses.dataclass
@@ -87,7 +89,7 @@ class GitRefSpec:
     branch: str | None = None
     revision: str | None = None
     tag: str | None = None
-    ref: bytes = dataclasses.field(default_factory=lambda: b"HEAD")
+    ref: Ref = dataclasses.field(default_factory=lambda: Ref(b"HEAD"))
 
     def resolve(self, remote_refs: FetchPackResult, repo: Repo) -> None:
         """
@@ -104,7 +106,7 @@ class GitRefSpec:
         """
         if self.revision:
             ref = f"refs/tags/{self.revision}".encode()
-            if ref in remote_refs.refs or annotated_tag(ref) in remote_refs.refs:
+            if ref in remote_refs.refs or peeled_tag(ref) in remote_refs.refs:
                 # this is a tag, incorrectly specified as a revision, tags take priority
                 self.tag = self.revision
                 self.revision = None
@@ -120,7 +122,7 @@ class GitRefSpec:
             and f"refs/heads/{self.branch}".encode() not in remote_refs.refs
             and (
                 f"refs/tags/{self.branch}".encode() in remote_refs.refs
-                or annotated_tag(f"refs/tags/{self.branch}") in remote_refs.refs
+                or peeled_tag(f"refs/tags/{self.branch}") in remote_refs.refs
             )
         ):
             # this is a tag incorrectly specified as a branch
@@ -145,25 +147,25 @@ class GitRefSpec:
         Internal helper method to populate ref and set it's sha as the remote's head
         and default ref.
         """
-        self.ref = remote_refs.symrefs[b"HEAD"]
+        self.ref = remote_refs.symrefs[Ref(b"HEAD")]
 
-        head: bytes | None
+        head: ObjectID | None
         if self.revision:
-            head = self.revision.encode("utf-8")
+            head = ObjectID(self.revision.encode("utf-8"))
         else:
             if self.tag:
-                ref = f"refs/tags/{self.tag}".encode()
-                annotated = annotated_tag(ref)
-                self.ref = annotated if annotated in remote_refs.refs else ref
+                ref = Ref(f"refs/tags/{self.tag}".encode())
+                peeled = peeled_tag(ref)
+                self.ref = peeled if peeled in remote_refs.refs else ref
             elif self.branch:
                 self.ref = (
-                    self.branch.encode("utf-8")
+                    Ref(self.branch.encode("utf-8"))
                     if self.is_ref
-                    else f"refs/heads/{self.branch}".encode()
+                    else Ref(f"refs/heads/{self.branch}".encode())
                 )
             head = remote_refs.refs[self.ref]
 
-        remote_refs.refs[self.ref] = remote_refs.refs[b"HEAD"] = head
+        remote_refs.refs[self.ref] = remote_refs.refs[Ref(b"HEAD")] = head
 
     @property
     def key(self) -> str:
@@ -217,7 +219,7 @@ class Git:
     @staticmethod
     def get_revision(repo: Repo) -> str:
         with repo:
-            return repo.get_peeled(b"HEAD").decode("utf-8")
+            return repo.get_peeled(Ref(b"HEAD")).decode("utf-8")
 
     @classmethod
     def info(cls, repo: Repo | Path) -> GitRepoLocalInfo:
@@ -339,9 +341,9 @@ class Git:
 
         try:
             # ensure local HEAD matches remote
-            ref = remote_refs.refs[b"HEAD"]
+            ref = remote_refs.refs[Ref(b"HEAD")]
             if ref is not None:
-                local.refs[b"HEAD"] = ref
+                local.refs[Ref(b"HEAD")] = ref
         except ValueError:
             raise PoetryRuntimeError.create(
                 reason=f"<error>Failed to clone {url} at '{refspec.key}', verify ref exists on remote.</>",
@@ -355,20 +357,20 @@ class Git:
 
         if refspec.is_ref:
             # set ref to current HEAD
-            local.refs[refspec.ref] = local.refs[b"HEAD"]
+            local.refs[refspec.ref] = local.refs[Ref(b"HEAD")]
 
         for base, prefix in {
-            (b"refs/remotes/origin", b"refs/heads/"),
-            (b"refs/tags", b"refs/tags"),
+            (Ref(b"refs/remotes/origin"), b"refs/heads/"),
+            (Ref(b"refs/tags"), b"refs/tags"),
         }:
             try:
                 local.refs.import_refs(
                     base=base,
                     other={
-                        n[len(prefix) :]: v
+                        Ref(n[len(prefix) :]): v
                         for (n, v) in remote_refs.refs.items()
                         if n.startswith(prefix)
-                        and not n.endswith(ANNOTATED_TAG_SUFFIX)
+                        and not n.endswith(PEELED_TAG_SUFFIX)
                         and v is not None
                     },
                 )
@@ -531,7 +533,9 @@ class Git:
 
                     with current_repo:
                         # we use peeled sha here to ensure tags are resolved consistently
-                        current_sha = current_repo.get_peeled(b"HEAD").decode("utf-8")
+                        current_sha = current_repo.get_peeled(Ref(b"HEAD")).decode(
+                            "utf-8"
+                        )
                 except (NotGitRepository, AssertionError, KeyError):
                     # something is wrong with the current checkout, clean it
                     remove_directory(target, force=True)
