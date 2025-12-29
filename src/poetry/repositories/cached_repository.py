@@ -70,3 +70,6 @@ class CachedRepository(Repository, ABC):
         return self.get_release_info(canonicalize_name(name), version).to_package(
             name=name
         )
+
+    def forget(self, name: str, version: Version) -> None:
+        self._release_cache.forget(f"{canonicalize_name(name)}:{version}")

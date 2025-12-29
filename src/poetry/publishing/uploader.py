@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import itertools
 import tarfile
 import zipfile
 
+from collections import defaultdict
+from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -12,6 +15,7 @@ import requests
 
 from packaging.metadata import RawMetadata
 from packaging.metadata import parse_email
+from poetry.core.constraints.version import Version
 from poetry.core.masonry.utils.helpers import distribution_name
 from requests_toolbelt import user_agent
 from requests_toolbelt.multipart import MultipartEncoder
@@ -36,7 +40,7 @@ class UploadError(Exception):
 class Uploader:
     def __init__(self, poetry: Poetry, io: IO, dist_dir: Path | None = None) -> None:
         self._poetry = poetry
-        self._package = poetry.package
+        self._dist_name = distribution_name(poetry.package.name)
         self._io = io
         self._dist_dir = dist_dir or self.default_dist_dir
         self._username: str | None = None
@@ -60,14 +64,39 @@ class Uploader:
 
     @property
     def files(self) -> list[Path]:
+        return self._files_and_version[0]
+
+    @property
+    def version(self) -> str:
+        return self._files_and_version[1]
+
+    @cached_property
+    def _files_and_version(self) -> tuple[list[Path], str]:
         dist = self.dist_dir
-        version = self._package.version.to_string()
-        escaped_name = distribution_name(self._package.name)
 
-        wheels = list(dist.glob(f"{escaped_name}-{version}-*.whl"))
-        tars = list(dist.glob(f"{escaped_name}-{version}.tar.gz"))
+        wheels = dist.glob(f"{self._dist_name}-*-*.whl")
+        tars = dist.glob(f"{self._dist_name}-*.tar.gz")
+        artifacts_by_version = defaultdict(list)
+        for artifact in itertools.chain(wheels, tars):
+            version = (
+                artifact.stem.removesuffix(".tar")
+                .removeprefix(f"{self._dist_name}-")
+                .split("-", maxsplit=1)[0]
+            )
+            artifacts_by_version[version].append(artifact)
+        match len(artifacts_by_version):
+            case 0:
+                return [], ""
+            case 1:
+                latest_version = next(iter(artifacts_by_version))
+                artifacts = artifacts_by_version[latest_version]
+            case _:
+                latest_version = max(
+                    artifacts_by_version, key=lambda v: Version.parse(v)
+                )
+                artifacts = artifacts_by_version[latest_version]
 
-        return sorted(wheels + tars)
+        return sorted(artifacts, key=lambda a: (a.suffix == ".whl", a)), latest_version
 
     def auth(self, username: str | None, password: str | None) -> None:
         self._username = username
@@ -258,14 +287,7 @@ class Uploader:
         """
         Register a package to a repository.
         """
-        dist = self.dist_dir
-        escaped_name = distribution_name(self._package.name)
-        file = dist / f"{escaped_name}-{self._package.version.to_string()}.tar.gz"
-
-        if not file.exists():
-            raise RuntimeError(f'"{file.name}" does not exist.')
-
-        data = self.post_data(file)
+        data = self.post_data(self.files[0])
         data.update({":action": "submit", "protocol_version": "1"})
 
         data_to_send = self._prepare_data(data)

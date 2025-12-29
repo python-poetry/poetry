@@ -711,8 +711,14 @@ poetry publish
 It can also build the package if you pass it the `--build` option.
 
 {{% note %}}
-See [Publishable Repositories]({{< relref "repositories/#publishable-repositories" >}}) for more information on how to configure and use publishable repositories.
+See [Publishable Repositories]({{< relref "repositories/#publishable-repositories" >}}) for more information
+on how to configure and use publishable repositories.
 {{% /note %}}
+
+{{% warning %}}
+Only artifacts of the latest version of your package in the dist directory will be uploaded.
+Older versions from previous builds as well as artifacts of other packages are ignored.
+{{% /warning %}}
 
 #### Options
 
