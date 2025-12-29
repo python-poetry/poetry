@@ -1854,6 +1854,14 @@ def test_add_does_not_update_locked_dependencies(
     for package in docker_locked, docker_new, foo:
         repo.add_package(package)
 
+    # set correct files to avoid cache refresh
+    if locked:
+        docker_locked.files = (
+            poetry_with_up_to_date_lockfile.locker.locked_repository()
+            .package("docker", Version.parse("4.3.1"))
+            .files
+        )
+
     tester.execute(command)
 
     lock_data = poetry_with_up_to_date_lockfile.locker.lock_data

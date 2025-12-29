@@ -79,7 +79,7 @@ class Publisher:
             repository_name = "PyPI"
         self._io.write_line(
             f"Publishing <c1>{self._package.pretty_name}</c1>"
-            f" (<c2>{self._package.pretty_version}</c2>) to"
+            f" (<c2>{self._uploader.version}</c2>) to"
             f" <info>{repository_name}</info>"
         )
 
