@@ -263,7 +263,7 @@ in the `tool.poetry.requires-plugins` section of the pyproject.toml file:
 ```toml
 [tool.poetry.requires-plugins]
 my-application-plugin = ">1.0"
-custom-plugin = {path = "custom_plugin/src", develop = true}
+custom-plugin = {path = "custom_plugin", develop = true}
 ```
 
 If the plugin is not installed in Poetry's own environment when running `poetry install`,
