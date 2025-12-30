@@ -63,7 +63,9 @@ class PluginManager:
 
         plugin_path = pyproject_toml.parent / ProjectPluginCache.PATH
         if plugin_path.exists():
+            # insert at the beginning to allow overriding with (compatible) versions
             EnvManager.get_system_env(naive=True).sys_path.insert(0, str(plugin_path))
+            # process .pth files (among other things)
             addsitedir(str(plugin_path))
 
     @classmethod
