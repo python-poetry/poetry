@@ -110,9 +110,7 @@ def _remote_refs(source_url: str, local_repo: Repo) -> FetchPackResult:
     path: str
     client, path = get_transport_and_path(source_url)
     return client.fetch(
-        path.encode(),
-        local_repo,
-        determine_wants=local_repo.object_store.determine_wants_all,
+        path, local_repo, determine_wants=local_repo.object_store.determine_wants_all
     )
 
 
