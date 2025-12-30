@@ -254,7 +254,7 @@ class Git:
 
         with local:
             result: FetchPackResult = client.fetch(
-                path.encode(),
+                path,
                 local,
                 determine_wants=local.object_store.determine_wants_all,
             )
