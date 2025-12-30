@@ -149,8 +149,8 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         vcs_config = StackedConfig.default()
         author = self.option("author")
         if not author and (vcs_username := vcs_config.get("user", "name")):
-            author = vcs_username
-            author_email = vcs_config.get("user", "email")
+            author = vcs_username.decode()
+            author_email = vcs_config.get("user", "email").decode()
             if author_email:
                 author += f" <{author_email}>"
 
