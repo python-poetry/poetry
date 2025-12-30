@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import shutil
+import sys
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -116,6 +117,12 @@ def io() -> BufferedIO:
     return BufferedIO()
 
 
+@pytest.fixture(autouse=True)
+def mock_sys_path(mocker: MockerFixture) -> None:
+    sys_path_copy = sys.path.copy()
+    mocker.patch("poetry.plugins.plugin_manager.sys.path", new=sys_path_copy)
+
+
 @pytest.fixture()
 def manager_factory(poetry: Poetry, io: BufferedIO) -> ManagerFactory:
     def _manager(group: str = Plugin.group) -> PluginManager:
@@ -185,6 +192,59 @@ def test_add_project_plugin_path(
     assert {
         f"{p.name} {p.version}" for p in InstalledRepository.load(system_env).packages
     } == {"my-application-plugin 1.0"}
+
+
+def test_add_project_plugin_path_addsitedir_called(
+    poetry_with_plugins: Poetry,
+    io: BufferedIO,
+    mocker: MockerFixture,
+) -> None:
+    """Test that addsitedir is called when plugin path exists."""
+    cache = ProjectPluginCache(poetry_with_plugins, io)
+    cache._path.mkdir(parents=True, exist_ok=True)
+
+    mock_addsitedir = mocker.patch("poetry.plugins.plugin_manager.addsitedir")
+
+    PluginManager.add_project_plugin_path(poetry_with_plugins.pyproject_path.parent)
+
+    # sys.path is mocked, so we can check it was modified
+    assert str(cache._path) in sys.path
+    assert sys.path[0] == str(cache._path)
+    mock_addsitedir.assert_called_once_with(str(cache._path))
+
+
+def test_add_project_plugin_path_no_addsitedir_when_path_missing(
+    poetry_with_plugins: Poetry,
+    mocker: MockerFixture,
+) -> None:
+    """Test that addsitedir is not called when plugin path doesn't exist."""
+    cache = ProjectPluginCache(poetry_with_plugins, BufferedIO())
+    # Ensure the plugin path does not exist
+    if cache._path.exists():
+        shutil.rmtree(cache._path)
+
+    mock_addsitedir = mocker.patch("poetry.plugins.plugin_manager.addsitedir")
+    initial_sys_path = sys.path.copy()
+
+    PluginManager.add_project_plugin_path(poetry_with_plugins.pyproject_path.parent)
+
+    assert sys.path == initial_sys_path
+    mock_addsitedir.assert_not_called()
+
+
+def test_add_project_plugin_path_no_pyproject(
+    tmp_path: Path,
+    mocker: MockerFixture,
+) -> None:
+    """Test that no action is taken when pyproject.toml is missing."""
+    mock_addsitedir = mocker.patch("poetry.plugins.plugin_manager.addsitedir")
+    initial_sys_path = sys.path.copy()
+
+    # Call with a directory that has no pyproject.toml
+    PluginManager.add_project_plugin_path(tmp_path)
+
+    assert sys.path == initial_sys_path
+    mock_addsitedir.assert_not_called()
 
 
 def test_ensure_plugins_no_plugins_no_output(poetry: Poetry, io: BufferedIO) -> None:

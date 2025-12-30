@@ -9,6 +9,7 @@ import sys
 from functools import cached_property
 from importlib import metadata
 from pathlib import Path
+from site import addsitedir
 from typing import TYPE_CHECKING
 
 import tomlkit
@@ -62,7 +63,10 @@ class PluginManager:
 
         plugin_path = pyproject_toml.parent / ProjectPluginCache.PATH
         if plugin_path.exists():
+            # insert at the beginning to allow overriding dependencies
             EnvManager.get_system_env(naive=True).sys_path.insert(0, str(plugin_path))
+            # process .pth files (among other things)
+            addsitedir(str(plugin_path))
 
     @classmethod
     def ensure_project_plugins(cls, poetry: Poetry, io: IO) -> None:
