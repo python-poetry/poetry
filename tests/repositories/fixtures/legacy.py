@@ -259,14 +259,15 @@ def get_legacy_dist_size_and_upload_time(
 ) -> Callable[[str], tuple[int | None, str | None]]:
     def get_size_and_upload_time(name: str) -> tuple[int | None, str | None]:
         package_name = name.split("-", 1)[0]
+        fixture_name = f"{package_name}.json"
         path = Path()
         for location in legacy_package_json_locations:
-            path = location / f"{package_name}.json"
+            path = location / fixture_name
             if path.exists():
                 break
         if not path.exists():
             raise RuntimeError(
-                f"Fixture for {package_name}.json not found in legacy fixtures"
+                f"Fixture for {fixture_name} not found in legacy fixtures"
             )
         with path.open("rb") as f:
             content = json.load(f)
@@ -275,8 +276,6 @@ def get_legacy_dist_size_and_upload_time(
                 size = file.get("size")
                 upload_time = file.get("upload-time")
                 return int(size) if size else None, upload_time
-        raise RuntimeError(
-            f"No URL for {name} found in legacy fixture {package_name}.html"
-        )
+        raise RuntimeError(f"No URL for {name} found in legacy fixture {fixture_name}")
 
     return get_size_and_upload_time
