@@ -41,8 +41,8 @@ the local/project configuration takes precedence over the global configuration.
 {{% /note %}}
 
 {{% warning %}}
-Be mindful about checking in this file into your repository since it may contain user-specific or sensitive information.
-{{% /note %}}
+Be mindful when checking in this file into your repository since it may contain user-specific or sensitive information.
+{{% /warning %}}
 
 ## Listing the current configuration
 
