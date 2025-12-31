@@ -35,6 +35,11 @@ Your local configuration of Poetry application is stored in the `poetry.toml` fi
 which is separate from `pyproject.toml`.
 {{% /note %}}
 
+{{% note %}}
+If a setting is defined in both `poetry.toml` (local/project) and `config.toml` (global),
+the local/project configuration takes precedence over the global configuration.
+{{% /note %}}
+
 {{% warning %}}
 Be mindful about checking in this file into your repository since it may contain user-specific or sensitive information.
 {{% /note %}}
