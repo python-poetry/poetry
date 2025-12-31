@@ -4,6 +4,7 @@ import base64
 import re
 
 from typing import TYPE_CHECKING
+from typing import Any
 
 import pytest
 import requests
@@ -490,10 +491,10 @@ def test_package_yanked(
 
 
 def test_package_partial_yank(
-    legacy_repository: LegacyRepository,
+    legacy_repository_html: LegacyRepository,
     legacy_repository_partial_yank: LegacyRepository,
 ) -> None:
-    repo = legacy_repository
+    repo = legacy_repository_html
     package = repo.package("futures", Version.parse("3.2.0"))
     assert len(package.files) == 2
 
@@ -522,7 +523,7 @@ def test_find_links_for_package_yanked(
     package = repo.package(package_name, Version.parse(version))
     links = repo.find_links_for_package(package)
 
-    assert len(links) == 1
+    assert len(links) == 2
     for link in links:
         assert link.yanked == yanked
         assert link.yanked_reason == yanked_reason
@@ -581,9 +582,7 @@ def test_get_redirected_response_url(
     repo = MockHttpRepository({"/foo/": 200}, http)
     redirect_url = "http://legacy.redirect.bar"
 
-    def get_mock(
-        url: str, raise_for_status: bool = True, timeout: int = 5
-    ) -> requests.Response:
+    def get_mock(*args: Any, **kwargs: Any) -> requests.Response:
         response = requests.Response()
         response.status_code = 200
         response.url = redirect_url + "/foo"
@@ -593,6 +592,36 @@ def test_get_redirected_response_url(
     page = repo.get_page("foo")
     assert page is not None
     assert page._url == "http://legacy.redirect.bar/foo"
+
+
+def test_get_page_prefers_json(http: responses.RequestsMock) -> None:
+    repo = MockHttpRepository({"/foo/": 200}, http)
+
+    _ = repo.get_page("foo")
+
+    accepted = [
+        item.strip()
+        for item in http.calls[-1].request.headers.get("Accept", "").split(",")
+    ]
+    preferred = [item for item in accepted if "q=0" not in item.split(";")[-1]]
+
+    assert preferred == ["application/vnd.pypi.simple.v1+json"]
+    assert any("*/*" in item for item in accepted)
+
+
+def test_root_page_prefers_json(http: responses.RequestsMock) -> None:
+    repo = MockHttpRepository({"/": 200}, http)
+
+    _ = repo.root_page
+
+    accepted = [
+        item.strip()
+        for item in http.calls[-1].request.headers.get("Accept", "").split(",")
+    ]
+    preferred = [item for item in accepted if "q=0" not in item.split(";")[-1]]
+
+    assert preferred == ["application/vnd.pypi.simple.v1+json"]
+    assert any("*/*" in item for item in accepted)
 
 
 @pytest.mark.parametrize(

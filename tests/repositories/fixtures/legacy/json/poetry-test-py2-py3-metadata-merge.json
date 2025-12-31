@@ -1,0 +1,28 @@
+{
+  "alternate-locations": [],
+  "files": [
+    {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
+      "filename": "poetry_test_py2_py3_metadata_merge-0.1.0-py2-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/52/19/poetry_test_py2_py3_metadata_merge-0.1.0-py2-none-any.whl"
+    },
+    {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
+      "filename": "poetry_test_py2_py3_metadata_merge-0.1.0-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/c7/b6/poetry_test_py2_py3_metadata_merge-0.1.0-py3-none-any.whl"
+    }
+  ],
+  "meta": {
+    "_last-serial": 0,
+    "api-version": "1.0"
+  },
+  "name": "poetry-test-py2-py3-metadata-merge",
+  "project-status": {
+    "status": "active"
+  },
+  "versions": [
+    "0.1.0"
+  ]
+}
