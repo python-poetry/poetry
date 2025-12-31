@@ -1206,3 +1206,108 @@ def test_init_does_not_create_project_structure_in_non_empty_directory(
     # Existing files should remain
     assert (source_dir / "existing_file.txt").exists()
     assert (source_dir / "existing_dir").exists()
+
+
+def test_init_with_no_package_mode_flag_active(
+    tester: CommandTester, source_dir: Path
+) -> None:
+    """Test that poetry init add package-mode = false to pyproject.toml"""
+    inputs = [
+        "my-package",  # Package name
+        "",  # Version
+        "",  # Description
+        "n",  # Author
+        "",  # License
+        "",  # Python
+        "n",  # Interactive packages
+        "n",  # Interactive dev packages
+        "\n",  # Generate
+    ]
+
+    expected = """\
+[tool.poetry]
+package-mode = false
+"""
+    tester.execute("--disable-package-mode", inputs="\n".join(inputs))
+
+    assert (source_dir / "pyproject.toml").exists()
+    assert expected in (source_dir / "pyproject.toml").read_text(encoding="utf-8")
+
+
+def test_init_with_no_package_mode_flag_active_short_flag(
+    tester: CommandTester, source_dir: Path
+) -> None:
+    """Test that poetry init add package-mode = false to pyproject.toml"""
+    inputs = [
+        "my-package",  # Package name
+        "",  # Version
+        "",  # Description
+        "n",  # Author
+        "",  # License
+        "",  # Python
+        "n",  # Interactive packages
+        "n",  # Interactive dev packages
+        "\n",  # Generate
+    ]
+
+    expected = """\
+[tool.poetry]
+package-mode = false
+"""
+    tester.execute("-N", inputs="\n".join(inputs))
+
+    assert (source_dir / "pyproject.toml").exists()
+    assert expected in (source_dir / "pyproject.toml").read_text(encoding="utf-8")
+
+
+def test_init_with_no_package_mode_flag_active_remove_optional_fields(
+    tester: CommandTester, source_dir: Path
+) -> None:
+    """Test that poetry init add package-mode = false to pyproject.toml"""
+    inputs = [
+        "my-package",  # Package name
+        "",  # Version
+        "",  # Description
+        "n",  # Author
+        "",  # License
+        "",  # Python
+        "n",  # Interactive packages
+        "n",  # Interactive dev packages
+        "\n",  # Generate
+    ]
+
+    tester.execute("-N", inputs="\n".join(inputs))
+
+    assert (source_dir / "pyproject.toml").exists()
+    toml_content = (source_dir / "pyproject.toml").read_text(encoding="utf-8")
+    assert "version = " not in toml_content
+    assert "description =" not in toml_content
+    assert "authors =" not in toml_content
+
+
+def test_init_with_no_package_mode_flag_active_remove_optional_fields_with_email(
+    tester: CommandTester, source_dir: Path
+) -> None:
+    """Test that poetry init add package-mode = false to pyproject.toml"""
+    inputs = [
+        "my-package",  # Package name
+        "",  # Version
+        "",  # Description
+        "poetry <poetry@poetry.com>",  # Author
+        "",  # License
+        "",  # Python
+        "n",  # Interactive packages
+        "n",  # Interactive dev packages
+        "\n",  # Generate
+    ]
+
+    tester.execute("-N", inputs="\n".join(inputs))
+    expected = """
+authors = [
+    {name = "poetry",email = "poetry@poetry.com"}
+]
+"""
+
+    assert (source_dir / "pyproject.toml").exists()
+    toml_content = (source_dir / "pyproject.toml").read_text(encoding="utf-8")
+    assert expected in toml_content
