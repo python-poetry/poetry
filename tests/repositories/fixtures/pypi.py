@@ -10,6 +10,9 @@ from urllib.parse import urlparse
 import pytest
 import responses
 
+from packaging.utils import parse_sdist_filename
+from packaging.utils import parse_wheel_filename
+
 from poetry.repositories.pypi_repository import PyPiRepository
 from tests.helpers import FIXTURE_PATH_DISTRIBUTIONS
 from tests.helpers import FIXTURE_PATH_REPOSITORIES_PYPI
@@ -168,9 +171,9 @@ def get_pypi_file_info(
 ) -> Callable[[str], dict[str, Any]]:
     def get_file_info(name: str) -> dict[str, Any]:
         if name.endswith(".whl"):
-            package_name, version, _ = name.split("-", 2)
+            package_name, version, _build, _tags = parse_wheel_filename(name)
         else:
-            package_name, version = name.removesuffix(".tar.gz").rsplit("-", 1)
+            package_name, version = parse_sdist_filename(name)
         path = package_json_locations[0] / package_name
         if not path.exists():
             raise RuntimeError(
