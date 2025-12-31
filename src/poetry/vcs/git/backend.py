@@ -28,6 +28,7 @@ from dulwich.repo import Repo
 from poetry.console.exceptions import PoetryRuntimeError
 from poetry.utils.authenticator import get_default_authenticator
 from poetry.utils.helpers import remove_directory
+from poetry.utils.pause_indicator import IndicatorPaused
 
 
 if TYPE_CHECKING:
@@ -253,11 +254,12 @@ class Git:
         )
 
         with local:
-            result: FetchPackResult = client.fetch(
-                path,
-                local,
-                determine_wants=local.object_store.determine_wants_all,
-            )
+            with IndicatorPaused():
+                result: FetchPackResult = client.fetch(
+                    path,
+                    local,
+                    determine_wants=local.object_store.determine_wants_all,
+                )
             return result
 
     @staticmethod
