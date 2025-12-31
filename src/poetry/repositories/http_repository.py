@@ -38,6 +38,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from packaging.utils import NormalizedName
+    from poetry.core.packages.package import PackageFile
     from poetry.core.packages.utils.link import Link
 
     from poetry.repositories.link_sources.base import LinkSource
@@ -340,7 +341,7 @@ class HTTPRepository(CachedRepository):
                 f' "{data.version}"'
             )
 
-        files: list[dict[str, Any]] = []
+        files: list[PackageFile] = []
         for link in links:
             if link.yanked and not data.yanked:
                 # drop yanked files unless the entire release is yanked
@@ -359,7 +360,23 @@ class HTTPRepository(CachedRepository):
             ):
                 file_hash = f"{hash_type}:{link.hashes[hash_type]}"
 
-            files.append({"file": link.filename, "hash": file_hash})
+            if file_hash is None:
+                # Is that even possible?
+                # Before introducing this warning and ignoring the file,
+                # null hashes would have been written to the lockfile,
+                # which should have been failed in the Chooser at latest.
+                self._log(
+                    f"Failed to determine hash of {link.url}. Skipping file.",
+                    level="warning",
+                )
+            else:
+                files.append({"file": link.filename, "hash": file_hash})
+
+        if not files:
+            raise PackageNotFoundError(
+                f'Could not determine a hash for any distribution link of package: "{data.name}" version:'
+                f' "{data.version}"'
+            )
 
         data.files = files
 

@@ -42,7 +42,7 @@ name = "build"
 version = "1.3.0"
 description = "A simple, correct Python build frontend"
 optional = false
-python-versions = ">= 3.9"
+python-versions = ">=3.9"
 groups = ["main"]
 files = [
     {file = "build-1.3.0-py3-none-any.whl", hash = "sha256:7145f0b5061ba90a1500d60bd1b13ca0a8a4cebdd0cc16ed8adf1c0e739f43b4"},
@@ -481,7 +481,7 @@ name = "cryptography"
 version = "46.0.3"
 description = "cryptography is a package which provides cryptographic recipes and primitives to Python developers."
 optional = false
-python-versions = ">=3.8, !=3.9.0, !=3.9.1"
+python-versions = "!=3.9.0,!=3.9.1,>=3.8"
 groups = ["main"]
 markers = "sys_platform == \"linux\""
 files = [
@@ -1214,7 +1214,7 @@ name = "nodeenv"
 version = "1.9.1"
 description = "Node.js virtual environment builder"
 optional = false
-python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*"
+python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
 groups = ["dev"]
 files = [
     {file = "nodeenv-1.9.1-py2.py3-none-any.whl", hash = "sha256:ba11c9782d29c27c70ffbdda2d7415098754709be8a7056d79a737cd901155c9"},
@@ -1338,12 +1338,16 @@ name = "poetry-core"
 version = "2.2.1"
 description = "Poetry PEP 517 Build Backend"
 optional = false
-python-versions = ">=3.9, <4.0"
+python-versions = ">=3.10, <4.0"
 groups = ["main"]
-files = [
-    {file = "poetry_core-2.2.1-py3-none-any.whl", hash = "sha256:bdfce710edc10bfcf9ab35041605c480829be4ab23f5bc01202cfe5db8f125ab"},
-    {file = "poetry_core-2.2.1.tar.gz", hash = "sha256:97e50d8593c8729d3f49364b428583e044087ee3def1e010c6496db76bd65ac5"},
-]
+files = []
+develop = false
+
+[package.source]
+type = "git"
+url = "https://github.com/python-poetry/poetry-core.git"
+reference = "HEAD"
+resolved_reference = "2548a4c47e172d298c2c34d0e511e5c589397de5"
 
 [[package]]
 name = "pre-commit"
@@ -2177,4 +2181,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "48113a39a874cca468450846747299f3ad6193b4a5849258b35a6baf7b2e14b4"
+content-hash = "22571b7e3ea21cc6b16624f5a218075ea74b3bd819fffcf1e56bc6629f0b0180"

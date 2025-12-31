@@ -42,6 +42,7 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
     from collections.abc import Sequence
 
+    from poetry.core.packages.package import PackageFile
     from pytest_mock import MockerFixture
 
     from poetry.config.config import Config
@@ -1819,7 +1820,7 @@ Package operations: 1 install, 0 updates, 0 removals
     ],
 )
 def test_executor_known_hashes(
-    package_files: list[dict[str, str]],
+    package_files: list[PackageFile],
     expected_url_reference: dict[str, Any],
     tmp_venv: VirtualEnv,
     pool: RepositoryPool,
