@@ -5,6 +5,7 @@ import importlib.metadata
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+import os 
 
 from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import Version
@@ -159,8 +160,11 @@ class Layout:
             project_content["license"]["text"] = self._license
         else:
             project_content.remove("license")
-
-        project_content["readme"] = f"README.{self._readme_format}"
+        
+        if os.path.exists(self.basedir/f"README.{self._readme_format}"):
+            project_content["readme"] = f"README.{self._readme_format}"
+        else:
+            project_content.pop("readme", None)
 
         if self._python:
             project_content["requires-python"] = self._python
