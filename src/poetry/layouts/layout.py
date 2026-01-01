@@ -161,10 +161,12 @@ class Layout:
         else:
             project_content.remove("license")
         
-        if os.path.exists(self.basedir/f"README.{self._readme_format}"):
+        readme_path = self.basedir / f"README.{self._readme_format}"
+        if readme_path.exists():
             project_content["readme"] = f"README.{self._readme_format}"
         else:
             project_content.pop("readme", None)
+
 
         if self._python:
             project_content["requires-python"] = self._python
