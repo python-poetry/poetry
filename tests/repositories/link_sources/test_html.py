@@ -9,10 +9,33 @@ from poetry.core.constraints.version import Version
 from poetry.core.packages.utils.link import Link
 
 from poetry.repositories.link_sources.html import HTMLPage
+from poetry.repositories.link_sources.html import SimpleRepositoryHTMLRootPage
 
 
 if TYPE_CHECKING:
     from tests.types import HTMLPageGetter
+
+
+@pytest.fixture
+def root_page() -> SimpleRepositoryHTMLRootPage:
+    names = ["poetry", "poetry-core", "requests"]
+    hrefs = [f'<a href="{name}/">{name}</a><br>' for name in names]
+
+    return SimpleRepositoryHTMLRootPage(f"""\
+<!DOCTYPE html>
+<html>
+    <head>
+        Legacy Repository
+    </head>
+    <body>
+    {"".join(hrefs)}
+    </body>
+</html>
+""")
+
+
+def test_root_page_package_names(root_page: SimpleRepositoryHTMLRootPage) -> None:
+    assert root_page.package_names == ["poetry", "poetry-core", "requests"]
 
 
 @pytest.mark.parametrize(
@@ -58,6 +81,19 @@ def test_link_attributes(
     assert link.requires_python == expected_link.requires_python
     assert link.yanked == expected_link.yanked
     assert link.yanked_reason == expected_link.yanked_reason
+
+
+def test_hash_from_url(html_page_content: HTMLPageGetter) -> None:
+    anchor = (
+        '<a href="https://files.pythonhosted.org/packages/16/52/cafe/'
+        'demo-1.0.0.whl#sha256=abcd1234">demo-1.0.0.whl</a><br/>'
+    )
+    content = html_page_content(anchor)
+    page = HTMLPage("https://example.org", content)
+
+    assert len(list(page.links)) == 1
+    link = next(iter(page.links))
+    assert link.hashes == {"sha256": "abcd1234"}
 
 
 @pytest.mark.parametrize(
@@ -146,24 +182,42 @@ def test_metadata(
 
 
 @pytest.mark.parametrize(
-    "anchor, base_url, expected",
+    "anchor, base_url, repo_url, expected",
     (
         (
             '<a href="https://example.org/demo-0.1.whl">demo-0.1.whl</a>',
             None,
+            "https://example.org/simple/",
+            "https://example.org/demo-0.1.whl",
+        ),
+        (
+            '<a href="https://example.org/demo-0.1.whl">demo-0.1.whl</a>',
+            "https://example.org/files/",
+            "https://example.org/simple/",
             "https://example.org/demo-0.1.whl",
         ),
         (
             '<a href="demo-0.1.whl">demo-0.1.whl</a>',
-            "https://example.org/",
-            "https://example.org/demo-0.1.whl",
+            "https://example.org/files/",
+            "https://example.org/simple/",
+            "https://example.org/files/demo-0.1.whl",
+        ),
+        (
+            '<a href="demo-0.1.whl">demo-0.1.whl</a>',
+            None,
+            "https://example.org/simple/",
+            "https://example.org/simple/demo-0.1.whl",
         ),
     ),
 )
 def test_base_url(
-    html_page_content: HTMLPageGetter, anchor: str, base_url: str | None, expected: str
+    html_page_content: HTMLPageGetter,
+    anchor: str,
+    base_url: str | None,
+    repo_url: str,
+    expected: str,
 ) -> None:
     content = html_page_content(anchor, base_url)
-    page = HTMLPage("https://example.org", content)
+    page = HTMLPage(repo_url, content)
     link = next(iter(page.links))
     assert link.url == expected

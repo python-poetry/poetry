@@ -21,7 +21,7 @@ def env() -> MockEnv:
 
 
 @pytest.fixture()
-def pool(legacy_repository: LegacyRepository) -> RepositoryPool:
+def pool(legacy_repository_html: LegacyRepository) -> RepositoryPool:
     pool = RepositoryPool()
 
     pool.add_repository(PyPiRepository(disable_cache=True))

@@ -1,0 +1,22 @@
+{
+  "alternate-locations": [],
+  "files": [
+    {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
+      "filename": "sqlalchemy-legacy-4.3.4-py2-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/41/d8/a945da414f2adc1d9e2f7d6e7445b27f2be42766879062a2e63616ad4199/sqlalchemy-legacy-4.3.4-py2-none-any.whl"
+    }
+  ],
+  "meta": {
+    "_last-serial": 0,
+    "api-version": "1.0"
+  },
+  "name": "sqlalchemy-legacy",
+  "project-status": {
+    "status": "active"
+  },
+  "versions": [
+    "4.3.4"
+  ]
+}
