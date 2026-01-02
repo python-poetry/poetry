@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from poetry.core.constraints.version import Version
+
 from poetry.packages import Locker
 from tests.helpers import get_package
 
@@ -92,7 +94,8 @@ def test_lock_does_not_update_if_not_necessary(
     poetry_with_old_lockfile: Poetry,
     repo: TestRepository,
 ) -> None:
-    repo.add_package(get_package("sampleproject", "1.3.1"))
+    package = get_package("sampleproject", "1.3.1")
+    repo.add_package(package)
     repo.add_package(get_package("sampleproject", "2.0.0"))
 
     locker = Locker(
@@ -105,6 +108,13 @@ def test_lock_does_not_update_if_not_necessary(
     assert (
         poetry_with_old_lockfile.locker.lock_data["metadata"].get("lock-version")
         == "1.0"
+    )
+
+    # set correct files to avoid cache refresh
+    package.files = (
+        locker.locked_repository()
+        .package("sampleproject", Version.parse("1.3.1"))
+        .files
     )
 
     tester = command_tester_factory("lock", poetry=poetry_with_old_lockfile)

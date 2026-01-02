@@ -13,8 +13,8 @@ from dulwich.repo import Repo
 from poetry.console.exceptions import PoetryRuntimeError
 from poetry.vcs.git.backend import Git
 from poetry.vcs.git.backend import GitRefSpec
-from poetry.vcs.git.backend import annotated_tag
 from poetry.vcs.git.backend import is_revision_sha
+from poetry.vcs.git.backend import peeled_tag
 from poetry.vcs.git.backend import urlpathjoin
 from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 
@@ -58,7 +58,7 @@ def fetch_pack_result(mocker: MockerFixture) -> FetchPackResult:
         b"refs/heads/main": FULL_SHA_MAIN.encode(),
         b"refs/heads/feature": b"a9b8c7d6e5f4321098765432109876543210abcd",
         b"refs/tags/v1.0.0": FULL_SHA_TAG.encode(),
-        annotated_tag(b"refs/tags/v1.0.0"): FULL_SHA_TAG.encode(),
+        peeled_tag(b"refs/tags/v1.0.0"): FULL_SHA_TAG.encode(),
         b"HEAD": FULL_SHA_MAIN.encode(),
     }
     mock_fetch_pack_result.symrefs = {b"HEAD": b"refs/heads/main"}
@@ -101,8 +101,8 @@ def test_get_name_from_source_url(url: str) -> None:
 
 
 @pytest.mark.parametrize(("tag"), ["my-tag", b"my-tag"])
-def test_annotated_tag(tag: str | bytes) -> None:
-    tag = annotated_tag("my-tag")
+def test_peeled_tag(tag: str | bytes) -> None:
+    tag = peeled_tag("my-tag")
     assert tag == b"my-tag^{}"
 
 
@@ -160,7 +160,7 @@ def test_git_refspec() -> None:
         ),
         (
             GitRefSpec(tag="v1.0.0"),
-            annotated_tag(b"refs/tags/v1.0.0"),
+            peeled_tag(b"refs/tags/v1.0.0"),
             None,
             None,
             "v1.0.0",
@@ -175,7 +175,7 @@ def test_git_refspec() -> None:
         # Cross-parameter resolution tests
         (
             GitRefSpec(revision="v1.0.0"),
-            annotated_tag(b"refs/tags/v1.0.0"),
+            peeled_tag(b"refs/tags/v1.0.0"),
             None,
             None,
             "v1.0.0",
@@ -189,7 +189,7 @@ def test_git_refspec() -> None:
         ),
         (
             GitRefSpec(branch="v1.0.0"),
-            annotated_tag(b"refs/tags/v1.0.0"),
+            peeled_tag(b"refs/tags/v1.0.0"),
             None,
             None,
             "v1.0.0",

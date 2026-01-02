@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from functools import cached_property
 from typing import TYPE_CHECKING
 from unittest.mock import PropertyMock
 
@@ -12,12 +13,23 @@ from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
 
 from poetry.repositories.link_sources.base import LinkSource
+from poetry.repositories.link_sources.base import SimpleRepositoryRootPage
 
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from pytest_mock import MockerFixture
+
+
+@pytest.fixture
+def root_page() -> SimpleRepositoryRootPage:
+    class TestRootPage(SimpleRepositoryRootPage):
+        @cached_property
+        def package_names(self) -> list[str]:
+            return ["poetry", "poetry-core", "requests", "urllib3"]
+
+    return TestRootPage()
 
 
 @pytest.fixture
@@ -99,3 +111,18 @@ def test_links_for_version(
         set(link_source.links_for_version(canonicalize_name("demo"), version))
         == expected
     )
+
+
+@pytest.mark.parametrize(
+    "query, expected",
+    [
+        ("poetry", ["poetry", "poetry-core"]),
+        (["requests", "urllib3"], ["requests", "urllib3"]),
+        ("lib", ["urllib3"]),
+        ("nonexistent", []),
+    ],
+)
+def test_root_page_search(
+    root_page: SimpleRepositoryRootPage, query: str | list[str], expected: list[str]
+) -> None:
+    assert root_page.search(query) == expected

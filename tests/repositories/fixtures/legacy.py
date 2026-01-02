@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import json
 import re
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
 from urllib.parse import urlparse
 
 import pytest
@@ -13,14 +15,16 @@ from packaging.utils import canonicalize_name
 
 from poetry.repositories.legacy_repository import LegacyRepository
 from tests.helpers import FIXTURE_PATH_REPOSITORIES_LEGACY
+from tests.helpers import FIXTURE_PATH_REPOSITORIES_PYPI
 
 
 if TYPE_CHECKING:
     from packaging.utils import NormalizedName
+    from pytest import FixtureRequest
     from pytest_mock import MockerFixture
     from requests import PreparedRequest
 
-    from poetry.repositories.link_sources.html import HTMLPage
+    from poetry.repositories.link_sources.base import LinkSource
     from tests.types import HttpRequestCallback
     from tests.types import HttpResponse
     from tests.types import NormalizedNameTransformer
@@ -34,6 +38,14 @@ pytest_plugins = [
 @pytest.fixture
 def legacy_repository_directory() -> Path:
     return FIXTURE_PATH_REPOSITORIES_LEGACY
+
+
+@pytest.fixture
+def legacy_package_json_locations() -> list[Path]:
+    return [
+        FIXTURE_PATH_REPOSITORIES_LEGACY / "json",
+        FIXTURE_PATH_REPOSITORIES_PYPI / "json",
+    ]
 
 
 @pytest.fixture
@@ -66,6 +78,14 @@ def legacy_repository_index_html(
 
 
 @pytest.fixture
+def legacy_repository_index_json(
+    legacy_repository_directory: Path, legacy_repository_package_names: set[str]
+) -> dict[str, Any]:
+    names = [{"name": name} for name in legacy_repository_package_names]
+    return {"meta": {"api-version": "1.4"}, "projects": names}
+
+
+@pytest.fixture
 def legacy_repository_url() -> str:
     return "https://legacy.foo.bar"
 
@@ -91,7 +111,32 @@ def legacy_repository_html_callback(
 
 
 @pytest.fixture
-def legacy_repository(
+def legacy_repository_json_callback(
+    legacy_package_json_locations: list[Path],
+    legacy_repository_index_json: dict[str, Any],
+) -> HttpRequestCallback:
+    def json_callback(request: PreparedRequest) -> HttpResponse:
+        assert request.url
+        headers = {"Content-Type": "application/vnd.pypi.simple.v1+json"}
+        if name := Path(urlparse(request.url).path).name:
+            fixture = Path()
+            for location in legacy_package_json_locations:
+                fixture = location / f"{name}.json"
+                if fixture.exists():
+                    break
+
+            if not fixture.exists():
+                return 404, {}, b"Not Found"
+
+            return 200, headers, fixture.read_bytes()
+
+        return 200, headers, json.dumps(legacy_repository_index_json).encode("utf-8")
+
+    return json_callback
+
+
+@pytest.fixture
+def legacy_repository_html(
     http: responses.RequestsMock,
     legacy_repository_url: str,
     legacy_repository_html_callback: HttpRequestCallback,
@@ -107,8 +152,29 @@ def legacy_repository(
 
 
 @pytest.fixture
+def legacy_repository_json(
+    http: responses.RequestsMock,
+    legacy_repository_url: str,
+    legacy_repository_json_callback: HttpRequestCallback,
+    mock_files_python_hosted: None,
+) -> LegacyRepository:
+    http.add_callback(
+        responses.GET,
+        re.compile(r"^https://legacy\.(.*)+/?(.*)?$"),
+        callback=legacy_repository_json_callback,
+    )
+
+    return LegacyRepository("legacy", legacy_repository_url, disable_cache=True)
+
+
+@pytest.fixture(params=["legacy_repository_html", "legacy_repository_json"])
+def legacy_repository(request: FixtureRequest) -> LegacyRepository:
+    return request.getfixturevalue(request.param)  # type: ignore[no-any-return]
+
+
+@pytest.fixture
 def specialized_legacy_repository_mocker(
-    legacy_repository: LegacyRepository,
+    legacy_repository_html: LegacyRepository,
     legacy_repository_url: str,
     mocker: MockerFixture,
 ) -> SpecializedLegacyRepositoryMocker:
@@ -127,7 +193,7 @@ def specialized_legacy_repository_mocker(
         )
         original_get_page = specialized_repository._get_page
 
-        def _mocked_get_page(name: NormalizedName) -> HTMLPage:
+        def _mocked_get_page(name: NormalizedName) -> LinkSource:
             return original_get_page(
                 canonicalize_name(f"{name}{transformer_or_suffix}")
                 if isinstance(transformer_or_suffix, str)

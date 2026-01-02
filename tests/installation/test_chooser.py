@@ -15,6 +15,8 @@ from poetry.utils.env import MockEnv
 
 
 if TYPE_CHECKING:
+    from poetry.core.packages.package import PackageFile
+
     from poetry.repositories.repository_pool import RepositoryPool
     from tests.conftest import Config
     from tests.types import DistributionHashGetter
@@ -211,7 +213,7 @@ def test_chooser_chooses_distributions_that_match_the_package_hashes(
     chooser = Chooser(pool, env)
 
     package = Package("isort", "4.3.4")
-    files = [
+    files: list[PackageFile] = [
         {
             "file": filename,
             "hash": (f"sha256:{dist_hash_getter(filename).sha256}"),
@@ -246,9 +248,9 @@ def test_chooser_chooses_yanked_if_no_others(
     chooser = Chooser(pool, env)
 
     package = Package("black", "21.11b0")
-    files = [
+    files: list[PackageFile] = [
         {
-            "filename": filename,
+            "file": filename,
             "hash": (f"sha256:{dist_hash_getter(filename).sha256}"),
         }
         for filename in [f"{package.name}-{package.version}-py3-none-any.whl"]
@@ -286,9 +288,9 @@ def test_chooser_does_not_choose_yanked_if_others(
     )
 
     package = Package("futures", "3.2.0")
-    files = [
+    files: list[PackageFile] = [
         {
-            "filename": filename,
+            "file": filename,
             "hash": (f"sha256:{dist_hash_getter(filename).sha256}"),
         }
         for filename in [
@@ -330,12 +332,12 @@ def test_chooser_throws_an_error_if_package_hashes_do_not_match(
     chooser = Chooser(pool, env)
 
     package = Package("isort", "4.3.4")
-    files = [
+    files: list[PackageFile] = [
         {
             "hash": (
                 "sha256:0000000000000000000000000000000000000000000000000000000000000000"
             ),
-            "filename": "isort-4.3.4.tar.gz",
+            "file": "isort-4.3.4.tar.gz",
         }
     ]
     if source_type == "legacy":
@@ -373,7 +375,7 @@ def test_chooser_md5_remote_fallback_to_sha256_inline_calculation(
     )
     package.files = [
         {
-            "filename": filename,
+            "file": filename,
             "hash": (f"sha256:{dist_hash_getter(filename).sha256}"),
         }
         for filename in [f"{package.name}-{package.version}.tar.gz"]

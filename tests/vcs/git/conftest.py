@@ -27,6 +27,7 @@ def temp_repo(tmp_path: Path) -> TempRepoFixture:
         author=b"User <user@example.com>",
         message=b"init",
         no_verify=True,
+        sign=False,
     )
 
     # one commit which is not "head"
@@ -37,6 +38,7 @@ def temp_repo(tmp_path: Path) -> TempRepoFixture:
         author=b"User <user@example.com>",
         message=b"extra",
         no_verify=True,
+        sign=False,
     )
 
     # extra commit
@@ -48,6 +50,7 @@ def temp_repo(tmp_path: Path) -> TempRepoFixture:
         author=b"User <user@example.com>",
         message=b"extra",
         no_verify=True,
+        sign=False,
     )
 
     repo[b"refs/tags/v1"] = head_commit

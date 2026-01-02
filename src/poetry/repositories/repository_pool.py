@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 from poetry.config.config import Config
 from poetry.repositories.abstract_repository import AbstractRepository
+from poetry.repositories.cached_repository import CachedRepository
 from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.repositories.repository import Repository
 from poetry.utils.cache import ArtifactCache
@@ -181,3 +182,10 @@ class RepositoryPool(AbstractRepository):
         for repo in self.repositories:
             results += repo.search(query)
         return results
+
+    def refresh(self, package: Package) -> Package:
+        repository_name = package.source_reference or "PyPI"
+        repo = self.repository(repository_name)
+        if isinstance(repo, CachedRepository):
+            repo.forget(package.name, package.version)
+        return repo.package(package.name, package.version)
