@@ -215,8 +215,9 @@ class EnvManager:
         # It's probably not a good idea to pollute Conda's global "base" env, since
         # most users have it activated all the time.
         in_venv = env_prefix is not None and conda_env_name != "base"
+        force_create_venv = self._poetry.config.get("virtualenvs.force-create", False)
 
-        if not in_venv or env is not None:
+        if not in_venv or env is not None or force_create_venv:
             # Checking if a local virtualenv exists
             if self.in_project_venv_exists():
                 venv = self.in_project_venv
