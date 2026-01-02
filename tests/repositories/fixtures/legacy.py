@@ -19,6 +19,8 @@ from tests.helpers import FIXTURE_PATH_REPOSITORIES_PYPI
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from packaging.utils import NormalizedName
     from pytest import FixtureRequest
     from pytest_mock import MockerFixture
@@ -33,6 +35,12 @@ if TYPE_CHECKING:
 pytest_plugins = [
     "tests.repositories.fixtures.python_hosted",
 ]
+
+
+class TestLegacyRepository(LegacyRepository):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.json = False
 
 
 @pytest.fixture
@@ -141,14 +149,16 @@ def legacy_repository_html(
     legacy_repository_url: str,
     legacy_repository_html_callback: HttpRequestCallback,
     mock_files_python_hosted: None,
-) -> LegacyRepository:
+) -> TestLegacyRepository:
     http.add_callback(
         responses.GET,
         re.compile(r"^https://legacy\.(.*)+/?(.*)?$"),
         callback=legacy_repository_html_callback,
     )
 
-    return LegacyRepository("legacy", legacy_repository_url, disable_cache=True)
+    repo = TestLegacyRepository("legacy", legacy_repository_url, disable_cache=True)
+    repo.json = False
+    return repo
 
 
 @pytest.fixture
@@ -157,18 +167,20 @@ def legacy_repository_json(
     legacy_repository_url: str,
     legacy_repository_json_callback: HttpRequestCallback,
     mock_files_python_hosted: None,
-) -> LegacyRepository:
+) -> TestLegacyRepository:
     http.add_callback(
         responses.GET,
         re.compile(r"^https://legacy\.(.*)+/?(.*)?$"),
         callback=legacy_repository_json_callback,
     )
 
-    return LegacyRepository("legacy", legacy_repository_url, disable_cache=True)
+    repo = TestLegacyRepository("legacy", legacy_repository_url, disable_cache=True)
+    repo.json = True
+    return repo
 
 
 @pytest.fixture(params=["legacy_repository_html", "legacy_repository_json"])
-def legacy_repository(request: FixtureRequest) -> LegacyRepository:
+def legacy_repository(request: FixtureRequest) -> TestLegacyRepository:
     return request.getfixturevalue(request.param)  # type: ignore[no-any-return]
 
 
@@ -219,3 +231,51 @@ def legacy_repository_partial_yank(
     specialized_legacy_repository_mocker: SpecializedLegacyRepositoryMocker,
 ) -> LegacyRepository:
     return specialized_legacy_repository_mocker("-partial-yank")
+
+
+@pytest.fixture
+def get_legacy_dist_url(legacy_repository_directory: Path) -> Callable[[str], str]:
+    def get_url(name: str) -> str:
+        package_name = name.split("-", 1)[0]
+        path = legacy_repository_directory / f"{package_name}.html"
+        if not path.exists():
+            raise RuntimeError(
+                f"Fixture for {package_name}.html not found in legacy fixtures"
+            )
+        content = path.read_text(encoding="utf-8")
+        match = re.search(rf'<a href="(?P<url>[^"]+{re.escape(name)}[^"]*)"', content)
+        if not match:
+            raise RuntimeError(
+                f"No URL for {name} found in legacy fixture {package_name}.html"
+            )
+        return match.group("url").split("#", 1)[0]
+
+    return get_url
+
+
+@pytest.fixture
+def get_legacy_dist_size_and_upload_time(
+    legacy_package_json_locations: list[Path],
+) -> Callable[[str], tuple[int | None, str | None]]:
+    def get_size_and_upload_time(name: str) -> tuple[int | None, str | None]:
+        package_name = name.split("-", 1)[0]
+        fixture_name = f"{package_name}.json"
+        path = Path()
+        for location in legacy_package_json_locations:
+            path = location / fixture_name
+            if path.exists():
+                break
+        if not path.exists():
+            raise RuntimeError(
+                f"Fixture for {fixture_name} not found in legacy fixtures"
+            )
+        with path.open("rb") as f:
+            content = json.load(f)
+        for file in content["files"]:
+            if file["filename"] == name:
+                size = file.get("size")
+                upload_time = file.get("upload-time")
+                return int(size) if size else None, upload_time
+        raise RuntimeError(f"No URL for {name} found in legacy fixture {fixture_name}")
+
+    return get_size_and_upload_time

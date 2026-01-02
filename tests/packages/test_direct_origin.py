@@ -21,6 +21,13 @@ def test_direct_origin_get_package_from_file(fixture_dir: FixtureDirGetter) -> N
     wheel_path = fixture_dir("distributions") / "demo-0.1.2-py2.py3-none-any.whl"
     package = DirectOrigin.get_package_from_file(wheel_path)
     assert package.name == "demo"
+    assert package.files == [
+        {
+            "file": "demo-0.1.2-py2.py3-none-any.whl",
+            "hash": "sha256:55dde4e6828081de7a1e429f33180459c333d9da593db62a3d75a8f5e505dde1",
+            "size": 1552,
+        }
+    ]
 
 
 def test_direct_origin_caches_url_dependency(tmp_path: Path) -> None:
@@ -31,6 +38,13 @@ def test_direct_origin_caches_url_dependency(tmp_path: Path) -> None:
     package = direct_origin.get_package_from_url(url)
 
     assert package.name == "demo"
+    assert package.files == [
+        {
+            "file": "demo-0.1.0-py2.py3-none-any.whl",
+            "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",
+            "size": 1116,
+        }
+    ]
     assert artifact_cache.get_cached_archive_for_link(Link(url), strict=True)
 
 
@@ -51,6 +65,13 @@ def test_direct_origin_does_not_download_url_dependency_when_cached(
     package = direct_origin.get_package_from_url(url)
 
     assert package.name == "demo"
+    assert package.files == [
+        {
+            "file": "demo-0.1.2-py2.py3-none-any.whl",
+            "hash": "sha256:55dde4e6828081de7a1e429f33180459c333d9da593db62a3d75a8f5e505dde1",
+            "size": 1552,
+        }
+    ]
     artifact_cache.get_cached_archive_for_link.assert_called_once_with(
         Link(url), strict=True, download_func=download_file
     )
