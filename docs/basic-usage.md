@@ -14,32 +14,6 @@ menu:
 For the basic usage introduction we will be installing `pendulum`, a datetime library.
 If you have not yet installed Poetry, refer to the [Introduction]({{< relref "docs" >}} "Introduction") chapter.
 
-# Using Poetry in an Existing Project (For Contributors)
-
-If you are contributing to a project that already uses Poetry, you usually do not need to create a new project or initialize Poetry again.
-In most cases, the project already contains a configured `pyproject.toml` file that defines its dependencies and development setup. Poetry can be used to quickly create a virtual environment that matches the project’s declared requirements.
-
-To install all project dependencies, navigate to the project directory and run the install command. This will create a virtual environment if one does not already exist and install all required dependencies. Development dependencies will also be installed if they are defined by the project.
-Once the installation is complete, you can work inside the project’s virtual environment by activating it. Activating the environment opens a new subshell where all commands use the project’s configured Python and dependencies.
-
-Alternatively, if you prefer not to activate a subshell, you can run individual commands through Poetry. This allows you to execute Python, test runners, or other tools within the project environment without manually activating it.
-
-While contributing, you may need to add new dependencies. This can be done using Poetry’s dependency management commands, which will update the project configuration and lock file automatically. For development-only dependencies, the project may define a dedicated development dependency group.
-Some projects may prefer contributors to edit the `pyproject.toml` file manually instead of adding dependencies via commands. Always follow the contribution guidelines of the project you are working on.
-If your goal is to create a new Poetry-managed project rather than contribute to an existing one, refer to the sections below that describe project creation and initialization.
-
-# Install project dependencies
-poetry install
-
-# Activate the virtual environment
-poetry shell
-
-# Run commands within the environment
-poetry run pytest
-
-# Add a new dependency
-poetry add <package> --group dev
-
 ## Project setup
 
 First, let's create our new project, let's call it `poetry-demo`:
@@ -324,3 +298,35 @@ and update the lock file with the new versions.
 Poetry will display a **Warning** when executing an install command if `poetry.lock` and `pyproject.toml`
 are not synchronized.
 {{% /note %}}
+
+## Contributing to an Existing Poetry Project
+
+If you are contributing to a project that already uses Poetry, you can skip/jump directly to this section: [Contributing to an Existing Project](#contributing-to-an-existing-poetry-project).
+
+To start contributing, follow these steps:
+
+```bash
+# Install all project dependencies
+poetry install
+
+# Activate the virtual environment
+poetry shell
+
+# Run commands inside the environment
+poetry run pytest
+
+# Add a new runtime dependency
+poetry add <package-name>
+
+# Add a new development-only dependency
+poetry add <package-name> --group dev
+Notes
+Virtual Environment: By default, Poetry creates a virtual environment in {cache-dir}/virtualenvs. You can also configure it to create the environment inside the project directory via poetry config virtualenvs.in-project true.
+
+Using your own virtual environment: If you manage a virtual environment externally, you can still use poetry run <command> inside it. Poetry will detect the activated environment automatically.
+
+Dependency management: Contributors typically rely on the existing pyproject.toml and poetry.lock. Only add dependencies if necessary, and commit the changes to the lock file to keep environments consistent.
+
+Reference: If you want to create a new project instead of contributing to an existing one, see the Project setup section above.
+
+{{% note %}} Poetry will display a Warning when executing an install command if poetry.lock and pyproject.toml are not synchronized. {{% /note %}}
