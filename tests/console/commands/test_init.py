@@ -73,7 +73,6 @@ def test_basic_interactive(
     assert init_basic_toml_no_readme in tester.io.fetch_output()
 
 
-
 def test_noninteractive(
     app: PoetryTestApplication,
     mocker: MockerFixture,
@@ -926,7 +925,7 @@ def test_init_existing_pyproject_consistent_linesep(
     lines = init_basic_toml.splitlines()
     lines = [line for line in lines if not line.strip().startswith("readme =")]
     init_basic_toml = "\n".join(lines)
-    
+
     pyproject_file = source_dir / "pyproject.toml"
     existing_section = """
 [tool.black]
@@ -1201,9 +1200,8 @@ def test_init_does_not_create_project_structure_in_non_empty_directory(
     # Existing files should remain
     assert (source_dir / "existing_file.txt").exists()
     assert (source_dir / "existing_dir").exists()
-    
-    
-    
+
+
 def test_init_adds_readme_key_when_readme_exists(
     tester: CommandTester, tmp_path: Path
 ) -> None:
