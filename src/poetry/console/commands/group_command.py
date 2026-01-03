@@ -46,6 +46,10 @@ class GroupCommand(Command):
     @property
     def non_optional_groups(self) -> set[str]:
         # TODO: this should move into poetry-core
+        default_optional = self.poetry.config.get("default-group-optionality", False)
+        if default_optional:
+            # When default-group-optionality is True, all groups are optional
+            return set()
         return {
             group.name
             for group in self.poetry.package._dependency_groups.values()
