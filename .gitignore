@@ -17,3 +17,6 @@
 
 .venv
 /poetry.toml
+
+# ignore pycache dirs
+__pycache__/

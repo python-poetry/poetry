@@ -136,7 +136,7 @@ class Layout:
         if with_pyproject:
             self._write_poetry(path)
 
-    def generate_project_content(self) -> TOMLDocument:
+    def generate_project_content(self, command_name: str | None = None) -> TOMLDocument:
         template = POETRY_DEFAULT
 
         content: dict[str, Any] = loads(template)
@@ -147,7 +147,6 @@ class Layout:
         project_content["description"] = self._description
         m = AUTHOR_REGEX.match(self._author)
         if m is None:
-            # This should not happen because author has been validated before.
             raise ValueError(f"Invalid author: {self._author}")
         else:
             author = {"name": m.group("name")}
@@ -160,7 +159,14 @@ class Layout:
         else:
             project_content.remove("license")
 
-        project_content["readme"] = f"README.{self._readme_format}"
+        readme_path = self.basedir / f"README.{self._readme_format}"
+        if command_name == "new":
+            project_content["readme"] = f"README.{self._readme_format}"
+        elif command_name == "init":
+            if readme_path.exists():
+                project_content["readme"] = f"README.{self._readme_format}"
+            else:
+                project_content.remove("readme")
 
         if self._python:
             project_content["requires-python"] = self._python
