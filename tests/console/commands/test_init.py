@@ -64,8 +64,14 @@ def tester(patches: None) -> CommandTester:
 def test_basic_interactive(
     tester: CommandTester, init_basic_inputs: str, init_basic_toml: str
 ) -> None:
+    # Remove the readme line
+    lines = init_basic_toml.splitlines()
+    lines = [line for line in lines if not line.strip().startswith("readme =")]
+    init_basic_toml_no_readme = "\n".join(lines)
+
     tester.execute(inputs=init_basic_inputs)
-    assert init_basic_toml in tester.io.fetch_output()
+    assert init_basic_toml_no_readme in tester.io.fetch_output()
+
 
 
 def test_noninteractive(
@@ -146,7 +152,6 @@ authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
 license = {text = "MIT"}
-readme = "README.md"
 requires-python = ">=3.6"
 dependencies = [
     "pendulum (>=2.0.0,<3.0.0)",
@@ -203,7 +208,6 @@ authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
 license = {text = "MIT"}
-readme = "README.md"
 requires-python = ">=3.6"
 """
 
@@ -233,7 +237,6 @@ description = ""
 authors = [
     {{name = "Your Name",email = "you@example.com"}}
 ]
-readme = "README.md"
 requires-python = ">={python}"
 """
     assert expected in tester.io.fetch_output()
@@ -273,7 +276,6 @@ authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
 license = {text = "MIT"}
-readme = "README.md"
 requires-python = ">=3.6"
 dependencies = [
     "demo @ git+https://github.com/demo/demo.git"
@@ -369,7 +371,6 @@ authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
 license = {text = "MIT"}
-readme = "README.md"
 requires-python = ">=3.6"
 dependencies = [
     "demo @ git+https://github.com/demo/demo.git@develop"
@@ -418,7 +419,6 @@ authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
 license = {text = "MIT"}
-readme = "README.md"
 requires-python = ">=3.6"
 dependencies = [
     "demo @ git+https://github.com/demo/pyproject-demo.git"
@@ -474,7 +474,6 @@ authors = [
     {{name = "Your Name",email = "you@example.com"}}
 ]
 license = {{text = "MIT"}}
-readme = "README.md"
 requires-python = ">=3.6"
 dependencies = [
     "demo @ {demo_uri}"
@@ -529,7 +528,6 @@ authors = [
     {{name = "Your Name",email = "you@example.com"}}
 ]
 license = {{text = "MIT"}}
-readme = "README.md"
 requires-python = ">=3.6"
 dependencies = [
     "demo @ {demo_uri}"
@@ -585,7 +583,6 @@ authors = [
     {{name = "Your Name",email = "you@example.com"}}
 ]
 license = {{text = "MIT"}}
-readme = "README.md"
 requires-python = ">=3.6"
 dependencies = [
     "demo @ {demo_uri}"
@@ -633,7 +630,6 @@ authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
 license = {text = "MIT"}
-readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
     "foo (==1.19.2)",
@@ -671,7 +667,6 @@ authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
 license = {text = "MIT"}
-readme = "README.md"
 requires-python = ">=3.6"
 """
 
@@ -703,7 +698,6 @@ authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
 license = {text = "MIT"}
-readme = "README.md"
 requires-python = ">=3.6"
 dependencies = [
     "pendulum (>=2.0.0,<3.0.0)"
@@ -746,7 +740,6 @@ authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
 license = {text = "MIT"}
-readme = "README.md"
 requires-python = ">=3.6"
 dependencies = [
     "pendulum (>=2.0.0,<3.0.0)",
@@ -782,7 +775,6 @@ authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
 license = {text = "MIT"}
-readme = "README.md"
 requires-python = ">=3.6"
 dependencies = [
 ]
@@ -829,7 +821,6 @@ authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
 license = {text = "MIT"}
-readme = "README.md"
 requires-python = ">=3.6"
 dependencies = [
 ]
@@ -877,7 +868,6 @@ authors = [
     {name = "Foo Bar",email = "foo@example.com"}
 ]
 license = {text = "MIT"}
-readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
     "pendulum (>=2.0.0,<3.0.0)"
@@ -910,6 +900,9 @@ def test_init_existing_pyproject_simple(
     init_basic_inputs: str,
     init_basic_toml: str,
 ) -> None:
+    lines = init_basic_toml.splitlines()
+    lines = [line for line in lines if not line.strip().startswith("readme =")]
+    init_basic_toml = "\n".join(lines)
     pyproject_file = source_dir / "pyproject.toml"
     existing_section = """
 [tool.black]
@@ -930,6 +923,10 @@ def test_init_existing_pyproject_consistent_linesep(
     init_basic_toml: str,
     linesep: str,
 ) -> None:
+    lines = init_basic_toml.splitlines()
+    lines = [line for line in lines if not line.strip().startswith("readme =")]
+    init_basic_toml = "\n".join(lines)
+    
     pyproject_file = source_dir / "pyproject.toml"
     existing_section = """
 [tool.black]
@@ -975,7 +972,6 @@ description = ""
 authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
-readme = "README.md"
 requires-python = ">=3.6"
 dependencies = [
     "foo (>=1.19.2,<2.0.0)"
@@ -1089,7 +1085,6 @@ def test_package_include(
         "authors = [\n"
         '    {name = "poetry"}\n'
         "]\n"
-        'readme = "README.md"\n'
         'requires-python = ">=3.10"\n'
         "dependencies = [\n"
         "]\n"
@@ -1206,3 +1201,30 @@ def test_init_does_not_create_project_structure_in_non_empty_directory(
     # Existing files should remain
     assert (source_dir / "existing_file.txt").exists()
     assert (source_dir / "existing_dir").exists()
+    
+    
+    
+def test_init_adds_readme_key_when_readme_exists(
+    tester: CommandTester, tmp_path: Path
+) -> None:
+    # Arrange: ensure README.md exists
+    readme = tmp_path / "README.md"
+    readme.write_text("# My Project\n", encoding="utf-8")
+    # Act
+    tester.execute(interactive=False)
+    # Assert
+    pyproject = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
+    assert 'readme = "README.md"' in pyproject
+
+
+def test_init_does_not_add_readme_key_when_readme_missing(
+    tester: CommandTester, tmp_path: Path
+) -> None:
+    # Arrange: ensure README.md does NOT exist
+    readme = tmp_path / "README.md"
+    assert not readme.exists()
+    # Act
+    tester.execute(interactive=False)
+    # Assert
+    pyproject = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
+    assert 'readme = "README.md"' not in pyproject

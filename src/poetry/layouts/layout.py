@@ -3,9 +3,8 @@ from __future__ import annotations
 import importlib.metadata
 
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from typing import Any
-import os 
 
 from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import Version
@@ -137,7 +136,7 @@ class Layout:
         if with_pyproject:
             self._write_poetry(path)
 
-    def generate_project_content(self) -> TOMLDocument:
+    def generate_project_content(self, command_name:Optional[str]=None) -> TOMLDocument:
         template = POETRY_DEFAULT
 
         content: dict[str, Any] = loads(template)
@@ -162,10 +161,13 @@ class Layout:
             project_content.remove("license")
         
         readme_path = self.basedir / f"README.{self._readme_format}"
-        if readme_path.exists():
+        if command_name=="new":
             project_content["readme"] = f"README.{self._readme_format}"
-        else:
-            project_content.pop("readme", None)
+        elif command_name=="init":
+            if readme_path.exists():
+                project_content["readme"] = f"README.{self._readme_format}"
+            else:
+                project_content.remove("readme")
 
 
         if self._python:
