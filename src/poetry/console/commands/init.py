@@ -15,6 +15,7 @@ from tomlkit import inline_table
 
 from poetry.console.commands.command import Command
 from poetry.console.commands.env_command import EnvCommand
+from poetry.factory import Factory
 from poetry.utils.dependency_specification import RequirementsParser
 from poetry.utils.env.python import Python
 
@@ -265,6 +266,16 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         if is_interactive and not self.confirm("Do you confirm generation?", True):
             self.line_error("<error>Command aborted</error>")
 
+            return 1
+
+        # Validate fields before creating pyproject.toml file. If any validations fail, throw an error.
+        validation_results = Factory().validate(pyproject.data)
+        if validation_results.get("errors"):
+            message = ""
+            for error in validation_results.get("errors", []):
+                message += f"  - {error}\n"
+
+            self.line_error(f"Validation failed: \n{message}")
             return 1
 
         pyproject.save()
