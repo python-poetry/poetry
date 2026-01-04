@@ -82,7 +82,6 @@ class NewCommand(InitCommand):
             self.line_error(
                 "The <c1>--src</> option is now the default and will be removed in a future version."
             )
-
         return self._init_pyproject(
             project_path=path,
             allow_interactive=self.option("interactive"),

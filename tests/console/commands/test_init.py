@@ -47,6 +47,15 @@ def source_dir(tmp_path: Path) -> Iterator[Path]:
 
 
 @pytest.fixture
+def init_basic_toml_no_readme(init_basic_toml: str) -> str:
+    # Remove the readme line
+    lines = init_basic_toml.splitlines()
+    lines = [line for line in lines if not line.strip().startswith("readme =")]
+    init_basic_toml_no_readme = "\n".join(lines)
+    return init_basic_toml_no_readme
+
+
+@pytest.fixture
 def patches(mocker: MockerFixture, source_dir: Path, repo: TestRepository) -> None:
     mocker.patch("pathlib.Path.cwd", return_value=source_dir)
     mocker.patch(
@@ -62,13 +71,8 @@ def tester(patches: None) -> CommandTester:
 
 
 def test_basic_interactive(
-    tester: CommandTester, init_basic_inputs: str, init_basic_toml: str
+    tester: CommandTester, init_basic_inputs: str, init_basic_toml_no_readme: str
 ) -> None:
-    # Remove the readme line
-    lines = init_basic_toml.splitlines()
-    lines = [line for line in lines if not line.strip().startswith("readme =")]
-    init_basic_toml_no_readme = "\n".join(lines)
-
     tester.execute(inputs=init_basic_inputs)
     assert init_basic_toml_no_readme in tester.io.fetch_output()
 
@@ -897,11 +901,8 @@ def test_init_existing_pyproject_simple(
     tester: CommandTester,
     source_dir: Path,
     init_basic_inputs: str,
-    init_basic_toml: str,
+    init_basic_toml_no_readme: str,
 ) -> None:
-    lines = init_basic_toml.splitlines()
-    lines = [line for line in lines if not line.strip().startswith("readme =")]
-    init_basic_toml = "\n".join(lines)
     pyproject_file = source_dir / "pyproject.toml"
     existing_section = """
 [tool.black]
@@ -909,8 +910,9 @@ line-length = 88
 """
     pyproject_file.write_text(existing_section, encoding="utf-8")
     tester.execute(inputs=init_basic_inputs)
-    assert f"{existing_section}\n{init_basic_toml}" in pyproject_file.read_text(
-        encoding="utf-8"
+    assert (
+        f"{existing_section}\n{init_basic_toml_no_readme}"
+        in pyproject_file.read_text(encoding="utf-8")
     )
 
 
@@ -919,13 +921,9 @@ def test_init_existing_pyproject_consistent_linesep(
     tester: CommandTester,
     source_dir: Path,
     init_basic_inputs: str,
-    init_basic_toml: str,
+    init_basic_toml_no_readme: str,
     linesep: str,
 ) -> None:
-    lines = init_basic_toml.splitlines()
-    lines = [line for line in lines if not line.strip().startswith("readme =")]
-    init_basic_toml = "\n".join(lines)
-
     pyproject_file = source_dir / "pyproject.toml"
     existing_section = """
 [tool.black]
@@ -936,7 +934,7 @@ line-length = 88
     tester.execute(inputs=init_basic_inputs)
     with open(pyproject_file, newline="", encoding="utf-8") as f:
         content = f.read()
-    init_basic_toml = init_basic_toml.replace("\n", linesep)
+    init_basic_toml = init_basic_toml_no_readme.replace("\n", linesep)
     assert f"{existing_section}{linesep}{init_basic_toml}" in content
 
 
