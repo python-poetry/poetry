@@ -149,6 +149,47 @@ Poetry supports a rich [dependency specification]({{< relref "dependency-specifi
 tilde, wildcard, inequality and
 [multiple constraints]({{< relref "dependency-specification#multiple-constraints-dependencies" >}}) requirements.
 
+## Contributing to an Existing Poetry Project
+
+If you are contributing to a project that already uses Poetry, you can [skip/jump directly to this section](#contributing-to-an-existing-poetry-project) and follow these steps to get started:
+
+```bash
+# Navigate to the project directory
+cd existing-project
+
+# Install all project dependencies
+poetry install
+
+# Activate the virtual environment
+poetry shell
+
+# Run commands inside the environment
+poetry run pytest
+
+# Add a new runtime dependency if necessary
+poetry add <package-name>
+
+# Add a new development-only dependency
+poetry add <package-name> --group dev
+```
+
+### Notes
+- **Virtual Environment:** By default, Poetry creates a virtual environment in `{cache-dir}/virtualenvs`. You can configure it to create the environment inside the project directory with:
+
+```bash
+poetry config virtualenvs.in-project true
+```
+
+- **Using your own virtual environment:** If you manage a virtual environment externally, you can still use `poetry run <command>` inside it. Poetry will detect the activated environment automatically.
+
+- **Dependency Management:** Contributors typically rely on the existing `pyproject.toml` and `poetry.lock`. Only add dependencies if necessary, and commit the changes to the lock file to keep environments consistent.
+
+- **Reference:** If you want to create a new project instead of contributing to an existing one, see the "Project setup" section above.
+
+{{% note %}}
+Poetry will display a **Warning** if `poetry.lock` and `pyproject.toml` are not synchronized when executing `poetry install`.
+{{% /note %}}
+
 ## Using your virtual environment
 
 By default, Poetry creates a virtual environment in `{cache-dir}/virtualenvs`.
