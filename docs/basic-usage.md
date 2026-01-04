@@ -298,3 +298,35 @@ and update the lock file with the new versions.
 Poetry will display a **Warning** when executing an install command if `poetry.lock` and `pyproject.toml`
 are not synchronized.
 {{% /note %}}
+
+## Contributing to an Existing Poetry Project
+
+If you are contributing to a project that already uses Poetry, you can skip/jump directly to this section: [Contributing to an Existing Project](#contributing-to-an-existing-poetry-project).
+
+To start contributing, follow these steps:
+
+```bash
+# Install all project dependencies
+poetry install
+
+# Activate the virtual environment
+poetry shell
+
+# Run commands inside the environment
+poetry run pytest
+
+# Add a new runtime dependency
+poetry add <package-name>
+
+# Add a new development-only dependency
+poetry add <package-name> --group dev
+Notes
+Virtual Environment: By default, Poetry creates a virtual environment in {cache-dir}/virtualenvs. You can also configure it to create the environment inside the project directory via poetry config virtualenvs.in-project true.
+
+Using your own virtual environment: If you manage a virtual environment externally, you can still use poetry run <command> inside it. Poetry will detect the activated environment automatically.
+
+Dependency management: Contributors typically rely on the existing pyproject.toml and poetry.lock. Only add dependencies if necessary, and commit the changes to the lock file to keep environments consistent.
+
+Reference: If you want to create a new project instead of contributing to an existing one, see the Project setup section above.
+
+{{% note %}} Poetry will display a Warning when executing an install command if poetry.lock and pyproject.toml are not synchronized. {{% /note %}}
