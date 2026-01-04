@@ -270,6 +270,10 @@ If the plugin is not installed in Poetry's own environment when running `poetry 
 it will be installed only for the current project under `.poetry/plugins`
 in the project's directory.
 
+This path can be changed by setting the `POETRY_PROJECT_PLUGIN_CACHE` environment variable
+to a path similar to the default value, e.g. `.poetry_314/plugins`,
+when running Poetry itself using different versions of Python, such as in CI.
+
 The syntax to specify `plugins` is the same as for [dependencies]({{< relref "managing-dependencies" >}}).
 Plugins can be installed in editable mode using path dependencies with `develop = true`,
 which is useful for plugin development.
