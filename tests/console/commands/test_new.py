@@ -191,7 +191,12 @@ def test_command_new_with_readme(
     poetry = verify_project_directory(path, package, Path("src") / package)
     project_section = poetry.pyproject.data["project"]
     assert isinstance(project_section, dict)
-    assert project_section["readme"] == f"README.{fmt or 'md'}"
+
+    readme_file = path / f"README.{fmt or 'md'}"
+    assert readme_file.exists()
+
+    assert "readme" in project_section
+    assert project_section["readme"] == readme_file.name
 
 
 @pytest.mark.parametrize(

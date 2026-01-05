@@ -136,7 +136,9 @@ class Layout:
         if with_pyproject:
             self._write_poetry(path)
 
-    def generate_project_content(self) -> TOMLDocument:
+    def generate_project_content(
+        self, project_path: Path | None = None
+    ) -> TOMLDocument:
         template = POETRY_DEFAULT
 
         content: dict[str, Any] = loads(template)
@@ -160,7 +162,14 @@ class Layout:
         else:
             project_content.remove("license")
 
-        project_content["readme"] = f"README.{self._readme_format}"
+        if project_path:
+            project_dir = project_path / f"README.{self._readme_format}"
+            abs_path = project_dir.resolve()
+
+            if abs_path.exists():
+                project_content["readme"] = f"README.{self._readme_format}"
+            else:
+                project_content.remove("readme")
 
         if self._python:
             project_content["requires-python"] = self._python

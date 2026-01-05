@@ -252,7 +252,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         if create_layout:
             layout_.create(project_path, with_pyproject=False)
 
-        content = layout_.generate_project_content()
+        content = layout_.generate_project_content(project_path)
         for section, item in content.items():
             pyproject.data.append(section, item)
 
