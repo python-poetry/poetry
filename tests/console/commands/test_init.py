@@ -47,15 +47,6 @@ def source_dir(tmp_path: Path) -> Iterator[Path]:
 
 
 @pytest.fixture
-def init_basic_toml_no_readme(init_basic_toml: str) -> str:
-    # Remove the readme line
-    lines = init_basic_toml.splitlines()
-    lines = [line for line in lines if not line.strip().startswith("readme =")]
-    init_basic_toml_no_readme = "\n".join(lines)
-    return init_basic_toml_no_readme
-
-
-@pytest.fixture
 def patches(mocker: MockerFixture, source_dir: Path, repo: TestRepository) -> None:
     mocker.patch("pathlib.Path.cwd", return_value=source_dir)
     mocker.patch(

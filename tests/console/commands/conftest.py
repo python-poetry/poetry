@@ -36,6 +36,15 @@ requires-python = ">=3.6"
 """
 
 
+@pytest.fixture
+def init_basic_toml_no_readme(init_basic_toml: str) -> str:
+    # Remove the readme line
+    lines = init_basic_toml.splitlines()
+    lines = [line for line in lines if not line.strip().startswith("readme =")]
+    init_basic_toml_no_readme = "\n".join(lines)
+    return init_basic_toml_no_readme
+
+
 @pytest.fixture()
 def new_basic_toml() -> str:
     return """\
