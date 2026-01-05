@@ -149,6 +149,7 @@ class Layout:
         project_content["description"] = self._description
         m = AUTHOR_REGEX.match(self._author)
         if m is None:
+            # This should not happen because author has been validated before.
             raise ValueError(f"Invalid author: {self._author}")
         else:
             author = {"name": m.group("name")}
