@@ -1214,4 +1214,4 @@ def test_init_does_not_add_readme_key_when_readme_missing(
     tester.execute(interactive=False)
     # Assert
     pyproject = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
-    assert 'readme = "README.md"' not in pyproject
+    assert "readme =" not in pyproject
