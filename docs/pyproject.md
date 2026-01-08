@@ -574,74 +574,22 @@ based on the `python` requirement, use `project.classifiers` instead of this set
 
 A list of packages and modules to include in the final distribution.
 
-If your project structure differs from the standard one supported by `poetry`,
-you can specify the packages you want to include in the final distribution.
+Poetry can automatically detect your package without requiring `[tool.poetry.packages]` in common cases.
 
-```toml
-[tool.poetry]
-# ...
-packages = [
-    { include = "my_package" },
-    { include = "extra_package/**/*.py" },
-]
-```
+### Automatic package detection
 
-If your package is stored inside a "lib" directory, you must specify it:
+Poetry can automatically detect packages if there exists either a **module** or a **package**
+whose name matches the project name (canonicalized: lowercase, with `-` replaced by `_`).
 
-```toml
-[tool.poetry]
-# ...
-packages = [
-    { include = "my_package", from = "lib" },
-]
-```
+The detected module or package must be located in one of the following places:
 
-The `to` parameter is designed to specify the relative destination path
-where the package will be located upon installation. This allows for
-greater control over the organization of packages within your project's structure.
+- **Flat layout:** at the same level as `pyproject.toml`
+- **Src layout:** inside a `src/` directory
 
-```toml
-[tool.poetry]
-# ...
-packages = [
-    { include = "my_package", from = "lib", to = "target_package" },
-]
-```
+These two layouts are considered the standard layouts.
 
-If you want to restrict a package to a specific build format, you can specify
-it by using `format`:
-
-```toml
-[tool.poetry]
-# ...
-packages = [
-    { include = "my_package" },
-    { include = "my_other_package", format = "sdist" },
-]
-```
-
-From now on, only the `sdist` build archive will include the `my_other_package` package.
-
-{{% note %}}
-Using `packages` disables the package auto-detection feature meaning you have to
-**explicitly** specify the "default" package.
-
-For instance, if you have a package named `my_package` and you want to also include
-another package named `extra_package`, you will need to specify `my_package` explicitly:
-
-```toml
-packages = [
-    { include = "my_package" },
-    { include = "extra_package" },
-]
-```
-{{% /note %}}
-
-{{% note %}}
-Poetry is clever enough to detect Python subpackages.
-
-Thus, you only have to specify the directory where your root package resides.
-{{% /note %}}
+If packages are not automatically detected, you must explicitly define them using
+[`tool.poetry.packages`](#packages).
 
 ### exclude and include
 
