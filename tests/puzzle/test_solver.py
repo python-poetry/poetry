@@ -3851,7 +3851,7 @@ def test_multiple_constraints_incomplete_explicit_source_transitive_locked(
     repo.add_package(package_other)
 
     if locked:
-        # order does not matter because packages are sorted in the provicer
+        # order does not matter because packages are sorted in the provider
         # (latest first) so that the package from the explicit source is preferred
         locked_packages = [package_lib_default, package_lib_explicit, package_other]
     else:
