@@ -31,7 +31,7 @@ class HTTPAuthCredential:
 
 
 class PoetryKeyring:
-    # some private sources expect tokens to be provided as passwords with empty userames
+    # some private sources expect tokens to be provided as passwords with empty usernames
     # we use a fixed literal to ensure that this can be stored in keyring (jaraco/keyring#687)
     #
     # Note: If this is changed, users with passwords stored with empty usernames will have to
