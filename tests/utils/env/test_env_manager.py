@@ -991,14 +991,16 @@ def test_create_venv_fails_if_no_compatible_python_version_could_be_found(
     assert m.call_count == 0
 
 
+@pytest.mark.parametrize("use_poetry_python", [True, False])
 def test_create_venv_does_not_try_to_find_compatible_versions_with_executable(
     manager: EnvManager,
     poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
     mocked_python_register: MockedPythonRegister,
+    use_poetry_python: bool,
 ) -> None:
-    config.config["virtualenvs"]["use-poetry-python"] = True
+    config.config["virtualenvs"]["use-poetry-python"] = use_poetry_python
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 

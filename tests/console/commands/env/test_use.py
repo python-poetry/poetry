@@ -11,8 +11,10 @@ import tomlkit
 
 from poetry.core.constraints.version import Version
 
+from poetry.console.commands.env.use import EnvUseCommand
 from poetry.toml.file import TOMLFile
 from poetry.utils.env import MockEnv
+from poetry.utils.env.python.exceptions import NoCompatiblePythonVersionFoundError
 from tests.console.commands.env.helpers import build_venv
 from tests.console.commands.env.helpers import check_output_wrapper
 
@@ -66,6 +68,10 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     mock_build_env = mocker.patch(
         "poetry.utils.env.EnvManager.build_venv", side_effect=build_venv
     )
+    envs_file = TOMLFile(venv_cache / "envs.toml")
+
+    assert not envs_file.exists()
+    assert not list(venv_cache.iterdir())
 
     tester.execute("3.7")
 
@@ -81,7 +87,6 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
         prompt="simple-project-py3.7",
     )
 
-    envs_file = TOMLFile(venv_cache / "envs.toml")
     assert envs_file.exists()
     envs: dict[str, Any] = envs_file.read()
     assert envs[venv_name]["minor"] == "3.7"
@@ -92,6 +97,33 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
         == f"Creating virtualenv {venv_py37.name} in {venv_py37.parent}\n"
     )
     assert tester.io.fetch_output() == f"Using virtualenv: {venv_py37}\n"
+
+
+@pytest.mark.parametrize("use_poetry_python", [True, False])
+def test_activate_does_not_activate_non_existing_virtualenv_with_unsupported_version(
+    tester: CommandTester,
+    venv_cache: Path,
+    venv_name: str,
+    venvs_in_cache_config: None,
+    mocked_python_register: MockedPythonRegister,
+    with_no_active_python: MagicMock,
+    use_poetry_python: bool,
+) -> None:
+    mocked_python_register("3.7.1")
+    mocked_python_register("3.8.2")
+    command = tester.command
+    assert isinstance(command, EnvUseCommand)
+    command.poetry.package.python_versions = "~3.8"
+    command.poetry.config.merge(
+        {"virtualenvs": {"use-poetry-python": use_poetry_python}}
+    )
+
+    assert not list(venv_cache.iterdir())
+
+    with pytest.raises(NoCompatiblePythonVersionFoundError):
+        tester.execute("3.7")
+
+    assert not list(venv_cache.iterdir())
 
 
 def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
