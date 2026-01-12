@@ -517,7 +517,7 @@ lists all packages available."""
 
             if write_groups:
                 groups = self.get_groups_from_package(locked.pretty_name) or "-"
-                line += " " * (groups_length - len(groups)) + groups
+                line += " " * (groups_length - len(groups) + 1) + groups
 
             if write_description:
                 description = locked.description
@@ -540,7 +540,7 @@ lists all packages available."""
     def get_groups_from_package(self, package_name: str) -> str | None:
         dep_group_map = self.dep_group_map()
         if package_name in dep_group_map:
-            return dep_group_map[package_name]
+            return dep_group_map.get(package_name)
         return None
 
     def dep_group_map(self) -> dict[str, str]:
