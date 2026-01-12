@@ -47,10 +47,11 @@ class OutputFormats(str, Enum):
 class ShowCommand(GroupCommand, EnvCommand):
     name = "show"
     description = "Shows information about packages."
-
     arguments: ClassVar[list[Argument]] = [
         argument("package", "The package to inspect", optional=True)
     ]
+    _dep_group_map: dict[str, str] | None = None
+
     options: ClassVar[list[Option]] = [
         *GroupCommand._group_dependency_options(),
         option("tree", "t", "List the dependencies as a tree."),
@@ -347,9 +348,12 @@ lists all packages available."""
                     )
 
                     if show_with_groups:
-                        group_map = self.build_dependency_group_map()
-                        max_len = max((len(v) for v in group_map.values()), default=0)
-                        groups_length = max_len
+                        group_map = self.dep_group_map()
+                        if group_map:
+                            max_len = max(
+                                (len(v) for v in group_map.values()), default=0
+                            )
+                            groups_length = max_len
 
                     if show_why:
                         required_by = reverse_deps(locked, locked_repository)
@@ -368,9 +372,10 @@ lists all packages available."""
                     ),
                 )
                 if show_with_groups:
-                    group_map = self.build_dependency_group_map()
-                    max_len = max((len(v) for v in group_map.values()), default=0)
-                    groups_length = max_len
+                    group_map = self.dep_group_map()
+                    if group_map:
+                        max_len = max((len(v) for v in group_map.values()), default=0)
+                        groups_length = max_len
 
                 if show_why:
                     required_by = reverse_deps(locked, locked_repository)
@@ -380,7 +385,6 @@ lists all packages available."""
 
         if self.option("format") == OutputFormats.JSON:
             packages = []
-            groups = self.build_dependency_group_map()
 
             for locked in locked_packages:
                 if locked not in required_locked_packages and not show_all:
@@ -412,7 +416,7 @@ lists all packages available."""
                     )
                 if show_with_groups:
                     groups = self.get_groups_from_package(locked.pretty_name)
-                    if groups != "-":
+                    if groups:
                         package["groups"] = groups.split(",")
                     else:
                         package["groups"] = []
@@ -512,7 +516,7 @@ lists all packages available."""
                     line += " " * required_by_length
 
             if write_groups:
-                groups = self.get_groups_from_package(locked.pretty_name)
+                groups = self.get_groups_from_package(locked.pretty_name) or "-"
                 line += " " * (groups_length - len(groups)) + groups
 
             if write_description:
@@ -533,11 +537,16 @@ lists all packages available."""
 
         return 0
 
-    def get_groups_from_package(self, package_name):
-        dep_map = self.build_dependency_group_map()
-        if package_name in dep_map:
-            return dep_map[package_name]
-        return "-"
+    def get_groups_from_package(self, package_name: str) -> str | None:
+        dep_group_map = self.dep_group_map()
+        if package_name in dep_group_map:
+            return dep_group_map[package_name]
+        return None
+
+    def dep_group_map(self) -> dict[str, str]:
+        if self._dep_group_map is None:
+            self._dep_group_map = self.build_dependency_group_map()
+        return self._dep_group_map
 
     def _display_packages_tree_information(
         self, locked_repository: Repository, root: ProjectPackage

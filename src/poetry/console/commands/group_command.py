@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from typing import TYPE_CHECKING
+from typing import Any
 
 from cleo.helpers import option
 from packaging.utils import NormalizedName
@@ -140,10 +141,9 @@ class GroupCommand(Command):
                 message_parts.append(f"{group} (via {opts})")
             raise GroupNotFoundError(f"Group(s) not found: {', '.join(message_parts)}")
 
-    def build_dependency_group_map(self) -> dict[str, str]:
-        pyproject_data = dict(self.poetry.pyproject.data)
+    def build_dependency_group_map(self) -> dict[Any, str]:
+        pyproject_data = self.poetry.pyproject.data
         dep_group_map = defaultdict(list)
-
         main_deps = pyproject_data.get("project", {}).get("dependencies", [])
 
         for dep_str in main_deps:
