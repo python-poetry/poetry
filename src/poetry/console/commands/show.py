@@ -98,6 +98,13 @@ lists all packages available."""
         if self.option("tree"):
             self.init_styles(self.io)
 
+        if self.option("with-groups") and self.option("tree"):
+            self.line_error(
+                "<error>Error: Cannot use --tree and --with-groups at the same"
+                " time.</error>"
+            )
+            return 1
+
         if self.option("top-level"):
             if self.option("tree"):
                 self.line_error(
@@ -282,12 +289,15 @@ lists all packages available."""
         show_all = self.option("all")
         show_top_level = self.option("top-level")
         show_why = self.option("why")
+        show_with_groups = self.option("with-groups")
         width = (
             sys.maxsize
             if self.option("no-truncate")
             else shutil.get_terminal_size().columns
         )
-        name_length = version_length = latest_length = required_by_length = 0
+        name_length = version_length = latest_length = required_by_length = (
+            groups_length
+        ) = 0
         latest_packages = {}
         latest_statuses = {}
         installed_repo = InstalledRepository.load(self.env)
@@ -336,6 +346,11 @@ lists all packages available."""
                         ),
                     )
 
+                    if show_with_groups:
+                        group_map = self.build_dependency_group_map()
+                        max_len = max((len(v) for v in group_map.values()), default=0)
+                        groups_length = max_len
+
                     if show_why:
                         required_by = reverse_deps(locked, locked_repository)
                         required_by_length = max(
@@ -352,6 +367,10 @@ lists all packages available."""
                         )
                     ),
                 )
+                if show_with_groups:
+                    group_map = self.build_dependency_group_map()
+                    max_len = max((len(v) for v in group_map.values()), default=0)
+                    groups_length = max_len
 
                 if show_why:
                     required_by = reverse_deps(locked, locked_repository)
@@ -361,6 +380,7 @@ lists all packages available."""
 
         if self.option("format") == OutputFormats.JSON:
             packages = []
+            groups = self.build_dependency_group_map()
 
             for locked in locked_packages:
                 if locked not in required_locked_packages and not show_all:
@@ -390,6 +410,12 @@ lists all packages available."""
                     package["latest_version"] = get_package_version_display_string(
                         latest, root=self.poetry.file.path.parent
                     )
+                if show_with_groups:
+                    groups = self.get_groups_from_package(locked.pretty_name)
+                    if groups != "-":
+                        package["groups"] = groups.split(",")
+                    else:
+                        package["groups"] = []
 
                 if show_why:
                     required_by = reverse_deps(locked, locked_repository)
@@ -404,14 +430,21 @@ lists all packages available."""
 
             return 0
 
-        write_version = name_length + version_length + 3 <= width
-        write_latest = name_length + version_length + latest_length + 3 <= width
+        write_version = name_length + version_length + groups_length + 3 <= width
+        write_latest = (
+            name_length + version_length + latest_length + groups_length + 3 <= width
+        )
 
         why_end_column = (
-            name_length + version_length + latest_length + required_by_length
+            name_length
+            + version_length
+            + latest_length
+            + groups_length
+            + required_by_length
         )
         write_why = show_why and (why_end_column + 3) <= width
         write_description = (why_end_column + 24) <= width
+        write_groups = show_with_groups and (why_end_column + 3) <= width
 
         for locked in locked_packages:
             color = "cyan"
@@ -478,6 +511,10 @@ lists all packages available."""
                 else:
                     line += " " * required_by_length
 
+            if write_groups:
+                groups = self.get_groups_from_package(locked.pretty_name)
+                line += " " * (groups_length - len(groups)) + groups
+
             if write_description:
                 description = locked.description
                 remaining = (
@@ -495,6 +532,12 @@ lists all packages available."""
             self.line(line)
 
         return 0
+
+    def get_groups_from_package(self, package_name):
+        dep_map = self.build_dependency_group_map()
+        if package_name in dep_map:
+            return dep_map[package_name]
+        return "-"
 
     def _display_packages_tree_information(
         self, locked_repository: Repository, root: ProjectPackage

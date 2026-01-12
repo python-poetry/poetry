@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from cleo.helpers import option
 from packaging.utils import NormalizedName
 from packaging.utils import canonicalize_name
+from poetry.core.packages.dependency import Dependency
 
 from poetry.console.commands.command import Command
 from poetry.console.exceptions import GroupNotFoundError
@@ -40,6 +41,12 @@ class GroupCommand(Command):
                 "The only dependency groups to include.",
                 flag=False,
                 multiple=True,
+            ),
+            option(
+                "with-groups",
+                None,
+                "Display all dependencies with their groups",
+                flag=True,
             ),
         ]
 
@@ -132,3 +139,24 @@ class GroupCommand(Command):
                 )
                 message_parts.append(f"{group} (via {opts})")
             raise GroupNotFoundError(f"Group(s) not found: {', '.join(message_parts)}")
+
+    def build_dependency_group_map(self) -> dict[str, str]:
+        pyproject_data = dict(self.poetry.pyproject.data)
+        dep_group_map = defaultdict(list)
+
+        main_deps = pyproject_data.get("project", {}).get("dependencies", [])
+
+        for dep_str in main_deps:
+            name = Dependency.create_from_pep_508(dep_str).name
+            dep_group_map[name].append("main")
+
+        group_deps = pyproject_data.get("dependency-groups", {})
+
+        for group_name, deps in group_deps.items():
+            for dep_str in deps:
+                name = Dependency.create_from_pep_508(dep_str).name
+                dep_group_map[name].append(group_name)
+        group_map = {
+            dep: ",".join(sorted(set(groups))) for dep, groups in dep_group_map.items()
+        }
+        return group_map
