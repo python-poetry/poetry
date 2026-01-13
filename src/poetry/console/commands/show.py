@@ -291,14 +291,21 @@ lists all packages available."""
         show_top_level = self.option("top-level")
         show_why = self.option("why")
         show_with_groups = self.option("with-groups")
+        groups_length = 0
+
+        if show_with_groups:
+            group_map = self.dep_group_map()
+            groups_length = max(
+                (len(groups) for groups in group_map.values()),
+                default=0,
+            )
+
         width = (
             sys.maxsize
             if self.option("no-truncate")
             else shutil.get_terminal_size().columns
         )
-        name_length = version_length = latest_length = required_by_length = (
-            groups_length
-        ) = 0
+        name_length = version_length = latest_length = required_by_length = 0
         latest_packages = {}
         latest_statuses = {}
         installed_repo = InstalledRepository.load(self.env)
@@ -347,14 +354,6 @@ lists all packages available."""
                         ),
                     )
 
-                    if show_with_groups:
-                        group_map = self.dep_group_map()
-                        if group_map:
-                            max_len = max(
-                                (len(v) for v in group_map.values()), default=0
-                            )
-                            groups_length = max_len
-
                     if show_why:
                         required_by = reverse_deps(locked, locked_repository)
                         required_by_length = max(
@@ -371,11 +370,6 @@ lists all packages available."""
                         )
                     ),
                 )
-                if show_with_groups:
-                    group_map = self.dep_group_map()
-                    if group_map:
-                        max_len = max((len(v) for v in group_map.values()), default=0)
-                        groups_length = max_len
 
                 if show_why:
                     required_by = reverse_deps(locked, locked_repository)
@@ -517,7 +511,7 @@ lists all packages available."""
 
             if write_groups:
                 groups = self.get_groups_from_package(locked.pretty_name) or "-"
-                line += " " * (groups_length - len(groups) + 1) + groups
+                line += f" {groups:{groups_length}}"
 
             if write_description:
                 description = locked.description

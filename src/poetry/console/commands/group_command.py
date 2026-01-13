@@ -2,12 +2,10 @@ from __future__ import annotations
 
 from collections import defaultdict
 from typing import TYPE_CHECKING
-from typing import Any
 
 from cleo.helpers import option
 from packaging.utils import NormalizedName
 from packaging.utils import canonicalize_name
-from poetry.core.packages.dependency import Dependency
 
 from poetry.console.commands.command import Command
 from poetry.console.exceptions import GroupNotFoundError
@@ -141,22 +139,18 @@ class GroupCommand(Command):
                 message_parts.append(f"{group} (via {opts})")
             raise GroupNotFoundError(f"Group(s) not found: {', '.join(message_parts)}")
 
-    def build_dependency_group_map(self) -> dict[Any, str]:
-        pyproject_data = self.poetry.pyproject.data
-        dep_group_map = defaultdict(list)
-        main_deps = pyproject_data.get("project", {}).get("dependencies", [])
+    def build_dependency_group_map(self) -> dict[str, str]:
+        root = self.project_with_activated_groups_only()
+        dep_group_map: dict[str, list[str]] = defaultdict(list)
+        # main dependencies
+        for dep in root.requires:
+            dep_group_map[dep.name].append("main")
+        # dependency groups
+        for group_name, group in root._dependency_groups.items():
+            for dep in group.dependencies:
+                dep_group_map[dep.name].append(group_name)
 
-        for dep_str in main_deps:
-            name = Dependency.create_from_pep_508(dep_str).name
-            dep_group_map[name].append("main")
-
-        group_deps = pyproject_data.get("dependency-groups", {})
-
-        for group_name, deps in group_deps.items():
-            for dep_str in deps:
-                name = Dependency.create_from_pep_508(dep_str).name
-                dep_group_map[name].append(group_name)
-        group_map = {
-            dep: ",".join(sorted(set(groups))) for dep, groups in dep_group_map.items()
+        return {
+            name: ",".join(sorted(set(groups)))
+            for name, groups in dep_group_map.items()
         }
-        return group_map
