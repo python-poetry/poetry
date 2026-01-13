@@ -574,22 +574,88 @@ based on the `python` requirement, use `project.classifiers` instead of this set
 
 A list of packages and modules to include in the final distribution.
 
-Poetry can automatically detect your package without requiring `[tool.poetry.packages]` in common cases.
+If packages are not automatically detected, you can specify the packages you want
+to include in the final distribution.
 
-### Automatic package detection
+#### Automatic package detection
 
-Poetry can automatically detect packages if there exists either a **module** or a **package**
-whose name matches the project name (canonicalized: lowercase, with `-` replaced by `_`).
+Poetry automatically detects packages if there is either a **module** or a
+**package** whose name matches the project name (canonicalized, with `-`
+replaced by `_`).
 
-The detected module or package must be located in one of the following places:
+The detected module or package must be located either:
 
-- **Flat layout:** at the same level as `pyproject.toml`
-- **Src layout:** inside a `src/` directory
+- at the same level as the `pyproject.toml` file (flat layout), or
+- inside a `src/` directory (src layout).
 
-These two layouts are considered the standard layouts.
+If packages are not automatically detected, they must be explicitly specified
+using `packages`.
 
-If packages are not automatically detected, you must explicitly define them using
-[`tool.poetry.packages`](#packages).
+```toml
+[tool.poetry]
+# ...
+packages = [
+    { include = "my_package" },
+    { include = "extra_package/**/*.py" },
+]
+```
+
+If your package is stored inside a "lib" directory, you must specify it:
+
+```toml
+[tool.poetry]
+# ...
+packages = [
+    { include = "my_package", from = "lib" },
+]
+```
+
+The `to` parameter is designed to specify the relative destination path
+where the package will be located upon installation. This allows for
+greater control over the organization of packages within your project's structure.
+
+```toml
+[tool.poetry]
+# ...
+packages = [
+    { include = "my_package", from = "lib", to = "target_package" },
+]
+```
+
+If you want to restrict a package to a specific build format, you can specify
+it by using `format`:
+
+```toml
+[tool.poetry]
+# ...
+packages = [
+    { include = "my_package" },
+    { include = "my_other_package", format = "sdist" },
+]
+```
+
+From now on, only the `sdist` build archive will include the `my_other_package` package.
+
+{{% note %}}
+Using `packages` disables the package auto-detection feature meaning you have to
+**explicitly** specify the "default" package.
+
+For instance, if you have a package named `my_package` and you want to also include
+another package named `extra_package`, you will need to specify `my_package` explicitly:
+
+```toml
+packages = [
+    { include = "my_package" },
+    { include = "extra_package" },
+]
+```
+{{% /note %}}
+
+{{% note %}}
+Poetry is clever enough to detect Python subpackages.
+
+Thus, you only have to specify the directory where your root package resides.
+{{% /note %}}
 
 ### exclude and include
 
