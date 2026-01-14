@@ -207,6 +207,11 @@ class EnvManager:
             if env:
                 python_minor = env["minor"]
 
+        # Check for in-project virtualenv first, regardless of VIRTUAL_ENV env var
+        if self.in_project_venv_exists():
+            venv = self.in_project_venv
+            return VirtualEnv(venv)
+
         # Check if we are inside a virtualenv or not
         # Conda sets CONDA_PREFIX in its envs, see
         # https://github.com/conda/conda/issues/2764
@@ -217,12 +222,6 @@ class EnvManager:
         in_venv = env_prefix is not None and conda_env_name != "base"
 
         if not in_venv or env is not None:
-            # Checking if a local virtualenv exists
-            if self.in_project_venv_exists():
-                venv = self.in_project_venv
-
-                return VirtualEnv(venv)
-
             create_venv = self._poetry.config.get("virtualenvs.create", True)
 
             if not create_venv:
