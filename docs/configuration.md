@@ -353,9 +353,11 @@ This setting has no effect if the server does not support HTTP range requests.
 
 **Type**: `boolean`
 
-**Default**: `true`
+**Default**: `false`
 
 **Environment Variable**: `POETRY_INSTALLER_RE_RESOLVE`
+
+*Changed default from `true` to `false` in 2.3.0*
 
 *Introduced in 2.0.0*
 
