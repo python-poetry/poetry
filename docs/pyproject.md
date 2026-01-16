@@ -577,19 +577,17 @@ A list of packages and modules to include in the final distribution.
 If packages are not automatically detected, you can specify the packages you want
 to include in the final distribution.
 
-#### Automatic package detection
-
-Poetry automatically detects packages if there is either a **module** or a
-**package** whose name matches the project name (canonicalized, with `-`
-replaced by `_`).
+{{% note %}}
+Poetry automatically detects a single **module** or **package** whose name matches the
+[normalized](https://packaging.python.org/en/latest/specifications/name-normalization/#name-normalization)
+project name with `-` replaced with `_`.
 
 The detected module or package must be located either:
 
 - at the same level as the `pyproject.toml` file (flat layout), or
 - inside a `src/` directory (src layout).
 
-If packages are not automatically detected, they must be explicitly specified
-using `packages`.
+{{% /note %}}
 
 ```toml
 [tool.poetry]
