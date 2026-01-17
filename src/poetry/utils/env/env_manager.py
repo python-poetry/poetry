@@ -395,7 +395,6 @@ class EnvManager:
 
         create_venv = self._poetry.config.get("virtualenvs.create")
         in_project_venv = self.use_in_project_venv()
-        use_poetry_python = self._poetry.config.get("virtualenvs.use-poetry-python")
         venv_prompt = self._poetry.config.get("virtualenvs.prompt")
 
         specific_python_requested = python is not None
@@ -420,7 +419,7 @@ class EnvManager:
             # If an executable has been specified, we stop there
             # and notify the user of the incompatibility.
             # Otherwise, we try to find a compatible Python version.
-            if specific_python_requested and use_poetry_python:
+            if specific_python_requested:
                 raise NoCompatiblePythonVersionFoundError(
                     self._poetry.package.python_versions,
                     python.patch_version.to_string(),
