@@ -386,7 +386,7 @@ class Git:
                     # ignore.
                     reason=(
                         f"<error>Failed to clone {url} at '{refspec.key}',"
-                        f" unable to acquire file lock for {to_str(e.filename)}.</>"  # type: ignore[arg-type]
+                        f" unable to acquire file lock for {to_str(e.filename)}.</>"
                     ),
                     info=[
                         ERROR_MESSAGE_NOTE,
