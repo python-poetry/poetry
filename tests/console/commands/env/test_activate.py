@@ -24,6 +24,7 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
 @pytest.mark.parametrize(
     "shell, command, ext",
     (
+        ("dash", ".", ""),
         ("bash", "source", ""),
         ("zsh", "source", ""),
         ("fish", "source", ".fish"),

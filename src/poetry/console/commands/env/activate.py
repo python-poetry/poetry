@@ -51,8 +51,10 @@ class EnvActivateCommand(EnvCommand):
             command, filename = ".", "activate.ps1"
         elif shell == "cmd":
             command, filename = ".", "activate.bat"
-        else:
+        elif shell in ["bash", "mksh", "zsh"]:
             command, filename = "source", "activate"
+        else:
+            command, filename = ".", "activate"
 
         if (activation_script := env.bin_dir / filename).exists():
             if WINDOWS:
