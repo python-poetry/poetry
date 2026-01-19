@@ -21,6 +21,21 @@ then `--help` combined with any of those can give you more information.
 ## Global Options
 
 * `--verbose (-v|vv|vvv)`: Increase the verbosity of messages: "-v" for normal output, "-vv" for more verbose output and "-vvv" for debug.
+
+{{% note %}}
+You can also set the verbosity level using the `SHELL_VERBOSITY` environment variable.
+This is useful in CI/CD pipelines or scripts where you cannot easily modify command-line arguments.
+
+| Value  | Equivalent | Description         |
+|--------|------------|---------------------|
+| `-1`   | `-q`       | Quiet mode          |
+| `0`    | (default)  | Normal output       |
+| `1`    | `-v`       | Verbose output      |
+| `2`    | `-vv`      | More verbose output |
+| `3`    | `-vvv`     | Debug output        |
+
+{{% /note %}}
+
 * `--help (-h)` : Display help information.
 * `--quiet (-q)` : Do not output any message.
 * `--ansi`: Force ANSI output.
