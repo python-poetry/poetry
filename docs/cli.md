@@ -26,20 +26,16 @@ then `--help` combined with any of those can give you more information.
 You can also set the verbosity level using the `SHELL_VERBOSITY` environment variable.
 This is useful in CI/CD pipelines or scripts where you cannot easily modify command-line arguments.
 
-| Value | Equivalent | Description |
-|-------|------------|-------------|
-| `-1` | `-q` | Quiet mode |
-| `0` | (default) | Normal output |
-| `1` | `-v` | Verbose output |
-| `2` | `-vv` | More verbose output |
-| `3` | `-vvv` | Debug output |
+| Value  | Equivalent | Description         |
+|--------|------------|---------------------|
+| `-1`   | `-q`       | Quiet mode          |
+| `0`    | (default)  | Normal output       |
+| `1`    | `-v`       | Verbose output      |
+| `2`    | `-vv`      | More verbose output |
+| `3`    | `-vvv`     | Debug output        |
 
-For example, to enable debug output:
-```bash
-export SHELL_VERBOSITY=3
-poetry install
-```
 {{% /note %}}
+
 * `--help (-h)` : Display help information.
 * `--quiet (-q)` : Do not output any message.
 * `--ansi`: Force ANSI output.
