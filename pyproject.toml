@@ -1,6 +1,6 @@
 [project]
 name = "poetry"
-version = "2.3.0"
+version = "2.3.1"
 description = "Python dependency management and packaging made easy."
 requires-python = ">=3.10,<4.0"
 dependencies = [
