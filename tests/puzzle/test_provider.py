@@ -1020,7 +1020,7 @@ def test_complete_package_no_refresh_on_url_size_upload_info(
     assert release_info.version is not None
     package = Package(release_info.name, release_info.version)
     package.files = release_info.files  # up-to-date files from lock
-    assert 'url' not in package.files[0]
+    assert "url" not in package.files[0]
 
     # trigger caching complete info
     repo._get_release_info = lambda name, version: release_info_complete.asdict()  # type: ignore[method-assign]
@@ -1032,7 +1032,7 @@ def test_complete_package_no_refresh_on_url_size_upload_info(
         DependencyPackage(package.to_dependency(), package)
     )
     assert len(complete_package.package.files) == 2
-    assert 'url' in complete_package.package.files[0]
+    assert "url" in complete_package.package.files[0]
     assert pool_refresh_spy.call_count == 0
 
 
