@@ -110,6 +110,30 @@ def release_info() -> PackageInfo:
 
 
 @pytest.fixture
+def release_info_with_urls() -> PackageInfo:
+    return PackageInfo(
+        name="mylib",
+        version="1.0",
+        summary="",
+        requires_dist=[],
+        requires_python=">=3.9",
+        files=[
+            {
+                "file": "mylib-1.0-py3-none-any.whl",
+                "hash": "sha256:dummyhashvalue1234567890abcdef",
+                "url": "https://example.org/mylib-1.0-py3-none-any.whl",
+            },
+            {
+                "file": "mylib-1.0.tar.gz",
+                "hash": "sha256:anotherdummyhashvalueabcdef1234567890",
+                "url": "https://example.org/mylib-1.0.tar.gz",
+            },
+        ],
+        cache_version=str(CachedRepository.CACHE_VERSION),
+    )
+
+
+@pytest.fixture
 def outdated_release_info() -> PackageInfo:
     return PackageInfo(
         name="mylib",
@@ -974,6 +998,36 @@ def test_complete_package_outdated_cache(
     )
     assert len(complete_package.package.files) == 2
     assert pool_refresh_spy.call_count == 1
+
+
+def test_complete_package_no_refresh_on_url(
+    root: ProjectPackage,
+    release_info: PackageInfo,
+    release_info_with_urls: PackageInfo,
+    mocker: MockerFixture,
+) -> None:
+    repo = MockCachedRepository("repo")
+    pool = RepositoryPool()
+    pool.add_repository(repo)
+    provider = Provider(root, pool, NullIO())
+    pool_refresh_spy = mocker.spy(provider.pool, "refresh")
+
+    assert release_info.name is not None
+    assert release_info.version is not None
+    package = Package(release_info.name, release_info.version)
+    package.files = release_info.files  # up-to-date files from lock
+
+    # trigger caching info with URLs
+    repo._get_release_info = lambda name, version: release_info_with_urls.asdict()  # type: ignore[method-assign]
+    assert len(repo.package(package.name, package.version).files) == 2
+
+    # Only the URL changed, hashes are the same -> no refresh needed
+    repo._get_release_info = lambda name, version: release_info.asdict()  # type: ignore[method-assign]
+    complete_package = provider.complete_package(
+        DependencyPackage(package.to_dependency(), package)
+    )
+    assert len(complete_package.package.files) == 2
+    assert pool_refresh_spy.call_count == 0
 
 
 def test_source_dependency_is_satisfied_by_direct_origin(
