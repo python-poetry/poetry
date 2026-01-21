@@ -539,7 +539,10 @@ lists all packages available."""
 
     def dep_group_map(self) -> dict[str, str]:
         if self._dep_group_map is None:
-            self._dep_group_map = self.build_dependency_group_map()
+            self._dep_group_map = {
+                name: ",".join(groups)
+                for name, groups in self.build_dependency_group_map().items()
+            }
         return self._dep_group_map
 
     def _display_packages_tree_information(

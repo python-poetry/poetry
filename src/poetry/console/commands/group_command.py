@@ -139,18 +139,15 @@ class GroupCommand(Command):
                 message_parts.append(f"{group} (via {opts})")
             raise GroupNotFoundError(f"Group(s) not found: {', '.join(message_parts)}")
 
-    def build_dependency_group_map(self) -> dict[str, str]:
+    def build_dependency_group_map(self) -> dict[str, set[str]]:
         root = self.project_with_activated_groups_only()
-        dep_group_map: dict[str, list[str]] = defaultdict(list)
+        dep_group_map: dict[str, set[str]] = defaultdict(set)
         # main dependencies
         for dep in root.requires:
-            dep_group_map[dep.name].append("main")
+            dep_group_map[dep.name].add("main")
         # dependency groups
         for group_name, group in root._dependency_groups.items():
             for dep in group.dependencies:
-                dep_group_map[dep.name].append(group_name)
+                dep_group_map[dep.name].add(group_name)
 
-        return {
-            name: ",".join(sorted(set(groups)))
-            for name, groups in dep_group_map.items()
-        }
+        return dep_group_map
