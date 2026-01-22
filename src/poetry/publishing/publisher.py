@@ -77,6 +77,8 @@ class Publisher:
 
         if repository_name == "pypi":
             repository_name = "PyPI"
+        if dry_run:
+            self._io.write_line("<info>Running in DRY RUN mode</>")
         self._io.write_line(
             f"Publishing <c1>{self._package.pretty_name}</c1>"
             f" (<c2>{self._uploader.version}</c2>) to"

@@ -58,7 +58,8 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
             version = self.increment_version(
                 self.poetry.package.pretty_version, version, self.option("next-phase")
             )
-
+            if self.option("dry-run"):
+                self._io.write_line("<info>Running in DRY RUN mode</>")
             if self.option("short"):
                 self.line(version.to_string())
             else:

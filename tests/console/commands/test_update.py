@@ -53,7 +53,9 @@ def test_update_with_dry_run_keep_files_intact(
     repo.add_package(get_package("docker", "4.3.1"))
 
     tester.execute(command)
+    output = tester.io.fetch_output()
 
+    assert "Running in DRY RUN mode" in output
     assert poetry_with_outdated_lockfile.file.read() == original_pyproject_content
     assert poetry_with_outdated_lockfile._locker.lock_data == original_lockfile_content
 
