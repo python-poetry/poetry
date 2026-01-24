@@ -38,6 +38,7 @@ if TYPE_CHECKING:
     from collections.abc import Collection
     from collections.abc import Iterable
     from collections.abc import Iterator
+    from collections.abc import Sequence
     from pathlib import Path
 
     from cleo.io.io import IO
@@ -47,6 +48,7 @@ if TYPE_CHECKING:
     from poetry.core.packages.directory_dependency import DirectoryDependency
     from poetry.core.packages.file_dependency import FileDependency
     from poetry.core.packages.package import Package
+    from poetry.core.packages.package import PackageFile
     from poetry.core.packages.url_dependency import URLDependency
     from poetry.core.packages.vcs_dependency import VCSDependency
     from poetry.core.version.markers import BaseMarker
@@ -450,6 +452,16 @@ class Provider:
             for dep in self._get_dependencies_with_overrides(dependencies, package)
         ]
 
+    @staticmethod
+    def _files_list_for_cmp(files: Sequence[PackageFile]) -> list[str]:
+        """
+        :return: A list of strings representing the files and their hashes, for
+            the purpose of comparing the file list to another one.
+            We only use file+hash, because that's what uniquely identifies the file,
+            the other properties (like URL) are not relevant.
+        """
+        return sorted(f["file"] + f["hash"] for f in files)
+
     def complete_package(
         self, dependency_package: DependencyPackage
     ) -> DependencyPackage:
@@ -481,9 +493,9 @@ class Provider:
                     package.version,
                     repository_name=dependency.source_name,
                 )
-            if package.files and sorted(
-                package.files, key=lambda f: f["file"]
-            ) != sorted(pool_package.files, key=lambda f: f["file"]):
+            if package.files and self._files_list_for_cmp(
+                package.files
+            ) != self._files_list_for_cmp(pool_package.files):
                 # This happens if additional artifacts are uploaded later. Either our own cache
                 # is outdated or the lockfile has been created with an outdated cache.
                 # Refresh to cover the first case. (It does not hurt much in the second case.)
