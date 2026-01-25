@@ -877,6 +877,56 @@ dev = [
     assert expected in output
 
 
+def test_predefined_2_authors(tester: CommandTester, repo: TestRepository) -> None:
+    repo.add_package(get_package("pendulum", "2.0.0"))
+    repo.add_package(get_package("pytest", "3.6.0"))
+
+    inputs = [
+        "1.2.3",  # Version
+        "",  # Author
+        "n",  # Interactive packages
+        "n",  # Interactive dev packages
+        "\n",  # Generate
+    ]
+
+    tester.execute(
+        "--name my-package "
+        "--description 'This is a description' "
+        "--author 'Foo Bar <foo@example.com>' "
+        "--author 'Author 2 <bar@example.com>' "
+        "--python '>=3.8' "
+        "--license MIT "
+        "--dependency pendulum "
+        "--dev-dependency pytest",
+        inputs="\n".join(inputs),
+    )
+
+    expected = """\
+[project]
+name = "my-package"
+version = "1.2.3"
+description = "This is a description"
+authors = [
+    {name = "Foo Bar",email = "foo@example.com"},
+    {name = "Author 2",email = "bar@example.com"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "pendulum (>=2.0.0,<3.0.0)"
+]
+
+[tool.poetry]
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^3.6.0"
+"""
+
+    output = tester.io.fetch_output()
+    assert expected in output
+
+
 def test_add_package_with_extras_and_whitespace(tester: CommandTester) -> None:
     command = tester.command
     assert isinstance(command, InitCommand)
