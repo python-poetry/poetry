@@ -374,6 +374,35 @@ def test_authenticator_uses_env_provided_credentials(
     request = http.calls[-1].request
 
     basic_auth = base64.b64encode(b"bar:baz").decode()
+
+    assert request.headers["Authorization"] == f"Basic {basic_auth}"
+
+
+def test_authenticator_uses_env_provided_credentials_over_netrc(
+    config: Config,
+    repo: dict[str, dict[str, str]],
+    environ: None,
+    mock_remote: type[httpretty.httpretty],
+    http: type[httpretty.httpretty],
+    monkeypatch: MonkeyPatch,
+    tmp_path: Path
+) -> None:
+    # Create .netrc file inside the temporary directory
+    temp_file = tmp_path / ".netrc"
+    temp_file.write_text("machine foo.bar\nlogin foor\npassword fooz")
+
+    monkeypatch.setenv("NETRC", str(temp_file))
+    monkeypatch.setenv("POETRY_HTTP_BASIC_FOO_USERNAME", "bar")
+    monkeypatch.setenv("POETRY_HTTP_BASIC_FOO_PASSWORD", "baz")
+
+    config.merge({"repositories": repo})
+
+    authenticator = Authenticator(config, NullIO())
+    authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
+
+    request = http.last_request()
+
+    basic_auth = base64.b64encode(b"bar:baz").decode()
     assert request.headers["Authorization"] == f"Basic {basic_auth}"
 
 
