@@ -20,7 +20,7 @@ then `--help` combined with any of those can give you more information.
 
 ## Global Options
 
-* `--verbose (-v|vv|vvv)`: Increase the verbosity of messages: "-v" for normal output, "-vv" for more verbose output and "-vvv" for debug.
+* `--verbose (-v|vv|vvv)`: Increase the verbosity of messages: "-v" for normal output, "-vv" for more verbose output and  "-vvv" for debug.
 
 {{% note %}}
 You can also set the verbosity level using the `SHELL_VERBOSITY` environment variable.
