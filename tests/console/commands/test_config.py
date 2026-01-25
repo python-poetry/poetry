@@ -66,6 +66,7 @@ def test_list_displays_default_value_if_not_set(
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
 data-dir = {data_dir}
+default-group-optionality = false
 installer.max-workers = null
 installer.no-binary = null
 installer.only-binary = null
@@ -101,6 +102,7 @@ def test_list_displays_set_get_setting(
     venv_path = json.dumps(os.path.join("{cache-dir}", "virtualenvs"))
     expected = f"""cache-dir = {cache_dir}
 data-dir = {data_dir}
+default-group-optionality = false
 installer.max-workers = null
 installer.no-binary = null
 installer.only-binary = null

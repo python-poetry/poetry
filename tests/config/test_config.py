@@ -43,6 +43,7 @@ def get_options_based_on_normalizer(normalizer: Normalizer) -> Iterator[str]:
         ("installer.parallel", True),
         ("virtualenvs.create", True),
         ("requests.max-retries", 0),
+        ("default-group-optionality", False),
     ],
 )
 def test_config_get_default_value(config: Config, name: str, value: bool) -> None:

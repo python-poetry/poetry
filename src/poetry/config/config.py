@@ -179,6 +179,7 @@ class Config:
         "keyring": {
             "enabled": True,
         },
+        "default-group-optionality": False,
     }
 
     def __init__(self, use_environment: bool = True) -> None:
@@ -389,6 +390,7 @@ class Config:
             "solver.lazy-wheel",
             "system-git-client",
             "keyring.enabled",
+            "default-group-optionality",
         }:
             return boolean_normalizer
 
