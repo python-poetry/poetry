@@ -3,13 +3,11 @@ from __future__ import annotations
 from contextlib import suppress
 from functools import cached_property
 from typing import TYPE_CHECKING
-from typing import Any
 
 import requests.adapters
 
 from poetry.core.packages.package import Package
 
-from poetry.inspection.info import PackageInfo
 from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.repositories.http_repository import HTTPRepository
 from poetry.repositories.link_sources.base import SimpleRepositoryRootPage
@@ -21,7 +19,6 @@ if TYPE_CHECKING:
     from packaging.utils import NormalizedName
     from poetry.core.constraints.version import Version
     from poetry.core.constraints.version import VersionConstraint
-    from poetry.core.packages.utils.link import Link
 
     from poetry.config.config import Config
 
@@ -71,14 +68,6 @@ class LegacyRepository(HTTPRepository):
 
             return package
 
-    def find_links_for_package(self, package: Package) -> list[Link]:
-        try:
-            page = self.get_page(package.name)
-        except PackageNotFoundError:
-            return []
-
-        return list(page.links_for_version(package.name, package.version))
-
     def _find_packages(
         self, name: NormalizedName, constraint: VersionConstraint
     ) -> list[Package]:
@@ -108,28 +97,6 @@ class LegacyRepository(HTTPRepository):
             )
             for version, yanked in versions
         ]
-
-    def _get_release_info(
-        self, name: NormalizedName, version: Version
-    ) -> dict[str, Any]:
-        page = self.get_page(name)
-
-        links = list(page.links_for_version(name, version))
-        yanked = page.yanked(name, version)
-
-        return self._links_to_data(
-            links,
-            PackageInfo(
-                name=name,
-                version=version.text,
-                summary="",
-                requires_dist=[],
-                requires_python=None,
-                files=[],
-                yanked=yanked,
-                cache_version=str(self.CACHE_VERSION),
-            ),
-        )
 
     @cached_property
     def root_page(self) -> SimpleRepositoryRootPage:
