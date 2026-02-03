@@ -340,4 +340,3 @@ and update the lock file with the new versions.
 Poetry will display a **Warning** when executing an install command if `poetry.lock` and `pyproject.toml`
 are not synchronized.
 {{% /note %}}
-
