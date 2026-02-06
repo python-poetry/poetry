@@ -132,6 +132,17 @@ def test_set_http_password_with_unavailable_backend(
     assert auth["password"] == "baz"
 
 
+def test_set_http_password_with_dot_in_repo_name(
+    config: Config, with_fail_keyring: None
+) -> None:
+    manager = PasswordManager(config)
+    manager.set_http_password("foo.bar", "baz", "qux")
+
+    auth = config.get("http-basic.foo\\.bar")
+    assert auth["username"] == "baz"
+    assert auth["password"] == "qux"
+
+
 @pytest.mark.parametrize(
     ("username", "password", "is_valid"),
     [
@@ -187,6 +198,15 @@ def test_set_pypi_token_with_unavailable_backend(
     manager.set_pypi_token("foo", "baz")
 
     assert config.get("pypi-token.foo") == "baz"
+
+
+def test_set_pypi_token_with_dot_in_repo_name(
+    config: Config, with_fail_keyring: None
+) -> None:
+    manager = PasswordManager(config)
+    manager.set_pypi_token("foo.bar", "baz")
+
+    assert config.get("pypi-token.foo\\.bar") == "baz"
 
 
 def test_get_pypi_token_with_unavailable_backend(

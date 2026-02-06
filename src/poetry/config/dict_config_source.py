@@ -4,6 +4,7 @@ from typing import Any
 
 from poetry.config.config_source import ConfigSource
 from poetry.config.config_source import PropertyNotFoundError
+from poetry.config.config_source import split_config_key
 
 
 class DictConfigSource(ConfigSource):
@@ -15,7 +16,7 @@ class DictConfigSource(ConfigSource):
         return self._config
 
     def get_property(self, key: str) -> Any:
-        keys = key.split(".")
+        keys = split_config_key(key)
         config = self._config
 
         for i, key in enumerate(keys):
@@ -28,7 +29,7 @@ class DictConfigSource(ConfigSource):
             config = config[key]
 
     def add_property(self, key: str, value: Any) -> None:
-        keys = key.split(".")
+        keys = split_config_key(key)
         config = self._config
 
         for i, key in enumerate(keys):
@@ -42,7 +43,7 @@ class DictConfigSource(ConfigSource):
             config = config[key]
 
     def remove_property(self, key: str) -> None:
-        keys = key.split(".")
+        keys = split_config_key(key)
 
         config = self._config
         for i, key in enumerate(keys):
