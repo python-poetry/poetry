@@ -132,6 +132,66 @@ def test_set_http_password_with_unavailable_backend(
     assert auth["password"] == "baz"
 
 
+def test_set_http_password_with_dot_in_repo_name(
+    config: Config, with_fail_keyring: None
+) -> None:
+    manager = PasswordManager(config)
+    manager.set_http_password("foo.bar", "baz", "qux")
+
+    auth = config.get("http-basic.foo\\.bar")
+    assert auth["username"] == "baz"
+    assert auth["password"] == "qux"
+
+
+def test_get_http_auth_with_dot_in_repo_name(
+    config: Config, with_fail_keyring: None
+) -> None:
+    config.auth_config_source.add_property(
+        "http-basic.foo\\.bar", {"username": "baz", "password": "qux"}
+    )
+    manager = PasswordManager(config)
+
+    auth = manager.get_http_auth("foo.bar")
+    assert auth.username == "baz"
+    assert auth.password == "qux"
+
+
+def test_delete_http_password_with_dot_in_repo_name(
+    config: Config, with_fail_keyring: None
+) -> None:
+    config.auth_config_source.add_property(
+        "http-basic.foo\\.bar", {"username": "baz", "password": "qux"}
+    )
+    manager = PasswordManager(config)
+
+    manager.delete_http_password("foo.bar")
+    assert config.get("http-basic.foo\\.bar") is None
+
+
+def test_get_http_auth_with_dot_in_repo_name_keyring(
+    config: Config, with_simple_keyring: None, dummy_keyring: DummyBackend
+) -> None:
+    manager = PasswordManager(config)
+    manager.set_http_password("foo.bar", "baz", "qux")
+
+    auth = manager.get_http_auth("foo.bar")
+    assert auth.username == "baz"
+    assert auth.password == "qux"
+    assert dummy_keyring.get_password("poetry-repository-foo.bar", "baz") == "qux"
+
+
+def test_delete_http_password_with_dot_in_repo_name_keyring(
+    config: Config, with_simple_keyring: None, dummy_keyring: DummyBackend
+) -> None:
+    manager = PasswordManager(config)
+    manager.set_http_password("foo.bar", "baz", "qux")
+
+    manager.delete_http_password("foo.bar")
+
+    assert dummy_keyring.get_password("poetry-repository-foo.bar", "baz") is None
+    assert config.get("http-basic.foo\\.bar") is None
+
+
 @pytest.mark.parametrize(
     ("username", "password", "is_valid"),
     [
@@ -187,6 +247,56 @@ def test_set_pypi_token_with_unavailable_backend(
     manager.set_pypi_token("foo", "baz")
 
     assert config.get("pypi-token.foo") == "baz"
+
+
+def test_set_pypi_token_with_dot_in_repo_name(
+    config: Config, with_fail_keyring: None
+) -> None:
+    manager = PasswordManager(config)
+    manager.set_pypi_token("foo.bar", "baz")
+
+    assert config.get("pypi-token.foo\\.bar") == "baz"
+
+
+def test_get_pypi_token_with_dot_in_repo_name(
+    config: Config, with_fail_keyring: None
+) -> None:
+    config.auth_config_source.add_property("pypi-token.foo\\.bar", "baz")
+    manager = PasswordManager(config)
+
+    assert manager.get_pypi_token("foo.bar") == "baz"
+
+
+def test_delete_pypi_token_with_dot_in_repo_name(
+    config: Config, with_fail_keyring: None
+) -> None:
+    config.auth_config_source.add_property("pypi-token.foo\\.bar", "baz")
+    manager = PasswordManager(config)
+
+    manager.delete_pypi_token("foo.bar")
+    assert config.get("pypi-token.foo\\.bar") is None
+
+
+def test_get_pypi_token_with_dot_in_repo_name_keyring(
+    config: Config, with_simple_keyring: None, dummy_keyring: DummyBackend
+) -> None:
+    manager = PasswordManager(config)
+    manager.set_pypi_token("foo.bar", "baz")
+
+    assert manager.get_pypi_token("foo.bar") == "baz"
+    assert (
+        dummy_keyring.get_password("poetry-repository-foo.bar", "__token__") == "baz"
+    )
+
+
+def test_delete_pypi_token_with_dot_in_repo_name_keyring(
+    config: Config, with_simple_keyring: None, dummy_keyring: DummyBackend
+) -> None:
+    manager = PasswordManager(config)
+    manager.set_pypi_token("foo.bar", "baz")
+
+    manager.delete_pypi_token("foo.bar")
+    assert dummy_keyring.get_password("poetry-repository-foo.bar", "__token__") is None
 
 
 def test_get_pypi_token_with_unavailable_backend(

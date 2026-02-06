@@ -22,6 +22,7 @@ from requests_toolbelt import user_agent
 
 from poetry.__version__ import __version__
 from poetry.config.config import Config
+from poetry.config.config_source import escape_config_key
 from poetry.console.exceptions import ConsoleMessage
 from poetry.console.exceptions import PoetryRuntimeError
 from poetry.exceptions import PoetryError
@@ -50,12 +51,13 @@ class RepositoryCertificateConfig:
         cls, repository: str, config: Config | None
     ) -> RepositoryCertificateConfig:
         config = config if config else Config.create()
+        repository_key = escape_config_key(repository)
 
         verify: str | bool = config.get(
-            f"certificates.{repository}.verify",
-            config.get(f"certificates.{repository}.cert", True),
+            f"certificates.{repository_key}.verify",
+            config.get(f"certificates.{repository_key}.cert", True),
         )
-        client_cert: str = config.get(f"certificates.{repository}.client-cert")
+        client_cert: str = config.get(f"certificates.{repository_key}.client-cert")
 
         return cls(
             cert=Path(verify) if isinstance(verify, str) else None,
@@ -389,7 +391,8 @@ class Authenticator:
         if self._configured_repositories is None:
             self._configured_repositories = {}
             for repository_name in self._config.get("repositories", []):
-                url = self._config.get(f"repositories.{repository_name}.url")
+                repository = escape_config_key(repository_name)
+                url = self._config.get(f"repositories.{repository}.url")
                 self._configured_repositories[repository_name] = (
                     AuthenticatorRepositoryConfig(repository_name, url)
                 )

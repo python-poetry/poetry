@@ -8,6 +8,7 @@ from contextlib import suppress
 from typing import TYPE_CHECKING
 
 from poetry.config.config import Config
+from poetry.config.config_source import escape_config_key
 from poetry.utils.threading import atomic_cached_property
 
 
@@ -210,10 +211,11 @@ class PasswordManager:
         logger.warning("Using a plaintext file to store credentials")
 
     def set_pypi_token(self, repo_name: str, token: str) -> None:
+        repository = escape_config_key(repo_name)
         if not self.use_keyring:
             self.warn_plaintext_credentials_stored()
             self._config.auth_config_source.add_property(
-                f"pypi-token.{repo_name}", token
+                f"pypi-token.{repository}", token
             )
         else:
             self.keyring.set_password(repo_name, "__token__", token)
@@ -228,7 +230,8 @@ class PasswordManager:
         :param repo_name:  Name of repository.
         :return: Returns a token as a string if found, otherwise None.
         """
-        token: str | None = self._config.get(f"pypi-token.{repo_name}")
+        repository = escape_config_key(repo_name)
+        token: str | None = self._config.get(f"pypi-token.{repository}")
         if token:
             return token
 
@@ -240,14 +243,15 @@ class PasswordManager:
     def delete_pypi_token(self, repo_name: str) -> None:
         if not self.use_keyring:
             return self._config.auth_config_source.remove_property(
-                f"pypi-token.{repo_name}"
+                f"pypi-token.{escape_config_key(repo_name)}"
             )
 
         self.keyring.delete_password(repo_name, "__token__")
 
     def get_http_auth(self, repo_name: str) -> HTTPAuthCredential:
-        username = self._config.get(f"http-basic.{repo_name}.username")
-        password = self._config.get(f"http-basic.{repo_name}.password")
+        repository = escape_config_key(repo_name)
+        username = self._config.get(f"http-basic.{repository}.username")
+        password = self._config.get(f"http-basic.{repository}.password")
 
         if password is None and self.use_keyring:
             password = self.keyring.get_password(repo_name, username)
@@ -264,7 +268,8 @@ class PasswordManager:
         else:
             self.keyring.set_password(repo_name, username, password)
 
-        self._config.auth_config_source.add_property(f"http-basic.{repo_name}", auth)
+        repository = escape_config_key(repo_name)
+        self._config.auth_config_source.add_property(f"http-basic.{repository}", auth)
 
     def delete_http_password(self, repo_name: str) -> None:
         auth = self.get_http_auth(repo_name)
@@ -275,7 +280,8 @@ class PasswordManager:
         with suppress(PoetryKeyringError):
             self.keyring.delete_password(repo_name, auth.username)
 
-        self._config.auth_config_source.remove_property(f"http-basic.{repo_name}")
+        repository = escape_config_key(repo_name)
+        self._config.auth_config_source.remove_property(f"http-basic.{repository}")
 
     def get_credential(
         self, *names: str, username: str | None = None

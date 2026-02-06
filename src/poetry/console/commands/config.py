@@ -113,7 +113,8 @@ To remove a repository (repo is a short alias for repositories):
 
         from poetry.core.pyproject.exceptions import PyProjectError
 
-        from poetry.config.config import Config
+from poetry.config.config import Config
+from poetry.config.config_source import escape_config_key
         from poetry.config.file_config_source import FileConfigSource
         from poetry.locations import CONFIG_DIR
         from poetry.toml.file import TOMLFile
@@ -182,7 +183,8 @@ To remove a repository (repo is a short alias for repositories):
                     if config.get("repositories") is not None:
                         value = config.get("repositories")
                 else:
-                    repo = config.get(f"repositories.{m.group(1)}")
+                    repository = escape_config_key(m.group(1))
+                    repo = config.get(f"repositories.{repository}")
                     if repo is None:
                         raise ValueError(f"There is no {m.group(1)} repository defined")
 
@@ -221,20 +223,23 @@ To remove a repository (repo is a short alias for repositories):
         if m:
             if not m.group(1):
                 raise ValueError("You cannot remove the [repositories] section")
+            repository = escape_config_key(m.group(1))
 
             if self.option("unset"):
-                repo = config.get(f"repositories.{m.group(1)}")
+                repo = config.get(f"repositories.{repository}")
                 if repo is None:
                     raise ValueError(f"There is no {m.group(1)} repository defined")
 
-                config.config_source.remove_property(f"repositories.{m.group(1)}")
+                config.config_source.remove_property(f"repositories.{repository}")
 
                 return 0
 
             if len(values) == 1:
                 url = values[0]
 
-                config.config_source.add_property(f"repositories.{m.group(1)}.url", url)
+                config.config_source.add_property(
+                    f"repositories.{repository}.url", url
+                )
 
                 return 0
 
@@ -286,9 +291,9 @@ To remove a repository (repo is a short alias for repositories):
             return 0
 
         # handle certs
-        m = re.match(r"certificates\.([^.]+)\.(cert|client-cert)", self.argument("key"))
+        m = re.match(r"certificates\.(.+)\.(cert|client-cert)", self.argument("key"))
         if m:
-            repository = m.group(1)
+            repository = escape_config_key(m.group(1))
             key = m.group(2)
 
             if self.option("unset"):

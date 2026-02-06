@@ -5,6 +5,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from poetry.publishing.uploader import Uploader
+from poetry.config.config_source import escape_config_key
 from poetry.utils.authenticator import Authenticator
 
 
@@ -49,7 +50,8 @@ class Publisher:
             repository_name = "pypi"
         else:
             # Retrieving config information
-            url = self._poetry.config.get(f"repositories.{repository_name}.url")
+            repository = escape_config_key(repository_name)
+            url = self._poetry.config.get(f"repositories.{repository}.url")
             if url is None:
                 raise RuntimeError(f"Repository {repository_name} is not defined")
 

@@ -10,6 +10,7 @@ from tomlkit import table
 from poetry.config.config_source import ConfigSource
 from poetry.config.config_source import PropertyNotFoundError
 from poetry.config.config_source import drop_empty_config_category
+from poetry.config.config_source import split_config_key
 
 
 if TYPE_CHECKING:
@@ -33,7 +34,7 @@ class FileConfigSource(ConfigSource):
         return self._file
 
     def get_property(self, key: str) -> Any:
-        keys = key.split(".")
+        keys = split_config_key(key)
 
         config = self.file.read() if self.file.exists() else {}
 
@@ -49,7 +50,7 @@ class FileConfigSource(ConfigSource):
     def add_property(self, key: str, value: Any) -> None:
         with self.secure() as toml:
             config: dict[str, Any] = toml
-            keys = key.split(".")
+            keys = split_config_key(key)
 
             for i, key in enumerate(keys):
                 if key not in config and i < len(keys) - 1:
@@ -64,7 +65,7 @@ class FileConfigSource(ConfigSource):
     def remove_property(self, key: str) -> None:
         with self.secure() as toml:
             config: dict[str, Any] = toml
-            keys = key.split(".")
+            keys = split_config_key(key)
 
             current_config = config
             for i, key in enumerate(keys):
