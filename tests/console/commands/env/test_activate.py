@@ -93,3 +93,18 @@ def test_no_additional_output_in_verbose_mode(
 
     lines = app_tester.io.fetch_output().splitlines()
     assert len(lines) == 1
+
+
+def test_env_activate_uses_shell_prefix_for_bash_on_windows(
+    tmp_venv: VirtualEnv,
+    mocker: MockerFixture,
+    tester: CommandTester,
+) -> None:
+    mocker.patch("shellingham.detect_shell", return_value=("bash", None))
+    mocker.patch("poetry.console.commands.env.activate.WINDOWS", True)
+    mocker.patch("poetry.utils.env.EnvManager.get", return_value=tmp_venv)
+
+    tester.execute()
+
+    line = tester.io.fetch_output().rstrip("\n")
+    assert line == f"source {tmp_venv.bin_dir}/activate"

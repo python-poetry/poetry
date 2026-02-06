@@ -57,9 +57,8 @@ class EnvActivateCommand(EnvCommand):
             command, filename = ".", "activate"
 
         if (activation_script := env.bin_dir / filename).exists():
-            if WINDOWS:
-                return f"{self._quote(str(activation_script), shell)}"
-            return f"{command} {self._quote(str(activation_script), shell)}"
+            quoted = self._quote(str(activation_script), shell)
+            return f"{command} {quoted}".strip()
         return ""
 
     @staticmethod
