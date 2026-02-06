@@ -33,6 +33,34 @@ class ConfigSource(ABC):
     def remove_property(self, key: str) -> None: ...
 
 
+def split_config_key(key: str) -> list[str]:
+    parts: list[str] = []
+    current: list[str] = []
+    escaped = False
+
+    for char in key:
+        if escaped:
+            current.append(char)
+            escaped = False
+        elif char == "\\":
+            escaped = True
+        elif char == ".":
+            parts.append("".join(current))
+            current = []
+        else:
+            current.append(char)
+
+    if escaped:
+        current.append("\\")
+
+    parts.append("".join(current))
+    return parts
+
+
+def escape_config_key(key: str) -> str:
+    return key.replace("\\", "\\\\").replace(".", "\\.")
+
+
 @dataclasses.dataclass
 class ConfigSourceMigration:
     old_key: str

@@ -89,3 +89,19 @@ def test_file_config_source_get_property_should_raise_if_not_found(
         PropertyNotFoundError, match=r"Key virtualenvs\.use-poetry-python not in config"
     ):
         _ = config_source.get_property("virtualenvs.use-poetry-python")
+
+
+def test_file_config_source_escaped_dot_key(tmp_path: Path) -> None:
+    config = tmp_path.joinpath("config.toml")
+    config.touch()
+
+    config_source = FileConfigSource(TOMLFile(config))
+    config_source.add_property("repositories.foo\\.bar.url", "https://example.com/simple")
+
+    assert config_source._file.read() == {
+        "repositories": {"foo.bar": {"url": "https://example.com/simple"}}
+    }
+    assert (
+        config_source.get_property("repositories.foo\\.bar.url")
+        == "https://example.com/simple"
+    )

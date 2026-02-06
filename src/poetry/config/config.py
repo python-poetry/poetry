@@ -29,7 +29,8 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
     from collections.abc import Sequence
 
-    from poetry.config.config_source import ConfigSource
+from poetry.config.config_source import ConfigSource
+from poetry.config.config_source import split_config_key
 
 
 def boolean_validator(val: str) -> bool:
@@ -313,7 +314,7 @@ class Config:
         """
         Retrieve a setting value.
         """
-        keys = setting_name.split(".")
+        keys = split_config_key(setting_name)
         build_config_settings: Mapping[
             NormalizedName, Mapping[str, str | Sequence[str]]
         ] = {}
