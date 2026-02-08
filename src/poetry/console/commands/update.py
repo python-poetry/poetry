@@ -5,6 +5,7 @@ from typing import ClassVar
 
 from cleo.helpers import argument
 from cleo.helpers import option
+from packaging.utils import canonicalize_name
 
 from poetry.console.commands.installer_command import InstallerCommand
 
@@ -45,6 +46,28 @@ class UpdateCommand(InstallerCommand):
     def handle(self) -> int:
         packages = self.argument("packages")
         if packages:
+            # Validate that all specified packages are declared dependencies
+            all_dependencies = {
+                canonicalize_name(dep.name) for dep in self.poetry.package.all_requires
+            }
+
+            invalid_packages = []
+            for package in packages:
+                # Check if package name contains version constraint
+                # (e.g., "package==1.0.0" or "package>=1.0")
+                package_name = package.split(">")[0].split("<")[0].split("=")[0].split("!")[0].strip()
+                canonical_name = canonicalize_name(package_name)
+
+                if canonical_name not in all_dependencies:
+                    invalid_packages.append(package)
+
+            if invalid_packages:
+                self.line_error(
+                    f"<error>The following packages are not dependencies of this project: "
+                    f"{', '.join(invalid_packages)}</error>"
+                )
+                return 1
+
             self.installer.whitelist(dict.fromkeys(packages, "*"))
 
         self.installer.only_groups(self.activated_groups)
