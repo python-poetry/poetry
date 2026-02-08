@@ -48,16 +48,17 @@ class EnvActivateCommand(EnvCommand):
         elif shell in ["csh", "tcsh"]:
             command, filename = "source", "activate.csh"
         elif shell in ["powershell", "pwsh"]:
-            command, filename = ".", "activate.ps1"
+            command, filename = "", "activate.ps1"
         elif shell == "cmd":
-            command, filename = ".", "activate.bat"
+            command, filename = "", "activate.bat"
         elif shell in ["bash", "mksh", "zsh"]:
             command, filename = "source", "activate"
         else:
             command, filename = ".", "activate"
 
         if (activation_script := env.bin_dir / filename).exists():
-            if WINDOWS:
+            # Only omit the command prefix for PowerShell and cmd on Windows
+            if not command:
                 return f"{self._quote(str(activation_script), shell)}"
             return f"{command} {self._quote(str(activation_script), shell)}"
         return ""
