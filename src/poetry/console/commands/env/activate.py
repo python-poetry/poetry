@@ -48,17 +48,20 @@ class EnvActivateCommand(EnvCommand):
         elif shell in ["csh", "tcsh"]:
             command, filename = "source", "activate.csh"
         elif shell in ["powershell", "pwsh"]:
-            command, filename = "", "activate.ps1"
+            command, filename = ".", "activate.ps1"
         elif shell == "cmd":
-            command, filename = "", "activate.bat"
+            command, filename = ".", "activate.bat"
         elif shell in ["bash", "mksh", "zsh"]:
             command, filename = "source", "activate"
         else:
             command, filename = ".", "activate"
 
         if (activation_script := env.bin_dir / filename).exists():
-            # Only omit the command prefix for PowerShell and cmd on Windows
-            if not command:
+            # On Windows, PowerShell and cmd don't need a command prefix
+            # because _quote already handles invocation (e.g. '& "path"'
+            # for PowerShell). Other shells (bash, zsh, etc.) still need
+            # their prefix even on Windows, which is the fix for #10395.
+            if WINDOWS and shell in ("powershell", "pwsh", "cmd"):
                 return f"{self._quote(str(activation_script), shell)}"
             return f"{command} {self._quote(str(activation_script), shell)}"
         return ""
