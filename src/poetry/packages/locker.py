@@ -616,7 +616,16 @@ class Locker:
                     data["dependencies"][dep_name] = constraints[0]
                 else:
                     data["dependencies"][dep_name] = array().multiline(True)
-                    for constraint in constraints:
+                    # Sort constraints for deterministic output
+                    # Sort by: markers (empty first), optional (False first), then version
+                    for constraint in sorted(
+                        constraints,
+                        key=lambda c: (
+                            c.get("markers", ""),
+                            c.get("optional", False),
+                            c.get("version", ""),
+                        ),
+                    ):
                         data["dependencies"][dep_name].append(constraint)
 
         if package.extras:
