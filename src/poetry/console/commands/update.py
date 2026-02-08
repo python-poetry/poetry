@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import re
+
 from typing import TYPE_CHECKING
 from typing import ClassVar
 
 from cleo.helpers import argument
 from cleo.helpers import option
+from packaging.requirements import InvalidRequirement
+from packaging.requirements import Requirement
 from packaging.utils import canonicalize_name
 
 from poetry.console.commands.installer_command import InstallerCommand
@@ -13,6 +17,27 @@ from poetry.console.commands.installer_command import InstallerCommand
 if TYPE_CHECKING:
     from cleo.io.inputs.argument import Argument
     from cleo.io.inputs.option import Option
+
+# PEP 508 package name pattern
+_PACKAGE_NAME_RE = re.compile(r"^([A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?)")
+
+
+def _extract_package_name(package: str) -> str:
+    """Extract the package name from a requirement string.
+
+    Handles PEP 508 requirement strings (with extras, version specifiers,
+    environment markers, and URLs) as well as non-standard operators like
+    Poetry's ``^`` and ``~``.
+    """
+    package = package.strip()
+    try:
+        return Requirement(package).name
+    except InvalidRequirement:
+        # Fall back to regex for non-PEP-508 input (e.g. Poetry's ^ or ~)
+        match = _PACKAGE_NAME_RE.match(package)
+        if match:
+            return match.group(1)
+        return package
 
 
 class UpdateCommand(InstallerCommand):
@@ -53,9 +78,7 @@ class UpdateCommand(InstallerCommand):
 
             invalid_packages = []
             for package in packages:
-                # Check if package name contains version constraint
-                # (e.g., "package==1.0.0" or "package>=1.0")
-                package_name = package.split(">")[0].split("<")[0].split("=")[0].split("!")[0].strip()
+                package_name = _extract_package_name(package)
                 canonical_name = canonicalize_name(package_name)
 
                 if canonical_name not in all_dependencies:
