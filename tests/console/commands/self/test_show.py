@@ -70,3 +70,22 @@ def test_show_format(tester: CommandTester, options: str) -> None:
     )
     assert tester.execute(options) == 0
     assert tester.io.fetch_output().strip() == expected
+
+
+def test_show_errors_without_lock_file_suggests_self_lock(
+    tester: CommandTester,
+) -> None:
+    command = tester.command
+    assert isinstance(command, SelfCommand)
+    # Ensure the system pyproject exists but the lock file doesn't
+    system_pyproject_file = command.system_pyproject
+    system_pyproject_file.parent.mkdir(parents=True, exist_ok=True)
+    lock_path = system_pyproject_file.parent.joinpath("poetry.lock")
+    if lock_path.exists():
+        lock_path.unlink()
+
+    tester.execute()
+
+    expected = "Error: poetry.lock not found. Run `poetry self lock` to create it.\n"
+    assert tester.io.fetch_error() == expected
+    assert tester.status_code == 1

@@ -228,6 +228,19 @@ def test_not_fresh_lock(installer: Installer, locker: Locker) -> None:
         installer.run()
 
 
+def test_not_fresh_lock_custom_hint(installer: Installer, locker: Locker) -> None:
+    locker.locked().fresh(False)
+    installer.set_lock_command_hint("poetry self lock")
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "pyproject.toml changed significantly since poetry.lock was last generated. "
+            "Run `poetry self lock` to fix the lock file."
+        ),
+    ):
+        installer.run()
+
+
 def test_run_with_dependencies(
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ) -> None:

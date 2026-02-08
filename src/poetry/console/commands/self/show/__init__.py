@@ -38,6 +38,10 @@ file.
 """
 
     @property
+    def _lock_command_hint(self) -> str:
+        return "poetry self lock"
+
+    @property
     def activated_groups(self) -> set[NormalizedName]:
         if self.option("addons", False):
             return {SelfCommand.ADDITIONAL_PACKAGE_GROUP}

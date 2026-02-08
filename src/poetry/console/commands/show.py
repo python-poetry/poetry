@@ -48,6 +48,10 @@ class ShowCommand(GroupCommand, EnvCommand):
     name = "show"
     description = "Shows information about packages."
 
+    @property
+    def _lock_command_hint(self) -> str:
+        return "poetry lock"
+
     arguments: ClassVar[list[Argument]] = [
         argument("package", "The package to inspect", optional=True)
     ]
@@ -147,8 +151,8 @@ lists all packages available."""
 
         if not self.poetry.locker.is_locked():
             self.line_error(
-                "<error>Error: poetry.lock not found. Run `poetry lock` to create"
-                " it.</error>"
+                "<error>Error: poetry.lock not found."
+                f" Run `{self._lock_command_hint}` to create it.</error>"
             )
             return 1
 

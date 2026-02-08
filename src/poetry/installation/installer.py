@@ -61,6 +61,7 @@ class Installer:
         self._groups: Iterable[NormalizedName] | None = None
         self._skip_directory = False
         self._lock = False
+        self._lock_command_hint = "poetry lock"
 
         self._whitelist: list[NormalizedName] = []
 
@@ -94,6 +95,11 @@ class Installer:
 
     def set_locker(self, locker: Locker) -> Installer:
         self._locker = locker
+
+        return self
+
+    def set_lock_command_hint(self, hint: str) -> Installer:
+        self._lock_command_hint = hint
 
         return self
 
@@ -266,7 +272,7 @@ class Installer:
             if not self._locker.is_fresh():
                 raise ValueError(
                     "pyproject.toml changed significantly since poetry.lock was last"
-                    " generated. Run `poetry lock` to fix the lock file."
+                    f" generated. Run `{self._lock_command_hint}` to fix the lock file."
                 )
             if not (reresolve or self._locker.is_locked_groups_and_markers()):
                 if self._io.is_verbose():

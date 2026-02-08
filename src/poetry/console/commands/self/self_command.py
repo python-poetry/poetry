@@ -143,6 +143,7 @@ class SelfCommand(InstallerCommand):
         # unexpected consequences.
 
         self.reset()
+        self.installer.set_lock_command_hint("poetry self lock")
 
         with directory(self.system_pyproject.parent):
             return self._system_project_handle()
