@@ -290,3 +290,84 @@ def test_clone_existing_locked_tag(tmp_path: Path, temp_repo: TempRepoFixture) -
         f"Try again later or remove the {tag_ref_lock} manually"
         " if you are sure no other process is holding it."
     )
+
+
+@pytest.mark.skip_git_mock
+def test_clone_with_lfs_files(tmp_path: Path) -> None:
+    """Test cloning a repository with Git LFS files (issue #8723)."""
+    from dulwich import porcelain
+    from dulwich.lfs import LFSStore
+
+    # Create a source repository with LFS support
+    source_path = tmp_path / "source-repo"
+    source_path.mkdir()
+    repo = Repo.init(str(source_path))
+
+    # Set up LFS in the repository
+    lfs_dir = source_path / ".git" / "lfs"
+    lfs_dir.mkdir(parents=True)
+    lfs_store = LFSStore.create(str(lfs_dir))
+
+    # Configure LFS URL in the repository config
+    config = repo.get_config()
+    config.set((b"lfs",), b"url", lfs_dir.as_uri().encode())
+    config.write_to_path()
+
+    # Configure .gitattributes to track large files with LFS
+    gitattributes = source_path / ".gitattributes"
+    gitattributes.write_text("*.bin filter=lfs diff=lfs merge=lfs -text\n")
+    porcelain.add(repo, str(gitattributes))
+
+    # Create a regular file
+    regular_file = source_path / "regular.txt"
+    regular_file.write_text("This is a regular file")
+    porcelain.add(repo, str(regular_file))
+
+    # Create an LFS file with a pointer
+    lfs_content = b"This is a large binary file content for LFS storage"
+    lfs_file = source_path / "large.bin"
+
+    # Store the actual content in LFS store and create pointer
+    lfs_object_id = lfs_store.write_object([lfs_content])
+    lfs_pointer = (
+        f"version https://git-lfs.github.com/spec/v1\n"
+        f"oid sha256:{lfs_object_id}\n"
+        f"size {len(lfs_content)}\n"
+    )
+    lfs_file.write_text(lfs_pointer)
+    porcelain.add(repo, str(lfs_file))
+
+    # Commit the files
+    porcelain.commit(
+        repo,
+        message=b"Add files with LFS support",
+        author=b"Test <test@example.com>",
+        committer=b"Test <test@example.com>",
+    )
+
+    # Clone the repository
+    source_root_dir = tmp_path / "clone-root"
+    source_root_dir.mkdir()
+    Git.clone(
+        url=source_path.as_uri(),
+        source_root=source_root_dir,
+        name="clone-test",
+    )
+
+    # Verify the clone succeeded
+    clone_dir = source_root_dir / "clone-test"
+    assert (clone_dir / ".git").is_dir()
+
+    # Verify regular file is present
+    assert (clone_dir / "regular.txt").exists()
+    assert (clone_dir / "regular.txt").read_text() == "This is a regular file"
+
+    # Verify .gitattributes is present
+    assert (clone_dir / ".gitattributes").exists()
+    assert "filter=lfs" in (clone_dir / ".gitattributes").read_text()
+
+    # Verify LFS file is present with actual content (not just pointer)
+    # The LFS system should automatically retrieve the actual content
+    assert (clone_dir / "large.bin").exists()
+    lfs_file_content = (clone_dir / "large.bin").read_bytes()
+    assert lfs_file_content == lfs_content
