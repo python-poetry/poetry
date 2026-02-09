@@ -521,7 +521,11 @@ class Locker:
         dependencies: dict[str, list[Any]] = {}
         for dependency in sorted(
             package.requires,
-            key=lambda d: d.name,
+            key=lambda d: (
+                d.name,
+                str(d.marker) if not d.marker.is_any() else "",
+                str(d.pretty_constraint),
+            ),
         ):
             dependencies.setdefault(dependency.pretty_name, [])
 
@@ -616,16 +620,7 @@ class Locker:
                     data["dependencies"][dep_name] = constraints[0]
                 else:
                     data["dependencies"][dep_name] = array().multiline(True)
-                    # Sort constraints for deterministic output
-                    # Sort by: markers (empty first), optional (False first), then version
-                    for constraint in sorted(
-                        constraints,
-                        key=lambda c: (
-                            c.get("markers", ""),
-                            c.get("optional", False),
-                            c.get("version", ""),
-                        ),
-                    ):
+                    for constraint in constraints:
                         data["dependencies"][dep_name].append(constraint)
 
         if package.extras:

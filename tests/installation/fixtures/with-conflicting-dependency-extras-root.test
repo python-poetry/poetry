@@ -1,15 +1,5 @@
 [[package]]
 name = "conflicting-dep"
-version = "1.2.0"
-description = ""
-optional = true
-python-versions = "*"
-files = [ ]
-groups = [ "main" ]
-markers = "extra != \"extra-one\" and extra == \"extra-two\""
-
-[[package]]
-name = "conflicting-dep"
 version = "1.1.0"
 description = ""
 optional = true
@@ -17,6 +7,16 @@ python-versions = "*"
 files = [ ]
 groups = [ "main" ]
 markers = "extra == \"extra-one\" and extra != \"extra-two\""
+
+[[package]]
+name = "conflicting-dep"
+version = "1.2.0"
+description = ""
+optional = true
+python-versions = "*"
+files = [ ]
+groups = [ "main" ]
+markers = "extra != \"extra-one\" and extra == \"extra-two\""
 
 [extras]
 extra-one = [ "conflicting-dep", "conflicting-dep" ]
