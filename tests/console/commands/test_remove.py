@@ -906,3 +906,84 @@ include-groups = [
         assert "foobar3" in content.get("group", {})
         assert "include-groups" in content["group"]["foobar3"]
         assert content["group"]["foobar3"]["include-groups"] == ["foobar2"]
+
+
+def test_remove_optional_dependency_from_project(
+    tester: CommandTester,
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installed: Repository,
+) -> None:
+    """Regression test for #10703: cannot remove optional dependency."""
+    repo.add_package(Package("pylint", "3.0.0"))
+    repo.add_package(Package("bar", "1.0.0"))
+
+    pyproject: dict[str, Any] = app.poetry.file.read()
+
+    optional_deps: dict[str, Any] = tomlkit.parse(
+        """\
+[project.optional-dependencies]
+linting = [
+    "pylint>=3.0",
+]
+"""
+    )
+
+    pyproject["project"]["optional-dependencies"] = optional_deps["project"][
+        "optional-dependencies"
+    ]
+    pyproject = cast("TOMLDocument", pyproject)
+    app.poetry.file.write(pyproject)
+
+    app.poetry.package.add_dependency(Factory.create_dependency("pylint", ">=3.0"))
+
+    tester.execute("pylint")
+
+    pyproject = app.poetry.file.read()
+    pyproject = cast("dict[str, Any]", pyproject)
+    assert "optional-dependencies" not in pyproject.get(
+        "project", {}
+    ) or "pylint" not in str(
+        pyproject["project"].get("optional-dependencies", {})
+    )
+
+
+def test_remove_optional_dependency_from_poetry_extras(
+    tester: CommandTester,
+    app: PoetryTestApplication,
+    repo: TestRepository,
+    installed: Repository,
+) -> None:
+    """Regression test for #10703: cannot remove optional dependency (legacy format)."""
+    repo.add_package(Package("pylint", "3.0.0"))
+
+    pyproject: dict[str, Any] = app.poetry.file.read()
+
+    poetry_deps: dict[str, Any] = tomlkit.parse(
+        """\
+[tool.poetry.dependencies]
+pylint = {version = "^3.0", optional = true}
+
+[tool.poetry.extras]
+linting = ["pylint"]
+"""
+    )
+
+    pyproject["tool"]["poetry"]["dependencies"] = poetry_deps["tool"]["poetry"][
+        "dependencies"
+    ]
+    pyproject["tool"]["poetry"]["extras"] = poetry_deps["tool"]["poetry"]["extras"]
+    pyproject = cast("TOMLDocument", pyproject)
+    app.poetry.file.write(pyproject)
+
+    app.poetry.package.add_dependency(Factory.create_dependency("pylint", "^3.0"))
+
+    tester.execute("pylint")
+
+    pyproject = app.poetry.file.read()
+    pyproject = cast("dict[str, Any]", pyproject)
+    poetry_content = pyproject["tool"]["poetry"]
+    assert "pylint" not in poetry_content.get("dependencies", {})
+    assert "extras" not in poetry_content or "pylint" not in str(
+        poetry_content.get("extras", {})
+    )
