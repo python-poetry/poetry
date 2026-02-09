@@ -478,8 +478,9 @@ resolves the dependencies, and installs them.
 {{% note %}}
 **When to use `install` vs `update`:**
 - Use `poetry install` to install dependencies as specified in `poetry.lock` (or resolve dependencies and create the lock file if it's missing).
-  This is what you run after cloning a project or when you want reproducible installs.
-- Use `poetry update` when you want to update dependencies to their latest versions (within constraints)
+  This is what you run after cloning a project. For reproducible installs, prefer `poetry sync`,
+  which also removes packages that are not in the lock file.
+- Use `poetry update` when you want to update dependencies to their latest versions (within the constraints from the `pyproject.toml`)
   and refresh `poetry.lock`.
 {{% /note %}}
 
