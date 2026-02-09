@@ -79,6 +79,7 @@ pytest-cov = ">=4.0"
 pytest-mock = ">=3.9"
 pytest-randomly = ">=3.12"
 pytest-xdist = { version = ">=3.1", extras = ["psutil"] }
+dulwich = ">=1.2.1"
 
 [tool.poetry.group.typing.dependencies]
 mypy = ">=1.8.0"
