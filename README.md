@@ -63,17 +63,12 @@ python = ">=3.9,<4.0"
 # Version-specific dependencies with prereleases allowed
 tomli = { allow-prereleases = true }
 
-# Dependency groups are supported for organizing your dependencies
-[tool.poetry.group.dev.dependencies]
-pytest = "^7.1.2"
-pytest-cov = "^3.0"
-
+# Dependency groups are supported for organizing your dependencies (PEP 735)
+[dependency-groups]
+dev = ["pytest (>=7.1.2,<8.0.0)", "pytest-cov (>=3.0,<4.0)"]
 # ...and can be installed only when explicitly requested
 # via 'poetry install --with docs'
-[tool.poetry.group.docs]
-optional = true
-[tool.poetry.group.docs.dependencies]
-Sphinx = "^5.1.1"
+docs = ["Sphinx (>=5.1.1,<6.0.0)"]
 ```
 
 ## Installation
