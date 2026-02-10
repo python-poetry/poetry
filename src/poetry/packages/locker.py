@@ -524,7 +524,6 @@ class Locker:
             key=lambda d: (
                 d.name,
                 str(d.marker) if not d.marker.is_any() else "",
-                str(d.pretty_constraint),
             ),
         ):
             dependencies.setdefault(dependency.pretty_name, [])

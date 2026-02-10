@@ -800,8 +800,8 @@ files = []
 
 [package.dependencies]
 B = [
-    {{version = ">=1.0.0", optional = true}},
     {{version = "^1.0.0"}},
+    {{version = ">=1.0.0", optional = true}},
 ]
 
 [package.extras]
