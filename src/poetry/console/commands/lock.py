@@ -23,6 +23,11 @@ class LockCommand(InstallerCommand):
             "Ignore existing lock file"
             " and overwrite it with a new lock file created from scratch.",
         ),
+        option(
+            "no-update",
+            None,
+            "Do not update locked packages (this is the default behavior).",
+        ),
     ]
 
     help = """
@@ -39,6 +44,12 @@ will not be updated.
     loggers: ClassVar[list[str]] = ["poetry.repositories.pypi_repository"]
 
     def handle(self) -> int:
+        if self.option("no-update") and self.option("regenerate"):
+            self.line_error(
+                "<error>You cannot set `<fg=yellow;options=bold>--no-update</>` and"
+                " `<fg=yellow;options=bold>--regenerate</>` at the same time.</error>"
+            )
+            return 1
         self.installer.lock(update=self.option("regenerate"))
 
         return self.installer.run()
