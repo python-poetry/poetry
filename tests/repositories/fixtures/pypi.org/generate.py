@@ -69,7 +69,7 @@ if TYPE_CHECKING:
 
     from poetry.core.packages.utils.link import Link
 
-ENABLE_RELEASE_JSON = True
+ENABLE_RELEASE_JSON = False
 
 logger = logging.getLogger("pypi.generator")
 logger.setLevel(logging.INFO)

@@ -39,6 +39,8 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from packaging.utils import NormalizedName
+    from poetry.core.constraints.version import Version
+    from poetry.core.packages.package import Package
     from poetry.core.packages.package import PackageFile
     from poetry.core.packages.utils.link import Link
 
@@ -95,6 +97,36 @@ class HTTPRepository(CachedRepository):
     @property
     def authenticated_url(self) -> str:
         return self._authenticator.authenticated_url(url=self.url)
+
+    def find_links_for_package(self, package: Package) -> list[Link]:
+        try:
+            page = self.get_page(package.name)
+        except PackageNotFoundError:
+            return []
+
+        return list(page.links_for_version(package.name, package.version))
+
+    def _get_release_info(
+        self, name: NormalizedName, version: Version
+    ) -> dict[str, Any]:
+        page = self.get_page(name)
+
+        links = list(page.links_for_version(name, version))
+        yanked = page.yanked(name, version)
+
+        return self._links_to_data(
+            links,
+            PackageInfo(
+                name=name,
+                version=version.text,
+                summary="",
+                requires_dist=[],
+                requires_python=None,
+                files=[],
+                yanked=yanked,
+                cache_version=str(self.CACHE_VERSION),
+            ),
+        )
 
     def _download(
         self, url: str, dest: Path, *, raise_accepts_ranges: bool = False

@@ -113,13 +113,9 @@ def pypi_repository(
             return json_callback(request)
         return legacy_repository_html_callback(request)
 
-    def _get_json_filepath(name: str, version: str | None = None) -> Path | None:
+    def _get_json_filepath(name: str) -> Path | None:
         for base in package_json_locations:
-            if not version:
-                fixture = base / f"{name}.json"
-            else:
-                fixture = base / name / f"{version}.json"
-
+            fixture = base / f"{name}.json"
             if fixture.exists():
                 return fixture
 
@@ -130,8 +126,7 @@ def pypi_repository(
         path = urlparse(request.url).path
         parts = path.rstrip("/").split("/")[2:]
         name = parts[0]
-        version = parts[1] if len(parts) == 3 else None
-        fixture = _get_json_filepath(name, version)
+        fixture = _get_json_filepath(name)
 
         if fixture is None or not fixture.exists():
             return default_callback(request)
@@ -162,7 +157,7 @@ def pypi_repository(
         callback=simple_callback,
     )
 
-    return PyPiRepository(disable_cache=True, fallback=False)
+    return PyPiRepository(disable_cache=True)
 
 
 @pytest.fixture
@@ -174,21 +169,16 @@ def get_pypi_file_info(
             package_name, version, _build, _tags = parse_wheel_filename(name)
         else:
             package_name, version = parse_sdist_filename(name)
-        path = package_json_locations[0] / package_name
+        path = package_json_locations[0] / f"{package_name}.json"
         if not path.exists():
             raise RuntimeError(
                 f"Fixture for {package_name} not found in pypi.org json fixtures"
             )
-        path /= f"{version}.json"
-        if not path.exists():
-            raise RuntimeError(
-                f"Fixture for {package_name} {version} not found in pypi.org json fixtures"
-            )
         with path.open("rb") as f:
             content = json.load(f)
-        for url in content["urls"]:
-            if url["filename"] == name:
-                return url  # type: ignore[no-any-return]
+        for file_ in content["files"]:
+            if file_["filename"] == name:
+                return file_  # type: ignore[no-any-return]
         raise RuntimeError(f"No URL in pypi.org json fixture of {name} {version}")
 
     return get_file_info
