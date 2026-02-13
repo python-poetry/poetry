@@ -57,7 +57,8 @@ class EnvActivateCommand(EnvCommand):
             command, filename = ".", "activate"
 
         if (activation_script := env.bin_dir / filename).exists():
-            if WINDOWS:
+            # PowerShell and cmd on Windows use the path directly without source prefix
+            if shell in ["powershell", "pwsh", "cmd"] and WINDOWS:
                 return f"{self._quote(str(activation_script), shell)}"
             return f"{command} {self._quote(str(activation_script), shell)}"
         return ""
