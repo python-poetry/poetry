@@ -29,7 +29,7 @@ readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 
-# No python upper bound for package metadata
+# No Python upper bound for package metadata
 requires-python = ">=3.9"
 
 authors = [
