@@ -462,3 +462,83 @@ def test_builder_installs_file_scripts(
     assert console_script.exists(), (
         f"Console script 'console-entry' was not installed to {tmp_venv._bin_dir}"
     )
+
+
+def test_builder_skips_missing_file_script(
+    fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
+) -> None:
+    from cleo.io.buffered_io import BufferedIO
+
+    poetry = Factory().create_poetry(fixture_dir("file_scripts_missing_ref_project"))
+    env_manager = EnvManager(poetry)
+    venv_path = tmp_path / "venv"
+    env_manager.build_venv(venv_path)
+    tmp_venv = VirtualEnv(venv_path)
+
+    io = BufferedIO()
+    builder = EditableBuilder(poetry, tmp_venv, io)
+    builder.build()
+
+    # The file script for the missing reference must not be created
+    script_path = tmp_venv._bin_dir.joinpath("missing-script")
+    assert not script_path.exists()
+
+    # The error message should be logged
+    error_output = io.fetch_error()
+    assert "missing-script" in error_output
+    assert "does not exist" in error_output
+
+
+def test_builder_skips_directory_file_script(
+    fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
+) -> None:
+    from cleo.io.buffered_io import BufferedIO
+
+    poetry = Factory().create_poetry(fixture_dir("file_scripts_dir_ref_project"))
+    env_manager = EnvManager(poetry)
+    venv_path = tmp_path / "venv"
+    env_manager.build_venv(venv_path)
+    tmp_venv = VirtualEnv(venv_path)
+
+    io = BufferedIO()
+    builder = EditableBuilder(poetry, tmp_venv, io)
+    builder.build()
+
+    # The file script for the directory reference must not be created
+    script_path = tmp_venv._bin_dir.joinpath("dir-script")
+    assert not script_path.exists()
+
+    # The error message should be logged
+    error_output = io.fetch_error()
+    assert "dir-script" in error_output
+    assert "is not a file" in error_output
+
+
+def test_builder_skips_file_script_missing_reference_field(
+    fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
+) -> None:
+    from cleo.io.buffered_io import BufferedIO
+
+    poetry = Factory().create_poetry(
+        fixture_dir("file_scripts_no_ref_field_project")
+    )
+    env_manager = EnvManager(poetry)
+    venv_path = tmp_path / "venv"
+    env_manager.build_venv(venv_path)
+    tmp_venv = VirtualEnv(venv_path)
+
+    io = BufferedIO()
+    builder = EditableBuilder(poetry, tmp_venv, io)
+    builder.build()
+
+    # The file script with missing reference field must not be created
+    script_path = tmp_venv._bin_dir.joinpath("no-ref-script")
+    assert not script_path.exists()
+
+    # The error message should be logged
+    error_output = io.fetch_error()
+    assert "no-ref-script" in error_output
+    assert "reference" in error_output

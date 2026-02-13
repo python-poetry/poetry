@@ -217,7 +217,13 @@ class EditableBuilder(Builder):
             "scripts", {}
         ).items():
             if isinstance(specification, dict) and specification.get("type") == "file":
-                source = specification["reference"]
+                source = specification.get("reference")
+                if not source:
+                    self._io.write_error_line(
+                        f"  - File script <c2>{name}</c2> is missing"
+                        " a \"reference\" field"
+                    )
+                    continue
                 source_path = self._path / source
 
                 if not source_path.exists():
