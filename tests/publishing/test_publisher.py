@@ -82,6 +82,31 @@ def test_publish_can_publish_to_given_repository(
     assert f"Publishing {project_name} ({uploader_version}) to foo" in io.fetch_output()
 
 
+def test_publish_normalizes_legacy_repository_url_without_trailing_slash(
+    fixture_dir: FixtureDirGetter, mocker: MockerFixture, config: Config
+) -> None:
+    uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
+    uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
+
+    poetry = Factory().create_poetry(fixture_dir("sample_project"))
+    poetry._config = config
+    poetry.config.merge(
+        {
+            "repositories": {"testpypi": {"url": "https://test.pypi.org/legacy"}},
+            "http-basic": {"testpypi": {"username": "foo", "password": "bar"}},
+        }
+    )
+
+    publisher = Publisher(poetry, NullIO())
+    publisher.publish("testpypi", None, None)
+
+    assert uploader_auth.call_args == [("foo", "bar")]
+    assert uploader_upload.call_args == [
+        ("https://test.pypi.org/legacy/",),
+        {"cert": True, "client_cert": None, "dry_run": False, "skip_existing": False},
+    ]
+
+
 def test_publish_raises_error_for_undefined_repository(
     fixture_dir: FixtureDirGetter, config: Config
 ) -> None:
