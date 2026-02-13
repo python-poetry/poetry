@@ -43,7 +43,7 @@ class EnvActivateCommand(EnvCommand):
     def _get_activate_command(self, env: Env, shell: str) -> str:
         # Normalize shell name to lowercase for case-insensitive comparison
         shell = shell.lower()
-        
+
         if shell == "fish":
             command, filename = "source", "activate.fish"
         elif shell == "nu":
