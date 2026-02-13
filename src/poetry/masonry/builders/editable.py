@@ -4,6 +4,7 @@ import csv
 import hashlib
 import json
 import os
+import shutil
 
 from base64 import urlsafe_b64encode
 from pathlib import Path
@@ -210,6 +211,37 @@ class EditableBuilder(Builder):
                     f.write(decode(cmd))
 
                 added.append(cmd_script)
+
+        # Handle file scripts (type = "file" in [tool.poetry.scripts])
+        for name, specification in self._poetry.local_config.get(
+            "scripts", {}
+        ).items():
+            if isinstance(specification, dict) and specification.get("type") == "file":
+                source = specification["reference"]
+                source_path = self._path / source
+
+                if not source_path.exists():
+                    self._io.write_error_line(
+                        f"  - File script <c2>{name}</c2> references"
+                        f" <b>{source}</b> which does not exist"
+                    )
+                    continue
+
+                if not source_path.is_file():
+                    self._io.write_error_line(
+                        f"  - File script <c2>{name}</c2> references"
+                        f" <b>{source}</b> which is not a file"
+                    )
+                    continue
+
+                target = scripts_path.joinpath(name)
+                self._debug(
+                    f"  - Adding the <c2>{name}</c2> file script"
+                    f" to <b>{scripts_path}</b>"
+                )
+                shutil.copy2(source_path, target)
+                target.chmod(0o755)
+                added.append(target)
 
         return added
 
