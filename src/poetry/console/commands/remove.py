@@ -94,14 +94,24 @@ list of installed packages
                 if group_name not in groups_content and group_name != MAIN_GROUP
             )
 
+            # Also include project.optional-dependencies (PEP 621)
+            optional_deps = project_content.get("optional-dependencies", {})
+            for optional_group, optional_list in optional_deps.items():
+                if optional_list:
+                    group_sections.append(
+                        (f"optional:{optional_group}", optional_list, {})
+                    )
+
             for group_name, standard_section, poetry_section in group_sections:
+                is_optional = group_name.startswith("optional:")
                 removed |= self._remove_packages(
                     packages=packages,
                     standard_section=standard_section,
                     poetry_section=poetry_section,
                     group_name=group_name,
+                    skip_group_update=is_optional,
                 )
-                if group_name != MAIN_GROUP:
+                if group_name != MAIN_GROUP and not is_optional:
                     if (
                         not poetry_section
                         and "dependencies" in poetry_groups_content.get(group_name, {})
@@ -114,8 +124,17 @@ list of installed packages
                     if (
                         group_name not in groups_content
                         and group_name not in poetry_groups_content
+                        and not group_name.startswith("optional:")
                     ):
                         self._remove_references_to_group(group_name, content)
+
+            # Clean up empty optional-dependencies entries
+            optional_deps = project_content.get("optional-dependencies", {})
+            for optional_group in list(optional_deps.keys()):
+                if not optional_deps[optional_group]:
+                    del optional_deps[optional_group]
+            if not optional_deps:
+                project_content.pop("optional-dependencies", None)
 
         elif group == "dev" and "dev-dependencies" in poetry_content:
             # We need to account for the old `dev-dependencies` section
@@ -190,9 +209,11 @@ list of installed packages
         standard_section: list[str | Mapping[str, Any]],
         poetry_section: dict[str, Any],
         group_name: str,
+        skip_group_update: bool = False,
     ) -> set[str]:
         removed = set()
-        group = self.poetry.package.dependency_group(group_name)
+        if not skip_group_update:
+            group = self.poetry.package.dependency_group(group_name)
 
         for package in packages:
             normalized_name = canonicalize_name(package)
@@ -207,8 +228,9 @@ list of installed packages
                     del poetry_section[existing_package]
                     removed.add(package)
 
-        for package in removed:
-            group.remove_dependency(package)
+        if not skip_group_update:
+            for package in removed:
+                group.remove_dependency(package)
 
         return removed
 
