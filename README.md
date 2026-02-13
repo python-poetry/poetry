@@ -56,7 +56,7 @@ homepage = "https://python-poetry.org"
 
 # Scripts are easily expressed
 [project.scripts]
-my_package_cli = 'my_package.console:run'
+my_package_cli = "my_package.console:run"
 
 [project.optional-dependencies]
 # optional dependency to be installed via 'poetry install -E my-extra'
