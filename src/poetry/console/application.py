@@ -605,6 +605,7 @@ class Application(BaseApplication):
 
     @staticmethod
     def configure_installer_for_command(command: InstallerCommand, io: IO) -> None:
+        from poetry.console.commands.self.self_command import SelfCommand
         from poetry.installation.installer import Installer
 
         poetry = command.poetry
@@ -617,6 +618,7 @@ class Application(BaseApplication):
             poetry.config,
             disable_cache=poetry.disable_cache,
             build_constraints=poetry.build_constraints,
+            is_self_command=isinstance(command, SelfCommand),
         )
         command.set_installer(installer)
 
