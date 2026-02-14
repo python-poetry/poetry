@@ -94,6 +94,11 @@ list of installed packages
                 if group_name not in groups_content and group_name != MAIN_GROUP
             )
 
+            # Also search optional dependencies sections
+            removed |= self._remove_optional_packages(
+                packages, project_content, poetry_content
+            )
+
             for group_name, standard_section, poetry_section in group_sections:
                 removed |= self._remove_packages(
                     packages=packages,
@@ -209,6 +214,72 @@ list of installed packages
 
         for package in removed:
             group.remove_dependency(package)
+
+        return removed
+
+    def _remove_optional_packages(
+        self,
+        packages: list[str],
+        project_content: dict[str, Any],
+        poetry_content: dict[str, Any],
+    ) -> set[str]:
+        """Remove packages from optional dependency sections.
+
+        Handles both [project.optional-dependencies] (PEP 621) and
+        [tool.poetry.extras] (legacy) sections.
+        """
+        removed: set[str] = set()
+
+        # PEP 621: [project.optional-dependencies]
+        optional_deps = project_content.get("optional-dependencies", {})
+        for extra_name, deps_list in list(optional_deps.items()):
+            for package in packages:
+                normalized_name = canonicalize_name(package)
+                for requirement in deps_list.copy():
+                    if not isinstance(requirement, str):
+                        continue
+                    if (
+                        Dependency.create_from_pep_508(requirement).name
+                        == normalized_name
+                    ):
+                        deps_list.remove(requirement)
+                        removed.add(package)
+            if not deps_list:
+                del optional_deps[extra_name]
+        if (
+            "optional-dependencies" in project_content
+            and not project_content["optional-dependencies"]
+        ):
+            del project_content["optional-dependencies"]
+
+        # Legacy: [tool.poetry.extras]
+        extras = poetry_content.get("extras", {})
+        for extra_name, extras_list in list(extras.items()):
+            for package in packages:
+                normalized_name = canonicalize_name(package)
+                for item in extras_list.copy():
+                    if canonicalize_name(item) == normalized_name:
+                        extras_list.remove(item)
+            if not extras_list:
+                del extras[extra_name]
+        if "extras" in poetry_content and not poetry_content["extras"]:
+            del poetry_content["extras"]
+
+        # Also remove from [tool.poetry.dependencies] if marked optional
+        poetry_deps = poetry_content.get("dependencies", {})
+        for package in packages:
+            normalized_name = canonicalize_name(package)
+            for dep_name in list(poetry_deps):
+                if canonicalize_name(dep_name) == normalized_name:
+                    dep_value = poetry_deps[dep_name]
+                    if isinstance(dep_value, dict) and dep_value.get("optional"):
+                        del poetry_deps[dep_name]
+                        removed.add(package)
+
+        if removed:
+            group = self.poetry.package.dependency_group(MAIN_GROUP)
+            for package in removed:
+                group.remove_dependency(package)
 
         return removed
 
