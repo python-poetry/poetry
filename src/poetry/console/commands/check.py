@@ -7,6 +7,7 @@ from typing import ClassVar
 from cleo.helpers import option
 
 from poetry.console.commands.command import Command
+from poetry.utils.helpers import lock_command_hint_for
 
 
 if TYPE_CHECKING:
@@ -179,9 +180,10 @@ class CheckCommand(Command):
         if self.option("lock") and not self.poetry.locker.is_locked():
             check_result["errors"] += ["poetry.lock was not found."]
         if self.poetry.locker.is_locked() and not self.poetry.locker.is_fresh():
+            hint = lock_command_hint_for(self.poetry.locker.lock)
             check_result["errors"] += [
                 "pyproject.toml changed significantly since poetry.lock was last generated. "
-                "Run `poetry lock` to fix the lock file."
+                f"Run {hint} to fix the lock file."
             ]
 
         return_code = 0

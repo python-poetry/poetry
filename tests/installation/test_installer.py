@@ -228,6 +228,25 @@ def test_not_fresh_lock(installer: Installer, locker: Locker) -> None:
         installer.run()
 
 
+def test_not_fresh_lock_in_self_context_suggests_self_lock(
+    installer: Installer, locker: Locker
+) -> None:
+    from pathlib import Path
+
+    from poetry.locations import CONFIG_DIR
+
+    locker.locked().fresh(False).set_lock_path(Path(CONFIG_DIR))
+
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "pyproject.toml changed significantly since poetry.lock was last generated. "
+            "Run `poetry self lock` to fix the lock file."
+        ),
+    ):
+        installer.run()
+
+
 def test_run_with_dependencies(
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ) -> None:

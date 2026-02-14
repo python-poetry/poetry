@@ -12,6 +12,7 @@ from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.repositories.lockfile_repository import LockfileRepository
+from poetry.utils.helpers import lock_command_hint_for
 
 
 if TYPE_CHECKING:
@@ -264,9 +265,10 @@ class Installer:
             self._io.write_line("<info>Installing dependencies from lock file</>")
 
             if not self._locker.is_fresh():
+                hint = lock_command_hint_for(self._locker.lock)
                 raise ValueError(
                     "pyproject.toml changed significantly since poetry.lock was last"
-                    " generated. Run `poetry lock` to fix the lock file."
+                    f" generated. Run {hint} to fix the lock file."
                 )
             if not (reresolve or self._locker.is_locked_groups_and_markers()):
                 if self._io.is_verbose():
