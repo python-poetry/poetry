@@ -307,7 +307,7 @@ def test_clone_annotated_tag(tmp_path: Path) -> None:
 
     # Create initial commit
     test_file = source_path / "test.txt"
-    test_file.write_text("test content")
+    test_file.write_text("test content", encoding="utf-8")
     porcelain.add(repo, str(test_file))
     expected_commit_sha = porcelain.commit(
         repo,
@@ -351,7 +351,7 @@ def test_clone_annotated_tag(tmp_path: Path) -> None:
     clone_dir = source_root_dir / "clone-test"
     assert (clone_dir / ".git").is_dir()
     assert (clone_dir / "test.txt").exists()
-    assert (clone_dir / "test.txt").read_text() == "test content"
+    assert (clone_dir / "test.txt").read_text(encoding="utf-8") == "test content"
 
 
 @pytest.mark.skip_git_mock
@@ -368,7 +368,7 @@ def test_clone_nested_annotated_tags(tmp_path: Path) -> None:
 
     # Create initial commit
     test_file = source_path / "test.txt"
-    test_file.write_text("nested tag test")
+    test_file.write_text("nested tag test", encoding="utf-8")
     porcelain.add(repo, paths=[b"test.txt"])
     commit_sha = porcelain.commit(
         repo,
@@ -423,4 +423,4 @@ def test_clone_nested_annotated_tags(tmp_path: Path) -> None:
     clone_dir = source_root_dir / "clone-test"
     assert (clone_dir / ".git").is_dir()
     assert (clone_dir / "test.txt").exists()
-    assert (clone_dir / "test.txt").read_text() == "nested tag test"
+    assert (clone_dir / "test.txt").read_text(encoding="utf-8") == "nested tag test"
