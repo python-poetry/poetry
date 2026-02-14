@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "file-scripts-no-ref-field-project"
+version = "1.0.0"
+description = "A project with a file script missing the reference field."
+authors = ["Test Author <test@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+
+[tool.poetry.scripts]
+no-ref-script = { type = "file" }
+console-entry = "file_scripts_no_ref_field_project:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
