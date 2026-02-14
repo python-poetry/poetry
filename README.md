@@ -16,15 +16,20 @@ Poetry replaces `setup.py`, `requirements.txt`, `setup.cfg`, `MANIFEST.in` and `
 based project format.
 
 ```toml
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
 [project]
 name = "my-package"
 version = "0.1.0"
 description = "The description of the package"
-
-license = { text = "MIT" }
 readme = "README.md"
 
-# No python upper bound for package metadata
+license = "MIT"
+license-files = ["LICENSE"]
+
+# No Python upper bound for package metadata
 requires-python = ">=3.9"
 
 authors = [
@@ -51,7 +56,7 @@ homepage = "https://python-poetry.org"
 
 # Scripts are easily expressed
 [project.scripts]
-my_package_cli = 'my_package.console:run'
+my_package_cli = "my_package.console:run"
 
 [project.optional-dependencies]
 # optional dependency to be installed via 'poetry install -E my-extra'
