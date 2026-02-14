@@ -475,14 +475,6 @@ poetry init
 The `install` command reads the `pyproject.toml` file from the current project,
 resolves the dependencies, and installs them.
 
-{{% note %}}
-Normally, you should prefer `poetry sync` to `poetry install` to avoid untracked outdated packages.
-However, if you have set `virtualenvs.create = false` to install dependencies into your system environment,
-which is discouraged, or `virtualenvs.options.system-site-packages = true` to make
-system site-packages available in your virtual environment, you should use `poetry install`
-because `poetry sync` will normally not work well in these cases.
-{{% /note %}}
-
 ```bash
 poetry install
 ```
@@ -492,6 +484,23 @@ it will use the exact versions from there instead of resolving them.
 This ensures that everyone using the library will get the same versions of the dependencies.
 
 If there is no `poetry.lock` file, Poetry will create one after dependency resolution.
+
+{{% note %}}
+**When to use `install` vs `update`:**
+- Use `poetry install` to install dependencies as specified in `poetry.lock` (or resolve dependencies and create the lock file if it is missing).
+  This is what you run after cloning a project. For reproducible installs, prefer `poetry sync`,
+  which also removes packages that are not in the lock file.
+- Use `poetry update` when you want to update dependencies to their latest versions (within the constraints from the `pyproject.toml`)
+  and refresh `poetry.lock`.
+{{% /note %}}
+
+{{% note %}}
+Normally, you should prefer `poetry sync` to `poetry install` to avoid untracked outdated packages.
+However, if you have set `virtualenvs.create = false` to install dependencies into your system environment,
+which is discouraged, or `virtualenvs.options.system-site-packages = true` to make
+system site-packages available in your virtual environment, you should use `poetry install`
+because `poetry sync` will normally not work well in these cases.
+{{% /note %}}
 
 If you want to exclude one or more dependency groups for the installation, you can use
 the `--without` option.
@@ -1276,7 +1285,14 @@ you should use the `update` command.
 poetry update
 ```
 
-This will resolve all dependencies of the project and write the exact versions into `poetry.lock`.
+This will resolve all dependencies of the project, write the exact versions into `poetry.lock`,
+and install them into your environment.
+
+{{% note %}}
+The `update` command **does not** modify your `pyproject.toml` file. It only updates the
+`poetry.lock` file with the latest compatible versions based on the constraints already
+defined in `pyproject.toml`. To change version constraints, use the `add` command instead.
+{{% /note %}}
 
 If you just want to update a few packages and not all, you can list them as such:
 
