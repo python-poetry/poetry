@@ -8,6 +8,8 @@ from typing import cast
 import pytest
 
 from dulwich.client import FetchPackResult
+from dulwich.refs import HEADREF
+from dulwich.refs import Ref
 from dulwich.repo import Repo
 
 from poetry.console.exceptions import PoetryRuntimeError
@@ -290,3 +292,135 @@ def test_clone_existing_locked_tag(tmp_path: Path, temp_repo: TempRepoFixture) -
         f"Try again later or remove the {tag_ref_lock} manually"
         " if you are sure no other process is holding it."
     )
+
+
+@pytest.mark.skip_git_mock
+def test_clone_annotated_tag(tmp_path: Path) -> None:
+    """Test cloning at an annotated tag (issue #10658)."""
+    from dulwich import porcelain
+    from dulwich.objects import Commit
+
+    # Create a source repository with an annotated tag
+    source_path = tmp_path / "source-repo"
+    source_path.mkdir()
+    repo = Repo.init(str(source_path))
+
+    # Create initial commit
+    test_file = source_path / "test.txt"
+    test_file.write_text("test content", encoding="utf-8")
+    porcelain.add(repo, str(test_file))
+    expected_commit_sha = porcelain.commit(
+        repo,
+        message=b"Initial commit",
+        author=b"Test <test@example.com>",
+        committer=b"Test <test@example.com>",
+    )
+
+    # Create an annotated tag
+    porcelain.tag_create(
+        repo,
+        tag=b"v1.0.0",
+        message=b"Release 1.0.0",
+        author=b"Test <test@example.com>",
+        annotated=True,
+    )
+
+    # Clone at the annotated tag
+    source_root_dir = tmp_path / "clone-root"
+    source_root_dir.mkdir()
+    cloned_repo = Git.clone(
+        url=source_path.as_uri(),
+        source_root=source_root_dir,
+        name="clone-test",
+        tag="v1.0.0",
+    )
+
+    # Verify HEAD points to a commit, not a tag object
+    head_sha = cloned_repo.refs[HEADREF]
+    head_obj = cloned_repo.object_store[head_sha]
+    assert isinstance(head_obj, Commit), (
+        f"HEAD should point to a Commit, got {type(head_obj).__name__}"
+    )
+    # Verify it's the correct commit
+    assert head_sha == expected_commit_sha, (
+        f"HEAD should point to the expected commit {expected_commit_sha.hex()}, "
+        f"got {head_sha.hex()}"
+    )
+
+    # Verify the clone succeeded and files are present
+    clone_dir = source_root_dir / "clone-test"
+    assert (clone_dir / ".git").is_dir()
+    assert (clone_dir / "test.txt").exists()
+    assert (clone_dir / "test.txt").read_text(encoding="utf-8") == "test content"
+
+
+@pytest.mark.skip_git_mock
+def test_clone_nested_annotated_tags(tmp_path: Path) -> None:
+    """Test cloning at a tag that points to another tag (nested tags)."""
+    from dulwich import porcelain
+    from dulwich.objects import Commit
+    from dulwich.objects import Tag
+
+    # Create a source repository with nested annotated tags
+    source_path = tmp_path / "source-repo"
+    source_path.mkdir()
+    repo = Repo.init(str(source_path))
+
+    # Create initial commit
+    test_file = source_path / "test.txt"
+    test_file.write_text("nested tag test", encoding="utf-8")
+    porcelain.add(repo, paths=[b"test.txt"])
+    commit_sha = porcelain.commit(
+        repo,
+        message=b"Initial commit",
+        committer=b"Test <test@example.com>",
+        author=b"Test <test@example.com>",
+    )
+
+    # Create first annotated tag pointing to the commit
+    tag1 = Tag()
+    tag1.name = b"v1.0.0"
+    tag1.object = (Commit, commit_sha)
+    tag1.message = b"First tag"
+    tag1.tag_time = 1234567890
+    tag1.tag_timezone = 0
+    tag1.tagger = b"Test <test@example.com>"
+    repo.object_store.add_object(tag1)
+    repo.refs[Ref(b"refs/tags/v1.0.0")] = tag1.id
+
+    # Create second annotated tag pointing to the first tag
+    tag2 = Tag()
+    tag2.name = b"v1.0.0-release"
+    tag2.object = (Tag, tag1.id)
+    tag2.message = b"Second tag (points to first tag)"
+    tag2.tag_time = 1234567891
+    tag2.tag_timezone = 0
+    tag2.tagger = b"Test <test@example.com>"
+    repo.object_store.add_object(tag2)
+    repo.refs[Ref(b"refs/tags/v1.0.0-release")] = tag2.id
+
+    # Clone at the nested tag
+    source_root_dir = tmp_path / "clone-root"
+    source_root_dir.mkdir()
+    cloned_repo = Git.clone(
+        url=source_path.as_uri(),
+        source_root=source_root_dir,
+        name="clone-test",
+        tag="v1.0.0-release",
+    )
+
+    # Verify HEAD points to a commit, not a tag object
+    head_sha = cloned_repo.refs[HEADREF]
+    head_obj = cloned_repo.object_store[head_sha]
+    assert isinstance(head_obj, Commit), (
+        f"HEAD should point to a Commit (peeling nested tags), got {type(head_obj).__name__}"
+    )
+
+    # Verify it's the correct commit
+    assert head_sha == commit_sha
+
+    # Verify the clone succeeded and files are present
+    clone_dir = source_root_dir / "clone-test"
+    assert (clone_dir / ".git").is_dir()
+    assert (clone_dir / "test.txt").exists()
+    assert (clone_dir / "test.txt").read_text(encoding="utf-8") == "nested tag test"
