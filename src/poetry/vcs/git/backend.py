@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import dataclasses
 import logging
 import os
@@ -20,6 +21,7 @@ from dulwich.config import parse_submodules
 from dulwich.errors import NotGitRepository
 from dulwich.file import FileLocked
 from dulwich.index import IndexEntry
+from dulwich.object_store import peel_sha
 from dulwich.objects import ObjectID
 from dulwich.protocol import PEELED_TAG_SUFFIX
 from dulwich.refs import Ref
@@ -96,7 +98,7 @@ class GitRefSpec:
         Resolve the ref using the provided remote refs.
         """
         self._normalise(remote_refs=remote_refs, repo=repo)
-        self._set_head(remote_refs=remote_refs)
+        self._set_head(remote_refs=remote_refs, repo=repo)
 
     def _normalise(self, remote_refs: FetchPackResult, repo: Repo) -> None:
         """
@@ -142,7 +144,7 @@ class GitRefSpec:
                 self.revision = sha.decode("utf-8")
                 return
 
-    def _set_head(self, remote_refs: FetchPackResult) -> None:
+    def _set_head(self, remote_refs: FetchPackResult, repo: Repo) -> None:
         """
         Internal helper method to populate ref and set it's sha as the remote's head
         and default ref.
@@ -164,6 +166,15 @@ class GitRefSpec:
                     else Ref(f"refs/heads/{self.branch}".encode())
                 )
             head = remote_refs.refs[self.ref]
+
+            # Peel tag objects to get the underlying commit SHA.
+            # Annotated tags are Tag objects, not Commit objects. Operations like
+            # reset_index() expect HEAD to point to a Commit, so we must peel tags
+            # to extract the commit SHA they reference.
+            # Object not in store yet will be handled during fetch
+            if head is not None:
+                with contextlib.suppress(KeyError):
+                    head = peel_sha(repo.object_store, head)[1].id
 
         remote_refs.refs[self.ref] = remote_refs.refs[Ref(b"HEAD")] = head
 
