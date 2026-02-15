@@ -117,6 +117,21 @@ list of installed packages
                     ):
                         self._remove_references_to_group(group_name, content)
 
+            # Handle project.optional-dependencies (PEP 621) separately
+            optional_deps = project_content.get("optional-dependencies", {})
+            for optional_group, optional_list in list(optional_deps.items()):
+                if optional_list:
+                    removed_from_optional = self._remove_packages_from_section(
+                        packages=packages,
+                        section=optional_list,
+                    )
+                    removed |= removed_from_optional
+                    # Clean up empty optional-dependencies entries
+                    if not optional_list:
+                        del optional_deps[optional_group]
+            if not optional_deps:
+                project_content.pop("optional-dependencies", None)
+
         elif group == "dev" and "dev-dependencies" in poetry_content:
             # We need to account for the old `dev-dependencies` section
             removed = self._remove_packages(
@@ -210,6 +225,23 @@ list of installed packages
         for package in removed:
             group.remove_dependency(package)
 
+        return removed
+
+    def _remove_packages_from_section(
+        self,
+        packages: list[str],
+        section: list[str | Mapping[str, Any]],
+    ) -> set[str]:
+        """Remove packages from a simple list section (e.g., project.optional-dependencies)."""
+        removed = set()
+        for package in packages:
+            normalized_name = canonicalize_name(package)
+            for requirement in section.copy():
+                if not isinstance(requirement, str):
+                    continue
+                if Dependency.create_from_pep_508(requirement).name == normalized_name:
+                    section.remove(requirement)
+                    removed.add(package)
         return removed
 
     def _remove_references_to_group(
