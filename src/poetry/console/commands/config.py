@@ -78,6 +78,7 @@ To remove a repository (repo is a short alias for repositories):
             "cache-dir": (str, lambda val: str(Path(val))),
             "data-dir": (str, lambda val: str(Path(val))),
             "virtualenvs.create": (boolean_validator, boolean_normalizer),
+            "virtualenvs.force-create": (boolean_validator, boolean_normalizer),
             "virtualenvs.in-project": (boolean_validator, boolean_normalizer),
             "virtualenvs.options.always-copy": (boolean_validator, boolean_normalizer),
             "virtualenvs.options.system-site-packages": (
