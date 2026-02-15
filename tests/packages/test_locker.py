@@ -1878,7 +1878,7 @@ def test_lock_file_dependency_constraints_are_ordered_deterministically(
     locker: Locker, root: ProjectPackage, transitive_info: TransitivePackageInfo
 ) -> None:
     """Dependency constraints for the same package should be sorted by
-    name, marker, and version to ensure deterministic lock file output
+    name and marker to ensure deterministic lock file output
     regardless of the order they are added."""
     package_a = get_package("A", "1.0.0")
     # Add dependencies on B in non-sorted order (by marker and version)
