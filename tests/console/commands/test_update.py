@@ -100,3 +100,68 @@ def test_update_sync_option_is_passed_to_the_installer(
     tester.execute("--sync")
 
     assert tester.command.installer._requires_synchronization
+
+
+def test_update_with_invalid_package_name_shows_error(
+    poetry_with_outdated_lockfile: Poetry,
+    command_tester_factory: CommandTesterFactory,
+) -> None:
+    """
+    Providing non-existent package names should raise an error.
+    """
+    tester = command_tester_factory("update", poetry=poetry_with_outdated_lockfile)
+
+    status = tester.execute("nonexistent-package")
+
+    assert status == 1
+    assert (
+        "The following packages are not dependencies of this project: nonexistent-package"
+        in tester.io.fetch_error()
+    )
+
+
+def test_update_with_multiple_invalid_package_names_shows_error(
+    poetry_with_outdated_lockfile: Poetry,
+    command_tester_factory: CommandTesterFactory,
+) -> None:
+    """
+    Providing multiple non-existent package names should list all of them in the error.
+    """
+    tester = command_tester_factory("update", poetry=poetry_with_outdated_lockfile)
+
+    status = tester.execute("fake1 fake2 fake3")
+
+    assert status == 1
+    error = tester.io.fetch_error()
+    assert "The following packages are not dependencies of this project" in error
+    assert "fake1" in error
+    assert "fake2" in error
+    assert "fake3" in error
+
+
+@pytest.mark.parametrize(
+    "package_spec",
+    [
+        "nonexistent==1.2.3",
+        "nonexistent>=1.0,<2.0",
+        "nonexistent!=1.0",
+        "nonexistent[extra]==1.0",
+    ],
+)
+def test_update_with_version_constraint_extracts_name_correctly(
+    package_spec: str,
+    poetry_with_outdated_lockfile: Poetry,
+    command_tester_factory: CommandTesterFactory,
+) -> None:
+    """
+    Package names should be correctly extracted from specifiers with version
+    constraints, extras, and complex operators so validation still works.
+    """
+    tester = command_tester_factory("update", poetry=poetry_with_outdated_lockfile)
+
+    status = tester.execute(package_spec)
+
+    assert status == 1
+    error = tester.io.fetch_error()
+    assert "The following packages are not dependencies of this project" in error
+    assert package_spec in error
