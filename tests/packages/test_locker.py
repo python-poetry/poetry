@@ -1872,3 +1872,64 @@ def test_lockfile_keep_eol(
         assert line.endswith("\r\n")
     else:
         assert not line.endswith("\r\n")
+
+
+def test_lock_file_dependency_constraints_are_ordered_deterministically(
+    locker: Locker, root: ProjectPackage, transitive_info: TransitivePackageInfo
+) -> None:
+    """Dependency constraints for the same package should be sorted by
+    name and marker to ensure deterministic lock file output
+    regardless of the order they are added."""
+    package_a = get_package("A", "1.0.0")
+    # Add dependencies on B in non-sorted order (by marker and version)
+    package_a.add_dependency(
+        Factory.create_dependency(
+            "B",
+            {"version": ">=2.0", "markers": 'sys_platform == "win32"'},
+        )
+    )
+    package_a.add_dependency(
+        Factory.create_dependency(
+            "B",
+            {"version": ">=1.0", "markers": 'sys_platform == "linux"'},
+        )
+    )
+
+    locker.set_lock_data(root, {package_a: transitive_info})
+
+    expected = f"""\
+# {GENERATED_COMMENT}
+
+[[package]]
+name = "A"
+version = "1.0.0"
+description = ""
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = []
+
+[package.dependencies]
+B = [
+    {{version = ">=1.0", markers = "sys_platform == \\"linux\\""}},
+    {{version = ">=2.0", markers = "sys_platform == \\"win32\\""}},
+]
+
+[metadata]
+lock-version = "2.1"
+python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+"""
+
+    with locker.lock.open(encoding="utf-8") as f:
+        content = f.read()
+
+    assert content == expected
+
+    # Run again to verify idempotency
+    locker.set_lock_data(root, {package_a: transitive_info})
+
+    with locker.lock.open(encoding="utf-8") as f:
+        content2 = f.read()
+
+    assert content2 == expected

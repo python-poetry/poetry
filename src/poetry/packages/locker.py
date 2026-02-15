@@ -521,7 +521,10 @@ class Locker:
         dependencies: dict[str, list[Any]] = {}
         for dependency in sorted(
             package.requires,
-            key=lambda d: d.name,
+            key=lambda d: (
+                d.name,
+                str(d.marker) if not d.marker.is_any() else "",
+            ),
         ):
             dependencies.setdefault(dependency.pretty_name, [])
 
