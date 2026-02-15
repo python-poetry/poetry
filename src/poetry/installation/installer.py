@@ -46,6 +46,7 @@ class Installer:
         disable_cache: bool = False,
         *,
         build_constraints: Mapping[NormalizedName, list[Dependency]] | None = None,
+        is_self_command: bool = False,
     ) -> None:
         self._io = io
         self._env = env
@@ -53,6 +54,7 @@ class Installer:
         self._locker = locker
         self._pool = pool
         self._config = config
+        self._is_self_command = is_self_command
 
         self._dry_run = False
         self._requires_synchronization = False
@@ -264,9 +266,13 @@ class Installer:
             self._io.write_line("<info>Installing dependencies from lock file</>")
 
             if not self._locker.is_fresh():
+                if self._is_self_command:
+                    lock_cmd = "poetry self lock"
+                else:
+                    lock_cmd = "poetry lock"
                 raise ValueError(
                     "pyproject.toml changed significantly since poetry.lock was last"
-                    " generated. Run `poetry lock` to fix the lock file."
+                    f" generated. Run `{lock_cmd}` to fix the lock file."
                 )
             if not (reresolve or self._locker.is_locked_groups_and_markers()):
                 if self._io.is_verbose():
