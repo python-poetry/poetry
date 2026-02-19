@@ -18,7 +18,7 @@ Poetry offers a lockfile to ensure repeatable installs, and can build your proje
 
 ## System requirements
 
-Poetry requires **Python 3.9+**. It is multi-platform and the goal is to make it work equally well
+Poetry requires **Python 3.10+**. It is multi-platform and the goal is to make it work equally well
 on Linux, macOS and Windows.
 
 ## Installation
