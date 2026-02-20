@@ -225,6 +225,8 @@ class Executor:
                 wait(tasks)
 
                 for operation in serial_operations:
+                    if self._shutdown:
+                        break
                     self._execute_operation(operation)
 
             except KeyboardInterrupt:
