@@ -108,7 +108,14 @@ class Chef:
             if len(elements) == 1 and elements[0].is_dir():
                 sdist_dir = elements[0]
             else:
-                sdist_dir = archive_dir / archive.name.rstrip(suffix)
+                # Remove known archive suffixes properly — rstrip treats
+                # its argument as a character set, not a suffix string.
+                stem = archive.name
+                for ext in (".tar.gz", ".tar.bz2", ".tar.xz", ".tar", ".zip"):
+                    if stem.endswith(ext):
+                        stem = stem[: -len(ext)]
+                        break
+                sdist_dir = archive_dir / stem
                 if not sdist_dir.is_dir():
                     sdist_dir = archive_dir
 
