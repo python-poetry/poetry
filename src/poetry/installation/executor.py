@@ -10,7 +10,6 @@ from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import wait
 from pathlib import Path
-from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -624,7 +623,7 @@ class Executor:
 
         try:
             return self.run_pip("uninstall", package.name, "-y")
-        except CalledProcessError as e:
+        except EnvCommandError as e:
             if "not installed" in str(e):
                 return 0
 
