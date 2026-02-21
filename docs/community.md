@@ -1,30 +1,18 @@
----
-title: "Community"
-draft: false
-type: docs
-layout: single
-
-menu:
-  docs:
-    weight: 105
----
-
 # Community
 
-## Badge
+## Join Us!
 
-For any projects using Poetry, you may add its official badge somewhere prominent like the README.
+We warmly welcome first-time contributors to our project! If you're new to contributing, don't hesitate to reach out on our [Discord server](https://discord.com/invite/awxPgve) for support. 
 
-[![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
+### Getting Started
 
-**Markdown**
-```md
-[![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
-```
+Check out our [Contributing to Poetry](https://python-poetry.org/docs/contributing) guide for detailed instructions on how to get involved. 
 
-**reStructuredText**
-```rst
-.. image:: https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json
-   :alt: Poetry
-   :target: https://python-poetry.org/
-```
+### Where to Contribute
+
+You can choose from a variety of tasks, including:
+- Writing or improving tests
+- Enhancing documentation
+- Addressing issues labeled as `good first issue`
+
+We appreciate your contributions and look forward to collaborating with you!
