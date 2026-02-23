@@ -102,7 +102,6 @@ def test_update_sync_option_is_passed_to_the_installer(
     assert tester.command.installer._requires_synchronization
 
 
-
 def test_update_with_valid_package_name(
     poetry_with_outdated_lockfile: Poetry,
     repo: TestRepository,
