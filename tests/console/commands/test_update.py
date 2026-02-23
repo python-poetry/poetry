@@ -102,6 +102,50 @@ def test_update_sync_option_is_passed_to_the_installer(
     assert tester.command.installer._requires_synchronization
 
 
+
+def test_update_with_valid_package_name(
+    poetry_with_outdated_lockfile: Poetry,
+    repo: TestRepository,
+    command_tester_factory: CommandTesterFactory,
+    mocker: MockerFixture,
+) -> None:
+    """
+    Specifying a valid dependency should not raise an error.
+    """
+    tester = command_tester_factory("update", poetry=poetry_with_outdated_lockfile)
+    assert isinstance(tester.command, UpdateCommand)
+    mocker.patch.object(tester.command.installer, "run", return_value=0)
+
+    repo.add_package(get_package("docker", "4.3.1"))
+
+    status = tester.execute("docker")
+
+    assert status == 0
+    assert "not dependencies of this project" not in tester.io.fetch_error()
+
+
+def test_update_with_non_normalized_package_name(
+    poetry_with_outdated_lockfile: Poetry,
+    repo: TestRepository,
+    command_tester_factory: CommandTesterFactory,
+    mocker: MockerFixture,
+) -> None:
+    """
+    Package names that differ only in normalization (e.g. 'Docker' vs 'docker')
+    should be accepted.
+    """
+    tester = command_tester_factory("update", poetry=poetry_with_outdated_lockfile)
+    assert isinstance(tester.command, UpdateCommand)
+    mocker.patch.object(tester.command.installer, "run", return_value=0)
+
+    repo.add_package(get_package("docker", "4.3.1"))
+
+    status = tester.execute("Docker")
+
+    assert status == 0
+    assert "not dependencies of this project" not in tester.io.fetch_error()
+
+
 def test_update_with_invalid_package_name_shows_error(
     poetry_with_outdated_lockfile: Poetry,
     command_tester_factory: CommandTesterFactory,

@@ -69,7 +69,7 @@ class UpdateCommand(InstallerCommand):
 
             # Validate that all specified packages are declared dependencies
             all_dependencies = {
-                canonicalize_name(dep.name) for dep in self.poetry.package.all_requires
+                dep.name for dep in self.poetry.package.all_requires
             }
 
             invalid_packages = [
