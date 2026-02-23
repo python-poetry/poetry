@@ -39,7 +39,13 @@ class InitCommand(Command):
     options: ClassVar[list[Option]] = [
         option("name", None, "Name of the package.", flag=False),
         option("description", None, "Description of the package.", flag=False),
-        option("author", None, "Author name of the package.", flag=False),
+        option(
+            "author",
+            None,
+            "Author name of the package.",
+            flag=False,
+            multiple=True,
+        ),
         option("python", None, "Compatible Python versions.", flag=False),
         option(
             "dependency",
@@ -148,21 +154,26 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         if not description and is_interactive:
             description = self.ask(self.create_question("Description []: ", default=""))
 
-        author = self.option("author")
-        if not author and vcs_config.get("user.name"):
-            author = vcs_config["user.name"]
-            author_email = vcs_config.get("user.email")
-            if author_email:
-                author += f" <{author_email}>"
+        authors_from_option = list(self.option("author"))
+        if authors_from_option:
+            authors = authors_from_option
+        else:
+            author = None
+            if vcs_config.get("user.name"):
+                author = vcs_config["user.name"]
+                author_email = vcs_config.get("user.email")
+                if author_email:
+                    author += f" <{author_email}>"
 
-        if is_interactive:
-            question = self.create_question(
-                f"Author [<comment>{author}</comment>, n to skip]: ", default=author
-            )
-            question.set_validator(lambda v: self._validate_author(v, author))
-            author = self.ask(question)
+            if is_interactive:
+                question = self.create_question(
+                    f"Author [<comment>{author}</comment>, n to skip]: ",
+                    default=author,
+                )
+                question.set_validator(lambda v: self._validate_author(v, author))
+                author = self.ask(question)
 
-        authors = [author] if author else []
+            authors = [author] if author else []
 
         license_name = self.option("license")
         if not license_name and is_interactive:
