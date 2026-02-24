@@ -34,6 +34,7 @@ if TYPE_CHECKING:
 
 class Installer:
     _POETRY_SYSTEM_PROJECT_NAME = "poetry-instance"
+
     def __init__(
         self,
         io: IO,
