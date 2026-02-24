@@ -70,3 +70,28 @@ def test_show_format(tester: CommandTester, options: str) -> None:
     )
     assert tester.execute(options) == 0
     assert tester.io.fetch_output().strip() == expected
+
+
+def test_self_show_errors_without_lock_file(tester: CommandTester) -> None:
+    system_pyproject_file = SelfCommand.get_default_system_pyproject_file()
+    system_pyproject_file.write_text(
+        tomlkit.dumps(
+            {
+                "tool": {
+                    "poetry": {
+                        "name": "poetry-instance",
+                        "version": __version__,
+                        "dependencies": {"python": "^3.9", "poetry": __version__},
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    system_pyproject_file.parent.joinpath("poetry.lock").unlink(missing_ok=True)
+
+    assert tester.execute() == 1
+    assert (
+        tester.io.fetch_error()
+        == "Error: poetry.lock not found. Run `poetry self lock` to create it.\n"
+    )

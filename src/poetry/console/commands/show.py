@@ -92,6 +92,14 @@ lists all packages available."""
 
     colors: ClassVar[list[str]] = ["cyan", "yellow", "green", "magenta", "blue"]
 
+    _POETRY_SYSTEM_PROJECT_NAME = "poetry-instance"
+
+    def _lock_create_command(self) -> str:
+        if self.poetry.package.name == self._POETRY_SYSTEM_PROJECT_NAME:
+            return "poetry self lock"
+
+        return "poetry lock"
+
     def handle(self) -> int:
         package = self.argument("package")
 
@@ -147,8 +155,8 @@ lists all packages available."""
 
         if not self.poetry.locker.is_locked():
             self.line_error(
-                "<error>Error: poetry.lock not found. Run `poetry lock` to create"
-                " it.</error>"
+                f"<error>Error: poetry.lock not found. Run `{self._lock_create_command()}`"
+                " to create it.</error>"
             )
             return 1
 
