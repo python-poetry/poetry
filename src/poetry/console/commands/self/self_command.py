@@ -14,6 +14,7 @@ from poetry.__version__ import __version__
 from poetry.console.commands.installer_command import InstallerCommand
 from poetry.factory import Factory
 from poetry.pyproject.toml import PyProjectTOML
+from poetry.utils.constants import POETRY_SYSTEM_PROJECT_NAME
 from poetry.utils.env import EnvManager
 from poetry.utils.env import SystemEnv
 from poetry.utils.helpers import directory
@@ -80,7 +81,7 @@ class SelfCommand(InstallerCommand):
                     "dict[str, Any]", content["dependency-groups"]
                 )
 
-        package = ProjectPackage(name="poetry-instance", version=__version__)
+        package = ProjectPackage(name=POETRY_SYSTEM_PROJECT_NAME, version=__version__)
         package.add_dependency(Dependency(name="poetry", constraint=f"{__version__}"))
 
         package.python_versions = ".".join(str(v) for v in self.env.version_info[:3])

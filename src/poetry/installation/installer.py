@@ -12,6 +12,7 @@ from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.repositories.lockfile_repository import LockfileRepository
+from poetry.utils.constants import POETRY_SYSTEM_PROJECT_NAME
 
 
 if TYPE_CHECKING:
@@ -33,8 +34,6 @@ if TYPE_CHECKING:
 
 
 class Installer:
-    _POETRY_SYSTEM_PROJECT_NAME = "poetry-instance"
-
     def __init__(
         self,
         io: IO,
@@ -102,7 +101,7 @@ class Installer:
     def _lock_fix_command(self) -> str:
         # `poetry self` commands operate on Poetry's own system project. When the lock
         # file is outdated, users should run `poetry self lock` rather than `poetry lock`.
-        if self._package.name == self._POETRY_SYSTEM_PROJECT_NAME:
+        if self._package.name == POETRY_SYSTEM_PROJECT_NAME:
             return "poetry self lock"
 
         return "poetry lock"

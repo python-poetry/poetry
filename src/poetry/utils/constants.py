@@ -3,6 +3,9 @@ from __future__ import annotations
 import os
 
 
+# Name of Poetry's own system project used by `poetry self` commands.
+POETRY_SYSTEM_PROJECT_NAME = "poetry-instance"
+
 # Timeout for HTTP requests using the requests library.
 REQUESTS_TIMEOUT = int(os.getenv("POETRY_REQUESTS_TIMEOUT", 15))
 

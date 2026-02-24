@@ -29,6 +29,7 @@ from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.toml.file import TOMLFile
+from poetry.utils.constants import POETRY_SYSTEM_PROJECT_NAME
 from poetry.utils.env import MockEnv
 from poetry.utils.env import NullEnv
 from tests.helpers import MOCK_DEFAULT_GIT_REVISION
@@ -229,7 +230,7 @@ def test_not_fresh_lock(installer: Installer, locker: Locker) -> None:
 
 
 def test_not_fresh_lock_self_project(installer: Installer, locker: Locker) -> None:
-    installer.set_package(ProjectPackage("poetry-instance", "1.0"))
+    installer.set_package(ProjectPackage(POETRY_SYSTEM_PROJECT_NAME, "1.0"))
     locker.locked().fresh(False)
     with pytest.raises(
         ValueError,

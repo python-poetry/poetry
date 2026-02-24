@@ -13,6 +13,7 @@ from packaging.utils import canonicalize_name
 
 from poetry.console.commands.env_command import EnvCommand
 from poetry.console.commands.group_command import GroupCommand
+from poetry.utils.constants import POETRY_SYSTEM_PROJECT_NAME
 
 
 if TYPE_CHECKING:
@@ -92,10 +93,8 @@ lists all packages available."""
 
     colors: ClassVar[list[str]] = ["cyan", "yellow", "green", "magenta", "blue"]
 
-    _POETRY_SYSTEM_PROJECT_NAME = "poetry-instance"
-
     def _lock_create_command(self) -> str:
-        if self.poetry.package.name == self._POETRY_SYSTEM_PROJECT_NAME:
+        if self.poetry.package.name == POETRY_SYSTEM_PROJECT_NAME:
             return "poetry self lock"
 
         return "poetry lock"
