@@ -263,7 +263,7 @@ poetry cache clear PyPI --all
 To only remove a specific package from a cache, you have to specify the cache entry in the following form `cache:package:version`:
 
 ```bash
-poetry cache clear pypi:requests:2.24.0
+poetry cache clear PyPI:requests:2.24.0
 ```
 
 ### cache list
