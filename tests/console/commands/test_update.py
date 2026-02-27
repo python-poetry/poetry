@@ -120,7 +120,7 @@ def test_update_with_valid_package_name(
     status = tester.execute("docker")
 
     assert status == 0
-    assert "not dependencies of this project" not in tester.io.fetch_error()
+    assert tester.io.fetch_error() == ""
 
 
 def test_update_with_non_normalized_package_name(
@@ -142,7 +142,7 @@ def test_update_with_non_normalized_package_name(
     status = tester.execute("Docker")
 
     assert status == 0
-    assert "not dependencies of this project" not in tester.io.fetch_error()
+    assert tester.io.fetch_error() == ""
 
 
 def test_update_with_invalid_package_name_shows_error(
