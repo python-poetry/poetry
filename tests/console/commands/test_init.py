@@ -1215,3 +1215,38 @@ def test_init_does_not_add_readme_key_when_readme_missing(
     # Assert
     pyproject = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
     assert "readme =" not in pyproject
+
+
+def test_interactive_rejects_invalid_version_constraint(
+    tester: CommandTester, repo: TestRepository
+) -> None:
+    repo.add_package(get_package("pendulum", "2.0.0"))
+
+    inputs = [
+        "my-package",  # Package name
+        "1.0.0",  # Version
+        "Desc",  # Description
+        "n",  # Author
+        "MIT",  # License
+        ">=3.8",  # Python
+        "",  # Interactive packages
+        "pendulum",  # Search package
+        "0",  # Select first result
+        "isort",  # INVALID version constraint
+        ">=2.0.0",  # VALID version constraint
+        "",  # Stop searching for packages
+        "",  # Interactive dev packages
+        "",
+        "\n",  # Generate
+    ]
+
+    tester.execute(inputs="\n".join(inputs))
+
+    output = tester.io.fetch_output()
+    error = tester.io.fetch_error()
+
+    # Must show validation error
+    assert "Invalid version constraint" in error
+
+    # Must use valid constraint
+    assert "pendulum (>=2.0.0" in output

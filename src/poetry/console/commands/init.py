@@ -11,6 +11,8 @@ from typing import ClassVar
 
 from cleo.helpers import option
 from packaging.utils import canonicalize_name
+from poetry.core.constraints.version import parse_constraint
+from poetry.core.constraints.version.exceptions import ParseConstraintError
 from tomlkit import inline_table
 
 from poetry.console.commands.command import Command
@@ -395,6 +397,14 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                             f"Using version <b>{package_constraint}</b> for"
                             f" <c1>{package}</c1>"
                         )
+                    else:
+                        try:
+                            parse_constraint(package_constraint)
+                        except ParseConstraintError:
+                            self.line_error(
+                                "<error>Invalid version constraint. Please enter a valid version specifier.</error>"
+                            )
+                            continue
 
                     constraint["version"] = package_constraint
 
