@@ -98,14 +98,6 @@ class Installer:
 
         return self
 
-    def _lock_fix_command(self) -> str:
-        # `poetry self` commands operate on Poetry's own system project. When the lock
-        # file is outdated, users should run `poetry self lock` rather than `poetry lock`.
-        if self._package.name == POETRY_SYSTEM_PROJECT_NAME:
-            return "poetry self lock"
-
-        return "poetry lock"
-
     def run(self) -> int:
         # Check if refresh
         if not self._update and self._lock and self._locker.is_locked():
@@ -388,6 +380,14 @@ class Installer:
             self._write_lock_file(solved_packages)
 
         return status
+
+    def _lock_fix_command(self) -> str:
+        # `poetry self` commands operate on Poetry's own system project. When the lock
+        # file is outdated, users should run `poetry self lock` rather than `poetry lock`.
+        if self._package.name == POETRY_SYSTEM_PROJECT_NAME:
+            return "poetry self lock"
+
+        return "poetry lock"
 
     def _write_lock_file(
         self,

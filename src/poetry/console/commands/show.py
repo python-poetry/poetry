@@ -93,12 +93,6 @@ lists all packages available."""
 
     colors: ClassVar[list[str]] = ["cyan", "yellow", "green", "magenta", "blue"]
 
-    def _lock_create_command(self) -> str:
-        if self.poetry.package.name == POETRY_SYSTEM_PROJECT_NAME:
-            return "poetry self lock"
-
-        return "poetry lock"
-
     def handle(self) -> int:
         package = self.argument("package")
 
@@ -171,6 +165,12 @@ lists all packages available."""
             return self._display_packages_tree_information(locked_repo, root)
 
         return self._display_packages_information(locked_repo, root)
+
+    def _lock_create_command(self) -> str:
+        if self.poetry.package.name == POETRY_SYSTEM_PROJECT_NAME:
+            return "poetry self lock"
+
+        return "poetry lock"
 
     def _display_single_package_information(
         self, package: str, locked_repository: Repository
