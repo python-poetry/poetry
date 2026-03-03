@@ -226,8 +226,9 @@ To remove a repository (repo is a short alias for repositories):
             repository = escape_config_key(m.group(1))
 
             if self.option("unset"):
-                repo = config.get(f"repositories.{repository}")
-                if repo is None:
+                try:
+                    config.config_source.get_property(f"repositories.{repository}")
+                except PropertyNotFoundError:
                     raise ValueError(f"There is no {m.group(1)} repository defined")
 
                 config.config_source.remove_property(f"repositories.{repository}")

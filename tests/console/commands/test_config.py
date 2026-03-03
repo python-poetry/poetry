@@ -238,7 +238,7 @@ def test_display_single_setting(
 
 
 def test_repositories_setting_with_dot_in_name(tester: CommandTester) -> None:
-    tester.execute("repositories.foo.bar.url https://bar.com/simple/")
+    tester.execute("repositories.foo.bar https://bar.com/simple/")
     tester.execute("repositories.foo.bar")
 
     assert tester.io.fetch_output() == "{'url': 'https://bar.com/simple/'}\n"
