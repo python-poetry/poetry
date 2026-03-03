@@ -4,8 +4,8 @@ import logging
 
 from typing import TYPE_CHECKING
 
-from poetry.publishing.uploader import Uploader
 from poetry.config.config_source import escape_config_key
+from poetry.publishing.uploader import Uploader
 from poetry.utils.authenticator import Authenticator
 
 

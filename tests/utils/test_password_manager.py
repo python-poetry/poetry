@@ -284,9 +284,7 @@ def test_get_pypi_token_with_dot_in_repo_name_keyring(
     manager.set_pypi_token("foo.bar", "baz")
 
     assert manager.get_pypi_token("foo.bar") == "baz"
-    assert (
-        dummy_keyring.get_password("poetry-repository-foo.bar", "__token__") == "baz"
-    )
+    assert dummy_keyring.get_password("poetry-repository-foo.bar", "__token__") == "baz"
 
 
 def test_delete_pypi_token_with_dot_in_repo_name_keyring(

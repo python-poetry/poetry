@@ -71,7 +71,9 @@ def test_dict_config_source_get_property_should_raise_if_not_found() -> None:
 def test_dict_config_source_escaped_dot_key() -> None:
     config_source = DictConfigSource()
 
-    config_source.add_property("repositories.foo\\.bar.url", "https://example.com/simple")
+    config_source.add_property(
+        "repositories.foo\\.bar.url", "https://example.com/simple"
+    )
     assert config_source._config == {
         "repositories": {"foo.bar": {"url": "https://example.com/simple"}}
     }

@@ -113,8 +113,8 @@ To remove a repository (repo is a short alias for repositories):
 
         from poetry.core.pyproject.exceptions import PyProjectError
 
-from poetry.config.config import Config
-from poetry.config.config_source import escape_config_key
+        from poetry.config.config import Config
+        from poetry.config.config_source import escape_config_key
         from poetry.config.file_config_source import FileConfigSource
         from poetry.locations import CONFIG_DIR
         from poetry.toml.file import TOMLFile
@@ -237,9 +237,7 @@ from poetry.config.config_source import escape_config_key
             if len(values) == 1:
                 url = values[0]
 
-                config.config_source.add_property(
-                    f"repositories.{repository}.url", url
-                )
+                config.config_source.add_property(f"repositories.{repository}.url", url)
 
                 return 0
 
