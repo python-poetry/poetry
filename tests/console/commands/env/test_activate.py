@@ -52,11 +52,12 @@ def test_env_activate_prints_correct_script(
 
 
 @pytest.mark.parametrize(
-    "shell, command, ext, prefix",
+    "shell, script, expected",
     (
-        ("cmd", ".", "activate.bat", ""),
-        ("pwsh", ".", "activate.ps1", "& "),
-        ("powershell", ".", "activate.ps1", "& "),
+        ("cmd", "activate.bat", '"{path}"'),
+        ("pwsh", "activate.ps1", '& "{path}"'),
+        ("powershell", "activate.ps1", '& "{path}"'),
+        ("bash", "activate", "source {path}"),
     ),
 )
 @pytest.mark.skipif(not WINDOWS, reason="Only Windows shells")
@@ -65,9 +66,8 @@ def test_env_activate_prints_correct_script_on_windows(
     mocker: MockerFixture,
     tester: CommandTester,
     shell: str,
-    command: str,
-    ext: str,
-    prefix: str,
+    script: str,
+    expected: str,
 ) -> None:
     mocker.patch("shellingham.detect_shell", return_value=(shell, None))
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=tmp_venv)
@@ -75,7 +75,7 @@ def test_env_activate_prints_correct_script_on_windows(
     tester.execute()
 
     line = tester.io.fetch_output().rstrip("\n")
-    assert line == f'{prefix}"{tmp_venv.bin_dir / ext!s}"'
+    assert line == expected.format(path=tmp_venv.bin_dir / script)
 
 
 @pytest.mark.parametrize("verbosity", ["", "-v", "-vv", "-vvv"])
@@ -93,18 +93,3 @@ def test_no_additional_output_in_verbose_mode(
 
     lines = app_tester.io.fetch_output().splitlines()
     assert len(lines) == 1
-
-
-def test_env_activate_uses_shell_prefix_for_bash_on_windows(
-    tmp_venv: VirtualEnv,
-    mocker: MockerFixture,
-    tester: CommandTester,
-) -> None:
-    mocker.patch("shellingham.detect_shell", return_value=("bash", None))
-    mocker.patch("poetry.console.commands.env.activate.WINDOWS", True)
-    mocker.patch("poetry.utils.env.EnvManager.get", return_value=tmp_venv)
-
-    tester.execute()
-
-    line = tester.io.fetch_output().rstrip("\n")
-    assert line == f"source {tmp_venv.bin_dir}/activate"

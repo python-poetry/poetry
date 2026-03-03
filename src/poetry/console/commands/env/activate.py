@@ -48,9 +48,9 @@ class EnvActivateCommand(EnvCommand):
         elif shell in ["csh", "tcsh"]:
             command, filename = "source", "activate.csh"
         elif shell in ["powershell", "pwsh"]:
-            command, filename = ".", "activate.ps1"
+            command, filename = "&", "activate.ps1"
         elif shell == "cmd":
-            command, filename = ".", "activate.bat"
+            command, filename = "", "activate.bat"
         elif shell in ["bash", "mksh", "zsh"]:
             command, filename = "source", "activate"
         else:
@@ -66,6 +66,4 @@ class EnvActivateCommand(EnvCommand):
         if WINDOWS:
             if shell == "cmd":
                 return f'"{command}"'
-            if shell in ["powershell", "pwsh"]:
-                return f'& "{command}"'
         return shlex.quote(command)
