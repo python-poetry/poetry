@@ -63,7 +63,6 @@ class EnvActivateCommand(EnvCommand):
 
     @staticmethod
     def _quote(command: str, shell: str) -> str:
-        if WINDOWS:
-            if shell == "cmd":
-                return f'"{command}"'
+        if WINDOWS and shell == "cmd":
+            return f'"{command}"'
         return shlex.quote(command)

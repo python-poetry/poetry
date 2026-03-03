@@ -55,9 +55,9 @@ def test_env_activate_prints_correct_script(
     "shell, script, expected",
     (
         ("cmd", "activate.bat", '"{path}"'),
-        ("pwsh", "activate.ps1", '& "{path}"'),
-        ("powershell", "activate.ps1", '& "{path}"'),
-        ("bash", "activate", "source {path}"),
+        ("pwsh", "activate.ps1", "& '{path}'"),
+        ("powershell", "activate.ps1", "& '{path}'"),
+        ("bash", "activate", "source '{path}'"),
     ),
 )
 @pytest.mark.skipif(not WINDOWS, reason="Only Windows shells")
