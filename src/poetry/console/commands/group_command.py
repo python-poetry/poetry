@@ -103,6 +103,16 @@ class GroupCommand(Command):
             key: {canonicalize_name(group) for group in key_groups}
             for key, key_groups in groups.items()
         }
+        # Warn if any group name was normalized
+        for key_groups in groups.values():
+            for group in key_groups:
+                normalized = canonicalize_name(group)
+                if normalized != group:
+                    self.line_error(
+                        f"<warning>Group '{group}' was normalized to '{normalized}'."
+                        " Consider updating your command to use the normalized name.</warning>"
+                    )
+
         norm_default_groups = {canonicalize_name(name) for name in self.default_groups}
 
         return norm_groups["only"] or norm_default_groups.union(
@@ -121,7 +131,9 @@ class GroupCommand(Command):
         invalid_options = defaultdict(set)
         for opt, groups in group_options.items():
             for group in groups:
-                if not self.poetry.package.has_dependency_group(group):
+                if not self.poetry.package.has_dependency_group(
+                    canonicalize_name(group)
+                ):
                     invalid_options[group].add(opt)
         if invalid_options:
             message_parts = []
