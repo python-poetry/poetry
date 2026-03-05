@@ -396,6 +396,47 @@ def test_invalid_groups_with_without_only(
                 )
 
 
+@pytest.mark.parametrize(
+    "option",
+    ["--with", "--without", "--only"],
+)
+def test_non_normalized_group_name_emits_warning(
+    tester: CommandTester,
+    mocker: MockerFixture,
+    option: str,
+) -> None:
+    """
+    A warning is emitted when a group name passed via --with/--without/--only
+    differs from its normalized form (e.g. 'Foo' instead of 'foo').
+    """
+    assert isinstance(tester.command, InstallerCommand)
+    mocker.patch.object(tester.command.installer, "run", return_value=0)
+
+    # 'Foo' normalizes to 'foo', which exists in the fixture pyproject
+    tester.execute(f"{option} Foo")
+
+    error_output = tester.io.fetch_error()
+    assert "was normalized to" in error_output
+    assert "'Foo'" in error_output
+    assert "'foo'" in error_output
+
+
+def test_normalized_group_name_does_not_raise(
+    tester: CommandTester,
+    mocker: MockerFixture,
+) -> None:
+    """
+    Passing a non-normalized but valid group name (e.g. 'Foo' for group 'foo')
+    should not raise a GroupNotFoundError.
+    """
+    assert isinstance(tester.command, InstallerCommand)
+    mocker.patch.object(tester.command.installer, "run", return_value=0)
+
+    # Should not raise even though 'Foo' != 'foo', because they normalize to the same name
+    tester.execute("--with Foo")
+    assert tester.status_code != 1 or "not found" not in tester.io.fetch_error()
+
+
 def test_dry_run_populates_installer(
     tester: CommandTester, mocker: MockerFixture
 ) -> None:
