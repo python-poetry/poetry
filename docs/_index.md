@@ -194,9 +194,9 @@ The installer creates a `poetry` wrapper in a well-known, platform-specific dire
 If you have installed Python through the Microsoft Store, the `poetry` binary
 will be installed to a different location:
 
-`%LOCALAPPDATA%\Packages\PythonSoftwareFoundation.Python.<Version>_qbz5n2kfra8p0\LocalCache\Roaming\Python\Scripts`
+`%LOCALAPPDATA%\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\Roaming\Python\Scripts`
 
-Replace `<Version>` with your Python version (e.g. `3.12`).
+Replace `3.12` with your installed Python version.
 {{% /note %}}
 
 If this directory is not present in your `$PATH`, you can add it in order to invoke Poetry
