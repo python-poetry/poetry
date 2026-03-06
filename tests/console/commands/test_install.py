@@ -397,13 +397,21 @@ def test_invalid_groups_with_without_only(
 
 
 @pytest.mark.parametrize(
-    "option",
-    ["--with", "--without", "--only"],
+    ("option", "group_input", "normalized"),
+    [
+        ("--with", "Foo", "foo"),
+        ("--without", "Foo", "foo"),
+        ("--only", "Foo", "foo"),
+        ("--with", "FOO", "foo"),
+        ("--with", "bim", "bim"),
+    ],
 )
 def test_non_normalized_group_name_emits_warning(
     tester: CommandTester,
     mocker: MockerFixture,
     option: str,
+    group_input: str,
+    normalized: str,
 ) -> None:
     """
     A warning is emitted when a group name passed via --with/--without/--only
@@ -412,13 +420,15 @@ def test_non_normalized_group_name_emits_warning(
     assert isinstance(tester.command, InstallerCommand)
     mocker.patch.object(tester.command.installer, "run", return_value=0)
 
-    # 'Foo' normalizes to 'foo', which exists in the fixture pyproject
-    tester.execute(f"{option} Foo")
-
+    tester.execute(f"{option} {group_input}")
     error_output = tester.io.fetch_error()
-    assert "was normalized to" in error_output
-    assert "'Foo'" in error_output
-    assert "'foo'" in error_output
+
+    if group_input != normalized:
+        assert "was normalized to" in error_output
+        assert f"'{group_input}'" in error_output
+        assert f"'{normalized}'" in error_output
+    else:
+        assert "was normalized to" not in error_output
 
 
 def test_normalized_group_name_does_not_raise(
@@ -433,8 +443,14 @@ def test_normalized_group_name_does_not_raise(
     mocker.patch.object(tester.command.installer, "run", return_value=0)
 
     # Should not raise even though 'Foo' != 'foo', because they normalize to the same name
-    tester.execute("--with Foo")
-    assert tester.status_code != 1 or "not found" not in tester.io.fetch_error()
+    # Use --no-root to avoid editable build failure in the test project fixture
+    tester.execute("--with Foo --no-root")
+    error_output = tester.io.fetch_error()
+    assert tester.status_code == 0
+    assert "GroupNotFoundError" not in error_output
+    assert "not found" not in error_output
+    assert "was normalized to" in error_output
+    assert "'Foo'" in error_output
 
 
 def test_dry_run_populates_installer(

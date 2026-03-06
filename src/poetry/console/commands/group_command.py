@@ -103,11 +103,13 @@ class GroupCommand(Command):
             key: {canonicalize_name(group) for group in key_groups}
             for key, key_groups in groups.items()
         }
-        # Warn if any group name was normalized
+        # Warn if any group name was normalized (deduplicate warnings)
+        warned: set[str] = set()
         for key_groups in groups.values():
             for group in key_groups:
                 normalized = canonicalize_name(group)
-                if normalized != group:
+                if normalized != group and group not in warned:
+                    warned.add(group)
                     self.line_error(
                         f"<warning>Group '{group}' was normalized to '{normalized}'."
                         " Consider updating your command to use the normalized name.</warning>"
