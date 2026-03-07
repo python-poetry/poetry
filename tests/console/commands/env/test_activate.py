@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from poetry.console.commands.env.activate import ShellNotSupportedError
 from poetry.utils._compat import WINDOWS
 
 
@@ -44,10 +45,15 @@ def test_env_activate_prints_correct_script(
     mocker.patch("shellingham.detect_shell", return_value=(shell, None))
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=tmp_venv)
 
-    tester.execute()
+    if WINDOWS and shell in {"csh", "tcsh"}:
+        with pytest.raises(ShellNotSupportedError):
+            tester.execute()
 
-    line = tester.io.fetch_output().rstrip("\n")
-    assert line == f"{command} {tmp_venv.bin_dir.as_posix()}/activate{ext}"
+    else:
+        tester.execute()
+
+        line = tester.io.fetch_output().rstrip("\n")
+        assert line == f"{command} {tmp_venv.bin_dir.as_posix()}/activate{ext}"
 
 
 @pytest.mark.parametrize(
