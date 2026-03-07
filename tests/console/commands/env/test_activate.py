@@ -33,7 +33,6 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
         ("tcsh", "source", ".csh"),
     ),
 )
-@pytest.mark.skipif(WINDOWS, reason="Only Unix shells")
 def test_env_activate_prints_correct_script(
     tmp_venv: VirtualEnv,
     mocker: MockerFixture,
@@ -48,26 +47,25 @@ def test_env_activate_prints_correct_script(
     tester.execute()
 
     line = tester.io.fetch_output().rstrip("\n")
-    assert line == f"{command} {tmp_venv.bin_dir}/activate{ext}"
+    assert line == f"{command} {tmp_venv.bin_dir.as_posix()}/activate{ext}"
 
 
 @pytest.mark.parametrize(
-    "shell, script, expected",
+    "shell, command, ext",
     (
-        ("cmd", "activate.bat", '"{path}"'),
-        ("pwsh", "activate.ps1", "& '{path}'"),
-        ("powershell", "activate.ps1", "& '{path}'"),
-        ("bash", "activate", "source '{path}'"),
+        ("cmd", "", ".bat"),
+        ("pwsh", "&", ".ps1"),
+        ("powershell", "&", ".ps1"),
     ),
 )
 @pytest.mark.skipif(not WINDOWS, reason="Only Windows shells")
-def test_env_activate_prints_correct_script_on_windows(
+def test_env_activate_prints_correct_script_for_windows_shells(
     tmp_venv: VirtualEnv,
     mocker: MockerFixture,
     tester: CommandTester,
     shell: str,
-    script: str,
-    expected: str,
+    command: str,
+    ext: str,
 ) -> None:
     mocker.patch("shellingham.detect_shell", return_value=(shell, None))
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=tmp_venv)
@@ -75,7 +73,8 @@ def test_env_activate_prints_correct_script_on_windows(
     tester.execute()
 
     line = tester.io.fetch_output().rstrip("\n")
-    assert line == expected.format(path=tmp_venv.bin_dir / script)
+    activation_script = tmp_venv.bin_dir / f"activate{ext}"
+    assert line == f'{command} "{activation_script}"'.strip()
 
 
 @pytest.mark.parametrize("verbosity", ["", "-v", "-vv", "-vvv"])

@@ -11,6 +11,8 @@ from poetry.utils._compat import WINDOWS
 
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from poetry.utils.env import Env
 
 
@@ -57,12 +59,12 @@ class EnvActivateCommand(EnvCommand):
             command, filename = ".", "activate"
 
         if (activation_script := env.bin_dir / filename).exists():
-            quoted = self._quote(str(activation_script), shell)
+            quoted = self._quote(activation_script, shell)
             return f"{command} {quoted}".strip()
         return ""
 
     @staticmethod
-    def _quote(command: str, shell: str) -> str:
-        if WINDOWS and shell == "cmd":
-            return f'"{command}"'
-        return shlex.quote(command)
+    def _quote(activation_script: Path, shell: str) -> str:
+        if WINDOWS and shell in {"cmd", "powershell", "pwsh"}:
+            return f'"{activation_script}"'
+        return shlex.quote(activation_script.as_posix())
