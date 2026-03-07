@@ -11,6 +11,8 @@ from poetry.utils._compat import WINDOWS
 
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from poetry.utils.env import Env
 
 
@@ -48,25 +50,21 @@ class EnvActivateCommand(EnvCommand):
         elif shell in ["csh", "tcsh"]:
             command, filename = "source", "activate.csh"
         elif shell in ["powershell", "pwsh"]:
-            command, filename = ".", "activate.ps1"
+            command, filename = "&", "activate.ps1"
         elif shell == "cmd":
-            command, filename = ".", "activate.bat"
+            command, filename = "", "activate.bat"
         elif shell in ["bash", "mksh", "zsh"]:
             command, filename = "source", "activate"
         else:
             command, filename = ".", "activate"
 
         if (activation_script := env.bin_dir / filename).exists():
-            if WINDOWS:
-                return f"{self._quote(str(activation_script), shell)}"
-            return f"{command} {self._quote(str(activation_script), shell)}"
+            quoted = self._quote(activation_script, shell)
+            return f"{command} {quoted}".strip()
         return ""
 
     @staticmethod
-    def _quote(command: str, shell: str) -> str:
-        if WINDOWS:
-            if shell == "cmd":
-                return f'"{command}"'
-            if shell in ["powershell", "pwsh"]:
-                return f'& "{command}"'
-        return shlex.quote(command)
+    def _quote(activation_script: Path, shell: str) -> str:
+        if WINDOWS and shell in {"cmd", "powershell", "pwsh"}:
+            return f'"{activation_script}"'
+        return shlex.quote(activation_script.as_posix())

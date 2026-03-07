@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from poetry.console.commands.env.activate import ShellNotSupportedError
 from poetry.utils._compat import WINDOWS
 
 
@@ -33,7 +34,6 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
         ("tcsh", "source", ".csh"),
     ),
 )
-@pytest.mark.skipif(WINDOWS, reason="Only Unix shells")
 def test_env_activate_prints_correct_script(
     tmp_venv: VirtualEnv,
     mocker: MockerFixture,
@@ -45,29 +45,33 @@ def test_env_activate_prints_correct_script(
     mocker.patch("shellingham.detect_shell", return_value=(shell, None))
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=tmp_venv)
 
-    tester.execute()
+    if WINDOWS and shell in {"csh", "tcsh"}:
+        with pytest.raises(ShellNotSupportedError):
+            tester.execute()
 
-    line = tester.io.fetch_output().rstrip("\n")
-    assert line == f"{command} {tmp_venv.bin_dir}/activate{ext}"
+    else:
+        tester.execute()
+
+        line = tester.io.fetch_output().rstrip("\n")
+        assert line == f"{command} {tmp_venv.bin_dir.as_posix()}/activate{ext}"
 
 
 @pytest.mark.parametrize(
-    "shell, command, ext, prefix",
+    "shell, command, ext",
     (
-        ("cmd", ".", "activate.bat", ""),
-        ("pwsh", ".", "activate.ps1", "& "),
-        ("powershell", ".", "activate.ps1", "& "),
+        ("cmd", "", ".bat"),
+        ("pwsh", "&", ".ps1"),
+        ("powershell", "&", ".ps1"),
     ),
 )
 @pytest.mark.skipif(not WINDOWS, reason="Only Windows shells")
-def test_env_activate_prints_correct_script_on_windows(
+def test_env_activate_prints_correct_script_for_windows_shells(
     tmp_venv: VirtualEnv,
     mocker: MockerFixture,
     tester: CommandTester,
     shell: str,
     command: str,
     ext: str,
-    prefix: str,
 ) -> None:
     mocker.patch("shellingham.detect_shell", return_value=(shell, None))
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=tmp_venv)
@@ -75,7 +79,8 @@ def test_env_activate_prints_correct_script_on_windows(
     tester.execute()
 
     line = tester.io.fetch_output().rstrip("\n")
-    assert line == f'{prefix}"{tmp_venv.bin_dir / ext!s}"'
+    activation_script = tmp_venv.bin_dir / f"activate{ext}"
+    assert line == f'{command} "{activation_script}"'.strip()
 
 
 @pytest.mark.parametrize("verbosity", ["", "-v", "-vv", "-vvv"])
