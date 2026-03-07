@@ -35,6 +35,7 @@ This should be a valid name as defined by [PEP 508](https://peps.python.org/pep-
 
 
 ```toml
+[project]
 name = "my-package"
 ```
 
@@ -45,6 +46,8 @@ The version of the package. **Always required when the `project` section is spec
 This should be a valid [PEP 440](https://peps.python.org/pep-0440/) string.
 
 ```toml
+[project]
+# ...
 version = "0.1.0"
 ```
 
@@ -66,6 +69,8 @@ version = "1.0"  # base version
 A short description of the package.
 
 ```toml
+[project]
+# ...
 description = "A short description of the package."
 ```
 
@@ -94,6 +99,8 @@ Optional, but it is highly recommended to supply this.
 More identifiers are listed at the [SPDX Open Source License Registry](https://spdx.org/licenses/).
 
 ```toml
+[project]
+# ...
 license = "MIT"
 ```
 
@@ -136,6 +143,8 @@ Specifying an empty list results in no license files being included.
 A path to the README file or the content.
 
 ```toml
+[project]
+# ...
 readme = "README.md"
 ```
 
@@ -159,6 +168,8 @@ readme = ["docs/README1.md", "docs/README2.md"]
 The Python version requirements of the project.
 
 ```toml
+[project]
+# ...
 requires-python = ">=3.8"
 ```
 
@@ -184,6 +195,8 @@ The authors of the package.
 This is a list of authors and should contain at least one author.
 
 ```toml
+[project]
+# ...
 authors = [
     { name = "Sébastien Eustace", email = "sebastien@eustace.io" },
 ]
@@ -196,6 +209,8 @@ The maintainers of the package.
 This is a list of maintainers and should be distinct from authors.
 
 ```toml
+[project]
+# ...
 maintainers = [
     { name = "John Smith", email = "johnsmith@example.org" },
     { name = "Jane Smith", email = "janesmith@example.org" },
@@ -207,6 +222,8 @@ maintainers = [
 A list of keywords that the package is related to.
 
 ```toml
+[project]
+# ...
 keywords = [ "packaging", "poetry" ]
 ```
 
@@ -215,6 +232,8 @@ keywords = [ "packaging", "poetry" ]
 A list of PyPI [trove classifiers](https://pypi.org/classifiers/) that describe the project.
 
 ```toml
+[project]
+# ...
 classifiers = [
     "Topic :: Software Development :: Build Tools",
     "Topic :: Software Development :: Libraries :: Python Modules"
@@ -326,6 +345,8 @@ export = "poetry_plugin_export.plugins:ExportApplicationPlugin"
 The `dependencies` of the project.
 
 ```toml
+[project]
+# ...
 dependencies = [
     "requests>=2.13.0",
 ]
@@ -366,6 +387,8 @@ Whether Poetry operates in package mode (default) or not.
 See [basic usage]({{< relref "basic-usage#operating-modes" >}}) for more information.
 
 ```toml
+[tool.poetry]
+# ...
 package-mode = false
 ```
 
@@ -379,6 +402,7 @@ This should be a valid name as defined by [PEP 508](https://peps.python.org/pep-
 
 
 ```toml
+[tool.poetry]
 name = "my-package"
 ```
 
@@ -395,6 +419,8 @@ The version of the package. **Required in package mode if not defined in the pro
 This should be a valid [PEP 440](https://peps.python.org/pep-0440/) string.
 
 ```toml
+[tool.poetry]
+# ...
 version = "0.1.0"
 ```
 
@@ -412,6 +438,8 @@ If you would like to use semantic versioning for your project, please see
 A short description of the package.
 
 ```toml
+[tool.poetry]
+# ...
 description = "A short description of the package."
 ```
 
@@ -441,6 +469,8 @@ Optional, but it is highly recommended to supply this.
 More identifiers are listed at the [SPDX Open Source License Registry](https://spdx.org/licenses/).
 
 ```toml
+[tool.poetry]
+# ...
 license = "MIT"
 ```
 
@@ -453,6 +483,8 @@ The authors of the package.
 This is a list of authors and should contain at least one author. Authors must be in the form `name <email>`.
 
 ```toml
+[tool.poetry]
+# ...
 authors = [
     "Sébastien Eustace <sebastien@eustace.io>",
 ]
@@ -467,6 +499,8 @@ The maintainers of the package.
 This is a list of maintainers and should be distinct from authors. Maintainers may contain an email and be in the form `name <email>`.
 
 ```toml
+[tool.poetry]
+# ...
 maintainers = [
     "John Smith <johnsmith@example.org>",
     "Jane Smith <janesmith@example.org>",
@@ -513,9 +547,11 @@ readme = ["docs/README1.md", "docs/README2.md"]
 
 **Deprecated**: Use `project.urls` instead.
 
-An URL to the website of the project.
+A URL to the website of the project.
 
 ```toml
+[tool.poetry]
+# ...
 homepage = "https://python-poetry.org/"
 ```
 
@@ -523,9 +559,11 @@ homepage = "https://python-poetry.org/"
 
 **Deprecated**: Use `project.urls` instead.
 
-An URL to the repository of the project.
+A URL to the repository of the project.
 
 ```toml
+[tool.poetry]
+# ...
 repository = "https://github.com/python-poetry/poetry"
 ```
 
@@ -533,9 +571,11 @@ repository = "https://github.com/python-poetry/poetry"
 
 **Deprecated**: Use `project.urls` instead.
 
-An URL to the documentation of the project.
+A URL to the documentation of the project.
 
 ```toml
+[tool.poetry]
+# ...
 documentation = "https://python-poetry.org/docs/"
 ```
 
@@ -546,6 +586,8 @@ documentation = "https://python-poetry.org/docs/"
 A list of keywords that the package is related to.
 
 ```toml
+[tool.poetry]
+# ...
 keywords = ["packaging", "poetry"]
 ```
 
@@ -642,6 +684,8 @@ For instance, if you have a package named `my_package` and you want to also incl
 another package named `extra_package`, you will need to specify `my_package` explicitly:
 
 ```toml
+[tool.poetry]
+# ...
 packages = [
     { include = "my_package" },
     { include = "extra_package" },
@@ -921,6 +965,7 @@ an error will be raised.
 
 ```toml
 [tool.poetry]
+# ...
 requires-poetry = ">=2.0"
 ```
 
