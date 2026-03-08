@@ -1,11 +1,8 @@
 from __future__ import annotations
 
-from datetime import datetime
-from datetime import timezone
 from io import BytesIO
 from typing import TYPE_CHECKING
 from typing import Any
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -16,6 +13,7 @@ from requests.exceptions import TooManyRedirects
 from requests.models import Response
 
 from poetry.factory import Factory
+from poetry.repositories.link_sources.json import SimpleJsonPage
 from poetry.repositories.pypi_repository import PyPiRepository
 
 
@@ -33,38 +31,34 @@ def _use_simple_keyring(with_simple_keyring: None) -> None:
 
 
 def test_release_age_days_with_upload_time(
-    pypi_repository: PyPiRepository, mocker: MockerFixture
+    pypi_repository: PyPiRepository,
 ) -> None:
-    """_release_age_days should compute age relative to now."""
-    link = MagicMock()
-    link.upload_time_isoformat = "2020-01-01T00:00:00+00:00"
-
-    page = MagicMock()
-    page.links_for_version.return_value = [link]
-
-    fixed_now = datetime(2020, 1, 11, tzinfo=timezone.utc)
-    mocker.patch(
-        "poetry.repositories.http_repository.datetime",
-        now=MagicMock(return_value=fixed_now),
-        fromisoformat=datetime.fromisoformat,
-    )
-
+    # requests fixture has upload-time from 2017, so always well over 1000 days old
+    page = pypi_repository.get_page(canonicalize_name("requests"))
     age = pypi_repository._release_age_days(
         page, canonicalize_name("requests"), Version.parse("2.18.0")
     )
-    assert age == 10
+    assert age is not None
+    assert age > 1000
 
 
 def test_release_age_days_without_upload_time(
     pypi_repository: PyPiRepository,
 ) -> None:
-    """_release_age_days should return None when no upload_time is present."""
-    link = MagicMock()
-    link.upload_time_isoformat = None
-
-    page = MagicMock()
-    page.links_for_version.return_value = [link]
-
+    page = SimpleJsonPage(
+        "https://pypi.org/simple/requests/",
+        {
+            "meta": {"api-version": "1.0"},
+            "name": "requests",
+            "files": [
+                {
+                    "filename": "requests-2.18.0-py2.py3-none-any.whl",
+                    "url": "https://files.pythonhosted.org/packages/requests-2.18.0.whl",
+                    "hashes": {"sha256": "abc123"},
+                }
+            ],
+        },
+    )
     age = pypi_repository._release_age_days(
         page, canonicalize_name("requests"), Version.parse("2.18.0")
     )
@@ -126,84 +120,76 @@ def test_find_packages_yanked(
     assert [str(p.version) for p in packages] == expected
 
 
-def test_find_packages_minimum_release_age_filters_new_versions(
-    pypi_repository: PyPiRepository, mocker: MockerFixture
-) -> None:
-    """Versions whose age is below the threshold should be excluded."""
-    # requests fixture has multiple versions; make them all appear brand-new.
-    mocker.patch.object(pypi_repository, "_release_age_days", return_value=0)
-    pypi_repository._minimum_release_age = 7
-
-    packages = pypi_repository.find_packages(
-        Factory.create_dependency("requests", "~2.18.0")
-    )
-    assert packages == []
-
-
-def test_find_packages_minimum_release_age_allows_old_versions(
-    pypi_repository: PyPiRepository, mocker: MockerFixture
-) -> None:
-    """Versions old enough should still be returned."""
-    mocker.patch.object(pypi_repository, "_release_age_days", return_value=30)
-    pypi_repository._minimum_release_age = 7
-
-    packages = pypi_repository.find_packages(
-        Factory.create_dependency("requests", "~2.18.0")
-    )
-    assert len(packages) == 5
-
-
-def test_find_packages_minimum_release_age_exclude_skips_filter(
-    pypi_repository: PyPiRepository, mocker: MockerFixture
-) -> None:
-    """Packages in the exclude list should bypass the age filter."""
-    mocker.patch.object(pypi_repository, "_release_age_days", return_value=0)
-    pypi_repository._minimum_release_age = 7
-    pypi_repository._minimum_release_age_exclude = ["requests"]
-
-    packages = pypi_repository.find_packages(
-        Factory.create_dependency("requests", "~2.18.0")
-    )
-    assert len(packages) == 5
-
-
-def test_find_packages_minimum_release_age_exclude_glob(
-    pypi_repository: PyPiRepository, mocker: MockerFixture
-) -> None:
-    """Glob patterns in the exclude list should work."""
-    mocker.patch.object(pypi_repository, "_release_age_days", return_value=0)
-    pypi_repository._minimum_release_age = 7
-    pypi_repository._minimum_release_age_exclude = ["req*"]
-
-    packages = pypi_repository.find_packages(
-        Factory.create_dependency("requests", "~2.18.0")
-    )
-    assert len(packages) == 5
-
-
-def test_find_packages_minimum_release_age_none_data_fails_open(
-    pypi_repository: PyPiRepository, mocker: MockerFixture
-) -> None:
-    """When upload_time data is absent (returns None), the version is allowed."""
-    mocker.patch.object(pypi_repository, "_release_age_days", return_value=None)
-    pypi_repository._minimum_release_age = 7
-
-    packages = pypi_repository.find_packages(
-        Factory.create_dependency("requests", "~2.18.0")
-    )
-    assert len(packages) == 5
-
-
-def test_find_packages_minimum_release_age_disabled_by_default(
+@pytest.mark.parametrize(
+    ["minimum_age", "expected_count"],
+    [
+        # disabled (default): all versions returned
+        (None, 5),
+        # threshold well below fixture age (~3100+ days): all versions pass
+        (365, 5),
+        # threshold far exceeding fixture age: all versions filtered
+        (99999, 0),
+    ],
+)
+def test_find_packages_minimum_release_age(
+    minimum_age: int | None,
+    expected_count: int,
     pypi_repository: PyPiRepository,
 ) -> None:
-    """With no minimum-release-age configured, all versions are returned normally."""
-    assert pypi_repository._minimum_release_age is None
-
+    pypi_repository._minimum_release_age = minimum_age
     packages = pypi_repository.find_packages(
         Factory.create_dependency("requests", "~2.18.0")
     )
-    assert len(packages) == 5
+    assert len(packages) == expected_count
+
+
+@pytest.mark.parametrize(
+    ["exclude_patterns", "expected_count"],
+    [
+        # no exclusions: all filtered by the high threshold
+        ([], 0),
+        # exact name bypasses filter
+        (["requests"], 5),
+        # glob pattern bypasses filter
+        (["req*"], 5),
+    ],
+)
+def test_find_packages_minimum_release_age_exclude(
+    exclude_patterns: list[str],
+    expected_count: int,
+    pypi_repository: PyPiRepository,
+) -> None:
+    pypi_repository._minimum_release_age = 99999
+    pypi_repository._minimum_release_age_exclude = exclude_patterns
+    packages = pypi_repository.find_packages(
+        Factory.create_dependency("requests", "~2.18.0")
+    )
+    assert len(packages) == expected_count
+
+
+def test_version_meets_minimum_age_fails_open_without_upload_time(
+    pypi_repository: PyPiRepository,
+) -> None:
+    # A page with no upload-time should allow the version through (fail open)
+    page = SimpleJsonPage(
+        "https://pypi.org/simple/requests/",
+        {
+            "meta": {"api-version": "1.0"},
+            "name": "requests",
+            "files": [
+                {
+                    "filename": "requests-2.18.0-py2.py3-none-any.whl",
+                    "url": "https://files.pythonhosted.org/packages/requests-2.18.0.whl",
+                    "hashes": {"sha256": "abc123"},
+                }
+            ],
+        },
+    )
+    pypi_repository._minimum_release_age = 99999
+    result = pypi_repository._version_meets_minimum_age(
+        page, canonicalize_name("requests"), Version.parse("2.18.0")
+    )
+    assert result is True
 
 
 def test_package(
