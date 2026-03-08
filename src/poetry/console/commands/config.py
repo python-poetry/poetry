@@ -101,6 +101,17 @@ To remove a repository (repo is a short alias for repositories):
                 PackageFilterPolicy.validator,
                 PackageFilterPolicy.normalize,
             ),
+            "installer.minimum-release-age": (
+                lambda val: int(val) >= 0,
+                int_normalizer,
+            ),
+            "installer.minimum-release-age-exclude": (
+                lambda val: True,
+                lambda val: [
+                    str(v).strip()
+                    for v in (val.split(",") if isinstance(val, str) else val)
+                ],
+            ),
             "solver.lazy-wheel": (boolean_validator, boolean_normalizer),
             "keyring.enabled": (boolean_validator, boolean_normalizer),
             "python.installation-dir": (str, lambda val: str(Path(val))),

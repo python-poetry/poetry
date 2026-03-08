@@ -171,7 +171,7 @@ class Config:
             "only-binary": None,
             "build-config-settings": {},
             "minimum-release-age": None,
-            "minimum-release-age-exclude": [],
+            "minimum-release-age-exclude": None,
         },
         "python": {"installation-dir": os.path.join("{data-dir}", "python")},
         "solver": {
