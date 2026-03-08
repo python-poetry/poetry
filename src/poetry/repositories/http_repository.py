@@ -528,8 +528,7 @@ class HTTPRepository(CachedRepository):
 
     def _is_release_age_excluded(self, name: NormalizedName) -> bool:
         return any(
-            fnmatch(str(name), pattern)
-            for pattern in self._minimum_release_age_exclude
+            fnmatch(str(name), pattern) for pattern in self._minimum_release_age_exclude
         )
 
     def _version_meets_minimum_age(
