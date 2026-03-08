@@ -5,6 +5,9 @@ import hashlib
 
 from contextlib import contextmanager
 from contextlib import suppress
+from datetime import datetime
+from datetime import timezone
+from fnmatch import fnmatch
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
@@ -71,6 +74,12 @@ class HTTPRepository(CachedRepository):
 
         self._lazy_wheel = config.get("solver.lazy-wheel", True)
         self._max_retries = config.get("requests.max-retries", 0)
+        self._minimum_release_age: int | None = config.get(
+            "installer.minimum-release-age"
+        )
+        self._minimum_release_age_exclude: list[str] = config.get(
+            "installer.minimum-release-age-exclude", []
+        )
         # We are tracking if a domain supports range requests or not to avoid
         # unnecessary requests.
         # ATTENTION: A domain might support range requests only for some files, so the
@@ -477,3 +486,49 @@ class HTTPRepository(CachedRepository):
         if self._is_json_response(response):
             return SimpleJsonPage(response.url, response.json())
         return HTMLPage(response.url, response.text)
+
+    def _release_age_days(
+        self, page: LinkSource, name: NormalizedName, version: Any
+    ) -> int | None:
+        """
+        Return the age in days of the oldest distribution file for the given version,
+        or None if no upload_time data is available (e.g. HTML-only index pages).
+        """
+        upload_times = [
+            datetime.fromisoformat(link.upload_time_isoformat)
+            for link in page.links_for_version(name, version)
+            if link.upload_time_isoformat is not None
+        ]
+        if not upload_times:
+            return None
+        return (datetime.now(timezone.utc) - min(upload_times)).days
+
+    def _is_release_age_excluded(self, name: NormalizedName) -> bool:
+        return any(
+            fnmatch(str(name), pattern)
+            for pattern in self._minimum_release_age_exclude
+        )
+
+    def _version_meets_minimum_age(
+        self, page: LinkSource, name: NormalizedName, version: Any
+    ) -> bool:
+        """
+        Return True if the version is old enough to satisfy minimum-release-age,
+        or if the feature is disabled / the package is excluded / age data is absent.
+        """
+        if self._minimum_release_age is None:
+            return True
+        if self._is_release_age_excluded(name):
+            return True
+        age = self._release_age_days(page, name, version)
+        if age is None:
+            # No upload_time data available (HTML index) — fail open.
+            return True
+        if age < self._minimum_release_age:
+            self._log(
+                f"Skipping {name} {version}: released {age} day(s) ago"
+                f" (minimum-release-age={self._minimum_release_age})",
+                level="debug",
+            )
+            return False
+        return True

@@ -118,6 +118,7 @@ class PyPiRepository(HTTPRepository):
             (version, json_page.yanked(name, version))
             for version in json_page.versions(name)
             if constraint.allows(version)
+            and self._version_meets_minimum_age(json_page, name, version)
         ]
 
         return [Package(name, version, yanked=yanked) for version, yanked in versions]

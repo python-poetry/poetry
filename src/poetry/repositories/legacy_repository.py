@@ -95,6 +95,7 @@ class LegacyRepository(HTTPRepository):
             (version, page.yanked(name, version))
             for version in page.versions(name)
             if constraint.allows(version)
+            and self._version_meets_minimum_age(page, name, version)
         ]
 
         return [

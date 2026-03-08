@@ -170,6 +170,8 @@ class Config:
             "no-binary": None,
             "only-binary": None,
             "build-config-settings": {},
+            "minimum-release-age": None,
+            "minimum-release-age-exclude": [],
         },
         "python": {"installation-dir": os.path.join("{data-dir}", "python")},
         "solver": {
@@ -398,8 +400,16 @@ class Config:
         if name in {
             "installer.max-workers",
             "requests.max-retries",
+            "installer.minimum-release-age",
         }:
             return int_normalizer
+
+        if name == "installer.minimum-release-age-exclude":
+            return lambda val: (
+                [v.strip() for v in val.split(",")]
+                if isinstance(val, str)
+                else list(val)
+            )
 
         if name in ["installer.no-binary", "installer.only-binary"]:
             return PackageFilterPolicy.normalize

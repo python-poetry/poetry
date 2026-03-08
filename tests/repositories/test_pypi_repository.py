@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+from datetime import datetime
+from datetime import timezone
 from io import BytesIO
 from typing import TYPE_CHECKING
 from typing import Any
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -27,6 +30,45 @@ if TYPE_CHECKING:
 @pytest.fixture(autouse=True)
 def _use_simple_keyring(with_simple_keyring: None) -> None:
     pass
+
+
+def test_release_age_days_with_upload_time(
+    pypi_repository: PyPiRepository, mocker: MockerFixture
+) -> None:
+    """_release_age_days should compute age relative to now."""
+    link = MagicMock()
+    link.upload_time_isoformat = "2020-01-01T00:00:00+00:00"
+
+    page = MagicMock()
+    page.links_for_version.return_value = [link]
+
+    fixed_now = datetime(2020, 1, 11, tzinfo=timezone.utc)
+    mocker.patch(
+        "poetry.repositories.http_repository.datetime",
+        now=MagicMock(return_value=fixed_now),
+        fromisoformat=datetime.fromisoformat,
+    )
+
+    age = pypi_repository._release_age_days(
+        page, canonicalize_name("requests"), Version.parse("2.18.0")
+    )
+    assert age == 10
+
+
+def test_release_age_days_without_upload_time(
+    pypi_repository: PyPiRepository,
+) -> None:
+    """_release_age_days should return None when no upload_time is present."""
+    link = MagicMock()
+    link.upload_time_isoformat = None
+
+    page = MagicMock()
+    page.links_for_version.return_value = [link]
+
+    age = pypi_repository._release_age_days(
+        page, canonicalize_name("requests"), Version.parse("2.18.0")
+    )
+    assert age is None
 
 
 def test_find_packages(pypi_repository: PyPiRepository) -> None:
@@ -82,6 +124,86 @@ def test_find_packages_yanked(
     packages = repo.find_packages(Factory.create_dependency("black", constraint))
 
     assert [str(p.version) for p in packages] == expected
+
+
+def test_find_packages_minimum_release_age_filters_new_versions(
+    pypi_repository: PyPiRepository, mocker: MockerFixture
+) -> None:
+    """Versions whose age is below the threshold should be excluded."""
+    # requests fixture has multiple versions; make them all appear brand-new.
+    mocker.patch.object(pypi_repository, "_release_age_days", return_value=0)
+    pypi_repository._minimum_release_age = 7
+
+    packages = pypi_repository.find_packages(
+        Factory.create_dependency("requests", "~2.18.0")
+    )
+    assert packages == []
+
+
+def test_find_packages_minimum_release_age_allows_old_versions(
+    pypi_repository: PyPiRepository, mocker: MockerFixture
+) -> None:
+    """Versions old enough should still be returned."""
+    mocker.patch.object(pypi_repository, "_release_age_days", return_value=30)
+    pypi_repository._minimum_release_age = 7
+
+    packages = pypi_repository.find_packages(
+        Factory.create_dependency("requests", "~2.18.0")
+    )
+    assert len(packages) == 5
+
+
+def test_find_packages_minimum_release_age_exclude_skips_filter(
+    pypi_repository: PyPiRepository, mocker: MockerFixture
+) -> None:
+    """Packages in the exclude list should bypass the age filter."""
+    mocker.patch.object(pypi_repository, "_release_age_days", return_value=0)
+    pypi_repository._minimum_release_age = 7
+    pypi_repository._minimum_release_age_exclude = ["requests"]
+
+    packages = pypi_repository.find_packages(
+        Factory.create_dependency("requests", "~2.18.0")
+    )
+    assert len(packages) == 5
+
+
+def test_find_packages_minimum_release_age_exclude_glob(
+    pypi_repository: PyPiRepository, mocker: MockerFixture
+) -> None:
+    """Glob patterns in the exclude list should work."""
+    mocker.patch.object(pypi_repository, "_release_age_days", return_value=0)
+    pypi_repository._minimum_release_age = 7
+    pypi_repository._minimum_release_age_exclude = ["req*"]
+
+    packages = pypi_repository.find_packages(
+        Factory.create_dependency("requests", "~2.18.0")
+    )
+    assert len(packages) == 5
+
+
+def test_find_packages_minimum_release_age_none_data_fails_open(
+    pypi_repository: PyPiRepository, mocker: MockerFixture
+) -> None:
+    """When upload_time data is absent (returns None), the version is allowed."""
+    mocker.patch.object(pypi_repository, "_release_age_days", return_value=None)
+    pypi_repository._minimum_release_age = 7
+
+    packages = pypi_repository.find_packages(
+        Factory.create_dependency("requests", "~2.18.0")
+    )
+    assert len(packages) == 5
+
+
+def test_find_packages_minimum_release_age_disabled_by_default(
+    pypi_repository: PyPiRepository,
+) -> None:
+    """With no minimum-release-age configured, all versions are returned normally."""
+    assert pypi_repository._minimum_release_age is None
+
+    packages = pypi_repository.find_packages(
+        Factory.create_dependency("requests", "~2.18.0")
+    )
+    assert len(packages) == 5
 
 
 def test_package(
