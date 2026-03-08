@@ -405,11 +405,10 @@ class Config:
             return int_normalizer
 
         if name == "installer.minimum-release-age-exclude":
-            return lambda val: (
-                [v.strip() for v in val.split(",")]
-                if isinstance(val, str)
-                else list(val)
-            )
+            return lambda val: [
+                str(v).strip()
+                for v in (val.split(",") if isinstance(val, str) else val)
+            ]
 
         if name in ["installer.no-binary", "installer.only-binary"]:
             return PackageFilterPolicy.normalize

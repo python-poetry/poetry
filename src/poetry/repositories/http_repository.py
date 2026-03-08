@@ -487,6 +487,27 @@ class HTTPRepository(CachedRepository):
             return SimpleJsonPage(response.url, response.json())
         return HTMLPage(response.url, response.text)
 
+    @staticmethod
+    def _parse_upload_time(value: str) -> datetime | None:
+        """
+        Parse an ISO 8601 upload timestamp into a timezone-aware UTC datetime.
+
+        Handles the trailing ``Z`` suffix that PyPI uses, which is only accepted
+        by ``datetime.fromisoformat`` on Python 3.11+.  Returns ``None`` for any
+        value that cannot be parsed so a single bad timestamp does not abort
+        dependency resolution.
+        """
+        try:
+            # Replace trailing Z with +00:00 for cross-version compatibility.
+            normalized = value.rstrip("Z") + "+00:00" if value.endswith("Z") else value
+            dt = datetime.fromisoformat(normalized)
+            # Make naive datetimes explicitly UTC.
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return dt
+        except (ValueError, AttributeError):
+            return None
+
     def _release_age_days(
         self, page: LinkSource, name: NormalizedName, version: Any
     ) -> int | None:
@@ -495,9 +516,11 @@ class HTTPRepository(CachedRepository):
         or None if no upload_time data is available (e.g. HTML-only index pages).
         """
         upload_times = [
-            datetime.fromisoformat(link.upload_time_isoformat)
+            parsed
             for link in page.links_for_version(name, version)
             if link.upload_time_isoformat is not None
+            if (parsed := self._parse_upload_time(link.upload_time_isoformat))
+            is not None
         ]
         if not upload_times:
             return None

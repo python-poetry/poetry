@@ -30,6 +30,31 @@ def _use_simple_keyring(with_simple_keyring: None) -> None:
     pass
 
 
+@pytest.mark.parametrize(
+    ["value", "expected_is_none"],
+    [
+        # Z suffix (PyPI's format) — must not raise on Python <3.11
+        ("2017-06-14T15:44:35.080617Z", False),
+        # Explicit UTC offset
+        ("2017-06-14T15:44:35+00:00", False),
+        # Naive datetime — treated as UTC
+        ("2017-06-14T15:44:35", False),
+        # Malformed — must return None, not raise
+        ("not-a-date", True),
+        ("", True),
+    ],
+)
+def test_parse_upload_time(
+    value: str, expected_is_none: bool, pypi_repository: PyPiRepository
+) -> None:
+    result = pypi_repository._parse_upload_time(value)
+    if expected_is_none:
+        assert result is None
+    else:
+        assert result is not None
+        assert result.tzinfo is not None
+
+
 def test_release_age_days_with_upload_time(
     pypi_repository: PyPiRepository,
 ) -> None:
