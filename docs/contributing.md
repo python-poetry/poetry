@@ -265,8 +265,8 @@ pipx install --suffix @pr1234 git+https://github.com/python-poetry/poetry.git@re
   [Documentation]: {{< ref "/docs" >}}
   [FAQ]: {{< relref "faq" >}}
   [Issue Tracker]: https://github.com/python-poetry/poetry/issues
-  [area/docs label]: https://github.com/python-poetry/poetry/labels/area/docs
-  [kind/question label]: https://github.com/python-poetry/poetry/labels/kind/question
+  [area/docs label]: https://github.com/python-poetry/poetry/labels/area%2Fdocs
+  [kind/question label]: https://github.com/python-poetry/poetry/labels/kind%2Fquestion
   [Issue Template]: https://github.com/python-poetry/poetry/issues/new/choose
   [Discussions]: https://github.com/python-poetry/poetry/discussions
   [Discord]: https://discord.com/invite/awxPgve
