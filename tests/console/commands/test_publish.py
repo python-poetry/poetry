@@ -233,6 +233,11 @@ def test_publish_build_no_interaction_skips_confirmation(
     exit_code = app_tester.execute("publish --build --no-interaction --dry-run")
 
     assert exit_code == 0
+    output = app_tester.io.fetch_output()
+    error = app_tester.io.fetch_error()
+
     confirm.assert_not_called()
+    assert "Build anyway?" not in output
+    assert "Build anyway?" not in error
     command_call.assert_called_once_with("build", args="--output dist")
     assert publisher_publish.call_count == 1
