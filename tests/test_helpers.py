@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 import pytest
 
@@ -49,7 +50,7 @@ def test_isolated_environment_updates_environ() -> None:
     assert "NEW_VAR" not in os.environ
 
 
-def test_switch_working_directory_restores_original_cwd_on_error(tmp_path) -> None:
+def test_switch_working_directory_restores_original_cwd_on_error(tmp_path: Path) -> None:
     original_cwd = os.getcwd()
 
     with pytest.raises(RuntimeError):
@@ -60,7 +61,7 @@ def test_switch_working_directory_restores_original_cwd_on_error(tmp_path) -> No
     assert os.getcwd() == original_cwd
 
 
-def test_switch_working_directory_remove_deletes_directory(tmp_path) -> None:
+def test_switch_working_directory_remove_deletes_directory(tmp_path: Path) -> None:
     temp_dir = tmp_path / "temp-working-dir"
     temp_dir.mkdir()
 
