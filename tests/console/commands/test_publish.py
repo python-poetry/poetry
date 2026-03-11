@@ -215,3 +215,18 @@ def test_publish_dist_dir_and_build_options(
     assert "Publishing simple-project (1.2.3) to PyPI" in output
     assert "- Uploading simple_project-1.2.3.tar.gz" in error
     assert "- Uploading simple_project-1.2.3-py2.py3-none-any.whl" in error
+
+
+def test_publish_build_no_interaction_skips_confirmation(
+    app_tester: ApplicationTester, mocker: MockerFixture
+) -> None:
+    confirm = mocker.patch("poetry.console.commands.publish.PublishCommand.confirm")
+    command_call = mocker.patch("poetry.console.commands.publish.PublishCommand.call")
+    publisher_publish = mocker.patch("poetry.publishing.Publisher.publish")
+
+    exit_code = app_tester.execute("publish --build --no-interaction --dry-run")
+
+    assert exit_code == 0
+    confirm.assert_not_called()
+    command_call.assert_called_once_with("build", args="--output dist")
+    assert publisher_publish.call_count == 1

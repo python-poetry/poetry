@@ -72,9 +72,13 @@ the config command.
 
         # Building package first, if told
         if self.option("build"):
-            if publisher.files and not self.confirm(
-                f"There are <info>{len(publisher.files)}</info> files ready for"
-                " publishing. Build anyway?"
+            if (
+                publisher.files
+                and self.io.is_interactive()
+                and not self.confirm(
+                    f"There are <info>{len(publisher.files)}</info> files ready for"
+                    " publishing. Build anyway?"
+                )
             ):
                 self.line_error("<error>Aborted!</error>")
 
