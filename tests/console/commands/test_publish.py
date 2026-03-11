@@ -5,6 +5,7 @@ import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import NoReturn
+from unittest.mock import PropertyMock
 
 import pytest
 import requests
@@ -220,6 +221,11 @@ def test_publish_dist_dir_and_build_options(
 def test_publish_build_no_interaction_skips_confirmation(
     app_tester: ApplicationTester, mocker: MockerFixture
 ) -> None:
+    mocker.patch(
+        "poetry.publishing.publisher.Publisher.files",
+        new_callable=PropertyMock,
+        return_value=[Path("dist/simple_project-1.2.3-py2.py3-none-any.whl")],
+    )
     confirm = mocker.patch("poetry.console.commands.publish.PublishCommand.confirm")
     command_call = mocker.patch("poetry.console.commands.publish.PublishCommand.call")
     publisher_publish = mocker.patch("poetry.publishing.Publisher.publish")
