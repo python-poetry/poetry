@@ -228,6 +228,11 @@ def test_publish_build_no_interaction_skips_confirmation(
     )
     confirm = mocker.patch("poetry.console.commands.publish.PublishCommand.confirm")
     command_call = mocker.patch("poetry.console.commands.publish.PublishCommand.call")
+    publisher_files = mocker.patch(
+        "poetry.publishing.publisher.Publisher.files",
+        new_callable=mocker.PropertyMock,
+        return_value=[Path("dist/existing.whl")],
+    )
     publisher_publish = mocker.patch("poetry.publishing.Publisher.publish")
 
     exit_code = app_tester.execute("publish --build --no-interaction --dry-run")
@@ -235,4 +240,5 @@ def test_publish_build_no_interaction_skips_confirmation(
     assert exit_code == 0
     confirm.assert_not_called()
     command_call.assert_called_once_with("build", args="--output dist")
+    assert publisher_files.call_count >= 1
     assert publisher_publish.call_count == 1
