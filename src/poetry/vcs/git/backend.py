@@ -65,9 +65,9 @@ ERROR_MESSAGE_BAD_REMOTE = (
     "- the remote ({remote}) you have specified\n"
     "    - was misspelled\n"
     "    - does not exist\n"
-    "    - requires credentials that were either not configured or is incorrect\n"
+    "    - requires credentials that were either not configured or are incorrect\n"
     "    - contains Git submodules that require credentials that were either not configured or are incorrect\n"
-    "    - is in accessible due to network issues"
+    "    - is inaccessible due to network issues"
 )
 ERROR_MESSAGE_FILE_LOCK = (
     "- another process is holding the file lock\n"
