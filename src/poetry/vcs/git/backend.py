@@ -66,6 +66,7 @@ ERROR_MESSAGE_BAD_REMOTE = (
     "    - was misspelled\n"
     "    - does not exist\n"
     "    - requires credentials that were either not configured or is incorrect\n"
+    "    - contains Git submodules that require credentials that were either not configured or are incorrect\n"
     "    - is in accessible due to network issues"
 )
 ERROR_MESSAGE_FILE_LOCK = (
