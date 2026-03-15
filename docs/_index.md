@@ -195,7 +195,8 @@ If you have installed Python through the Microsoft Store, the `poetry` binary
 will be installed to a different location, for example:
 
 ```
-%LOCALAPPDATA%\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\Roaming\Python\Scripts
+%LOCALAPPDATA%\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0
+\LocalCache\Roaming\Python\Scripts
 ```
 
 Replace `3.12` with your installed Python version and `qbz5n2kfra8p0` with your suffix.
