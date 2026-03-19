@@ -55,24 +55,22 @@ def test_isolated_environment_updates_environ() -> None:
     assert "NEW_VAR" not in os.environ
 
 
-def test_switch_working_directory_restores_original_cwd_on_error(
-    tmp_path: Path,
+@pytest.mark.parametrize(("remove", "raise_error"), [(False, False), (False, True), (True, False), (True, True)])
+def test_switch_working_directory_changes_restores_and_removes(
+    tmp_path: Path, remove: bool, raise_error: bool
 ) -> None:
     original_cwd = os.getcwd()
-
-    with pytest.raises(RuntimeError), switch_working_directory(tmp_path):
-        assert os.getcwd() == str(tmp_path)
-        raise RuntimeError("boom")
-
-    assert os.getcwd() == original_cwd
-
-
-def test_switch_working_directory_remove_deletes_directory(tmp_path: Path) -> None:
-    temp_dir = tmp_path / "temp-working-dir"
+    temp_dir = tmp_path / f"temp-working-dir-{remove}-{raise_error}"
     temp_dir.mkdir()
 
-    with switch_working_directory(temp_dir, remove=True):
-        assert os.getcwd() == str(temp_dir)
-        assert temp_dir.exists()
+    if raise_error:
+        with pytest.raises(RuntimeError):
+            with switch_working_directory(temp_dir, remove=remove):
+                assert os.getcwd() == str(temp_dir)
+                raise RuntimeError("boom")
+    else:
+        with switch_working_directory(temp_dir, remove=remove):
+            assert os.getcwd() == str(temp_dir)
 
-    assert not temp_dir.exists()
+    assert os.getcwd() == original_cwd
+    assert temp_dir.exists() is (not remove)
