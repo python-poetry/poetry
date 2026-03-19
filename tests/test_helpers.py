@@ -55,7 +55,10 @@ def test_isolated_environment_updates_environ() -> None:
     assert "NEW_VAR" not in os.environ
 
 
-@pytest.mark.parametrize(("remove", "raise_error"), [(False, False), (False, True), (True, False), (True, True)])
+@pytest.mark.parametrize(
+    ("remove", "raise_error"),
+    [(False, False), (False, True), (True, False), (True, True)],
+)
 def test_switch_working_directory_changes_restores_and_removes(
     tmp_path: Path, remove: bool, raise_error: bool
 ) -> None:
@@ -64,10 +67,12 @@ def test_switch_working_directory_changes_restores_and_removes(
     temp_dir.mkdir()
 
     if raise_error:
-        with pytest.raises(RuntimeError):
-            with switch_working_directory(temp_dir, remove=remove):
-                assert os.getcwd() == str(temp_dir)
-                raise RuntimeError("boom")
+        with (
+            pytest.raises(RuntimeError),
+            switch_working_directory(temp_dir, remove=remove),
+        ):
+            assert os.getcwd() == str(temp_dir)
+            raise RuntimeError("boom")
     else:
         with switch_working_directory(temp_dir, remove=remove):
             assert os.getcwd() == str(temp_dir)
