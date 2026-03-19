@@ -47,7 +47,10 @@ class CachedRepository(Repository, ABC):
         from poetry.inspection.info import PackageInfo
 
         if self._disable_cache:
-            return PackageInfo.load(self._get_release_info(name, version))
+            cached = self._get_release_info(name, version)
+            # Keep the persistent cache in sync so later cached runs see fresh data.
+            self._release_cache.put(f"{name}:{version}", cached)
+            return PackageInfo.load(cached)
 
         cached = self._release_cache.remember(
             f"{name}:{version}", lambda: self._get_release_info(name, version)

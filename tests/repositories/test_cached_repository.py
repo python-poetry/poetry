@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -11,8 +12,14 @@ from poetry.core.constraints.version import Version
 from poetry.inspection.info import PackageInfo
 from poetry.repositories.cached_repository import CachedRepository
 
+if TYPE_CHECKING:
+    from tests.conftest import Config
+
 
 class MockCachedRepository(CachedRepository):
+    def __init__(self, name: str, *, disable_cache: bool, config: Config) -> None:
+        super().__init__(name, disable_cache=disable_cache, config=config)
+
     def _get_release_info(
         self, name: NormalizedName, version: Version
     ) -> dict[str, Any]:
@@ -61,9 +68,12 @@ def outdated_release_info() -> PackageInfo:
 
 @pytest.mark.parametrize("disable_cache", [False, True])
 def test_get_release_info_cache(
-    release_info: PackageInfo, outdated_release_info: PackageInfo, disable_cache: bool
+    release_info: PackageInfo,
+    outdated_release_info: PackageInfo,
+    disable_cache: bool,
+    config: Config,
 ) -> None:
-    repo = MockCachedRepository("mock", disable_cache=disable_cache)
+    repo = MockCachedRepository("mock", disable_cache=disable_cache, config=config)
     repo._get_release_info = lambda name, version: outdated_release_info.asdict()  # type: ignore[method-assign]
 
     name = canonicalize_name("mylib")
@@ -80,3 +90,25 @@ def test_get_release_info_cache(
     # after clearing the cache entry, updated data is returned
     repo.forget(name, version)
     assert len(repo.get_release_info(name, version).files) == 2
+
+
+def test_get_release_info_disable_cache_ignores_stale_persistent_cache(
+    release_info: PackageInfo, outdated_release_info: PackageInfo, config: Config
+) -> None:
+    name = canonicalize_name("mylib")
+    version = Version.parse("1.0")
+
+    cached_repo = MockCachedRepository("mock", disable_cache=False, config=config)
+    cached_repo._get_release_info = lambda name, version: outdated_release_info.asdict()  # type: ignore[method-assign]
+    assert len(cached_repo.get_release_info(name, version).files) == 1
+
+    fresh_repo = MockCachedRepository("mock", disable_cache=True, config=config)
+    fresh_repo._get_release_info = lambda name, version: release_info.asdict()  # type: ignore[method-assign]
+
+    assert len(fresh_repo.get_release_info(name, version).files) == 2
+
+    cached_repo = MockCachedRepository("mock", disable_cache=False, config=config)
+    cached_repo._get_release_info = lambda name, version: (_ for _ in ()).throw(  # type: ignore[method-assign]
+        AssertionError("upstream should not be called")
+    )
+    assert len(cached_repo.get_release_info(name, version).files) == 2

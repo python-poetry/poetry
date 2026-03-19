@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 import json
 import re
 import shutil
@@ -23,8 +24,10 @@ from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
 
 from poetry.factory import Factory
+from poetry.inspection.info import PackageInfo
 from poetry.installation import Installer
 from poetry.packages import Locker as BaseLocker
+from poetry.repositories.cached_repository import CachedRepository
 from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
 from poetry.repositories.installed_repository import InstalledRepository
@@ -1606,6 +1609,115 @@ def test_installer_with_pypi_repository(
 
     expected = fixture("with-pypi-repository")
     assert locker.written_data == expected
+
+
+def test_update_no_cache_refreshes_release_cache_and_keeps_lockfile_stable(
+    package: ProjectPackage,
+    locker: Locker,
+    installed: CustomInstalledRepository,
+    env: NullEnv,
+    config: Config,
+    mocker: MockerFixture,
+) -> None:
+    package.add_dependency(Factory.create_dependency("foo", "^1.0"))
+
+    cache_version = str(CachedRepository.CACHE_VERSION)
+    foo_release_info_a = PackageInfo(
+        name="foo",
+        version="1.0.0",
+        summary="",
+        requires_dist=[],
+        requires_python="*",
+        cache_version=cache_version,
+    ).asdict()
+    foo_release_info_b = PackageInfo(
+        name="foo",
+        version="1.0.0",
+        summary="",
+        requires_dist=["bar (>=1.0)"],
+        requires_python="*",
+        cache_version=cache_version,
+    ).asdict()
+    bar_release_info = PackageInfo(
+        name="bar",
+        version="1.0.0",
+        summary="",
+        requires_dist=[],
+        requires_python="*",
+        cache_version=cache_version,
+    ).asdict()
+
+    class MockCachedRepository(CachedRepository):
+        def __init__(
+            self, release_info: dict[str, dict[str, Any]], *, disable_cache: bool
+        ) -> None:
+            super().__init__("mock", disable_cache=disable_cache, config=config)
+            self._release_info = release_info
+            self.add_package(get_package("foo", "1.0.0"))
+            self.add_package(get_package("bar", "1.0.0"))
+
+        def _get_release_info(
+            self, name: str, version: Version
+        ) -> dict[str, Any]:
+            return self._release_info[name]
+
+    stale_repository = MockCachedRepository(
+        {"foo": foo_release_info_a, "bar": bar_release_info}, disable_cache=False
+    )
+    stale_repository.get_release_info("foo", Version.parse("1.0.0"))
+
+    no_cache_repository = MockCachedRepository(
+        {"foo": foo_release_info_b, "bar": bar_release_info}, disable_cache=True
+    )
+    no_cache_spy = mocker.spy(no_cache_repository, "_get_release_info")
+
+    no_cache_pool = RepositoryPool(config=config)
+    no_cache_pool.add_repository(no_cache_repository)
+
+    no_cache_installer = Installer(
+        NullIO(),
+        env,
+        package,
+        locker,
+        no_cache_pool,
+        config,
+        installed=installed,
+        executor=TestExecutor(env, no_cache_pool, config, NullIO()),
+        disable_cache=True,
+    )
+
+    no_cache_installer.update(True)
+    assert no_cache_installer.run() == 0
+    first_lock_data = deepcopy(locker.written_data)
+    assert no_cache_spy.call_count > 0
+
+    cached_repository = MockCachedRepository(
+        {"foo": foo_release_info_a, "bar": bar_release_info}, disable_cache=False
+    )
+    cached_spy = mocker.spy(cached_repository, "_get_release_info")
+    assert cached_repository.get_release_info("foo", Version.parse("1.0.0")).requires_dist == [
+        "bar (>=1.0)"
+    ]
+    assert cached_spy.call_count == 0
+
+    cached_pool = RepositoryPool(config=config)
+    cached_pool.add_repository(cached_repository)
+
+    cached_installer = Installer(
+        NullIO(),
+        env,
+        package,
+        locker,
+        cached_pool,
+        config,
+        installed=installed,
+        executor=TestExecutor(env, cached_pool, config, NullIO()),
+    )
+
+    cached_installer.update(True)
+    assert cached_installer.run() == 0
+
+    assert locker.written_data == first_lock_data
 
 
 def test_run_installs_with_local_file(

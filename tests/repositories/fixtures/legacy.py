@@ -13,6 +13,7 @@ import responses
 
 from packaging.utils import canonicalize_name
 
+from tests.conftest import Config
 from poetry.repositories.legacy_repository import LegacyRepository
 from tests.helpers import FIXTURE_PATH_REPOSITORIES_LEGACY
 from tests.helpers import FIXTURE_PATH_REPOSITORIES_PYPI
@@ -149,6 +150,7 @@ def legacy_repository_html(
     legacy_repository_url: str,
     legacy_repository_html_callback: HttpRequestCallback,
     mock_files_python_hosted: None,
+    config: Config,
 ) -> TestLegacyRepository:
     http.add_callback(
         responses.GET,
@@ -156,7 +158,9 @@ def legacy_repository_html(
         callback=legacy_repository_html_callback,
     )
 
-    repo = TestLegacyRepository("legacy", legacy_repository_url, disable_cache=True)
+    repo = TestLegacyRepository(
+        "legacy", legacy_repository_url, disable_cache=True, config=config
+    )
     repo.json = False
     return repo
 
@@ -167,6 +171,7 @@ def legacy_repository_json(
     legacy_repository_url: str,
     legacy_repository_json_callback: HttpRequestCallback,
     mock_files_python_hosted: None,
+    config: Config,
 ) -> TestLegacyRepository:
     http.add_callback(
         responses.GET,
@@ -174,7 +179,9 @@ def legacy_repository_json(
         callback=legacy_repository_json_callback,
     )
 
-    repo = TestLegacyRepository("legacy", legacy_repository_url, disable_cache=True)
+    repo = TestLegacyRepository(
+        "legacy", legacy_repository_url, disable_cache=True, config=config
+    )
     repo.json = True
     return repo
 
@@ -188,6 +195,7 @@ def legacy_repository(request: FixtureRequest) -> TestLegacyRepository:
 def specialized_legacy_repository_mocker(
     legacy_repository_html: LegacyRepository,
     legacy_repository_url: str,
+    config: Config,
     mocker: MockerFixture,
 ) -> SpecializedLegacyRepositoryMocker:
     """
@@ -201,7 +209,7 @@ def specialized_legacy_repository_mocker(
         repository_url: str = legacy_repository_url,
     ) -> LegacyRepository:
         specialized_repository = LegacyRepository(
-            repository_name, repository_url, disable_cache=True
+            repository_name, repository_url, disable_cache=True, config=config
         )
         original_get_page = specialized_repository._get_page
 

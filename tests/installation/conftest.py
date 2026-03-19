@@ -4,6 +4,7 @@ import pytest
 
 from packaging.tags import Tag
 
+from tests.conftest import Config
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.pypi_repository import PyPiRepository
 from poetry.repositories.repository_pool import RepositoryPool
@@ -21,14 +22,24 @@ def env() -> MockEnv:
 
 
 @pytest.fixture()
-def pool(legacy_repository_html: LegacyRepository) -> RepositoryPool:
+def pool(legacy_repository_html: LegacyRepository, config: Config) -> RepositoryPool:
     pool = RepositoryPool()
 
-    pool.add_repository(PyPiRepository(disable_cache=True))
+    pool.add_repository(PyPiRepository(disable_cache=True, config=config))
     pool.add_repository(
-        LegacyRepository("foo", "https://legacy.foo.bar/simple/", disable_cache=True)
+        LegacyRepository(
+            "foo",
+            "https://legacy.foo.bar/simple/",
+            disable_cache=True,
+            config=config,
+        )
     )
     pool.add_repository(
-        LegacyRepository("foo2", "https://legacy.foo2.bar/simple/", disable_cache=True)
+        LegacyRepository(
+            "foo2",
+            "https://legacy.foo2.bar/simple/",
+            disable_cache=True,
+            config=config,
+        )
     )
     return pool

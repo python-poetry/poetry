@@ -13,6 +13,7 @@ import responses
 from packaging.utils import parse_sdist_filename
 from packaging.utils import parse_wheel_filename
 
+from tests.conftest import Config
 from poetry.repositories.pypi_repository import PyPiRepository
 from tests.helpers import FIXTURE_PATH_DISTRIBUTIONS
 from tests.helpers import FIXTURE_PATH_REPOSITORIES_PYPI
@@ -100,6 +101,7 @@ def pypi_repository(
     legacy_repository_html_callback: HttpRequestCallback,
     package_json_locations: list[Path],
     mock_files_python_hosted: None,
+    config: Config,
 ) -> PyPiRepository:
     def default_callback(request: PreparedRequest) -> HttpResponse:
         return 404, {}, b"Not Found"
@@ -162,7 +164,7 @@ def pypi_repository(
         callback=simple_callback,
     )
 
-    return PyPiRepository(disable_cache=True, fallback=False)
+    return PyPiRepository(disable_cache=True, fallback=False, config=config)
 
 
 @pytest.fixture
