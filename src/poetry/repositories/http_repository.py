@@ -67,7 +67,7 @@ class HTTPRepository(CachedRepository):
             pool_size=pool_size,
         )
         self._authenticator.add_repository(name, url)
-        self.get_page = functools.lru_cache(maxsize=None)(self._get_page)
+        self._get_page_cached = functools.lru_cache(maxsize=None)(self._get_page)
 
         self._lazy_wheel = config.get("solver.lazy-wheel", True)
         self._max_retries = config.get("requests.max-retries", 0)
@@ -467,6 +467,24 @@ class HTTPRepository(CachedRepository):
             response.headers.get("Content-Type", "").split(";")[0].strip()
             == "application/vnd.pypi.simple.v1+json"
         )
+
+    def get_page(self, name: NormalizedName) -> LinkSource:
+        """Return the simple-repository page for *name*.
+
+        When ``disable_cache`` is *True* (e.g. ``--no-cache``) the underlying
+        HTTP response is fetched fresh on every call so that the page content
+        is never stale.  Otherwise the result is memoised in-process via an
+        ``lru_cache`` for the lifetime of this repository object.
+
+        Keeping both paths in one method (rather than assigning an instance
+        attribute in ``__init__``) means the ``disable_cache`` flag is
+        evaluated at *call* time, which fixes the inconsistency reported in
+        issue #10584 where ``--no-cache`` bypassed the file-based release-info
+        cache but still served stale page data from the in-memory LRU cache.
+        """
+        if self._disable_cache:
+            return self._get_page(name)
+        return self._get_page_cached(name)
 
     def _get_page(self, name: NormalizedName) -> LinkSource:
         response = self._get_response(
