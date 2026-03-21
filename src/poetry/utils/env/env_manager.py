@@ -125,7 +125,7 @@ class EnvManager:
         if self.use_in_project_venv():
             create = False
             venv = self.in_project_venv
-            if venv.exists():
+            if venv.is_dir():
                 # We need to check if the patch version is correct
                 _venv = VirtualEnv(venv)
                 current_patch = ".".join(str(v) for v in _venv.version_info[:3])
@@ -452,7 +452,7 @@ class EnvManager:
                     f"Invalid template string in 'virtualenvs.prompt' setting: {e}"
                 ) from e
 
-        if not venv.exists():
+        if not venv.is_dir():
             if create_venv is False:
                 self._io.write_error_line(
                     "<fg=black;bg=yellow>"
@@ -462,6 +462,12 @@ class EnvManager:
                 )
 
                 return self.get_system_env()
+
+            if venv.is_file():
+                self._io.write_error_line(
+                    f"<warning>{venv} is not a virtual environment but a file. Removing it.</warning>"
+                )
+                venv.unlink()
 
             self._io.write_error_line(
                 f"Creating virtualenv <c1>{name}</> in"
