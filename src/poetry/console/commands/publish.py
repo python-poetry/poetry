@@ -72,14 +72,13 @@ the config command.
 
         # Building package first, if told
         if self.option("build"):
-            if publisher.files:
-                if self.io.is_interactive() and not self.confirm(
-                    f"There are <info>{len(publisher.files)}</info> files ready for"
-                    " publishing. Build anyway?"
-                ):
-                    self.line_error("<error>Aborted!</error>")
-                    return 1
-                # Non-interactive mode: automatically proceed with build (like answering "yes")
+            if publisher.files and self.io.is_interactive() and not self.confirm(
+                f"There are <info>{len(publisher.files)}</info> files ready for"
+                " publishing. Build anyway?"
+            ):
+                self.line_error("<error>Aborted!</error>")
+                return 1
+
             self.call("build", args=f"--output {dist_dir}")
             publisher = Publisher(self.poetry, self.io, Path(dist_dir))
 
