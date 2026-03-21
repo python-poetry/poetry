@@ -55,10 +55,8 @@ def test_isolated_environment_updates_environ() -> None:
     assert "NEW_VAR" not in os.environ
 
 
-@pytest.mark.parametrize(
-    ("remove", "raise_error"),
-    [(False, False), (False, True), (True, False), (True, True)],
-)
+@pytest.mark.parametrize("remove", [False, True])
+@pytest.mark.parametrize("raise_error", [False, True])
 def test_switch_working_directory_changes_restores_and_removes(
     tmp_path: Path, remove: bool, raise_error: bool
 ) -> None:
