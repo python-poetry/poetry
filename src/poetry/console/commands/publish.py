@@ -82,7 +82,7 @@ the config command.
                     return 1
 
                 if not self.io.is_interactive():
-                    self.line_error(
+                    self.line(
                         "<warning>Warning: Existing distribution files were found in "
                         f"{dist_dir}; continuing because --no-interaction was set.</warning>"
                     )
