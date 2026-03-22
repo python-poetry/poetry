@@ -72,17 +72,20 @@ the config command.
 
         # Building package first, if told
         if self.option("build"):
-            if (
-                publisher.files
-                and self.io.is_interactive()
-                and not self.confirm(
+            if publisher.files:
+                if self.io.is_interactive() and not self.confirm(
                     f"There are <info>{len(publisher.files)}</info> files ready for"
                     " publishing. Build anyway?"
-                )
-            ):
-                self.line_error("<error>Aborted!</error>")
+                ):
+                    self.line_error("<error>Aborted!</error>")
 
-                return 1
+                    return 1
+
+                if not self.io.is_interactive():
+                    self.line_error(
+                        "<warning>Warning: Existing distribution files were found in "
+                        f"{dist_dir}; continuing because --no-interaction was set.</warning>"
+                    )
 
             self.call("build", args=f"--output {dist_dir}")
 
