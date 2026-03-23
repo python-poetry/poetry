@@ -222,12 +222,16 @@ class EnvManager:
             cwd == project_path or cwd.is_relative_to(project_path)
         )
 
-        if in_venv and env is None and invoked_outside_project:
+        if (
+            in_venv
+            and env is None
+            and invoked_outside_project
+            and self.in_project_venv_exists()
+        ):
             # When operating on another project directory (for example via `-C`),
             # prefer that project's in-project virtualenv over an inherited
             # VIRTUAL_ENV from the caller process.
-            if self.in_project_venv_exists():
-                return VirtualEnv(self.in_project_venv)
+            return VirtualEnv(self.in_project_venv)
 
         if not in_venv or env is not None:
             # Checking if a local virtualenv exists

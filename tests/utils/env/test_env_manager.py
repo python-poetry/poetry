@@ -583,7 +583,7 @@ def test_get_prefers_in_project_venv_when_running_outside_project(
     in_project_venv_dir: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    os.environ["VIRTUAL_ENV"] = "/environment/prefix"
+    monkeypatch.setenv("VIRTUAL_ENV", "/environment/prefix")
     outside_cwd = tmp_path / "outside"
     outside_cwd.mkdir()
     monkeypatch.chdir(outside_cwd)
@@ -600,7 +600,7 @@ def test_get_keeps_active_virtualenv_when_running_inside_project(
     in_project_venv_dir: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    os.environ["VIRTUAL_ENV"] = "/environment/prefix"
+    monkeypatch.setenv("VIRTUAL_ENV", "/environment/prefix")
     monkeypatch.chdir(poetry.file.path.parent)
 
     env = manager.get()
