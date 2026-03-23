@@ -216,6 +216,19 @@ class EnvManager:
         # most users have it activated all the time.
         in_venv = env_prefix is not None and conda_env_name != "base"
 
+        project_path = self._poetry.file.path.parent.resolve()
+        cwd = Path.cwd().resolve()
+        invoked_outside_project = not (
+            cwd == project_path or cwd.is_relative_to(project_path)
+        )
+
+        if in_venv and env is None and invoked_outside_project:
+            # When operating on another project directory (for example via `-C`),
+            # prefer that project's in-project virtualenv over an inherited
+            # VIRTUAL_ENV from the caller process.
+            if self.in_project_venv_exists():
+                return VirtualEnv(self.in_project_venv)
+
         if not in_venv or env is not None:
             # Checking if a local virtualenv exists
             if self.in_project_venv_exists():

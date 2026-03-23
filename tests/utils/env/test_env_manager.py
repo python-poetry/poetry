@@ -577,6 +577,37 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
     assert env.base == Path(sys.base_prefix)
 
 
+def test_get_prefers_in_project_venv_when_running_outside_project(
+    tmp_path: Path,
+    manager: EnvManager,
+    in_project_venv_dir: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    os.environ["VIRTUAL_ENV"] = "/environment/prefix"
+    outside_cwd = tmp_path / "outside"
+    outside_cwd.mkdir()
+    monkeypatch.chdir(outside_cwd)
+
+    env = manager.get()
+
+    assert env.path == in_project_venv_dir
+    assert env.base == Path(sys.base_prefix)
+
+
+def test_get_keeps_active_virtualenv_when_running_inside_project(
+    manager: EnvManager,
+    poetry: Poetry,
+    in_project_venv_dir: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    os.environ["VIRTUAL_ENV"] = "/environment/prefix"
+    monkeypatch.chdir(poetry.file.path.parent)
+
+    env = manager.get()
+
+    assert env.path == Path("/environment/prefix")
+
+
 def test_list(
     tmp_path: Path,
     manager: EnvManager,
