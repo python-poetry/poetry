@@ -284,3 +284,99 @@ def test_new_with_dot_in_empty_directory(tester: CommandTester, tmp_path: Path) 
     finally:
         # Always restore original directory
         os.chdir(original_cwd)
+
+
+def test_new_non_package_creates_pyproject_without_build_system(
+    tester: CommandTester, tmp_path: Path
+) -> None:
+    """Test that poetry new --non-package creates pyproject.toml with
+    package-mode = false and no build-system."""
+    path = tmp_path / "my-project"
+    tester.execute(f"--non-package {path}")
+
+    pyproject_file = path / "pyproject.toml"
+    assert pyproject_file.is_file()
+
+    toml_content = pyproject_file.read_text(encoding="utf-8")
+
+    assert "package-mode = false" in toml_content
+    assert "[build-system]" not in toml_content
+
+
+def test_new_non_package_does_not_create_package_dirs(
+    tester: CommandTester, tmp_path: Path
+) -> None:
+    """Test that poetry new --non-package does not create src/ or package __init__.py."""
+    path = tmp_path / "my-project"
+    tester.execute(f"--non-package {path}")
+
+    assert path.is_dir()
+    assert (path / "pyproject.toml").is_file()
+
+    # README should still be created
+    assert (path / "README.md").is_file()
+
+    # Package structure should NOT be created
+    assert not (path / "src").exists()
+    assert not (path / "my_project").exists()
+    assert not (path / "tests").exists()
+
+
+def test_new_non_package_with_name(tester: CommandTester, tmp_path: Path) -> None:
+    """Test that poetry new --non-package --name works."""
+    path = tmp_path / "my-dir"
+    tester.execute(f"--non-package --name my-cool-project {path}")
+
+    toml_content = (path / "pyproject.toml").read_text(encoding="utf-8")
+
+    assert 'name = "my-cool-project"' in toml_content
+    assert "package-mode = false" in toml_content
+    assert "[build-system]" not in toml_content
+
+
+def test_new_non_package_no_packages_key(tester: CommandTester, tmp_path: Path) -> None:
+    """Test that --non-package does not have packages in [tool.poetry]."""
+    path = tmp_path / "my-project"
+    tester.execute(f"--non-package {path}")
+
+    toml_content = (path / "pyproject.toml").read_text(encoding="utf-8")
+
+    assert "packages = [" not in toml_content
+    assert "package-mode = false" in toml_content
+
+
+def test_new_without_non_package_still_works(
+    tester: CommandTester, tmp_path: Path
+) -> None:
+    """Regression: ensure normal poetry new still creates full structure."""
+    path = tmp_path / "my-package"
+    tester.execute(str(path))
+
+    assert (path / "pyproject.toml").is_file()
+    assert (path / "src" / "my_package" / "__init__.py").is_file()
+    assert (path / "tests" / "__init__.py").is_file()
+
+    toml_content = (path / "pyproject.toml").read_text(encoding="utf-8")
+
+    assert "package-mode = false" not in toml_content
+    assert "[build-system]" in toml_content
+
+
+def test_new_non_package_in_empty_existing_directory(
+    tester: CommandTester, tmp_path: Path
+) -> None:
+    """Test that poetry new --non-package works in existing empty directory."""
+    path = tmp_path / "my-project"
+    path.mkdir()
+
+    tester.execute(f"--non-package {path}")
+
+    assert (path / "pyproject.toml").is_file()
+    assert (path / "README.md").is_file()
+
+    # Should NOT create package dirs
+    assert not (path / "src").exists()
+    assert not (path / "tests").exists()
+
+    toml_content = (path / "pyproject.toml").read_text(encoding="utf-8")
+    assert "package-mode = false" in toml_content

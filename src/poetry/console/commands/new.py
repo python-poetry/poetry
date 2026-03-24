@@ -53,6 +53,7 @@ class NewCommand(InitCommand):
                 "dependency",
                 "dev-dependency",
                 "license",
+                "non-package",
             }
         ],
     ]
