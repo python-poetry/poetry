@@ -11,6 +11,7 @@ import pytest
 
 from cleo.testers.application_tester import ApplicationTester
 
+from poetry.__version__ import __version__
 from poetry.console.application import Application
 from poetry.console.commands.command import Command
 from poetry.plugins.application_plugin import ApplicationPlugin
@@ -97,7 +98,7 @@ def test_application_with_plugins_skipped_for_version(
     tester.execute(flag)
 
     assert tester.status_code == 0
-    assert app._plugins_loaded is True
+    assert __version__ in tester.io.fetch_output()
     manager_mock.assert_not_called()
 
 
