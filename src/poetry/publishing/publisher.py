@@ -17,6 +17,10 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+def _normalize_legacy_repository_url(url: str) -> str:
+    if url.endswith("/legacy"):
+        url += "/"
+    return url
 
 class Publisher:
     """
@@ -52,6 +56,7 @@ class Publisher:
             url = self._poetry.config.get(f"repositories.{repository_name}.url")
             if url is None:
                 raise RuntimeError(f"Repository {repository_name} is not defined")
+            url = _normalize_legacy_repository_url(url)
 
         if not (username and password):
             # Check if we have a token first

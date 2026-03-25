@@ -210,3 +210,45 @@ def test_publish_read_from_environment_variable(
         ("https://foo.bar",),
         {"cert": True, "client_cert": None, "dry_run": False, "skip_existing": False},
     ]
+
+@pytest.mark.parametrize(
+    ("configured_url", "expected_url"),
+    [
+        # Missing trailing slash — should be added
+        ("https://test.pypi.org/legacy", "https://test.pypi.org/legacy/"),
+        # Already has trailing slash — should not double up
+        ("https://test.pypi.org/legacy/", "https://test.pypi.org/legacy/"),
+        # Non-legacy URL — should be unchanged
+        ("https://test.pypi.org/simple", "https://test.pypi.org/simple"),
+    ],
+)
+def test_publish_normalizes_legacy_repository_url(
+    fixture_dir: FixtureDirGetter,
+    mocker: MockerFixture,
+    config: Config,
+    configured_url: str,
+    expected_url: str,
+) -> None:
+    uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
+    uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
+
+    poetry = Factory().create_poetry(fixture_dir("sample_project"))
+    poetry._config = config
+    poetry.config.merge(
+        {
+            "repositories": {"testpypi": {"url": configured_url}},
+            "http-basic": {"testpypi": {"username": "foo", "password": "bar"}},
+        }
+    )
+
+    publisher = Publisher(poetry, NullIO())
+    publisher.publish("testpypi", None, None)
+
+    uploader_auth.assert_called_once_with("foo", "bar")
+    uploader_upload.assert_called_once_with(
+        expected_url,
+        cert=True,
+        client_cert=None,
+        dry_run=False,
+        skip_existing=False,
+    )
