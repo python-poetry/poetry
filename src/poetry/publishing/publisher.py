@@ -17,10 +17,12 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+
 def _normalize_legacy_repository_url(url: str) -> str:
     if url.endswith("/legacy"):
         url += "/"
     return url
+
 
 class Publisher:
     """

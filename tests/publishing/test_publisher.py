@@ -211,6 +211,7 @@ def test_publish_read_from_environment_variable(
         {"cert": True, "client_cert": None, "dry_run": False, "skip_existing": False},
     ]
 
+
 @pytest.mark.parametrize(
     ("configured_url", "expected_url"),
     [
