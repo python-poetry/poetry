@@ -84,7 +84,9 @@ class Python:
     @classmethod
     def find_all(cls) -> Iterator[Python]:
         venv_path: Path | None = (
-            Path(os.environ["VIRTUAL_ENV"]) if "VIRTUAL_ENV" in os.environ else None
+            Path(os.environ["VIRTUAL_ENV"])
+            if os.environ.get("VIRTUAL_ENV")
+            else None
         )
         for python in findpython.find_all():
             if venv_path and python.executable.is_relative_to(venv_path):

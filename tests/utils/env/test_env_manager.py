@@ -577,6 +577,39 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
     assert env.base == Path(sys.base_prefix)
 
 
+@pytest.mark.parametrize(
+    "env_var",
+    ["VIRTUAL_ENV", "CONDA_PREFIX"],
+)
+def test_get_ignores_empty_env_prefix(
+    manager: EnvManager,
+    poetry: Poetry,
+    in_project_venv_dir: Path,
+    env_var: str,
+    mocker: MockerFixture,
+) -> None:
+    """An empty VIRTUAL_ENV or CONDA_PREFIX should be treated as unset.
+
+    After ``conda deactivate``, conda can leave CONDA_PREFIX set to an
+    empty string.  Poetry should not consider that as an active
+    virtualenv and should fall back to the in-project .venv instead.
+
+    See: https://github.com/python-poetry/poetry/issues/10770
+    """
+    os.environ.pop("VIRTUAL_ENV", None)
+    os.environ.pop("CONDA_PREFIX", None)
+    os.environ[env_var] = ""
+    mocker.patch(
+        "poetry.utils.env.virtual_env.VirtualEnv.__init__",
+        lambda self, *args, **kwargs: setattr(self, "_path", args[0]),
+    )
+    try:
+        venv = manager.get()
+        assert venv.path == in_project_venv_dir
+    finally:
+        del os.environ[env_var]
+
+
 def test_list(
     tmp_path: Path,
     manager: EnvManager,
