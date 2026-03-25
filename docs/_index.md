@@ -40,7 +40,7 @@ See the **advanced** installation instructions to use a preview or alternate ver
 **Install pipx**
 
 If `pipx` is not already installed, you can follow any of the options in the
-[official pipx installation instructions](https://pipx.pypa.io/stable/installation/).
+[official pipx installation instructions](https://pipx.pypa.io/stable/how-to/install-pipx/).
 Any non-ancient version of `pipx` will do.
 
 {{< /step >}}
