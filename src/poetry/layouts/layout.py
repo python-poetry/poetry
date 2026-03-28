@@ -32,7 +32,7 @@ version = ""
 description = ""
 authors = [
 ]
-license = {}
+license = ""
 readme = ""
 requires-python = ""
 dependencies = [
@@ -158,7 +158,7 @@ class Layout:
             project_content["authors"].append(author)
 
         if self._license:
-            project_content["license"]["text"] = self._license
+            project_content["license"] = self._license
         else:
             project_content.remove("license")
 

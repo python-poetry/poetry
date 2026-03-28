@@ -166,7 +166,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         license_name = self.option("license")
         if not license_name and is_interactive:
-            license_name = self.ask(self.create_question("License []: ", default=""))
+            license_name = self.ask(self.create_question("License: ", default=""))
 
         python = self.option("python")
         if not python:
