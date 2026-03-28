@@ -159,7 +159,7 @@ class EnvManager:
 
         # Create if needed
         if not venv.exists() or create:
-            in_venv = os.environ.get("VIRTUAL_ENV") is not None
+            in_venv = bool(os.environ.get("VIRTUAL_ENV"))
             if in_venv or not venv.exists():
                 create = True
 
@@ -214,7 +214,9 @@ class EnvManager:
         conda_env_name = os.environ.get("CONDA_DEFAULT_ENV")
         # It's probably not a good idea to pollute Conda's global "base" env, since
         # most users have it activated all the time.
-        in_venv = env_prefix is not None and conda_env_name != "base"
+        # Treat an empty env_prefix as if no virtualenv is active, since conda
+        # can leave CONDA_PREFIX set to an empty string after deactivation.
+        in_venv = bool(env_prefix) and conda_env_name != "base"
 
         if not in_venv or env is not None:
             # Checking if a local virtualenv exists
@@ -249,14 +251,8 @@ class EnvManager:
 
             return VirtualEnv(venv)
 
-        if env_prefix is not None:
-            prefix = Path(env_prefix)
-            base_prefix = None
-        else:
-            prefix = Path(sys.prefix)
-            base_prefix = self.get_base_prefix()
-
-        return VirtualEnv(prefix, base_prefix)
+        assert env_prefix
+        return VirtualEnv(Path(env_prefix))
 
     def list(self, name: str | None = None) -> list[VirtualEnv]:
         if name is None:
