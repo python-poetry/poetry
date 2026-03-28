@@ -240,8 +240,7 @@ def test_publish_build_no_interaction_skips_confirmation(
     assert "Build anyway?" not in output
     assert "Build anyway?" not in error
     assert (
-        "Warning: Existing distribution files were found in dist; continuing because"
-        " --no-interaction was set."
+        "Warning: There are 1 files ready for publishing in dist. Build anyway!"
     ) in output
     command_call.assert_called_once_with("build", args="--output dist")
     assert publisher_publish.call_count == 1
