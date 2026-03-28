@@ -577,10 +577,7 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
     assert env.base == Path(sys.base_prefix)
 
 
-@pytest.mark.parametrize(
-    "env_var",
-    ["VIRTUAL_ENV", "CONDA_PREFIX"],
-)
+@pytest.mark.parametrize("env_var", ["VIRTUAL_ENV", "CONDA_PREFIX"])
 def test_get_ignores_empty_env_prefix(
     manager: EnvManager,
     poetry: Poetry,
