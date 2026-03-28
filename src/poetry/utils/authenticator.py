@@ -189,13 +189,15 @@ class Authenticator:
         self, method: str, url: str, raise_for_status: bool = True, **kwargs: Any
     ) -> requests.Response:
         headers = kwargs.get("headers")
-        request = requests.Request(method, url, headers=headers)
         credential = self.get_credentials_for_url(url)
 
+        auth = None
         if credential.username is not None or credential.password is not None:
-            request = requests.auth.HTTPBasicAuth(
+            auth = requests.auth.HTTPBasicAuth(
                 credential.username or "", credential.password or ""
-            )(request)
+            )
+
+        request = requests.Request(method, url, headers=headers, auth=auth)
 
         session = self.get_session(url=url)
         prepared_request = session.prepare_request(request)
