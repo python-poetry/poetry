@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from cleo.io.buffered_io import BufferedIO
+
 from poetry.utils.env import EnvManager
 
 
@@ -19,5 +21,10 @@ def poetry(project_factory: ProjectFactory, fixture_dir: FixtureDirGetter) -> Po
 
 
 @pytest.fixture
-def manager(poetry: Poetry) -> EnvManager:
-    return EnvManager(poetry)
+def io() -> BufferedIO:
+    return BufferedIO()
+
+
+@pytest.fixture
+def manager(poetry: Poetry, io: BufferedIO) -> EnvManager:
+    return EnvManager(poetry, io)
