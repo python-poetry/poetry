@@ -447,6 +447,8 @@ typically different to the same one provided by the repository for the simple AP
 in the example of [Test PyPI](https://test.pypi.org/), both the host (`test.pypi.org`) as
 well as the path (`/legacy`) are different to its simple API (`https://test.pypi.org/simple`).
 
+While the examples show URLs with a trailing slash (e.g., `https://test.pypi.org/legacy/`), Poetry automatically normalizes legacy repository URLs by adding a trailing slash if one is missing. This means both `https://test.pypi.org/legacy` and `https://test.pypi.org/legacy/` will work correctly when publishing.
+
 {{% /note %}}
 
 ## Configuring Credentials
