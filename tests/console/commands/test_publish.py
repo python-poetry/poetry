@@ -5,6 +5,7 @@ import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import NoReturn
+from unittest.mock import PropertyMock
 
 import pytest
 import requests
@@ -215,3 +216,31 @@ def test_publish_dist_dir_and_build_options(
     assert "Publishing simple-project (1.2.3) to PyPI" in output
     assert "- Uploading simple_project-1.2.3.tar.gz" in error
     assert "- Uploading simple_project-1.2.3-py2.py3-none-any.whl" in error
+
+
+def test_publish_build_no_interaction_skips_confirmation(
+    app_tester: ApplicationTester, mocker: MockerFixture
+) -> None:
+    mocker.patch(
+        "poetry.publishing.publisher.Publisher.files",
+        new_callable=PropertyMock,
+        return_value=[Path("dist/simple_project-1.2.3-py2.py3-none-any.whl")],
+    )
+    confirm = mocker.patch("poetry.console.commands.publish.PublishCommand.confirm")
+    command_call = mocker.patch("poetry.console.commands.publish.PublishCommand.call")
+    publisher_publish = mocker.patch("poetry.publishing.Publisher.publish")
+
+    exit_code = app_tester.execute("publish --build --no-interaction --dry-run")
+
+    assert exit_code == 0
+    output = app_tester.io.fetch_output()
+    error = app_tester.io.fetch_error()
+
+    confirm.assert_not_called()
+    assert "Build anyway?" not in output
+    assert "Build anyway?" not in error
+    assert (
+        "Warning: There are 1 files ready for publishing in dist. Build anyway!"
+    ) in output
+    command_call.assert_called_once_with("build", args="--output dist")
+    assert publisher_publish.call_count == 1
