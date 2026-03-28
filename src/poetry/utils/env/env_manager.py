@@ -251,12 +251,8 @@ class EnvManager:
 
             return VirtualEnv(venv)
 
-        if env_prefix:
-            prefix = Path(env_prefix)
-            base_prefix = None
-        else:
-            prefix = Path(sys.prefix)
-            base_prefix = self.get_base_prefix()
+        prefix = Path(env_prefix)
+        base_prefix = None
 
         return VirtualEnv(prefix, base_prefix)
 
