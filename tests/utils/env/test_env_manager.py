@@ -600,11 +600,8 @@ def test_get_ignores_empty_env_prefix(
         "poetry.utils.env.virtual_env.VirtualEnv.__init__",
         lambda self, *args, **kwargs: setattr(self, "_path", args[0]),
     )
-    try:
-        venv = manager.get()
-        assert venv.path == in_project_venv_dir
-    finally:
-        del os.environ[env_var]
+    venv = manager.get()
+    assert venv.path == in_project_venv_dir
 
 
 def test_list(
