@@ -251,10 +251,8 @@ class EnvManager:
 
             return VirtualEnv(venv)
 
-        prefix = Path(env_prefix)
-        base_prefix = None
-
-        return VirtualEnv(prefix, base_prefix)
+        assert env_prefix
+        return VirtualEnv(Path(env_prefix))
 
     def list(self, name: str | None = None) -> list[VirtualEnv]:
         if name is None:
