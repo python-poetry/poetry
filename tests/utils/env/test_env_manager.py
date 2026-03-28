@@ -32,6 +32,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
     from unittest.mock import MagicMock
 
+    from cleo.io.buffered_io import BufferedIO
     from pytest import LogCaptureFixture
     from pytest_mock import MockerFixture
 
@@ -468,6 +469,56 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
 
     envs_file = TOMLFile(tmp_path / "virtualenvs" / "envs.toml")
     assert not envs_file.exists()
+
+
+def test_activate_with_in_project_setting_if_venv_is_file(
+    manager: EnvManager,
+    poetry: Poetry,
+    io: BufferedIO,
+    config: Config,
+    tmp_path: Path,
+    mocker: MockerFixture,
+    venv_flags_default: dict[str, bool],
+    mocked_python_register: MockedPythonRegister,
+) -> None:
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
+
+    config.merge(
+        {
+            "virtualenvs": {
+                "path": str(tmp_path / "virtualenvs"),
+                "in-project": True,
+            }
+        }
+    )
+
+    mocked_python_register("3.7.1")
+    m = mocker.patch("poetry.utils.env.EnvManager.build_venv")
+
+    venv_path = poetry.file.path.parent / ".venv"
+    assert not venv_path.exists()
+    venv_path.touch()
+    assert venv_path.is_file()
+
+    manager.activate("python3.7")
+
+    m.assert_called_with(
+        poetry.file.path.parent / ".venv",
+        executable=Path("/usr/bin/python3.7"),
+        flags=venv_flags_default,
+        prompt="simple-project-py3.7",
+    )
+
+    envs_file = TOMLFile(tmp_path / "virtualenvs" / "envs.toml")
+    assert not envs_file.exists()
+
+    # The .venv file is removed, but no .venv is created because we mocked build_venv.
+    assert not venv_path.exists()
+    assert (
+        f"{venv_path} is not a virtual environment but a file. Removing it."
+        in io.fetch_error()
+    )
 
 
 def test_deactivate_non_activated_but_existing(
