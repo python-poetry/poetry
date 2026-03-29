@@ -10,6 +10,7 @@ from poetry.core.version.exceptions import InvalidVersionError
 
 from poetry.config.config import Config
 from poetry.console.commands.command import Command
+from poetry.utils._compat import is_relative_to
 from poetry.utils.env.python import Python
 
 
@@ -107,9 +108,8 @@ class PythonListCommand(Command):
             implementation = implementations.get(
                 pv.implementation.lower(), pv.implementation
             )
-            is_poetry_managed = (
-                pv.executable is None
-                or pv.executable.resolve().is_relative_to(python_installation_path)
+            is_poetry_managed = pv.executable is None or is_relative_to(
+                pv.executable.resolve(), python_installation_path
             )
 
             if self.option("managed") and not is_poetry_managed:
