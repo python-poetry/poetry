@@ -30,7 +30,7 @@ description = "This is a description"
 authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
-license = {text = "MIT"}
+license = "MIT"
 readme = "README.md"
 requires-python = ">=3.6"
 """
@@ -55,7 +55,7 @@ description = "This is a description"
 authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
-license = {text = "MIT"}
+license = "MIT"
 readme = "README.md"
 requires-python = ">=3.6"
 dependencies = [
