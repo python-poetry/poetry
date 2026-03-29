@@ -145,7 +145,7 @@ description = "This is a description"
 authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
-license = {text = "MIT"}
+license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
     "pendulum (>=2.0.0,<3.0.0)",
@@ -201,7 +201,7 @@ description = "This is a description"
 authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
-license = {text = "MIT"}
+license = "MIT"
 requires-python = ">=3.6"
 """
 
@@ -269,7 +269,7 @@ description = "This is a description"
 authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
-license = {text = "MIT"}
+license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
     "demo @ git+https://github.com/demo/demo.git"
@@ -364,7 +364,7 @@ description = "This is a description"
 authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
-license = {text = "MIT"}
+license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
     "demo @ git+https://github.com/demo/demo.git@develop"
@@ -412,7 +412,7 @@ description = "This is a description"
 authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
-license = {text = "MIT"}
+license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
     "demo @ git+https://github.com/demo/pyproject-demo.git"
@@ -467,7 +467,7 @@ description = "This is a description"
 authors = [
     {{name = "Your Name",email = "you@example.com"}}
 ]
-license = {{text = "MIT"}}
+license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
     "demo @ {demo_uri}"
@@ -521,7 +521,7 @@ description = "This is a description"
 authors = [
     {{name = "Your Name",email = "you@example.com"}}
 ]
-license = {{text = "MIT"}}
+license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
     "demo @ {demo_uri}"
@@ -576,7 +576,7 @@ description = "This is a description"
 authors = [
     {{name = "Your Name",email = "you@example.com"}}
 ]
-license = {{text = "MIT"}}
+license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
     "demo @ {demo_uri}"
@@ -623,7 +623,7 @@ description = "This is a description"
 authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
-license = {text = "MIT"}
+license = "MIT"
 requires-python = ">=3.8"
 dependencies = [
     "foo (==1.19.2)",
@@ -660,7 +660,7 @@ description = "This is a description"
 authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
-license = {text = "MIT"}
+license = "MIT"
 requires-python = ">=3.6"
 """
 
@@ -691,7 +691,7 @@ description = "This is a description"
 authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
-license = {text = "MIT"}
+license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
     "pendulum (>=2.0.0,<3.0.0)"
@@ -733,7 +733,7 @@ description = "This is a description"
 authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
-license = {text = "MIT"}
+license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
     "pendulum (>=2.0.0,<3.0.0)",
@@ -768,7 +768,7 @@ description = "This is a description"
 authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
-license = {text = "MIT"}
+license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
 ]
@@ -814,7 +814,7 @@ description = "This is a description"
 authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
-license = {text = "MIT"}
+license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
 ]
@@ -861,7 +861,7 @@ description = "This is a description"
 authors = [
     {name = "Foo Bar",email = "foo@example.com"}
 ]
-license = {text = "MIT"}
+license = "MIT"
 requires-python = ">=3.8"
 dependencies = [
     "pendulum (>=2.0.0,<3.0.0)"
