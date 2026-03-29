@@ -44,7 +44,14 @@ class WheelDestination(SchemeDictionaryDestination):
         from installer.utils import copyfileobj_with_hashing
         from installer.utils import make_file_executable
 
-        target_path = Path(self.scheme_dict[scheme]) / path
+        target_dir = Path(self.scheme_dict[scheme]).resolve()
+        target_path = (target_dir / path).resolve()
+
+        if not target_path.is_relative_to(target_dir):
+            raise ValueError(
+                f"Attempting to write {path} outside of the target directory"
+            )
+
         if target_path.exists():
             # Contrary to the base library we don't raise an error here since it can
             # break pkgutil-style and pkg_resource-style namespace packages.
