@@ -48,6 +48,19 @@
     "yanked_reason": null
   },
   "last_serial": 0,
+  "ownership": {
+    "organization": "poetry",
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "neersighted"
+      },
+      {
+        "role": "Maintainer",
+        "user": "secrus"
+      }
+    ]
+  },
   "urls": [
     {
       "comment_text": "",

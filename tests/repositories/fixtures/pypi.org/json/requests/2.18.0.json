@@ -63,6 +63,23 @@
     "yanked_reason": null
   },
   "last_serial": 0,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "Lukasa"
+      },
+      {
+        "role": "Owner",
+        "user": "graffatcolmingov"
+      },
+      {
+        "role": "Owner",
+        "user": "nateprewitt"
+      }
+    ]
+  },
   "urls": [
     {
       "comment_text": "",

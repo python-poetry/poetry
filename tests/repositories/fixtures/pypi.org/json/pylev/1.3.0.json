@@ -46,6 +46,15 @@
     "yanked_reason": null
   },
   "last_serial": 0,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "daniellindsley"
+      }
+    ]
+  },
   "urls": [
     {
       "comment_text": "",
