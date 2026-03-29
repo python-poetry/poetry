@@ -56,6 +56,19 @@
     "yanked_reason": null
   },
   "last_serial": 0,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "tartley"
+      },
+      {
+        "role": "Owner",
+        "user": "wiggin15"
+      }
+    ]
+  },
   "urls": [
     {
       "comment_text": "",

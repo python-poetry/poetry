@@ -55,6 +55,10 @@
     "yanked_reason": null
   },
   "last_serial": 0,
+  "ownership": {
+    "organization": "beeware",
+    "roles": []
+  },
   "urls": [
     {
       "comment_text": "",

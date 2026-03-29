@@ -45,6 +45,10 @@
     "yanked_reason": null
   },
   "last_serial": 0,
+  "ownership": {
+    "organization": "twisted",
+    "roles": []
+  },
   "urls": [
     {
       "comment_text": "",

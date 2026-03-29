@@ -71,6 +71,31 @@
     "yanked_reason": "Broken regex dependency. Use 21.11b1 instead."
   },
   "last_serial": 0,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "JelleZijlstra"
+      },
+      {
+        "role": "Owner",
+        "user": "ambv"
+      },
+      {
+        "role": "Owner",
+        "user": "cooperlees"
+      },
+      {
+        "role": "Owner",
+        "user": "willingc"
+      },
+      {
+        "role": "Owner",
+        "user": "zsolzsol"
+      }
+    ]
+  },
   "urls": [
     {
       "comment_text": "",

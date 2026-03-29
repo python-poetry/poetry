@@ -52,6 +52,10 @@
     "yanked_reason": null
   },
   "last_serial": 0,
+  "ownership": {
+    "organization": "poetry",
+    "roles": []
+  },
   "urls": [
     {
       "comment_text": "",
