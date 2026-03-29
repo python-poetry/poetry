@@ -81,3 +81,51 @@ def test_enable_bytecode_compilation(
         assert not list(cache_dir.glob("*.opt-2.pyc"))
     else:
         assert not cache_dir.exists()
+
+
+def test_install_dir_is_symlink(tmp_path: Path, demo_wheel: Path) -> None:
+    target_dir = tmp_path / "target"
+    target_dir.mkdir()
+    symlink_dir = tmp_path / "symlink"
+    symlink_dir.symlink_to(target_dir, target_is_directory=True)
+
+    env = MockEnv(path=symlink_dir)
+
+    installer = WheelInstaller(env)
+    installer.install(demo_wheel)
+
+    assert (Path(env.paths["purelib"]) / "demo").exists()
+
+
+@pytest.fixture
+def wheel_with_path_traversal(tmp_path: Path) -> Path:
+    import zipfile
+
+    wheel = tmp_path / "traversal-0.1-py3-none-any.whl"
+    files = {
+        "traversal/__init__.py": b"",
+        "../../traversal.txt": b"",
+        "traversal-0.1.dist-info/WHEEL": (
+            b"Wheel-Version: 1.0\nRoot-Is-Purelib: true\nTag: py3-none-any\n"
+        ),
+        "traversal-0.1.dist-info/METADATA": (
+            b"Metadata-Version: 2.1\nName: traversal\nVersion: 0.1\n"
+        ),
+    }
+    files["traversal-0.1.dist-info/RECORD"] = (
+        "\n".join([f"{k},," for k in files] + ["traversal-0.1.dist-info/RECORD,,"])
+        + "\n"
+    ).encode()
+
+    with zipfile.ZipFile(wheel, "w") as z:
+        for k, v in files.items():
+            z.writestr(k, v)
+
+    return wheel
+
+
+def test_path_traversal(env: MockEnv, wheel_with_path_traversal: Path) -> None:
+    installer = WheelInstaller(env)
+    with pytest.raises(ValueError):
+        installer.install(wheel_with_path_traversal)
+    assert not (env.path.parent / "traversal.txt").exists()
