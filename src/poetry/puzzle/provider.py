@@ -93,9 +93,10 @@ class Indicator(ProgressIndicator):
         def _set_context(context: str | None) -> None:
             Indicator.CONTEXT = context
 
-        yield _set_context
-
-        _set_context(None)
+        try:
+            yield _set_context
+        finally:
+            _set_context(None)
 
     def _formatter_context(self) -> str:
         if Indicator.CONTEXT is None:

@@ -1069,3 +1069,14 @@ def test_source_dependency_is_not_satisfied_by_incompatible_direct_origin(
     dep.source_name = repository.name
 
     assert provider.search_for(dep) == [repo_package]
+
+
+def test_indicator_context_resets_on_exception() -> None:
+    from poetry.puzzle.provider import Indicator
+
+    with pytest.raises(RuntimeError), Indicator.context() as set_context:
+        set_context("downloading something")
+        assert Indicator.CONTEXT == "downloading something"
+        raise RuntimeError("network error")
+
+    assert Indicator.CONTEXT is None
