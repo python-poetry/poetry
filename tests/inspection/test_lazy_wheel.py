@@ -469,3 +469,33 @@ def test_metadata_from_wheel_url_handles_unexpected_errors(
             "https://runtime-error.com/demo_missing_dist_info-0.1.0-py2.py3-none-any.whl",
             requests.Session(),
         )
+
+
+def test_prefetch_metadata_closes_zipfile_on_error() -> None:
+    """ZipFile opened in _prefetch_metadata must be closed even if an error occurs."""
+    import re
+
+    from unittest.mock import MagicMock
+    from unittest.mock import patch
+    from zipfile import ZipInfo
+
+    from poetry.inspection.lazy_wheel import LazyWheelOverHTTP
+
+    lazy = object.__new__(LazyWheelOverHTTP)
+    lazy._metadata_regex = re.compile(r"\.dist-info/METADATA$")
+    lazy._file = MagicMock()
+    lazy._file.name = "test.whl"
+
+    mock_zf = MagicMock()
+    # Return entries that don't match the metadata regex, triggering UnsupportedWheelError
+    mock_zf.infolist.return_value = [ZipInfo("pkg/data.txt")]
+
+    mock_zf.__exit__ = MagicMock(return_value=False)
+
+    with (
+        patch("poetry.inspection.lazy_wheel.ZipFile", return_value=mock_zf),
+        pytest.raises(Exception, match=r"no .* found for"),
+    ):
+        lazy._prefetch_metadata("test-pkg")
+
+    mock_zf.__exit__.assert_called_once()
