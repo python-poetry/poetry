@@ -206,7 +206,9 @@ class Authenticator:
         stream: bool | None = kwargs.get("stream")
 
         certs = self.get_certs_for_url(url)
-        verify: bool | str | Path = kwargs.get("verify") or certs.cert or certs.verify
+        verify: bool | str | Path | None = kwargs.get("verify")
+        if verify is None:
+            verify = certs.cert or certs.verify
         cert: str | Path | None = kwargs.get("cert") or certs.client_cert
 
         if cert is not None:
