@@ -55,6 +55,12 @@ def test_config_get_processes_depended_on_values(
     assert str(config_cache_dir / "virtualenvs") == config.get("virtualenvs.path")
 
 
+def test_config_process_resolves_falsy_values(config: Config) -> None:
+    """Falsy config values (False, 0) must not be treated as missing
+    during string interpolation."""
+    assert config.process("{requests.max-retries}") == "0"
+
+
 def generate_environment_variable_tests() -> Iterator[tuple[str, str, str, bool]]:
     data: list[tuple[Normalizer, list[tuple[str, Any]]]] = [
         (
