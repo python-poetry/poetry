@@ -373,7 +373,7 @@ class Git:
 
         for base, prefix in {
             (Ref(b"refs/remotes/origin"), b"refs/heads/"),
-            (Ref(b"refs/tags"), b"refs/tags"),
+            (Ref(b"refs/tags"), b"refs/tags/"),
         }:
             try:
                 local.refs.import_refs(
