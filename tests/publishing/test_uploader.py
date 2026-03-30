@@ -225,6 +225,29 @@ def test_uploader_registers_with_sdist_for_appropriate_400_errors(
     assert b"bdist_wheel" not in bodies[1]
 
 
+def test_uploader_retries_upload_after_register(
+    http: responses.RequestsMock, uploader: Uploader
+) -> None:
+    """After registering a package, the upload must be retried.
+
+    The server returns 400 "was ever registered" on the first upload,
+    then 200 on the registration and the retried upload.
+    """
+    http.post("https://foo.com", status=400, body="No package was ever registered")
+    http.post("https://foo.com", status=200)  # register
+    http.post("https://foo.com", status=200)  # retry upload (first file)
+    http.post("https://foo.com", status=200)  # upload second file
+
+    uploader.upload("https://foo.com")
+
+    assert len(http.calls) == 4
+    bodies = [c.request.body or b"" for c in http.calls]
+    assert b'name=":action"\r\n\r\nfile_upload\r\n' in bodies[0]
+    assert b'name=":action"\r\n\r\nsubmit\r\n' in bodies[1]
+    assert b'name=":action"\r\n\r\nfile_upload\r\n' in bodies[2]
+    assert b'name=":action"\r\n\r\nfile_upload\r\n' in bodies[3]
+
+
 def test_uploader_register_uses_wheel_if_no_sdist(
     http: responses.RequestsMock, poetry: Poetry, tmp_path: Path
 ) -> None:
