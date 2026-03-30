@@ -424,3 +424,32 @@ def test_clone_nested_annotated_tags(tmp_path: Path) -> None:
     assert (clone_dir / ".git").is_dir()
     assert (clone_dir / "test.txt").exists()
     assert (clone_dir / "test.txt").read_text(encoding="utf-8") == "nested tag test"
+
+
+@pytest.mark.parametrize(
+    ("revision_input", "expected_checkout"),
+    [
+        ("refs/heads/main", "main"),
+        ("refs/tags/v1.0", "v1.0"),
+        ("abc123", "abc123"),
+        ("HEAD", "HEAD"),
+    ],
+)
+def test_clone_legacy_strips_ref_prefixes(
+    tmp_path: Path,
+    mocker: MockerFixture,
+    revision_input: str,
+    expected_checkout: str,
+) -> None:
+    """_clone_legacy must strip refs/heads/ and refs/tags/ before checkout."""
+    mock_clone = mocker.patch("poetry.vcs.git.system.SystemGit.clone")
+    mock_checkout = mocker.patch("poetry.vcs.git.system.SystemGit.checkout")
+    mocker.patch("poetry.vcs.git.backend.Repo")
+
+    target = tmp_path / "repo"
+    refspec = GitRefSpec(revision=revision_input)
+
+    Git._clone_legacy("https://example.com/repo.git", refspec, target)
+
+    mock_clone.assert_called_once()
+    mock_checkout.assert_called_once_with(expected_checkout, target)
