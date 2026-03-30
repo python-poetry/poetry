@@ -487,3 +487,31 @@ def test_prefetch_metadata_closes_zipfile_on_error(mocker: MockerFixture) -> Non
         lazy._prefetch_metadata("test-pkg")
 
     mock_zf.__exit__.assert_called_once()
+
+
+def test_ensure_downloaded_writes_at_correct_offsets() -> None:
+    """_ensure_downloaded must seek to range_start, not start."""
+    from io import BytesIO
+    from unittest.mock import patch
+
+    from poetry.inspection.lazy_wheel import LazyFileOverHTTP
+    from poetry.inspection.lazy_wheel import MergeIntervals
+
+    content = bytes(range(100))
+
+    # Build a LazyFileOverHTTP without hitting the network
+    lazy = object.__new__(LazyFileOverHTTP)
+    lazy._file = BytesIO(b"\x00" * 100)
+    lazy._merge_intervals = MergeIntervals()
+
+    def fake_fetch(start: int, end: int) -> list[bytes]:
+        return [content[start : end + 1]]
+
+    with patch.object(lazy, "_fetch_content_range", side_effect=fake_fetch):
+        # Download bytes 0-49, then request 30-80 (overlap).
+        # Only 50-79 needs fetching; the bug wrote that data at offset 30.
+        lazy._ensure_downloaded(0, 50)
+        lazy._ensure_downloaded(30, 80)
+
+    lazy._file.seek(0)
+    assert lazy._file.read(80) == content[:80]
