@@ -554,7 +554,7 @@ lists all packages available."""
             self._write_tree_line(io, info)
 
             tree_bar = tree_bar.replace("└", " ")
-            packages_in_tree = [package.name, dependency.name]
+            packages_in_tree = {package.name, dependency.name}
 
             self._display_tree(
                 io,
@@ -570,7 +570,7 @@ lists all packages available."""
         io: IO,
         dependency: Dependency,
         installed_packages: list[Package],
-        packages_in_tree: list[NormalizedName],
+        packages_in_tree: set[NormalizedName],
         previous_tree_bar: str = "├",
         level: int = 1,
     ) -> None:
@@ -590,7 +590,6 @@ lists all packages available."""
         tree_bar = previous_tree_bar + "   ├"
         total = len(dependencies)
         for i, dependency in enumerate(dependencies, 1):
-            current_tree = packages_in_tree
             if i == total:
                 tree_bar = previous_tree_bar + "   └"
 
@@ -598,7 +597,7 @@ lists all packages available."""
             color = self.colors[color_ident]
 
             circular_warn = ""
-            if dependency.name in current_tree:
+            if dependency.name in packages_in_tree:
                 circular_warn = "(circular dependency aborted here)"
 
             info = (
@@ -609,17 +608,19 @@ lists all packages available."""
 
             tree_bar = tree_bar.replace("└", " ")
 
-            if dependency.name not in current_tree:
-                current_tree.append(dependency.name)
+            if dependency.name not in packages_in_tree:
+                packages_in_tree.add(dependency.name)
 
                 self._display_tree(
                     io,
                     dependency,
                     installed_packages,
-                    current_tree,
+                    packages_in_tree,
                     tree_bar,
                     level + 1,
                 )
+
+                packages_in_tree.discard(dependency.name)
 
     def _write_tree_line(self, io: IO, line: str) -> None:
         if not io.output.supports_utf8():
