@@ -196,6 +196,45 @@ def test_info_from_sdist_no_pkg_info(fixture_dir: FixtureDirGetter) -> None:
     assert info._source_url == path.resolve().as_posix()
 
 
+def test_info_from_sdist_name_ending_in_suffix_chars(tmp_path: Path) -> None:
+    """rstrip(".tar.gz") strips individual characters from the set {.,t,a,r,g,z}
+    rather than the suffix string.  This test uses a package name whose version
+    ends in 'a' (an alpha release) so that rstrip would eat the 'a', producing
+    the wrong directory name.  removesuffix does not have this problem.
+    """
+    import tarfile
+
+    # "pkg-1.0a" ends with 'a', which is in the char set {.,t,a,r,g,z}.
+    # rstrip(".tar.gz") would wrongly produce "pkg-1.0" instead of "pkg-1.0a".
+    sdist_name = "pkg-1.0a.tar.gz"
+    inner_dir = "pkg-1.0a"
+
+    # Build a minimal sdist with multiple top-level entries so the
+    # fallback path (name.removesuffix(suffix)) is exercised.
+    sdist_path = tmp_path / sdist_name
+    content_dir = tmp_path / "content"
+    pkg_dir = content_dir / inner_dir
+    pkg_dir.mkdir(parents=True)
+
+    pyproject = pkg_dir / "pyproject.toml"
+    pyproject.write_text(
+        '[project]\nname = "pkg"\nversion = "1.0a"\n'
+        "[build-system]\n"
+        'requires = ["setuptools"]\n'
+        'build-backend = "setuptools.build_meta"\n'
+    )
+    # Add a second top-level entry to force the fallback path
+    (content_dir / "extra-file.txt").write_text("force fallback")
+
+    with tarfile.open(sdist_path, "w:gz") as tf:
+        tf.add(pkg_dir, arcname=inner_dir)
+        tf.add(content_dir / "extra-file.txt", arcname="extra-file.txt")
+
+    info = PackageInfo.from_sdist(sdist_path)
+    assert info.name == "pkg"
+    assert info.version == "1.0a0"
+
+
 def test_info_from_wheel(demo_wheel: Path) -> None:
     info = PackageInfo.from_wheel(demo_wheel)
     demo_check_info(info)

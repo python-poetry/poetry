@@ -108,7 +108,7 @@ class Chef:
             if len(elements) == 1 and elements[0].is_dir():
                 sdist_dir = elements[0]
             else:
-                sdist_dir = archive_dir / archive.name.rstrip(suffix)
+                sdist_dir = archive_dir / archive.name.removesuffix(suffix)
                 if not sdist_dir.is_dir():
                     sdist_dir = archive_dir
 
