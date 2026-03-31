@@ -327,7 +327,7 @@ class PackageInfo:
             if len(elements) == 1 and elements[0].is_dir():
                 sdist_dir = elements[0]
             else:
-                sdist_dir = tmp / path.name.rstrip(suffix)
+                sdist_dir = tmp / path.name.removesuffix(suffix)
                 if not sdist_dir.is_dir():
                     sdist_dir = tmp
 
