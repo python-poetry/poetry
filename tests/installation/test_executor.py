@@ -1572,6 +1572,46 @@ You can verify this by running {expected_pip_command}.
     assert io.fetch_output() == expected_output
 
 
+def test_build_backend_error_includes_config_settings_in_pip_command(
+    mocker: MockerFixture,
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    env: MockEnv,
+    fixture_dir: FixtureDirGetter,
+) -> None:
+    """String config setting values must not be iterated per-character."""
+    error = BuildBackendException(Exception("build failed"), description="build failed")
+    mocker.patch.object(ProjectBuilder, "build", side_effect=error)
+    io.set_verbosity(Verbosity.NORMAL)
+
+    config.merge(
+        {
+            "installer": {
+                "build-config-settings": {
+                    "simple-project": {
+                        "CC": "gcc",
+                        "--build-option": ["--one", "--two"],
+                    },
+                },
+            },
+        }
+    )
+
+    executor = Executor(env, pool, config, io)
+    source_url = fixture_dir("simple_project").resolve().as_posix()
+    package = Package(
+        "simple-project", "1.2.3", source_type="directory", source_url=source_url
+    )
+
+    executor.execute([Install(package)])
+
+    output = io.fetch_output()
+    assert "--config-settings='CC=gcc'" in output
+    assert "--config-settings='--build-option=--one'" in output
+    assert "--config-settings='--build-option=--two'" in output
+
+
 @pytest.mark.parametrize("encoding", ["utf-8", "latin-1"])
 @pytest.mark.parametrize("stderr", [None, "Errör on stderr"])
 def test_build_backend_errors_are_reported_correctly_if_caused_by_subprocess_encoding(

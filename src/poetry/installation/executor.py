@@ -353,7 +353,10 @@ class Executor:
 
                         if config_settings := self._build_config_settings.get(pkg.name):
                             for setting in config_settings:
-                                for setting_value in config_settings[setting]:
+                                values = config_settings[setting]
+                                if isinstance(values, str):
+                                    values = [values]
+                                for setting_value in values:
                                     pip_command += f" --config-settings='{setting}={setting_value}'"
 
                         message = e.generate_message(
