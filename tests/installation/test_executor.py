@@ -1589,7 +1589,10 @@ def test_build_backend_error_includes_config_settings_in_pip_command(
         {
             "installer": {
                 "build-config-settings": {
-                    "simple-project": {"CC": "gcc"},
+                    "simple-project": {
+                        "CC": "gcc",
+                        "--build-option": ["--one", "--two"],
+                    },
                 },
             },
         }
@@ -1605,6 +1608,8 @@ def test_build_backend_error_includes_config_settings_in_pip_command(
 
     output = io.fetch_output()
     assert "--config-settings='CC=gcc'" in output
+    assert "--config-settings='--build-option=--one'" in output
+    assert "--config-settings='--build-option=--two'" in output
 
 
 @pytest.mark.parametrize("encoding", ["utf-8", "latin-1"])
