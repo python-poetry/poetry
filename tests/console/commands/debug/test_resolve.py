@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from poetry.core.version.markers import parse_marker
+
 from poetry.factory import Factory
 from tests.helpers import get_package
 
@@ -60,6 +62,27 @@ Resolution results:
 
 cachy 0.2.0
 └── msgpack-python >=0.5 <0.6
+"""
+
+    assert tester.io.fetch_output() == expected
+
+
+def test_debug_resolve_shows_marker_when_present(
+    tester: CommandTester, repo: TestRepository
+) -> None:
+    """Packages with environment markers must show the marker in output."""
+    pkg = get_package("pathlib2", "2.3.0")
+    pkg.marker = parse_marker('sys_platform == "win32"')
+    repo.add_package(pkg)
+
+    tester.execute("pathlib2")
+
+    expected = """\
+Resolving dependencies...
+
+Resolution results:
+
+pathlib2 2.3.0 sys_platform == "win32"
 """
 
     assert tester.io.fetch_output() == expected

@@ -535,7 +535,8 @@ class VersionSolver:
                 relevant_dependencies = [
                     r
                     for r in package.requires
-                    if not r.in_extras or r.in_extras[0] in dependency.extras
+                    if not r.in_extras
+                    or any(extra in dependency.extras for extra in r.in_extras)
                 ]
             has_deps = bool(relevant_dependencies)
             num_deps_upper_bound = sum(
