@@ -17,3 +17,5 @@
 
 .venv
 /poetry.toml
+/docs/superpowers/plans
+/docs/superpowers/specs

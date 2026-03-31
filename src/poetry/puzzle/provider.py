@@ -10,6 +10,7 @@ from collections import defaultdict
 from contextlib import contextmanager
 from datetime import datetime
 from datetime import timezone
+from dateutil.parser import isoparse
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -325,8 +326,6 @@ class Provider:
         for file in package.files or []:
             upload_time_str = file.get("upload_time")
             if upload_time_str:
-                from dateutil.parser import isoparse
-
                 upload_time = isoparse(upload_time_str).astimezone(timezone.utc)
                 if upload_time > self._exclude_newer:
                     return True

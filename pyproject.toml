@@ -30,6 +30,7 @@ dependencies = [
     # pbs-installer uses calver, so version is unclamped
     "pbs-installer[download,install] (>=2025.6.10)",
     "pytimeparse (>=1.1.8)",
+    "python-dateutil (>=2.9.0)"
 ]
 authors = [
     { name = "Sébastien Eustace", email = "sebastien@eustace.io" }
@@ -69,8 +70,6 @@ include = [{ path = "tests", format = "sdist" }]
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = ">=2.10"
-python-dateutil = "^2.9.0.post0"
-pytimeparse = ">=1.1.8,<3.0.0"
 
 [tool.poetry.group.test.dependencies]
 coverage = ">=7.2.0"
@@ -199,6 +198,7 @@ markers = [
 ]
 log_cli_level = "INFO"
 xfail_strict = true
+pythonpath = ["src"]
 
 
 [tool.coverage.report]

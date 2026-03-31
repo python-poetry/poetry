@@ -23,6 +23,7 @@ from poetry.json import validate_object
 from poetry.packages.locker import Locker
 from poetry.plugins.plugin import Plugin
 from poetry.plugins.plugin_manager import PluginManager
+from poetry.utils.duration import parse_duration
 from poetry.poetry import Poetry
 from poetry.pyproject.toml import PyProjectTOML
 from poetry.toml.file import TOMLFile
@@ -82,8 +83,6 @@ class Factory(BaseFactory):
         # Parse exclude-newer duration if specified
         exclude_newer = None
         if exclude_newer_str := base_poetry.local_config.get("exclude-newer"):
-            from poetry.utils.duration import parse_duration
-
             exclude_newer = parse_duration(exclude_newer_str)
 
         build_constraints: dict[NormalizedName, list[Dependency]] = {}

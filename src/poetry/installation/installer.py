@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import datetime
-from datetime import timezone
 from typing import TYPE_CHECKING
 from typing import cast
 

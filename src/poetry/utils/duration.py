@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 import re
-from datetime import datetime, timezone
+
+from datetime import datetime
+from datetime import timezone
 
 import pytimeparse
+
+from dateutil.relativedelta import relativedelta
 
 
 def parse_duration(duration_str: str) -> datetime:
@@ -23,7 +27,6 @@ def parse_duration(duration_str: str) -> datetime:
     # Handle month-based durations explicitly since pytimeparse doesn't support them
     month_match = re.match(r"^(\d+)\s*months?$", duration_str.strip(), re.IGNORECASE)
     if month_match:
-        from dateutil.relativedelta import relativedelta
 
         months = int(month_match.group(1))
         now = datetime.now(timezone.utc)
@@ -34,9 +37,6 @@ def parse_duration(duration_str: str) -> datetime:
 
     if seconds is None:
         raise ValueError(f"Invalid duration: {duration_str!r}")
-
-    # Calculate the cutoff time
-    from dateutil.relativedelta import relativedelta
 
     now = datetime.now(timezone.utc)
     return now - relativedelta(seconds=seconds)
