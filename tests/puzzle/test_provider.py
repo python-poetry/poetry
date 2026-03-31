@@ -1069,3 +1069,40 @@ def test_source_dependency_is_not_satisfied_by_incompatible_direct_origin(
     dep.source_name = repository.name
 
     assert provider.search_for(dep) == [repo_package]
+
+
+def test_search_for_exclude_newer(
+    provider: Provider,
+    repository: Repository,
+) -> None:
+    """Test that packages published within exclude_newer are filtered."""
+    from datetime import datetime, timezone
+    from dateutil.relativedelta import relativedelta
+
+    # Set exclude_newer to 3 days ago
+    exclude_newer = datetime.now(timezone.utc) - relativedelta(days=3)
+    provider = Provider(provider._package, provider._pool, NullIO(), exclude_newer=exclude_newer)
+
+    # Add packages with different upload times
+    recent_package = Package("foo", "1.0")
+    recent_package.files = [
+        {"file": "foo-1.0-py3-none-any.whl", "hash": "sha256:abc",
+         "upload_time": "2026-03-30T12:00:00Z"}  # recent
+    ]
+
+    old_package = Package("foo", "2.0")
+    old_package.files = [
+        {"file": "foo-2.0-py3-none-any.whl", "hash": "sha256:def",
+         "upload_time": "2026-01-01T12:00:00Z"}  # old
+    ]
+
+    repository.add_package(recent_package)
+    repository.add_package(old_package)
+
+    dependency = Dependency("foo", ">=1")
+
+    result = provider.search_for(dependency)
+    versions = [p.package.version for p in result]
+
+    # Only old package should be included since recent is within exclude_newer
+    assert versions == [Package("foo", "2.0").version]

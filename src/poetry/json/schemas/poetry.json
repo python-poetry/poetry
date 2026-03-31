@@ -33,6 +33,10 @@
           "$ref": "#/definitions/dependencies"
         }
       }
+    },
+    "exclude-newer": {
+      "type": "string",
+      "description": "Duration string to exclude packages published within the specified duration (e.g., '1 week', '3 days')."
     }
   },
   "definitions": {

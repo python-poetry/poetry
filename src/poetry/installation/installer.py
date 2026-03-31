@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime
+from datetime import timezone
 from typing import TYPE_CHECKING
 from typing import cast
 
@@ -47,6 +49,7 @@ class Installer:
         disable_cache: bool = False,
         *,
         build_constraints: Mapping[NormalizedName, list[Dependency]] | None = None,
+        exclude_newer: datetime | None = None,
     ) -> None:
         self._io = io
         self._env = env
@@ -54,6 +57,7 @@ class Installer:
         self._locker = locker
         self._pool = pool
         self._config = config
+        self._exclude_newer = exclude_newer
 
         self._dry_run = False
         self._requires_synchronization = False
@@ -83,6 +87,9 @@ class Installer:
             installed = self._get_installed()
 
         self._installed_repository = installed
+
+    def set_exclude_newer(self, exclude_newer: datetime | None) -> None:
+        self._exclude_newer = exclude_newer
 
     @property
     def executor(self) -> Executor:
@@ -196,6 +203,7 @@ class Installer:
             locked_repository.packages,
             locked_repository.packages,
             self._io,
+            exclude_newer=self._exclude_newer,
         )
 
         # Always re-solve directory dependencies, otherwise we can't determine
@@ -243,6 +251,7 @@ class Installer:
                 self._installed_repository.packages,
                 locked_repository.packages,
                 self._io,
+                exclude_newer=self._exclude_newer,
             )
 
             with solver.provider.use_source_root(
@@ -316,6 +325,7 @@ class Installer:
                 locked_repository.packages,
                 NullIO(),
                 active_root_extras=self._extras,
+                exclude_newer=self._exclude_newer,
             )
             # Everything is resolved at this point, so we no longer need
             # to load deferred dependencies (i.e. VCS, URL and path dependencies)

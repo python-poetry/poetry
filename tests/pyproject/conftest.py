@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from poetry.toml import TOMLFile
+
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -41,3 +43,13 @@ python = "^3.5"
     with pyproject_toml.open(mode="a", encoding="utf-8") as f:
         f.write(content)
     return content
+
+
+@pytest.fixture
+def exclude_newer_section(pyproject_toml: Path, poetry_section: str) -> str:
+    # Read the current content and insert exclude-newer before [tool.poetry.dependencies]
+    content = TOMLFile(pyproject_toml).read()
+    # Insert exclude-newer at the [tool.poetry] level
+    content["tool"]["poetry"]["exclude-newer"] = "1 week"
+    TOMLFile(pyproject_toml).write(content)
+    return 'exclude-newer = "1 week"'

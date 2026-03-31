@@ -45,3 +45,11 @@ def test_pyproject_toml_save(
     assert pyproject.poetry_config["name"] == name
     assert pyproject.build_system.build_backend == build_backend
     assert build_requires in pyproject.build_system.requires
+
+
+def test_pyproject_toml_exclude_newer(
+    pyproject_toml: Path, poetry_section: str, exclude_newer_section: str
+) -> None:
+    pyproject = PyProjectTOML(pyproject_toml)
+
+    assert pyproject.poetry_config["exclude-newer"] == "1 week"

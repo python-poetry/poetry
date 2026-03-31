@@ -79,6 +79,13 @@ class Factory(BaseFactory):
 
         base_poetry = super().create_poetry(cwd=cwd, with_groups=with_groups)
 
+        # Parse exclude-newer duration if specified
+        exclude_newer = None
+        if exclude_newer_str := base_poetry.local_config.get("exclude-newer"):
+            from poetry.utils.duration import parse_duration
+
+            exclude_newer = parse_duration(exclude_newer_str)
+
         build_constraints: dict[NormalizedName, list[Dependency]] = {}
         for name, constraints in base_poetry.local_config.get(
             "build-constraints", {}
@@ -130,6 +137,8 @@ class Factory(BaseFactory):
             disable_cache=disable_cache,
             build_constraints=build_constraints,
         )
+
+        poetry.set_exclude_newer(exclude_newer)
 
         poetry.set_pool(
             self.create_pool(
