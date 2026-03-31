@@ -8,6 +8,8 @@ import time
 
 from collections import defaultdict
 from contextlib import contextmanager
+from datetime import datetime
+from datetime import timezone
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -121,6 +123,7 @@ class Provider:
         *,
         locked: list[Package] | None = None,
         active_root_extras: Collection[NormalizedName] | None = None,
+        exclude_newer: datetime | None = None,
     ) -> None:
         self._package = package
         self._pool = pool
@@ -139,6 +142,7 @@ class Provider:
         self._active_root_extras = (
             frozenset(active_root_extras) if active_root_extras is not None else None
         )
+        self._exclude_newer = exclude_newer
 
         self._explicit_sources: dict[str, str] = {}
         for package in locked or []:
@@ -301,6 +305,9 @@ class Provider:
 
         packages = self._pool.find_packages(dependency)
 
+        if self._exclude_newer is not None:
+            packages = [p for p in packages if not self._is_package_excluded_by_newer(p)]
+
         packages.sort(
             key=lambda p: (
                 not p.yanked,
@@ -311,6 +318,19 @@ class Provider:
         )
 
         return PackageCollection(dependency, packages)
+
+    def _is_package_excluded_by_newer(self, package: Package) -> bool:
+        if self._exclude_newer is None:
+            return False
+        for file in package.files or []:
+            upload_time_str = file.get("upload_time")
+            if upload_time_str:
+                from dateutil.parser import isoparse
+
+                upload_time = isoparse(upload_time_str).astimezone(timezone.utc)
+                if upload_time > self._exclude_newer:
+                    return True
+        return False
 
     def _search_for_vcs(self, dependency: VCSDependency) -> Package:
         """

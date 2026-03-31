@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
@@ -50,6 +51,7 @@ class Poetry(BasePoetry):
         self._plugin_manager: PluginManager | None = None
         self._disable_cache = disable_cache
         self._build_constraints = build_constraints or {}
+        self._exclude_newer: datetime | None = None
 
     @property
     def pyproject(self) -> PyProjectTOML:
@@ -80,6 +82,10 @@ class Poetry(BasePoetry):
     def build_constraints(self) -> Mapping[NormalizedName, list[Dependency]]:
         return self._build_constraints
 
+    @property
+    def exclude_newer(self) -> datetime | None:
+        return self._exclude_newer
+
     def set_locker(self, locker: Locker) -> Poetry:
         self._locker = locker
 
@@ -93,6 +99,10 @@ class Poetry(BasePoetry):
     def set_config(self, config: Config) -> Poetry:
         self._config = config
 
+        return self
+
+    def set_exclude_newer(self, exclude_newer: datetime | None) -> Poetry:
+        self._exclude_newer = exclude_newer
         return self
 
     def get_sources(self) -> list[Source]:

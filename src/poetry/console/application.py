@@ -617,6 +617,7 @@ class Application(BaseApplication):
             poetry.config,
             disable_cache=poetry.disable_cache,
             build_constraints=poetry.build_constraints,
+            exclude_newer=poetry.exclude_newer,
         )
         command.set_installer(installer)
 

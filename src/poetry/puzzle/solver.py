@@ -5,6 +5,8 @@ import time
 
 from collections import defaultdict
 from contextlib import contextmanager
+from datetime import datetime
+from datetime import timezone
 from typing import TYPE_CHECKING
 
 from poetry.core.version.markers import AnyMarker
@@ -56,6 +58,7 @@ class Solver:
         locked: list[Package],
         io: IO,
         active_root_extras: Collection[NormalizedName] | None = None,
+        exclude_newer: datetime | None = None,
     ) -> None:
         self._package = package
         self._pool = pool
@@ -69,6 +72,7 @@ class Solver:
             self._io,
             locked=locked,
             active_root_extras=active_root_extras,
+            exclude_newer=exclude_newer,
         )
         self._overrides: list[dict[Package, dict[str, Dependency]]] = []
 

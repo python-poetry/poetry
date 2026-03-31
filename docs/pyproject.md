@@ -746,6 +746,20 @@ If a VCS is being used for a package, the exclude field will be seeded with the 
 VCS ignore settings can be negated by adding entries in `include`; be sure to explicitly set the `format` as above.
 {{% /note %}}
 
+### exclude-newer
+
+The `exclude-newer` field in `[tool.poetry]` allows you to exclude package versions that were published within a specified duration. This is useful for avoiding recently published packages with unknown vulnerabilities.
+
+```toml
+[tool.poetry]
+exclude-newer = "1 week"
+```
+
+Supported duration formats include: `seconds`, `minutes`, `hours`, `days`, `weeks`, `months`, `years` (e.g., "3 days", "2 weeks", "1 month").
+
+When set, Poetry will not consider any package version where any file was uploaded within the specified duration. If a package version has multiple files (e.g., wheel and source tarball), it will be excluded if **any** file was uploaded within the duration. Packages without upload time information are included by default (assumed to be older).
+
+
 ### dependencies and dependency groups
 
 Poetry is configured to look for dependencies on [PyPI](https://pypi.org) by default.

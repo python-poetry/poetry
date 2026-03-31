@@ -25,6 +25,7 @@ class InstallerCommand(GroupCommand, EnvCommand):
 
         self.installer.set_package(self.poetry.package)
         self.installer.set_locker(self.poetry.locker)
+        self.installer.set_exclude_newer(self.poetry.exclude_newer)
 
     @property
     def installer(self) -> Installer:
