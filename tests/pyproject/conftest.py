@@ -50,6 +50,6 @@ def exclude_newer_section(pyproject_toml: Path, poetry_section: str) -> str:
     # Read the current content and insert exclude-newer before [tool.poetry.dependencies]
     content = TOMLFile(pyproject_toml).read()
     # Insert exclude-newer at the [tool.poetry] level
-    content["tool"]["poetry"]["exclude-newer"] = "1 week"
+    content["tool"]["poetry"]["exclude-newer"] = "1 week"  # type: ignore[index]
     TOMLFile(pyproject_toml).write(content)
     return 'exclude-newer = "1 week"'

@@ -3,12 +3,12 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 import pytest
-from dateutil.relativedelta import relativedelta
+from dateutil.relativedelta import relativedelta  # type: ignore[import-untyped]
 
 from poetry.utils.duration import parse_duration
 
 
-def test_parse_duration_valid_formats():
+def test_parse_duration_valid_formats() -> None:
     """Test various valid duration formats."""
     now = datetime.now(timezone.utc)
 
@@ -28,7 +28,7 @@ def test_parse_duration_valid_formats():
     assert abs((result - expected).total_seconds()) < 2
 
 
-def test_parse_duration_invalid_format():
+def test_parse_duration_invalid_format() -> None:
     """Test that invalid formats raise ValueError."""
     with pytest.raises(ValueError, match="Invalid duration"):
         parse_duration("invalid")

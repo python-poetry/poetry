@@ -162,9 +162,10 @@ class Env(ABC):
         self._find_pip_executable()
 
     def get_embedded_wheel(self, distribution: str) -> Path:
-        wheel: Wheel = get_embed_wheel(
+        wheel = get_embed_wheel(
             distribution, f"{self.version_info[0]}.{self.version_info[1]}"
         )
+        assert wheel is not None
         path: Path = wheel.path
         return path
 

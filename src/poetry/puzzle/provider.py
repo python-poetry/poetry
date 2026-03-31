@@ -10,7 +10,7 @@ from collections import defaultdict
 from contextlib import contextmanager
 from datetime import datetime
 from datetime import timezone
-from dateutil.parser import isoparse
+from dateutil.parser import isoparse  # type: ignore[import-untyped]
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar

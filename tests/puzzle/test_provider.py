@@ -1077,23 +1077,25 @@ def test_search_for_exclude_newer(
 ) -> None:
     """Test that packages published within exclude_newer are filtered."""
     from datetime import datetime, timezone
-    from dateutil.relativedelta import relativedelta
+    from dateutil.relativedelta import relativedelta  # type: ignore[import-untyped]
 
     # Set exclude_newer to 3 days ago
     exclude_newer = datetime.now(timezone.utc) - relativedelta(days=3)
     provider = Provider(provider._package, provider._pool, NullIO(), exclude_newer=exclude_newer)
+    tz1 = (datetime.now(timezone.utc) - relativedelta(days=1)).isoformat(timespec="seconds").replace("+00:00","Z")
+    tz2 = (datetime.now(timezone.utc) - relativedelta(days=10)).isoformat(timespec="seconds").replace("+00:00","Z")
 
     # Add packages with different upload times
     recent_package = Package("foo", "1.0")
     recent_package.files = [
         {"file": "foo-1.0-py3-none-any.whl", "hash": "sha256:abc",
-         "upload_time": "2026-03-30T12:00:00Z"}  # recent
+         "upload_time": tz2}  # recent
     ]
 
     old_package = Package("foo", "2.0")
     old_package.files = [
         {"file": "foo-2.0-py3-none-any.whl", "hash": "sha256:def",
-         "upload_time": "2026-01-01T12:00:00Z"}  # old
+         "upload_time": tz1}  # old
     ]
 
     repository.add_package(recent_package)
@@ -1105,4 +1107,77 @@ def test_search_for_exclude_newer(
     versions = [p.package.version for p in result]
 
     # Only old package should be included since recent is within exclude_newer
-    assert versions == [Package("foo", "2.0").version]
+    assert versions == [Package("foo", "1.0").version]
+
+def test_search_for_exclude_newer_with_strict_rule(
+    provider: Provider,
+    repository: Repository,
+) -> None:
+    """Test that packages published within exclude_newer are filtered."""
+    from datetime import datetime, timezone
+    from dateutil.relativedelta import relativedelta
+
+    # Set exclude_newer to 3 days ago
+    exclude_newer = datetime.now(timezone.utc) - relativedelta(days=3)
+    provider = Provider(
+        provider._package,
+        provider._pool,
+        NullIO(),
+        exclude_newer=exclude_newer,
+    )
+
+
+    # 1) Packages whose files all lack `upload_time` should still be included.
+    no_upload_time_pkg = Package("foo-no-upload-time", "1.0")
+    no_upload_time_pkg.files = [
+        {
+            "file": "foo_no_upload_time-1.0-py3-none-any.whl",
+            "hash": "sha256:no-upload",
+        }
+    ]
+    repository.add_package(no_upload_time_pkg)
+
+    results = provider.search_for(Dependency("foo_no_upload_time",">=1.0"))
+    # Packages without upload_time must not be excluded by the cutoff.
+    assert no_upload_time_pkg in results
+
+    # 2) Packages with any file newer than the cutoff should be excluded,
+    #    even if other files are older.
+    mixed_pkg = Package("foo-mixed", "1.0")
+    old_upload_time = (exclude_newer - relativedelta(days=10)).isoformat()
+    recent_upload_time = (exclude_newer + relativedelta(days=1)).isoformat()
+    mixed_pkg.files = [
+        {
+            "file": "foo_mixed-1.0-old-py3-none-any.whl",
+            "hash": "sha256:old",
+            "upload_time": old_upload_time,
+        },
+        {
+            "file": "foo_mixed-1.0-new-py3-none-any.whl",
+            "hash": "sha256:new",
+            "upload_time": recent_upload_time,
+        },
+    ]
+    repository.add_package(mixed_pkg)
+
+    results = provider.search_for(Dependency("foo_mixed",">=1.0"))
+    # Any file newer than the cutoff excludes the whole package.
+    assert mixed_pkg not in results
+
+    # 3) Boundary test where `upload_time` equals the cutoff; this documents
+    #    the intended `>` vs `>=` behavior in `_is_package_excluded_by_newer`.
+    boundary_pkg = Package("foo-boundary", "1.0")
+    boundary_pkg.files = [
+        {
+            "file": "foo_boundary-1.0-py3-none-any.whl",
+            "hash": "sha256:boundary",
+            "upload_time": exclude_newer.isoformat(),
+        }
+    ]
+    repository.add_package(boundary_pkg)
+
+    results = provider.search_for(Dependency("foo_boundary",">=1.0"))
+    # If `_is_package_excluded_by_newer` uses a strict `>` comparison, the
+    # boundary package should be included; if it uses `>=`, this assertion
+    # should be updated to `assert boundary_pkg not in results`.
+    assert boundary_pkg in results

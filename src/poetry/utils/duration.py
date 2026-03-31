@@ -5,9 +5,9 @@ import re
 from datetime import datetime
 from datetime import timezone
 
-import pytimeparse
+import pytimeparse  # type: ignore[import-untyped]
 
-from dateutil.relativedelta import relativedelta
+from dateutil.relativedelta import relativedelta  # type: ignore[import-untyped]
 
 
 def parse_duration(duration_str: str) -> datetime:
@@ -30,7 +30,7 @@ def parse_duration(duration_str: str) -> datetime:
 
         months = int(month_match.group(1))
         now = datetime.now(timezone.utc)
-        return now - relativedelta(months=months)
+        return now - relativedelta(months=months)  # type: ignore[no-any-return]
 
     # pytimeparse returns seconds as an integer or None on failure
     seconds = pytimeparse.parse(duration_str)
@@ -39,4 +39,4 @@ def parse_duration(duration_str: str) -> datetime:
         raise ValueError(f"Invalid duration: {duration_str!r}")
 
     now = datetime.now(timezone.utc)
-    return now - relativedelta(seconds=seconds)
+    return now - relativedelta(seconds=seconds)  # type: ignore[no-any-return]
