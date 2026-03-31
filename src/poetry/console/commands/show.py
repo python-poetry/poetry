@@ -610,17 +610,17 @@ lists all packages available."""
 
             if dependency.name not in packages_in_tree:
                 packages_in_tree.add(dependency.name)
-
-                self._display_tree(
-                    io,
-                    dependency,
-                    installed_packages,
-                    packages_in_tree,
-                    tree_bar,
-                    level + 1,
-                )
-
-                packages_in_tree.discard(dependency.name)
+                try:
+                    self._display_tree(
+                        io,
+                        dependency,
+                        installed_packages,
+                        packages_in_tree,
+                        tree_bar,
+                        level + 1,
+                    )
+                finally:
+                    packages_in_tree.discard(dependency.name)
 
     def _write_tree_line(self, io: IO, line: str) -> None:
         if not io.output.supports_utf8():
