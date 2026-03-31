@@ -95,6 +95,13 @@ class PythonListCommand(Command):
                 "<fg=magenta;options=bold>Path</>",
             ]
         )
+        # Set minimum column widths to ensure consistent formatting across Python versions
+        # Version: max len is "X.Y.Zt" (7 chars) or "Version" (7 chars)
+        # Implementation: max len is "Implementation" (14 chars)
+        # Manager: max len is "System" or "Poetry" (6 chars) or "Manager" (7 chars)
+        table.set_column_width(0, 7)
+        table.set_column_width(1, 14)
+        table.set_column_width(2, 7)
 
         implementations = {"cpython": "CPython", "pypy": "PyPy"}
         python_installation_path = Config.create().python_installation_dir
