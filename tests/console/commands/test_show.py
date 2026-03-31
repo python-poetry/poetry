@@ -2069,6 +2069,91 @@ a 0.0.1
     assert tester.io.fetch_output() == expected
 
 
+def test_show_tree_shared_dependency_not_marked_circular(
+    tester: CommandTester, poetry: Poetry, installed: Repository
+) -> None:
+    """When siblings share a dependency, it must not be flagged as circular.
+
+    a depends on b, which depends on c and d.  Both c and d depend on e.
+    Because c and d are siblings under b, e appearing under d is not circular
+    — only a true ancestor cycle should trigger the warning.
+    """
+    poetry.package.add_dependency(Factory.create_dependency("a", "=0.0.1"))
+
+    a = get_package("a", "0.0.1")
+    a.add_dependency(Factory.create_dependency("b", "=0.0.1"))
+    installed.add_package(a)
+
+    b = get_package("b", "0.0.1")
+    b.add_dependency(Factory.create_dependency("c", "=0.0.1"))
+    b.add_dependency(Factory.create_dependency("d", "=0.0.1"))
+    installed.add_package(b)
+
+    c = get_package("c", "0.0.1")
+    c.add_dependency(Factory.create_dependency("e", "=0.0.1"))
+    installed.add_package(c)
+
+    d = get_package("d", "0.0.1")
+    d.add_dependency(Factory.create_dependency("e", "=0.0.1"))
+    installed.add_package(d)
+
+    e = get_package("e", "0.0.1")
+    installed.add_package(e)
+
+    assert isinstance(poetry.locker, TestLocker)
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "a",
+                    "version": "0.0.1",
+                    "dependencies": {"b": "=0.0.1"},
+                    "python-versions": "*",
+                    "optional": False,
+                },
+                {
+                    "name": "b",
+                    "version": "0.0.1",
+                    "dependencies": {"c": "=0.0.1", "d": "=0.0.1"},
+                    "python-versions": "*",
+                    "optional": False,
+                },
+                {
+                    "name": "c",
+                    "version": "0.0.1",
+                    "dependencies": {"e": "=0.0.1"},
+                    "python-versions": "*",
+                    "optional": False,
+                },
+                {
+                    "name": "d",
+                    "version": "0.0.1",
+                    "dependencies": {"e": "=0.0.1"},
+                    "python-versions": "*",
+                    "optional": False,
+                },
+                {
+                    "name": "e",
+                    "version": "0.0.1",
+                    "python-versions": "*",
+                    "optional": False,
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "files": {"a": [], "b": [], "c": [], "d": [], "e": []},
+            },
+        }
+    )
+
+    tester.execute("--tree", supports_utf8=False)
+
+    output = tester.io.fetch_output()
+    assert "circular" not in output
+
+
 def test_show_tree_why(
     tester: CommandTester, poetry: Poetry, installed: Repository
 ) -> None:

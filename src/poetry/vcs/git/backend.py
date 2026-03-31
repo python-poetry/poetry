@@ -301,8 +301,8 @@ class Git:
             )
 
         if revision:
-            revision.replace("refs/head/", "")
-            revision.replace("refs/tags/", "")
+            revision = revision.removeprefix("refs/heads/")
+            revision = revision.removeprefix("refs/tags/")
 
         try:
             SystemGit.checkout(revision, target)

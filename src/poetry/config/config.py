@@ -363,11 +363,11 @@ class Config:
         if not isinstance(value, str):
             return value
 
-        def resolve_from_config(match: re.Match[str]) -> Any:
+        def resolve_from_config(match: re.Match[str]) -> str:
             key = match.group(1)
             config_value = self.get(key)
-            if config_value:
-                return config_value
+            if config_value is not None:
+                return str(config_value)
 
             # The key doesn't exist in the config but might be resolved later,
             # so we keep it as a format variable.
