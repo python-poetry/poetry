@@ -17,7 +17,7 @@ import requests.auth
 import requests.exceptions
 
 from cachecontrol import CacheControlAdapter
-from cachecontrol.caches import FileCache
+from cachecontrol.caches import SeparateBodyFileCache
 from requests_toolbelt import user_agent
 
 from poetry.__version__ import __version__
@@ -116,7 +116,7 @@ class Authenticator:
         ) = None
         self._password_manager = PasswordManager(self._config)
         self._cache_control = (
-            FileCache(
+            SeparateBodyFileCache(
                 self._config.repository_cache_directory
                 / (cache_id or "_default_cache")
                 / "_http"
