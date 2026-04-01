@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from datetime import datetime
 from typing import TYPE_CHECKING
 from typing import cast
 
@@ -19,6 +18,7 @@ from poetry.utils.constants import POETRY_SYSTEM_PROJECT_NAME
 if TYPE_CHECKING:
     from collections.abc import Iterable
     from collections.abc import Mapping
+    from datetime import datetime
 
     from cleo.io.io import IO
     from packaging.utils import NormalizedName

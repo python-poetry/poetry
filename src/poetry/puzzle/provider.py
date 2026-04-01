@@ -10,13 +10,13 @@ from collections import defaultdict
 from contextlib import contextmanager
 from datetime import datetime
 from datetime import timezone
-from dateutil.parser import isoparse  # type: ignore[import-untyped]
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
 from typing import cast
 
 from cleo.ui.progress_indicator import ProgressIndicator
+from dateutil.parser import isoparse  # type: ignore[import-untyped]
 from poetry.core.constraints.version import EmptyConstraint
 from poetry.core.constraints.version import Version
 from poetry.core.constraints.version import VersionRange
@@ -308,7 +308,9 @@ class Provider:
         packages = self._pool.find_packages(dependency)
 
         if self._exclude_newer is not None:
-            packages = [p for p in packages if not self._is_package_excluded_by_newer(p)]
+            packages = [
+                p for p in packages if not self._is_package_excluded_by_newer(p)
+            ]
 
         packages.sort(
             key=lambda p: (

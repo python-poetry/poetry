@@ -5,8 +5,6 @@ import time
 
 from collections import defaultdict
 from contextlib import contextmanager
-from datetime import datetime
-from datetime import timezone
 from typing import TYPE_CHECKING
 
 from poetry.core.version.markers import AnyMarker
@@ -28,6 +26,7 @@ if TYPE_CHECKING:
     from collections.abc import Collection
     from collections.abc import Iterator
     from collections.abc import Sequence
+    from datetime import datetime
 
     from cleo.io.io import IO
     from packaging.utils import NormalizedName

@@ -27,7 +27,6 @@ def parse_duration(duration_str: str) -> datetime:
     # Handle month-based durations explicitly since pytimeparse doesn't support them
     month_match = re.match(r"^(\d+)\s*months?$", duration_str.strip(), re.IGNORECASE)
     if month_match:
-
         months = int(month_match.group(1))
         now = datetime.now(timezone.utc)
         return now - relativedelta(months=months)  # type: ignore[no-any-return]

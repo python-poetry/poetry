@@ -28,7 +28,6 @@ from poetry.utils.helpers import is_dir_writable
 if TYPE_CHECKING:
     from packaging.tags import Tag
     from poetry.core.version.markers import BaseMarker
-    from virtualenv.seed.wheels.util import Wheel
 
     from poetry.utils.env.generic_env import GenericEnv
 

@@ -23,10 +23,10 @@ from poetry.json import validate_object
 from poetry.packages.locker import Locker
 from poetry.plugins.plugin import Plugin
 from poetry.plugins.plugin_manager import PluginManager
-from poetry.utils.duration import parse_duration
 from poetry.poetry import Poetry
 from poetry.pyproject.toml import PyProjectTOML
 from poetry.toml.file import TOMLFile
+from poetry.utils.duration import parse_duration
 from poetry.utils.isolated_build import CONSTRAINTS_GROUP_NAME
 
 

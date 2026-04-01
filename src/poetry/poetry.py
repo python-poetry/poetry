@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from datetime import datetime
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
@@ -14,6 +13,7 @@ from poetry.pyproject.toml import PyProjectTOML
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
+    from datetime import datetime
     from pathlib import Path
 
     from packaging.utils import NormalizedName

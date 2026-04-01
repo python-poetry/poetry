@@ -653,8 +653,10 @@ lists all packages available."""
             for dep in requires:
                 if dep.name == package.name and dep.source_type == package.source_type:
                     provider = Provider(
-                        root, self.poetry.pool, NullIO(),
-                        exclude_newer=self.poetry.exclude_newer
+                        root,
+                        self.poetry.pool,
+                        NullIO(),
+                        exclude_newer=self.poetry.exclude_newer,
                     )
                     return provider.search_for_direct_origin_dependency(dep)
 

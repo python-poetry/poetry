@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime
+from datetime import timezone
 
 import pytest
+
 from dateutil.relativedelta import relativedelta  # type: ignore[import-untyped]
 
 from poetry.utils.duration import parse_duration
