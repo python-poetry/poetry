@@ -88,7 +88,9 @@ the config command.
                         f"ready for publishing in {dist_dir}. Build anyway!</warning>"
                     )
 
-            self.call("build", args=f"--output {dist_dir}")
+            exit_code = self.call("build", args=f"--output {dist_dir}")
+            if exit_code:
+                return exit_code
 
             publisher = Publisher(self.poetry, self.io, Path(dist_dir))
 
