@@ -422,6 +422,37 @@ def test_authenticator_uses_certs_from_config_if_not_provided(
     assert Path(kwargs["cert"]) == Path(client_cert or configured_client_cert)
 
 
+@pytest.mark.parametrize("verify", [True, False, None])
+def test_authenticator_request_verify_is_respected(
+    config: Config,
+    mock_remote: responses.RequestsMock,
+    mock_config: Config,
+    http: responses.RequestsMock,
+    mocker: MockerFixture,
+    verify: bool | None,
+) -> None:
+    """especially verify=False must not be overridden by configured certificates."""
+    mock_config.merge(
+        {
+            "certificates": {
+                "foo": {"cert": "/path/to/cert", "client-cert": "/path/to/client-cert"}
+            },
+        }
+    )
+
+    authenticator = Authenticator(mock_config, NullIO())
+    url = "https://foo.bar/files/foo-0.1.0.tar.gz"
+    session = authenticator.get_session(url)
+    session_send = mocker.patch.object(session, "send")
+    authenticator.request("get", url, verify=verify)
+    kwargs = session_send.call_args[1]
+
+    if verify is None:
+        assert kwargs["verify"] == str(Path("/path/to/cert"))
+    else:
+        assert kwargs["verify"] is verify
+
+
 def test_authenticator_uses_credentials_from_config_matched_by_url_path(
     config: Config, mock_remote: None, http: responses.RequestsMock
 ) -> None:
