@@ -448,7 +448,7 @@ def test_authenticator_request_verify_is_respected(
     kwargs = session_send.call_args[1]
 
     if verify is None:
-        assert kwargs["verify"] == "/path/to/cert"
+        assert kwargs["verify"] == str(Path("/path/to/cert"))
     else:
         assert kwargs["verify"] is verify
 
