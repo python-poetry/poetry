@@ -204,6 +204,8 @@ class Uploader:
         file: Path,
         dry_run: bool = False,
         skip_existing: bool = False,
+        *,
+        registered: bool = False,
     ) -> None:
         from cleo.ui.progress_bar import ProgressBar
 
@@ -254,7 +256,16 @@ class Uploader:
                         "Is the URL missing a trailing slash?"
                     )
                 elif resp.status_code == 400 and "was ever registered" in resp.text:
-                    self._register(session, url)
+                    if not registered:
+                        self._register(session, url)
+                        return self._upload_file(
+                            session,
+                            url,
+                            file,
+                            dry_run,
+                            skip_existing,
+                            registered=True,
+                        )
                     resp.raise_for_status()
                 elif skip_existing and self._is_file_exists_error(resp):
                     bar.set_format(
