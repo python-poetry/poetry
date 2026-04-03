@@ -10,7 +10,7 @@ dependencies = [
     "cleo (>=2.1.0,<3.0.0)",
     "dulwich (>=0.25.0,<2)",
     "fastjsonschema (>=2.18.0,<3.0.0)",
-    "installer (>=0.7.0,<0.8.0)",
+    "installer (>=1,<2)",
     "keyring (>=25.1.0,<26.0.0)",
     # packaging uses calver, so version is unclamped
     "packaging (>=24.2)",  # PEP 639 support was added in 24.2
