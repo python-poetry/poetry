@@ -1306,22 +1306,22 @@ def test_executor_should_install_multiple_packages_from_same_git_repository(
     wheel: Path,
 ) -> None:
     package_a = Package(
-        "package_a",
+        "one",
         "0.1.2",
         source_type="git",
         source_reference="master",
         source_resolved_reference="123456",
         source_url="https://github.com/demo/subdirectories.git",
-        source_subdirectory="package_a",
+        source_subdirectory="one",
     )
     package_b = Package(
-        "package_b",
+        "two",
         "0.1.2",
         source_type="git",
         source_reference="master",
         source_resolved_reference="123456",
         source_url="https://github.com/demo/subdirectories.git",
-        source_subdirectory="package_b",
+        source_subdirectory="two",
     )
 
     chef = Chef(artifact_cache, tmp_venv, Factory.create_pool(config))
@@ -1330,13 +1330,59 @@ def test_executor_should_install_multiple_packages_from_same_git_repository(
 
     executor = Executor(tmp_venv, pool, config, io)
     executor._chef = chef
-    executor.execute([Install(package_a), Install(package_b)])
+    return_code = executor.execute([Install(package_a), Install(package_b)])
+
+    assert return_code == 0, io.fetch_error()
+    assert spy.call_count == 2
 
     archive_arg = spy.call_args_list[0][0][0]
-    assert archive_arg == tmp_venv.path / "src/subdirectories/package_a"
+    assert archive_arg == tmp_venv.path / "src/subdirectories/one"
 
     archive_arg = spy.call_args_list[1][0][0]
-    assert archive_arg == tmp_venv.path / "src/subdirectories/package_b"
+    assert archive_arg == tmp_venv.path / "src/subdirectories/two"
+
+
+def test_executor_should_abort_if_installing_first_package_from_same_git_repository_fails(
+    mocker: MockerFixture,
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    config: Config,
+    artifact_cache: ArtifactCache,
+    io: BufferedIO,
+    wheel: Path,
+) -> None:
+    package_a = Package(
+        "non-existent",
+        "0.1.2",
+        source_type="git",
+        source_reference="master",
+        source_resolved_reference="123456",
+        source_url="https://github.com/demo/subdirectories.git",
+        source_subdirectory="non-existent",
+    )
+    package_b = Package(
+        "two",
+        "0.1.2",
+        source_type="git",
+        source_reference="master",
+        source_resolved_reference="123456",
+        source_url="https://github.com/demo/subdirectories.git",
+        source_subdirectory="two",
+    )
+
+    chef = Chef(artifact_cache, tmp_venv, Factory.create_pool(config))
+    chef.set_directory_wheel(wheel)
+    spy = mocker.spy(chef, "prepare")
+
+    executor = Executor(tmp_venv, pool, config, io)
+    executor._chef = chef
+    return_code = executor.execute([Install(package_a), Install(package_b)])
+
+    assert return_code == 1
+    assert spy.call_count == 1
+
+    archive_arg = spy.call_args_list[0][0][0]
+    assert archive_arg == tmp_venv.path / "src/subdirectories/non-existent"
 
 
 def test_executor_should_install_multiple_packages_from_forked_git_repository(
@@ -1373,7 +1419,9 @@ def test_executor_should_install_multiple_packages_from_forked_git_repository(
 
     executor = Executor(tmp_venv, pool, config, io)
     executor._chef = chef
-    executor.execute([Install(package_a), Install(package_b)])
+    return_code = executor.execute([Install(package_a), Install(package_b)])
+
+    assert return_code == 0, io.fetch_error()
 
     # Verify that the repo for package_a is not re-used for package_b.
     # both repos must be cloned serially into separate directories.

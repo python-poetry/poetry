@@ -225,6 +225,8 @@ class Executor:
                 wait(tasks)
 
                 for operation in serial_operations:
+                    if self._shutdown:
+                        break
                     self._execute_operation(operation)
 
             except KeyboardInterrupt:
@@ -266,6 +268,8 @@ class Executor:
             section.write(line)
 
     def _execute_operation(self, operation: Operation) -> None:
+        if self._shutdown:
+            return
         try:
             op_message = self.get_operation_message(operation)
             if self.supports_fancy_output():
