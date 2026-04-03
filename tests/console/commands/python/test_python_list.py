@@ -15,7 +15,6 @@ if TYPE_CHECKING:
 
     from poetry.config.config import Config
     from tests.types import CommandTesterFactory
-    from tests.types import MockedPoetryPythonRegister
     from tests.types import MockedPythonRegister
 
 
@@ -75,12 +74,40 @@ def test_list(
 def test_list_poetry_managed(
     tester: CommandTester,
     config: Config,
-    mocked_poetry_managed_python_register: MockedPoetryPythonRegister,
+    mocked_python_register: MockedPythonRegister,
     only_poetry_managed: bool,
 ) -> None:
-    mocked_poetry_managed_python_register("3.9.1", "cpython")
-    mocked_poetry_managed_python_register("3.10.8", "pypy")
-    mocked_poetry_managed_python_register("3.14.0", "cpython", free_threaded=True)
+    # Register mocked system Pythons
+    mocked_python_register("3.11.5", parent="s")
+    mocked_python_register("3.12.3", parent="t")
+
+    # Register mocked poetry-managed Pythons via their installation paths
+    install_dir = config.python_installation_dir
+    install_dir.mkdir(exist_ok=True)
+
+    # We cannot use mocked_poetry_managed_python_register here because it deactivates mocking of system Pythons
+    for implementation, version in [
+        ("CPython", "3.9.1"),
+        ("PyPy", "3.10.8"),
+        ("CPython", "3.14.0t"),
+    ]:
+        bin_path = (
+            install_dir
+            / f"{implementation.lower()}@{version}"
+            / ("" if WINDOWS else "bin")
+        )
+        bin_path.mkdir(parents=True)
+        executables = ["python"]
+        if implementation == "PyPy":
+            executables.append("pypy")
+        for executable in executables:
+            mocked_python_register(
+                version.removesuffix("t"),
+                executable_name=executable,
+                implementation=implementation,
+                parent=bin_path,
+                free_threaded=version.endswith("t"),
+            )
 
     tester.execute("-m" if only_poetry_managed else "")
 
@@ -88,20 +115,24 @@ def test_list_poetry_managed(
     system_lines = [line.strip() for line in lines if "System" in line]
     poetry_lines = [line.strip() for line in lines if "Poetry" in line]
 
-    install_dir = config.python_installation_dir.as_posix()
-    bin_dir = "" if WINDOWS else "bin/"
-    expected = {
-        f"3.10.8  PyPy           Poetry  {install_dir}/pypy@3.10.8/{bin_dir}pypy",
-        f"3.10.8  PyPy           Poetry  {install_dir}/pypy@3.10.8/{bin_dir}python",
-        f"3.9.1   CPython        Poetry  {install_dir}/cpython@3.9.1/{bin_dir}python",
-        f"3.14.0t CPython        Poetry  {install_dir}/cpython@3.14.0t/{bin_dir}python",
+    expected_system = {
+        "3.11.5  CPython        System  s/python3.11",
+        "3.12.3  CPython        System  t/python3.12",
     }
 
-    assert set(poetry_lines) == expected
+    bin_dir = "" if WINDOWS else "bin/"
+    expected_poetry = {
+        f"3.10.8  PyPy           Poetry  {install_dir.as_posix()}/pypy@3.10.8/{bin_dir}pypy",
+        f"3.10.8  PyPy           Poetry  {install_dir.as_posix()}/pypy@3.10.8/{bin_dir}python",
+        f"3.9.1   CPython        Poetry  {install_dir.as_posix()}/cpython@3.9.1/{bin_dir}python",
+        f"3.14.0t CPython        Poetry  {install_dir.as_posix()}/cpython@3.14.0t/{bin_dir}python",
+    }
+
+    assert set(poetry_lines) == expected_poetry
     if only_poetry_managed:
         assert not system_lines
     else:
-        assert system_lines
+        assert set(system_lines) == expected_system
 
 
 @pytest.mark.parametrize(
