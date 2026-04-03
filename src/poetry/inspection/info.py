@@ -17,6 +17,7 @@ from poetry.core.constraints.version import Version
 from poetry.core.factory import Factory
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
+from poetry.core.packages.utils.utils import splitext
 from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.core.utils.helpers import parse_requires
 from poetry.core.version.markers import InvalidMarkerError
@@ -307,15 +308,8 @@ class PackageInfo:
 
         # Still not dependencies found
         # So, we unpack and introspect
-        suffix = path.suffix
+        _, suffix = splitext(path)
         zip = suffix == ".zip"
-
-        if suffix == ".bz2":
-            suffixes = path.suffixes
-            if len(suffixes) > 1 and suffixes[-2] == ".tar":
-                suffix = ".tar.bz2"
-        elif not zip:
-            suffix = ".tar.gz"
 
         with TemporaryDirectory(ignore_cleanup_errors=True) as tmp_str:
             tmp = Path(tmp_str)
