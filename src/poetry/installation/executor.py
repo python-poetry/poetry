@@ -268,6 +268,8 @@ class Executor:
             section.write(line)
 
     def _execute_operation(self, operation: Operation) -> None:
+        if self._shutdown:
+            return
         try:
             op_message = self.get_operation_message(operation)
             if self.supports_fancy_output():
