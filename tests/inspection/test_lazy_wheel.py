@@ -20,6 +20,7 @@ from poetry.inspection.lazy_wheel import HTTPRangeRequestUnsupportedError
 from poetry.inspection.lazy_wheel import InvalidWheelError
 from poetry.inspection.lazy_wheel import LazyWheelOverHTTP
 from poetry.inspection.lazy_wheel import LazyWheelUnsupportedError
+from poetry.inspection.lazy_wheel import UnsupportedWheelError
 from poetry.inspection.lazy_wheel import metadata_from_wheel_url
 from tests.helpers import http_setup_redirect
 
@@ -482,7 +483,7 @@ def test_prefetch_metadata_closes_zipfile_on_error(mocker: MockerFixture) -> Non
 
     lazy = LazyWheelOverHTTP("url", requests.Session())
 
-    with pytest.raises(Exception, match=r"no .* found for"):
+    with pytest.raises(UnsupportedWheelError, match=r"no .* found for"):
         lazy._prefetch_metadata("test-pkg")
 
     mock_zf.__exit__.assert_called_once()
