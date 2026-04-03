@@ -480,7 +480,7 @@ class LazyFileOverHTTP(ReadOnlyIOWrapper):
                 range_start,
                 range_end,
             ) in self._merge_intervals.minimal_intervals_covering(start, end):
-                self.seek(start)
+                self.seek(range_start)
                 for chunk in self._fetch_content_range(range_start, range_end):
                     self._file.write(chunk)
 
