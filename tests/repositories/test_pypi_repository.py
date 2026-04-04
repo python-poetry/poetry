@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime
+from datetime import timezone
 from io import BytesIO
 from typing import TYPE_CHECKING
 from typing import Any
@@ -82,6 +84,47 @@ def test_find_packages_yanked(
     packages = repo.find_packages(Factory.create_dependency("black", constraint))
 
     assert [str(p.version) for p in packages] == expected
+
+
+def test_find_packages_min_release_age(pypi_repository: PyPiRepository) -> None:
+    """Versions with files uploaded within min-release-age days are filtered."""
+    repo = pypi_repository
+    # requests fixture upload times:
+    #   2.18.0: 2017-06-14, 2.18.1: 2017-06-14, 2.18.2: 2017-07-25,
+    #   2.18.3: 2017-08-02, 2.18.4: 2017-08-15, 2.19.0: 2018-06-12
+    # Set "now" to 2017-08-20 with min-release-age=10 days.
+    # Cutoff = 2017-08-10. Versions with any file uploaded after that are filtered.
+    # Note that 2.19.0 is uploaded in the future ;)
+    repo._min_release_age_cutoff = datetime(2017, 8, 10, tzinfo=timezone.utc)
+    packages = repo.find_packages(Factory.create_dependency("requests", ">=2.18.0"))
+
+    assert [str(p.version) for p in packages] == [
+        "2.18.0",
+        "2.18.1",
+        "2.18.2",
+        "2.18.3",
+    ]
+    assert repo._age_filtered_versions == {
+        "requests": {Version.parse("2.18.4"), Version.parse("2.19.0")}
+    }
+
+
+@pytest.mark.parametrize(
+    "constraints", [(">=2.18.0", "<2.19.0"), ("<2.19.0", ">=2.18.0")]
+)
+def test_find_packages_min_release_age_multiple_calls(
+    pypi_repository: PyPiRepository, constraints: tuple[str, str]
+) -> None:
+    """See test_find_packages_min_release_age for basic setup."""
+    repo = pypi_repository
+    repo._min_release_age_cutoff = datetime(2017, 8, 10, tzinfo=timezone.utc)
+
+    repo.find_packages(Factory.create_dependency("requests", constraints[0]))
+    repo.find_packages(Factory.create_dependency("requests", constraints[1]))
+
+    expected_filtered = {"requests": {Version.parse("2.18.4"), Version.parse("2.19.0")}}
+
+    assert repo._age_filtered_versions == expected_filtered
 
 
 def test_package(

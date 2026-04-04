@@ -20,7 +20,6 @@ from poetry.repositories.link_sources.json import SimpleRepositoryJsonRootPage
 if TYPE_CHECKING:
     from packaging.utils import NormalizedName
     from poetry.core.constraints.version import Version
-    from poetry.core.constraints.version import VersionConstraint
     from poetry.core.packages.utils.link import Link
 
     from poetry.config.config import Config
@@ -79,35 +78,17 @@ class LegacyRepository(HTTPRepository):
 
         return list(page.links_for_version(package.name, package.version))
 
-    def _find_packages(
-        self, name: NormalizedName, constraint: VersionConstraint
-    ) -> list[Package]:
-        """
-        Find packages on the remote server.
-        """
-        try:
-            page = self.get_page(name)
-        except PackageNotFoundError:
-            self._log(f"No packages found for {name}", level="debug")
-            return []
-
-        versions = [
-            (version, page.yanked(name, version))
-            for version in page.versions(name)
-            if constraint.allows(version)
-        ]
-
-        return [
-            Package(
-                name,
-                version,
-                source_type="legacy",
-                source_reference=self.name,
-                source_url=self._url,
-                yanked=yanked,
-            )
-            for version, yanked in versions
-        ]
+    def _package(
+        self, name: NormalizedName, version: Version, yanked: str | bool
+    ) -> Package:
+        return Package(
+            name,
+            version,
+            source_type="legacy",
+            source_reference=self.name,
+            source_url=self._url,
+            yanked=yanked,
+        )
 
     def _get_release_info(
         self, name: NormalizedName, version: Version

@@ -3,8 +3,12 @@ from __future__ import annotations
 import functools
 import hashlib
 
+from collections import defaultdict
 from contextlib import contextmanager
 from contextlib import suppress
+from datetime import datetime
+from datetime import timedelta
+from datetime import timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
@@ -14,6 +18,8 @@ import requests
 import requests.adapters
 
 from packaging.metadata import parse_email
+from poetry.core.constraints.version import Version
+from poetry.core.constraints.version import VersionConstraint
 from poetry.core.constraints.version import parse_constraint
 from poetry.core.packages.dependency import Dependency
 from poetry.core.version.markers import parse_marker
@@ -36,9 +42,11 @@ from poetry.utils.patterns import wheel_file_re
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
     from collections.abc import Iterator
 
     from packaging.utils import NormalizedName
+    from poetry.core.packages.package import Package
     from poetry.core.packages.package import PackageFile
     from poetry.core.packages.utils.link import Link
 
@@ -71,6 +79,16 @@ class HTTPRepository(CachedRepository):
 
         self._lazy_wheel = config.get("solver.lazy-wheel", True)
         self._max_retries = config.get("requests.max-retries", 0)
+
+        self._min_release_age = config.get("solver.min-release-age", 0)
+        self._min_release_age_cutoff: datetime | None = None
+        if self._min_release_age:
+            self._min_release_age_cutoff = datetime.now(tz=timezone.utc) - timedelta(
+                days=self._min_release_age
+            )
+        self._age_filtered_versions: defaultdict[NormalizedName, set[Version]] = (
+            defaultdict(set)
+        )
         # We are tracking if a domain supports range requests or not to avoid
         # unnecessary requests.
         # ATTENTION: A domain might support range requests only for some files, so the
@@ -118,6 +136,65 @@ class HTTPRepository(CachedRepository):
                 link.url, filepath, raise_accepts_ranges=raise_accepts_ranges
             )
             yield filepath
+
+    def _package(
+        self, name: NormalizedName, version: Version, yanked: str | bool
+    ) -> Package:
+        raise NotImplementedError
+
+    def _is_version_too_recent(self, links: Iterable[Link]) -> bool:
+        """Return True if any file of the version was uploaded after the cutoff.
+
+        If no upload time information is available for any file,
+        the version is considered old enough (return False).
+        """
+        if not self._min_release_age_cutoff:
+            return False
+        for link in links:
+            upload_time = link.upload_time
+            if upload_time is None:
+                continue
+            if upload_time > self._min_release_age_cutoff:
+                return True
+        return False
+
+    def _find_packages(
+        self, name: NormalizedName, constraint: VersionConstraint
+    ) -> list[Package]:
+        """
+        Find packages on the remote server.
+        """
+        try:
+            page = self.get_page(name)
+        except PackageNotFoundError:
+            self._log(f"No packages found for {name}", level="debug")
+            return []
+
+        versions = [
+            (version, page.yanked(name, version))
+            for version in page.versions(name)
+            if constraint.allows(version)
+        ]
+
+        if self._min_release_age_cutoff is not None:
+            filtered_out: set[Version] = set()
+            accepted: list[tuple[Version, str | bool]] = []
+            for version, yanked in versions:
+                if self._is_version_too_recent(page.links_for_version(name, version)):
+                    filtered_out.add(version)
+                else:
+                    accepted.append((version, yanked))
+            if filtered_out:
+                self._age_filtered_versions[name] |= filtered_out
+                version_list = ", ".join(str(v) for v in sorted(filtered_out))
+                self._log(
+                    f"Ignoring {name} version(s) due to "
+                    f"solver.min-release-age={self._min_release_age}: {version_list}",
+                    level="debug",
+                )
+            versions = accepted
+
+        return [self._package(name, version, yanked) for version, yanked in versions]
 
     def _get_info_from_wheel(self, link: Link) -> PackageInfo:
         from poetry.inspection.info import PackageInfo
@@ -477,3 +554,19 @@ class HTTPRepository(CachedRepository):
         if self._is_json_response(response):
             return SimpleJsonPage(response.url, response.json())
         return HTMLPage(response.url, response.text)
+
+    def log_age_filtered_versions(self, *, level: str, reset: bool) -> None:
+        if not self._age_filtered_versions:
+            return
+        self._log(
+            "The following package versions were ignored"
+            f" due to solver.min-release-age={self._min_release_age}",
+            level=level,
+        )
+        for name in sorted(self._age_filtered_versions):
+            versions = ", ".join(
+                str(v) for v in sorted(self._age_filtered_versions[name])
+            )
+            self._log(f"{name}: {versions}", level=level)
+        if reset:
+            self._age_filtered_versions.clear()

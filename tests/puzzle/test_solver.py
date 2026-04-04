@@ -5245,3 +5245,39 @@ def test_solver_resolves_duplicate_dependencies_with_restricted_extras(
             ]
         ),
     )
+
+
+def test_solver_logs_age_filtered_versions_on_failure(
+    mocker: MockerFixture, pool: RepositoryPool, solver: Solver
+) -> None:
+    """
+    When the solver fails with a SolverProblemError, it should call
+    RepositoryPool.log_age_filtered_versions(level="warning", reset=True).
+    """
+    log_age_filtered_versions_spy = mocker.spy(pool, "log_age_filtered_versions")
+
+    # Force a SolverProblemError from solve()
+    mock_solve = mocker.patch.object(
+        solver, "_solve", side_effect=SolverProblemError(mocker.MagicMock())
+    )
+
+    with pytest.raises(SolverProblemError):
+        solver.solve()
+
+    mock_solve.assert_called_once()
+    log_age_filtered_versions_spy.assert_called_once_with(level="warning", reset=True)
+
+
+def test_solver_logs_age_filtered_versions_on_success(
+    mocker: MockerFixture, pool: RepositoryPool, solver: Solver
+) -> None:
+    """
+    When the solver succeeds, it should call
+    RepositoryPool.log_age_filtered_versions(level="info", reset=True).
+    """
+    log_age_filtered_versions_spy = mocker.spy(pool, "log_age_filtered_versions")
+    mocker.patch.object(solver, "_solve", return_value=mocker.MagicMock())
+
+    solver.solve()
+
+    log_age_filtered_versions_spy.assert_called_once_with(level="info", reset=True)

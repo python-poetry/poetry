@@ -30,7 +30,6 @@ logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     from packaging.utils import NormalizedName
     from poetry.core.constraints.version import Version
-    from poetry.core.constraints.version import VersionConstraint
 
     from poetry.config.config import Config
 
@@ -102,25 +101,10 @@ class PyPiRepository(HTTPRepository):
         """
         return self._get_package_info(name)
 
-    def _find_packages(
-        self, name: NormalizedName, constraint: VersionConstraint
-    ) -> list[Package]:
-        """
-        Find packages on the remote server.
-        """
-        try:
-            json_page = self.get_page(name)
-        except PackageNotFoundError:
-            self._log(f"No packages found for {name}", level="debug")
-            return []
-
-        versions = [
-            (version, json_page.yanked(name, version))
-            for version in json_page.versions(name)
-            if constraint.allows(version)
-        ]
-
-        return [Package(name, version, yanked=yanked) for version, yanked in versions]
+    def _package(
+        self, name: NormalizedName, version: Version, yanked: str | bool
+    ) -> Package:
+        return Package(name, version, yanked=yanked)
 
     def _get_package_info(self, name: NormalizedName) -> dict[str, Any]:
         headers = {"Accept": "application/vnd.pypi.simple.v1+json"}

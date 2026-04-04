@@ -75,6 +75,7 @@ keyring.enabled = true
 python.installation-dir = {json.dumps(str(Path("{data-dir}/python")))}  # {config_data_dir / "python"}
 requests.max-retries = 0
 solver.lazy-wheel = true
+solver.min-release-age = 0
 system-git-client = false
 virtualenvs.create = true
 virtualenvs.in-project = null
@@ -110,6 +111,7 @@ keyring.enabled = true
 python.installation-dir = {json.dumps(str(Path("{data-dir}/python")))}  # {config_data_dir / "python"}
 requests.max-retries = 0
 solver.lazy-wheel = true
+solver.min-release-age = 0
 system-git-client = false
 virtualenvs.create = false
 virtualenvs.in-project = null
@@ -166,6 +168,7 @@ keyring.enabled = true
 python.installation-dir = {json.dumps(str(Path("{data-dir}/python")))}  # {config_data_dir / "python"}
 requests.max-retries = 0
 solver.lazy-wheel = true
+solver.min-release-age = 0
 system-git-client = false
 virtualenvs.create = true
 virtualenvs.in-project = null
@@ -200,6 +203,7 @@ keyring.enabled = true
 python.installation-dir = {json.dumps(str(Path("{data-dir}/python")))}  # {config_data_dir / "python"}
 requests.max-retries = 0
 solver.lazy-wheel = true
+solver.min-release-age = 0
 system-git-client = false
 virtualenvs.create = true
 virtualenvs.in-project = null
@@ -381,6 +385,7 @@ keyring.enabled = true
 python.installation-dir = {json.dumps(str(Path("{data-dir}/python")))}  # {config_data_dir / "python"}
 requests.max-retries = 0
 solver.lazy-wheel = true
+solver.min-release-age = 0
 system-git-client = false
 virtualenvs.create = false
 virtualenvs.in-project = null
@@ -425,6 +430,7 @@ python.installation-dir = {json.dumps(str(Path("{data-dir}/python")))}  # {confi
 repositories.foo.url = "https://foo.bar/simple/"
 requests.max-retries = 0
 solver.lazy-wheel = true
+solver.min-release-age = 0
 system-git-client = false
 virtualenvs.create = true
 virtualenvs.in-project = null
@@ -650,6 +656,24 @@ def test_config_solver_lazy_wheel(
 
     repo = LegacyRepository("foo", "https://foo.com")
     assert not repo._lazy_wheel
+
+
+def test_config_solver_min_release_age(
+    tester: CommandTester, command_tester_factory: CommandTesterFactory
+) -> None:
+    tester.execute("--local solver.min-release-age")
+    assert tester.io.fetch_output().strip() == "0"
+
+    repo = LegacyRepository("foo", "https://foo.com")
+    assert repo._min_release_age == 0
+
+    tester.io.clear_output()
+    tester.execute("--local solver.min-release-age 3")
+    tester.execute("--local solver.min-release-age")
+    assert tester.io.fetch_output().strip() == "3"
+
+    repo = LegacyRepository("foo", "https://foo.com")
+    assert repo._min_release_age == 3
 
 
 current_config = """\
