@@ -189,3 +189,7 @@ class RepositoryPool(AbstractRepository):
         if isinstance(repo, CachedRepository):
             repo.forget(package.name, package.version)
         return repo.package(package.name, package.version)
+
+    def log_age_filtered_versions(self, *, level: str, reset: bool) -> None:
+        for repo in self.all_repositories:
+            repo.log_age_filtered_versions(level=level, reset=reset)

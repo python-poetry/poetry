@@ -175,6 +175,7 @@ class Config:
         "python": {"installation-dir": os.path.join("{data-dir}", "python")},
         "solver": {
             "lazy-wheel": True,
+            "min-release-age": 0,
         },
         "system-git-client": False,
         "keyring": {
@@ -402,6 +403,7 @@ class Config:
         if name in {
             "installer.max-workers",
             "requests.max-retries",
+            "solver.min-release-age",
         }:
             return int_normalizer
 

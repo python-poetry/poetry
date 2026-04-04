@@ -3,6 +3,8 @@ from __future__ import annotations
 import base64
 import re
 
+from datetime import datetime
+from datetime import timezone
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -282,6 +284,47 @@ def test_find_packages_yanked(
     packages = repo.find_packages(Factory.create_dependency("black", constraint))
 
     assert [str(p.version) for p in packages] == expected
+
+
+def test_find_packages_min_release_age(legacy_repository: TestLegacyRepository) -> None:
+    """Versions with files uploaded within min-release-age days are filtered."""
+    repo = legacy_repository
+    # ipython fixture upload times:
+    #   4.1.0rc1: 2016-01-26, 5.7.0: 2018-05-10, 7.5.0: 2019-04-25
+    repo._min_release_age_cutoff = datetime(2018, 10, 6, tzinfo=timezone.utc)
+    packages = repo.find_packages(Factory.create_dependency("ipython", "*"))
+
+    # HTML API does not provide upload time
+    if repo.json:
+        expected_versions = ["5.7.0"]
+        expected_filtered = {"ipython": {Version.parse("7.5.0")}}
+    else:
+        expected_versions = ["5.7.0", "7.5.0"]
+        expected_filtered = {}
+
+    assert [str(p.version) for p in packages] == expected_versions
+    assert repo._age_filtered_versions == expected_filtered
+
+
+@pytest.mark.parametrize("constraints", [(">5", "<7"), ("<7", ">5")])
+def test_find_packages_min_release_age_multiple_calls(
+    legacy_repository: TestLegacyRepository, constraints: tuple[str, str]
+) -> None:
+    """See test_find_packages_min_release_age for basic setup."""
+    repo = legacy_repository
+    repo._min_release_age_cutoff = datetime(2017, 10, 6, tzinfo=timezone.utc)
+
+    repo.find_packages(Factory.create_dependency("ipython", constraints[0]))
+    repo.find_packages(Factory.create_dependency("ipython", constraints[1]))
+
+    # HTML API does not provide upload time
+    expected = (
+        {"ipython": {Version.parse("5.7.0"), Version.parse("7.5.0")}}
+        if repo.json
+        else {}
+    )
+
+    assert repo._age_filtered_versions == expected
 
 
 def test_get_package_information_chooses_correct_distribution(

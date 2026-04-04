@@ -43,9 +43,10 @@ def get_options_based_on_normalizer(normalizer: Normalizer) -> Iterator[str]:
         ("installer.parallel", True),
         ("virtualenvs.create", True),
         ("requests.max-retries", 0),
+        ("solver.min-release-age", 0),
     ],
 )
-def test_config_get_default_value(config: Config, name: str, value: bool) -> None:
+def test_config_get_default_value(config: Config, name: str, value: bool | int) -> None:
     assert config.get(name) is value
 
 

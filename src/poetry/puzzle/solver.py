@@ -86,28 +86,34 @@ class Solver:
     ) -> Transaction:
         from poetry.puzzle.transaction import Transaction
 
-        with self._progress(), self._provider.use_latest_for(use_latest or []):
-            start = time.time()
-            packages = self._solve()
-            # simplify markers by removing redundant information
-            for transitive_info in packages.values():
-                for group, marker in transitive_info.markers.items():
-                    transitive_info.markers[group] = simplify_marker(
-                        marker, self._package.python_constraint
-                    )
-            end = time.time()
+        try:
+            with self._progress(), self._provider.use_latest_for(use_latest or []):
+                start = time.time()
+                packages = self._solve()
+                # simplify markers by removing redundant information
+                for transitive_info in packages.values():
+                    for group, marker in transitive_info.markers.items():
+                        transitive_info.markers[group] = simplify_marker(
+                            marker, self._package.python_constraint
+                        )
+                end = time.time()
 
-            if len(self._overrides) > 1:
-                self._provider.debug(
-                    # ignore the warning as provider does not do interpolation
-                    f"Complete version solving took {end - start:.3f}"
-                    f" seconds with {len(self._overrides)} overrides"
-                )
-                self._provider.debug(
-                    # ignore the warning as provider does not do interpolation
-                    "Resolved with overrides:"
-                    f" {', '.join(f'({b})' for b in self._overrides)}"
-                )
+                if len(self._overrides) > 1:
+                    self._provider.debug(
+                        # ignore the warning as provider does not do interpolation
+                        f"Complete version solving took {end - start:.3f}"
+                        f" seconds with {len(self._overrides)} overrides"
+                    )
+                    self._provider.debug(
+                        # ignore the warning as provider does not do interpolation
+                        "Resolved with overrides:"
+                        f" {', '.join(f'({b})' for b in self._overrides)}"
+                    )
+        except SolverProblemError:
+            self._pool.log_age_filtered_versions(level="warning", reset=True)
+            raise
+
+        self._pool.log_age_filtered_versions(level="info", reset=True)
 
         for p in packages:
             if p.yanked:

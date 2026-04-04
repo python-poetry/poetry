@@ -409,6 +409,34 @@ Especially with slow network connections, this setting can speed up dependency r
 If the cache has already been filled or the server does not support HTTP range requests,
 this setting makes no difference.
 
+### `solver.min-release-age`
+
+**Type**: `int`
+
+**Default**: `0`
+
+**Environment Variable**: `POETRY_SOLVER_MIN_RELEASE_AGE`
+
+*Introduced in 2.4.0*
+
+Minimum age of a package release in **days** before it is considered during dependency resolution.
+When set, any package version where at least one distribution file was uploaded more recently
+than the specified number of days ago will be ignored by the solver.
+
+For example, with a value of `7`, a version is only considered
+if all known distribution files are at least seven days old.
+If the option is not set or set to `0`, all versions are considered.
+
+This option is useful to protect against supply chain attacks where a new release
+of a dependency is published with malicious code.
+This is often detected within hours or days and the compromised release is removed.
+
+{{% note %}}
+This filter can only be enforced for package sources that expose file upload timestamps.
+If a source does not provide upload times for a release,
+that release is not filtered out by this setting.
+{{% /note %}}
+
 ### `system-git-client`
 
 **Type**: `boolean`

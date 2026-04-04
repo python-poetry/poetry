@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
 from poetry.core.constraints.version import Version
@@ -11,6 +13,10 @@ from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.repository_pool import Priority
 from tests.helpers import get_dependency
 from tests.helpers import get_package
+
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 
 def test_pool() -> None:
@@ -282,3 +288,22 @@ def test_search_legacy_repositories_are_not_skipped(
 
     assert repo1.search("demo") == []
     assert repo2.search("demo") == pool.search("demo") == [demo_package]
+
+
+@pytest.mark.parametrize(("level", "reset"), [("warning", True), ("info", False)])
+def test_log_age_filtered_versions_includes_explicit_repositories(
+    mocker: MockerFixture, level: str, reset: bool
+) -> None:
+    primary = Repository("primary")
+    explicit = Repository("explicit")
+
+    primary_spy = mocker.spy(primary, "log_age_filtered_versions")
+    explicit_spy = mocker.spy(explicit, "log_age_filtered_versions")
+
+    pool = RepositoryPool([primary])
+    pool.add_repository(explicit, priority=Priority.EXPLICIT)
+
+    pool.log_age_filtered_versions(level=level, reset=reset)
+
+    primary_spy.assert_called_once_with(level=level, reset=reset)
+    explicit_spy.assert_called_once_with(level=level, reset=reset)

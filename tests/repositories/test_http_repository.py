@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 import contextlib
+import logging
 import shutil
 
+from datetime import datetime
+from datetime import timedelta
+from datetime import timezone
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -11,6 +15,8 @@ from zipfile import ZipFile
 import pytest
 
 from packaging.metadata import parse_email
+from packaging.utils import canonicalize_name
+from poetry.core.constraints.version import Version
 from poetry.core.packages.utils.link import Link
 
 from poetry.inspection.info import PackageInfoError
@@ -21,21 +27,134 @@ from poetry.utils.helpers import HTTPRangeRequestSupportedError
 
 if TYPE_CHECKING:
     from packaging.utils import NormalizedName
-    from poetry.core.constraints.version import Version
     from pytest_mock import MockerFixture
+
+    from poetry.config.config import Config
 
 
 class MockRepository(HTTPRepository):
     DIST_FIXTURES = Path(__file__).parent / "fixtures" / "pypi.org" / "dists"
 
-    def __init__(self, lazy_wheel: bool = True) -> None:
-        super().__init__("foo", "https://foo.com")
+    def __init__(self, lazy_wheel: bool = True, config: Config | None = None) -> None:
+        super().__init__("foo", "https://foo.com", config=config)
         self._lazy_wheel = lazy_wheel
 
     def _get_release_info(
         self, name: NormalizedName, version: Version
     ) -> dict[str, Any]:
         raise NotImplementedError
+
+
+@pytest.mark.parametrize("min_release_age", [None, 0, 30])
+def test_min_release_age_and_cutoff_is_set(
+    mocker: MockerFixture, config: Config, min_release_age: int | None
+) -> None:
+    config.merge({"solver": {"min-release-age": min_release_age}})
+
+    mocked_now = datetime(2017, 8, 20, tzinfo=timezone.utc)
+    mocker.patch(  # type: ignore[call-overload]
+        "poetry.repositories.http_repository.datetime",
+        wraps=datetime,
+        **{"now.return_value": mocked_now},
+    )
+
+    repo = MockRepository(config=config)
+
+    assert repo._min_release_age == min_release_age
+    if min_release_age:
+        assert repo._min_release_age_cutoff == mocked_now - timedelta(
+            days=min_release_age
+        )
+    else:
+        assert repo._min_release_age_cutoff is None
+
+
+@pytest.mark.parametrize(
+    ("links", "expected"),
+    [
+        (  # no upload time
+            [Link("https://foo.com/pkg-1.0.tar.gz")],
+            False,
+        ),
+        (  # before cutoff date
+            [
+                Link(
+                    "https://foo.com/pkg-1.0.tar.gz",
+                    upload_time="2017-08-09T00:00:00Z",
+                ),
+            ],
+            False,
+        ),
+        (  # exact cutoff date
+            [
+                Link(
+                    "https://foo.com/pkg-1.0.tar.gz",
+                    upload_time="2017-08-10T00:00:00Z",
+                ),
+            ],
+            False,
+        ),
+        (  # after cutoff date
+            [
+                Link(
+                    "https://foo.com/pkg-1.0.tar.gz",
+                    upload_time="2017-08-11T00:00:00Z",
+                ),
+            ],
+            True,
+        ),
+        (  # some files without upload time, others old enough
+            [
+                Link("https://foo.com/pkg-1.0.tar.gz"),
+                Link(
+                    "https://foo.com/pkg-1.0-py3-none-any.whl",
+                    upload_time="2017-06-01T00:00:00Z",
+                ),
+            ],
+            False,
+        ),
+        (  # some files without upload time, others not old enough
+            [
+                Link("https://foo.com/pkg-1.0.tar.gz"),
+                Link(
+                    "https://foo.com/pkg-1.0-py3-none-any.whl",
+                    upload_time="2017-08-15T00:00:00Z",
+                ),
+            ],
+            True,
+        ),
+        (  # some files old enough, some files not
+            [
+                Link(
+                    "https://foo.com/pkg-1.0-py3-none-any.whl",
+                    upload_time="2017-07-01T00:00:00Z",
+                ),
+                Link(
+                    "https://foo.com/pkg-1.0-py3-none-any.whl",
+                    upload_time="2017-08-15T00:00:00Z",
+                ),
+            ],
+            True,
+        ),
+    ],
+)
+def test_is_version_too_recent(links: list[Link], expected: bool) -> None:
+    repo = MockRepository()
+    repo._min_release_age_cutoff = datetime(2017, 8, 10, tzinfo=timezone.utc)
+    assert repo._is_version_too_recent(links) == expected
+
+
+def test_is_version_too_recent_no_cutoff_set() -> None:
+    """When no cutoff is set, always returns False."""
+    repo = MockRepository()
+    assert repo._min_release_age_cutoff is None
+    links = [
+        Link(
+            "https://foo.com/pkg-1.0.tar.gz",
+            upload_time="2099-01-01T00:00:00Z",
+        )
+    ]
+    assert not repo._is_version_too_recent(links)
 
 
 @pytest.mark.parametrize("lazy_wheel", [False, True])
@@ -243,3 +362,48 @@ def test_calculate_sha256_defaults_to_sha256_on_md5_errors(
         calculated_hash
         == "sha256:e216b70f013c47b82a72540d34347632c5bfe59fd54f5fe5d51f6a68b19aaf84"
     )
+
+
+@pytest.mark.parametrize(
+    ("level", "log_level"), [("info", logging.INFO), ("warning", logging.WARNING)]
+)
+@pytest.mark.parametrize("reset", [True, False])
+def test_log_age_filtered_versions(
+    caplog: pytest.LogCaptureFixture, level: str, log_level: int, reset: bool
+) -> None:
+    repo = MockRepository()
+    repo._min_release_age = 7
+    repo._age_filtered_versions |= {
+        canonicalize_name("B"): {
+            Version.parse("2.0"),
+            Version.parse("1.5"),
+        },
+        canonicalize_name("A"): {
+            Version.parse("1.0"),
+        },
+    }
+
+    with caplog.at_level(log_level):
+        repo.log_age_filtered_versions(level=level, reset=reset)
+
+    assert len(caplog.records) == 3
+    assert "solver.min-release-age=7" in caplog.records[0].message
+    # packages are sorted by name
+    assert "a: 1.0" in caplog.records[1].message
+    assert "b: 1.5, 2.0" in caplog.records[2].message
+    assert all(r.levelno == log_level for r in caplog.records)
+    if reset:
+        assert repo._age_filtered_versions == {}
+    else:
+        assert repo._age_filtered_versions != {}
+
+
+def test_log_age_filtered_versions_empty(caplog: pytest.LogCaptureFixture) -> None:
+    repo = MockRepository()
+    repo._min_release_age = 7
+    repo._age_filtered_versions.clear()
+
+    with caplog.at_level(logging.WARNING):
+        repo.log_age_filtered_versions(level="warning", reset=False)
+
+    assert len(caplog.records) == 0
