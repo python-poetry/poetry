@@ -456,6 +456,26 @@ regardless of their upload age.
 poetry config solver.min-release-age-exclude "my-package,other-package"
 ```
 
+### `solver.min-release-age-exclude-source`
+
+**Type**: `string`
+
+**Default**: *not set*
+
+**Environment Variable**: `POETRY_SOLVER_MIN_RELEASE_AGE_EXCLUDE_SOURCE`
+
+*Introduced in 2.4.0*
+
+A comma-separated list of source names or URLs that should be excluded from the
+[`solver.min-release-age`](#solvermin-release-age) filter.
+All packages from these sources will always be considered by the solver,
+regardless of their upload age.
+Sources can be referenced by the name defined in `pyproject.toml` or by URL.
+
+```bash
+poetry config solver.min-release-age-exclude-source "private-repo,https://example.com/simple/"
+```
+
 ### `system-git-client`
 
 **Type**: `boolean`

@@ -97,6 +97,40 @@ def test_min_release_age_exclude_default(config: Config) -> None:
 
 
 @pytest.mark.parametrize(
+    ("exclude_sources", "expect_cutoff"),
+    [
+        ([], True),
+        (["bar"], True),  # name does not match
+        (["foo"], False),  # matches repo name
+        (["FOO"], False),  # matches repo name (repo names are case-insensitive)
+        (["https://foo.com"], False),  # matches repo URL
+        (["https://foo.com/"], False),  # matches repo URL with trailing slash
+        (["other", "https://foo.com"], False),  # URL in list
+    ],
+)
+def test_min_release_age_exclude_source(
+    config: Config,
+    exclude_sources: list[str],
+    expect_cutoff: bool,
+) -> None:
+    config.merge(
+        {
+            "solver": {
+                "min-release-age": 7,
+                "min-release-age-exclude-source": exclude_sources,
+            }
+        }
+    )
+    repo = MockRepository(config=config)
+    if expect_cutoff:
+        assert repo._min_release_age == 7
+        assert repo._min_release_age_cutoff is not None
+    else:
+        assert repo._min_release_age == 0
+        assert repo._min_release_age_cutoff is None
+
+
+@pytest.mark.parametrize(
     ("links", "expected"),
     [
         (  # no upload time

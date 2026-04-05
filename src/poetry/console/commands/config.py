@@ -19,6 +19,7 @@ from poetry.config.config import boolean_validator
 from poetry.config.config import build_config_setting_normalizer
 from poetry.config.config import build_config_setting_validator
 from poetry.config.config import int_normalizer
+from poetry.config.config import str_list_normalizer
 from poetry.config.config_source import UNSET
 from poetry.config.config_source import ConfigSourceMigration
 from poetry.config.config_source import PropertyNotFoundError
@@ -106,6 +107,10 @@ To remove a repository (repo is a short alias for repositories):
             "solver.min-release-age-exclude": (
                 PackageFilterPolicy.validator,
                 PackageFilterPolicy.normalize,
+            ),
+            "solver.min-release-age-exclude-source": (
+                lambda val: bool(val.strip()),
+                str_list_normalizer,
             ),
             "keyring.enabled": (boolean_validator, boolean_normalizer),
             "python.installation-dir": (str, lambda val: str(Path(val))),
