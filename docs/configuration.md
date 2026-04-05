@@ -437,6 +437,25 @@ If a source does not provide upload times for a release,
 that release is not filtered out by this setting.
 {{% /note %}}
 
+### `solver.min-release-age-exclude`
+
+**Type**: `string`
+
+**Default**: *not set*
+
+**Environment Variable**: `POETRY_SOLVER_MIN_RELEASE_AGE_EXCLUDE`
+
+*Introduced in 2.4.0*
+
+A comma-separated list of package names that should be excluded from the
+[`solver.min-release-age`](#solvermin-release-age) filter.
+Versions of these packages will always be considered by the solver,
+regardless of their upload age.
+
+```bash
+poetry config solver.min-release-age-exclude "my-package,other-package"
+```
+
 ### `system-git-client`
 
 **Type**: `boolean`

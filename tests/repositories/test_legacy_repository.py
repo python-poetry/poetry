@@ -11,6 +11,7 @@ from typing import Any
 import pytest
 import requests
 
+from packaging.utils import NormalizedName
 from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import Version
 from poetry.core.packages.dependency import Dependency
@@ -286,16 +287,23 @@ def test_find_packages_yanked(
     assert [str(p.version) for p in packages] == expected
 
 
-def test_find_packages_min_release_age(legacy_repository: TestLegacyRepository) -> None:
+@pytest.mark.parametrize(
+    "min_release_age_exclude", [set(), {"a", "b"}, {"ipython", "other"}]
+)
+def test_find_packages_min_release_age(
+    legacy_repository: TestLegacyRepository,
+    min_release_age_exclude: set[NormalizedName],
+) -> None:
     """Versions with files uploaded within min-release-age days are filtered."""
     repo = legacy_repository
     # ipython fixture upload times:
     #   4.1.0rc1: 2016-01-26, 5.7.0: 2018-05-10, 7.5.0: 2019-04-25
     repo._min_release_age_cutoff = datetime(2018, 10, 6, tzinfo=timezone.utc)
+    repo._min_release_age_exclude = min_release_age_exclude
     packages = repo.find_packages(Factory.create_dependency("ipython", "*"))
 
     # HTML API does not provide upload time
-    if repo.json:
+    if repo.json and "ipython" not in min_release_age_exclude:
         expected_versions = ["5.7.0"]
         expected_filtered = {"ipython": {Version.parse("7.5.0")}}
     else:

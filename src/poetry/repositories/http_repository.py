@@ -18,6 +18,7 @@ import requests
 import requests.adapters
 
 from packaging.metadata import parse_email
+from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import Version
 from poetry.core.constraints.version import VersionConstraint
 from poetry.core.constraints.version import parse_constraint
@@ -82,10 +83,15 @@ class HTTPRepository(CachedRepository):
 
         self._min_release_age = config.get("solver.min-release-age", 0)
         self._min_release_age_cutoff: datetime | None = None
+        self._min_release_age_exclude: set[NormalizedName] = set()
         if self._min_release_age:
             self._min_release_age_cutoff = datetime.now(tz=timezone.utc) - timedelta(
                 days=self._min_release_age
             )
+            self._min_release_age_exclude = {
+                canonicalize_name(n)
+                for n in (config.get("solver.min-release-age-exclude") or [])
+            }
         self._age_filtered_versions: defaultdict[NormalizedName, set[Version]] = (
             defaultdict(set)
         )
@@ -176,7 +182,10 @@ class HTTPRepository(CachedRepository):
             if constraint.allows(version)
         ]
 
-        if self._min_release_age_cutoff is not None:
+        if (
+            self._min_release_age_cutoff is not None
+            and name not in self._min_release_age_exclude
+        ):
             filtered_out: set[Version] = set()
             accepted: list[tuple[Version, str | bool]] = []
             for version, yanked in versions:

@@ -76,6 +76,7 @@ python.installation-dir = {json.dumps(str(Path("{data-dir}/python")))}  # {confi
 requests.max-retries = 0
 solver.lazy-wheel = true
 solver.min-release-age = 0
+solver.min-release-age-exclude = null
 system-git-client = false
 virtualenvs.create = true
 virtualenvs.in-project = null
@@ -112,6 +113,7 @@ python.installation-dir = {json.dumps(str(Path("{data-dir}/python")))}  # {confi
 requests.max-retries = 0
 solver.lazy-wheel = true
 solver.min-release-age = 0
+solver.min-release-age-exclude = null
 system-git-client = false
 virtualenvs.create = false
 virtualenvs.in-project = null
@@ -169,6 +171,7 @@ python.installation-dir = {json.dumps(str(Path("{data-dir}/python")))}  # {confi
 requests.max-retries = 0
 solver.lazy-wheel = true
 solver.min-release-age = 0
+solver.min-release-age-exclude = null
 system-git-client = false
 virtualenvs.create = true
 virtualenvs.in-project = null
@@ -204,6 +207,7 @@ python.installation-dir = {json.dumps(str(Path("{data-dir}/python")))}  # {confi
 requests.max-retries = 0
 solver.lazy-wheel = true
 solver.min-release-age = 0
+solver.min-release-age-exclude = null
 system-git-client = false
 virtualenvs.create = true
 virtualenvs.in-project = null
@@ -386,6 +390,7 @@ python.installation-dir = {json.dumps(str(Path("{data-dir}/python")))}  # {confi
 requests.max-retries = 0
 solver.lazy-wheel = true
 solver.min-release-age = 0
+solver.min-release-age-exclude = null
 system-git-client = false
 virtualenvs.create = false
 virtualenvs.in-project = null
@@ -431,6 +436,7 @@ repositories.foo.url = "https://foo.bar/simple/"
 requests.max-retries = 0
 solver.lazy-wheel = true
 solver.min-release-age = 0
+solver.min-release-age-exclude = null
 system-git-client = false
 virtualenvs.create = true
 virtualenvs.in-project = null
@@ -674,6 +680,27 @@ def test_config_solver_min_release_age(
 
     repo = LegacyRepository("foo", "https://foo.com")
     assert repo._min_release_age == 3
+
+
+def test_config_solver_min_release_age_exclude(
+    tester: CommandTester, command_tester_factory: CommandTesterFactory
+) -> None:
+    tester.execute("--local solver.min-release-age-exclude")
+    assert tester.io.fetch_output().strip() == "null"
+
+    repo = LegacyRepository("foo", "https://foo.com")
+    assert repo._min_release_age_exclude == set()
+
+    tester.io.clear_output()
+    tester.execute("--local solver.min-release-age 3")
+    tester.execute("--local solver.min-release-age-exclude 'my-pkg,Other-Pkg'")
+    tester.execute("--local solver.min-release-age-exclude")
+    output = tester.io.fetch_output().strip()
+    assert "my-pkg" in output
+    assert "other-pkg" in output
+
+    repo = LegacyRepository("foo", "https://foo.com")
+    assert repo._min_release_age_exclude == {"my-pkg", "other-pkg"}
 
 
 current_config = """\
