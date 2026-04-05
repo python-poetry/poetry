@@ -69,6 +69,33 @@ def test_min_release_age_and_cutoff_is_set(
         assert repo._min_release_age_cutoff is None
 
 
+def test_min_release_age_exclude_is_set(config: Config) -> None:
+    config.merge(
+        {
+            "solver": {
+                "min-release-age": 1,
+                "min-release-age-exclude": ["My-Package", "other-pkg"],
+            }
+        }
+    )
+    repo = MockRepository(config=config)
+    assert repo._min_release_age_exclude == {"my-package", "other-pkg"}
+
+
+def test_min_release_age_exclude_is_not_set_without_min_release_age(
+    config: Config,
+) -> None:
+    config.merge({"solver": {"min-release-age-exclude": ["My-Package", "other-pkg"]}})
+    repo = MockRepository(config=config)
+    assert repo._min_release_age_exclude == set()
+
+
+def test_min_release_age_exclude_default(config: Config) -> None:
+    config.merge({"solver": {"min-release-age": 1}})
+    repo = MockRepository(config=config)
+    assert repo._min_release_age_exclude == set()
+
+
 @pytest.mark.parametrize(
     ("links", "expected"),
     [

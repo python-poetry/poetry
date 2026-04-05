@@ -103,6 +103,10 @@ To remove a repository (repo is a short alias for repositories):
             ),
             "solver.lazy-wheel": (boolean_validator, boolean_normalizer),
             "solver.min-release-age": (lambda val: int(val) >= 0, int_normalizer),
+            "solver.min-release-age-exclude": (
+                PackageFilterPolicy.validator,
+                PackageFilterPolicy.normalize,
+            ),
             "keyring.enabled": (boolean_validator, boolean_normalizer),
             "python.installation-dir": (str, lambda val: str(Path(val))),
         }

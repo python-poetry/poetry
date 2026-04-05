@@ -176,6 +176,7 @@ class Config:
         "solver": {
             "lazy-wheel": True,
             "min-release-age": 0,
+            "min-release-age-exclude": None,
         },
         "system-git-client": False,
         "keyring": {
@@ -407,7 +408,11 @@ class Config:
         }:
             return int_normalizer
 
-        if name in ["installer.no-binary", "installer.only-binary"]:
+        if name in {
+            "installer.no-binary",
+            "installer.only-binary",
+            "solver.min-release-age-exclude",
+        }:
             return PackageFilterPolicy.normalize
 
         if name.startswith("installer.build-config-settings."):

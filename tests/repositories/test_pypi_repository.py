@@ -8,6 +8,7 @@ from typing import Any
 
 import pytest
 
+from packaging.utils import NormalizedName
 from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import Version
 from poetry.core.packages.dependency import Dependency
@@ -86,7 +87,12 @@ def test_find_packages_yanked(
     assert [str(p.version) for p in packages] == expected
 
 
-def test_find_packages_min_release_age(pypi_repository: PyPiRepository) -> None:
+@pytest.mark.parametrize(
+    "min_release_age_exclude", [set(), {"a", "b"}, {"requests", "other"}]
+)
+def test_find_packages_min_release_age(
+    pypi_repository: PyPiRepository, min_release_age_exclude: set[NormalizedName]
+) -> None:
     """Versions with files uploaded within min-release-age days are filtered."""
     repo = pypi_repository
     # requests fixture upload times:
@@ -96,17 +102,22 @@ def test_find_packages_min_release_age(pypi_repository: PyPiRepository) -> None:
     # Cutoff = 2017-08-10. Versions with any file uploaded after that are filtered.
     # Note that 2.19.0 is uploaded in the future ;)
     repo._min_release_age_cutoff = datetime(2017, 8, 10, tzinfo=timezone.utc)
+    repo._min_release_age_exclude = min_release_age_exclude
     packages = repo.find_packages(Factory.create_dependency("requests", ">=2.18.0"))
 
-    assert [str(p.version) for p in packages] == [
+    expected_versions = [
         "2.18.0",
         "2.18.1",
         "2.18.2",
         "2.18.3",
     ]
-    assert repo._age_filtered_versions == {
-        "requests": {Version.parse("2.18.4"), Version.parse("2.19.0")}
-    }
+    expected_filtered = {"requests": {Version.parse("2.18.4"), Version.parse("2.19.0")}}
+    if "requests" in min_release_age_exclude:
+        expected_versions += ["2.18.4", "2.19.0"]
+        expected_filtered = {}
+
+    assert [str(p.version) for p in packages] == expected_versions
+    assert repo._age_filtered_versions == expected_filtered
 
 
 @pytest.mark.parametrize(
