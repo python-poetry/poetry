@@ -156,7 +156,7 @@ def test_uploader_properly_handles_nonstandard_errors(
     content = (
         b'{\n "errors": [ {\n '
         b'"status": 400,'
-        b'"message": "I cant let you do that, dave"\n'
+        b'"message": "I can\'t let you do that, dave"\n'
         b"} ]\n}"
     )
     http.post("https://foo.com", status=400, body=content)
