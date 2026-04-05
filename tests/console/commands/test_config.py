@@ -77,6 +77,7 @@ requests.max-retries = 0
 solver.lazy-wheel = true
 solver.min-release-age = 0
 solver.min-release-age-exclude = null
+solver.min-release-age-exclude-source = null
 system-git-client = false
 virtualenvs.create = true
 virtualenvs.in-project = null
@@ -114,6 +115,7 @@ requests.max-retries = 0
 solver.lazy-wheel = true
 solver.min-release-age = 0
 solver.min-release-age-exclude = null
+solver.min-release-age-exclude-source = null
 system-git-client = false
 virtualenvs.create = false
 virtualenvs.in-project = null
@@ -172,6 +174,7 @@ requests.max-retries = 0
 solver.lazy-wheel = true
 solver.min-release-age = 0
 solver.min-release-age-exclude = null
+solver.min-release-age-exclude-source = null
 system-git-client = false
 virtualenvs.create = true
 virtualenvs.in-project = null
@@ -208,6 +211,7 @@ requests.max-retries = 0
 solver.lazy-wheel = true
 solver.min-release-age = 0
 solver.min-release-age-exclude = null
+solver.min-release-age-exclude-source = null
 system-git-client = false
 virtualenvs.create = true
 virtualenvs.in-project = null
@@ -391,6 +395,7 @@ requests.max-retries = 0
 solver.lazy-wheel = true
 solver.min-release-age = 0
 solver.min-release-age-exclude = null
+solver.min-release-age-exclude-source = null
 system-git-client = false
 virtualenvs.create = false
 virtualenvs.in-project = null
@@ -437,6 +442,7 @@ requests.max-retries = 0
 solver.lazy-wheel = true
 solver.min-release-age = 0
 solver.min-release-age-exclude = null
+solver.min-release-age-exclude-source = null
 system-git-client = false
 virtualenvs.create = true
 virtualenvs.in-project = null
@@ -701,6 +707,23 @@ def test_config_solver_min_release_age_exclude(
 
     repo = LegacyRepository("foo", "https://foo.com")
     assert repo._min_release_age_exclude == {"my-pkg", "other-pkg"}
+
+
+def test_config_solver_min_release_age_exclude_source(
+    tester: CommandTester, command_tester_factory: CommandTesterFactory
+) -> None:
+    tester.execute("--local solver.min-release-age-exclude-source")
+    assert tester.io.fetch_output().strip() == "null"
+
+    tester.io.clear_output()
+    tester.execute(
+        "--local solver.min-release-age-exclude-source"
+        " 'private-repo,https://example.com/simple/'"
+    )
+    tester.execute("--local solver.min-release-age-exclude-source")
+    output = tester.io.fetch_output().strip()
+    assert "private-repo" in output
+    assert "https://example.com/simple/" in output
 
 
 current_config = """\

@@ -15,6 +15,7 @@ from deepdiff.diff import DeepDiff
 from poetry.config.config import Config
 from poetry.config.config import boolean_normalizer
 from poetry.config.config import int_normalizer
+from poetry.config.config import str_list_normalizer
 from poetry.utils.password_manager import PasswordManager
 from tests.helpers import flatten_dict
 from tests.helpers import isolated_environment
@@ -38,6 +39,18 @@ def get_options_based_on_normalizer(normalizer: Normalizer) -> Iterator[str]:
 
 
 @pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("foo, bar ,  baz", ["foo", "bar", "baz"]),
+        (", ,", []),
+        ("", []),
+    ],
+)
+def test_str_list_normalizer(value: str, expected: list[str]) -> None:
+    assert str_list_normalizer(value) == expected
+
+
+@pytest.mark.parametrize(
     ("name", "value"),
     [
         ("installer.parallel", True),
@@ -45,6 +58,7 @@ def get_options_based_on_normalizer(normalizer: Normalizer) -> Iterator[str]:
         ("requests.max-retries", 0),
         ("solver.min-release-age", 0),
         ("solver.min-release-age-exclude", None),
+        ("solver.min-release-age-exclude-source", None),
     ],
 )
 def test_config_get_default_value(

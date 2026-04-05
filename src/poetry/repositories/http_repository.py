@@ -85,13 +85,21 @@ class HTTPRepository(CachedRepository):
         self._min_release_age_cutoff: datetime | None = None
         self._min_release_age_exclude: set[NormalizedName] = set()
         if self._min_release_age:
-            self._min_release_age_cutoff = datetime.now(tz=timezone.utc) - timedelta(
-                days=self._min_release_age
+            exclude_sources: set[str] = set(
+                config.get("solver.min-release-age-exclude-source") or []
             )
-            self._min_release_age_exclude = {
-                canonicalize_name(n)
-                for n in (config.get("solver.min-release-age-exclude") or [])
-            }
+            if self._is_name_excluded_from_min_release_age(
+                exclude_sources
+            ) or self._is_url_excluded_from_min_release_age(exclude_sources):
+                self._min_release_age = 0
+            else:
+                self._min_release_age_cutoff = datetime.now(
+                    tz=timezone.utc
+                ) - timedelta(days=self._min_release_age)
+                self._min_release_age_exclude = {
+                    canonicalize_name(n)
+                    for n in (config.get("solver.min-release-age-exclude") or [])
+                }
         self._age_filtered_versions: defaultdict[NormalizedName, set[Version]] = (
             defaultdict(set)
         )
@@ -103,6 +111,12 @@ class HTTPRepository(CachedRepository):
         # - True: The domain supports range requests for at least some files.
         # - False: The domain does not support range requests for the files we tried.
         self._supports_range_requests: dict[str, bool] = {}
+
+    def _is_name_excluded_from_min_release_age(self, exclude_sources: set[str]) -> bool:
+        return self.name.lower() in {s.lower() for s in exclude_sources}
+
+    def _is_url_excluded_from_min_release_age(self, exclude_sources: set[str]) -> bool:
+        return self.url.rstrip("/") in {s.rstrip("/") for s in exclude_sources}
 
     @property
     def session(self) -> Authenticator:

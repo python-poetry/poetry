@@ -45,6 +45,10 @@ def int_normalizer(val: str) -> int:
     return int(val)
 
 
+def str_list_normalizer(val: str) -> list[str]:
+    return [vs for v in val.split(",") if (vs := v.strip())]
+
+
 def build_config_setting_validator(val: str) -> bool:
     try:
         value = build_config_setting_normalizer(val)
@@ -115,9 +119,8 @@ class PackageFilterPolicy:
 
         return list(
             {
-                name.strip() if cls.is_reserved(name) else canonicalize_name(name)
-                for name in policy.strip().split(",")
-                if name
+                name if cls.is_reserved(name) else canonicalize_name(name)
+                for name in str_list_normalizer(policy)
             }
         )
 
@@ -177,6 +180,7 @@ class Config:
             "lazy-wheel": True,
             "min-release-age": 0,
             "min-release-age-exclude": None,
+            "min-release-age-exclude-source": None,
         },
         "system-git-client": False,
         "keyring": {
@@ -414,6 +418,9 @@ class Config:
             "solver.min-release-age-exclude",
         }:
             return PackageFilterPolicy.normalize
+
+        if name == "solver.min-release-age-exclude-source":
+            return str_list_normalizer
 
         if name.startswith("installer.build-config-settings."):
             return build_config_setting_normalizer
