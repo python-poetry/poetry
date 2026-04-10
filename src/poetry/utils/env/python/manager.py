@@ -266,6 +266,10 @@ class Python:
         if python := findpython.find(python_name):
             return cls(python=python)
 
+        if python_name == "python":
+            for python in ShutilWhichPythonProvider().find_pythons():
+                return cls(python=python)
+
         return None
 
     @classmethod

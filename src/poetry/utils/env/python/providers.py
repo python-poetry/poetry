@@ -28,8 +28,9 @@ class ShutilWhichPythonProvider(findpython.BaseProvider):  # type: ignore[misc]
         return cls()
 
     def find_pythons(self) -> Iterable[findpython.PythonVersion]:
-        if python := self.find_python_by_name("python"):
-            return [python]
+        for name in ("python", "python3"):
+            if python := self.find_python_by_name(name):
+                return [python]
         return []
 
     @classmethod

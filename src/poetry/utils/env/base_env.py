@@ -421,8 +421,20 @@ class Env(ABC):
         # TODO: Consider replacing (-I) with (-EP) once support for managing Python <3.11 environments dropped.
         # This is useful to prevent user site being disabled over zealously.
 
+        import shutil
+
+        executable = self._executable
+        # On non-Windows, when the target executable doesn't resolve to a real path and
+        # is not available in PATH (e.g. macOS systems where only python3 exists),
+        # fall back to python3 for subprocess execution only.
+        if not self._is_windows and executable == "python":
+            resolved = self._bin(executable)
+            if not Path(resolved).exists() and not shutil.which(executable):
+                if shutil.which("python3"):
+                    executable = "python3"
+
         return self.run(
-            self._executable,
+            executable,
             "-I",
             "-W",
             "ignore",
