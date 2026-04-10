@@ -84,6 +84,24 @@ class VirtualEnv(Env):
             # - using an emulated aarch Python on an x86_64 Linux
             output = self.run_python_script(GET_PLATFORMS)
             platforms = json.loads(output)
+        elif macos_match := re.match(r"macosx-(\d+)\.(\d+)-(.+)", sysconfig_platform):
+            # On Python 3.13+, platform.mac_ver() can return an empty string in some
+            # macOS environments (e.g. GitHub Actions), causing packaging.tags to raise
+            # ValueError. Derive platforms from sysconfig_platform instead.
+            import platform as _platform
+
+            if not _platform.mac_ver()[0]:
+                from packaging.tags import mac_platforms
+
+                platforms = list(
+                    mac_platforms(
+                        version=(
+                            int(macos_match.group(1)),
+                            int(macos_match.group(2)),
+                        ),
+                        arch=macos_match.group(3),
+                    )
+                )
 
         return [
             *(

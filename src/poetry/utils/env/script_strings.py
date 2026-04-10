@@ -22,7 +22,27 @@ spec = importlib.util.spec_from_file_location(
 packaging_tags = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(packaging_tags)
 
-print(json.dumps(list(packaging_tags.platform_tags())))
+try:
+    platforms = list(packaging_tags.platform_tags())
+except ValueError:
+    # On Python 3.13+, platform.mac_ver() can return an empty string in some
+    # macOS environments, causing packaging.tags to raise ValueError.
+    # Derive platforms from sysconfig.get_platform() instead.
+    import re
+    import sysconfig
+
+    platform_str = sysconfig.get_platform()
+    m = re.match(r"macosx-(\\d+)\\.(\\d+)-(.+)", platform_str)
+    if m:
+        platforms = list(
+            packaging_tags.mac_platforms(
+                version=(int(m.group(1)), int(m.group(2))),
+                arch=m.group(3),
+            )
+        )
+    else:
+        platforms = [platform_str.replace("-", "_").replace(".", "_")]
+print(json.dumps(platforms))
 """
 
 GET_ENVIRONMENT_INFO = """\
