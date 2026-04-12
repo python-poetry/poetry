@@ -415,7 +415,7 @@ def extractall(source: Path, dest: Path, zip: bool) -> None:
     else:
         # These versions of python shipped with a broken tarfile data_filter, per
         # https://github.com/python/cpython/issues/107845.
-        broken_tarfile_filter = {(3, 9, 17), (3, 10, 12), (3, 11, 4)}
+        broken_tarfile_filter = {(3, 10, 12), (3, 11, 4)}
         with tarfile.open(source) as archive:
             if (
                 hasattr(tarfile, "data_filter")
@@ -423,4 +423,37 @@ def extractall(source: Path, dest: Path, zip: bool) -> None:
             ):
                 archive.extractall(dest, filter="data")
             else:
-                archive.extractall(dest)
+                # Validate all member paths before extraction
+                #
+                # Attention: Path.absolute() is not sufficient because it does not
+                #  normalize, i.e. does not remove "..".
+                #
+                # We want to avoid Path.resolve() because it is significantly slower
+                # than os.path.abspath()!
+                dest = Path(os.path.abspath(dest))
+                safe_members = []
+                for member in archive.getmembers():
+                    member_path = Path(os.path.abspath(dest / member.name))
+                    if not member_path.is_relative_to(dest):
+                        raise ValueError(
+                            f"Refusing to extract {member.name}: "
+                            f"would write outside {dest}"
+                        )
+                    if member.issym():
+                        link_target = Path(
+                            os.path.abspath(member_path.parent / member.linkname)
+                        )
+                        if not link_target.is_relative_to(dest):
+                            raise ValueError(
+                                f"Refusing symlink {member.name}: "
+                                f"target {member.linkname} outside {dest}"
+                            )
+                    elif member.islnk():
+                        link_target = Path(os.path.abspath(dest / member.linkname))
+                        if not link_target.is_relative_to(dest):
+                            raise ValueError(
+                                f"Refusing hardlink {member.name}: "
+                                f"target {member.linkname} outside {dest}"
+                            )
+                    safe_members.append(member)
+                archive.extractall(dest, members=safe_members)

@@ -1047,3 +1047,85 @@ def mocked_poetry_managed_python_register(
         return bin_dir
 
     return register
+
+
+@pytest.fixture(params=[False, True])  # relative path
+def wheel_with_path_traversal(tmp_path: Path, request: pytest.FixtureRequest) -> Path:
+    import zipfile
+
+    traversal_path = (
+        "../../traversal.txt"
+        if request.param
+        else (tmp_path / "traversal.txt").as_posix()
+    )
+
+    wheel = tmp_path / "traversal-0.1-py3-none-any.whl"
+    files = {
+        "traversal/__init__.py": b"",
+        traversal_path: b"path traversal",
+        "traversal-0.1.dist-info/WHEEL": (
+            b"Wheel-Version: 1.0\nRoot-Is-Purelib: true\nTag: py3-none-any\n"
+        ),
+        "traversal-0.1.dist-info/METADATA": (
+            b"Metadata-Version: 2.1\nName: traversal\nVersion: 0.1\n"
+        ),
+    }
+    files["traversal-0.1.dist-info/RECORD"] = (
+        "\n".join([f"{k},," for k in files] + ["traversal-0.1.dist-info/RECORD,,"])
+        + "\n"
+    ).encode()
+
+    with zipfile.ZipFile(wheel, "w") as z:
+        for k, v in files.items():
+            z.writestr(k, v)
+
+    return wheel
+
+
+@pytest.fixture(params=[False, True])  # relative path
+def wheel_with_path_traversal_via_symlink(
+    tmp_path: Path, request: pytest.FixtureRequest
+) -> Path:
+    import stat
+    import zipfile
+
+    wheel = tmp_path / "symlink-0.1-py3-none-any.whl"
+    files = {
+        "symlink/__init__.py": b"",
+        "symlink-0.1.dist-info/WHEEL": (
+            b"Wheel-Version: 1.0\nRoot-Is-Purelib: true\nTag: py3-none-any\n"
+        ),
+        "symlink-0.1.dist-info/METADATA": (
+            b"Metadata-Version: 2.1\nName: symlink-pkg\nVersion: 0.1\n"
+        ),
+    }
+
+    symlink_entry = "symlink/traversal_link"
+    symlink_target = (
+        b"../../target"
+        if request.param
+        else (tmp_path / "target").as_posix().encode("utf-8")
+    )
+    traversal_file = "symlink/traversal_link/traversal.txt"
+
+    record_lines = [f"{k},," for k in files]
+    record_lines.append(f"{symlink_entry},,")
+    record_lines.append(f"{traversal_file},,")
+    record_lines.append("symlink-0.1.dist-info/RECORD,,")
+    files["symlink-0.1.dist-info/RECORD"] = ("\n".join(record_lines) + "\n").encode()
+
+    with zipfile.ZipFile(wheel, "w") as z:
+        for k, v in files.items():
+            z.writestr(k, v)
+
+        # Add a ZIP entry whose external attributes mark it as a symlink.
+        # The entry's data is the symlink target, pointing outside the
+        # installation directory.
+        info = zipfile.ZipInfo(symlink_entry)
+        info.create_system = 3  # unix
+        info.external_attr = (stat.S_IFLNK | 0o777) << 16
+        z.writestr(info, symlink_target)
+
+        z.writestr(traversal_file, b"path traversal")
+
+    return wheel
