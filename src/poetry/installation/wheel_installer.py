@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import platform
 import sys
 
@@ -14,7 +15,6 @@ from installer.sources import _WheelFileValidationError
 
 from poetry.__version__ import __version__
 from poetry.utils._compat import WINDOWS
-from poetry.utils._compat import is_relative_to
 
 
 logger = logging.getLogger(__name__)
@@ -45,14 +45,20 @@ class WheelDestination(SchemeDictionaryDestination):
         from installer.utils import copyfileobj_with_hashing
         from installer.utils import make_file_executable
 
-        target_dir = Path(self.scheme_dict[scheme]).resolve()
-        target_path = (target_dir / path).resolve()
+        # See https://docs.python.org/3/library/zipfile.html#zipfile.Path:
+        #  When handling untrusted archives,
+        #  consider resolving filenames using os.path.abspath()
+        #  and checking against the target directory with os.path.commonpath().
+        #
+        # Attention: Path.absolute() is not sufficient because it does not
+        #  normalize, i.e. does not remove "..".
+        #
+        # We want to avoid Path.resolve() because it is significantly slower
+        # than os.path.abspath()!
+        target_dir = Path(os.path.abspath(self.scheme_dict[scheme]))
+        target_path = Path(os.path.abspath(target_dir / path))
 
-        # Use is_relative_to() instead of Path.is_relative_to()
-        # because the latter does not work if one of both paths
-        # has a Windows long path prefix and the other path has not.
-        # (A long path prefix may be added when calling resolve().)
-        if not is_relative_to(target_path, target_dir):
+        if not target_path.is_relative_to(target_dir):
             raise ValueError(
                 f"Attempting to write {path} outside of the target directory\n"
                 f"Target directory: {target_dir}\n"
