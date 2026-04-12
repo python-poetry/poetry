@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import base64
+import contextlib
 import re
+import sys
+import tarfile
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -13,10 +16,12 @@ import responses
 from poetry.core.utils.helpers import parse_requires
 from requests.exceptions import ChunkedEncodingError
 
+from poetry.utils._compat import WINDOWS
 from poetry.utils.helpers import Downloader
 from poetry.utils.helpers import HTTPRangeRequestSupportedError
 from poetry.utils.helpers import download_file
 from poetry.utils.helpers import ensure_path
+from poetry.utils.helpers import extractall
 from poetry.utils.helpers import get_file_hash
 from poetry.utils.helpers import get_highest_priority_hash_type
 
@@ -341,3 +346,165 @@ def test_ensure_path_directory(tmp_path: Path) -> None:
 
     path.mkdir()
     assert ensure_path(path=path, is_directory=True) is path
+
+
+@pytest.mark.parametrize("relative", [False, True])
+@pytest.mark.parametrize("existing", [False, True])
+def test_extractall_sdist_no_path_traversal(
+    tmp_path: Path, relative: bool, existing: bool
+) -> None:
+    import io
+    import tarfile
+
+    archive = tmp_path / "traversal.tar.gz"
+    dest = tmp_path / "dest"
+    dest.mkdir()
+
+    target = tmp_path / "traversal.txt"
+    if existing:
+        target.write_text("original", encoding="utf-8")
+
+    with tarfile.open(archive, "w:gz") as tar:
+        b = b"path traversal"
+        t = tarfile.TarInfo("../traversal.txt" if relative else target.as_posix())
+        t.size = len(b)
+        tar.addfile(t, io.BytesIO(b))
+
+    has_data_filter = hasattr(tarfile, "data_filter")
+    # The stdlib implementation just strips the leading "/" from absolute paths
+    # and extracts them relative to the target directory (except for Windows).
+    # We do not care and raise an error.
+    raises = (
+        relative
+        or WINDOWS
+        or not has_data_filter
+        or sys.version_info[:3] in {(3, 10, 12), (3, 11, 4)}
+    )
+    exceptions: tuple[type[Exception], ...]
+    if has_data_filter:
+        if relative:
+            exceptions = (tarfile.OutsideDestinationError, ValueError)
+        else:
+            exceptions = (tarfile.AbsolutePathError, ValueError)
+    else:
+        # tarfile.OutsideDestinationError does not exist
+        exceptions = (ValueError,)
+
+    with pytest.raises(exceptions) if raises else contextlib.nullcontext():
+        extractall(source=archive, dest=dest, zip=False)
+
+    if existing:
+        assert target.exists()
+        assert target.read_text(encoding="utf-8") == "original"
+    else:
+        assert not target.exists()
+    if not raises:
+        # check that expected location exists, otherwise we have to check
+        # that there is no traversal in an unexpected location
+        assert (dest / target.as_posix().lstrip("/")).exists()
+
+
+@pytest.mark.parametrize("link_type", [tarfile.SYMTYPE, tarfile.LNKTYPE])
+@pytest.mark.parametrize("relative", [False, True])
+@pytest.mark.parametrize("existing", [False, True])
+def test_extractall_sdist_no_symlink_path_traversal(
+    tmp_path: Path, link_type: bytes, relative: bool, existing: bool
+) -> None:
+    import io
+    import tarfile
+
+    archive = tmp_path / "traversal.tar.gz"
+    dest = tmp_path / "dest"
+    dest.mkdir()
+
+    target = tmp_path / "traversal.txt"
+    if existing:
+        target.write_text("original", encoding="utf-8")
+
+    with tarfile.open(archive, "w:gz") as tar:
+        # We use a link in a subdirectory to test the difference
+        # between symlinks and hardlinks:
+        # symlinks are relative to the directory of the symlink,
+        # while hardlinks are relative to the root of the archive
+        s = tarfile.TarInfo("sub/link")
+        s.type = link_type
+        if relative:
+            s.linkname = (
+                "../../traversal.txt"
+                if link_type == tarfile.SYMTYPE
+                else "../traversal.txt"
+            )
+        else:
+            s.linkname = target.as_posix()
+        tar.addfile(s)
+        p = b"path traversal"
+        f = tarfile.TarInfo("sub/link")
+        f.size = len(p)
+        tar.addfile(f, io.BytesIO(p))
+
+    exceptions: tuple[type[Exception], ...]
+    if hasattr(tarfile, "data_filter"):
+        exceptions = (
+            tarfile.AbsoluteLinkError,
+            tarfile.LinkOutsideDestinationError,
+            ValueError,
+        )
+    else:
+        # tarfile.OutsideDestinationError does not exist
+        exceptions = (ValueError,)
+
+    with pytest.raises(exceptions):
+        extractall(source=archive, dest=dest, zip=False)
+
+    if existing:
+        assert target.exists()
+        assert target.read_text(encoding="utf-8") == "original"
+    else:
+        assert not target.exists()
+
+
+@pytest.mark.parametrize("existing", [False, True])
+def test_extractall_wheel_no_path_traversal(
+    tmp_path: Path, wheel_with_path_traversal: Path, existing: bool
+) -> None:
+    """see also test_no_path_traversal in test_wheel_installer.py"""
+    dest = tmp_path / "dest" / "dir"
+    dest.mkdir(parents=True)
+    target = tmp_path / "traversal.txt"
+    if existing:
+        target.write_text("original", encoding="utf-8")
+
+    extractall(source=wheel_with_path_traversal, dest=dest, zip=True)
+
+    if existing:
+        assert target.exists()
+        assert target.read_text(encoding="utf-8") == "original"
+    else:
+        assert not target.exists()
+
+    # target is "../.." but also check ".." just to be sure
+    assert not (dest.parent / "traversal.txt").exists()
+
+
+@pytest.mark.parametrize("existing", [False, True])
+def test_extractall_wheel_no_path_traversal_via_symlink(
+    tmp_path: Path, wheel_with_path_traversal_via_symlink: Path, existing: bool
+) -> None:
+    """see also test_no_path_traversal_via_symlink in test_wheel_installer.py"""
+    dest = tmp_path / "dest" / "dir"
+    dest.mkdir(parents=True)
+    target_dir = tmp_path / "target"
+    target_dir.mkdir()
+    target = target_dir / "traversal.txt"
+    if existing:
+        target.write_text("original", encoding="utf-8")
+
+    with pytest.raises(FileNotFoundError if WINDOWS else NotADirectoryError):
+        extractall(source=wheel_with_path_traversal_via_symlink, dest=dest, zip=True)
+
+    assert target_dir.exists()
+    if existing:
+        assert target.exists()
+        assert target.read_text(encoding="utf-8") == "original"
+    else:
+        assert not target.exists()
