@@ -503,37 +503,37 @@ def test_execute_prints_warning_for_yanked_package(
         assert error.count("yanked") == 0
 
 
-@pytest.mark.skip(reason="https://github.com/python-poetry/poetry/issues/7983")
 def test_execute_prints_warning_for_invalid_wheels(
     config: Config,
     pool: RepositoryPool,
     io: BufferedIO,
     tmp_path: Path,
     env: MockEnv,
+    fixture_dir: FixtureDirGetter,
 ) -> None:
     config.merge({"cache-dir": str(tmp_path)})
 
     executor = Executor(env, pool, config, io)
 
-    base_url = "https://files.pythonhosted.org/"
     wheel1 = "demo_invalid_record-0.1.0-py2.py3-none-any.whl"
     wheel2 = "demo_invalid_record2-0.1.0-py2.py3-none-any.whl"
+    dist_dir = fixture_dir("distributions")
     return_code = executor.execute(
         [
             Install(
                 Package(
                     "demo-invalid-record",
                     "0.1.0",
-                    source_type="url",
-                    source_url=f"{base_url}/{wheel1}",
+                    source_type="file",
+                    source_url=(dist_dir / wheel1).resolve().as_posix(),
                 )
             ),
             Install(
                 Package(
                     "demo-invalid-record2",
                     "0.1.0",
-                    source_type="url",
-                    source_url=f"{base_url}/{wheel2}",
+                    source_type="file",
+                    source_url=(dist_dir / wheel2).resolve().as_posix(),
                 )
             ),
         ]
