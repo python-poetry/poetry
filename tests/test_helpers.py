@@ -196,7 +196,7 @@ def test_get_dependency_optional() -> None:
 
 def test_get_dependency_prereleases() -> None:
     dep = get_dependency("requests", allows_prereleases=True)
-    assert dep.allows_prereleases
+    assert dep.allows_prereleases() is True
 
 
 def test_get_dependency_with_groups() -> None:

@@ -162,9 +162,12 @@ class Env(ABC):
         self._find_pip_executable()
 
     def get_embedded_wheel(self, distribution: str) -> Path:
-        wheel: Wheel = get_embed_wheel(
+        wheel: Wheel | None = get_embed_wheel(
             distribution, f"{self.version_info[0]}.{self.version_info[1]}"
         )
+        if wheel is None:
+            msg = f"Unable to find embedded wheel for {distribution}"
+            raise RuntimeError(msg)
         path: Path = wheel.path
         return path
 
