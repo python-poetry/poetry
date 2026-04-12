@@ -10,6 +10,7 @@ import pytest
 from poetry.core.constraints.version import parse_constraint
 
 from poetry.installation.wheel_installer import WheelInstaller
+from poetry.utils._compat import WINDOWS
 from poetry.utils.env import MockEnv
 
 
@@ -21,7 +22,7 @@ if TYPE_CHECKING:
 
 @pytest.fixture
 def env(tmp_path: Path) -> MockEnv:
-    return MockEnv(path=tmp_path)
+    return MockEnv(path=tmp_path / "env")
 
 
 @pytest.fixture(scope="module")
@@ -97,14 +98,20 @@ def test_install_dir_is_symlink(tmp_path: Path, demo_wheel: Path) -> None:
     assert (Path(env.paths["purelib"]) / "demo").exists()
 
 
-@pytest.fixture
-def wheel_with_path_traversal(tmp_path: Path) -> Path:
+@pytest.fixture(params=[False, True])  # relative path
+def wheel_with_path_traversal(tmp_path: Path, request: pytest.FixtureRequest) -> Path:
     import zipfile
+
+    traversal_path = (
+        "../../traversal.txt"
+        if request.param
+        else (tmp_path / "traversal.txt").as_posix()
+    )
 
     wheel = tmp_path / "traversal-0.1-py3-none-any.whl"
     files = {
         "traversal/__init__.py": b"",
-        "../../traversal.txt": b"",
+        traversal_path: b"path traversal",
         "traversal-0.1.dist-info/WHEEL": (
             b"Wheel-Version: 1.0\nRoot-Is-Purelib: true\nTag: py3-none-any\n"
         ),
@@ -124,8 +131,90 @@ def wheel_with_path_traversal(tmp_path: Path) -> Path:
     return wheel
 
 
-def test_path_traversal(env: MockEnv, wheel_with_path_traversal: Path) -> None:
+@pytest.mark.parametrize("existing", [False, True])
+def test_no_path_traversal(
+    env: MockEnv, wheel_with_path_traversal: Path, existing: bool
+) -> None:
+    target = env.path.parent / "traversal.txt"
+    if existing:
+        target.write_text("original", encoding="utf-8")
     installer = WheelInstaller(env)
     with pytest.raises(ValueError):
         installer.install(wheel_with_path_traversal)
-    assert not (env.path.parent / "traversal.txt").exists()
+
+    if existing:
+        assert target.exists()
+        assert target.read_text(encoding="utf-8") == "original"
+    else:
+        assert not target.exists()
+
+
+@pytest.fixture(params=[False, True])  # relative path
+def wheel_with_symlink(tmp_path: Path, request: pytest.FixtureRequest) -> Path:
+    import stat
+    import zipfile
+
+    wheel = tmp_path / "symlink-0.1-py3-none-any.whl"
+    files = {
+        "symlink/__init__.py": b"",
+        "symlink-0.1.dist-info/WHEEL": (
+            b"Wheel-Version: 1.0\nRoot-Is-Purelib: true\nTag: py3-none-any\n"
+        ),
+        "symlink-0.1.dist-info/METADATA": (
+            b"Metadata-Version: 2.1\nName: symlink-pkg\nVersion: 0.1\n"
+        ),
+    }
+
+    symlink_entry = "symlink/traversal_link"
+    symlink_target = (
+        b"../../target"
+        if request.param
+        else (tmp_path / "target").as_posix().encode("utf-8")
+    )
+    traversal_file = "symlink/traversal_link/traversal.txt"
+
+    record_lines = [f"{k},," for k in files]
+    record_lines.append(f"{symlink_entry},,")
+    record_lines.append(f"{traversal_file},,")
+    record_lines.append("symlink-0.1.dist-info/RECORD,,")
+    files["symlink-0.1.dist-info/RECORD"] = ("\n".join(record_lines) + "\n").encode()
+
+    with zipfile.ZipFile(wheel, "w") as z:
+        for k, v in files.items():
+            z.writestr(k, v)
+
+        # Add a ZIP entry whose external attributes mark it as a symlink.
+        # The entry's data is the symlink target, pointing outside the
+        # installation directory.
+        info = zipfile.ZipInfo(symlink_entry)
+        info.create_system = 3  # unix
+        info.external_attr = (stat.S_IFLNK | 0o777) << 16
+        z.writestr(info, symlink_target)
+
+        z.writestr(traversal_file, b"path traversal")
+
+    return wheel
+
+
+@pytest.mark.parametrize("existing", [False, True])
+def test_no_path_traversal_via_symlink(
+    tmp_path: Path, env: MockEnv, wheel_with_symlink: Path, existing: bool
+) -> None:
+    target_dir = tmp_path / "target"
+    target_dir.mkdir()
+    target = target_dir / "traversal.txt"
+    if existing:
+        target.write_text("original", encoding="utf-8")
+
+    installer = WheelInstaller(env)
+    with pytest.raises(FileNotFoundError if WINDOWS else NotADirectoryError):
+        installer.install(wheel_with_symlink)
+
+    traversal_link = Path(env.paths["purelib"]) / "symlink" / "traversal_link"
+    assert traversal_link.exists()
+    assert not traversal_link.is_symlink()  # not even extracted as symlink
+    assert target_dir.exists()
+    if existing:
+        assert target.read_text(encoding="utf-8") == "original"
+    else:
+        assert not list(target_dir.iterdir())
