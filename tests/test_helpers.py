@@ -253,10 +253,13 @@ def test_make_entry_point_with_dist() -> None:
     dist.name = "my-package"
     dist.metadata = MagicMock()
     dist.metadata.json = MagicMock(return_value={})
+    dist.metadata.json.return_value = {"name": "my-package", "version": "1.0.0"}
 
     ep = make_entry_point_from_plugin("another-plugin", DummyPlugin, dist=dist)
 
     assert ep.name == "another-plugin"
+    assert ep.group == DummyPlugin.group
+    assert ep.dist is dist
 
 
 def test_with_working_directory_copies_and_restores(
@@ -293,5 +296,26 @@ def test_with_working_directory_without_target(
     with with_working_directory(source) as path:
         assert path == source
         assert os.getcwd() == str(source)
+
+    assert os.getcwd() == str(original_cwd)
+
+
+def test_with_working_directory_restores_on_exception(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    original_cwd = tmp_path.parent / "original_cwd"
+    original_cwd.mkdir(exist_ok=True)
+    monkeypatch.chdir(original_cwd)
+
+    source = tmp_path / "source_dir"
+    source.mkdir()
+
+    class CustomError(Exception):
+        pass
+
+    with pytest.raises(CustomError):
+        with with_working_directory(source):
+            assert os.getcwd() == str(source)
+            raise CustomError("intentional error")
 
     assert os.getcwd() == str(original_cwd)
