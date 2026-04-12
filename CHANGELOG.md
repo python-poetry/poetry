@@ -1,5 +1,13 @@
 # Change Log
 
+## [2.3.4] - 2026-04-12
+
+### Fixed
+
+- Fix a performance regression in the wheel installer that was introduced in Poetry 2.3.3 ([#10821](https://github.com/python-poetry/poetry/pull/10821)).
+- Fix a path traversal vulnerability in sdist extraction on Python 3.10.0-3.10.12 and 3.11.0-3.11.4 that could allow malicious tarball files to write files outside the target directory ([#10837](https://github.com/python-poetry/poetry/pull/10837)).
+
+
 ## [2.3.3] - 2026-03-29
 
 ### Fixed
@@ -2693,7 +2701,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/2.3.3...main
+[Unreleased]: https://github.com/python-poetry/poetry/compare/2.3.4...main
+[2.3.4]: https://github.com/python-poetry/poetry/releases/tag/2.3.4
 [2.3.3]: https://github.com/python-poetry/poetry/releases/tag/2.3.3
 [2.3.2]: https://github.com/python-poetry/poetry/releases/tag/2.3.2
 [2.3.1]: https://github.com/python-poetry/poetry/releases/tag/2.3.1
