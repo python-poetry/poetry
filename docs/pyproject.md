@@ -700,8 +700,8 @@ Thus, you only have to specify the directory where your root package resides.
 {{% /note %}}
 
 {{% warning %}}
-If a VCS is being used, files matched by its ignore settings (for example by
-`.gitignore` for git) are excluded from the built distributions even when their
+If a VCS is being used, files matched by its ignore settings (for example, by
+`.gitignore` for Git) are excluded from the built distributions even when their
 parent directory is listed under `packages`. This can be surprising if a
 `packages` entry points at generated code or another path that is intentionally
 kept out of version control. To ship such files, add them back via
