@@ -922,7 +922,7 @@ class Executor:
 
         assert package.source_url is not None
         return {
-            "url": Path(package.source_url).as_uri(),
+            "url": Path(package.source_url).resolve().as_uri(),
             "archive_info": archive_info,
         }
 
@@ -934,7 +934,7 @@ class Executor:
 
         assert package.source_url is not None
         return {
-            "url": Path(package.source_url).as_uri(),
+            "url": Path(package.source_url).resolve().as_uri(),
             "dir_info": dir_info,
         }
 

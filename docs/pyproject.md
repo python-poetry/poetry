@@ -699,6 +699,18 @@ Poetry is clever enough to detect Python subpackages.
 Thus, you only have to specify the directory where your root package resides.
 {{% /note %}}
 
+{{% warning %}}
+Packages specified in the `packages` field are still subject to version control system (VCS) ignore settings
+like `.gitignore`. If your package directory is ignored by your VCS, it will not be included in the build
+distribution.
+
+To include VCS-ignored packages, you can either:
+- Remove the ignore pattern from your VCS configuration, or
+- Use the `include` field to explicitly include the package files with the appropriate `format` setting
+
+See the [exclude and include]({{< relref "#exclude-and-include" >}}) section for more details.
+{{% /warning %}}
+
 ### exclude and include
 
 {{% note %}}
