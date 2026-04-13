@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import re
 import shutil
 import tempfile
@@ -1960,3 +1961,63 @@ def test_executor_no_supported_hash_types(
     assert return_code == 1, f"\noutput: {output}\nerror: {error}\n"
     assert "No usable hash type(s) for demo" in output
     assert "hash_blah:1234567890abcdefghijklmnopqrstyzwxyz" in output
+
+
+def test_executor_should_handle_relative_paths_in_directory_url_reference(
+    tmp_path: Path,
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    config: Config,
+    io: BufferedIO,
+    fixture_dir: FixtureDirGetter,
+) -> None:
+    """Test that relative paths are properly resolved before converting to URI."""
+    # Create a package with a relative path (simulating the bug scenario)
+    project_dir = fixture_dir("simple_project")
+    relative_path = os.path.relpath(project_dir, tmp_path)
+
+    package = Package(
+        "simple-project", "1.2.3", source_type="directory", source_url=relative_path
+    )
+    executor = Executor(tmp_venv, pool, config, io)
+
+    # This should not raise ValueError: relative path can't be expressed as a file URI
+    url_reference = executor._create_directory_url_reference(package)
+
+    # The URL should be an absolute file URI
+    assert url_reference["url"].startswith("file://")
+    # Verify it's a valid URI
+    from urllib.parse import urlparse
+
+    parsed = urlparse(url_reference["url"])
+    assert parsed.scheme == "file"
+    assert parsed.path  # Should have a path component
+
+
+def test_executor_should_handle_relative_paths_in_file_url_reference(
+    tmp_path: Path,
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    config: Config,
+    io: BufferedIO,
+    fixture_dir: FixtureDirGetter,
+) -> None:
+    """Test that relative paths are properly resolved before converting to URI for file sources."""
+    # Create a package with a relative file path
+    dist_file = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
+    relative_path = os.path.relpath(dist_file, tmp_path)
+
+    package = Package("demo", "0.1.0", source_type="file", source_url=relative_path)
+    executor = Executor(tmp_venv, pool, config, io)
+
+    # This should not raise ValueError: relative path can't be expressed as a file URI
+    url_reference = executor._create_file_url_reference(package)
+
+    # The URL should be an absolute file URI
+    assert url_reference["url"].startswith("file://")
+    # Verify it's a valid URI
+    from urllib.parse import urlparse
+
+    parsed = urlparse(url_reference["url"])
+    assert parsed.scheme == "file"
+    assert parsed.path  # Should have a path component
