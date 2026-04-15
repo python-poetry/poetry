@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 
 from importlib import metadata
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import keyring
@@ -14,7 +13,6 @@ from poetry.core.packages.utils.link import Link
 
 from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.utils.password_manager import PoetryKeyring
-from tests.helpers import FIXTURE_PATH
 from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.helpers import MockDulwichRepo
 from tests.helpers import TestLocker
@@ -33,6 +31,8 @@ from tests.helpers import with_working_directory
 
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from pytest_mock import MockerFixture
 
 
@@ -239,9 +239,7 @@ class TestTestLocker:
         assert locker._lock_data == data
         assert not lock_path.exists()
 
-    def test_write_lock_data_with_write_persists_to_file(
-        self, tmp_path: Path
-    ) -> None:
+    def test_write_lock_data_with_write_persists_to_file(self, tmp_path: Path) -> None:
         lock_path = tmp_path / "poetry.lock"
         locker = TestLocker(lock_path, {})
         locker.write()
@@ -310,9 +308,7 @@ class TestIsolatedEnvironment:
 
     def test_clears_and_updates_environ(self) -> None:
         os.environ["EXISTING_VAR"] = "existing"
-        with isolated_environment(
-            environ={"INJECTED_VAR": "injected"}, clear=True
-        ):
+        with isolated_environment(environ={"INJECTED_VAR": "injected"}, clear=True):
             assert "EXISTING_VAR" not in os.environ
             assert os.environ["INJECTED_VAR"] == "injected"
         assert os.environ.get("EXISTING_VAR") == "existing"
@@ -359,9 +355,7 @@ class TestMockMetadataEntryPoints:
         assert len(eps) == 1
         assert eps[0].name == "my-plugin"
 
-    def test_returns_empty_for_different_group(
-        self, mocker: MockerFixture
-    ) -> None:
+    def test_returns_empty_for_different_group(self, mocker: MockerFixture) -> None:
         class FakePlugin:
             group = "poetry.plugin"
             __module__ = "my_plugin"
@@ -370,7 +364,7 @@ class TestMockMetadataEntryPoints:
         mock_metadata_entry_points(mocker, FakePlugin)
 
         eps = metadata.entry_points(group="some.other.group")
-        assert eps == []
+        assert len(eps) == 0
 
 
 # --- flatten_dict ---
@@ -494,14 +488,10 @@ class TestSetKeyringBackend:
             def priority(self) -> float:
                 return 42
 
-            def get_password(
-                self, service: str, username: str
-            ) -> str | None:
+            def get_password(self, service: str, username: str) -> str | None:
                 return None
 
-            def set_password(
-                self, service: str, username: str, password: str
-            ) -> None:
+            def set_password(self, service: str, username: str, password: str) -> None:
                 pass
 
             def delete_password(self, service: str, username: str) -> None:
