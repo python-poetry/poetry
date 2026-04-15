@@ -119,7 +119,7 @@ class Config(BaseConfig):
     _config_source: DictConfigSource
     _auth_config_source: DictConfigSource
 
-    def get(self, setting_name: str, default: Any = None) -> Any:
+    def get(self, setting_name: str | list[str], default: Any = None) -> Any:
         self.merge(self._config_source.config)
         self.merge(self._auth_config_source.config)
 

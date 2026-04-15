@@ -103,7 +103,8 @@ def test_file_config_source_add_property_with_list_keys(tmp_path: Path) -> None:
         "https://example.com/simple/",
     )
     data = config_source._file.read()
-    assert data["repositories"]["my.repo"]["url"] == "https://example.com/simple/"
+    repos = data["repositories"]
+    assert repos["my.repo"]["url"] == "https://example.com/simple/"  # type: ignore[index]
 
 
 def test_file_config_source_get_property_with_list_keys(tmp_path: Path) -> None:
@@ -137,5 +138,7 @@ def test_file_config_source_remove_property_with_list_keys(
 
     config_source.remove_property(["repositories", "my.repo"])
     data = config_source._file.read()
-    assert "my.repo" not in data.get("repositories", {})
-    assert data["repositories"]["other"]["url"] == "https://other.com/simple/"
+    repos = data.get("repositories", {})
+    assert "my.repo" not in repos
+    other = data["repositories"]
+    assert other["other"]["url"] == "https://other.com/simple/"  # type: ignore[index]
