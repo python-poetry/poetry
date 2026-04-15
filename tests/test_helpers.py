@@ -143,21 +143,24 @@ class TestCopyPath:
 
 
 class TestMockDulwichRepo:
-    def test_stores_path_as_string(self) -> None:
-        repo = MockDulwichRepo(Path("/some/path"))
-        assert repo.path == "/some/path"
+    def test_stores_path_as_string(self, tmp_path: Path) -> None:
+        p = tmp_path / "some" / "path"
+        repo = MockDulwichRepo(p)
+        assert repo.path == str(p)
 
-    def test_stores_string_path(self) -> None:
-        repo = MockDulwichRepo("/some/path")
-        assert repo.path == "/some/path"
+    def test_stores_string_path(self, tmp_path: Path) -> None:
+        p = str(tmp_path / "some" / "path")
+        repo = MockDulwichRepo(p)
+        assert repo.path == p
 
-    def test_head_returns_mock_revision(self) -> None:
-        repo = MockDulwichRepo("/some/path")
+    def test_head_returns_mock_revision(self, tmp_path: Path) -> None:
+        repo = MockDulwichRepo(str(tmp_path))
         assert repo.head() == MOCK_DEFAULT_GIT_REVISION.encode()
 
-    def test_ignores_extra_kwargs(self) -> None:
-        repo = MockDulwichRepo(Path("/some/path"), extra="ignored")
-        assert repo.path == "/some/path"
+    def test_ignores_extra_kwargs(self, tmp_path: Path) -> None:
+        p = tmp_path / "some" / "path"
+        repo = MockDulwichRepo(p, extra="ignored")
+        assert repo.path == str(p)
 
 
 # --- mock_clone ---
@@ -213,7 +216,10 @@ class TestTestLocker:
     def test_mock_lock_data_sets_data(self, tmp_path: Path) -> None:
         lock_path = tmp_path / "poetry.lock"
         locker = TestLocker(lock_path, {})
-        data = {"package": [], "metadata": {}}
+        data: dict[str, list[str] | dict[str, str]] = {
+            "package": [],
+            "metadata": {},
+        }
         locker.mock_lock_data(data)
         assert locker.is_locked() is True
         assert locker.lock_data == data
@@ -477,10 +483,16 @@ class TestWithWorkingDirectory:
 
 class TestSetKeyringBackend:
     def test_sets_keyring_backend_and_clears_cache(self) -> None:
+        from jaraco.classes import properties
         from keyring.backend import KeyringBackend
 
         class DummyBackend(KeyringBackend):
-            priority = 1  # type: ignore[assignment]
+            def __init__(self) -> None:
+                pass
+
+            @properties.classproperty
+            def priority(self) -> float:
+                return 42
 
             def get_password(
                 self, service: str, username: str
