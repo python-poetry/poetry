@@ -16,6 +16,7 @@ from typing import ClassVar
 from packaging.utils import NormalizedName
 from packaging.utils import canonicalize_name
 
+from poetry.config.config_source import split_key
 from poetry.config.dict_config_source import DictConfigSource
 from poetry.config.file_config_source import FileConfigSource
 from poetry.locations import CONFIG_DIR
@@ -309,11 +310,16 @@ class Config:
             return default_max_workers
         return min(default_max_workers, int(desired_max_workers))
 
-    def get(self, setting_name: str, default: Any = None) -> Any:
+    def get(self, setting_name: str | list[str], default: Any = None) -> Any:
         """
         Retrieve a setting value.
+
+        The setting_name can be a dotted string (e.g. "virtualenvs.create")
+        or a list of key segments (e.g. ["http-basic", "my.repo", "username"])
+        when any segment may contain periods.
         """
-        keys = setting_name.split(".")
+        keys = split_key(setting_name)
+        setting_name_str = ".".join(keys) if isinstance(setting_name, list) else setting_name
         build_config_settings: Mapping[
             NormalizedName, Mapping[str, str | Sequence[str]]
         ] = {}
@@ -321,14 +327,14 @@ class Config:
         # Looking in the environment if the setting
         # is set via a POETRY_* environment variable
         if self._use_environment:
-            if setting_name == "repositories":
+            if setting_name_str == "repositories":
                 # repositories setting is special for now
                 repositories = self._get_environment_repositories()
                 if repositories:
                     return repositories
 
             build_config_settings_key = "installer.build-config-settings"
-            if setting_name == build_config_settings_key or setting_name.startswith(
+            if setting_name_str == build_config_settings_key or setting_name_str.startswith(
                 f"{build_config_settings_key}."
             ):
                 build_config_settings = self._get_environment_build_config_settings()
@@ -336,7 +342,7 @@ class Config:
                 env = "POETRY_" + "_".join(k.upper().replace("-", "_") for k in keys)
                 env_value = os.getenv(env)
                 if env_value is not None:
-                    return self.process(self._get_normalizer(setting_name)(env_value))
+                    return self.process(self._get_normalizer(setting_name_str)(env_value))
 
         value = self._config
 
@@ -355,7 +361,7 @@ class Config:
         if self._use_environment and isinstance(value, dict):
             # this is a configuration table, it is likely that we missed env vars
             # in order to capture them recurse, eg: virtualenvs.options
-            return {k: self.get(f"{setting_name}.{k}") for k in value}
+            return {k: self.get(keys + [k]) for k in value}
 
         return self.process(value)
 

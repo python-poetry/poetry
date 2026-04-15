@@ -18,19 +18,33 @@ if TYPE_CHECKING:
 UNSET = object()
 
 
+def split_key(key: str | list[str]) -> list[str]:
+    """Split a config key into its component parts.
+
+    If the key is already a list, return it as-is.
+    If the key is a string, split on periods.
+
+    Use a list when the key contains segments with periods
+    (e.g. repository names like "my.repo").
+    """
+    if isinstance(key, list):
+        return key
+    return key.split(".")
+
+
 class PropertyNotFoundError(ValueError):
     pass
 
 
 class ConfigSource(ABC):
     @abstractmethod
-    def get_property(self, key: str) -> Any: ...
+    def get_property(self, key: str | list[str]) -> Any: ...
 
     @abstractmethod
-    def add_property(self, key: str, value: Any) -> None: ...
+    def add_property(self, key: str | list[str], value: Any) -> None: ...
 
     @abstractmethod
-    def remove_property(self, key: str) -> None: ...
+    def remove_property(self, key: str | list[str]) -> None: ...
 
 
 @dataclasses.dataclass
