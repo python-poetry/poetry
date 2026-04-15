@@ -225,7 +225,7 @@ def test_unset_value_not_exists(tester: CommandTester) -> None:
     ("value", "expected"),
     [
         ("virtualenvs.create", "true\n"),
-        ("repositories.foo.url", "{'url': 'https://bar.com/simple/'}\n"),
+        ("repositories.foo.url", "https://bar.com/simple/\n"),
     ],
 )
 def test_display_single_setting(
