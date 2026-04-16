@@ -83,6 +83,7 @@ class TestGetDependency:
     def test_returns_dependency_with_groups(self) -> None:
         dep = get_dependency("foo", ">=1.0", groups=["dev"])
         assert dep.in_extras == []
+        assert "dev" in dep.groups
 
     def test_returns_dependency_allowing_prereleases(self) -> None:
         dep = get_dependency("foo", ">=1.0", allows_prereleases=True)
@@ -267,6 +268,17 @@ class TestTestRepository:
         result = repo.find_packages(dep)
         assert len(result) == 1
         assert result[0].name == "foo"
+
+    def test_find_packages_filters_by_version_constraint(self) -> None:
+        repo = TestRepository("test")
+        repo.add_package(get_package("foo", "1.0.0"))
+        repo.add_package(get_package("foo", "1.1.0"))
+        repo.add_package(get_package("foo", "2.0.0"))
+
+        dep = get_dependency("foo", ">=1.0,<2.0")
+        result = repo.find_packages(dep)
+        versions = sorted(p.version.text for p in result)
+        assert versions == ["1.0.0", "1.1.0"]
 
     def test_find_packages_raises_when_not_found(self) -> None:
         repo = TestRepository("test")
@@ -497,15 +509,43 @@ class TestSetKeyringBackend:
             def delete_password(self, service: str, username: str) -> None:
                 pass
 
-        backend = DummyBackend()
+        # Save original keyring state so we can restore it
+        original_backend = keyring.get_keyring()
 
-        # Populate the cache before calling set_keyring_backend
-        PoetryKeyring.is_available()
+        try:
+            backend = DummyBackend()
 
-        from tests.helpers import set_keyring_backend
+            # Populate the cache before calling set_keyring_backend
+            PoetryKeyring.is_available()
+            cache_before = PoetryKeyring.is_available.cache_info()
+            assert cache_before.currsize > 0, "Cache should be populated"
 
-        set_keyring_backend(backend)
-        assert keyring.get_keyring() is backend
+            from tests.helpers import set_keyring_backend
+
+            set_keyring_backend(backend)
+
+            # Verify the global backend was set
+            assert keyring.get_keyring() is backend
+
+            # Verify the cache was cleared by set_keyring_backend
+            cache_after_clear = PoetryKeyring.is_available.cache_info()
+            assert cache_after_clear.currsize == 0, (
+                "Cache should be empty after set_keyring_backend"
+            )
+
+            # Verify cache is recomputed on the next call
+            PoetryKeyring.is_available()
+            cache_recomputed = PoetryKeyring.is_available.cache_info()
+            assert cache_recomputed.misses > 0, (
+                "Cache should have a miss after recomputation"
+            )
+            assert cache_recomputed.currsize > 0, (
+                "Cache should be repopulated after calling is_available"
+            )
+        finally:
+            # Restore original keyring state to avoid leaking into other tests
+            PoetryKeyring.is_available.cache_clear()
+            keyring.set_keyring(original_backend)
 
 
 # --- pbs_installer_supported_arch ---
