@@ -179,6 +179,7 @@ class Config:
         "keyring": {
             "enabled": True,
         },
+        "system-truststore": True,
     }
 
     def __init__(self, use_environment: bool = True) -> None:
@@ -389,6 +390,7 @@ class Config:
             "solver.lazy-wheel",
             "system-git-client",
             "keyring.enabled",
+            "system-truststore",
         }:
             return boolean_normalizer
 

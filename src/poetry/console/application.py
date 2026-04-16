@@ -250,6 +250,7 @@ class Application(BaseApplication):
         # the options --directory or --project, configuring the options here allow cleo to trap and
         # display the error cleanly unless the user uses verbose or debug
         self._configure_global_options(io)
+        self._load_system_truststore()
 
         with directory(self._working_directory):
             self._load_plugins(io)
@@ -636,6 +637,15 @@ class Application(BaseApplication):
             manager.activate(self)
 
         self._plugins_loaded = True
+
+    @staticmethod
+    def _load_system_truststore() -> None:
+        from poetry.utils.ssl_truststore import is_truststore_enabled
+
+        if is_truststore_enabled():
+            import truststore
+
+            truststore.inject_into_ssl()
 
 
 def main() -> int:

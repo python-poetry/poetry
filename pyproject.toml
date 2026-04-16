@@ -24,6 +24,7 @@ dependencies = [
     "tomlkit (>=0.11.4,<1.0.0)",
     # trove-classifiers uses calver, so version is unclamped
     "trove-classifiers (>=2022.5.19)",
+    "truststore (>=0.10.0,<1.0.0)",
     "virtualenv (>=20.26.6)",
     "xattr (>=1.0.0,<2.0.0) ; sys_platform == 'darwin'",
     "findpython (>=0.6.2,<0.8.0)",
