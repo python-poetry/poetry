@@ -129,7 +129,7 @@ def test_file_config_source_remove_property_with_list_keys(
     config = tmp_path.joinpath("config.toml")
     with config.open(mode="w", encoding="utf-8") as f:
         f.write(
-            '[repositories]\n'
+            "[repositories]\n"
             '[repositories."my.repo"]\nurl = "https://example.com/simple/"\n'
             '[repositories.other]\nurl = "https://other.com/simple/"\n'
         )

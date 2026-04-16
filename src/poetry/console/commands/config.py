@@ -188,13 +188,15 @@ To remove a repository (repo is a short alias for repositories):
                     repo_name = m.group(1)
                     repo = config.get(["repositories", repo_name])
                     if repo is None:
-                        raise ValueError(
-                            f"There is no {repo_name} repository defined"
-                        )
+                        raise ValueError(f"There is no {repo_name} repository defined")
 
                     if m.group(2):
                         # User asked for a specific sub-property (e.g. .url)
-                        value = repo.get(m.group(2), repo) if isinstance(repo, dict) else repo
+                        value = (
+                            repo.get(m.group(2), repo)
+                            if isinstance(repo, dict)
+                            else repo
+                        )
                     else:
                         value = repo
 
@@ -239,9 +241,7 @@ To remove a repository (repo is a short alias for repositories):
             if self.option("unset"):
                 repo = config.get(["repositories", repo_name])
                 if repo is None:
-                    raise ValueError(
-                        f"There is no {repo_name} repository defined"
-                    )
+                    raise ValueError(f"There is no {repo_name} repository defined")
 
                 if m.group(2):
                     # Unset a specific sub-property (e.g. .url)
@@ -249,9 +249,7 @@ To remove a repository (repo is a short alias for repositories):
                         ["repositories", repo_name, m.group(2)]
                     )
                 else:
-                    config.config_source.remove_property(
-                        ["repositories", repo_name]
-                    )
+                    config.config_source.remove_property(["repositories", repo_name])
 
                 return 0
 
@@ -312,9 +310,7 @@ To remove a repository (repo is a short alias for repositories):
             return 0
 
         # handle certs
-        m = re.match(
-            r"certificates\.(.+)\.(cert|client-cert)$", self.argument("key")
-        )
+        m = re.match(r"certificates\.(.+)\.(cert|client-cert)$", self.argument("key"))
         if m:
             repository = m.group(1)
             key = m.group(2)

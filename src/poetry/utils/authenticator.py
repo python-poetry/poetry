@@ -55,9 +55,7 @@ class RepositoryCertificateConfig:
             ["certificates", repository, "verify"],
             config.get(["certificates", repository, "cert"], True),
         )
-        client_cert: str = config.get(
-            ["certificates", repository, "client-cert"]
-        )
+        client_cert: str = config.get(["certificates", repository, "client-cert"])
 
         return cls(
             cert=Path(verify) if isinstance(verify, str) else None,
@@ -395,9 +393,7 @@ class Authenticator:
         if self._configured_repositories is None:
             self._configured_repositories = {}
             for repository_name in self._config.get("repositories", []):
-                url = self._config.get(
-                    ["repositories", repository_name, "url"]
-                )
+                url = self._config.get(["repositories", repository_name, "url"])
                 self._configured_repositories[repository_name] = (
                     AuthenticatorRepositoryConfig(repository_name, url)
                 )

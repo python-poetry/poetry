@@ -264,9 +264,7 @@ class PasswordManager:
         else:
             self.keyring.set_password(repo_name, username, password)
 
-        self._config.auth_config_source.add_property(
-            ["http-basic", repo_name], auth
-        )
+        self._config.auth_config_source.add_property(["http-basic", repo_name], auth)
 
     def delete_http_password(self, repo_name: str) -> None:
         auth = self.get_http_auth(repo_name)
@@ -277,9 +275,7 @@ class PasswordManager:
         with suppress(PoetryKeyringError):
             self.keyring.delete_password(repo_name, auth.username)
 
-        self._config.auth_config_source.remove_property(
-            ["http-basic", repo_name]
-        )
+        self._config.auth_config_source.remove_property(["http-basic", repo_name])
 
     def get_credential(
         self, *names: str, username: str | None = None

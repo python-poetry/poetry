@@ -93,9 +93,7 @@ def test_dict_config_source_get_property_with_list_keys() -> None:
         "username": "user",
         "password": "pass",
     }
-    assert config_source.get_property(
-        ["http-basic", "my.repo", "username"]
-    ) == "user"
+    assert config_source.get_property(["http-basic", "my.repo", "username"]) == "user"
 
 
 def test_dict_config_source_remove_property_with_list_keys() -> None:
