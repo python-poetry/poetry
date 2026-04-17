@@ -183,7 +183,7 @@ virtualenvs.use-poetry-python = false
 def test_unset_repo_setting(
     tester: CommandTester, config: Config, config_cache_dir: Path, config_data_dir: Path
 ) -> None:
-    tester.execute("repositories.foo.url https://bar.com/simple/")
+    tester.execute("repositories.foo https://bar.com/simple/")
     tester.execute("repositories.foo.url --unset ")
     tester.execute("--list")
     cache_dir = json.dumps(str(config_cache_dir))
@@ -225,13 +225,13 @@ def test_unset_value_not_exists(tester: CommandTester) -> None:
     ("value", "expected"),
     [
         ("virtualenvs.create", "true\n"),
-        ("repositories.foo.url", "{'url': 'https://bar.com/simple/'}\n"),
+        ("repositories.foo.url", "https://bar.com/simple/\n"),
     ],
 )
 def test_display_single_setting(
     tester: CommandTester, value: str, expected: str | bool
 ) -> None:
-    tester.execute("repositories.foo.url https://bar.com/simple/")
+    tester.execute("repositories.foo https://bar.com/simple/")
     tester.execute(value)
 
     assert tester.io.fetch_output() == expected
@@ -275,7 +275,7 @@ def test_display_empty_repositories_setting(
 def test_unset_nonempty_repositories_section(
     tester: CommandTester, setting: str, expected: str
 ) -> None:
-    tester.execute("repositories.foo.url https://bar.com/simple/")
+    tester.execute("repositories.foo https://bar.com/simple/")
 
     with pytest.raises(ValueError) as e:
         tester.execute(f"{setting} --unset")
@@ -292,6 +292,19 @@ def test_set_malformed_repositories_setting(
     assert (
         str(e.value) == "You must pass the url. Example: poetry config repositories.foo"
         " https://bar.com"
+    )
+
+
+def test_set_repository_url_with_property_suffix_should_fail(
+    tester: CommandTester,
+) -> None:
+    with pytest.raises(ValueError) as e:
+        tester.execute("repositories.foo.url https://bar.com/simple/")
+
+    assert (
+        str(e.value)
+        == "Repository URLs must be configured with the repository name only. "
+        "Example: poetry config repositories.foo https://bar.com"
     )
 
 

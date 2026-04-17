@@ -232,6 +232,12 @@ To remove a repository (repo is a short alias for repositories):
                 return 0
 
             if len(values) == 1:
+                if m.group(1).endswith(".url"):
+                    raise ValueError(
+                        "Repository URLs must be configured with the repository name only. "
+                        "Example: poetry config repositories.foo https://bar.com"
+                    )
+
                 url = values[0]
 
                 config.config_source.add_property(f"repositories.{m.group(1)}.url", url)
