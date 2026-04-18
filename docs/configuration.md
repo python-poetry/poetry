@@ -40,20 +40,6 @@ If a setting is defined in both `poetry.toml` (local/project) and `config.toml` 
 the local/project configuration takes precedence over the global configuration.
 {{% /note %}}
 
-## Configuration sources
-
-When a setting is set in multiple places, Poetry applies the following precedence
-(from highest to lowest):
-
-1. Environment variables (for example, `POETRY_VIRTUALENVS_CREATE`)
-2. The local `poetry.toml` file (created with `poetry config --local`)
-3. The global `config.toml` file
-4. The setting's default value
-
-For repository credentials (`http-basic.*`, `pypi-token.*`), Poetry may also read
-from `auth.toml` and the system keyring. Environment variables still take
-precedence over file-based values.
-
 {{% warning %}}
 Be mindful when checking in this file into your repository since it may contain user-specific or sensitive information.
 {{% /warning %}}
@@ -132,6 +118,20 @@ This also works for secret settings, like credentials:
 ```bash
 export POETRY_HTTP_BASIC_MY_REPOSITORY_PASSWORD=secret
 ```
+
+## Configuration sources
+
+When a setting is set in multiple places, Poetry applies the following precedence
+(from highest to lowest):
+
+1. Environment variables (for example, `POETRY_VIRTUALENVS_CREATE`)
+2. The local `poetry.toml` file (created with `poetry config --local`)
+3. The global `config.toml` file
+4. The setting's default value
+
+For repository credentials (`http-basic.*`, `pypi-token.*`), Poetry may also read
+from `auth.toml` and the system keyring (for details see [Repositories]({{< relref "repositories" >}})).
+Environment variables still take precedence over file-based values.
 
 ## Migrate outdated configs
 
