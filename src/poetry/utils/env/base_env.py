@@ -28,7 +28,6 @@ from poetry.utils.helpers import is_dir_writable
 if TYPE_CHECKING:
     from packaging.tags import Tag
     from poetry.core.version.markers import BaseMarker
-    from virtualenv.seed.wheels.util import Wheel
 
     from poetry.utils.env.generic_env import GenericEnv
 
@@ -162,11 +161,12 @@ class Env(ABC):
         self._find_pip_executable()
 
     def get_embedded_wheel(self, distribution: str) -> Path:
-        wheel: Wheel = get_embed_wheel(
+        wheel = get_embed_wheel(
             distribution, f"{self.version_info[0]}.{self.version_info[1]}"
         )
-        path: Path = wheel.path
-        return path
+        if wheel is None:
+            raise RuntimeError(f"embedded {distribution} wheel not found")
+        return wheel.path
 
     @property
     def pip_embedded(self) -> Path:
