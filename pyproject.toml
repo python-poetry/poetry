@@ -74,7 +74,7 @@ coverage = ">=7.2.0"
 deepdiff = ">=6.3"
 responses = ">=0.25.8"
 jaraco-classes = ">=3.3.1"
-pytest = ">=8.0"
+pytest = ">=9.0"
 pytest-cov = ">=4.0"
 pytest-mock = ">=3.9"
 pytest-randomly = ">=3.12"
@@ -187,15 +187,15 @@ module = [
 ignore_missing_imports = true
 
 
-[tool.pytest.ini_options]
-addopts = [ "-n", "logical", "-ra", "--strict-config", "--strict-markers" ]
+[tool.pytest]
+strict = true
+addopts = [ "-n", "logical", "-ra" ]
 testpaths = ["tests"]
 markers = [
     "network: mark tests that require internet access",
-    "skip_git_mock: mark tests that should not auto-apply git_mock"
+    "skip_git_mock: mark tests that should not auto-apply git_mock",
 ]
 log_cli_level = "INFO"
-xfail_strict = true
 
 
 [tool.coverage.report]

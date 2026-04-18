@@ -90,7 +90,7 @@ def test_is_fresh(
         ("outdated", "2.3.0", False),
         ("valid", "2.2.1", True),
         ("legacy", "2.2.1", True),
-        ("outdated", "2.3.0", False),
+        ("outdated", "2.2.1", False),
     ],
 )
 def test_is_fresh_dependency_groups(

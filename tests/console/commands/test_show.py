@@ -394,37 +394,6 @@ pendulum 2.0.0 Pendulum package
                 },
             ],
         ),
-        (
-            "--with time",
-            """\
-cachy    0.1.0 Cachy package
-pendulum 2.0.0 Pendulum package
-pytest   3.7.3 Pytest package
-""",
-        ),
-        (
-            "--with time --format json",
-            [
-                {
-                    "name": "cachy",
-                    "version": "0.1.0",
-                    "description": "Cachy package",
-                    "installed_status": "installed",
-                },
-                {
-                    "name": "pendulum",
-                    "version": "2.0.0",
-                    "description": "Pendulum package",
-                    "installed_status": "installed",
-                },
-                {
-                    "name": "pytest",
-                    "version": "3.7.3",
-                    "description": "Pytest package",
-                    "installed_status": "installed",
-                },
-            ],
-        ),
     ],
 )
 def test_show_basic_with_group_options(

@@ -102,10 +102,10 @@ def test_get_name_from_source_url(url: str) -> None:
     assert name == "poetry"
 
 
-@pytest.mark.parametrize(("tag"), ["my-tag", b"my-tag"])
+@pytest.mark.parametrize("tag", ["my-tag", b"my-tag"], ids=["str", "bytes"])
 def test_peeled_tag(tag: str | bytes) -> None:
-    tag = peeled_tag("my-tag")
-    assert tag == b"my-tag^{}"
+    tag_ref = peeled_tag(tag)
+    assert tag_ref == b"my-tag^{}"
 
 
 def test_get_remote_url(repo_mock: Repo) -> None:
