@@ -1215,3 +1215,29 @@ def test_init_does_not_add_readme_key_when_readme_missing(
     # Assert
     pyproject = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
     assert "readme =" not in pyproject
+
+
+def test_multiple_authors_via_cli(tester: CommandTester, source_dir: Path) -> None:
+    """Test that multiple --author flags are supported in non-interactive mode."""
+    tester.execute(
+        "--name my-package "
+        "--author 'Alice <alice@example.com>' "
+        "--author 'Bob <bob@example.com>'",
+        interactive=False,
+    )
+
+    pyproject = (source_dir / "pyproject.toml").read_text(encoding="utf-8")
+    assert '{name = "Alice",email = "alice@example.com"}' in pyproject
+    assert '{name = "Bob",email = "bob@example.com"}' in pyproject
+
+
+def test_single_author_via_cli_unchanged(tester: CommandTester, source_dir: Path) -> None:
+    """Test that single --author behavior is unchanged."""
+    tester.execute(
+        "--name my-package "
+        "--author 'Alice <alice@example.com>'",
+        interactive=False,
+    )
+
+    pyproject = (source_dir / "pyproject.toml").read_text(encoding="utf-8")
+    assert '{name = "Alice",email = "alice@example.com"}' in pyproject
