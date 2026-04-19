@@ -163,14 +163,9 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         elif not author:
             author = []
 
-        if is_interactive and not author:
-            default_author = ""
-            if vcs_config.get("user.name"):
-                default_author = vcs_config["user.name"]
-                author_email = vcs_config.get("user.email")
-                if author_email:
-                    default_author += f" <{author_email}>"
-
+        if is_interactive:
+            # Build the default author string for the prompt
+            default_author = author[0] if author else ""
             question = self.create_question(
                 f"Author [<comment>{default_author}</comment>, n to skip]: ",
                 default=default_author,
@@ -180,9 +175,11 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             )
             first_author = self.ask(question)
             if first_author:
-                author.append(first_author)
+                author = [first_author]
+            else:
+                author = []
 
-        # Validate all authors
+        # Validate all authors from CLI
         authors = []
         for a in author:
             validated = self._validate_author(a, a)
