@@ -66,6 +66,7 @@ class Layout:
         description: str = "",
         readme_format: str = "md",
         author: str | None = None,
+        # TODO: Deprecate `author` in a future major version; use `authors` only.
         authors: list[str] | None = None,
         license: str | None = None,
         python: str | None = None,
