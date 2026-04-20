@@ -77,7 +77,7 @@ class InstalledRepository(Repository):
                             path = lib.joinpath(path).resolve()
                         paths.add(path)
 
-        src_path = env.path / "src" / name
+        src_path = env.path / "src" / module_name(name)
         if not paths and src_path.exists():
             paths.add(src_path)
 
