@@ -312,6 +312,16 @@ def test_load_editable_with_import_package(repository: InstalledRepository) -> N
     assert editable.source_url is None
 
 
+def test_get_package_paths_falls_back_to_normalized_src_directory(tmp_path: Path) -> None:
+    env = MockEnv(path=tmp_path)
+    src_path = tmp_path / "src" / "my_package"
+    src_path.mkdir(parents=True)
+
+    assert InstalledRepository.get_package_paths(env=env, name="My-Package") == {
+        src_path
+    }
+
+
 def test_load_standard_package_with_pth_file(repository: InstalledRepository) -> None:
     # test standard packages with .pth file is not treated as editable
     standard = get_package_from_repository("standard", repository)
