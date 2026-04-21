@@ -10,7 +10,7 @@ inputs:
 
 outputs:
   cache-hit:
-    description: Whether an exact cache hit occured
+    description: Whether an exact cache hit occurred
     value: ${{ steps.cache.outputs.cache-hit }}
 
 runs:
