@@ -147,7 +147,7 @@ class GitRefSpec:
 
     def _set_head(self, remote_refs: FetchPackResult, repo: Repo) -> None:
         """
-        Internal helper method to populate ref and set it's sha as the remote's head
+        Internal helper method to populate ref and set its SHA as the remote's head
         and default ref.
         """
         self.ref = remote_refs.symrefs[Ref(b"HEAD")]
