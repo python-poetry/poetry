@@ -14,6 +14,7 @@ from poetry.core.constraints.version import parse_constraint
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.packages.vcs_dependency import VCSDependency
+from tomlrt import Table
 
 from poetry.__version__ import __version__
 from poetry.exceptions import PoetryError
@@ -173,10 +174,12 @@ def test_create_pyproject_from_package(
     # Extras are normalized as they are read.
     extras = expected.pop("extras", None)
     if extras is not None:
-        normalized_extras = {
-            canonicalize_name(extra): dependencies
-            for extra, dependencies in extras.items()
-        }
+        normalized_extras = Table.section(
+            {
+                canonicalize_name(extra): dependencies
+                for extra, dependencies in extras.items()
+            }
+        )
         expected["extras"] = normalized_extras
 
     # packages do not support this at present

@@ -198,8 +198,8 @@ optional = false
 python-versions = "*"
 groups = ["main"]
 files = [
-    {{file = "bar", hash = "123"}},
-    {{file = "foo", hash = "456"}},
+    {{ file = "bar", hash = "123" }},
+    {{ file = "foo", hash = "456" }},
 ]
 
 [package.dependencies]
@@ -213,7 +213,7 @@ optional = false
 python-versions = "*"
 groups = ["main"]
 files = [
-    {{file = "baz", hash = "345"}},
+    {{ file = "baz", hash = "345" }},
 ]
 
 [[package]]
@@ -353,7 +353,7 @@ groups = ["main"]
 files = []
 
 [package.dependencies]
-b = {{version = "^1.0", optional = true, extras = "c"}}
+b = {{ version = "^1.0", optional = true, extras = "c" }}
 
 [package.extras]
 b = ["b[c] (>=1.0,<2.0)"]
@@ -368,7 +368,7 @@ groups = ["main"]
 files = []
 
 [package.dependencies]
-c = {{version = "^1.0", optional = true}}
+c = {{ version = "^1.0", optional = true }}
 
 [package.extras]
 c = ["c (>=1.0,<2.0)"]
@@ -434,7 +434,7 @@ groups = ["main"]
 files = []
 
 [package.dependencies]
-b = {{version = "^1.0", optional = true}}
+b = {{ version = "^1.0", optional = true }}
 
 [package.extras]
 b = ["b (^1.0)"]
@@ -665,9 +665,9 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
 [metadata.files]
 # metadata.files are only tracked for non-direct origin and file dependencies
 demo = [
-    {file = "demo-1.0-cp39-win_amd64.whl", hash = "sha256"},
-    {file = "demo-1.0.tar.gz", hash = "sha256"},
-    {file = "demo-1.0-py3-none-any.whl", hash = "sha256"},
+    { file = "demo-1.0-cp39-win_amd64.whl", hash = "sha256" },
+    { file = "demo-1.0.tar.gz", hash = "sha256" },
+    { file = "demo-1.0-py3-none-any.whl", hash = "sha256" },
 ]
 """
     with open(locker.lock, "w", encoding="utf-8") as f:
@@ -761,7 +761,7 @@ optional = false
 python-versions = "*"
 groups = ["main"]
 files = [
-    {{file = "a-1.0.whl", hash = "sha256:abcdef1234567890"}},
+    {{ file = "a-1.0.whl", hash = "sha256:abcdef1234567890" }},
 ]
 
 [metadata]
@@ -800,8 +800,8 @@ files = []
 
 [package.dependencies]
 B = [
-    {{version = "^1.0.0"}},
-    {{version = ">=1.0.0", optional = true}},
+    {{ version = "^1.0.0" }},
+    {{ version = ">=1.0.0", optional = true }},
 ]
 
 [package.extras]
@@ -1014,6 +1014,7 @@ def test_root_extras_dependencies_are_ordered(
 
     expected = f"""\
 # {GENERATED_COMMENT}
+
 package = []
 
 [extras]
@@ -1058,7 +1059,7 @@ groups = ["main"]
 files = []
 
 [package.dependencies]
-B = {{version = "^1.0.0", extras = ["a", "b", "c"], optional = true}}
+B = {{ version = "^1.0.0", extras = ["a", "b", "c"], optional = true }}
 
 [metadata]
 lock-version = "2.1"
@@ -1191,8 +1192,8 @@ description = ""
 optional = false
 python-versions = "*"
 groups = ["main", "dev"]
+markers = {{ main = "sys_platform == \\"win32\\"", dev = "sys_platform == \\"linux\\"" }}
 files = []
-markers = {{main = "sys_platform == \\"win32\\"", dev = "sys_platform == \\"linux\\""}}
 
 [[package]]
 name = "F"
@@ -1201,8 +1202,8 @@ description = ""
 optional = false
 python-versions = "*"
 groups = ["main", "dev"]
+markers = {{ main = "sys_platform == \\"win32\\"" }}
 files = []
-markers = {{main = "sys_platform == \\"win32\\""}}
 
 [metadata]
 lock-version = "2.1"
@@ -1287,14 +1288,14 @@ groups = ["main"]
 files = []
 
 [package.dependencies]
-B = {{path = "project_with_extras", develop = true}}
-C = {{path = "directory/project_with_transitive_directory_dependencies"}}
-D = {{path = "distributions/demo-0.1.0.tar.gz"}}
-E = {{url = "https://files.pythonhosted.org/poetry-1.2.0.tar.gz"}}
-F = {{git = "https://github.com/python-poetry/poetry.git", branch = "foo"}}
-G = {{git = "https://github.com/python-poetry/poetry.git", subdirectory = "bar"}}
-H = {{git = "https://github.com/python-poetry/poetry.git", tag = "baz"}}
-I = {{git = "https://github.com/python-poetry/poetry.git", rev = "spam"}}
+B = {{ path = "project_with_extras", develop = true }}
+C = {{ path = "directory/project_with_transitive_directory_dependencies" }}
+D = {{ path = "distributions/demo-0.1.0.tar.gz" }}
+E = {{ url = "https://files.pythonhosted.org/poetry-1.2.0.tar.gz" }}
+F = {{ git = "https://github.com/python-poetry/poetry.git", branch = "foo" }}
+G = {{ git = "https://github.com/python-poetry/poetry.git", subdirectory = "bar" }}
+H = {{ git = "https://github.com/python-poetry/poetry.git", tag = "baz" }}
+I = {{ git = "https://github.com/python-poetry/poetry.git", rev = "spam" }}
 
 [metadata]
 lock-version = "2.1"
@@ -1511,7 +1512,7 @@ develop = true
 file = []
 
 [package.dependencies]
-lib-b = {{path = "../libB", develop = true}}
+lib-b = {{ path = "../libB", develop = true }}
 
 [package.source]
 type = "directory"
@@ -1911,8 +1912,8 @@ files = []
 
 [package.dependencies]
 B = [
-    {{version = ">=1.0", markers = "sys_platform == \\"linux\\""}},
-    {{version = ">=2.0", markers = "sys_platform == \\"win32\\""}},
+    {{ version = ">=1.0", markers = "sys_platform == \\"linux\\"" }},
+    {{ version = ">=2.0", markers = "sys_platform == \\"win32\\"" }},
 ]
 
 [metadata]

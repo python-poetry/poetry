@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
-import tomlkit
+import tomlrt
 
 from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import Version
@@ -598,7 +598,7 @@ def test_add_to_new_group_keeps_existing_group(
     app: PoetryTestApplication, tester: CommandTester
 ) -> None:
     pyproject = app.poetry.file.read()
-    groups_content = tomlkit.parse(
+    groups_content = tomlrt.loads(
         """\
 [dependency-groups]
 example = [
@@ -634,19 +634,19 @@ def test_add_to_existing_group(
     app: PoetryTestApplication, tester: CommandTester, additional_poetry_group: bool
 ) -> None:
     pyproject = app.poetry.file.read()
-    groups_content = tomlkit.parse(
+    groups_content = tomlrt.loads(
         """\
 [dependency-groups]
 example = [
     "cachy (>=0.2.0,<0.3.0)",
-    {include-group = "included"},
+    { include-group = "included" },
 ]
 included = []
 """
     )
     pyproject["dependency-groups"] = groups_content["dependency-groups"]
     if additional_poetry_group:
-        poetry_groups_content = tomlkit.parse(
+        poetry_groups_content = tomlrt.loads(
             """\
 [tool.poetry.group.example.dependencies]
 cachy = { allow-prereleases = true }
@@ -687,11 +687,11 @@ def test_add_to_group_with_latest_overwrite_existing(
     app: PoetryTestApplication, tester: CommandTester
 ) -> None:
     pyproject = app.poetry.file.read()
-    groups_content = tomlkit.parse(
+    groups_content = tomlrt.loads(
         """\
 [dependency-groups]
 example = [
-    {include-group = "included"},
+    { include-group = "included" },
     "cachy (>=0.1.0,<0.2.0)",
     "pendulum (>=1.4.4,<2.0.0)",
 ]
@@ -749,7 +749,7 @@ def test_add_to_group_uses_existing_legacy_group(
     app: PoetryTestApplication, tester: CommandTester
 ) -> None:
     pyproject = app.poetry.file.read()
-    groups_content = tomlkit.parse(
+    groups_content = tomlrt.loads(
         """\
 [tool.poetry.group.example.dependencies]
 pendulum = "^1.4.4"
@@ -1304,10 +1304,10 @@ Writing lock file
     escaped_group_name = f'"{group_name}"' if "." in group_name else group_name
     expected = f"""\
 {escaped_group_name} = [
-    "cachy (>=0.2.0,<0.3.0)"
+    "cachy (>=0.2.0,<0.3.0)",
 ]
 """
-    string_content = content.as_string()
+    string_content = pyproject.render()
     if "\r\n" in string_content:
         # consistent line endings
         expected = expected.replace("\n", "\r\n")
@@ -1796,9 +1796,7 @@ Writing lock file
 
 @pytest.mark.parametrize(
     "command",
-    [
-        "requests --extras security socks",
-    ],
+    ["requests --extras security socks"],
 )
 def test_add_extras_only_accepts_one_package(
     command: str, tester: CommandTester, repo: DummyRepository

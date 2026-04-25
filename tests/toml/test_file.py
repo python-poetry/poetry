@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tomlkit.toml_document import TOMLDocument
+from tomlrt import Document
 
 from poetry.toml import TOMLError
 from poetry.toml import TOMLFile
@@ -39,7 +39,7 @@ def test_read_returns_a_toml_document(tmp_path: Path) -> None:
 
     content = TOMLFile(path).read()
 
-    assert isinstance(content, TOMLDocument)
+    assert isinstance(content, Document)
     assert content["tool"]["poetry"]["name"] == "poetry"
 
 
