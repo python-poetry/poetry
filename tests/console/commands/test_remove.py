@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-import tomlkit
+import tomlrt
 
 from poetry.core.packages.dependency_group import DependencyGroup
 from poetry.core.packages.package import Package
@@ -64,7 +64,7 @@ def test_remove_from_project_and_poetry(
 
     pyproject = app.poetry.file.read()
 
-    project_dependencies = tomlkit.parse(
+    project_dependencies = tomlrt.loads(
         """\
 [project]
 dependencies = [
@@ -74,7 +74,7 @@ dependencies = [
 """
     )
 
-    poetry_dependencies = tomlkit.parse(
+    poetry_dependencies = tomlrt.loads(
         """\
 [tool.poetry.dependencies]
 foo = "^2.0.0"
@@ -115,7 +115,7 @@ dependencies = [
 bar = "^1.0.0"
 
 """
-    string_content = pyproject.as_string()
+    string_content = pyproject.render()
     if "\r\n" in string_content:
         # consistent line endings
         expected_project_string = expected_project_string.replace("\n", "\r\n")
@@ -136,7 +136,7 @@ def test_remove_from_pep735_group_and_poetry_group(
 
     pyproject = app.poetry.file.read()
 
-    pep735_dependencies = tomlkit.parse(
+    pep735_dependencies = tomlrt.loads(
         """\
 [dependency-groups]
 dev = [
@@ -146,7 +146,7 @@ dev = [
 """
     )
 
-    poetry_dependencies = tomlkit.parse(
+    poetry_dependencies = tomlrt.loads(
         """\
 [tool.poetry.group.dev.dependencies]
 foo = "^2.0.0"
@@ -188,9 +188,8 @@ dev = [
 
 [tool.poetry.group.dev.dependencies]
 bar = "^1.0.0"
-
 """
-    string_content = pyproject.as_string()
+    string_content = pyproject.render()
     if "\r\n" in string_content:
         # consistent line endings
         expected_pep735_string = expected_pep735_string.replace("\n", "\r\n")
@@ -219,7 +218,7 @@ def test_remove_without_specific_group_removes_from_all_groups(
     pyproject["tool"]["poetry"]["dependencies"]["foo"] = "^2.0.0"
 
     if pep_735:
-        groups_content = tomlkit.parse(
+        groups_content = tomlrt.loads(
             """\
 [dependency-groups]
 bar = [
@@ -231,7 +230,7 @@ bar = [
         pyproject["dependency-groups"] = groups_content["dependency-groups"]
 
     else:
-        groups_content = tomlkit.parse(
+        groups_content = tomlrt.loads(
             """\
 [tool.poetry.group.bar.dependencies]
 foo = "^2.0.0"
@@ -273,7 +272,7 @@ bar = [
 [tool.poetry.group.bar.dependencies]
 baz = "^1.0.0"
 """
-    string_content = pyproject.as_string()
+    string_content = pyproject.render()
     if "\r\n" in string_content:
         # consistent line endings
         expected = expected.replace("\n", "\r\n")
@@ -300,7 +299,7 @@ def test_remove_with_specific_group_removes_from_specific_groups(
     pyproject["tool"]["poetry"]["dependencies"]["foo"] = "^2.0.0"
 
     if pep_735:
-        groups_content = tomlkit.parse(
+        groups_content = tomlrt.loads(
             """\
 [dependency-groups]
 bar = [
@@ -312,7 +311,7 @@ bar = [
         pyproject["dependency-groups"] = groups_content["dependency-groups"]
 
     else:
-        groups_content = tomlkit.parse(
+        groups_content = tomlrt.loads(
             """\
 [tool.poetry.group.bar.dependencies]
 foo = "^2.0.0"
@@ -353,7 +352,7 @@ bar = [
 [tool.poetry.group.bar.dependencies]
 baz = "^1.0.0"
 """
-    string_content = pyproject.as_string()
+    string_content = pyproject.render()
     if "\r\n" in string_content:
         # consistent line endings
         expected = expected.replace("\n", "\r\n")
@@ -380,7 +379,7 @@ def test_remove_does_not_keep_empty_groups(
     pyproject["tool"]["poetry"]["dependencies"]["foo"] = "^2.0.0"
 
     if pep_735:
-        groups_content = tomlkit.parse(
+        groups_content = tomlrt.loads(
             """\
 [dependency-groups]
 bar = [
@@ -391,7 +390,7 @@ bar = [
         )
         pyproject["dependency-groups"] = groups_content["dependency-groups"]
     else:
-        groups_content = tomlkit.parse(
+        groups_content = tomlrt.loads(
             """\
 [tool.poetry.group.bar.dependencies]
 foo = "^2.0.0"
@@ -423,8 +422,8 @@ baz = "^1.0.0"
     else:
         # The group 'bar' should be removed entirely from the configuration
         assert "group" not in content
-        assert "[tool.poetry.group.bar]" not in content.as_string()
-        assert "[tool.poetry.group]" not in content.as_string()
+        assert "[tool.poetry.group.bar]" not in pyproject.render()
+        assert "[tool.poetry.group]" not in pyproject.render()
 
 
 @pytest.mark.parametrize("pep_735", [True, False])
@@ -446,7 +445,7 @@ def test_remove_canonicalized_named_removes_dependency_correctly(
     pyproject["tool"]["poetry"]["dependencies"]["foo-bar"] = "^2.0.0"
 
     if pep_735:
-        groups_content = tomlkit.parse(
+        groups_content = tomlrt.loads(
             """\
 [dependency-groups]
 bar = [
@@ -457,7 +456,7 @@ bar = [
         )
         pyproject["dependency-groups"] = groups_content["dependency-groups"]
     else:
-        groups_content = tomlkit.parse(
+        groups_content = tomlrt.loads(
             """\
 [tool.poetry.group.bar.dependencies]
 foo-bar = "^2.0.0"
@@ -465,9 +464,7 @@ baz = "^1.0.0"
 
 """
         )
-        pyproject["tool"]["poetry"].value._insert_after(
-            "dependencies", "group", groups_content["tool"]["poetry"]["group"]
-        )
+        pyproject["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
     app.poetry.file.write(pyproject)
 
     app.poetry.package.add_dependency(Factory.create_dependency("foo-bar", "^2.0.0"))
@@ -502,7 +499,7 @@ bar = [
 [tool.poetry.group.bar.dependencies]
 baz = "^1.0.0"
 """
-    string_content = pyproject.as_string()
+    string_content = pyproject.render()
     if "\r\n" in string_content:
         # consistent line endings
         expected = expected.replace("\n", "\r\n")
@@ -518,13 +515,13 @@ def test_remove_package_does_not_exist(
 ) -> None:
     repo.add_package(Package("foo", "2.0.0"))
 
-    original_content = app.poetry.file.read().as_string()
+    original_content = app.poetry.file.read().render()
 
     with pytest.raises(ValueError) as e:
         tester.execute("foo")
 
     assert str(e.value) == "The following packages were not found: foo"
-    assert app.poetry.file.read().as_string() == original_content
+    assert app.poetry.file.read().render() == original_content
 
 
 def test_remove_package_no_dependencies(
@@ -560,11 +557,11 @@ def test_remove_command_should_not_write_changes_upon_installer_errors(
 
     mocker.patch("poetry.installation.installer.Installer.run", return_value=1)
 
-    original_content = app.poetry.file.read().as_string()
+    original_content = app.poetry.file.read().render()
 
     tester.execute("foo")
 
-    assert app.poetry.file.read().as_string() == original_content
+    assert app.poetry.file.read().render() == original_content
 
 
 @pytest.mark.parametrize(
@@ -664,7 +661,7 @@ def test_remove_from_nested_pep735_group_and_poetry_group(
     pyproject["tool"]["poetry"]["dependencies"]["foo"] = "^2.0.0"
 
     if pep_735:
-        groups_content = tomlkit.parse(
+        groups_content = tomlrt.loads(
             """\
 [dependency-groups]
 bar = [
@@ -679,7 +676,7 @@ foobar = [
         pyproject["dependency-groups"] = groups_content["dependency-groups"]
 
     else:
-        groups_content = tomlkit.parse(
+        groups_content = tomlrt.loads(
             """\
 [tool.poetry.group.bar.dependencies]
 foo = "^2.0.0"
@@ -736,7 +733,7 @@ include-groups = [
     "bar",
 ]
 """
-    string_content = pyproject.as_string()
+    string_content = pyproject.render()
     if "\r\n" in string_content:
         # consistent line endings
         expected = expected.replace("\n", "\r\n")
@@ -766,7 +763,7 @@ def test_remove_group_cleans_up_include_group_references(
     pyproject = app.poetry.file.read()
 
     if pep_735:
-        groups_content = tomlkit.parse(
+        groups_content = tomlrt.loads(
             """\
 [dependency-groups]
 bar = [
@@ -788,7 +785,7 @@ foobar3 = [
         )
         pyproject["dependency-groups"] = groups_content["dependency-groups"]
     else:
-        groups_content = tomlkit.parse(
+        groups_content = tomlrt.loads(
             """\
 [tool.poetry.group.bar.dependencies]
 foo = "^2.0.0"

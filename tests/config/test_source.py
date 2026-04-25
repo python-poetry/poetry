@@ -2,10 +2,6 @@ from __future__ import annotations
 
 import pytest
 
-from tomlkit.container import Container
-from tomlkit.items import Table
-from tomlkit.items import Trivia
-
 from poetry.config.source import Source
 from poetry.repositories.repository_pool import Priority
 
@@ -32,10 +28,7 @@ from poetry.repositories.repository_pool import Priority
     ],
 )
 def test_source_to_table(source: Source, table_body: dict[str, str | bool]) -> None:
-    table = Table(Container(), Trivia(), False)
-    table._value = table_body  # type: ignore[assignment]
-
-    assert source.to_toml_table() == table
+    assert dict(source.to_toml_table()) == table_body
 
 
 def test_source_default_is_primary() -> None:

@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 import pytest
-import tomlkit
+import tomlrt
 
 from poetry.core.constraints.version import Version
 
@@ -108,7 +108,7 @@ def test_envs_file_remove_section(
     envs_file_path = tmp_path / "envs.toml"
 
     envs_file = TOMLFile(envs_file_path)
-    doc = tomlkit.document()
+    doc = tomlrt.Document()
     doc["foo"] = {"minor": "3.10", "patch": "3.10.13"}
     doc["bar"] = {"minor": "3.11", "patch": "3.11.7"}
     doc["baz"] = {"minor": "3.12", "patch": "3.12.1"}
@@ -268,7 +268,7 @@ def test_activate_activates_same_virtualenv_with_envs_file(
         del os.environ["VIRTUAL_ENV"]
 
     envs_file = TOMLFile(tmp_path / "envs.toml")
-    doc = tomlkit.document()
+    doc = tomlrt.Document()
     doc[venv_name] = {"minor": "3.7", "patch": "3.7.1"}
     envs_file.write(doc)
 
@@ -306,7 +306,7 @@ def test_activate_activates_different_virtualenv_with_envs_file(
         del os.environ["VIRTUAL_ENV"]
 
     envs_file = TOMLFile(tmp_path / "envs.toml")
-    doc = tomlkit.document()
+    doc = tomlrt.Document()
     doc[venv_name] = {"minor": "3.7", "patch": "3.7.1"}
     envs_file.write(doc)
 
@@ -351,7 +351,7 @@ def test_activate_activates_recreates_for_different_patch(
         del os.environ["VIRTUAL_ENV"]
 
     envs_file = TOMLFile(tmp_path / "envs.toml")
-    doc = tomlkit.document()
+    doc = tomlrt.Document()
     doc[venv_name] = {"minor": "3.7", "patch": "3.7.0"}
     envs_file.write(doc)
 
@@ -400,7 +400,7 @@ def test_activate_does_not_recreate_when_switching_minor(
         del os.environ["VIRTUAL_ENV"]
 
     envs_file = TOMLFile(tmp_path / "envs.toml")
-    doc = tomlkit.document()
+    doc = tomlrt.Document()
     doc[venv_name] = {"minor": "3.7", "patch": "3.7.0"}
     envs_file.write(doc)
 
@@ -561,7 +561,7 @@ def test_deactivate_activated(
     (tmp_path / f"{venv_name}-py{other_version.major}.{other_version.minor}").mkdir()
 
     envs_file = TOMLFile(tmp_path / "envs.toml")
-    doc = tomlkit.document()
+    doc = tomlrt.Document()
     doc[venv_name] = {
         "minor": f"{other_version.major}.{other_version.minor}",
         "patch": other_version.text,
@@ -613,7 +613,7 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
     (tmp_path / f"{venv_name}-py3.7").mkdir()
 
     envs_file = TOMLFile(tmp_path / "envs.toml")
-    doc = tomlkit.document()
+    doc = tomlrt.Document()
     doc[venv_name] = {"minor": "3.7", "patch": "3.7.0"}
     envs_file.write(doc)
 
@@ -876,7 +876,7 @@ def test_remove_also_deactivates(
     )
 
     envs_file = TOMLFile(tmp_path / "envs.toml")
-    doc = tomlkit.document()
+    doc = tomlrt.Document()
     doc[venv_name] = {"minor": "3.6", "patch": "3.6.6"}
     envs_file.write(doc)
 
@@ -1309,7 +1309,7 @@ def test_create_venv_does_not_keep_inconsistent_envs_entry(
 
     # There is an entry in the envs.toml file but the venv does not exist
     envs_file = TOMLFile(tmp_path / "envs.toml")
-    doc = tomlkit.document()
+    doc = tomlrt.Document()
     if is_inconsistent_entry:
         doc[venv_name] = {"minor": "3.7", "patch": "3.7.0"}
     doc["other"] = {"minor": "3.7", "patch": "3.7.0"}
