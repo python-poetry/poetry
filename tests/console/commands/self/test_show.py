@@ -5,10 +5,10 @@ import json
 from typing import TYPE_CHECKING
 
 import pytest
-import tomlkit
 
 from poetry.__version__ import __version__
 from poetry.console.commands.self.self_command import SelfCommand
+from tests.helpers import toml_dumps_dict
 
 
 if TYPE_CHECKING:
@@ -64,9 +64,11 @@ def test_show_format(tester: CommandTester, options: str) -> None:
     else:
         expected = f"poetry {__version__}"
     system_pyproject_file = SelfCommand.get_default_system_pyproject_file()
-    system_pyproject_file.write_text(tomlkit.dumps(pyproject_content), encoding="utf-8")
+    system_pyproject_file.write_text(
+        toml_dumps_dict(pyproject_content), encoding="utf-8"
+    )
     system_pyproject_file.parent.joinpath("poetry.lock").write_text(
-        tomlkit.dumps(lock_content), encoding="utf-8"
+        toml_dumps_dict(lock_content), encoding="utf-8"
     )
     assert tester.execute(options) == 0
     assert tester.io.fetch_output().strip() == expected
@@ -75,7 +77,7 @@ def test_show_format(tester: CommandTester, options: str) -> None:
 def test_self_show_errors_without_lock_file(tester: CommandTester) -> None:
     system_pyproject_file = SelfCommand.get_default_system_pyproject_file()
     system_pyproject_file.write_text(
-        tomlkit.dumps(
+        toml_dumps_dict(
             {
                 "tool": {
                     "poetry": {

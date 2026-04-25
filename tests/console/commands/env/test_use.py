@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 import pytest
-import tomlkit
+import tomlrt
 
 from poetry.core.constraints.version import Version
 
@@ -142,7 +142,7 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
     venv_dir.mkdir(parents=True, exist_ok=True)
 
     envs_file = TOMLFile(venv_cache / "envs.toml")
-    doc = tomlkit.document()
+    doc = tomlrt.Document()
     doc[venv_name] = {"minor": python_minor, "patch": python_patch}
     envs_file.write(doc)
 

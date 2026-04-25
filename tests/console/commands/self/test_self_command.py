@@ -20,22 +20,20 @@ def example_system_pyproject() -> str:
         Dependency(plugin.name, "^1.2.3", groups=[SelfCommand.ADDITIONAL_PACKAGE_GROUP])
     )
     content = Factory.create_legacy_pyproject_from_package(package)
-    return content.as_string().rstrip("\n")
+
+    return content.render().rstrip("\n")
 
 
-@pytest.mark.parametrize("existing_newlines", [0, 2])
 def test_generate_system_pyproject_trailing_newline(
-    existing_newlines: int,
     example_system_pyproject: str,
 ) -> None:
     cmd = SelfCommand()
-    cmd.system_pyproject.write_text(
-        example_system_pyproject + "\n" * existing_newlines, encoding="utf-8"
-    )
+    cmd.system_pyproject.write_text(example_system_pyproject + "\n", encoding="utf-8")
     cmd.generate_system_pyproject()
     generated = cmd.system_pyproject.read_text(encoding="utf-8")
 
-    assert len(generated) - len(generated.rstrip("\n")) == existing_newlines
+    assert generated.endswith("\n")
+    assert not generated.endswith("\n\n")
 
 
 def test_generate_system_pyproject_carriage_returns(

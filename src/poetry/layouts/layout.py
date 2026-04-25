@@ -10,10 +10,9 @@ from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import Version
 from poetry.core.utils.helpers import module_name
 from poetry.core.utils.patterns import AUTHOR_REGEX
-from tomlkit import inline_table
-from tomlkit import loads
-from tomlkit import table
-from tomlkit.toml_document import TOMLDocument
+from tomlrt import Document
+from tomlrt import Table
+from tomlrt import loads
 
 from poetry.factory import Factory
 from poetry.pyproject.toml import PyProjectTOML
@@ -21,8 +20,6 @@ from poetry.pyproject.toml import PyProjectTOML
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
-
-    from tomlkit.items import InlineTable
 
 
 POETRY_DEFAULT = """\
@@ -99,8 +96,8 @@ class Layout:
     def package_path(self) -> Path:
         return self.basedir / self._package_path_relative
 
-    def get_package_include(self) -> InlineTable | None:
-        package = inline_table()
+    def get_package_include(self) -> Table | None:
+        package = Table.inline()
 
         # If a project is created in the root directory (this is reasonable inside a
         # docker container, eg <https://github.com/python-poetry/poetry/issues/5103>)
@@ -110,10 +107,10 @@ class Layout:
             return None
 
         include = parts[0]
-        package.append("include", include)
+        package["include"] = include
 
         if self.basedir != Path():
-            package.append("from", self.basedir.as_posix())
+            package["from"] = self.basedir.as_posix()
         else:
             if module_name(self._project) == include:
                 # package include and package name are the same,
@@ -136,12 +133,10 @@ class Layout:
         if with_pyproject:
             self._write_poetry(path)
 
-    def generate_project_content(
-        self, project_path: Path | None = None
-    ) -> TOMLDocument:
+    def generate_project_content(self, project_path: Path | None = None) -> Document:
         template = POETRY_DEFAULT
 
-        content: dict[str, Any] = loads(template)
+        content = loads(template)
 
         project_content = content["project"]
         project_content["name"] = self._project
@@ -160,7 +155,7 @@ class Layout:
         if self._license:
             project_content["license"] = self._license
         else:
-            project_content.remove("license")
+            del project_content["license"]
 
         if project_path:
             project_dir = project_path / f"README.{self._readme_format}"
@@ -169,12 +164,12 @@ class Layout:
             if abs_path.exists():
                 project_content["readme"] = f"README.{self._readme_format}"
             else:
-                project_content.remove("readme")
+                del project_content["readme"]
 
         if self._python:
             project_content["requires-python"] = self._python
         else:
-            project_content.remove("requires-python")
+            del project_content["requires-python"]
 
         for dep_name, dep_constraint in self._dependencies.items():
             dependency = Factory.create_dependency(dep_name, dep_constraint)
@@ -186,7 +181,7 @@ class Layout:
         if packages:
             poetry_content["packages"].append(packages)
         else:
-            poetry_content.remove("packages")
+            del poetry_content["packages"]
 
         if self._dev_dependencies:
             for dep_name, dep_constraint in self._dev_dependencies.items():
@@ -197,9 +192,11 @@ class Layout:
 
         if not poetry_content:
             del content["tool"]["poetry"]
+        if not content["tool"]:
+            del content["tool"]
 
         # Add build system
-        build_system = table()
+        build_system = Table.section()
         build_system_version = ""
 
         if BUILD_SYSTEM_MIN_VERSION is not None:
@@ -209,11 +206,10 @@ class Layout:
                 build_system_version += ","
             build_system_version += "<" + BUILD_SYSTEM_MAX_VERSION
 
-        build_system.add("requires", ["poetry-core" + build_system_version])
-        build_system.add("build-backend", "poetry.core.masonry.api")
+        build_system["requires"] = ["poetry-core" + build_system_version]
+        build_system["build-backend"] = "poetry.core.masonry.api"
 
-        assert isinstance(content, TOMLDocument)
-        content.add("build-system", build_system)
+        content["build-system"] = build_system
 
         return content
 
@@ -241,5 +237,5 @@ class Layout:
         pyproject = PyProjectTOML(path / "pyproject.toml")
         content = self.generate_project_content()
         for section, item in content.items():
-            pyproject.data.append(section, item)
+            pyproject.data[section] = item
         pyproject.save()

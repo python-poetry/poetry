@@ -7,9 +7,9 @@ import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import cast
 
 import pytest
+import tomlrt
 
 from cleo.io.buffered_io import BufferedIO
 from cleo.io.inputs.input import Input
@@ -43,7 +43,6 @@ if TYPE_CHECKING:
 
     from _pytest.fixtures import FixtureRequest
     from pytest_mock import MockerFixture
-    from tomlkit import TOMLDocument
 
     from poetry.repositories.legacy_repository import LegacyRepository
     from poetry.repositories.pypi_repository import PyPiRepository
@@ -193,10 +192,10 @@ def fixture(name: str, data: dict[str, Any] | None = None) -> dict[str, Any]:
 
     if data:
         # if data is provided write it, this is helpful for generating fixtures
-        # we expect lock data to be compatible with TOMLDocument for our purposes
-        file.write(cast("TOMLDocument", data))
+        doc = tomlrt.Document(data)
+        file.write(doc)
 
-    content: dict[str, Any] = file.read()
+    content = file.read()
 
     return content
 

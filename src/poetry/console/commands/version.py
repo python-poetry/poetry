@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Any
 from typing import ClassVar
 
 from cleo.helpers import argument
 from cleo.helpers import option
 from poetry.core.version.exceptions import InvalidVersionError
-from tomlkit.toml_document import TOMLDocument
 
 from poetry.console.commands.command import Command
 
@@ -68,7 +66,7 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
                 )
 
             if not self.option("dry-run"):
-                content: dict[str, Any] = self.poetry.file.read()
+                content = self.poetry.file.read()
                 project_content = content.get("project", {})
                 if "version" in project_content:
                     project_content["version"] = version.text
@@ -76,7 +74,6 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
                 if "version" in poetry_content:
                     poetry_content["version"] = version.text
 
-                assert isinstance(content, TOMLDocument)
                 self.poetry.file.write(content)
         else:
             if self.option("short"):

@@ -3,16 +3,17 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-import tomlkit
 
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
+from tomlrt import Array
 
 from poetry.__version__ import __version__
 from poetry.console.commands.self.self_command import SelfCommand
 from poetry.factory import Factory
 from tests.console.commands.self.utils import get_self_command_dependencies
+from tests.helpers import toml_dumps_dict
 
 
 if TYPE_CHECKING:
@@ -33,17 +34,15 @@ def install_plugin(installed: Repository) -> None:
     plugin = Package("poetry-plugin", "1.2.3")
 
     content = Factory.create_legacy_pyproject_from_package(package)
-    content["dependency-groups"] = tomlkit.table()
-    content["dependency-groups"][SelfCommand.ADDITIONAL_PACKAGE_GROUP] = tomlkit.array(  # type: ignore[index]
-        "[\n]"
+    group = content.install(
+        ("dependency-groups", SelfCommand.ADDITIONAL_PACKAGE_GROUP),
+        Array(multiline=True),
     )
-    content["dependency-groups"][SelfCommand.ADDITIONAL_PACKAGE_GROUP].append(  # type: ignore[index, union-attr, call-arg]
-        Dependency(plugin.name, "^1.2.3").to_pep_508()
-    )
+    group.append(Dependency(plugin.name, "^1.2.3").to_pep_508())
 
     system_pyproject_file = SelfCommand.get_default_system_pyproject_file()
     with open(system_pyproject_file, "w", encoding="utf-8", newline="") as f:
-        f.write(content.as_string())
+        f.write(content.render())
 
     lock_content = {
         "package": [
@@ -63,7 +62,7 @@ def install_plugin(installed: Repository) -> None:
         },
     }
     system_pyproject_file.parent.joinpath("poetry.lock").write_text(
-        tomlkit.dumps(lock_content), encoding="utf-8"
+        toml_dumps_dict(lock_content), encoding="utf-8"
     )
 
     installed.add_package(plugin)

@@ -21,11 +21,10 @@ from poetry.core.packages.package import Package
 from poetry.core.version.exceptions import InvalidVersionError
 from poetry.core.version.markers import parse_marker
 from poetry.core.version.requirements import InvalidRequirementError
-from tomlkit import array
-from tomlkit import comment
-from tomlkit import document
-from tomlkit import inline_table
-from tomlkit import table
+from tomlrt import AoT
+from tomlrt import Array
+from tomlrt import Document
+from tomlrt import Table
 
 from poetry.__version__ import __version__
 from poetry.packages.transitive_package_info import TransitivePackageInfo
@@ -40,7 +39,6 @@ if TYPE_CHECKING:
     from poetry.core.packages.file_dependency import FileDependency
     from poetry.core.packages.url_dependency import URLDependency
     from poetry.core.packages.vcs_dependency import VCSDependency
-    from tomlkit.toml_document import TOMLDocument
 
     from poetry.repositories.lockfile_repository import LockfileRepository
 
@@ -212,40 +210,38 @@ class Locker:
 
     def _compute_lock_data(
         self, root: Package, packages: dict[Package, TransitivePackageInfo]
-    ) -> TOMLDocument:
+    ) -> Document:
         package_specs = self._lock_packages(packages)
         # Retrieving hashes
         for package in package_specs:
-            files = array()
+            file_entries = [
+                Table.inline(dict(sorted(f.items()))) for f in package["files"]
+            ]
+            package["files"] = Array(file_entries, multiline=bool(file_entries))
 
-            for f in package["files"]:
-                file_metadata = inline_table()
-                for k, v in sorted(f.items()):
-                    file_metadata[k] = v
-
-                files.append(file_metadata)
-
-            package["files"] = files.multiline(True)
-
-        lock = document()
-        lock.add(comment(GENERATED_COMMENT))
-        lock["package"] = package_specs
+        lock = Document()
+        lock.preamble = (GENERATED_COMMENT,)
+        lock["package"] = AoT(package_specs) if package_specs else []
 
         if root.extras:
-            lock["extras"] = {
-                extra: sorted(dep.pretty_name for dep in deps)
-                for extra, deps in sorted(root.extras.items())
-            }
+            lock["extras"] = Table.section(
+                {
+                    extra: sorted(dep.pretty_name for dep in deps)
+                    for extra, deps in sorted(root.extras.items())
+                }
+            )
 
-        lock["metadata"] = {
-            "lock-version": self._VERSION,
-            "python-versions": root.python_versions,
-            "content-hash": self._content_hash,
-        }
+        lock["metadata"] = Table.section(
+            {
+                "lock-version": self._VERSION,
+                "python-versions": root.python_versions,
+                "content-hash": self._content_hash,
+            }
+        )
 
         return lock
 
-    def _should_write(self, lock: TOMLDocument) -> bool:
+    def _should_write(self, lock: Document) -> bool:
         # if lock file exists: compare with existing lock data
         do_write = True
         if self.is_locked():
@@ -258,7 +254,7 @@ class Locker:
                 do_write = lock != lock_data
         return do_write
 
-    def _write_lock_data(self, data: TOMLDocument) -> None:
+    def _write_lock_data(self, data: Document) -> None:
         if self.lock.exists():
             # The following code is roughly equivalent to
             # • lockfile = TOMLFile(self.lock)
@@ -275,7 +271,7 @@ class Locker:
             linesep = "\r\n" if line.endswith("\r\n") else "\n"
 
             # enforce original line endings
-            content = data.as_string()
+            content = data.render()
             if linesep == "\n":
                 content = content.replace("\r\n", "\n")
             elif linesep == "\r\n":
@@ -528,7 +524,7 @@ class Locker:
         ):
             dependencies.setdefault(dependency.pretty_name, [])
 
-            constraint = inline_table()
+            constraint = Table.inline()
 
             if dependency.is_directory():
                 dependency = cast("DirectoryDependency", dependency)
@@ -597,7 +593,7 @@ class Locker:
                 if not (marker := next(iter(markers))).is_any():
                     data["markers"] = str(marker)
             else:
-                data["markers"] = inline_table()
+                data["markers"] = Table.inline()
                 for group, marker in sorted(
                     transitive_info.markers.items(),
                     key=lambda x: group_sort_key(x[0]),
@@ -613,21 +609,20 @@ class Locker:
         )
 
         if dependencies:
-            data["dependencies"] = table()
+            data["dependencies"] = Table.section()
             for dep_name, constraints in dependencies.items():
                 if len(constraints) == 1:
                     data["dependencies"][dep_name] = constraints[0]
                 else:
-                    data["dependencies"][dep_name] = array().multiline(True)
-                    for constraint in constraints:
-                        data["dependencies"][dep_name].append(constraint)
+                    data["dependencies"][dep_name] = Array(constraints, multiline=True)
 
         if package.extras:
-            extras = {}
-            for name, deps in sorted(package.extras.items()):
-                extras[name] = sorted(dep.to_pep_508(with_extras=False) for dep in deps)
-
-            data["extras"] = extras
+            data["extras"] = Table.section(
+                {
+                    name: sorted(dep.to_pep_508(with_extras=False) for dep in deps)
+                    for name, deps in sorted(package.extras.items())
+                }
+            )
 
         if package.source_url:
             url = package.source_url
@@ -640,7 +635,7 @@ class Locker:
                     )
                 ).as_posix()
 
-            data["source"] = {}
+            data["source"] = Table.section()
 
             if package.source_type:
                 data["source"]["type"] = package.source_type

@@ -6,7 +6,6 @@ import re
 
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import cast
 
 from cleo.io.null_io import NullIO
 from packaging.utils import NormalizedName
@@ -36,7 +35,7 @@ if TYPE_CHECKING:
     from cleo.io.io import IO
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
-    from tomlkit.toml_document import TOMLDocument
+    from tomlrt import Document
 
     from poetry.repositories import RepositoryPool
     from poetry.repositories.http_repository import HTTPRepository
@@ -249,17 +248,14 @@ class Factory(BaseFactory):
         )
 
     @classmethod
-    def create_legacy_pyproject_from_package(cls, package: Package) -> TOMLDocument:
-        import tomlkit
+    def create_legacy_pyproject_from_package(cls, package: Package) -> Document:
+        from tomlrt import Document
+        from tomlrt import Table
 
         from poetry.utils.dependency_specification import dependency_to_specification
 
-        pyproject: dict[str, Any] = tomlkit.document()
-
-        pyproject["tool"] = tomlkit.table(is_super_table=True)
-
-        content: dict[str, Any] = tomlkit.table()
-        pyproject["tool"]["poetry"] = content
+        pyproject = Document()
+        content = pyproject.ensure_table("tool.poetry")
 
         content["name"] = package.name
         content["version"] = package.version.text
@@ -299,11 +295,11 @@ class Factory(BaseFactory):
         if readmes:
             content["readme"] = readmes
 
-        optional_dependencies = set()
-        extras_section = None
+        optional_dependencies: set[NormalizedName] = set()
+        extras_section: Table | None = None
 
         if package.extras:
-            extras_section = tomlkit.table()
+            extras_section = Table.section()
 
             for extra in package.extras:
                 _dependencies = []
@@ -313,13 +309,13 @@ class Factory(BaseFactory):
 
                 extras_section[extra] = _dependencies
 
-        optional_dependencies = set(optional_dependencies)
-        dependency_section = content["dependencies"] = tomlkit.table()
+        dependency_section = Table.section()
+        content["dependencies"] = dependency_section
         dependency_section["python"] = package.python_versions
 
         for dep in package.all_requires:
             constraint: DependencySpec | str = dependency_to_specification(
-                dep, tomlkit.inline_table()
+                dep, Table.inline()
             )
 
             if not isinstance(constraint, str):
@@ -336,21 +332,12 @@ class Factory(BaseFactory):
                 if group == MAIN_GROUP:
                     dependency_section[dep.name] = constraint
                 else:
-                    if "group" not in content:
-                        content["group"] = tomlkit.table(is_super_table=True)
-
-                    if group not in content["group"]:
-                        content["group"][group] = tomlkit.table(is_super_table=True)
-
-                    if "dependencies" not in content["group"][group]:
-                        content["group"][group]["dependencies"] = tomlkit.table()
-
-                    content["group"][group]["dependencies"][dep.name] = constraint
+                    content.install(
+                        ("group", group, "dependencies", dep.name), constraint
+                    )
 
         if extras_section:
             content["extras"] = extras_section
-
-        pyproject = cast("TOMLDocument", pyproject)
 
         return pyproject
 

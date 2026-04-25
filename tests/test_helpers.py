@@ -214,9 +214,9 @@ class TestTestLocker:
         lock_path = tmp_path / "poetry.lock"
         locker = DummyLocker(lock_path, {})
 
-        from tomlkit import document
+        from tomlrt import Document
 
-        data = document()
+        data = Document()
         data["metadata"] = {"lock-version": "2.1"}
         locker._write_lock_data(data)
 
@@ -228,9 +228,9 @@ class TestTestLocker:
         locker = DummyLocker(lock_path, {})
         locker.write()
 
-        from tomlkit import document
+        from tomlrt import Document
 
-        data = document()
+        data = Document()
         data["metadata"] = {"lock-version": "2.1"}
         locker._write_lock_data(data)
 

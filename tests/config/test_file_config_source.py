@@ -3,11 +3,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-import tomlkit
 
 from poetry.config.config_source import PropertyNotFoundError
 from poetry.config.file_config_source import FileConfigSource
 from poetry.toml import TOMLFile
+from tests.helpers import toml_dumps_dict
 
 
 if TYPE_CHECKING:
@@ -44,7 +44,7 @@ def test_file_config_source_remove_property(tmp_path: Path) -> None:
 
     config = tmp_path.joinpath("config.toml")
     with config.open(mode="w", encoding="utf-8") as f:
-        f.write(tomlkit.dumps(config_data))
+        f.write(toml_dumps_dict(config_data))
 
     config_source = FileConfigSource(TOMLFile(config))
 
@@ -69,7 +69,7 @@ def test_file_config_source_get_property(tmp_path: Path) -> None:
 
     config = tmp_path.joinpath("config.toml")
     with config.open(mode="w", encoding="utf-8") as f:
-        f.write(tomlkit.dumps(config_data))
+        f.write(toml_dumps_dict(config_data))
 
     config_source = FileConfigSource(TOMLFile(config))
 
@@ -104,7 +104,7 @@ def test_file_config_source_add_property_with_list_keys(tmp_path: Path) -> None:
     )
     data = config_source._file.read()
     repos = data["repositories"]
-    assert repos["my.repo"]["url"] == "https://example.com/simple/"  # type: ignore[index]
+    assert repos["my.repo"]["url"] == "https://example.com/simple/"
 
 
 def test_file_config_source_get_property_with_list_keys(tmp_path: Path) -> None:
@@ -141,4 +141,4 @@ def test_file_config_source_remove_property_with_list_keys(
     repos = data.get("repositories", {})
     assert "my.repo" not in repos
     other = data["repositories"]
-    assert other["other"]["url"] == "https://other.com/simple/"  # type: ignore[index]
+    assert other["other"]["url"] == "https://other.com/simple/"

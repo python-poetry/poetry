@@ -11,7 +11,7 @@ from typing import TypeVar
 from typing import cast
 
 from poetry.core.packages.dependency import Dependency
-from tomlkit.items import InlineTable
+from tomlrt import Table
 
 from poetry.packages.direct_origin import DirectOrigin
 
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 
 DependencySpec = dict[str, str | bool | dict[str, str | bool] | list[str]]
-BaseSpec = TypeVar("BaseSpec", DependencySpec, InlineTable)
+BaseSpec = TypeVar("BaseSpec", DependencySpec, Table)
 
 GIT_URL_SCHEMES = {"git+http", "git+https", "git+ssh"}
 
