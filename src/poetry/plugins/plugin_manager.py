@@ -12,8 +12,6 @@ from pathlib import Path
 from site import addsitedir
 from typing import TYPE_CHECKING
 
-import tomlkit
-
 from poetry.core.packages.project_package import ProjectPackage
 
 from poetry.__version__ import __version__
@@ -298,12 +296,7 @@ class ProjectPluginCache:
     def _write_config(self) -> None:
         self._ensure_cache_directory()
 
-        document = tomlkit.document()
-
-        for key, value in self._config.items():
-            document[key] = value
-
-        TOMLFile(self._config_file).write(data=document)
+        TOMLFile(self._config_file).write(data=self._config)
 
     def _ensure_cache_directory(self) -> None:
         if self._path.exists():
