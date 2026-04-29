@@ -119,7 +119,7 @@ class Authenticator:
             SeparateBodyFileCache(
                 self._config.repository_cache_directory
                 / (cache_id or "_default_cache")
-                / "_http2"
+                / "_http_"
             )
             if not disable_cache
             else None
