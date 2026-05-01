@@ -324,7 +324,9 @@ def test_invalid_versions_ignored(pypi_repository: PyPiRepository) -> None:
 def test_get_should_invalid_cache_on_too_many_redirects_error(
     mocker: MockerFixture,
 ) -> None:
-    delete_cache = mocker.patch("cachecontrol.caches.file_cache.FileCache.delete")
+    delete_cache = mocker.patch(
+        "cachecontrol.caches.file_cache.SeparateBodyFileCache.delete"
+    )
 
     response = Response()
     response.status_code = 200
