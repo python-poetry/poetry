@@ -36,9 +36,6 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
 
-# --- get_package ---
-
-
 class TestGetPackage:
     def test_returns_package_with_name_and_version(self) -> None:
         package = get_package("foo", "1.0.0")
@@ -57,9 +54,6 @@ class TestGetPackage:
     def test_returns_yanked_package_with_bool(self) -> None:
         package = get_package("foo", "1.0.0", yanked=True)
         assert package.yanked is True
-
-
-# --- get_dependency ---
 
 
 class TestGetDependency:
@@ -88,9 +82,6 @@ class TestGetDependency:
     def test_returns_dependency_allowing_prereleases(self) -> None:
         dep = get_dependency("foo", ">=1.0", allows_prereleases=True)
         assert dep.allows_prereleases()
-
-
-# --- copy_path ---
 
 
 class TestCopyPath:
@@ -140,9 +131,6 @@ class TestCopyPath:
         assert not (dest / "old_file.txt").exists()
 
 
-# --- MockDulwichRepo ---
-
-
 class TestMockDulwichRepo:
     def test_stores_path_as_string(self, tmp_path: Path) -> None:
         p = tmp_path / "some" / "path"
@@ -164,9 +152,6 @@ class TestMockDulwichRepo:
         assert repo.path == str(p)
 
 
-# --- mock_clone ---
-
-
 class TestMockClone:
     def test_clones_fixture_to_source_root(self, tmp_path: Path) -> None:
         url = "https://github.com/demo/demo.git"
@@ -184,9 +169,6 @@ class TestMockClone:
         assert isinstance(result, MockDulwichRepo)
         dest = tmp_path / "subdirectories"
         assert dest.is_dir()
-
-
-# --- TestLocker ---
 
 
 class TestTestLocker:
@@ -255,9 +237,6 @@ class TestTestLocker:
         assert locker.is_locked() is True
 
 
-# --- TestRepository ---
-
-
 class TestTestRepository:
     def test_find_packages_returns_matching_packages(self) -> None:
         repo = TestRepository("test")
@@ -297,9 +276,6 @@ class TestTestRepository:
         assert "my_package-1.2.3-py2.py3-none-any.whl" in str(links[0])
 
 
-# --- isolated_environment ---
-
-
 class TestIsolatedEnvironment:
     def test_restores_original_environ(self) -> None:
         original_environ = dict(os.environ)
@@ -327,9 +303,6 @@ class TestIsolatedEnvironment:
         assert "INJECTED_VAR" not in os.environ
 
 
-# --- make_entry_point_from_plugin ---
-
-
 class TestMakeEntryPointFromPlugin:
     def test_creates_entry_point_without_dist(self) -> None:
         class FakePlugin:
@@ -349,9 +322,6 @@ class TestMakeEntryPointFromPlugin:
 
         ep = make_entry_point_from_plugin("test-plugin", NoGroupPlugin)
         assert ep.group is None
-
-
-# --- mock_metadata_entry_points ---
 
 
 class TestMockMetadataEntryPoints:
@@ -377,9 +347,6 @@ class TestMockMetadataEntryPoints:
 
         eps = metadata.entry_points(group="some.other.group")
         assert len(eps) == 0
-
-
-# --- flatten_dict ---
 
 
 class TestFlattenDict:
@@ -418,9 +385,6 @@ class TestFlattenDict:
         assert flatten_dict({}) == {}
 
 
-# --- switch_working_directory ---
-
-
 class TestSwitchWorkingDirectory:
     @pytest.mark.parametrize("remove", [False, True])
     @pytest.mark.parametrize("raise_error", [False, True])
@@ -444,9 +408,6 @@ class TestSwitchWorkingDirectory:
 
         assert os.getcwd() == original_cwd
         assert temp_dir.exists() is (not remove)
-
-
-# --- with_working_directory ---
 
 
 class TestWithWorkingDirectory:
@@ -482,9 +443,6 @@ class TestWithWorkingDirectory:
         assert not target.exists()
         # source should remain untouched
         assert source.exists()
-
-
-# --- set_keyring_backend ---
 
 
 class TestSetKeyringBackend:
@@ -546,9 +504,6 @@ class TestSetKeyringBackend:
             # Restore original keyring state to avoid leaking into other tests
             PoetryKeyring.is_available.cache_clear()
             keyring.set_keyring(original_backend)
-
-
-# --- pbs_installer_supported_arch ---
 
 
 class TestPbsInstallerSupportedArch:
