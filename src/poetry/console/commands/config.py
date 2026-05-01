@@ -150,6 +150,8 @@ To remove a repository (repo is a short alias for repositories):
         if self.argument("value") and self.option("unset"):
             raise RuntimeError("You can not combine a setting value with --unset")
 
+        repo_regex = r"^repos?(?:itories)?(?:\.(.+?)(?:\.(url))?)?$"
+
         # show the value if no value is provided
         if not self.argument("value") and not self.option("unset"):
             if setting_key.split(".")[0] in self.LIST_PROHIBITED_SETTINGS:
@@ -176,10 +178,7 @@ To remove a repository (repo is a short alias for repositories):
                             f"No build config settings configured for <c1>{package_name}</>."
                         )
                 return 0
-            elif m := re.match(
-                r"^repos?(?:itories)?(?:\.(.+?)(?:\.(url))?)?$",
-                self.argument("key"),
-            ):
+            elif m := re.match(repo_regex, self.argument("key")):
                 if not m.group(1):
                     value = {}
                     if config.get("repositories") is not None:
@@ -190,15 +189,7 @@ To remove a repository (repo is a short alias for repositories):
                     if repo is None:
                         raise ValueError(f"There is no {repo_name} repository defined")
 
-                    if m.group(2):
-                        # User asked for a specific sub-property (e.g. .url)
-                        value = (
-                            repo.get(m.group(2), repo)
-                            if isinstance(repo, dict)
-                            else repo
-                        )
-                    else:
-                        value = repo
+                    value = repo.get(sub_key, "") if (sub_key := m.group(2)) else repo
 
                 self.line(str(value))
             else:
@@ -229,9 +220,7 @@ To remove a repository (repo is a short alias for repositories):
             )
 
         # handle repositories
-        m = re.match(
-            r"^repos?(?:itories)?(?:\.(.+?)(?:\.(url))?)?$", self.argument("key")
-        )
+        m = re.match(repo_regex, self.argument("key"))
         if m:
             if not m.group(1):
                 raise ValueError("You cannot remove the [repositories] section")
@@ -244,7 +233,7 @@ To remove a repository (repo is a short alias for repositories):
                     raise ValueError(f"There is no {repo_name} repository defined")
 
                 if m.group(2):
-                    # Unset a specific sub-property (e.g. .url)
+                    # Unset a specific sub-property
                     config.config_source.remove_property(
                         ["repositories", repo_name, m.group(2)]
                     )
