@@ -1,10 +1,15 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from typing import Any
 
 from poetry.config.config_source import ConfigSource
 from poetry.config.config_source import PropertyNotFoundError
 from poetry.config.config_source import split_key
+
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 class DictConfigSource(ConfigSource):
@@ -15,7 +20,7 @@ class DictConfigSource(ConfigSource):
     def config(self) -> dict[str, Any]:
         return self._config
 
-    def get_property(self, key: str | list[str]) -> Any:
+    def get_property(self, key: str | Sequence[str]) -> Any:
         keys = split_key(key)
         config = self._config
 
@@ -28,7 +33,7 @@ class DictConfigSource(ConfigSource):
 
             config = config[sub_key]
 
-    def add_property(self, key: str | list[str], value: Any) -> None:
+    def add_property(self, key: str | Sequence[str], value: Any) -> None:
         keys = split_key(key)
         config = self._config
 
@@ -42,7 +47,7 @@ class DictConfigSource(ConfigSource):
 
             config = config[sub_key]
 
-    def remove_property(self, key: str | list[str]) -> None:
+    def remove_property(self, key: str | Sequence[str]) -> None:
         keys = split_key(key)
 
         config = self._config

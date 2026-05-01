@@ -15,6 +15,7 @@ from poetry.config.config_source import split_key
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from collections.abc import Sequence
 
     from tomlkit.toml_document import TOMLDocument
 
@@ -33,7 +34,7 @@ class FileConfigSource(ConfigSource):
     def file(self) -> TOMLFile:
         return self._file
 
-    def get_property(self, key: str | list[str]) -> Any:
+    def get_property(self, key: str | Sequence[str]) -> Any:
         keys = split_key(key)
 
         config = self.file.read() if self.file.exists() else {}
@@ -47,7 +48,7 @@ class FileConfigSource(ConfigSource):
 
             config = config[sub_key]
 
-    def add_property(self, key: str | list[str], value: Any) -> None:
+    def add_property(self, key: str | Sequence[str], value: Any) -> None:
         with self.secure() as toml:
             config: dict[str, Any] = toml
             keys = split_key(key)
@@ -62,7 +63,7 @@ class FileConfigSource(ConfigSource):
 
                 config = config[sub_key]
 
-    def remove_property(self, key: str | list[str]) -> None:
+    def remove_property(self, key: str | Sequence[str]) -> None:
         with self.secure() as toml:
             config: dict[str, Any] = toml
             keys = split_key(key)

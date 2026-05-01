@@ -310,7 +310,7 @@ class Config:
             return default_max_workers
         return min(default_max_workers, int(desired_max_workers))
 
-    def get(self, setting_name: str | list[str], default: Any = None) -> Any:
+    def get(self, setting_name: str | Sequence[str], default: Any = None) -> Any:
         """
         Retrieve a setting value.
 
@@ -320,7 +320,7 @@ class Config:
         """
         keys = split_key(setting_name)
         setting_name_str = (
-            ".".join(keys) if isinstance(setting_name, list) else setting_name
+            setting_name if isinstance(setting_name, str) else ".".join(keys)
         )
         build_config_settings: Mapping[
             NormalizedName, Mapping[str, str | Sequence[str]]

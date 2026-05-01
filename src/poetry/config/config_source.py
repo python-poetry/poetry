@@ -12,13 +12,15 @@ from cleo.io.null_io import NullIO
 
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from cleo.io.io import IO
 
 
 UNSET = object()
 
 
-def split_key(key: str | list[str]) -> list[str]:
+def split_key(key: str | Sequence[str]) -> list[str]:
     """Split a config key into its component parts.
 
     If the key is already a list, return it as-is.
@@ -27,9 +29,9 @@ def split_key(key: str | list[str]) -> list[str]:
     Use a list when the key contains segments with periods
     (e.g. repository names like "my.repo").
     """
-    if isinstance(key, list):
-        return key
-    return key.split(".")
+    if isinstance(key, str):
+        return key.split(".")
+    return list(key)
 
 
 class PropertyNotFoundError(ValueError):
@@ -38,13 +40,13 @@ class PropertyNotFoundError(ValueError):
 
 class ConfigSource(ABC):
     @abstractmethod
-    def get_property(self, key: str | list[str]) -> Any: ...
+    def get_property(self, key: str | Sequence[str]) -> Any: ...
 
     @abstractmethod
-    def add_property(self, key: str | list[str], value: Any) -> None: ...
+    def add_property(self, key: str | Sequence[str], value: Any) -> None: ...
 
     @abstractmethod
-    def remove_property(self, key: str | list[str]) -> None: ...
+    def remove_property(self, key: str | Sequence[str]) -> None: ...
 
 
 @dataclasses.dataclass
@@ -95,7 +97,7 @@ class ConfigSourceMigration:
 
 
 def drop_empty_config_category(
-    keys: list[str], config: dict[Any, Any]
+    keys: Sequence[str], config: dict[Any, Any]
 ) -> dict[Any, Any]:
     config_ = {}
 
