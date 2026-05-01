@@ -1,9 +1,15 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from typing import Any
 
 from poetry.config.config_source import ConfigSource
 from poetry.config.config_source import PropertyNotFoundError
+from poetry.config.config_source import split_key
+
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 class DictConfigSource(ConfigSource):
@@ -14,44 +20,44 @@ class DictConfigSource(ConfigSource):
     def config(self) -> dict[str, Any]:
         return self._config
 
-    def get_property(self, key: str) -> Any:
-        keys = key.split(".")
+    def get_property(self, key: str | Sequence[str]) -> Any:
+        keys = split_key(key)
         config = self._config
 
-        for i, key in enumerate(keys):
-            if key not in config:
+        for i, sub_key in enumerate(keys):
+            if sub_key not in config:
                 raise PropertyNotFoundError(f"Key {'.'.join(keys)} not in config")
 
             if i == len(keys) - 1:
-                return config[key]
+                return config[sub_key]
 
-            config = config[key]
+            config = config[sub_key]
 
-    def add_property(self, key: str, value: Any) -> None:
-        keys = key.split(".")
+    def add_property(self, key: str | Sequence[str], value: Any) -> None:
+        keys = split_key(key)
         config = self._config
 
-        for i, key in enumerate(keys):
-            if key not in config and i < len(keys) - 1:
-                config[key] = {}
+        for i, sub_key in enumerate(keys):
+            if sub_key not in config and i < len(keys) - 1:
+                config[sub_key] = {}
 
             if i == len(keys) - 1:
-                config[key] = value
+                config[sub_key] = value
                 break
 
-            config = config[key]
+            config = config[sub_key]
 
-    def remove_property(self, key: str) -> None:
-        keys = key.split(".")
+    def remove_property(self, key: str | Sequence[str]) -> None:
+        keys = split_key(key)
 
         config = self._config
-        for i, key in enumerate(keys):
-            if key not in config:
+        for i, sub_key in enumerate(keys):
+            if sub_key not in config:
                 return
 
             if i == len(keys) - 1:
-                del config[key]
+                del config[sub_key]
 
                 break
 
-            config = config[key]
+            config = config[sub_key]

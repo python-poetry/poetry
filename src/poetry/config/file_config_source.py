@@ -10,10 +10,12 @@ from tomlkit import table
 from poetry.config.config_source import ConfigSource
 from poetry.config.config_source import PropertyNotFoundError
 from poetry.config.config_source import drop_empty_config_category
+from poetry.config.config_source import split_key
 
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from collections.abc import Sequence
 
     from tomlkit.toml_document import TOMLDocument
 
@@ -32,51 +34,51 @@ class FileConfigSource(ConfigSource):
     def file(self) -> TOMLFile:
         return self._file
 
-    def get_property(self, key: str) -> Any:
-        keys = key.split(".")
+    def get_property(self, key: str | Sequence[str]) -> Any:
+        keys = split_key(key)
 
         config = self.file.read() if self.file.exists() else {}
 
-        for i, key in enumerate(keys):
-            if key not in config:
+        for i, sub_key in enumerate(keys):
+            if sub_key not in config:
                 raise PropertyNotFoundError(f"Key {'.'.join(keys)} not in config")
 
             if i == len(keys) - 1:
-                return config[key]
+                return config[sub_key]
 
-            config = config[key]
+            config = config[sub_key]
 
-    def add_property(self, key: str, value: Any) -> None:
+    def add_property(self, key: str | Sequence[str], value: Any) -> None:
         with self.secure() as toml:
             config: dict[str, Any] = toml
-            keys = key.split(".")
+            keys = split_key(key)
 
-            for i, key in enumerate(keys):
-                if key not in config and i < len(keys) - 1:
-                    config[key] = table()
+            for i, sub_key in enumerate(keys):
+                if sub_key not in config and i < len(keys) - 1:
+                    config[sub_key] = table()
 
                 if i == len(keys) - 1:
-                    config[key] = value
+                    config[sub_key] = value
                     break
 
-                config = config[key]
+                config = config[sub_key]
 
-    def remove_property(self, key: str) -> None:
+    def remove_property(self, key: str | Sequence[str]) -> None:
         with self.secure() as toml:
             config: dict[str, Any] = toml
-            keys = key.split(".")
+            keys = split_key(key)
 
             current_config = config
-            for i, key in enumerate(keys):
-                if key not in current_config:
+            for i, sub_key in enumerate(keys):
+                if sub_key not in current_config:
                     return
 
                 if i == len(keys) - 1:
-                    del current_config[key]
+                    del current_config[sub_key]
 
                     break
 
-                current_config = current_config[key]
+                current_config = current_config[sub_key]
 
             current_config = drop_empty_config_category(keys=keys[:-1], config=config)
             config.clear()

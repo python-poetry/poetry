@@ -150,6 +150,8 @@ To remove a repository (repo is a short alias for repositories):
         if self.argument("value") and self.option("unset"):
             raise RuntimeError("You can not combine a setting value with --unset")
 
+        repo_regex = r"^repos?(?:itories)?(?:\.(.+?)(?:\.(url))?)?$"
+
         # show the value if no value is provided
         if not self.argument("value") and not self.option("unset"):
             if setting_key.split(".")[0] in self.LIST_PROHIBITED_SETTINGS:
@@ -176,17 +178,18 @@ To remove a repository (repo is a short alias for repositories):
                             f"No build config settings configured for <c1>{package_name}</>."
                         )
                 return 0
-            elif m := re.match(r"^repos?(?:itories)?(?:\.(.+))?", self.argument("key")):
+            elif m := re.match(repo_regex, self.argument("key")):
                 if not m.group(1):
                     value = {}
                     if config.get("repositories") is not None:
                         value = config.get("repositories")
                 else:
-                    repo = config.get(f"repositories.{m.group(1)}")
+                    repo_name = m.group(1)
+                    repo = config.get(["repositories", repo_name])
                     if repo is None:
-                        raise ValueError(f"There is no {m.group(1)} repository defined")
+                        raise ValueError(f"There is no {repo_name} repository defined")
 
-                    value = repo
+                    value = repo.get(sub_key, "") if (sub_key := m.group(2)) else repo
 
                 self.line(str(value))
             else:
@@ -217,24 +220,34 @@ To remove a repository (repo is a short alias for repositories):
             )
 
         # handle repositories
-        m = re.match(r"^repos?(?:itories)?(?:\.(.+))?", self.argument("key"))
+        m = re.match(repo_regex, self.argument("key"))
         if m:
             if not m.group(1):
                 raise ValueError("You cannot remove the [repositories] section")
 
-            if self.option("unset"):
-                repo = config.get(f"repositories.{m.group(1)}")
-                if repo is None:
-                    raise ValueError(f"There is no {m.group(1)} repository defined")
+            repo_name = m.group(1)
 
-                config.config_source.remove_property(f"repositories.{m.group(1)}")
+            if self.option("unset"):
+                repo = config.get(["repositories", repo_name])
+                if repo is None:
+                    raise ValueError(f"There is no {repo_name} repository defined")
+
+                if m.group(2):
+                    # Unset a specific sub-property
+                    config.config_source.remove_property(
+                        ["repositories", repo_name, m.group(2)]
+                    )
+                else:
+                    config.config_source.remove_property(["repositories", repo_name])
 
                 return 0
 
             if len(values) == 1:
                 url = values[0]
 
-                config.config_source.add_property(f"repositories.{m.group(1)}.url", url)
+                config.config_source.add_property(
+                    ["repositories", repo_name, "url"], url
+                )
 
                 return 0
 
@@ -286,14 +299,14 @@ To remove a repository (repo is a short alias for repositories):
             return 0
 
         # handle certs
-        m = re.match(r"certificates\.([^.]+)\.(cert|client-cert)", self.argument("key"))
+        m = re.match(r"certificates\.(.+)\.(cert|client-cert)$", self.argument("key"))
         if m:
             repository = m.group(1)
             key = m.group(2)
 
             if self.option("unset"):
                 config.auth_config_source.remove_property(
-                    f"certificates.{repository}.{key}"
+                    ["certificates", repository, key]
                 )
 
                 return 0
@@ -305,7 +318,7 @@ To remove a repository (repo is a short alias for repositories):
                     new_value = boolean_normalizer(values[0])
 
                 config.auth_config_source.add_property(
-                    f"certificates.{repository}.{key}", new_value
+                    ["certificates", repository, key], new_value
                 )
             else:
                 raise ValueError("You must pass exactly 1 value")

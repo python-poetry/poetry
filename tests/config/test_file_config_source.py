@@ -89,3 +89,56 @@ def test_file_config_source_get_property_should_raise_if_not_found(
         PropertyNotFoundError, match=r"Key virtualenvs\.use-poetry-python not in config"
     ):
         _ = config_source.get_property("virtualenvs.use-poetry-python")
+
+
+def test_file_config_source_add_property_with_list_keys(tmp_path: Path) -> None:
+    """Repository names containing periods should be stored correctly."""
+    config = tmp_path.joinpath("config.toml")
+    config.touch()
+
+    config_source = FileConfigSource(TOMLFile(config))
+
+    config_source.add_property(
+        ["repositories", "my.repo", "url"],
+        "https://example.com/simple/",
+    )
+    data = config_source._file.read()
+    repos = data["repositories"]
+    assert repos["my.repo"]["url"] == "https://example.com/simple/"  # type: ignore[index]
+
+
+def test_file_config_source_get_property_with_list_keys(tmp_path: Path) -> None:
+    """Repository names containing periods should be retrievable via list keys."""
+    config = tmp_path.joinpath("config.toml")
+    with config.open(mode="w", encoding="utf-8") as f:
+        f.write(
+            '[repositories]\n[repositories."my.repo"]\nurl = "https://example.com/simple/"\n'
+        )
+
+    config_source = FileConfigSource(TOMLFile(config))
+
+    assert config_source.get_property(["repositories", "my.repo", "url"]) == (
+        "https://example.com/simple/"
+    )
+
+
+def test_file_config_source_remove_property_with_list_keys(
+    tmp_path: Path,
+) -> None:
+    """Repository names containing periods should be removable via list keys."""
+    config = tmp_path.joinpath("config.toml")
+    with config.open(mode="w", encoding="utf-8") as f:
+        f.write(
+            "[repositories]\n"
+            '[repositories."my.repo"]\nurl = "https://example.com/simple/"\n'
+            '[repositories.other]\nurl = "https://other.com/simple/"\n'
+        )
+
+    config_source = FileConfigSource(TOMLFile(config))
+
+    config_source.remove_property(["repositories", "my.repo"])
+    data = config_source._file.read()
+    repos = data.get("repositories", {})
+    assert "my.repo" not in repos
+    other = data["repositories"]
+    assert other["other"]["url"] == "https://other.com/simple/"  # type: ignore[index]
