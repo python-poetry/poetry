@@ -23,11 +23,12 @@ UNSET = object()
 def split_key(key: str | Sequence[str]) -> list[str]:
     """Split a config key into its component parts.
 
-    If the key is already a list, return it as-is.
     If the key is a string, split on periods.
 
-    Use a list when the key contains segments with periods
-    (e.g. repository names like "my.repo").
+    If the key contains segments with periods
+    (e.g. repository names like "my.repo"),
+    this should be handled before calling this function
+    so that a list or tuple of the segments is passed.
     """
     if isinstance(key, str):
         return key.split(".")
