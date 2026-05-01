@@ -171,12 +171,10 @@ warn_unused_ignores = false
 
 [[tool.mypy.overrides]]
 module = [
-    'deepdiff.*',
     'fastjsonschema.*',
     'findpython.*',
     'requests_toolbelt.*',
     'shellingham.*',
-    'virtualenv.*',
     'xattr.*',
 ]
 ignore_missing_imports = true
