@@ -26,6 +26,7 @@ from tests.helpers import make_entry_point_from_plugin
 from tests.helpers import mock_clone
 from tests.helpers import mock_metadata_entry_points
 from tests.helpers import pbs_installer_supported_arch
+from tests.helpers import set_keyring_backend
 from tests.helpers import switch_working_directory
 from tests.helpers import with_working_directory
 
@@ -477,8 +478,6 @@ class TestSetKeyringBackend:
             PoetryKeyring.is_available()
             cache_before = PoetryKeyring.is_available.cache_info()
             assert cache_before.currsize > 0, "Cache should be populated"
-
-            from tests.helpers import set_keyring_backend
 
             set_keyring_backend(backend)
 
