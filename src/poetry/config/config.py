@@ -319,9 +319,6 @@ class Config:
         when any segment may contain periods.
         """
         keys = split_key(setting_name)
-        setting_name_str = (
-            setting_name if isinstance(setting_name, str) else ".".join(keys)
-        )
         build_config_settings: Mapping[
             NormalizedName, Mapping[str, str | Sequence[str]]
         ] = {}
@@ -329,25 +326,19 @@ class Config:
         # Looking in the environment if the setting
         # is set via a POETRY_* environment variable
         if self._use_environment:
-            if setting_name_str == "repositories":
+            if keys == ["repositories"]:
                 # repositories setting is special for now
                 repositories = self._get_environment_repositories()
                 if repositories:
                     return repositories
 
-            build_config_settings_key = "installer.build-config-settings"
-            if (
-                setting_name_str == build_config_settings_key
-                or setting_name_str.startswith(f"{build_config_settings_key}.")
-            ):
+            if keys[:2] == ["installer", "build-config-settings"]:
                 build_config_settings = self._get_environment_build_config_settings()
             else:
                 env = "POETRY_" + "_".join(k.upper().replace("-", "_") for k in keys)
                 env_value = os.getenv(env)
                 if env_value is not None:
-                    return self.process(
-                        self._get_normalizer(setting_name_str)(env_value)
-                    )
+                    return self.process(self._get_normalizer(keys)(env_value))
 
         value = self._config
 
@@ -387,7 +378,9 @@ class Config:
         return re.sub(r"{(.+?)}", resolve_from_config, value)
 
     @staticmethod
-    def _get_normalizer(name: str) -> Callable[[str], Any]:
+    def _get_normalizer(name: str | Sequence[str]) -> Callable[[str], Any]:
+        if not isinstance(name, str):
+            name = ".".join(name)
         if name in {
             "virtualenvs.create",
             "virtualenvs.in-project",
