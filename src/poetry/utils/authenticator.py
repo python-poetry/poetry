@@ -17,7 +17,7 @@ import requests.auth
 import requests.exceptions
 
 from cachecontrol import CacheControlAdapter
-from cachecontrol.caches import FileCache
+from cachecontrol.caches import SeparateBodyFileCache
 from requests_toolbelt import user_agent
 
 from poetry.__version__ import __version__
@@ -115,15 +115,20 @@ class Authenticator:
             dict[str, AuthenticatorRepositoryConfig] | None
         ) = None
         self._password_manager = PasswordManager(self._config)
+
+        # Poetry < 2.4: FileCache -> directory "_http"
+        # Poetry >= 2.4: SeparateBodyCache -> directory "_http_"
+        # See https://github.com/python-poetry/poetry/pull/10816 for details.
         self._cache_control = (
-            FileCache(
+            SeparateBodyFileCache(
                 self._config.repository_cache_directory
                 / (cache_id or "_default_cache")
-                / "_http"
+                / "_http_"
             )
             if not disable_cache
             else None
         )
+
         self.get_repository_config_for_url = functools.lru_cache(maxsize=None)(
             self._get_repository_config_for_url
         )
