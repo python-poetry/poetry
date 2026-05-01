@@ -162,15 +162,10 @@ exclude = [
     "tests/utils/fixtures",
 ]
 
-# use of importlib-metadata backport makes it impossible to satisfy mypy
-# without some ignores: but we get different sets of ignores at different
-# python versions.
+# ignores that are only required for some Python versions
 [[tool.mypy.overrides]]
 module = [
     'poetry.repositories.installed_repository',
-    'tests.console.commands.self.test_show_plugins',
-    'tests.repositories.test_installed_repository',
-    'tests.helpers',
 ]
 warn_unused_ignores = false
 

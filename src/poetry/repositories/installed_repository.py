@@ -271,7 +271,7 @@ class InstalledRepository(Repository):
                     continue
 
                 try:
-                    dist_metadata = distribution.metadata  # type: ignore[attr-defined]
+                    dist_metadata = distribution.metadata
                 except FileNotFoundError:
                     # Python 3.15+ raises MetadataNotFound (a FileNotFoundError subclass)
                     # when a dist-info directory has no METADATA file
