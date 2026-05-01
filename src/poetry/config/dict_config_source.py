@@ -19,40 +19,40 @@ class DictConfigSource(ConfigSource):
         keys = split_key(key)
         config = self._config
 
-        for i, key in enumerate(keys):
-            if key not in config:
+        for i, sub_key in enumerate(keys):
+            if sub_key not in config:
                 raise PropertyNotFoundError(f"Key {'.'.join(keys)} not in config")
 
             if i == len(keys) - 1:
-                return config[key]
+                return config[sub_key]
 
-            config = config[key]
+            config = config[sub_key]
 
     def add_property(self, key: str | list[str], value: Any) -> None:
         keys = split_key(key)
         config = self._config
 
-        for i, key in enumerate(keys):
-            if key not in config and i < len(keys) - 1:
-                config[key] = {}
+        for i, sub_key in enumerate(keys):
+            if sub_key not in config and i < len(keys) - 1:
+                config[sub_key] = {}
 
             if i == len(keys) - 1:
-                config[key] = value
+                config[sub_key] = value
                 break
 
-            config = config[key]
+            config = config[sub_key]
 
     def remove_property(self, key: str | list[str]) -> None:
         keys = split_key(key)
 
         config = self._config
-        for i, key in enumerate(keys):
-            if key not in config:
+        for i, sub_key in enumerate(keys):
+            if sub_key not in config:
                 return
 
             if i == len(keys) - 1:
-                del config[key]
+                del config[sub_key]
 
                 break
 
-            config = config[key]
+            config = config[sub_key]

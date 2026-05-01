@@ -38,29 +38,29 @@ class FileConfigSource(ConfigSource):
 
         config = self.file.read() if self.file.exists() else {}
 
-        for i, key in enumerate(keys):
-            if key not in config:
+        for i, sub_key in enumerate(keys):
+            if sub_key not in config:
                 raise PropertyNotFoundError(f"Key {'.'.join(keys)} not in config")
 
             if i == len(keys) - 1:
-                return config[key]
+                return config[sub_key]
 
-            config = config[key]
+            config = config[sub_key]
 
     def add_property(self, key: str | list[str], value: Any) -> None:
         with self.secure() as toml:
             config: dict[str, Any] = toml
             keys = split_key(key)
 
-            for i, key in enumerate(keys):
-                if key not in config and i < len(keys) - 1:
-                    config[key] = table()
+            for i, sub_key in enumerate(keys):
+                if sub_key not in config and i < len(keys) - 1:
+                    config[sub_key] = table()
 
                 if i == len(keys) - 1:
-                    config[key] = value
+                    config[sub_key] = value
                     break
 
-                config = config[key]
+                config = config[sub_key]
 
     def remove_property(self, key: str | list[str]) -> None:
         with self.secure() as toml:
@@ -68,16 +68,16 @@ class FileConfigSource(ConfigSource):
             keys = split_key(key)
 
             current_config = config
-            for i, key in enumerate(keys):
-                if key not in current_config:
+            for i, sub_key in enumerate(keys):
+                if sub_key not in current_config:
                     return
 
                 if i == len(keys) - 1:
-                    del current_config[key]
+                    del current_config[sub_key]
 
                     break
 
-                current_config = current_config[key]
+                current_config = current_config[sub_key]
 
             current_config = drop_empty_config_category(keys=keys[:-1], config=config)
             config.clear()
