@@ -2,17 +2,13 @@ from __future__ import annotations
 
 import os
 
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 import pytest
 
 from tests.helpers import flatten_dict
 from tests.helpers import isolated_environment
 from tests.helpers import switch_working_directory
-
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 def test_flatten_dict() -> None:
@@ -60,7 +56,7 @@ def test_isolated_environment_updates_environ() -> None:
 def test_switch_working_directory_changes_restores_and_removes(
     tmp_path: Path, remove: bool, raise_error: bool
 ) -> None:
-    original_cwd = os.getcwd()
+    original_cwd = Path.cwd()
     temp_dir = tmp_path / f"temp-working-dir-{remove}-{raise_error}"
     temp_dir.mkdir()
 
@@ -69,11 +65,11 @@ def test_switch_working_directory_changes_restores_and_removes(
             pytest.raises(RuntimeError),
             switch_working_directory(temp_dir, remove=remove),
         ):
-            assert os.getcwd() == str(temp_dir)
+            assert Path.cwd() == temp_dir
             raise RuntimeError("boom")
     else:
         with switch_working_directory(temp_dir, remove=remove):
-            assert os.getcwd() == str(temp_dir)
+            assert Path.cwd() == temp_dir
 
-    assert os.getcwd() == original_cwd
+    assert Path.cwd() == original_cwd
     assert temp_dir.exists() is (not remove)

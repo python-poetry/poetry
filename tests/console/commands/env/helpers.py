@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import os
-
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -38,8 +36,8 @@ def check_output_wrapper(
             return f"{version.major}.{version.minor}"
 
         if "import sys; print(sys.executable)" in python_cmd:
-            executable = cmd[0]
-            basename = os.path.basename(executable)
+            executable = Path(cmd[0])
+            basename = executable.name
             return f"/usr/bin/{basename}"
 
         if "print(sys.base_prefix)" in python_cmd:

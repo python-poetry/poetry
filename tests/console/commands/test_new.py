@@ -267,9 +267,9 @@ def test_new_with_dot_in_empty_directory(tester: CommandTester, tmp_path: Path) 
     test_dir = "test_new_with_dot_in_empty_directory"
 
     # Change to the temporary directory
-    original_cwd = os.getcwd()
+    original_cwd = Path.cwd()
     os.chdir(tmp_path)
-    os.mkdir(test_dir)
+    Path(test_dir).mkdir()
     tmp_path = Path(original_cwd) / test_dir
     os.chdir(tmp_path)
 

@@ -55,8 +55,8 @@ class WheelDestination(SchemeDictionaryDestination):
         #
         # We want to avoid Path.resolve() because it is significantly slower
         # than os.path.abspath()!
-        target_dir = Path(os.path.abspath(self.scheme_dict[scheme]))
-        target_path = Path(os.path.abspath(target_dir / path))
+        target_dir = Path(os.path.abspath(self.scheme_dict[scheme]))  # noqa: PTH100
+        target_path = Path(os.path.abspath(target_dir / path))  # noqa: PTH100
 
         if not target_path.is_relative_to(target_dir):
             raise ValueError(
