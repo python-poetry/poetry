@@ -270,7 +270,12 @@ class InstalledRepository(Repository):
                 if path in skipped:
                     continue
 
-                dist_metadata = distribution.metadata  # type: ignore[attr-defined]
+                try:
+                    dist_metadata = distribution.metadata  # type: ignore[attr-defined]
+                except FileNotFoundError:
+                    # Python 3.15+ raises MetadataNotFound (a FileNotFoundError subclass)
+                    # when a dist-info directory has no METADATA file
+                    dist_metadata = None
                 name = (
                     dist_metadata.get("name")  # type: ignore[attr-defined]
                     if dist_metadata
