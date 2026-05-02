@@ -95,22 +95,3 @@ class ConfigSourceMigration:
 
         if self.new_key is not None and new_value is not UNSET:
             config_source.add_property(self.new_key, new_value)
-
-
-def drop_empty_config_category(
-    keys: Sequence[str], config: dict[Any, Any]
-) -> dict[Any, Any]:
-    config_ = {}
-
-    for key, value in config.items():
-        if not keys or key != keys[0]:
-            config_[key] = value
-            continue
-        if keys and key == keys[0]:
-            if isinstance(value, dict):
-                value = drop_empty_config_category(keys[1:], value)
-
-            if value != {}:
-                config_[key] = value
-
-    return config_
