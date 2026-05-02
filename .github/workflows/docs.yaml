@@ -49,7 +49,7 @@ jobs:
 
       - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
-          node-version: "18"
+          node-version: "22"
 
       - uses: ./poetry-github/.github/actions/bootstrap-poetry
 
@@ -68,7 +68,7 @@ jobs:
 
       - uses: amondnet/vercel-action@c71810f8732de6b8656e41155e63b6303ca3e4bf # v42.1.0
         with:
-          vercel-version: 48.12.1
+          vercel-version: 50.44.0
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
