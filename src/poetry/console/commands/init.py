@@ -39,7 +39,13 @@ class InitCommand(Command):
     options: ClassVar[list[Option]] = [
         option("name", None, "Name of the package.", flag=False),
         option("description", None, "Description of the package.", flag=False),
-        option("author", None, "Author name of the package.", flag=False),
+        option(
+            "author",
+            None,
+            "Author name of the package.",
+            flag=False,
+            multiple=True,
+        ),
         option("python", None, "Compatible Python versions.", flag=False),
         option(
             "dependency",
@@ -149,20 +155,77 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             description = self.ask(self.create_question("Description []: ", default=""))
 
         author = self.option("author")
+        author_from_cli = bool(author)
         if not author and vcs_config.get("user.name"):
-            author = vcs_config["user.name"]
+            author = [vcs_config["user.name"]]
             author_email = vcs_config.get("user.email")
             if author_email:
-                author += f" <{author_email}>"
+                author[0] += f" <{author_email}>"
+        elif not author:
+            author = []
 
         if is_interactive:
-            question = self.create_question(
-                f"Author [<comment>{author}</comment>, n to skip]: ", default=author
-            )
-            question.set_validator(lambda v: self._validate_author(v, author))
-            author = self.ask(question)
+            # When --author was provided via CLI, use it as default but still prompt
+            # so the user can confirm or override. Do not ask for additional authors
+            # since the user already expressed their intent via the CLI flag.
+            if author_from_cli:
+                default_author = author[0] if author else ""
+                question = self.create_question(
+                    f"Author [<comment>{default_author}</comment>, n to skip]: ",
+                    default=default_author,
+                )
+                question.set_validator(
+                    lambda v: self._validate_author(v, default_author)
+                )
+                first_author = self.ask(question)
+                if first_author:
+                    author = [first_author]
+                else:
+                    author = []
+            else:
+                # No --author from CLI: interactive flow allows multiple authors
+                default_author = author[0] if author else ""
+                question = self.create_question(
+                    f"Author [<comment>{default_author}</comment>, n to skip]: ",
+                    default=default_author,
+                )
+                question.set_validator(
+                    lambda v: self._validate_author(v, default_author)
+                )
+                first_author = self.ask(question)
+                if first_author:
+                    author = [first_author]
+                else:
+                    author = []
 
-        authors = [author] if author else []
+                # Allow additional authors interactively
+                while first_author:
+                    question = self.create_question(
+                        "Add another author? [<comment>n</comment> to skip]: ",
+                        default="n",
+                    )
+                    another = self.ask(question)
+                    if not another or another.lower() == "n":
+                        break
+                    question = self.create_question(
+                        "Author [<comment></comment>, n to skip]: ",
+                        default="",
+                    )
+                    question.set_validator(
+                        lambda v: self._validate_author(v, "")
+                    )
+                    additional = self.ask(question)
+                    if additional:
+                        author.append(additional)
+                    else:
+                        break
+
+        # Validate all authors from CLI
+        authors = []
+        for a in author:
+            validated = self._validate_author(a, a)
+            if validated:
+                authors.append(validated)
 
         license_name = self.option("license")
         if not license_name and is_interactive:
@@ -237,7 +300,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             name,
             version,
             description=description,
-            author=authors[0] if authors else None,
+            authors=authors,
             readme_format=readme_format,
             license=license_name,
             python=python,
