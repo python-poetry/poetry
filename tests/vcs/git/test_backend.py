@@ -314,6 +314,7 @@ def test_clone_annotated_tag(tmp_path: Path) -> None:
         message=b"Initial commit",
         author=b"Test <test@example.com>",
         committer=b"Test <test@example.com>",
+        sign=False,
     )
 
     # Create an annotated tag
@@ -375,6 +376,7 @@ def test_clone_nested_annotated_tags(tmp_path: Path) -> None:
         message=b"Initial commit",
         committer=b"Test <test@example.com>",
         author=b"Test <test@example.com>",
+        sign=False,
     )
 
     # Create first annotated tag pointing to the commit
