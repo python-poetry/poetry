@@ -884,14 +884,14 @@ files = [
 
 [[package]]
 name = "installer"
-version = "0.7.0"
+version = "1.0.0"
 description = "A library for installing Python wheels."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "installer-0.7.0-py3-none-any.whl", hash = "sha256:05d1933f0a5ba7d8d6296bb6d5018e7c94fa473ceb10cf198a92ccea19c27b53"},
-    {file = "installer-0.7.0.tar.gz", hash = "sha256:a26d3e3116289bb08216e0d0f7d925fcef0b0194eedfa0c944bcaaa106c4b631"},
+    {file = "installer-1.0.0-py3-none-any.whl", hash = "sha256:7b46327ded20d8544bfe2d8561618bbcd12d88e7e3645333af1ed141d8bc1bfe"},
+    {file = "installer-1.0.0.tar.gz", hash = "sha256:c6d691331621cf3fec4822f5c6f83cab3705f79b316225dc454127411677c71f"},
 ]
 
 [[package]]
@@ -2265,4 +2265,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "896ced05b261ff1e349a63bb1c40a55a3c4ab041de5355bde09c4aebd5378ae5"
+content-hash = "676e5481b8366ae031ffc940b39bd15e0f8b0313978499f6d84d55f62bf5a432"
