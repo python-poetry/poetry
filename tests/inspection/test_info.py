@@ -221,10 +221,11 @@ def test_info_from_sdist_name_ending_in_suffix_chars(tmp_path: Path) -> None:
         '[project]\nname = "pkg"\nversion = "1.0a"\n'
         "[build-system]\n"
         'requires = ["setuptools"]\n'
-        'build-backend = "setuptools.build_meta"\n'
+        'build-backend = "setuptools.build_meta"\n',
+        encoding="utf-8",
     )
     # Add a second top-level entry to force the fallback path
-    (content_dir / "extra-file.txt").write_text("force fallback")
+    (content_dir / "extra-file.txt").write_text("force fallback", encoding="utf-8")
 
     with tarfile.open(sdist_path, "w:gz") as tf:
         tf.add(pkg_dir, arcname=inner_dir)

@@ -178,11 +178,11 @@ class PoetryTestApplication(Application):
         self._poetry.set_pool(poetry.pool)
         self._poetry.set_config(poetry.config)
         self._poetry.set_locker(
-            TestLocker(poetry.locker.lock, self._poetry.pyproject.data)
+            DummyLocker(poetry.locker.lock, self._poetry.pyproject.data)
         )
 
 
-class TestLocker(Locker):
+class DummyLocker(Locker):
     # class name begins 'Test': tell pytest that it does not contain testcases.
     __test__ = False
 
@@ -197,7 +197,7 @@ class TestLocker(Locker):
     def is_locked(self) -> bool:
         return self._locked
 
-    def locked(self, is_locked: bool = True) -> TestLocker:
+    def locked(self, is_locked: bool = True) -> DummyLocker:
         self._locked = is_locked
 
         return self
@@ -219,7 +219,7 @@ class TestLocker(Locker):
         self._lock_data = data
 
 
-class TestRepository(Repository):
+class DummyRepository(Repository):
     def find_packages(self, dependency: Dependency) -> list[Package]:
         packages = super().find_packages(dependency)
         if len(packages) == 0:

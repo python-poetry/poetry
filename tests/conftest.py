@@ -50,8 +50,8 @@ from poetry.utils.env import VirtualEnv
 from poetry.utils.env.python import Python
 from poetry.utils.password_manager import PoetryKeyring
 from tests.helpers import MOCK_DEFAULT_GIT_REVISION
-from tests.helpers import TestLocker
-from tests.helpers import TestRepository
+from tests.helpers import DummyLocker
+from tests.helpers import DummyRepository
 from tests.helpers import get_package
 from tests.helpers import http_setup_redirect
 from tests.helpers import isolated_environment
@@ -441,16 +441,16 @@ def default_python(current_python: PythonVersion) -> str:
 
 
 @pytest.fixture
-def repo(http: responses.RequestsMock) -> TestRepository:
+def repo(http: responses.RequestsMock) -> DummyRepository:
     http.get(re.compile(r"^https?://foo\.bar/(.+?)$"))
-    return TestRepository(name="foo")
+    return DummyRepository(name="foo")
 
 
 @pytest.fixture
 def project_factory(
     tmp_path: Path,
     config: Config,
-    repo: TestRepository,
+    repo: DummyRepository,
     installed: InstalledRepository,
     default_python: str,
     load_required_fixtures: None,
@@ -501,7 +501,7 @@ def project_factory(
         poetry = Factory().create_poetry(project_dir)
 
         if use_test_locker:
-            locker = TestLocker(
+            locker = DummyLocker(
                 poetry.locker.lock, locker_config or poetry.locker._pyproject_data
             )
             locker.write()

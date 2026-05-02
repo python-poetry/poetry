@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from poetry.poetry import Poetry
-    from tests.helpers import TestRepository
+    from tests.helpers import DummyRepository
     from tests.types import CommandTesterFactory
     from tests.types import FixtureDirGetter
     from tests.types import ProjectFactory
@@ -41,7 +41,7 @@ def poetry_with_outdated_lockfile(
 def test_update_with_dry_run_keep_files_intact(
     command: str,
     poetry_with_outdated_lockfile: Poetry,
-    repo: TestRepository,
+    repo: DummyRepository,
     command_tester_factory: CommandTesterFactory,
 ) -> None:
     tester = command_tester_factory("update", poetry=poetry_with_outdated_lockfile)
@@ -70,7 +70,7 @@ def test_update_prints_operations(
     command: str,
     expected: bool,
     poetry_with_outdated_lockfile: Poetry,
-    repo: TestRepository,
+    repo: DummyRepository,
     command_tester_factory: CommandTesterFactory,
 ) -> None:
     tester = command_tester_factory("update", poetry=poetry_with_outdated_lockfile)
@@ -104,7 +104,7 @@ def test_update_sync_option_is_passed_to_the_installer(
 
 def test_update_with_valid_package_name(
     poetry_with_outdated_lockfile: Poetry,
-    repo: TestRepository,
+    repo: DummyRepository,
     command_tester_factory: CommandTesterFactory,
     mocker: MockerFixture,
 ) -> None:
@@ -125,7 +125,7 @@ def test_update_with_valid_package_name(
 
 def test_update_with_non_normalized_package_name(
     poetry_with_outdated_lockfile: Poetry,
-    repo: TestRepository,
+    repo: DummyRepository,
     command_tester_factory: CommandTesterFactory,
     mocker: MockerFixture,
 ) -> None:

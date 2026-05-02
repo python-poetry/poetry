@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
 
     from poetry.poetry import Poetry
-    from tests.helpers import TestRepository
+    from tests.helpers import DummyRepository
     from tests.types import CommandTesterFactory
     from tests.types import FixtureDirGetter
     from tests.types import ProjectFactory
@@ -92,7 +92,7 @@ def poetry_with_invalid_lockfile(
 def test_lock_does_not_update_if_not_necessary(
     command_tester_factory: CommandTesterFactory,
     poetry_with_old_lockfile: Poetry,
-    repo: TestRepository,
+    repo: DummyRepository,
 ) -> None:
     package = get_package("sampleproject", "1.3.1")
     repo.add_package(package)
@@ -138,7 +138,7 @@ def test_lock_does_not_update_if_not_necessary(
 def test_lock_always_updates_path_dependencies(
     command_tester_factory: CommandTesterFactory,
     poetry_with_nested_path_deps_old_lockfile: Poetry,
-    repo: TestRepository,
+    repo: DummyRepository,
     regenerate: bool,
 ) -> None:
     """
@@ -224,7 +224,7 @@ def test_lock_path_dependency_deleted_from_pyproject(
 def test_lock_with_incompatible_lockfile(
     command_tester_factory: CommandTesterFactory,
     poetry_with_incompatible_lockfile: Poetry,
-    repo: TestRepository,
+    repo: DummyRepository,
     regenerate: bool,
 ) -> None:
     repo.add_package(get_package("sampleproject", "1.3.1"))
@@ -255,7 +255,7 @@ def test_lock_with_incompatible_lockfile(
 def test_lock_with_invalid_lockfile(
     command_tester_factory: CommandTesterFactory,
     poetry_with_invalid_lockfile: Poetry,
-    repo: TestRepository,
+    repo: DummyRepository,
     regenerate: bool,
 ) -> None:
     repo.add_package(get_package("sampleproject", "1.3.1"))

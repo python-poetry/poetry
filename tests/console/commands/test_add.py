@@ -17,7 +17,7 @@ from poetry.console.commands.installer_command import InstallerCommand
 from poetry.puzzle.exceptions import SolverProblemError
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.utils.dependency_specification import RequirementsParser
-from tests.helpers import TestLocker
+from tests.helpers import DummyLocker
 from tests.helpers import get_dependency
 from tests.helpers import get_package
 
@@ -33,8 +33,8 @@ if TYPE_CHECKING:
     from poetry.poetry import Poetry
     from poetry.utils.env import MockEnv
     from poetry.utils.env import VirtualEnv
+    from tests.helpers import DummyRepository
     from tests.helpers import PoetryTestApplication
-    from tests.helpers import TestRepository
     from tests.types import CommandTesterFactory
     from tests.types import FixtureDirGetter
     from tests.types import ProjectFactory
@@ -80,7 +80,7 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
 
 
 @pytest.fixture(autouse=True)
-def repo_add_default_packages(repo: TestRepository) -> None:
+def repo_add_default_packages(repo: DummyRepository) -> None:
     msgpack_optional_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6")
     msgpack = get_package("msgpack-python", "0.5.6")
@@ -1328,7 +1328,7 @@ Writing lock file
 
 
 def test_add_creating_poetry_section_does_not_remove_existing_tools(
-    repo: TestRepository,
+    repo: DummyRepository,
     project_factory: ProjectFactory,
     command_tester_factory: CommandTesterFactory,
 ) -> None:
@@ -1414,7 +1414,7 @@ Writing lock file
 @pytest.mark.parametrize("project_dependencies", [True, False])
 def test_add_should_skip_when_adding_existing_package_with_no_constraint(
     app: PoetryTestApplication,
-    repo: TestRepository,
+    repo: DummyRepository,
     tester: CommandTester,
     project_dependencies: bool,
 ) -> None:
@@ -1446,7 +1446,7 @@ If you prefer to upgrade it to the latest available version,\
 @pytest.mark.parametrize("project_dependencies", [True, False])
 def test_add_should_skip_when_adding_canonicalized_existing_package_with_no_constraint(
     app: PoetryTestApplication,
-    repo: TestRepository,
+    repo: DummyRepository,
     tester: CommandTester,
     project_dependencies: bool,
 ) -> None:
@@ -1476,7 +1476,7 @@ If you prefer to upgrade it to the latest available version,\
 
 
 def test_add_should_fail_circular_dependency(
-    repo: TestRepository, tester: CommandTester
+    repo: DummyRepository, tester: CommandTester
 ) -> None:
     repo.add_package(get_package("simple-project", "1.1.2"))
     result = tester.execute("simple-project")
@@ -1488,7 +1488,7 @@ def test_add_should_fail_circular_dependency(
 
 
 def test_add_latest_should_strip_out_invalid_pep508_path(
-    tester: CommandTester, repo: TestRepository, mocker: MockerFixture
+    tester: CommandTester, repo: DummyRepository, mocker: MockerFixture
 ) -> None:
     spy = mocker.spy(RequirementsParser, "parse")
     repo.add_package(get_package("foo", "1.1.1"))
@@ -1505,7 +1505,7 @@ def test_add_latest_should_strip_out_invalid_pep508_path(
 @pytest.mark.parametrize("project_dependencies", [True, False])
 def test_add_latest_should_not_create_duplicate_keys(
     project_factory: ProjectFactory,
-    repo: TestRepository,
+    repo: DummyRepository,
     command_tester_factory: CommandTesterFactory,
     project_dependencies: bool,
 ) -> None:
@@ -1559,7 +1559,7 @@ def test_add_latest_should_not_create_duplicate_keys(
 @pytest.mark.parametrize("project_dependencies", [True, False])
 def test_add_should_work_when_adding_existing_package_with_latest_constraint(
     app: PoetryTestApplication,
-    repo: TestRepository,
+    repo: DummyRepository,
     tester: CommandTester,
     project_dependencies: bool,
 ) -> None:
@@ -1604,7 +1604,7 @@ Writing lock file
 
 
 def test_add_chooses_prerelease_if_only_prereleases_are_available(
-    repo: TestRepository, tester: CommandTester
+    repo: DummyRepository, tester: CommandTester
 ) -> None:
     repo.add_package(get_package("foo", "1.2.3b0"))
     repo.add_package(get_package("foo", "1.2.3b1"))
@@ -1627,7 +1627,7 @@ Writing lock file
 
 
 def test_add_prefers_stable_releases(
-    repo: TestRepository, tester: CommandTester
+    repo: DummyRepository, tester: CommandTester
 ) -> None:
     repo.add_package(get_package("foo", "1.2.3"))
     repo.add_package(get_package("foo", "1.2.4b1"))
@@ -1670,7 +1670,7 @@ Writing lock file
 
 def test_add_keyboard_interrupt_restore_content(
     poetry_with_up_to_date_lockfile: Poetry,
-    repo: TestRepository,
+    repo: DummyRepository,
     command_tester_factory: CommandTesterFactory,
     mocker: MockerFixture,
 ) -> None:
@@ -1703,7 +1703,7 @@ def test_add_keyboard_interrupt_restore_content(
 def test_add_with_dry_run_keep_files_intact(
     command: str,
     poetry_with_up_to_date_lockfile: Poetry,
-    repo: TestRepository,
+    repo: DummyRepository,
     command_tester_factory: CommandTesterFactory,
 ) -> None:
     tester = command_tester_factory("add", poetry=poetry_with_up_to_date_lockfile)
@@ -1723,7 +1723,7 @@ def test_add_with_dry_run_keep_files_intact(
 
 def test_add_should_not_change_lock_file_when_dependency_installation_fail(
     poetry_with_up_to_date_lockfile: Poetry,
-    repo: TestRepository,
+    repo: DummyRepository,
     command_tester_factory: CommandTesterFactory,
     mocker: MockerFixture,
 ) -> None:
@@ -1758,7 +1758,7 @@ Resolving dependencies...
 
 def test_add_with_path_dependency_no_loopiness(
     poetry_with_path_dependency: Poetry,
-    repo: TestRepository,
+    repo: DummyRepository,
     command_tester_factory: CommandTesterFactory,
 ) -> None:
     """https://github.com/python-poetry/poetry/issues/7398"""
@@ -1814,7 +1814,7 @@ Writing lock file
     ],
 )
 def test_add_extras_only_accepts_one_package(
-    command: str, tester: CommandTester, repo: TestRepository
+    command: str, tester: CommandTester, repo: DummyRepository
 ) -> None:
     """
     You cannot pass in multiple package values to a single --extras flag.\
@@ -1835,7 +1835,7 @@ def test_add_extras_only_accepts_one_package(
     ("locked", "expected_docker"), [(True, "4.3.1"), (False, "4.3.2")]
 )
 def test_add_does_not_update_locked_dependencies(
-    repo: TestRepository,
+    repo: DummyRepository,
     poetry_with_up_to_date_lockfile: Poetry,
     tester: CommandTester,
     command_tester_factory: CommandTesterFactory,
@@ -1843,7 +1843,7 @@ def test_add_does_not_update_locked_dependencies(
     locked: bool,
     expected_docker: str,
 ) -> None:
-    assert isinstance(poetry_with_up_to_date_lockfile.locker, TestLocker)
+    assert isinstance(poetry_with_up_to_date_lockfile.locker, DummyLocker)
     poetry_with_up_to_date_lockfile.locker.locked(locked)
     tester = command_tester_factory("add", poetry=poetry_with_up_to_date_lockfile)
     docker_locked = get_package("docker", "4.3.1")
@@ -1873,7 +1873,7 @@ def test_add_does_not_update_locked_dependencies(
 
 def test_add_creates_dependencies_array_if_necessary(
     project_factory: ProjectFactory,
-    repo: TestRepository,
+    repo: DummyRepository,
     command_tester_factory: CommandTesterFactory,
 ) -> None:
     pyproject_content = """\
@@ -1900,7 +1900,7 @@ def test_add_creates_dependencies_array_if_necessary(
 @pytest.mark.parametrize("has_poetry_section", [True, False])
 def test_add_does_not_add_poetry_dependencies_if_not_necessary(
     project_factory: ProjectFactory,
-    repo: TestRepository,
+    repo: DummyRepository,
     command_tester_factory: CommandTesterFactory,
     has_poetry_section: bool,
 ) -> None:
@@ -1946,7 +1946,7 @@ def test_add_does_not_add_poetry_dependencies_if_not_necessary(
 @pytest.mark.parametrize("has_poetry_section", [True, False])
 def test_add_poetry_dependencies_if_necessary(
     project_factory: ProjectFactory,
-    repo: TestRepository,
+    repo: DummyRepository,
     command_tester_factory: CommandTesterFactory,
     mocker: MockerFixture,
     has_poetry_section: bool,
