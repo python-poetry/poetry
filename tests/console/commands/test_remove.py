@@ -11,7 +11,7 @@ from poetry.core.packages.dependency_group import DependencyGroup
 from poetry.core.packages.package import Package
 
 from poetry.factory import Factory
-from tests.helpers import TestLocker
+from tests.helpers import DummyLocker
 from tests.helpers import get_package
 
 
@@ -24,8 +24,8 @@ if TYPE_CHECKING:
 
     from poetry.poetry import Poetry
     from poetry.repositories import Repository
+    from tests.helpers import DummyRepository
     from tests.helpers import PoetryTestApplication
-    from tests.helpers import TestRepository
     from tests.types import CommandTesterFactory
     from tests.types import FixtureDirGetter
     from tests.types import ProjectFactory
@@ -44,7 +44,7 @@ def poetry_with_up_to_date_lockfile(
             poetry_lock_content=(source / "poetry.lock").read_text(encoding="utf-8"),
         )
 
-        assert isinstance(poetry.locker, TestLocker)
+        assert isinstance(poetry.locker, DummyLocker)
         poetry.locker.locked(True)
         return poetry
 
@@ -59,7 +59,7 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
 def test_remove_from_project_and_poetry(
     tester: CommandTester,
     app: PoetryTestApplication,
-    repo: TestRepository,
+    repo: DummyRepository,
     installed: Repository,
 ) -> None:
     repo.add_package(Package("foo", "2.0.0"))
@@ -134,7 +134,7 @@ bar = "^1.0.0"
 def test_remove_from_pep735_group_and_poetry_group(
     tester: CommandTester,
     app: PoetryTestApplication,
-    repo: TestRepository,
+    repo: DummyRepository,
     installed: Repository,
 ) -> None:
     repo.add_package(Package("foo", "2.0.0"))
@@ -214,7 +214,7 @@ def test_remove_without_specific_group_removes_from_all_groups(
     pep_735: bool,
     tester: CommandTester,
     app: PoetryTestApplication,
-    repo: TestRepository,
+    repo: DummyRepository,
     installed: Repository,
 ) -> None:
     """
@@ -300,7 +300,7 @@ def test_remove_with_specific_group_removes_from_specific_groups(
     pep_735: bool,
     tester: CommandTester,
     app: PoetryTestApplication,
-    repo: TestRepository,
+    repo: DummyRepository,
     installed: Repository,
 ) -> None:
     """
@@ -385,7 +385,7 @@ def test_remove_does_not_keep_empty_groups(
     pep_735: bool,
     tester: CommandTester,
     app: PoetryTestApplication,
-    repo: TestRepository,
+    repo: DummyRepository,
     installed: Repository,
 ) -> None:
     """
@@ -455,7 +455,7 @@ def test_remove_canonicalized_named_removes_dependency_correctly(
     pep_735: bool,
     tester: CommandTester,
     app: PoetryTestApplication,
-    repo: TestRepository,
+    repo: DummyRepository,
     installed: Repository,
 ) -> None:
     """
@@ -540,7 +540,7 @@ baz = "^1.0.0"
 def test_remove_package_does_not_exist(
     tester: CommandTester,
     app: PoetryTestApplication,
-    repo: TestRepository,
+    repo: DummyRepository,
     command_tester_factory: CommandTesterFactory,
 ) -> None:
     repo.add_package(Package("foo", "2.0.0"))
@@ -557,7 +557,7 @@ def test_remove_package_does_not_exist(
 def test_remove_package_no_dependencies(
     tester: CommandTester,
     app: PoetryTestApplication,
-    repo: TestRepository,
+    repo: DummyRepository,
     command_tester_factory: CommandTesterFactory,
 ) -> None:
     repo.add_package(Package("foo", "2.0.0"))
@@ -578,7 +578,7 @@ def test_remove_package_no_dependencies(
 def test_remove_command_should_not_write_changes_upon_installer_errors(
     tester: CommandTester,
     app: PoetryTestApplication,
-    repo: TestRepository,
+    repo: DummyRepository,
     command_tester_factory: CommandTesterFactory,
     mocker: MockerFixture,
 ) -> None:
@@ -601,7 +601,7 @@ def test_remove_command_should_not_write_changes_upon_installer_errors(
 def test_remove_with_dry_run_keep_files_intact(
     fixture_name: str,
     poetry_with_up_to_date_lockfile: Callable[[str], Poetry],
-    repo: TestRepository,
+    repo: DummyRepository,
     command_tester_factory: CommandTesterFactory,
 ) -> None:
     poetry = poetry_with_up_to_date_lockfile(fixture_name)
@@ -677,7 +677,7 @@ def test_remove_from_nested_pep735_group_and_poetry_group(
     pep_735: bool,
     tester: CommandTester,
     app: PoetryTestApplication,
-    repo: TestRepository,
+    repo: DummyRepository,
     installed: Repository,
 ) -> None:
     """
@@ -783,7 +783,7 @@ def test_remove_group_cleans_up_include_group_references(
     args: str,
     tester: CommandTester,
     app: PoetryTestApplication,
-    repo: TestRepository,
+    repo: DummyRepository,
     installed: Repository,
 ) -> None:
     """

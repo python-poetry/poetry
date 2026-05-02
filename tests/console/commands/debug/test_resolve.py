@@ -13,7 +13,7 @@ from tests.helpers import get_package
 if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
 
-    from tests.helpers import TestRepository
+    from tests.helpers import DummyRepository
     from tests.types import CommandTesterFactory
 
 
@@ -23,7 +23,7 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
 
 
 @pytest.fixture(autouse=True)
-def __add_packages(repo: TestRepository) -> None:
+def __add_packages(repo: DummyRepository) -> None:
     cachy020 = get_package("cachy", "0.2.0")
     cachy020.add_dependency(Factory.create_dependency("msgpack-python", ">=0.5 <0.6"))
 
@@ -68,7 +68,7 @@ cachy 0.2.0
 
 
 def test_debug_resolve_shows_marker_when_present(
-    tester: CommandTester, repo: TestRepository
+    tester: CommandTester, repo: DummyRepository
 ) -> None:
     """Packages with environment markers must show the marker in output."""
     pkg = get_package("pathlib2", "2.3.0")

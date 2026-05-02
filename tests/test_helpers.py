@@ -14,9 +14,9 @@ from poetry.core.packages.utils.link import Link
 from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.utils.password_manager import PoetryKeyring
 from tests.helpers import MOCK_DEFAULT_GIT_REVISION
+from tests.helpers import DummyLocker
+from tests.helpers import DummyRepository
 from tests.helpers import MockDulwichRepo
-from tests.helpers import TestLocker
-from tests.helpers import TestRepository
 from tests.helpers import copy_path
 from tests.helpers import flatten_dict
 from tests.helpers import get_dependency
@@ -88,47 +88,47 @@ class TestGetDependency:
 class TestCopyPath:
     def test_copies_file(self, tmp_path: Path) -> None:
         source = tmp_path / "source.txt"
-        source.write_text("hello")
+        source.write_text("hello", encoding="utf-8")
         dest = tmp_path / "dest.txt"
 
         copy_path(source, dest)
 
-        assert dest.read_text() == "hello"
+        assert dest.read_text(encoding="utf-8") == "hello"
 
     def test_overwrites_existing_file(self, tmp_path: Path) -> None:
         source = tmp_path / "source.txt"
-        source.write_text("new content")
+        source.write_text("new content", encoding="utf-8")
         dest = tmp_path / "dest.txt"
-        dest.write_text("old content")
+        dest.write_text("old content", encoding="utf-8")
 
         copy_path(source, dest)
 
-        assert dest.read_text() == "new content"
+        assert dest.read_text(encoding="utf-8") == "new content"
 
     def test_copies_directory(self, tmp_path: Path) -> None:
         source = tmp_path / "source_dir"
         source.mkdir()
-        (source / "file.txt").write_text("content")
+        (source / "file.txt").write_text("content", encoding="utf-8")
         dest = tmp_path / "dest_dir"
 
         copy_path(source, dest)
 
         assert dest.is_dir()
-        assert (dest / "file.txt").read_text() == "content"
+        assert (dest / "file.txt").read_text(encoding="utf-8") == "content"
 
     def test_overwrites_existing_directory(self, tmp_path: Path) -> None:
         source = tmp_path / "source_dir"
         source.mkdir()
-        (source / "new_file.txt").write_text("new")
+        (source / "new_file.txt").write_text("new", encoding="utf-8")
 
         dest = tmp_path / "dest_dir"
         dest.mkdir()
-        (dest / "old_file.txt").write_text("old")
+        (dest / "old_file.txt").write_text("old", encoding="utf-8")
 
         copy_path(source, dest)
 
         assert dest.is_dir()
-        assert (dest / "new_file.txt").read_text() == "new"
+        assert (dest / "new_file.txt").read_text(encoding="utf-8") == "new"
         assert not (dest / "old_file.txt").exists()
 
 
@@ -175,31 +175,31 @@ class TestMockClone:
 class TestTestLocker:
     def test_is_not_locked_by_default(self, tmp_path: Path) -> None:
         lock_path = tmp_path / "poetry.lock"
-        locker = TestLocker(lock_path, {})
+        locker = DummyLocker(lock_path, {})
         assert locker.is_locked() is False
 
     def test_locked_sets_locked_state(self, tmp_path: Path) -> None:
         lock_path = tmp_path / "poetry.lock"
-        locker = TestLocker(lock_path, {})
+        locker = DummyLocker(lock_path, {})
         result = locker.locked()
         assert locker.is_locked() is True
         assert result is locker
 
     def test_locked_with_false(self, tmp_path: Path) -> None:
         lock_path = tmp_path / "poetry.lock"
-        locker = TestLocker(lock_path, {})
+        locker = DummyLocker(lock_path, {})
         locker.locked()
         locker.locked(False)
         assert locker.is_locked() is False
 
     def test_is_fresh_always_returns_true(self, tmp_path: Path) -> None:
         lock_path = tmp_path / "poetry.lock"
-        locker = TestLocker(lock_path, {})
+        locker = DummyLocker(lock_path, {})
         assert locker.is_fresh() is True
 
     def test_mock_lock_data_sets_data(self, tmp_path: Path) -> None:
         lock_path = tmp_path / "poetry.lock"
-        locker = TestLocker(lock_path, {})
+        locker = DummyLocker(lock_path, {})
         data: dict[str, list[str] | dict[str, str]] = {
             "package": [],
             "metadata": {},
@@ -212,7 +212,7 @@ class TestTestLocker:
         self, tmp_path: Path
     ) -> None:
         lock_path = tmp_path / "poetry.lock"
-        locker = TestLocker(lock_path, {})
+        locker = DummyLocker(lock_path, {})
 
         from tomlkit import document
 
@@ -225,7 +225,7 @@ class TestTestLocker:
 
     def test_write_lock_data_with_write_persists_to_file(self, tmp_path: Path) -> None:
         lock_path = tmp_path / "poetry.lock"
-        locker = TestLocker(lock_path, {})
+        locker = DummyLocker(lock_path, {})
         locker.write()
 
         from tomlkit import document
@@ -240,7 +240,7 @@ class TestTestLocker:
 
 class TestTestRepository:
     def test_find_packages_returns_matching_packages(self) -> None:
-        repo = TestRepository("test")
+        repo = DummyRepository("test")
         package = get_package("foo", "1.0.0")
         repo.add_package(package)
 
@@ -250,7 +250,7 @@ class TestTestRepository:
         assert result[0].name == "foo"
 
     def test_find_packages_filters_by_version_constraint(self) -> None:
-        repo = TestRepository("test")
+        repo = DummyRepository("test")
         repo.add_package(get_package("foo", "1.0.0"))
         repo.add_package(get_package("foo", "1.1.0"))
         repo.add_package(get_package("foo", "2.0.0"))
@@ -261,14 +261,14 @@ class TestTestRepository:
         assert versions == ["1.0.0", "1.1.0"]
 
     def test_find_packages_raises_when_not_found(self) -> None:
-        repo = TestRepository("test")
+        repo = DummyRepository("test")
 
         dep = get_dependency("nonexistent", ">=1.0")
         with pytest.raises(PackageNotFoundError, match="nonexistent"):
             repo.find_packages(dep)
 
     def test_find_links_for_package_returns_wheel_link(self) -> None:
-        repo = TestRepository("test")
+        repo = DummyRepository("test")
         package = get_package("my-package", "1.2.3")
 
         links = repo.find_links_for_package(package)
@@ -415,13 +415,13 @@ class TestWithWorkingDirectory:
     def test_without_copy(self, tmp_path: Path) -> None:
         source = tmp_path / "source_dir"
         source.mkdir()
-        (source / "file.txt").write_text("content")
+        (source / "file.txt").write_text("content", encoding="utf-8")
 
         original_cwd = os.getcwd()
         with with_working_directory(source) as path:
             assert os.getcwd() == str(source)
             assert path == source
-            assert (path / "file.txt").read_text() == "content"
+            assert (path / "file.txt").read_text(encoding="utf-8") == "content"
 
         assert os.getcwd() == original_cwd
         assert source.exists()
@@ -429,7 +429,7 @@ class TestWithWorkingDirectory:
     def test_with_copy(self, tmp_path: Path) -> None:
         source = tmp_path / "source_dir"
         source.mkdir()
-        (source / "file.txt").write_text("content")
+        (source / "file.txt").write_text("content", encoding="utf-8")
 
         target = tmp_path / "target_dir"
         original_cwd = os.getcwd()
@@ -437,7 +437,7 @@ class TestWithWorkingDirectory:
         with with_working_directory(source, target=target) as path:
             assert os.getcwd() == str(target)
             assert path == target
-            assert (path / "file.txt").read_text() == "content"
+            assert (path / "file.txt").read_text(encoding="utf-8") == "content"
 
         assert os.getcwd() == original_cwd
         # target should be removed after context manager exits

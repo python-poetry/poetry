@@ -30,8 +30,8 @@ if TYPE_CHECKING:
 
     from poetry.config.config import Config
     from poetry.poetry import Poetry
+    from tests.helpers import DummyRepository
     from tests.helpers import PoetryTestApplication
-    from tests.helpers import TestRepository
     from tests.types import FixtureDirGetter
     from tests.types import MockedPythonRegister
 
@@ -47,7 +47,7 @@ def source_dir(tmp_path: Path) -> Iterator[Path]:
 
 
 @pytest.fixture
-def patches(mocker: MockerFixture, source_dir: Path, repo: TestRepository) -> None:
+def patches(mocker: MockerFixture, source_dir: Path, repo: DummyRepository) -> None:
     mocker.patch("pathlib.Path.cwd", return_value=source_dir)
     mocker.patch(
         "poetry.console.commands.init.InitCommand._get_pool",
@@ -72,7 +72,7 @@ def test_noninteractive(
     app: PoetryTestApplication,
     mocker: MockerFixture,
     poetry: Poetry,
-    repo: TestRepository,
+    repo: DummyRepository,
     tmp_path: Path,
 ) -> None:
     command = app.find("init")
@@ -106,7 +106,7 @@ def test_noninteractive(
 
 
 def test_interactive_with_dependencies(
-    tester: CommandTester, repo: TestRepository
+    tester: CommandTester, repo: DummyRepository
 ) -> None:
     repo.add_package(get_package("django-pendulum", "0.1.6-pre4"))
     repo.add_package(get_package("pendulum", "2.0.0"))
@@ -168,7 +168,7 @@ build-backend = "poetry.core.masonry.api"
 
 # Regression test for https://github.com/python-poetry/poetry/issues/2355
 def test_interactive_with_dependencies_and_no_selection(
-    tester: CommandTester, repo: TestRepository
+    tester: CommandTester, repo: DummyRepository
 ) -> None:
     repo.add_package(get_package("django-pendulum", "0.1.6-pre4"))
     repo.add_package(get_package("pendulum", "2.0.0"))
@@ -237,7 +237,7 @@ requires-python = ">={python}"
 
 
 def test_interactive_with_git_dependencies(
-    tester: CommandTester, repo: TestRepository
+    tester: CommandTester, repo: DummyRepository
 ) -> None:
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
@@ -332,7 +332,7 @@ def test_generate_choice_list(
 
 
 def test_interactive_with_git_dependencies_with_reference(
-    tester: CommandTester, repo: TestRepository
+    tester: CommandTester, repo: DummyRepository
 ) -> None:
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
@@ -380,7 +380,7 @@ dev = [
 
 
 def test_interactive_with_git_dependencies_and_other_name(
-    tester: CommandTester, repo: TestRepository
+    tester: CommandTester, repo: DummyRepository
 ) -> None:
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
@@ -429,7 +429,7 @@ dev = [
 
 def test_interactive_with_directory_dependency(
     tester: CommandTester,
-    repo: TestRepository,
+    repo: DummyRepository,
     source_dir: Path,
     fixture_dir: FixtureDirGetter,
 ) -> None:
@@ -483,7 +483,7 @@ dev = [
 
 def test_interactive_with_directory_dependency_and_other_name(
     tester: CommandTester,
-    repo: TestRepository,
+    repo: DummyRepository,
     source_dir: Path,
     fixture_dir: FixtureDirGetter,
 ) -> None:
@@ -538,7 +538,7 @@ dev = [
 
 def test_interactive_with_file_dependency(
     tester: CommandTester,
-    repo: TestRepository,
+    repo: DummyRepository,
     source_dir: Path,
     fixture_dir: FixtureDirGetter,
 ) -> None:
@@ -592,7 +592,7 @@ dev = [
 
 
 def test_interactive_with_wrong_dependency_inputs(
-    tester: CommandTester, repo: TestRepository
+    tester: CommandTester, repo: DummyRepository
 ) -> None:
     inputs = [
         "my-package",  # Package name
@@ -667,7 +667,7 @@ requires-python = ">=3.6"
     assert expected in tester.io.fetch_output()
 
 
-def test_predefined_dependency(tester: CommandTester, repo: TestRepository) -> None:
+def test_predefined_dependency(tester: CommandTester, repo: DummyRepository) -> None:
     repo.add_package(get_package("pendulum", "2.0.0"))
 
     inputs = [
@@ -702,7 +702,7 @@ dependencies = [
 
 
 def test_predefined_and_interactive_dependencies(
-    tester: CommandTester, repo: TestRepository
+    tester: CommandTester, repo: DummyRepository
 ) -> None:
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pyramid", "1.10"))
@@ -743,7 +743,9 @@ dependencies = [
     assert expected in tester.io.fetch_output()
 
 
-def test_predefined_dev_dependency(tester: CommandTester, repo: TestRepository) -> None:
+def test_predefined_dev_dependency(
+    tester: CommandTester, repo: DummyRepository
+) -> None:
     repo.add_package(get_package("pytest", "3.6.0"))
 
     inputs = [
@@ -783,7 +785,7 @@ dev = [
 
 
 def test_predefined_and_interactive_dev_dependencies(
-    tester: CommandTester, repo: TestRepository
+    tester: CommandTester, repo: DummyRepository
 ) -> None:
     repo.add_package(get_package("pytest", "3.6.0"))
     repo.add_package(get_package("pytest-requests", "0.2.0"))
@@ -830,7 +832,7 @@ dev = [
     assert expected in output
 
 
-def test_predefined_all_options(tester: CommandTester, repo: TestRepository) -> None:
+def test_predefined_all_options(tester: CommandTester, repo: DummyRepository) -> None:
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
 
@@ -933,7 +935,7 @@ def test_init_non_interactive_existing_pyproject_add_dependency(
     tester: CommandTester,
     source_dir: Path,
     init_basic_inputs: str,
-    repo: TestRepository,
+    repo: DummyRepository,
 ) -> None:
     pyproject_file = source_dir / "pyproject.toml"
     existing_section = """

@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from poetry.config.config import Config
     from poetry.repositories.repository import Repository
     from poetry.utils.env import VirtualEnv
-    from tests.helpers import TestRepository
+    from tests.helpers import DummyRepository
 
 
 @pytest.fixture
@@ -35,14 +35,14 @@ def poetry_package() -> Package:
 
 @pytest.fixture(autouse=True)
 def _patch_repos(
-    repo: TestRepository, installed: Repository, poetry_package: Package
+    repo: DummyRepository, installed: Repository, poetry_package: Package
 ) -> None:
     repo.add_package(poetry_package)
     installed.add_package(poetry_package)
 
 
 @pytest.fixture()
-def pool(repo: TestRepository) -> RepositoryPool:
+def pool(repo: DummyRepository) -> RepositoryPool:
     return RepositoryPool([repo])
 
 
