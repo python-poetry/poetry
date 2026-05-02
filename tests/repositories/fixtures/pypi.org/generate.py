@@ -674,7 +674,7 @@ PROJECTS = [
         "poetry-core",
         releases=[
             Release("poetry-core", "1.5.0", stub=False),
-            Release("poetry-core", "2.0.1", stub=False),
+            Release("poetry-core", "2.1.3", stub=False),
         ],
     ),
     Project("py", releases=[Release("py", "1.5.3")]),
