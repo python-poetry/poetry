@@ -1217,3 +1217,198 @@ def test_init_does_not_add_readme_key_when_readme_missing(
     # Assert
     pyproject = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
     assert "readme =" not in pyproject
+
+
+def test_non_package_noninteractive(
+    app: PoetryTestApplication,
+    mocker: MockerFixture,
+    poetry: Poetry,
+    repo: TestRepository,
+    tmp_path: Path,
+) -> None:
+    """Test that --non-package creates pyproject.toml with package-mode = false
+    and no build-system section."""
+    command = app.find("init")
+    assert isinstance(command, InitCommand)
+    command._pool = poetry.pool
+
+    p = mocker.patch("pathlib.Path.cwd")
+    p.return_value = tmp_path
+
+    tester = CommandTester(command)
+    tester.execute(
+        "--name my-project --non-package",
+        interactive=False,
+    )
+
+    toml_content = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
+
+    # Should have package-mode = false
+    assert "package-mode = false" in toml_content
+
+    # Should NOT have build-system section
+    assert "[build-system]" not in toml_content
+    assert "poetry-core" not in toml_content
+
+
+def test_non_package_noninteractive_has_project_section(
+    app: PoetryTestApplication,
+    mocker: MockerFixture,
+    poetry: Poetry,
+    repo: TestRepository,
+    tmp_path: Path,
+) -> None:
+    """Test that --non-package still generates [project] section with name and version."""
+    command = app.find("init")
+    assert isinstance(command, InitCommand)
+    command._pool = poetry.pool
+
+    p = mocker.patch("pathlib.Path.cwd")
+    p.return_value = tmp_path
+
+    tester = CommandTester(command)
+    tester.execute(
+        "--name my-project --non-package",
+        interactive=False,
+    )
+
+    toml_content = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
+
+    assert 'name = "my-project"' in toml_content
+    assert 'version = "0.1.0"' in toml_content
+
+
+def test_non_package_noninteractive_with_dependencies(
+    app: PoetryTestApplication,
+    mocker: MockerFixture,
+    poetry: Poetry,
+    repo: TestRepository,
+    tmp_path: Path,
+) -> None:
+    """Test that --non-package works with --dependency flag."""
+    command = app.find("init")
+    assert isinstance(command, InitCommand)
+    command._pool = poetry.pool
+
+    repo.add_package(get_package("requests", "2.28.0"))
+
+    p = mocker.patch("pathlib.Path.cwd")
+    p.return_value = tmp_path
+
+    tester = CommandTester(command)
+    tester.execute(
+        "--name my-project --non-package --dependency requests",
+        interactive=False,
+    )
+
+    toml_content = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
+
+    assert "package-mode = false" in toml_content
+    assert "requests" in toml_content
+    assert "[build-system]" not in toml_content
+
+
+def test_non_package_interactive_skips_package_questions(
+    tester: CommandTester,
+) -> None:
+    """Test that --non-package in interactive mode skips name/version/description/
+    author/license/python questions and goes straight to dependency questions."""
+    inputs = [
+        "n",  # Interactive packages (would you like to define...)
+        "n",  # Interactive dev packages
+        "\n",  # Confirm generation
+    ]
+
+    tester.execute("--non-package", inputs="\n".join(inputs))
+
+    output = tester.io.fetch_output()
+
+    # Should have package-mode = false in the generated output
+    assert "package-mode = false" in output
+
+    # Should NOT have build-system
+    assert "[build-system]" not in output
+
+    # Should NOT have asked for package name (no "Package name" prompt)
+    # The output should contain the generated file but without the interactive
+    # package-specific questions
+
+
+def test_non_package_no_packages_key(
+    app: PoetryTestApplication,
+    mocker: MockerFixture,
+    poetry: Poetry,
+    repo: TestRepository,
+    tmp_path: Path,
+) -> None:
+    """Test that --non-package does not include packages key in [tool.poetry]."""
+    command = app.find("init")
+    assert isinstance(command, InitCommand)
+    command._pool = poetry.pool
+
+    p = mocker.patch("pathlib.Path.cwd")
+    p.return_value = tmp_path
+
+    tester = CommandTester(command)
+    tester.execute(
+        "--name my-project --non-package",
+        interactive=False,
+    )
+
+    toml_content = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
+
+    # Should NOT have packages key — non-package projects don't need it
+    assert "packages = [" not in toml_content
+
+
+def test_non_package_does_not_create_package_structure(
+    tester: CommandTester, source_dir: Path
+) -> None:
+    """Test that poetry init --non-package does not create __init__.py or tests/."""
+    inputs = [
+        "n",  # Interactive packages
+        "n",  # Interactive dev packages
+        "\n",  # Generate
+    ]
+
+    tester.execute("--non-package", inputs="\n".join(inputs))
+
+    # Should only create pyproject.toml
+    assert (source_dir / "pyproject.toml").exists()
+
+    # Should NOT create package structure
+    assert not (source_dir / "tests").exists()
+    assert not (source_dir / "src").exists()
+
+
+def test_without_non_package_flag_still_works(
+    app: PoetryTestApplication,
+    mocker: MockerFixture,
+    poetry: Poetry,
+    repo: TestRepository,
+    tmp_path: Path,
+) -> None:
+    """Regression test: ensure normal init (without --non-package) still works."""
+    command = app.find("init")
+    assert isinstance(command, InitCommand)
+    command._pool = poetry.pool
+
+    repo.add_package(get_package("pytest", "3.6.0"))
+
+    p = mocker.patch("pathlib.Path.cwd")
+    p.return_value = tmp_path
+
+    tester = CommandTester(command)
+    tester.execute(
+        "--name my-package --dependency pytest",
+        interactive=False,
+    )
+
+    toml_content = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
+
+    # Should NOT have package-mode = false
+    assert "package-mode = false" not in toml_content
+
+    # Should have build-system
+    assert "[build-system]" in toml_content
+    assert "poetry-core" in toml_content

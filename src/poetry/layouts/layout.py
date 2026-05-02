@@ -70,6 +70,7 @@ class Layout:
         python: str | None = None,
         dependencies: Mapping[str, str | Mapping[str, Any]] | None = None,
         dev_dependencies: Mapping[str, str | Mapping[str, Any]] | None = None,
+        package_mode: bool = True,
     ) -> None:
         self._project = canonicalize_name(project)
         self._package_path_relative = Path(
@@ -85,6 +86,7 @@ class Layout:
         self._python = python
         self._dependencies = dependencies or {}
         self._dev_dependencies = dev_dependencies or {}
+        self._package_mode = package_mode
 
         if not author:
             author = "Your Name <you@example.com>"
@@ -127,10 +129,12 @@ class Layout:
     ) -> None:
         path.mkdir(parents=True, exist_ok=True)
 
-        self._create_default(path)
+        if self._package_mode:
+            self._create_default(path)
+
         self._create_readme(path)
 
-        if with_tests:
+        if with_tests and self._package_mode:
             self._create_tests(path)
 
         if with_pyproject:
@@ -182,11 +186,16 @@ class Layout:
 
         poetry_content = content["tool"]["poetry"]
 
-        packages = self.get_package_include()
-        if packages:
-            poetry_content["packages"].append(packages)
+        if self._package_mode:
+            packages = self.get_package_include()
+            if packages:
+                poetry_content["packages"].append(packages)
+            else:
+                poetry_content.remove("packages")
         else:
+            # In non-package mode, replace packages with package-mode = false
             poetry_content.remove("packages")
+            poetry_content["package-mode"] = False
 
         if self._dev_dependencies:
             for dep_name, dep_constraint in self._dev_dependencies.items():
@@ -198,22 +207,24 @@ class Layout:
         if not poetry_content:
             del content["tool"]["poetry"]
 
-        # Add build system
-        build_system = table()
-        build_system_version = ""
-
-        if BUILD_SYSTEM_MIN_VERSION is not None:
-            build_system_version = ">=" + BUILD_SYSTEM_MIN_VERSION
-        if BUILD_SYSTEM_MAX_VERSION is not None:
-            if build_system_version:
-                build_system_version += ","
-            build_system_version += "<" + BUILD_SYSTEM_MAX_VERSION
-
-        build_system.add("requires", ["poetry-core" + build_system_version])
-        build_system.add("build-backend", "poetry.core.masonry.api")
-
         assert isinstance(content, TOMLDocument)
-        content.add("build-system", build_system)
+
+        # Add build system only for package mode
+        if self._package_mode:
+            build_system = table()
+            build_system_version = ""
+
+            if BUILD_SYSTEM_MIN_VERSION is not None:
+                build_system_version = ">=" + BUILD_SYSTEM_MIN_VERSION
+            if BUILD_SYSTEM_MAX_VERSION is not None:
+                if build_system_version:
+                    build_system_version += ","
+                build_system_version += "<" + BUILD_SYSTEM_MAX_VERSION
+
+            build_system.add("requires", ["poetry-core" + build_system_version])
+            build_system.add("build-backend", "poetry.core.masonry.api")
+
+            content.add("build-system", build_system)
 
         return content
 
