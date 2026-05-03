@@ -265,12 +265,12 @@ class ProjectPluginCache:
         self,
         plugins: Sequence[Dependency],
         poetry_env: Env,
-        locked_packages: Sequence[Package],
+        installed_packages: Sequence[Package],
     ) -> None:
         project = ProjectPackage(name="poetry-project-instance", version="0")
         project.python_versions = ".".join(str(v) for v in poetry_env.version_info[:3])
         # consider all packages in Poetry's environment pinned
-        for package in locked_packages:
+        for package in installed_packages:
             project.add_dependency(package.to_dependency())
         # add missing plugin dependencies
         for dependency in plugins:
@@ -288,9 +288,7 @@ class ProjectPluginCache:
             Locker(self._path / "poetry.lock", {}),
             self._poetry.pool,
             self._poetry.config,
-            # Build installed repository from locked packages so that plugins
-            # that may be overwritten are not included.
-            InstalledRepository(locked_packages),
+            InstalledRepository(installed_packages),
         )
         installer.update(True)
 
