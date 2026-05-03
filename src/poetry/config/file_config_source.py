@@ -9,7 +9,6 @@ from tomlkit import table
 
 from poetry.config.config_source import ConfigSource
 from poetry.config.config_source import PropertyNotFoundError
-from poetry.config.config_source import drop_empty_config_category
 from poetry.config.config_source import split_key
 
 
@@ -68,21 +67,21 @@ class FileConfigSource(ConfigSource):
             config: dict[str, Any] = toml
             keys = split_key(key)
 
-            current_config = config
-            for i, sub_key in enumerate(keys):
-                if sub_key not in current_config:
+            # Descend to the leaf, recording the (parent, key) at each step.
+            stack = []
+            current = config
+            for key in keys:
+                if key not in current:
                     return
+                stack.append((current, key))
+                current = current[key]
 
-                if i == len(keys) - 1:
-                    del current_config[sub_key]
-
+            # Delete the leaf, then walk back up pruning any now-empty parents.
+            while stack:
+                parent, key = stack.pop()
+                del parent[key]
+                if parent:
                     break
-
-                current_config = current_config[sub_key]
-
-            current_config = drop_empty_config_category(keys=keys[:-1], config=config)
-            config.clear()
-            config.update(current_config)
 
     @contextmanager
     def secure(self) -> Iterator[TOMLDocument]:
