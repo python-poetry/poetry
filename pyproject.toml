@@ -26,7 +26,7 @@ dependencies = [
     "trove-classifiers (>=2022.5.19)",
     "virtualenv (>=20.26.6)",
     "xattr (>=1.0.0,<2.0.0) ; sys_platform == 'darwin'",
-    "findpython (>=0.6.2,<0.8.0)",
+    "findpython (>=0.6.2,<0.9.0)",
     # pbs-installer uses calver, so version is unclamped
     "pbs-installer[download,install] (>=2025.6.10)",
 ]
