@@ -14,6 +14,7 @@ import keyring
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
 from poetry.core.vcs.git import ParsedUrl
+from tomlrt import Document
 
 from poetry.config.config import Config
 from poetry.console.application import Application
@@ -37,7 +38,6 @@ if TYPE_CHECKING:
     from poetry.core.packages.dependency import Dependency
     from pytest_mock import MockerFixture
     from requests import PreparedRequest
-    from tomlkit.toml_document import TOMLDocument
 
     from poetry.installation.operations.operation import Operation
     from poetry.poetry import Poetry
@@ -210,7 +210,7 @@ class DummyLocker(Locker):
     def is_fresh(self) -> bool:
         return True
 
-    def _write_lock_data(self, data: TOMLDocument) -> None:
+    def _write_lock_data(self, data: Document) -> None:
         if self._write:
             super()._write_lock_data(data)
             self._locked = True
@@ -375,3 +375,8 @@ def pbs_installer_supported_arch(architecture: str) -> bool:
     # Based on pbs_installer._versions and pbs_installer._utils.ARCH_MAPPING
     supported_archs = ["arm64", "aarch64", "amd64", "x86_64", "i686", "x86"]
     return architecture.lower() in supported_archs
+
+
+def toml_dumps_dict(data: Mapping[str, Any]) -> str:
+    """tomlrt.dumps requires a Document; this helper accepts a plain dict."""
+    return Document(data).render()

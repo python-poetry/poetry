@@ -4,8 +4,7 @@ from contextlib import contextmanager
 from typing import TYPE_CHECKING
 from typing import Any
 
-from tomlkit import document
-from tomlkit import table
+from tomlrt import Document
 
 from poetry.config.config_source import ConfigSource
 from poetry.config.config_source import PropertyNotFoundError
@@ -15,8 +14,6 @@ from poetry.config.config_source import split_key
 if TYPE_CHECKING:
     from collections.abc import Iterator
     from collections.abc import Sequence
-
-    from tomlkit.toml_document import TOMLDocument
 
     from poetry.toml.file import TOMLFile
 
@@ -34,37 +31,19 @@ class FileConfigSource(ConfigSource):
         return self._file
 
     def get_property(self, key: str | Sequence[str]) -> Any:
-        keys = split_key(key)
-
-        config = self.file.read() if self.file.exists() else {}
-
-        for i, sub_key in enumerate(keys):
-            if sub_key not in config:
-                raise PropertyNotFoundError(f"Key {'.'.join(keys)} not in config")
-
-            if i == len(keys) - 1:
-                return config[sub_key]
-
-            config = config[sub_key]
+        config = self.file.read() if self.file.exists() else Document()
+        try:
+            return config.entry(key)
+        except KeyError:
+            keys = split_key(key)
+            raise PropertyNotFoundError(f"Key {'.'.join(keys)} not in config")
 
     def add_property(self, key: str | Sequence[str], value: Any) -> None:
-        with self.secure() as toml:
-            config: dict[str, Any] = toml
-            keys = split_key(key)
-
-            for i, sub_key in enumerate(keys):
-                if sub_key not in config and i < len(keys) - 1:
-                    config[sub_key] = table()
-
-                if i == len(keys) - 1:
-                    config[sub_key] = value
-                    break
-
-                config = config[sub_key]
+        with self.secure() as config:
+            config.install(key, value)
 
     def remove_property(self, key: str | Sequence[str]) -> None:
-        with self.secure() as toml:
-            config: dict[str, Any] = toml
+        with self.secure() as config:
             keys = split_key(key)
 
             # Descend to the leaf, recording the (parent, key) at each step.
@@ -84,13 +63,13 @@ class FileConfigSource(ConfigSource):
                     break
 
     @contextmanager
-    def secure(self) -> Iterator[TOMLDocument]:
+    def secure(self) -> Iterator[Document]:
         if self.file.exists():
             initial_config = self.file.read()
             config = self.file.read()
         else:
-            initial_config = document()
-            config = document()
+            initial_config = Document()
+            config = Document()
 
         new_file = not self.file.exists()
 

@@ -13,7 +13,7 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 
-import tomlkit
+import tomlrt
 import virtualenv
 
 from cleo.io.null_io import NullIO
@@ -137,7 +137,7 @@ class EnvManager:
 
             return self.get(reload=True)
 
-        envs = tomlkit.document()
+        envs = tomlrt.Document()
         if self.envs_file.exists():
             envs = self.envs_file.read()
             current_env = envs.get(self.base_env_name)

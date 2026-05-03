@@ -4,10 +4,9 @@ import sys
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import cast
 
 import pytest
-import tomlkit
+import tomlrt
 
 from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import Version
@@ -27,7 +26,6 @@ if TYPE_CHECKING:
 
     from cleo.testers.command_tester import CommandTester
     from pytest_mock import MockerFixture
-    from tomlkit import TOMLDocument
 
     from poetry.config.config import Config
     from poetry.poetry import Poetry
@@ -137,7 +135,7 @@ Writing lock file
     assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 2
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     content = pyproject["tool"]["poetry"]
 
     assert "cachy" in content["dependencies"]
@@ -164,7 +162,7 @@ Writing lock file
     assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 1
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     content = pyproject["tool"]["poetry"]
 
     assert "torch" in content["dependencies"]
@@ -184,7 +182,7 @@ def test_add_non_package_mode_no_name(
     assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 2
 
-    pyproject: dict[str, Any] = poetry.file.read()
+    pyproject = poetry.file.read()
     content = pyproject["tool"]["poetry"]
 
     assert "cachy" in content["dependencies"]
@@ -213,7 +211,7 @@ Writing lock file
     assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 2
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     content = pyproject["tool"]["poetry"]
 
     assert "cachy" in content["dependencies"]
@@ -242,7 +240,7 @@ Writing lock file
 def test_add_no_constraint_editable_error(
     app: PoetryTestApplication, tester: CommandTester
 ) -> None:
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     content = pyproject["tool"]["poetry"]
 
     tester.execute("-e cachy")
@@ -353,7 +351,7 @@ def test_add_with_markers(app: PoetryTestApplication, tester: CommandTester) -> 
     marker = "python_version <= '3.4' or sys_platform == 'win32'"
     tester.execute(f"""cachy --markers "{marker}" """)
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     content = pyproject["tool"]["poetry"]
 
     assert "cachy" in content["dependencies"]
@@ -387,7 +385,7 @@ Writing lock file
     assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     content = pyproject["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
@@ -452,7 +450,7 @@ Writing lock file
     assert tester.io.fetch_output().strip() == expected.strip()
     assert tester.command.installer.executor.installations_count == 4
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     content = pyproject["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
@@ -494,7 +492,7 @@ Writing lock file
     assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 1
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     content = pyproject["tool"]["poetry"]
 
     constraint = {
@@ -538,7 +536,7 @@ Writing lock file
     assert tester.io.fetch_output() == expected
     assert tester.command.installer.executor.installations_count == 2
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     content = pyproject["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
@@ -584,7 +582,7 @@ Writing lock file
     assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 2
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     content = pyproject["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
@@ -599,8 +597,8 @@ Writing lock file
 def test_add_to_new_group_keeps_existing_group(
     app: PoetryTestApplication, tester: CommandTester
 ) -> None:
-    pyproject: dict[str, Any] = app.poetry.file.read()
-    groups_content: dict[str, Any] = tomlkit.parse(
+    pyproject = app.poetry.file.read()
+    groups_content = tomlrt.loads(
         """\
 [dependency-groups]
 example = [
@@ -609,7 +607,6 @@ example = [
 """
     )
     pyproject["dependency-groups"] = groups_content["dependency-groups"]
-    pyproject = cast("TOMLDocument", pyproject)
     app.poetry.file.write(pyproject)
 
     tester.execute("-G foo pendulum")
@@ -623,7 +620,6 @@ Using version ^1.4.4 for pendulum
     assert tester.command.installer.executor.installations_count == 1
 
     pyproject = app.poetry.file.read()
-    pyproject = cast("dict[str, Any]", pyproject)
     assert "example" in pyproject["dependency-groups"]
     assert pyproject["dependency-groups"]["example"] == [
         "cachy (>=0.2.0,<0.3.0)",
@@ -637,20 +633,20 @@ Using version ^1.4.4 for pendulum
 def test_add_to_existing_group(
     app: PoetryTestApplication, tester: CommandTester, additional_poetry_group: bool
 ) -> None:
-    pyproject: dict[str, Any] = app.poetry.file.read()
-    groups_content: dict[str, Any] = tomlkit.parse(
+    pyproject = app.poetry.file.read()
+    groups_content = tomlrt.loads(
         """\
 [dependency-groups]
 example = [
     "cachy (>=0.2.0,<0.3.0)",
-    {include-group = "included"},
+    { include-group = "included" },
 ]
 included = []
 """
     )
     pyproject["dependency-groups"] = groups_content["dependency-groups"]
     if additional_poetry_group:
-        poetry_groups_content: dict[str, Any] = tomlkit.parse(
+        poetry_groups_content = tomlrt.loads(
             """\
 [tool.poetry.group.example.dependencies]
 cachy = { allow-prereleases = true }
@@ -659,7 +655,6 @@ cachy = { allow-prereleases = true }
         pyproject["tool"]["poetry"]["group"] = poetry_groups_content["tool"]["poetry"][
             "group"
         ]
-    pyproject = cast("TOMLDocument", pyproject)
     app.poetry.file.write(pyproject)
 
     tester.execute("-G example pendulum")
@@ -673,7 +668,6 @@ Using version ^1.4.4 for pendulum
     assert tester.command.installer.executor.installations_count == 1
 
     pyproject = app.poetry.file.read()
-    pyproject = cast("dict[str, Any]", pyproject)
     assert "example" in pyproject["dependency-groups"]
     assert pyproject["dependency-groups"]["example"] == [
         "cachy (>=0.2.0,<0.3.0)",
@@ -692,12 +686,12 @@ Using version ^1.4.4 for pendulum
 def test_add_to_group_with_latest_overwrite_existing(
     app: PoetryTestApplication, tester: CommandTester
 ) -> None:
-    pyproject: dict[str, Any] = app.poetry.file.read()
-    groups_content: dict[str, Any] = tomlkit.parse(
+    pyproject = app.poetry.file.read()
+    groups_content = tomlrt.loads(
         """\
 [dependency-groups]
 example = [
-    {include-group = "included"},
+    { include-group = "included" },
     "cachy (>=0.1.0,<0.2.0)",
     "pendulum (>=1.4.4,<2.0.0)",
 ]
@@ -705,7 +699,6 @@ included = []
 """
     )
     pyproject["dependency-groups"] = groups_content["dependency-groups"]
-    pyproject = cast("TOMLDocument", pyproject)
     app.poetry.file.write(pyproject)
 
     tester.execute("-G example cachy@latest")
@@ -720,7 +713,6 @@ Using version ^0.2.0 for cachy
     assert tester.command.installer.executor.installations_count == 2
 
     pyproject = app.poetry.file.read()
-    pyproject = cast("dict[str, Any]", pyproject)
     assert "example" in pyproject["dependency-groups"]
     assert pyproject["dependency-groups"]["example"] == [
         {"include-group": "included"},
@@ -741,7 +733,7 @@ Using version ^1.4.4 for pendulum
 
     assert tester.io.fetch_output().startswith(expected)
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     assert isinstance(tester.command, InstallerCommand)
     # `cachy` has `msgpack-python` as dependency. So installation count increases by 1.
     assert tester.command.installer.executor.installations_count == 3
@@ -756,16 +748,14 @@ Using version ^1.4.4 for pendulum
 def test_add_to_group_uses_existing_legacy_group(
     app: PoetryTestApplication, tester: CommandTester
 ) -> None:
-    pyproject: dict[str, Any] = app.poetry.file.read()
-    groups_content: dict[str, Any] = tomlkit.parse(
+    pyproject = app.poetry.file.read()
+    groups_content = tomlrt.loads(
         """\
 [tool.poetry.group.example.dependencies]
 pendulum = "^1.4.4"
 """
     )
     pyproject["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
-
-    pyproject = cast("TOMLDocument", pyproject)
     app.poetry.file.write(pyproject)
 
     tester.execute("-G example cachy")
@@ -780,7 +770,6 @@ Using version ^0.2.0 for cachy
     assert tester.command.installer.executor.installations_count == 2
 
     pyproject = app.poetry.file.read()
-    pyproject = cast("dict[str, Any]", pyproject)
     assert "dependency-groups" not in pyproject
     assert "example" in pyproject["tool"]["poetry"]["group"]
     assert "pendulum" in pyproject["tool"]["poetry"]["group"]["example"]["dependencies"]
@@ -816,7 +805,7 @@ Writing lock file
     assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 2
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
 
     assert "demo @ file://" in pyproject["dependency-groups"]["example"][0]
     assert demo_path in pyproject["dependency-groups"]["example"][0]
@@ -885,7 +874,7 @@ Writing lock file
     assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 2
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     content = pyproject["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
@@ -921,7 +910,7 @@ Writing lock file
     assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 2
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     content = pyproject["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
@@ -953,7 +942,7 @@ Writing lock file
     assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 2
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     content = pyproject["tool"]["poetry"]
 
     assert "cachy" in content["dependencies"]
@@ -993,7 +982,7 @@ Writing lock file
     assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 2
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     content = pyproject["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
@@ -1035,7 +1024,7 @@ Writing lock file
     assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 4
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     content = pyproject["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
@@ -1073,14 +1062,13 @@ def test_add_constraint_with_optional(
     existing_extras: dict[str, list[str]] | None,
     expected_extras: dict[str, list[str]],
 ) -> None:
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     if project_dependencies:
         pyproject["project"]["dependencies"] = ["tomlkit (<1)"]
         if existing_extras:
             pyproject["project"]["optional-dependencies"] = existing_extras
     else:
         pyproject["tool"]["poetry"]["dependencies"]["tomlkit"] = "<1"
-    pyproject = cast("TOMLDocument", pyproject)
     app.poetry.file.write(pyproject)
     app.reset_poetry()
 
@@ -1164,7 +1152,7 @@ Writing lock file
     assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 2
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     content = pyproject["tool"]["poetry"]
 
     assert "cachy" in content["dependencies"]
@@ -1198,7 +1186,7 @@ Writing lock file
     assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 2
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     content = pyproject["tool"]["poetry"]
 
     assert "cachy" in content["dependencies"]
@@ -1246,7 +1234,7 @@ Writing lock file
     assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 1
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     content = pyproject["tool"]["poetry"]
 
     assert "cachy" in content["dependencies"]
@@ -1308,7 +1296,7 @@ Writing lock file
     assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 2
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     content = pyproject["dependency-groups"]
 
     assert content[group_name][0] == "cachy (>=0.2.0,<0.3.0)"
@@ -1316,10 +1304,10 @@ Writing lock file
     escaped_group_name = f'"{group_name}"' if "." in group_name else group_name
     expected = f"""\
 {escaped_group_name} = [
-    "cachy (>=0.2.0,<0.3.0)"
+    "cachy (>=0.2.0,<0.3.0)",
 ]
 """
-    string_content = content.as_string()
+    string_content = pyproject.render()
     if "\r\n" in string_content:
         # consistent line endings
         expected = expected.replace("\n", "\r\n")
@@ -1346,7 +1334,7 @@ def test_add_creating_poetry_section_does_not_remove_existing_tools(
     assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 2
 
-    pyproject: dict[str, Any] = poetry.file.read()
+    pyproject = poetry.file.read()
     content = pyproject["dependency-groups"]
 
     assert content["dev"][0] == "cachy (>=0.2.0,<0.3.0)"
@@ -1376,7 +1364,7 @@ Writing lock file
     assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 2
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     content = pyproject["dependency-groups"]
 
     assert content["dev"][0] == "cachy (>=0.2.0,<0.3.0)"
@@ -1404,7 +1392,7 @@ Writing lock file
     assert isinstance(tester.command, InstallerCommand)
     assert tester.command.installer.executor.installations_count == 1
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     content = pyproject["tool"]["poetry"]
 
     assert "pyyaml" in content["dependencies"]
@@ -1418,12 +1406,11 @@ def test_add_should_skip_when_adding_existing_package_with_no_constraint(
     tester: CommandTester,
     project_dependencies: bool,
 ) -> None:
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     if project_dependencies:
         pyproject["project"]["dependencies"] = ["foo>1"]
     else:
         pyproject["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
-    pyproject = cast("TOMLDocument", pyproject)
     app.poetry.file.write(pyproject)
 
     repo.add_package(get_package("foo", "1.1.2"))
@@ -1450,12 +1437,11 @@ def test_add_should_skip_when_adding_canonicalized_existing_package_with_no_cons
     tester: CommandTester,
     project_dependencies: bool,
 ) -> None:
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     if project_dependencies:
         pyproject["project"]["dependencies"] = ["foo-bar>1"]
     else:
         pyproject["tool"]["poetry"]["dependencies"]["foo-bar"] = "^1.0"
-    pyproject = cast("TOMLDocument", pyproject)
     app.poetry.file.write(pyproject)
 
     repo.add_package(get_package("foo-bar", "1.1.2"))
@@ -1530,7 +1516,7 @@ def test_add_latest_should_not_create_duplicate_keys(
         """
 
     poetry = project_factory(name="simple-project", pyproject_content=pyproject_content)
-    pyproject: dict[str, Any] = poetry.file.read()
+    pyproject = poetry.file.read()
 
     if project_dependencies:
         assert "tool" not in pyproject
@@ -1563,12 +1549,11 @@ def test_add_should_work_when_adding_existing_package_with_latest_constraint(
     tester: CommandTester,
     project_dependencies: bool,
 ) -> None:
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     if project_dependencies:
         pyproject["project"]["dependencies"] = ["foo>1"]
     else:
         pyproject["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
-    pyproject = cast("TOMLDocument", pyproject)
     app.poetry.file.write(pyproject)
 
     repo.add_package(get_package("foo", "1.1.2"))
@@ -1797,7 +1782,7 @@ Writing lock file
 
     assert tester.io.fetch_output() == expected
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     content = pyproject["tool"]["poetry"]
 
     assert "cleo" in content["dependencies"]
@@ -1809,9 +1794,7 @@ Writing lock file
 
 @pytest.mark.parametrize(
     "command",
-    [
-        "requests --extras security socks",
-    ],
+    ["requests --extras security socks"],
 )
 def test_add_extras_only_accepts_one_package(
     command: str, tester: CommandTester, repo: DummyRepository
@@ -1919,7 +1902,7 @@ def test_add_does_not_add_poetry_dependencies_if_not_necessary(
     """
 
     poetry = project_factory(name="simple-project", pyproject_content=pyproject_content)
-    pyproject: dict[str, Any] = poetry.file.read()
+    pyproject = poetry.file.read()
 
     if has_poetry_section:
         assert "dependencies" not in pyproject["tool"]["poetry"]
@@ -1966,7 +1949,7 @@ def test_add_poetry_dependencies_if_necessary(
     """
 
     poetry = project_factory(name="simple-project", pyproject_content=pyproject_content)
-    pyproject: dict[str, Any] = poetry.file.read()
+    pyproject = poetry.file.read()
 
     if has_poetry_section:
         assert "dependencies" not in pyproject["tool"]["poetry"]

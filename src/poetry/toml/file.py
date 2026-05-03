@@ -2,18 +2,21 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from tomlkit.toml_file import TOMLFile as BaseTOMLFile
+import tomlrt
 
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tomlkit.toml_document import TOMLDocument
+    from tomlrt import Document
 
 
-class TOMLFile(BaseTOMLFile):
+class TOMLFile:
+    """
+    Represents a TOML file backed by tomlrt for format-preserving I/O.
+    """
+
     def __init__(self, path: Path) -> None:
-        super().__init__(path)
         self.__path = path
 
     @property
@@ -23,15 +26,18 @@ class TOMLFile(BaseTOMLFile):
     def exists(self) -> bool:
         return self.__path.exists()
 
-    def read(self) -> TOMLDocument:
-        from tomlkit.exceptions import TOMLKitError
-
+    def read(self) -> Document:
         from poetry.toml import TOMLError
 
         try:
-            return super().read()
-        except (ValueError, TOMLKitError) as e:
-            raise TOMLError(f"Invalid TOML file {self.path.as_posix()}: {e}")
+            with open(self.__path, "rb") as f:
+                return tomlrt.load(f)
+        except tomlrt.TOMLError as e:
+            raise TOMLError(f"Invalid TOML file {self.__path.as_posix()}: {e}")
+
+    def write(self, data: Document) -> None:
+        with open(self.__path, "wb") as f:
+            tomlrt.dump(data, f)
 
     def __str__(self) -> str:
         return self.__path.as_posix()

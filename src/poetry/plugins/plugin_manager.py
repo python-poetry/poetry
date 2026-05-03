@@ -12,7 +12,7 @@ from pathlib import Path
 from site import addsitedir
 from typing import TYPE_CHECKING
 
-import tomlkit
+import tomlrt
 
 from poetry.core.packages.project_package import ProjectPackage
 
@@ -298,7 +298,7 @@ class ProjectPluginCache:
     def _write_config(self) -> None:
         self._ensure_cache_directory()
 
-        document = tomlkit.document()
+        document = tomlrt.Document()
 
         for key, value in self._config.items():
             document[key] = value

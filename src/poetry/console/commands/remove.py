@@ -9,7 +9,6 @@ from cleo.helpers import option
 from packaging.utils import canonicalize_name
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.dependency_group import MAIN_GROUP
-from tomlkit.toml_document import TOMLDocument
 
 from poetry.console.commands.installer_command import InstallerCommand
 
@@ -63,7 +62,7 @@ list of installed packages
         else:
             group = self.option("group", self.default_group)
 
-        content: dict[str, Any] = self.poetry.file.read()
+        content = self.poetry.file.read()
         project_content = content.get("project", {})
         groups_content = content.get("dependency-groups", {})
         poetry_content = content.get("tool", {}).get("poetry", {})
@@ -179,7 +178,6 @@ list of installed packages
         status = self.installer.run()
 
         if not self.option("dry-run") and status == 0:
-            assert isinstance(content, TOMLDocument)
             self.poetry.file.write(content)
 
         return status

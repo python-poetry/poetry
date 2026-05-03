@@ -11,7 +11,7 @@ from typing import ClassVar
 
 from cleo.helpers import option
 from packaging.utils import canonicalize_name
-from tomlkit import inline_table
+from tomlrt import Table
 
 from poetry.console.commands.command import Command
 from poetry.console.commands.env_command import EnvCommand
@@ -23,7 +23,6 @@ if TYPE_CHECKING:
     from cleo.io.inputs.option import Option
     from packaging.utils import NormalizedName
     from poetry.core.packages.package import Package
-    from tomlkit.items import InlineTable
 
     from poetry.repositories import RepositoryPool
 
@@ -253,13 +252,12 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             layout_.create(project_path, with_pyproject=False)
 
         content = layout_.generate_project_content(project_path)
-        for section, item in content.items():
-            pyproject.data.append(section, item)
+        pyproject.data.update(content)
 
         if is_interactive:
             self.line("<info>Generated file</info>")
             self.line("")
-            self.line(pyproject.data.as_string().replace("\r\n", "\n"))
+            self.line(pyproject.data.render().replace("\r\n", "\n"))
             self.line("")
 
         if is_interactive and not self.confirm("Do you confirm generation?", True):
@@ -483,13 +481,11 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         requires: Requirements = {}
         for requirement in requirements:
             name = requirement.pop("name")
-            constraint: str | InlineTable
+            constraint: str | Table
             if "version" in requirement and len(requirement) == 1:
                 constraint = requirement["version"]
             else:
-                constraint = inline_table()
-                constraint.trivia.trail = "\n"
-                constraint.update(requirement)
+                constraint = Table.inline(requirement)
 
             requires[name] = constraint
 
