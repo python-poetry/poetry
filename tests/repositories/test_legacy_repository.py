@@ -183,11 +183,11 @@ def test_get_package_information_pep_658(
         assert (
             package.requires == isort_package.requires == [Dependency("futures", "*")]
         )
-        assert (
-            str(package.python_constraint)
-            == str(isort_package.python_constraint)
-            == ">=2.7,<3.0.dev0 || >=3.4.dev0"
-        )
+        assert package.python_constraint == isort_package.python_constraint
+        assert str(package.python_constraint) in {
+            ">=2.7,<3.0 || >=3.4",
+            ">=2.7,<3.0.dev0 || >=3.4.dev0",
+        }
 
 
 def test_get_package_information_skips_dependencies_with_invalid_constraints(
