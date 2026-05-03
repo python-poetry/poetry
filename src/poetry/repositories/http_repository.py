@@ -21,7 +21,7 @@ from packaging.metadata import parse_email
 from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import Version
 from poetry.core.constraints.version import VersionConstraint
-from poetry.core.constraints.version import parse_constraint
+from poetry.core.constraints.version import parse_marker_version_constraint
 from poetry.core.packages.dependency import Dependency
 from poetry.core.version.markers import parse_marker
 
@@ -370,8 +370,12 @@ class HTTPRepository(CachedRepository):
 
                 if info.requires_python or py3_info.requires_python:
                     info.requires_python = str(
-                        parse_constraint(info.requires_python or "^2.7").union(
-                            parse_constraint(py3_info.requires_python or "^3")
+                        parse_marker_version_constraint(
+                            info.requires_python or "^2.7"
+                        ).union(
+                            parse_marker_version_constraint(
+                                py3_info.requires_python or "^3"
+                            )
                         )
                     )
 

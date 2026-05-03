@@ -734,6 +734,7 @@ def test_complete_package_merges_same_source_and_no_source(
     assert requires[0].source_name == "source"
     assert str(requires[0].constraint) in {
         ">=1,<1.1 || >=1.3,<2",
+        ">=1,<1.1 || >=1.3.dev0,<2",
         ">=1,<1.1.dev0 || >=1.3.dev0,<2",
         ">=1,<1.1.0 || >=1.3.0,<2",
         ">=1,<1.1.0.dev0 || >=1.3.0.dev0,<2",
