@@ -5,7 +5,9 @@ import runpy
 import pytest
 
 
-def test_module_entrypoint_exits_with_application_status(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_module_entrypoint_exits_with_application_status(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     calls: list[None] = []
 
     def main() -> int:
