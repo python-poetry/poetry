@@ -394,6 +394,43 @@ poetry config system-git-client true
 ```
 {{% /note %}}
 
+### Credentials for SSH repositories
+
+If your project has SSH repositories in `pyproject.toml`, you can use SSH keys for authentication. It is also possible to configure the git client to use HTTPS instead of SSH. For this to work, you can use the git configuration to set up a URL that includes the credentials. This is particularly useful when you want to avoid SSH keys or when your CI/CD environment does not support SSH keys.
+
+```bash
+git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@github.com/sdispater/pendulum.git".insteadOf "ssh://git@github.com/sdispater/pendulum.git"
+poetry lock  # uses the updated git configuration to resolve the repository
+```
+
+This will replace the SSH URL with the HTTPS URL that includes the credentials, allowing Poetry to access the repository without needing SSH keys.
+
+{{% note %}}
+Be aware that there is a difference between the URL used in the `pyproject.toml` file and the URL in the `poetry.lock` file. For example, if you have a dependency in your `pyproject.toml` file like this:
+
+{{< tabs tabTotal="2" tabID1="git-ssh-credentials-project" tabID2="git-ssh-credentials-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
+
+{{< tab tabID="git-ssh-credentials-project" >}}
+```toml
+[project]
+# ...
+dependencies = [
+    "pendulum @ git+ssh://git@github.com/sdispater/pendulum.git"
+]
+```
+{{< /tab >}}
+
+{{< tab tabID="git-ssh-credentials-poetry" >}}
+```toml
+[tool.poetry.dependencies]
+pendulum = { git = "git@github.com/sdispater/pendulum.git" }
+```
+{{< /tab >}}
+{{< /tabs >}}
+
+The URL in the `poetry.lock` file will now be `ssh://git@github.com/sdispater/pendulum.git`. The second URL you use in the git configuration will need to match the URL in the `poetry.lock` file, not the one in the `pyproject.toml` file.
+{{% /note %}}
+
 ## `path` dependencies
 
 {{< tabs tabTotal="2" tabID1="path-project" tabID2="path-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
