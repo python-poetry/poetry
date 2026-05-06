@@ -11,6 +11,7 @@ import pytest
 
 from cleo.testers.application_tester import ApplicationTester
 
+from poetry.__version__ import __version__
 from poetry.console.application import Application
 from poetry.console.commands.command import Command
 from poetry.plugins.application_plugin import ApplicationPlugin
@@ -81,6 +82,24 @@ def test_application_execute_plugin_command(with_add_command_plugin: None) -> No
 
     assert tester.io.fetch_output() == "foo called\n"
     assert tester.status_code == 0
+
+
+@pytest.mark.parametrize("flag", ["--version", "-V"])
+def test_application_with_plugins_skipped_for_version(
+    flag: str, with_add_command_plugin: None, mocker: MockerFixture
+) -> None:
+    app = Application()
+
+    manager_mock = mocker.patch(
+        "poetry.plugins.plugin_manager.PluginManager", autospec=True
+    )
+
+    tester = ApplicationTester(app)
+    tester.execute(flag)
+
+    assert tester.status_code == 0
+    assert __version__ in tester.io.fetch_output()
+    manager_mock.assert_not_called()
 
 
 def test_application_execute_plugin_command_with_plugins_disabled(
