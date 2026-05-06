@@ -91,7 +91,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         readme_format: str = "md",
         allow_layout_creation_on_empty: bool = False,
     ) -> int:
-        from poetry.core.vcs.git import GitConfig
+        from dulwich.config import StackedConfig
 
         from poetry.config.config import Config
         from poetry.layouts import layout
@@ -115,8 +115,6 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                     " exists.</error>"
                 )
                 return 1
-
-        vcs_config = GitConfig()
 
         if is_interactive:
             self.line("")
@@ -148,10 +146,19 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         if not description and is_interactive:
             description = self.ask(self.create_question("Description []: ", default=""))
 
+        vcs_config = StackedConfig.default()
+
+        def get_vcs_config_value(*keys: str) -> bytes | None:
+            try:
+                value = vcs_config.get(*keys)
+            except KeyError:
+                value = None
+            return value
+
         author = self.option("author")
-        if not author and vcs_config.get("user.name"):
-            author = vcs_config["user.name"]
-            author_email = vcs_config.get("user.email")
+        if not author and (vcs_username := get_vcs_config_value("user", "name")):
+            author = str(vcs_username)
+            author_email = str(get_vcs_config_value("user", "email"))
             if author_email:
                 author += f" <{author_email}>"
 
