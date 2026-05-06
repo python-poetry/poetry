@@ -422,3 +422,123 @@ def test_builder_catches_bad_scripts_too_many_colon(
     assert "foo::bar" in msg
     # and some hint about what is wrong
     assert "Too many" in msg
+
+
+@pytest.fixture()
+def file_scripts_poetry(fixture_dir: FixtureDirGetter) -> Poetry:
+    poetry = Factory().create_poetry(fixture_dir("file_scripts_project"))
+    return poetry
+
+
+def test_builder_installs_file_scripts(
+    file_scripts_poetry: Poetry,
+    tmp_path: Path,
+) -> None:
+    env_manager = EnvManager(file_scripts_poetry)
+    venv_path = tmp_path / "venv"
+    env_manager.build_venv(venv_path)
+    tmp_venv = VirtualEnv(venv_path)
+
+    builder = EditableBuilder(file_scripts_poetry, tmp_venv, NullIO())
+    builder.build()
+
+    # The file script should be copied to the venv bin directory
+    script_path = tmp_venv._bin_dir.joinpath("my-script")
+    assert script_path.exists(), (
+        f"File script 'my-script' was not copied to {tmp_venv._bin_dir}"
+    )
+
+    # Check script content matches the source
+    source_content = (
+        file_scripts_poetry.file.path.parent / "bin" / "my-script.sh"
+    ).read_text(encoding="utf-8")
+    assert script_path.read_text(encoding="utf-8") == source_content
+
+    # Check the file is executable
+    assert os.access(script_path, os.X_OK)
+
+    # The console entry point should also be installed
+    console_script = tmp_venv._bin_dir.joinpath("console-entry")
+    assert console_script.exists(), (
+        f"Console script 'console-entry' was not installed to {tmp_venv._bin_dir}"
+    )
+
+
+def test_builder_skips_missing_file_script(
+    fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
+) -> None:
+    from cleo.io.buffered_io import BufferedIO
+
+    poetry = Factory().create_poetry(fixture_dir("file_scripts_missing_ref_project"))
+    env_manager = EnvManager(poetry)
+    venv_path = tmp_path / "venv"
+    env_manager.build_venv(venv_path)
+    tmp_venv = VirtualEnv(venv_path)
+
+    io = BufferedIO()
+    builder = EditableBuilder(poetry, tmp_venv, io)
+    builder.build()
+
+    # The file script for the missing reference must not be created
+    script_path = tmp_venv._bin_dir.joinpath("missing-script")
+    assert not script_path.exists()
+
+    # The error message should be logged
+    error_output = io.fetch_error()
+    assert "missing-script" in error_output
+    assert "does not exist" in error_output
+
+
+def test_builder_skips_directory_file_script(
+    fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
+) -> None:
+    from cleo.io.buffered_io import BufferedIO
+
+    poetry = Factory().create_poetry(fixture_dir("file_scripts_dir_ref_project"))
+    env_manager = EnvManager(poetry)
+    venv_path = tmp_path / "venv"
+    env_manager.build_venv(venv_path)
+    tmp_venv = VirtualEnv(venv_path)
+
+    io = BufferedIO()
+    builder = EditableBuilder(poetry, tmp_venv, io)
+    builder.build()
+
+    # The file script for the directory reference must not be created
+    script_path = tmp_venv._bin_dir.joinpath("dir-script")
+    assert not script_path.exists()
+
+    # The error message should be logged
+    error_output = io.fetch_error()
+    assert "dir-script" in error_output
+    assert "is not a file" in error_output
+
+
+def test_builder_skips_file_script_missing_reference_field(
+    fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
+) -> None:
+    from cleo.io.buffered_io import BufferedIO
+
+    poetry = Factory().create_poetry(
+        fixture_dir("file_scripts_no_ref_field_project")
+    )
+    env_manager = EnvManager(poetry)
+    venv_path = tmp_path / "venv"
+    env_manager.build_venv(venv_path)
+    tmp_venv = VirtualEnv(venv_path)
+
+    io = BufferedIO()
+    builder = EditableBuilder(poetry, tmp_venv, io)
+    builder.build()
+
+    # The file script with missing reference field must not be created
+    script_path = tmp_venv._bin_dir.joinpath("no-ref-script")
+    assert not script_path.exists()
+
+    # The error message should be logged
+    error_output = io.fetch_error()
+    assert "no-ref-script" in error_output
+    assert "reference" in error_output

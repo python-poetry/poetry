@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "file-scripts-project"
+version = "1.0.0"
+description = "A project with file scripts."
+authors = ["Test Author <test@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+
+[tool.poetry.scripts]
+my-script = { reference = "bin/my-script.sh", type = "file" }
+console-entry = "file_scripts_project:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
