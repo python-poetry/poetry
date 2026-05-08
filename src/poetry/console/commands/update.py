@@ -67,8 +67,16 @@ class UpdateCommand(InstallerCommand):
                 )
                 return 1
 
-            # Validate that all specified packages are declared dependencies
+            # Validate that all specified packages appear somewhere in the
+            # project's dependency graph. We union two sources:
+            #   - declared deps in pyproject.toml (covers a freshly-edited
+            #     pyproject where the lockfile has not caught up yet)
+            #   - locked deps in poetry.lock (covers transitive deps that
+            #     are not declared directly in pyproject.toml)
             all_dependencies = {dep.name for dep in self.poetry.package.all_requires}
+            all_dependencies |= {
+                p.name for p in self.poetry.locker.locked_repository().packages
+            }
 
             invalid_packages = [
                 p for p in packages if canonicalize_name(p) not in all_dependencies
