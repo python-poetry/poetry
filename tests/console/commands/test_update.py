@@ -145,6 +145,76 @@ def test_update_with_non_normalized_package_name(
     assert tester.io.fetch_error() == ""
 
 
+def test_update_with_transitive_dependency(
+    project_factory: ProjectFactory,
+    fixture_dir: FixtureDirGetter,
+    repo: DummyRepository,
+    command_tester_factory: CommandTesterFactory,
+    mocker: MockerFixture,
+) -> None:
+    """
+    Regression test: `poetry update <pkg>` must work when <pkg> is a
+    transitive dependency present in the lockfile but not declared
+    directly in pyproject.toml. In the fixture, `requests` is pulled in
+    by `docker`.
+    """
+    source = fixture_dir("outdated_lock")
+    poetry = project_factory(
+        name="foobar",
+        pyproject_content=(source / "pyproject.toml").read_text(encoding="utf-8"),
+        poetry_lock_content=(source / "poetry.lock").read_text(encoding="utf-8"),
+        use_test_locker=False,
+    )
+
+    tester = command_tester_factory("update", poetry=poetry)
+    assert isinstance(tester.command, UpdateCommand)
+    mocker.patch.object(tester.command.installer, "run", return_value=0)
+
+    repo.add_package(get_package("requests", "2.25.0"))
+
+    status = tester.execute("requests")
+
+    assert status == 0
+    assert tester.io.fetch_error() == ""
+
+
+def test_update_with_dependency_added_to_pyproject_but_not_locked(
+    project_factory: ProjectFactory,
+    fixture_dir: FixtureDirGetter,
+    repo: DummyRepository,
+    command_tester_factory: CommandTesterFactory,
+    mocker: MockerFixture,
+) -> None:
+    """
+    Regression test: a dependency that has been added to pyproject.toml but
+    is not yet present in the lockfile (because the user has not run
+    `poetry lock` yet) must still be acceptable to `poetry update`.
+    """
+    source = fixture_dir("outdated_lock")
+    pyproject_content = (source / "pyproject.toml").read_text(encoding="utf-8")
+    pyproject_content = pyproject_content.replace(
+        '"docker>=4.3.1",',
+        '"docker>=4.3.1",\n    "pendulum>=3.0.0",',
+    )
+    poetry = project_factory(
+        name="foobar",
+        pyproject_content=pyproject_content,
+        poetry_lock_content=(source / "poetry.lock").read_text(encoding="utf-8"),
+        use_test_locker=False,
+    )
+
+    tester = command_tester_factory("update", poetry=poetry)
+    assert isinstance(tester.command, UpdateCommand)
+    mocker.patch.object(tester.command.installer, "run", return_value=0)
+
+    repo.add_package(get_package("pendulum", "3.0.0"))
+
+    status = tester.execute("pendulum")
+
+    assert status == 0
+    assert tester.io.fetch_error() == ""
+
+
 def test_update_with_invalid_package_name_shows_error(
     poetry_with_outdated_lockfile: Poetry,
     command_tester_factory: CommandTesterFactory,
