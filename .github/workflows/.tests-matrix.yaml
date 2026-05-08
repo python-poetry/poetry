@@ -117,12 +117,6 @@ jobs:
         env:
           PYTHON_VERSION: ${{ inputs.python-version }}
 
-      # This step can be removed after having released a poetry-plugin-export version
-      # that has cffi>=1.17.0 in its lock file.
-      - name: Force more recent cffi (workaround for Python 3.13)
-        working-directory: poetry-plugin-export
-        run: poetry update --lock cffi
-
       - name: Install
         working-directory: poetry-plugin-export
         run: poetry install
