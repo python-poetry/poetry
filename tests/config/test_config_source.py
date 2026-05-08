@@ -23,7 +23,7 @@ def test_config_source_migration_rename_key() -> None:
 
     migration.apply(config_source)
 
-    config_source._config = {
+    assert config_source._config == {
         "virtualenvs": {
             "use-poetry-python": True,
         },
@@ -49,7 +49,7 @@ def test_config_source_migration_remove_key() -> None:
 
     migration.apply(config_source)
 
-    config_source._config = {
+    assert config_source._config == {
         "virtualenvs": {},
         "system-git-client": True,
     }
@@ -74,7 +74,7 @@ def test_config_source_migration_unset_value() -> None:
 
     migration.apply(config_source)
 
-    config_source._config = {
+    assert config_source._config == {
         "virtualenvs": {},
         "system-git-client": True,
     }
@@ -99,7 +99,7 @@ def test_config_source_migration_complex_migration() -> None:
 
     migration.apply(config_source)
 
-    config_source._config = {
+    assert config_source._config == {
         "virtualenvs": {
             "use-poetry-python": None,
         },
