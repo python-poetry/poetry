@@ -39,7 +39,7 @@ class InitCommand(Command):
     options: ClassVar[list[Option]] = [
         option("name", None, "Name of the package.", flag=False),
         option("description", None, "Description of the package.", flag=False),
-        option("author", None, "Author name of the package.", flag=False),
+        option("author", None, "Author name of the package.", flag=False, multiple=True),
         option("python", None, "Compatible Python versions.", flag=False),
         option(
             "dependency",
@@ -237,7 +237,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             name,
             version,
             description=description,
-            author=authors[0] if authors else None,
+            authors=authors,
             readme_format=readme_format,
             license=license_name,
             python=python,
