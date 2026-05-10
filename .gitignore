@@ -10,10 +10,13 @@
 .DS_Store
 .idea/*
 .python-version
-.vscode/*
 
 /docs/site/*
 .mypy_cache
 
 .venv
 /poetry.toml
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat
+.gitignore
