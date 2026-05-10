@@ -503,6 +503,7 @@ def test_clone_with_lfs_files(tmp_path: Path) -> None:
         message=b"Add files with LFS support",
         author=b"Test <test@example.com>",
         committer=b"Test <test@example.com>",
+        sign=False,
     )
 
     # Clone the repository
