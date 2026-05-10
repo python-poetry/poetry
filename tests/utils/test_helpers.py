@@ -42,7 +42,6 @@ def test_pluralize() -> None:
     assert pluralize(3, "") == "s"
 
 
-
 def test_parse_requires() -> None:
     requires = """\
 jsonschema>=2.6.0.0,<3.0.0.0
