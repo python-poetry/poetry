@@ -1,0 +1,37 @@
+{
+  "alternate-locations": [],
+  "files": [
+    {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
+      "filename": "poetry-21.07.28.5ffb65e2ff8067c732e2b178d03b707c7fb27855-py3-none-any.whl",
+      "hashes": {
+        "sha256": "1d85132efab8ead3c6f69202843da40a03823992091c29f8d65a31af68940163"
+      },
+      "requires-python": ">=3.6.0",
+      "url": "poetry-21.07.28.5ffb65e2ff8067c732e2b178d03b707c7fb27855-py3-none-any.whl"
+    },
+    {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
+      "filename": "poetry-0.1.0-py3-none-any.whl",
+      "hashes": {
+        "sha256": "1d85132efab8ead3c6f69202843da40a03823992091c29f8d65a31af68940163"
+      },
+      "requires-python": ">=3.6.0",
+      "url": "poetry-0.1.0-py3-none-any.whl"
+    }
+  ],
+  "meta": {
+    "_last-serial": 0,
+    "api-version": "1.0"
+  },
+  "name": "poetry",
+  "project-status": {
+    "status": "active"
+  },
+  "versions": [
+    "0.1.0",
+    "21.07.28.5ffb65e2ff8067c732e2b178d03b707c7fb27855"
+  ]
+}

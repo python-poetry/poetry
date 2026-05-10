@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from poetry.utils._compat import metadata
+from importlib import metadata
 
 
 __version__ = metadata.version("poetry")

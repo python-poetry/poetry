@@ -30,10 +30,19 @@ description = "This is a description"
 authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
-license = {text = "MIT"}
+license = "MIT"
 readme = "README.md"
 requires-python = ">=3.6"
 """
+
+
+@pytest.fixture
+def init_basic_toml_no_readme(init_basic_toml: str) -> str:
+    # Remove the readme line
+    lines = init_basic_toml.splitlines()
+    lines = [line for line in lines if not line.strip().startswith("readme =")]
+    init_basic_toml_no_readme = "\n".join(lines)
+    return init_basic_toml_no_readme
 
 
 @pytest.fixture()
@@ -46,7 +55,7 @@ description = "This is a description"
 authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
-license = {text = "MIT"}
+license = "MIT"
 readme = "README.md"
 requires-python = ">=3.6"
 dependencies = [

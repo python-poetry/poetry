@@ -7,7 +7,9 @@ import shutil
 import sys
 
 from functools import cached_property
+from importlib import metadata
 from pathlib import Path
+from site import addsitedir
 from typing import TYPE_CHECKING
 
 import tomlkit
@@ -21,7 +23,6 @@ from poetry.plugins.application_plugin import ApplicationPlugin
 from poetry.plugins.plugin import Plugin
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.toml import TOMLFile
-from poetry.utils._compat import metadata
 from poetry.utils._compat import tomllib
 from poetry.utils.env import Env
 from poetry.utils.env import EnvManager
@@ -62,7 +63,10 @@ class PluginManager:
 
         plugin_path = pyproject_toml.parent / ProjectPluginCache.PATH
         if plugin_path.exists():
+            # insert at the beginning to allow overriding dependencies
             EnvManager.get_system_env(naive=True).sys_path.insert(0, str(plugin_path))
+            # process .pth files (among other things)
+            addsitedir(str(plugin_path))
 
     @classmethod
     def ensure_project_plugins(cls, poetry: Poetry, io: IO) -> None:
@@ -261,12 +265,12 @@ class ProjectPluginCache:
         self,
         plugins: Sequence[Dependency],
         poetry_env: Env,
-        locked_packages: Sequence[Package],
+        installed_packages: Sequence[Package],
     ) -> None:
         project = ProjectPackage(name="poetry-project-instance", version="0")
         project.python_versions = ".".join(str(v) for v in poetry_env.version_info[:3])
         # consider all packages in Poetry's environment pinned
-        for package in locked_packages:
+        for package in installed_packages:
             project.add_dependency(package.to_dependency())
         # add missing plugin dependencies
         for dependency in plugins:
@@ -284,9 +288,7 @@ class ProjectPluginCache:
             Locker(self._path / "poetry.lock", {}),
             self._poetry.pool,
             self._poetry.config,
-            # Build installed repository from locked packages so that plugins
-            # that may be overwritten are not included.
-            InstalledRepository(locked_packages),
+            InstalledRepository(installed_packages),
         )
         installer.update(True)
 

@@ -599,7 +599,7 @@ The first example will only work completely if you configure Poetry to not re-re
 poetry config installer.re-resolve false
 ```
 
-This is a new feature of Poetry 2.0 that may become the default in a future version of Poetry.
+This was a new feature of Poetry 2.0 and became the default behavior in Poetry 2.3.
 
 {{% /warning %}}
 

@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+from datetime import datetime
+from datetime import timezone
 from io import BytesIO
 from typing import TYPE_CHECKING
+from typing import Any
 
 import pytest
 
+from packaging.utils import NormalizedName
 from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import Version
 from poetry.core.packages.dependency import Dependency
@@ -16,6 +20,8 @@ from poetry.repositories.pypi_repository import PyPiRepository
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from pytest_mock import MockerFixture
 
     from tests.types import DistributionHashGetter
@@ -81,8 +87,61 @@ def test_find_packages_yanked(
     assert [str(p.version) for p in packages] == expected
 
 
+@pytest.mark.parametrize(
+    "min_release_age_exclude", [set(), {"a", "b"}, {"requests", "other"}]
+)
+def test_find_packages_min_release_age(
+    pypi_repository: PyPiRepository, min_release_age_exclude: set[NormalizedName]
+) -> None:
+    """Versions with files uploaded within min-release-age days are filtered."""
+    repo = pypi_repository
+    # requests fixture upload times:
+    #   2.18.0: 2017-06-14, 2.18.1: 2017-06-14, 2.18.2: 2017-07-25,
+    #   2.18.3: 2017-08-02, 2.18.4: 2017-08-15, 2.19.0: 2018-06-12
+    # Set "now" to 2017-08-20 with min-release-age=10 days.
+    # Cutoff = 2017-08-10. Versions with any file uploaded after that are filtered.
+    # Note that 2.19.0 is uploaded in the future ;)
+    repo._min_release_age_cutoff = datetime(2017, 8, 10, tzinfo=timezone.utc)
+    repo._min_release_age_exclude = min_release_age_exclude
+    packages = repo.find_packages(Factory.create_dependency("requests", ">=2.18.0"))
+
+    expected_versions = [
+        "2.18.0",
+        "2.18.1",
+        "2.18.2",
+        "2.18.3",
+    ]
+    expected_filtered = {"requests": {Version.parse("2.18.4"), Version.parse("2.19.0")}}
+    if "requests" in min_release_age_exclude:
+        expected_versions += ["2.18.4", "2.19.0"]
+        expected_filtered = {}
+
+    assert [str(p.version) for p in packages] == expected_versions
+    assert repo._age_filtered_versions == expected_filtered
+
+
+@pytest.mark.parametrize(
+    "constraints", [(">=2.18.0", "<2.19.0"), ("<2.19.0", ">=2.18.0")]
+)
+def test_find_packages_min_release_age_multiple_calls(
+    pypi_repository: PyPiRepository, constraints: tuple[str, str]
+) -> None:
+    """See test_find_packages_min_release_age for basic setup."""
+    repo = pypi_repository
+    repo._min_release_age_cutoff = datetime(2017, 8, 10, tzinfo=timezone.utc)
+
+    repo.find_packages(Factory.create_dependency("requests", constraints[0]))
+    repo.find_packages(Factory.create_dependency("requests", constraints[1]))
+
+    expected_filtered = {"requests": {Version.parse("2.18.4"), Version.parse("2.19.0")}}
+
+    assert repo._age_filtered_versions == expected_filtered
+
+
 def test_package(
-    pypi_repository: PyPiRepository, dist_hash_getter: DistributionHashGetter
+    pypi_repository: PyPiRepository,
+    dist_hash_getter: DistributionHashGetter,
+    get_pypi_file_info: Callable[[str], dict[str, Any]],
 ) -> None:
     repo = pypi_repository
 
@@ -97,7 +156,10 @@ def test_package(
     assert package.files == [
         {
             "file": filename,
-            "hash": (f"sha256:{dist_hash_getter(filename).sha256}"),
+            "hash": f"sha256:{dist_hash_getter(filename).sha256}",
+            "url": (file_info := get_pypi_file_info(filename))["url"],
+            "size": file_info["size"],
+            "upload_time": file_info["upload_time_iso_8601"],
         }
         for filename in [
             f"{package.name}-{package.version}-py2.py3-none-any.whl",
@@ -316,7 +378,9 @@ def test_invalid_versions_ignored(pypi_repository: PyPiRepository) -> None:
 def test_get_should_invalid_cache_on_too_many_redirects_error(
     mocker: MockerFixture,
 ) -> None:
-    delete_cache = mocker.patch("cachecontrol.caches.file_cache.FileCache.delete")
+    delete_cache = mocker.patch(
+        "cachecontrol.caches.file_cache.SeparateBodyFileCache.delete"
+    )
 
     response = Response()
     response.status_code = 200

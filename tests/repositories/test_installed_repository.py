@@ -5,6 +5,7 @@ import shutil
 import zipfile
 
 from functools import cached_property
+from importlib import metadata
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import NamedTuple
@@ -13,7 +14,6 @@ import pytest
 
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils._compat import getencoding
-from poetry.utils._compat import metadata
 from poetry.utils.env import EnvManager
 from poetry.utils.env import MockEnv
 from poetry.utils.env import VirtualEnv
@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from pytest_mock.plugin import MockerFixture
 
     from poetry.poetry import Poetry
+    from poetry.utils.env.base_env import PythonVersion
     from tests.types import FixtureDirGetter
     from tests.types import ProjectFactory
 
@@ -64,10 +65,7 @@ def installed_results(
         metadata.PathDistribution(site_purelib / "cleo-0.7.6.dist-info"),
         metadata.PathDistribution(src_dir / "pendulum" / "pendulum.egg-info"),
         metadata.PathDistribution(
-            zipfile.Path(  # type: ignore[arg-type]
-                site_purelib / "foo-0.1.0-py3.8.egg",
-                "EGG-INFO",
-            )
+            zipfile.Path(site_purelib / "foo-0.1.0-py3.8.egg", "EGG-INFO")
         ),
         metadata.PathDistribution(site_purelib / "standard-1.2.3.dist-info"),
         metadata.PathDistribution(site_purelib / "editable-2.3.4.dist-info"),
@@ -134,7 +132,7 @@ def repository(
     installed_results: list[metadata.PathDistribution],
 ) -> InstalledRepository:
     mocker.patch(
-        "poetry.utils._compat.metadata.Distribution.discover",
+        "importlib.metadata.Distribution.discover",
         return_value=installed_results,
     )
     return InstalledRepository.load(env)
@@ -191,7 +189,7 @@ def test_load_successful_with_invalid_distribution(
     invalid_dist_info = tmp_path / "site-packages" / "invalid-0.1.0.dist-info"
     invalid_dist_info.mkdir(parents=True)
     mocker.patch(
-        "poetry.utils._compat.metadata.Distribution.discover",
+        "importlib.metadata.Distribution.discover",
         return_value=[*installed_results, metadata.PathDistribution(invalid_dist_info)],
     )
     repository_with_invalid_distribution = InstalledRepository.load(env)
@@ -205,7 +203,7 @@ def test_load_successful_with_invalid_distribution(
 
 
 def test_loads_in_correct_sys_path_order(
-    tmp_path: Path, current_python: tuple[int, int, int], fixture_dir: FixtureDirGetter
+    tmp_path: Path, current_python: PythonVersion, fixture_dir: FixtureDirGetter
 ) -> None:
     path1 = tmp_path / "path1"
     path1.mkdir()

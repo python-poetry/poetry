@@ -57,7 +57,7 @@ def test_remove_version(
     other_cpython_path = mocked_poetry_managed_python_register("3.9.2", "cpython")
     pypy_path = mocked_poetry_managed_python_register("3.9.1", "pypy")
 
-    tester.execute("3.9.1")
+    assert tester.execute("3.9.1") == 0, tester.io.fetch_error()
 
     assert (
         tester.io.fetch_output() == "Removing installation 3.9.1 (cpython) ... Done\n"
@@ -77,7 +77,7 @@ def test_remove_version_implementation(
     cpython_path = mocked_poetry_managed_python_register("3.9.1", "cpython")
     pypy_path = mocked_poetry_managed_python_register("3.9.1", "pypy")
 
-    tester.execute(f"3.9.1 -i {implementation}")
+    assert tester.execute(f"3.9.1 -i {implementation}") == 0, tester.io.fetch_error()
 
     assert (
         tester.io.fetch_output()
@@ -89,6 +89,41 @@ def test_remove_version_implementation(
     else:
         assert cpython_path.exists()
         assert not pypy_path.exists()
+
+
+@pytest.mark.parametrize("free_threaded", [True, False])
+@pytest.mark.parametrize("option", [True, False])
+def test_remove_version_free_threaded(
+    tester: CommandTester,
+    config: Config,
+    mocked_poetry_managed_python_register: MockedPoetryPythonRegister,
+    free_threaded: bool,
+    option: bool,
+) -> None:
+    standard_path = mocked_poetry_managed_python_register("3.14.0", "cpython")
+    free_threaded_path = mocked_poetry_managed_python_register(
+        "3.14.0", "cpython", free_threaded=True
+    )
+
+    args = "3.14.0"
+    if free_threaded:
+        args += " --free-threaded" if option else "t"
+
+    assert tester.execute(args) == 0, tester.io.fetch_error()
+
+    details = "cpython"
+    if free_threaded:
+        details += ", free-threaded"
+    assert (
+        tester.io.fetch_output()
+        == f"Removing installation 3.14.0 ({details}) ... Done\n"
+    )
+    if free_threaded:
+        assert not free_threaded_path.exists()
+        assert standard_path.exists()
+    else:
+        assert not standard_path.exists()
+        assert free_threaded_path.exists()
 
 
 def test_remove_multiple_versions(

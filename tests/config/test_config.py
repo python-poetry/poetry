@@ -15,6 +15,7 @@ from deepdiff.diff import DeepDiff
 from poetry.config.config import Config
 from poetry.config.config import boolean_normalizer
 from poetry.config.config import int_normalizer
+from poetry.config.config import str_list_normalizer
 from poetry.utils.password_manager import PasswordManager
 from tests.helpers import flatten_dict
 from tests.helpers import isolated_environment
@@ -38,14 +39,31 @@ def get_options_based_on_normalizer(normalizer: Normalizer) -> Iterator[str]:
 
 
 @pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("foo, bar ,  baz", ["foo", "bar", "baz"]),
+        (", ,", []),
+        ("", []),
+    ],
+)
+def test_str_list_normalizer(value: str, expected: list[str]) -> None:
+    assert str_list_normalizer(value) == expected
+
+
+@pytest.mark.parametrize(
     ("name", "value"),
     [
         ("installer.parallel", True),
         ("virtualenvs.create", True),
         ("requests.max-retries", 0),
+        ("solver.min-release-age", 0),
+        ("solver.min-release-age-exclude", None),
+        ("solver.min-release-age-exclude-source", None),
     ],
 )
-def test_config_get_default_value(config: Config, name: str, value: bool) -> None:
+def test_config_get_default_value(
+    config: Config, name: str, value: bool | int | None
+) -> None:
     assert config.get(name) is value
 
 
@@ -53,6 +71,12 @@ def test_config_get_processes_depended_on_values(
     config: Config, config_cache_dir: Path
 ) -> None:
     assert str(config_cache_dir / "virtualenvs") == config.get("virtualenvs.path")
+
+
+def test_config_process_resolves_falsy_values(config: Config) -> None:
+    """Falsy config values (False, 0) must not be treated as missing
+    during string interpolation."""
+    assert config.process("{requests.max-retries}") == "0"
 
 
 def generate_environment_variable_tests() -> Iterator[tuple[str, str, str, bool]]:

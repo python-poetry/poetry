@@ -173,3 +173,20 @@ def test_install_passes_options_to_installer(
         f"Downloading and installing 3.13 ({details}) ... Done\n"
         f"Testing 3.13 ({details}) ... Done\n"
     )
+
+
+def test_install_free_threaded_via_trailing_t(
+    tester: CommandTester, mock_installer: MagicMock
+) -> None:
+    mock_installer.return_value.exists.return_value = False
+
+    tester.execute("3.13t")
+
+    mock_installer.assert_called_once_with("3.13", "cpython", True)
+    mock_installer.return_value.install.assert_called_once()
+
+    assert tester.status_code == 0
+    assert tester.io.fetch_output() == (
+        "Downloading and installing 3.13 (cpython, free-threaded) ... Done\n"
+        "Testing 3.13 (cpython, free-threaded) ... Done\n"
+    )

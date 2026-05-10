@@ -3,9 +3,10 @@ from __future__ import annotations
 import tempfile
 
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
 
-from poetry.core.utils.helpers import temporary_directory
+from poetry.core.packages.utils.utils import splitext
 
 from poetry.utils.helpers import extractall
 from poetry.utils.isolated_build import isolated_builder
@@ -16,6 +17,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from build import DistributionType
+    from poetry.core.packages.dependency import Dependency
 
     from poetry.repositories import RepositoryPool
     from poetry.utils.cache import ArtifactCache
@@ -40,6 +42,7 @@ class Chef:
         *,
         editable: bool = False,
         config_settings: Mapping[str, str | Sequence[str]] | None = None,
+        build_constraints: list[Dependency] | None = None,
     ) -> Path:
         if not self._should_prepare(archive):
             return archive
@@ -51,10 +54,14 @@ class Chef:
                 destination=destination,
                 editable=editable,
                 config_settings=config_settings,
+                build_constraints=build_constraints,
             )
 
         return self._prepare_sdist(
-            archive, destination=output_dir, config_settings=config_settings
+            archive,
+            destination=output_dir,
+            config_settings=config_settings,
+            build_constraints=build_constraints,
         )
 
     def _prepare(
@@ -64,6 +71,7 @@ class Chef:
         *,
         editable: bool = False,
         config_settings: Mapping[str, str | Sequence[str]] | None = None,
+        build_constraints: list[Dependency] | None = None,
     ) -> Path:
         distribution: DistributionType = "editable" if editable else "wheel"
         with isolated_builder(
@@ -71,6 +79,7 @@ class Chef:
             distribution=distribution,
             python_executable=self._env.python,
             pool=self._pool,
+            build_constraints=build_constraints,
         ) as builder:
             return Path(
                 builder.build(
@@ -85,13 +94,14 @@ class Chef:
         archive: Path,
         destination: Path | None = None,
         config_settings: Mapping[str, str | Sequence[str]] | None = None,
+        build_constraints: list[Dependency] | None = None,
     ) -> Path:
         from poetry.core.packages.utils.link import Link
 
-        suffix = archive.suffix
+        _, suffix = splitext(archive)
         zip = suffix == ".zip"
 
-        with temporary_directory() as tmp_dir:
+        with TemporaryDirectory(ignore_cleanup_errors=True) as tmp_dir:
             archive_dir = Path(tmp_dir)
             extractall(source=archive, dest=archive_dir, zip=zip)
 
@@ -100,7 +110,7 @@ class Chef:
             if len(elements) == 1 and elements[0].is_dir():
                 sdist_dir = elements[0]
             else:
-                sdist_dir = archive_dir / archive.name.rstrip(suffix)
+                sdist_dir = archive_dir / archive.name.removesuffix(suffix)
                 if not sdist_dir.is_dir():
                     sdist_dir = archive_dir
 
@@ -115,6 +125,7 @@ class Chef:
                 sdist_dir,
                 destination,
                 config_settings=config_settings,
+                build_constraints=build_constraints,
             )
 
     def _should_prepare(self, archive: Path) -> bool:

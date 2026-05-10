@@ -9,11 +9,14 @@ from poetry.utils.env.null_env import NullEnv
 if TYPE_CHECKING:
     from packaging.tags import Tag
 
+    from poetry.utils.env.base_env import MarkerEnv
+    from poetry.utils.env.base_env import PythonVersion
+
 
 class MockEnv(NullEnv):
     def __init__(
         self,
-        version_info: tuple[int, int, int] = (3, 7, 0),
+        version_info: tuple[int, int, int] | PythonVersion = (3, 7, 0),
         *,
         python_implementation: str = "CPython",
         platform: str = "darwin",
@@ -27,6 +30,8 @@ class MockEnv(NullEnv):
     ) -> None:
         super().__init__(**kwargs)
 
+        if len(version_info) == 3:
+            version_info = (*version_info, "final", 0)
         self._version_info = version_info
         self._python_implementation = python_implementation
         self._platform = platform
@@ -56,21 +61,23 @@ class MockEnv(NullEnv):
 
         return self._sys_path
 
-    def get_marker_env(self) -> dict[str, Any]:
-        if self._mock_marker_env is not None:
-            return self._mock_marker_env
-
+    def get_marker_env(self) -> MarkerEnv:
         marker_env = super().get_marker_env()
-        marker_env["python_implementation"] = self._python_implementation
         marker_env["version_info"] = self._version_info
         marker_env["python_version"] = ".".join(str(v) for v in self._version_info[:2])
-        marker_env["python_full_version"] = ".".join(str(v) for v in self._version_info)
+        marker_env["python_full_version"] = ".".join(
+            str(v) for v in self._version_info[:3]
+        )
         marker_env["sys_platform"] = self._platform
         marker_env["platform_machine"] = self._platform_machine
         marker_env["interpreter_name"] = self._python_implementation.lower()
         marker_env["interpreter_version"] = "cp" + "".join(
             str(v) for v in self._version_info[:2]
         )
+
+        if self._mock_marker_env is not None:
+            for key, value in self._mock_marker_env.items():
+                marker_env[key] = value  # type: ignore[literal-required]
 
         return marker_env
 

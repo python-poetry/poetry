@@ -17,7 +17,7 @@ import requests.auth
 import requests.exceptions
 
 from cachecontrol import CacheControlAdapter
-from cachecontrol.caches import FileCache
+from cachecontrol.caches import SeparateBodyFileCache
 from requests_toolbelt import user_agent
 
 from poetry.__version__ import __version__
@@ -52,10 +52,10 @@ class RepositoryCertificateConfig:
         config = config if config else Config.create()
 
         verify: str | bool = config.get(
-            f"certificates.{repository}.verify",
-            config.get(f"certificates.{repository}.cert", True),
+            ["certificates", repository, "verify"],
+            config.get(["certificates", repository, "cert"], True),
         )
-        client_cert: str = config.get(f"certificates.{repository}.client-cert")
+        client_cert: str = config.get(["certificates", repository, "client-cert"])
 
         return cls(
             cert=Path(verify) if isinstance(verify, str) else None,
@@ -115,15 +115,20 @@ class Authenticator:
             dict[str, AuthenticatorRepositoryConfig] | None
         ) = None
         self._password_manager = PasswordManager(self._config)
+
+        # Poetry < 2.4: FileCache -> directory "_http"
+        # Poetry >= 2.4: SeparateBodyCache -> directory "_http_"
+        # See https://github.com/python-poetry/poetry/pull/10816 for details.
         self._cache_control = (
-            FileCache(
+            SeparateBodyFileCache(
                 self._config.repository_cache_directory
                 / (cache_id or "_default_cache")
-                / "_http"
+                / "_http_"
             )
             if not disable_cache
             else None
         )
+
         self.get_repository_config_for_url = functools.lru_cache(maxsize=None)(
             self._get_repository_config_for_url
         )
@@ -189,13 +194,15 @@ class Authenticator:
         self, method: str, url: str, raise_for_status: bool = True, **kwargs: Any
     ) -> requests.Response:
         headers = kwargs.get("headers")
-        request = requests.Request(method, url, headers=headers)
         credential = self.get_credentials_for_url(url)
 
+        auth = None
         if credential.username is not None or credential.password is not None:
-            request = requests.auth.HTTPBasicAuth(
+            auth = requests.auth.HTTPBasicAuth(
                 credential.username or "", credential.password or ""
-            )(request)
+            )
+
+        request = requests.Request(method, url, headers=headers, auth=auth)
 
         session = self.get_session(url=url)
         prepared_request = session.prepare_request(request)
@@ -204,7 +211,9 @@ class Authenticator:
         stream: bool | None = kwargs.get("stream")
 
         certs = self.get_certs_for_url(url)
-        verify: bool | str | Path = kwargs.get("verify") or certs.cert or certs.verify
+        verify: bool | str | Path | None = kwargs.get("verify")
+        if verify is None:
+            verify = certs.cert or certs.verify
         cert: str | Path | None = kwargs.get("cert") or certs.client_cert
 
         if cert is not None:
@@ -389,7 +398,7 @@ class Authenticator:
         if self._configured_repositories is None:
             self._configured_repositories = {}
             for repository_name in self._config.get("repositories", []):
-                url = self._config.get(f"repositories.{repository_name}.url")
+                url = self._config.get(["repositories", repository_name, "url"])
                 self._configured_repositories[repository_name] = (
                     AuthenticatorRepositoryConfig(repository_name, url)
                 )

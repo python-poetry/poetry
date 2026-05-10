@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
-from typing import Union
 
 from cleo.helpers import option
 from packaging.utils import canonicalize_name
@@ -28,7 +27,7 @@ if TYPE_CHECKING:
 
     from poetry.repositories import RepositoryPool
 
-Requirements = dict[str, Union[str, Mapping[str, Any]]]
+Requirements = dict[str, str | Mapping[str, Any]]
 
 
 class InitCommand(Command):
@@ -90,6 +89,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         allow_interactive: bool = True,
         layout_name: str = "standard",
         readme_format: str = "md",
+        allow_layout_creation_on_empty: bool = False,
     ) -> int:
         from poetry.core.vcs.git import GitConfig
 
@@ -245,12 +245,14 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             dev_dependencies=dev_requirements,
         )
 
-        create_layout = not project_path.exists()
+        create_layout = not project_path.exists() or (
+            allow_layout_creation_on_empty and not any(project_path.iterdir())
+        )
 
         if create_layout:
             layout_.create(project_path, with_pyproject=False)
 
-        content = layout_.generate_project_content()
+        content = layout_.generate_project_content(project_path)
         for section, item in content.items():
             pyproject.data.append(section, item)
 

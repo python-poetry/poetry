@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import contextlib
 import dataclasses
 import logging
+import os
 import re
 
 from pathlib import Path
@@ -17,8 +19,12 @@ from dulwich.client import get_transport_and_path
 from dulwich.config import ConfigFile
 from dulwich.config import parse_submodules
 from dulwich.errors import NotGitRepository
+from dulwich.file import FileLocked
 from dulwich.index import IndexEntry
-from dulwich.refs import ANNOTATED_TAG_SUFFIX
+from dulwich.object_store import peel_sha
+from dulwich.objects import ObjectID
+from dulwich.protocol import PEELED_TAG_SUFFIX
+from dulwich.refs import Ref
 from dulwich.repo import Repo
 
 from poetry.console.exceptions import PoetryRuntimeError
@@ -43,7 +49,10 @@ ERROR_MESSAGE_NOTE = (
     "Poetry issue."
 )
 ERROR_MESSAGE_PROBLEMS_SECTION_START = (
-    "This issue could be caused by any of the following;\n\n"
+    "This issue could be caused by any of the following;\n"
+)
+ERROR_MESSAGE_PROBLEMS_SECTION_START_NETWORK_ISSUES = (
+    f"{ERROR_MESSAGE_PROBLEMS_SECTION_START}\n"
     "- there are network issues in this environment"
 )
 ERROR_MESSAGE_BAD_REVISION = (
@@ -56,8 +65,15 @@ ERROR_MESSAGE_BAD_REMOTE = (
     "- the remote ({remote}) you have specified\n"
     "    - was misspelled\n"
     "    - does not exist\n"
-    "    - requires credentials that were either not configured or is incorrect\n"
-    "    - is in accessible due to network issues"
+    "    - requires credentials that were either not configured or are incorrect\n"
+    "    - contains Git submodules that require credentials that were either not configured or are incorrect\n"
+    "    - is inaccessible due to network issues"
+)
+ERROR_MESSAGE_FILE_LOCK = (
+    "- another process is holding the file lock\n"
+    "- another process crashed while holding the file lock\n\n"
+    "Try again later or remove the {lock_file} manually"
+    " if you are sure no other process is holding it."
 )
 
 
@@ -65,10 +81,10 @@ def is_revision_sha(revision: str | None) -> bool:
     return re.match(r"^\b[0-9a-f]{5,40}\b$", revision or "") is not None
 
 
-def annotated_tag(ref: str | bytes) -> bytes:
+def peeled_tag(ref: str | bytes) -> Ref:
     if isinstance(ref, str):
         ref = ref.encode("utf-8")
-    return ref + ANNOTATED_TAG_SUFFIX
+    return Ref(ref + PEELED_TAG_SUFFIX)
 
 
 @dataclasses.dataclass
@@ -76,14 +92,14 @@ class GitRefSpec:
     branch: str | None = None
     revision: str | None = None
     tag: str | None = None
-    ref: bytes = dataclasses.field(default_factory=lambda: b"HEAD")
+    ref: Ref = dataclasses.field(default_factory=lambda: Ref(b"HEAD"))
 
     def resolve(self, remote_refs: FetchPackResult, repo: Repo) -> None:
         """
         Resolve the ref using the provided remote refs.
         """
         self._normalise(remote_refs=remote_refs, repo=repo)
-        self._set_head(remote_refs=remote_refs)
+        self._set_head(remote_refs=remote_refs, repo=repo)
 
     def _normalise(self, remote_refs: FetchPackResult, repo: Repo) -> None:
         """
@@ -93,7 +109,7 @@ class GitRefSpec:
         """
         if self.revision:
             ref = f"refs/tags/{self.revision}".encode()
-            if ref in remote_refs.refs or annotated_tag(ref) in remote_refs.refs:
+            if ref in remote_refs.refs or peeled_tag(ref) in remote_refs.refs:
                 # this is a tag, incorrectly specified as a revision, tags take priority
                 self.tag = self.revision
                 self.revision = None
@@ -109,7 +125,7 @@ class GitRefSpec:
             and f"refs/heads/{self.branch}".encode() not in remote_refs.refs
             and (
                 f"refs/tags/{self.branch}".encode() in remote_refs.refs
-                or annotated_tag(f"refs/tags/{self.branch}") in remote_refs.refs
+                or peeled_tag(f"refs/tags/{self.branch}") in remote_refs.refs
             )
         ):
             # this is a tag incorrectly specified as a branch
@@ -120,7 +136,7 @@ class GitRefSpec:
             # revision is a short sha, resolve to full sha
             short_sha = self.revision.encode("utf-8")
             for sha in remote_refs.refs.values():
-                if sha.startswith(short_sha):
+                if sha is not None and sha.startswith(short_sha):
                     self.revision = sha.decode("utf-8")
                     return
 
@@ -129,29 +145,39 @@ class GitRefSpec:
                 self.revision = sha.decode("utf-8")
                 return
 
-    def _set_head(self, remote_refs: FetchPackResult) -> None:
+    def _set_head(self, remote_refs: FetchPackResult, repo: Repo) -> None:
         """
-        Internal helper method to populate ref and set it's sha as the remote's head
+        Internal helper method to populate ref and set its SHA as the remote's head
         and default ref.
         """
-        self.ref = remote_refs.symrefs[b"HEAD"]
+        self.ref = remote_refs.symrefs[Ref(b"HEAD")]
 
+        head: ObjectID | None
         if self.revision:
-            head = self.revision.encode("utf-8")
+            head = ObjectID(self.revision.encode("utf-8"))
         else:
             if self.tag:
-                ref = f"refs/tags/{self.tag}".encode()
-                annotated = annotated_tag(ref)
-                self.ref = annotated if annotated in remote_refs.refs else ref
+                ref = Ref(f"refs/tags/{self.tag}".encode())
+                peeled = peeled_tag(ref)
+                self.ref = peeled if peeled in remote_refs.refs else ref
             elif self.branch:
                 self.ref = (
-                    self.branch.encode("utf-8")
+                    Ref(self.branch.encode("utf-8"))
                     if self.is_ref
-                    else f"refs/heads/{self.branch}".encode()
+                    else Ref(f"refs/heads/{self.branch}".encode())
                 )
             head = remote_refs.refs[self.ref]
 
-        remote_refs.refs[self.ref] = remote_refs.refs[b"HEAD"] = head
+            # Peel tag objects to get the underlying commit SHA.
+            # Annotated tags are Tag objects, not Commit objects. Operations like
+            # reset_index() expect HEAD to point to a Commit, so we must peel tags
+            # to extract the commit SHA they reference.
+            # Object not in store yet will be handled during fetch
+            if head is not None:
+                with contextlib.suppress(KeyError):
+                    head = peel_sha(repo.object_store, head)[1].id
+
+        remote_refs.refs[self.ref] = remote_refs.refs[Ref(b"HEAD")] = head
 
     @property
     def key(self) -> str:
@@ -205,7 +231,7 @@ class Git:
     @staticmethod
     def get_revision(repo: Repo) -> str:
         with repo:
-            return repo.get_peeled(b"HEAD").decode("utf-8")
+            return repo.get_peeled(Ref(b"HEAD")).decode("utf-8")
 
     @classmethod
     def info(cls, repo: Repo | Path) -> GitRepoLocalInfo:
@@ -223,17 +249,20 @@ class Git:
         client: GitClient
         path: str
 
-        kwargs: dict[str, str] = {}
         credentials = get_default_authenticator().get_credentials_for_git_url(url=url)
 
+        username = None
+        password = None
         if credentials.password and credentials.username:
             # we do this conditionally as otherwise, dulwich might complain if these
             # parameters are passed in for an ssh url
-            kwargs["username"] = credentials.username
-            kwargs["password"] = credentials.password
+            username = credentials.username
+            password = credentials.password
 
         config = local.get_config_stack()
-        client, path = get_transport_and_path(url, config=config, **kwargs)
+        client, path = get_transport_and_path(
+            url, config=config, username=username, password=password
+        )
 
         with local:
             result: FetchPackResult = client.fetch(
@@ -266,14 +295,14 @@ class Git:
                 exception=e,
                 info=[
                     ERROR_MESSAGE_NOTE,
-                    ERROR_MESSAGE_PROBLEMS_SECTION_START,
+                    ERROR_MESSAGE_PROBLEMS_SECTION_START_NETWORK_ISSUES,
                     ERROR_MESSAGE_BAD_REMOTE.format(remote=url),
                 ],
             )
 
         if revision:
-            revision.replace("refs/head/", "")
-            revision.replace("refs/tags/", "")
+            revision = revision.removeprefix("refs/heads/")
+            revision = revision.removeprefix("refs/tags/")
 
         try:
             SystemGit.checkout(revision, target)
@@ -283,7 +312,7 @@ class Git:
                 exception=e,
                 info=[
                     ERROR_MESSAGE_NOTE,
-                    ERROR_MESSAGE_PROBLEMS_SECTION_START,
+                    ERROR_MESSAGE_PROBLEMS_SECTION_START_NETWORK_ISSUES,
                     ERROR_MESSAGE_BAD_REVISION.format(revision=revision),
                 ],
             )
@@ -317,20 +346,22 @@ class Git:
                 reason=f"<error>Failed to clone {url} at '{refspec.key}', verify ref exists on remote.</>",
                 info=[
                     ERROR_MESSAGE_NOTE,
-                    ERROR_MESSAGE_PROBLEMS_SECTION_START,
+                    ERROR_MESSAGE_PROBLEMS_SECTION_START_NETWORK_ISSUES,
                     ERROR_MESSAGE_BAD_REVISION.format(revision=refspec.key),
                 ],
             )
 
         try:
             # ensure local HEAD matches remote
-            local.refs[b"HEAD"] = remote_refs.refs[b"HEAD"]
+            ref = remote_refs.refs[Ref(b"HEAD")]
+            if ref is not None:
+                local.refs[Ref(b"HEAD")] = ref
         except ValueError:
             raise PoetryRuntimeError.create(
                 reason=f"<error>Failed to clone {url} at '{refspec.key}', verify ref exists on remote.</>",
                 info=[
                     ERROR_MESSAGE_NOTE,
-                    ERROR_MESSAGE_PROBLEMS_SECTION_START,
+                    ERROR_MESSAGE_PROBLEMS_SECTION_START_NETWORK_ISSUES,
                     ERROR_MESSAGE_BAD_REVISION.format(revision=refspec.key),
                     f"\nThis particular error is prevalent when {refspec.key} could not be resolved to a specific commit sha.",
                 ],
@@ -338,24 +369,49 @@ class Git:
 
         if refspec.is_ref:
             # set ref to current HEAD
-            local.refs[refspec.ref] = local.refs[b"HEAD"]
+            local.refs[refspec.ref] = local.refs[Ref(b"HEAD")]
 
         for base, prefix in {
-            (b"refs/remotes/origin", b"refs/heads/"),
-            (b"refs/tags", b"refs/tags"),
+            (Ref(b"refs/remotes/origin"), b"refs/heads/"),
+            (Ref(b"refs/tags"), b"refs/tags/"),
         }:
-            local.refs.import_refs(
-                base=base,
-                other={
-                    n[len(prefix) :]: v
-                    for (n, v) in remote_refs.refs.items()
-                    if n.startswith(prefix) and not n.endswith(ANNOTATED_TAG_SUFFIX)
-                },
-            )
+            try:
+                local.refs.import_refs(
+                    base=base,
+                    other={
+                        Ref(n[len(prefix) :]): v
+                        for (n, v) in remote_refs.refs.items()
+                        if n.startswith(prefix)
+                        and not n.endswith(PEELED_TAG_SUFFIX)
+                        and v is not None
+                    },
+                )
+            except FileLocked as e:
+
+                def to_str(path: bytes | str) -> str:
+                    if isinstance(path, bytes):
+                        path = path.decode()
+                    return path.replace(os.sep * 2, os.sep)
+
+                raise PoetryRuntimeError.create(
+                    # <https://github.com/jelmer/dulwich/pull/2045> should clean up the
+                    # ignore.
+                    reason=(
+                        f"<error>Failed to clone {url} at '{refspec.key}',"
+                        f" unable to acquire file lock for {to_str(e.filename)}.</>"
+                    ),
+                    info=[
+                        ERROR_MESSAGE_NOTE,
+                        ERROR_MESSAGE_PROBLEMS_SECTION_START,
+                        ERROR_MESSAGE_FILE_LOCK.format(
+                            lock_file=to_str(e.lockfilename)
+                        ),
+                    ],
+                )
 
         try:
             with local:
-                local.reset_index()
+                local.get_worktree().reset_index()
         except (AssertionError, KeyError) as e:
             # this implies the ref we need does not exist or is invalid
             if isinstance(e, KeyError):
@@ -374,7 +430,7 @@ class Git:
                 reason=f"<error>Failed to clone {url} at '{refspec.key}', verify ref exists on remote.</>",
                 info=[
                     ERROR_MESSAGE_NOTE,
-                    ERROR_MESSAGE_PROBLEMS_SECTION_START,
+                    ERROR_MESSAGE_PROBLEMS_SECTION_START_NETWORK_ISSUES,
                     ERROR_MESSAGE_BAD_REVISION.format(revision=refspec.key),
                 ],
                 exception=e,
@@ -489,7 +545,9 @@ class Git:
 
                     with current_repo:
                         # we use peeled sha here to ensure tags are resolved consistently
-                        current_sha = current_repo.get_peeled(b"HEAD").decode("utf-8")
+                        current_sha = current_repo.get_peeled(Ref(b"HEAD")).decode(
+                            "utf-8"
+                        )
                 except (NotGitRepository, AssertionError, KeyError):
                     # something is wrong with the current checkout, clean it
                     remove_directory(target, force=True)

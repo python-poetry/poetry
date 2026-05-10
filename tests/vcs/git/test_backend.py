@@ -1,25 +1,71 @@
 from __future__ import annotations
 
+import shutil
+
 from typing import TYPE_CHECKING
-from unittest.mock import MagicMock
+from typing import cast
 
 import pytest
 
+from dulwich.client import FetchPackResult
+from dulwich.refs import HEADREF
+from dulwich.refs import Ref
 from dulwich.repo import Repo
 
+from poetry.console.exceptions import PoetryRuntimeError
 from poetry.vcs.git.backend import Git
-from poetry.vcs.git.backend import annotated_tag
+from poetry.vcs.git.backend import GitRefSpec
 from poetry.vcs.git.backend import is_revision_sha
+from poetry.vcs.git.backend import peeled_tag
 from poetry.vcs.git.backend import urlpathjoin
+from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 
 
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from pytest_mock import MockerFixture
+
     from tests.vcs.git.git_fixture import TempRepoFixture
 
 
 VALID_SHA = "c5c7624ef64f34d9f50c3b7e8118f7f652fddbbd"
+
+FULL_SHA_MAIN = "f7c3bc1d808e04732adf679965ccc34ca7ae3441"
+FULL_SHA_TAG = "d4f6c2a8b9e1073451f28c96a5db7e3f9c2a8b7e"
+SHORT_SHA = "f7c3bc1d"
+
+
+@pytest.fixture()
+def repo_mock(mocker: MockerFixture) -> Repo:
+    repo = mocker.MagicMock(spec=Repo)
+
+    repo.get_config.return_value.get.return_value = (
+        b"https://github.com/python-poetry/poetry.git"
+    )
+
+    repo.head.return_value = MOCK_DEFAULT_GIT_REVISION.encode("utf-8")
+
+    # Mock object store for short SHA resolution
+    repo.object_store = mocker.MagicMock()
+    repo.object_store.iter_prefix.return_value = [FULL_SHA_MAIN.encode()]
+
+    return cast("Repo", repo)
+
+
+@pytest.fixture()
+def fetch_pack_result(mocker: MockerFixture) -> FetchPackResult:
+    mock_fetch_pack_result = mocker.MagicMock(spec=FetchPackResult)
+    mock_fetch_pack_result.refs = {
+        b"refs/heads/main": FULL_SHA_MAIN.encode(),
+        b"refs/heads/feature": b"a9b8c7d6e5f4321098765432109876543210abcd",
+        b"refs/tags/v1.0.0": FULL_SHA_TAG.encode(),
+        peeled_tag(b"refs/tags/v1.0.0"): FULL_SHA_TAG.encode(),
+        b"HEAD": FULL_SHA_MAIN.encode(),
+    }
+    mock_fetch_pack_result.symrefs = {b"HEAD": b"refs/heads/main"}
+
+    return cast("FetchPackResult", mock_fetch_pack_result)
 
 
 def test_invalid_revision_sha() -> None:
@@ -56,19 +102,29 @@ def test_get_name_from_source_url(url: str) -> None:
     assert name == "poetry"
 
 
-@pytest.mark.parametrize(("tag"), ["my-tag", b"my-tag"])
-def test_annotated_tag(tag: str | bytes) -> None:
-    tag = annotated_tag("my-tag")
-    assert tag == b"my-tag^{}"
+@pytest.mark.parametrize("tag", ["my-tag", b"my-tag"], ids=["str", "bytes"])
+def test_peeled_tag(tag: str | bytes) -> None:
+    tag_ref = peeled_tag(tag)
+    assert tag_ref == b"my-tag^{}"
 
 
-def test_get_remote_url() -> None:
-    repo = MagicMock(spec=Repo)
-    repo.get_config.return_value.get.return_value = (
-        b"https://github.com/python-poetry/poetry.git"
+def test_get_remote_url(repo_mock: Repo) -> None:
+    assert (
+        Git.get_remote_url(repo_mock) == "https://github.com/python-poetry/poetry.git"
     )
 
-    assert Git.get_remote_url(repo) == "https://github.com/python-poetry/poetry.git"
+
+def test_get_revision(repo_mock: Repo) -> None:
+    assert Git.get_revision(repo_mock) == MOCK_DEFAULT_GIT_REVISION
+
+
+def test_info(repo_mock: Repo) -> None:
+    info = Git.info(repo_mock)
+
+    assert info.origin == "https://github.com/python-poetry/poetry.git"
+    assert (
+        info.revision == MOCK_DEFAULT_GIT_REVISION
+    )  # revision already mocked in helper
 
 
 @pytest.mark.parametrize(
@@ -82,6 +138,103 @@ def test_urlpathjoin(url: str, expected_result: str) -> None:
     path = "../other-repo"
     result = urlpathjoin(url, path)
     assert result == expected_result
+
+
+def test_git_refspec() -> None:
+    git_ref = GitRefSpec("main", "1234", "v2")
+
+    assert git_ref.branch == "main"
+    assert git_ref.revision == "1234"
+    assert git_ref.tag == "v2"
+    assert git_ref.ref == b"HEAD"
+
+
+@pytest.mark.parametrize(
+    "refspec, expected_ref, expected_branch, expected_revision, expected_tag",
+    [
+        # Basic parameter tests
+        (
+            GitRefSpec(branch="main"),
+            b"refs/heads/main",
+            "main",
+            None,
+            None,
+        ),
+        (
+            GitRefSpec(tag="v1.0.0"),
+            peeled_tag(b"refs/tags/v1.0.0"),
+            None,
+            None,
+            "v1.0.0",
+        ),
+        (
+            GitRefSpec(branch="refs/heads/feature"),
+            b"refs/heads/feature",
+            "refs/heads/feature",
+            None,
+            None,
+        ),
+        # Cross-parameter resolution tests
+        (
+            GitRefSpec(revision="v1.0.0"),
+            peeled_tag(b"refs/tags/v1.0.0"),
+            None,
+            None,
+            "v1.0.0",
+        ),
+        (
+            GitRefSpec(revision="main"),
+            b"refs/heads/main",
+            "main",
+            None,
+            None,
+        ),
+        (
+            GitRefSpec(branch="v1.0.0"),
+            peeled_tag(b"refs/tags/v1.0.0"),
+            None,
+            None,
+            "v1.0.0",
+        ),
+        (
+            GitRefSpec(revision="refs/heads/main"),
+            b"refs/heads/main",
+            "refs/heads/main",
+            None,
+            None,
+        ),
+        # SHA resolution tests with realistic values
+        (
+            GitRefSpec(revision=SHORT_SHA),
+            b"refs/heads/main",
+            None,
+            FULL_SHA_MAIN,
+            None,
+        ),
+        (
+            GitRefSpec(revision=FULL_SHA_MAIN),
+            b"refs/heads/main",
+            None,
+            FULL_SHA_MAIN,
+            None,
+        ),
+    ],
+)
+def test_git_ref_spec_resolve(
+    fetch_pack_result: FetchPackResult,
+    repo_mock: Repo,
+    refspec: GitRefSpec,
+    expected_ref: bytes,
+    expected_branch: str | None,
+    expected_revision: str | None,
+    expected_tag: str | None,
+) -> None:
+    refspec.resolve(fetch_pack_result, repo_mock)
+
+    assert refspec.ref == expected_ref
+    assert refspec.branch == expected_branch
+    assert refspec.revision == expected_revision
+    assert refspec.tag == expected_tag
 
 
 @pytest.mark.skip_git_mock
@@ -107,3 +260,275 @@ def test_short_sha_not_in_head(tmp_path: Path, temp_repo: TempRepoFixture) -> No
 
     target_dir = source_root_dir / "clone-test"
     assert (target_dir / ".git").is_dir()
+
+
+@pytest.mark.skip_git_mock
+def test_clone_existing_locked_tag(tmp_path: Path, temp_repo: TempRepoFixture) -> None:
+    source_root_dir = tmp_path / "test-repo"
+    source_url = temp_repo.path.as_uri()
+    Git.clone(url=source_url, source_root=source_root_dir, name="clone-test")
+
+    tag_ref = source_root_dir / "clone-test" / ".git" / "refs" / "tags" / "v1"
+    assert tag_ref.is_file()
+
+    tag_ref_lock = tag_ref.with_name("v1.lock")
+    shutil.copy(tag_ref, tag_ref_lock)
+
+    with pytest.raises(PoetryRuntimeError) as exc_info:
+        Git.clone(url=source_url, source_root=source_root_dir, name="clone-test")
+
+    expected_short = (
+        f"Failed to clone {source_url} at 'refs/heads/main',"
+        f" unable to acquire file lock for {tag_ref}."
+    )
+    assert str(exc_info.value) == expected_short
+    assert exc_info.value.get_text(debug=True, strip=True) == (
+        f"{expected_short}\n\n"
+        "Note: This error arises from interacting with the specified vcs source"
+        " and is likely not a Poetry issue.\n"
+        "This issue could be caused by any of the following;\n\n"
+        "- another process is holding the file lock\n"
+        "- another process crashed while holding the file lock\n\n"
+        f"Try again later or remove the {tag_ref_lock} manually"
+        " if you are sure no other process is holding it."
+    )
+
+
+@pytest.mark.skip_git_mock
+def test_clone_annotated_tag(tmp_path: Path) -> None:
+    """Test cloning at an annotated tag (issue #10658)."""
+    from dulwich import porcelain
+    from dulwich.objects import Commit
+
+    # Create a source repository with an annotated tag
+    source_path = tmp_path / "source-repo"
+    source_path.mkdir()
+    repo = Repo.init(str(source_path))
+
+    # Create initial commit
+    test_file = source_path / "test.txt"
+    test_file.write_text("test content", encoding="utf-8")
+    porcelain.add(repo, str(test_file))
+    expected_commit_sha = porcelain.commit(
+        repo,
+        message=b"Initial commit",
+        author=b"Test <test@example.com>",
+        committer=b"Test <test@example.com>",
+        sign=False,
+    )
+
+    # Create an annotated tag
+    porcelain.tag_create(
+        repo,
+        tag=b"v1.0.0",
+        message=b"Release 1.0.0",
+        author=b"Test <test@example.com>",
+        annotated=True,
+    )
+
+    # Clone at the annotated tag
+    source_root_dir = tmp_path / "clone-root"
+    source_root_dir.mkdir()
+    cloned_repo = Git.clone(
+        url=source_path.as_uri(),
+        source_root=source_root_dir,
+        name="clone-test",
+        tag="v1.0.0",
+    )
+
+    # Verify HEAD points to a commit, not a tag object
+    head_sha = cloned_repo.refs[HEADREF]
+    head_obj = cloned_repo.object_store[head_sha]
+    assert isinstance(head_obj, Commit), (
+        f"HEAD should point to a Commit, got {type(head_obj).__name__}"
+    )
+    # Verify it's the correct commit
+    assert head_sha == expected_commit_sha, (
+        f"HEAD should point to the expected commit {expected_commit_sha.hex()}, "
+        f"got {head_sha.hex()}"
+    )
+
+    # Verify the clone succeeded and files are present
+    clone_dir = source_root_dir / "clone-test"
+    assert (clone_dir / ".git").is_dir()
+    assert (clone_dir / "test.txt").exists()
+    assert (clone_dir / "test.txt").read_text(encoding="utf-8") == "test content"
+
+
+@pytest.mark.skip_git_mock
+def test_clone_nested_annotated_tags(tmp_path: Path) -> None:
+    """Test cloning at a tag that points to another tag (nested tags)."""
+    from dulwich import porcelain
+    from dulwich.objects import Commit
+    from dulwich.objects import Tag
+
+    # Create a source repository with nested annotated tags
+    source_path = tmp_path / "source-repo"
+    source_path.mkdir()
+    repo = Repo.init(str(source_path))
+
+    # Create initial commit
+    test_file = source_path / "test.txt"
+    test_file.write_text("nested tag test", encoding="utf-8")
+    porcelain.add(repo, paths=[b"test.txt"])
+    commit_sha = porcelain.commit(
+        repo,
+        message=b"Initial commit",
+        committer=b"Test <test@example.com>",
+        author=b"Test <test@example.com>",
+        sign=False,
+    )
+
+    # Create first annotated tag pointing to the commit
+    tag1 = Tag()
+    tag1.name = b"v1.0.0"
+    tag1.object = (Commit, commit_sha)
+    tag1.message = b"First tag"
+    tag1.tag_time = 1234567890
+    tag1.tag_timezone = 0
+    tag1.tagger = b"Test <test@example.com>"
+    repo.object_store.add_object(tag1)
+    repo.refs[Ref(b"refs/tags/v1.0.0")] = tag1.id
+
+    # Create second annotated tag pointing to the first tag
+    tag2 = Tag()
+    tag2.name = b"v1.0.0-release"
+    tag2.object = (Tag, tag1.id)
+    tag2.message = b"Second tag (points to first tag)"
+    tag2.tag_time = 1234567891
+    tag2.tag_timezone = 0
+    tag2.tagger = b"Test <test@example.com>"
+    repo.object_store.add_object(tag2)
+    repo.refs[Ref(b"refs/tags/v1.0.0-release")] = tag2.id
+
+    # Clone at the nested tag
+    source_root_dir = tmp_path / "clone-root"
+    source_root_dir.mkdir()
+    cloned_repo = Git.clone(
+        url=source_path.as_uri(),
+        source_root=source_root_dir,
+        name="clone-test",
+        tag="v1.0.0-release",
+    )
+
+    # Verify HEAD points to a commit, not a tag object
+    head_sha = cloned_repo.refs[HEADREF]
+    head_obj = cloned_repo.object_store[head_sha]
+    assert isinstance(head_obj, Commit), (
+        f"HEAD should point to a Commit (peeling nested tags), got {type(head_obj).__name__}"
+    )
+
+    # Verify it's the correct commit
+    assert head_sha == commit_sha
+
+    # Verify the clone succeeded and files are present
+    clone_dir = source_root_dir / "clone-test"
+    assert (clone_dir / ".git").is_dir()
+    assert (clone_dir / "test.txt").exists()
+    assert (clone_dir / "test.txt").read_text(encoding="utf-8") == "nested tag test"
+
+
+@pytest.mark.parametrize(
+    ("revision_input", "expected_checkout"),
+    [
+        ("refs/heads/main", "main"),
+        ("refs/tags/v1.0", "v1.0"),
+        ("abc123", "abc123"),
+        ("HEAD", "HEAD"),
+    ],
+)
+def test_clone_legacy_strips_ref_prefixes(
+    tmp_path: Path,
+    mocker: MockerFixture,
+    revision_input: str,
+    expected_checkout: str,
+) -> None:
+    """_clone_legacy must strip refs/heads/ and refs/tags/ before checkout."""
+    mock_clone = mocker.patch("poetry.vcs.git.system.SystemGit.clone")
+    mock_checkout = mocker.patch("poetry.vcs.git.system.SystemGit.checkout")
+    mocker.patch("poetry.vcs.git.backend.Repo")
+
+    target = tmp_path / "repo"
+    refspec = GitRefSpec(revision=revision_input)
+
+    Git._clone_legacy("https://example.com/repo.git", refspec, target)
+
+    mock_clone.assert_called_once()
+    mock_checkout.assert_called_once_with(expected_checkout, target)
+
+
+@pytest.mark.skip_git_mock
+def test_clone_with_lfs_files(tmp_path: Path) -> None:
+    """Test cloning a repository with Git LFS files (issue #8723)."""
+    from dulwich import porcelain
+    from dulwich.lfs import LFSStore
+
+    # Create a source repository with LFS support
+    source_path = tmp_path / "source-repo"
+    source_path.mkdir()
+    repo = Repo.init(str(source_path))
+
+    # Set up LFS in the repository
+    lfs_dir = source_path / ".git" / "lfs"
+    lfs_dir.mkdir(parents=True)
+    lfs_store = LFSStore.create(str(lfs_dir))
+
+    # Configure .gitattributes to track large files with LFS
+    gitattributes = source_path / ".gitattributes"
+    gitattributes.write_text("*.bin filter=lfs diff=lfs merge=lfs -text\n")
+    porcelain.add(repo, str(gitattributes))
+
+    # Create a regular file
+    regular_file = source_path / "regular.txt"
+    regular_file.write_text("This is a regular file")
+    porcelain.add(repo, str(regular_file))
+
+    # Create an LFS file with a pointer
+    lfs_content = b"This is a large binary file content for LFS storage"
+    lfs_file = source_path / "large.bin"
+
+    # Store the actual content in LFS store and create pointer
+    lfs_object_id = lfs_store.write_object([lfs_content])
+    lfs_pointer = (
+        f"version https://git-lfs.github.com/spec/v1\n"
+        f"oid sha256:{lfs_object_id}\n"
+        f"size {len(lfs_content)}\n"
+    )
+    lfs_file.write_text(lfs_pointer)
+    porcelain.add(repo, str(lfs_file))
+
+    # Commit the files
+    porcelain.commit(
+        repo,
+        message=b"Add files with LFS support",
+        author=b"Test <test@example.com>",
+        committer=b"Test <test@example.com>",
+        sign=False,
+    )
+
+    # Clone the repository
+    source_root_dir = tmp_path / "clone-root"
+    source_root_dir.mkdir()
+    Git.clone(
+        url=source_path.as_uri(),
+        source_root=source_root_dir,
+        name="clone-test",
+    )
+
+    # Verify the clone succeeded
+    clone_dir = source_root_dir / "clone-test"
+    assert (clone_dir / ".git").is_dir()
+
+    # Verify regular file is present
+    assert (clone_dir / "regular.txt").exists()
+    assert (clone_dir / "regular.txt").read_text() == "This is a regular file"
+
+    # Verify .gitattributes is present
+    assert (clone_dir / ".gitattributes").exists()
+    assert "filter=lfs" in (clone_dir / ".gitattributes").read_text()
+
+    # Verify LFS file is present with actual content (not just pointer)
+    # The LFS system should automatically retrieve the actual content
+    assert (clone_dir / "large.bin").exists()
+    lfs_file_content = (clone_dir / "large.bin").read_bytes()
+    assert lfs_file_content == lfs_content

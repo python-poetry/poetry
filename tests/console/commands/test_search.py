@@ -10,7 +10,7 @@ from poetry.repositories.pypi_repository import PyPiRepository
 
 
 if TYPE_CHECKING:
-    import httpretty
+    import responses
 
     from cleo.testers.command_tester import CommandTester
 
@@ -54,7 +54,7 @@ def clean_output(text: str) -> str:
 
 
 def test_search(
-    tester: CommandTester, http: type[httpretty.httpretty], poetry: Poetry
+    tester: CommandTester, http: responses.RequestsMock, poetry: Poetry
 ) -> None:
     # we expect PyPI in the default behaviour
     poetry.pool.add_repository(PyPiRepository())
@@ -68,7 +68,7 @@ def test_search(
 
 def test_search_empty_results(
     tester: CommandTester,
-    http: type[httpretty.httpretty],
+    http: responses.RequestsMock,
     poetry: Poetry,
     legacy_repository: LegacyRepository,
 ) -> None:
@@ -82,7 +82,7 @@ def test_search_empty_results(
 
 def test_search_with_legacy_repository(
     tester: CommandTester,
-    http: type[httpretty.httpretty],
+    http: responses.RequestsMock,
     poetry: Poetry,
     legacy_repository: LegacyRepository,
 ) -> None:
@@ -104,7 +104,7 @@ def test_search_with_legacy_repository(
 
 def test_search_only_legacy_repository(
     tester: CommandTester,
-    http: type[httpretty.httpretty],
+    http: responses.RequestsMock,
     poetry: Poetry,
     legacy_repository: LegacyRepository,
 ) -> None:
@@ -113,9 +113,10 @@ def test_search_only_legacy_repository(
     tester.execute("ipython")
 
     expected = """\
- Package Version Source Description
- ipython 5.7.0   legacy
- ipython 7.5.0   legacy
+ Package Version  Source Description
+ ipython 4.1.0rc1 legacy
+ ipython 5.7.0    legacy
+ ipython 7.5.0    legacy
 """
 
     output = clean_output(tester.io.fetch_output())
@@ -124,7 +125,7 @@ def test_search_only_legacy_repository(
 
 def test_search_multiple_queries(
     tester: CommandTester,
-    http: type[httpretty.httpretty],
+    http: responses.RequestsMock,
     poetry: Poetry,
     legacy_repository: LegacyRepository,
 ) -> None:
@@ -133,11 +134,12 @@ def test_search_multiple_queries(
     tester.execute("ipython isort")
 
     expected = """\
- Package        Version Source Description
- ipython        5.7.0   legacy
- ipython        7.5.0   legacy
- isort          4.3.4   legacy
- isort-metadata 4.3.4   legacy
+ Package        Version  Source Description
+ ipython        4.1.0rc1 legacy
+ ipython        5.7.0    legacy
+ ipython        7.5.0    legacy
+ isort          4.3.4    legacy
+ isort-metadata 4.3.4    legacy
 """
 
     output = clean_output(tester.io.fetch_output())

@@ -3,35 +3,38 @@ from __future__ import annotations
 import re
 
 from enum import IntEnum
+from io import BytesIO
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Any
 from typing import Protocol
 from urllib.parse import urlparse
+from zipfile import ZipInfo
 
 import pytest
 import requests
+import responses
 
 from requests import codes
 
 from poetry.inspection.lazy_wheel import HTTPRangeRequestNotRespectedError
 from poetry.inspection.lazy_wheel import HTTPRangeRequestUnsupportedError
 from poetry.inspection.lazy_wheel import InvalidWheelError
+from poetry.inspection.lazy_wheel import LazyFileOverHTTP
+from poetry.inspection.lazy_wheel import LazyWheelOverHTTP
 from poetry.inspection.lazy_wheel import LazyWheelUnsupportedError
+from poetry.inspection.lazy_wheel import UnsupportedWheelError
 from poetry.inspection.lazy_wheel import metadata_from_wheel_url
 from tests.helpers import http_setup_redirect
 
 
 if TYPE_CHECKING:
-    import httpretty
-
-    from httpretty.core import HTTPrettyRequest
     from pytest_mock import MockerFixture
+    from requests import PreparedRequest
 
     from tests.types import FixtureDirGetter
-    from tests.types import HTTPPrettyRequestCallbackWrapper
-    from tests.types import HTTPrettyRequestCallback
-    from tests.types import HTTPrettyResponse
+    from tests.types import HttpRequestCallback
+    from tests.types import HttpRequestCallbackWrapper
+    from tests.types import HttpResponse
     from tests.types import PackageDistributionLookup
 
     class RequestCallbackFactory(Protocol):
@@ -41,7 +44,7 @@ if TYPE_CHECKING:
             accept_ranges: str | None = "bytes",
             negative_offset_error: tuple[int, bytes] | None = None,
             ignore_accept_ranges: bool = False,
-        ) -> HTTPrettyRequestCallback: ...
+        ) -> HttpRequestCallback: ...
 
     class AssertMetadataFromWheelUrl(Protocol):
         def __call__(
@@ -50,7 +53,7 @@ if TYPE_CHECKING:
             accept_ranges: str | None = "bytes",
             negative_offset_error: tuple[int, bytes] | None = None,
             expected_requests: int = 3,
-            request_callback_wrapper: HTTPPrettyRequestCallbackWrapper | None = None,
+            request_callback_wrapper: HttpRequestCallbackWrapper | None = None,
             redirect: bool = True,
         ) -> None: ...
 
@@ -62,9 +65,9 @@ class NegativeOffsetFailure(IntEnum):
 
 
 def build_head_response(
-    accept_ranges: str | None, content_length: int, response_headers: dict[str, Any]
-) -> HTTPrettyResponse:
-    response_headers["Content-Length"] = content_length
+    accept_ranges: str | None, content_length: int, response_headers: dict[str, str]
+) -> HttpResponse:
+    response_headers["Content-Length"] = str(content_length)
     if accept_ranges:
         response_headers["Accept-Ranges"] = accept_ranges
     return 200, response_headers, b""
@@ -73,10 +76,10 @@ def build_head_response(
 def build_partial_response(
     rng: str,
     wheel_bytes: bytes,
-    response_headers: dict[str, Any],
+    response_headers: dict[str, str],
     *,
     negative_offset_failure: NegativeOffsetFailure | None = None,
-) -> HTTPrettyResponse:
+) -> HttpResponse:
     status_code = 206
     response_headers["Accept-Ranges"] = "bytes"
     total_length = len(wheel_bytes)
@@ -94,11 +97,12 @@ def build_partial_response(
             start = total_length + offset  # negative start of content range possible!
             end = total_length - 1
             body = wheel_bytes[offset:]
-            response_headers["Content-Length"] = -offset  # just wrong...
+            response_headers["Content-Length"] = str(-offset)  # just wrong...
         else:
             start = total_length + offset
             if start < 0:
                 # wheel is smaller than initial chunk size
+                response_headers["Content-Length"] = str(len(wheel_bytes))
                 return 200, response_headers, wheel_bytes
             end = total_length - 1
             body = wheel_bytes[offset:]
@@ -107,6 +111,8 @@ def build_partial_response(
         start, end = map(int, rng.split("-"))
         body = wheel_bytes[start : end + 1]
     response_headers["Content-Range"] = f"bytes {start}-{end}/{total_length}"
+    if "Content-Length" not in response_headers:
+        response_headers["Content-Length"] = str(len(body))
     return status_code, response_headers, body
 
 
@@ -120,22 +126,21 @@ def handle_request_factory(
         accept_ranges: str | None = "bytes",
         negative_offset_error: tuple[int, bytes] | None = None,
         ignore_accept_ranges: bool = False,
-    ) -> HTTPrettyRequestCallback:
-        def handle_request(
-            request: HTTPrettyRequest, uri: str, response_headers: dict[str, Any]
-        ) -> HTTPrettyResponse:
-            name = Path(urlparse(uri).path).name
+    ) -> HttpRequestCallback:
+        def handle_request(request: PreparedRequest) -> HttpResponse:
+            assert request.url
+            name = Path(urlparse(request.url).path).name
 
             wheel = package_distribution_lookup(name) or package_distribution_lookup(
                 "demo-0.1.0-py2.py3-none-any.whl"
             )
 
             if not wheel:
-                return 404, response_headers, b"Not Found"
+                return 404, {}, b"Not Found"
 
             wheel_bytes = wheel.read_bytes()
 
-            del response_headers["status"]
+            response_headers: dict[str, str] = {}
 
             if request.method == "HEAD":
                 return build_head_response(
@@ -153,6 +158,9 @@ def handle_request_factory(
                 elif negative_offset_error[0] == NegativeOffsetFailure.one_more:
                     negative_offset_failure = NegativeOffsetFailure.one_more
                 else:
+                    response_headers["Content-Length"] = str(
+                        len(negative_offset_error[1])
+                    )
                     return (
                         negative_offset_error[0],
                         response_headers,
@@ -168,6 +176,7 @@ def handle_request_factory(
 
             status_code = 200
             body = wheel_bytes
+            response_headers["Content-Length"] = str(len(body))
 
             return status_code, response_headers, body
 
@@ -178,7 +187,7 @@ def handle_request_factory(
 
 @pytest.fixture
 def assert_metadata_from_wheel_url(
-    http: type[httpretty.httpretty],
+    http: responses.RequestsMock,
     handle_request_factory: RequestCallbackFactory,
 ) -> AssertMetadataFromWheelUrl:
     def _assertion(
@@ -186,11 +195,10 @@ def assert_metadata_from_wheel_url(
         accept_ranges: str | None = "bytes",
         negative_offset_error: tuple[int, bytes] | None = None,
         expected_requests: int = 3,
-        request_callback_wrapper: HTTPPrettyRequestCallbackWrapper | None = None,
+        request_callback_wrapper: HttpRequestCallbackWrapper | None = None,
         redirect: bool = False,
     ) -> None:
-        latest_requests = http.latest_requests()
-        latest_requests.clear()
+        http.reset()
 
         domain = (
             f"lazy-wheel-{negative_offset_error[0] if negative_offset_error else 0}.com"
@@ -202,11 +210,11 @@ def assert_metadata_from_wheel_url(
         if request_callback_wrapper is not None:
             request_callback = request_callback_wrapper(request_callback)
 
-        http.register_uri(http.GET, uri_regex, body=request_callback)
-        http.register_uri(http.HEAD, uri_regex, body=request_callback)
+        http.add_callback(responses.GET, uri_regex, callback=request_callback)
+        http.add_callback(responses.HEAD, uri_regex, callback=request_callback)
 
         if redirect:
-            http_setup_redirect(http, http.GET, http.HEAD)
+            http_setup_redirect(http, responses.GET, responses.HEAD)
 
         url_prefix = "redirect." if redirect else ""
         url = f"https://{url_prefix}{domain}/poetry_core-1.5.0-py3-none-any.whl"
@@ -220,7 +228,7 @@ def assert_metadata_from_wheel_url(
             'importlib-metadata (>=1.7.0) ; python_version < "3.8"'
         ]
 
-        assert len(latest_requests) == expected_requests
+        assert len(http.calls) == expected_requests
 
     return _assertion
 
@@ -276,14 +284,10 @@ def test_metadata_from_wheel_url_416_missing_content_range(
     assert_metadata_from_wheel_url: AssertMetadataFromWheelUrl,
 ) -> None:
     def request_callback_wrapper(
-        request_callback: HTTPrettyRequestCallback,
-    ) -> HTTPrettyRequestCallback:
-        def _wrapped(
-            request: HTTPrettyRequest, uri: str, response_headers: dict[str, Any]
-        ) -> HTTPrettyResponse:
-            status_code, response_headers, body = request_callback(
-                request, uri, response_headers
-            )
+        request_callback: HttpRequestCallback,
+    ) -> HttpRequestCallback:
+        def _wrapped(request: PreparedRequest) -> HttpResponse:
+            status_code, response_headers, body = request_callback(request)
             return (
                 status_code,
                 {
@@ -335,7 +339,7 @@ def test_metadata_from_wheel_url_with_redirect_after_500(
     ],
 )
 def test_metadata_from_wheel_url_smaller_than_initial_chunk_size(
-    http: type[httpretty.httpretty],
+    http: responses.RequestsMock,
     handle_request_factory: RequestCallbackFactory,
     negative_offset_failure: NegativeOffsetFailure | None,
     expected_requests: int,
@@ -347,8 +351,8 @@ def test_metadata_from_wheel_url_smaller_than_initial_chunk_size(
             (negative_offset_failure, b"") if negative_offset_failure else None
         )
     )
-    http.register_uri(http.GET, uri_regex, body=request_callback)
-    http.register_uri(http.HEAD, uri_regex, body=request_callback)
+    http.add_callback(responses.GET, uri_regex, callback=request_callback)
+    http.add_callback(responses.HEAD, uri_regex, callback=request_callback)
 
     url = f"https://{domain}/zipp-3.5.0-py3-none-any.whl"
 
@@ -359,30 +363,28 @@ def test_metadata_from_wheel_url_smaller_than_initial_chunk_size(
     assert metadata["author"] == "Jason R. Coombs"
     assert len(metadata["requires_dist"]) == 12
 
-    latest_requests = http.latest_requests()
-    assert len(latest_requests) == expected_requests
+    assert len(http.calls) == expected_requests
 
 
 @pytest.mark.parametrize("accept_ranges", [None, "none"])
 def test_metadata_from_wheel_url_range_requests_not_supported_one_request(
-    http: type[httpretty.httpretty],
+    http: responses.RequestsMock,
     handle_request_factory: RequestCallbackFactory,
     accept_ranges: str | None,
 ) -> None:
     domain = "no-range-requests.com"
     uri_regex = re.compile(f"^https://{domain}/.*$")
     request_callback = handle_request_factory(accept_ranges=accept_ranges)
-    http.register_uri(http.GET, uri_regex, body=request_callback)
-    http.register_uri(http.HEAD, uri_regex, body=request_callback)
+    http.add_callback(responses.GET, uri_regex, callback=request_callback)
+    http.add_callback(responses.HEAD, uri_regex, callback=request_callback)
 
     url = f"https://{domain}/poetry_core-1.5.0-py3-none-any.whl"
 
     with pytest.raises(HTTPRangeRequestUnsupportedError):
         metadata_from_wheel_url("poetry-core", url, requests.Session())
 
-    latest_requests = http.latest_requests()
-    assert len(latest_requests) == 1
-    assert latest_requests[0].method == "GET"
+    assert len(http.calls) == 1
+    assert http.calls[0].request.method == "GET"
 
 
 @pytest.mark.parametrize(
@@ -393,7 +395,7 @@ def test_metadata_from_wheel_url_range_requests_not_supported_one_request(
     ],
 )
 def test_metadata_from_wheel_url_range_requests_not_supported_two_requests(
-    http: type[httpretty.httpretty],
+    http: responses.RequestsMock,
     handle_request_factory: RequestCallbackFactory,
     negative_offset_error: tuple[int, bytes],
 ) -> None:
@@ -402,22 +404,21 @@ def test_metadata_from_wheel_url_range_requests_not_supported_two_requests(
     request_callback = handle_request_factory(
         accept_ranges=None, negative_offset_error=negative_offset_error
     )
-    http.register_uri(http.GET, uri_regex, body=request_callback)
-    http.register_uri(http.HEAD, uri_regex, body=request_callback)
+    http.add_callback(responses.GET, uri_regex, callback=request_callback)
+    http.add_callback(responses.HEAD, uri_regex, callback=request_callback)
 
     url = f"https://{domain}/poetry_core-1.5.0-py3-none-any.whl"
 
     with pytest.raises(HTTPRangeRequestUnsupportedError):
         metadata_from_wheel_url("poetry-core", url, requests.Session())
 
-    latest_requests = http.latest_requests()
-    assert len(latest_requests) == 2
-    assert latest_requests[0].method == "GET"
-    assert latest_requests[1].method == "HEAD"
+    assert len(http.calls) == 2
+    assert http.calls[0].request.method == "GET"
+    assert http.calls[1].request.method == "HEAD"
 
 
 def test_metadata_from_wheel_url_range_requests_supported_but_not_respected(
-    http: type[httpretty.httpretty],
+    http: responses.RequestsMock,
     handle_request_factory: RequestCallbackFactory,
 ) -> None:
     domain = "range-requests-not-respected.com"
@@ -426,39 +427,37 @@ def test_metadata_from_wheel_url_range_requests_supported_but_not_respected(
         negative_offset_error=(codes.method_not_allowed, b"Method not allowed"),
         ignore_accept_ranges=True,
     )
-    http.register_uri(http.GET, uri_regex, body=request_callback)
-    http.register_uri(http.HEAD, uri_regex, body=request_callback)
+    http.add_callback(responses.GET, uri_regex, callback=request_callback)
+    http.add_callback(responses.HEAD, uri_regex, callback=request_callback)
 
     url = f"https://{domain}/poetry_core-1.5.0-py3-none-any.whl"
 
     with pytest.raises(HTTPRangeRequestNotRespectedError):
         metadata_from_wheel_url("poetry-core", url, requests.Session())
 
-    latest_requests = http.latest_requests()
-    assert len(latest_requests) == 3
-    assert latest_requests[0].method == "GET"
-    assert latest_requests[1].method == "HEAD"
-    assert latest_requests[2].method == "GET"
+    assert len(http.calls) == 3
+    assert http.calls[0].request.method == "GET"
+    assert http.calls[1].request.method == "HEAD"
+    assert http.calls[2].request.method == "GET"
 
 
 def test_metadata_from_wheel_url_invalid_wheel(
-    http: type[httpretty.httpretty],
+    http: responses.RequestsMock,
     handle_request_factory: RequestCallbackFactory,
 ) -> None:
     domain = "invalid-wheel.com"
     uri_regex = re.compile(f"^https://{domain}/.*$")
     request_callback = handle_request_factory()
-    http.register_uri(http.GET, uri_regex, body=request_callback)
-    http.register_uri(http.HEAD, uri_regex, body=request_callback)
+    http.add_callback(responses.GET, uri_regex, callback=request_callback)
+    http.add_callback(responses.HEAD, uri_regex, callback=request_callback)
 
     url = f"https://{domain}/demo_missing_dist_info-0.1.0-py2.py3-none-any.whl"
 
     with pytest.raises(InvalidWheelError):
         metadata_from_wheel_url("demo-missing-dist-info", url, requests.Session())
 
-    latest_requests = http.latest_requests()
-    assert len(latest_requests) == 1
-    assert latest_requests[0].method == "GET"
+    assert len(http.calls) == 1
+    assert http.calls[0].request.method == "GET"
 
 
 def test_metadata_from_wheel_url_handles_unexpected_errors(
@@ -475,3 +474,44 @@ def test_metadata_from_wheel_url_handles_unexpected_errors(
             "https://runtime-error.com/demo_missing_dist_info-0.1.0-py2.py3-none-any.whl",
             requests.Session(),
         )
+
+
+def test_prefetch_metadata_closes_zipfile_on_error(mocker: MockerFixture) -> None:
+    """ZipFile opened in _prefetch_metadata must be closed even if an error occurs."""
+    mock_zf = mocker.MagicMock()
+    # Return entries that don't match the metadata regex, triggering UnsupportedWheelError
+    mock_zf.infolist.return_value = [ZipInfo("pkg/data.txt")]
+    mocker.patch("poetry.inspection.lazy_wheel.ZipFile", return_value=mock_zf)
+
+    lazy = LazyWheelOverHTTP("url", requests.Session())
+
+    with pytest.raises(UnsupportedWheelError, match=r"no .* found for"):
+        lazy._prefetch_metadata("test-pkg")
+
+    mock_zf.__exit__.assert_called_once()
+
+
+def test_ensure_downloaded_writes_at_correct_offsets(mocker: MockerFixture) -> None:
+    """_ensure_downloaded must seek to range_start, not start."""
+    content = bytes(range(100))
+
+    mocker.patch(
+        "poetry.inspection.lazy_wheel.NamedTemporaryFile",
+        return_value=BytesIO(b"\x00" * 100),
+    )
+    lazy = LazyFileOverHTTP("url", requests.Session())
+
+    def fake_fetch(start: int, end: int) -> list[bytes]:
+        return [content[start : end + 1]]
+
+    mocker.patch.object(lazy, "_fetch_content_length", return_value=100)
+    mocker.patch.object(lazy, "_fetch_content_range", side_effect=fake_fetch)
+
+    with lazy:
+        # Download bytes 0-49, then request 30-80 (overlap).
+        # Only 50-79 needs fetching; the bug wrote that data at offset 30.
+        lazy._ensure_downloaded(0, 50)
+        lazy._ensure_downloaded(30, 80)
+
+        lazy._file.seek(0)
+        assert lazy._file.read(80) == content[:80]

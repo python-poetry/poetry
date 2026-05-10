@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from poetry.core.version.markers import parse_marker
+
 from poetry.factory import Factory
 from tests.helpers import get_package
 
@@ -11,7 +13,7 @@ from tests.helpers import get_package
 if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
 
-    from tests.helpers import TestRepository
+    from tests.helpers import DummyRepository
     from tests.types import CommandTesterFactory
 
 
@@ -21,7 +23,7 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
 
 
 @pytest.fixture(autouse=True)
-def __add_packages(repo: TestRepository) -> None:
+def __add_packages(repo: DummyRepository) -> None:
     cachy020 = get_package("cachy", "0.2.0")
     cachy020.add_dependency(Factory.create_dependency("msgpack-python", ">=0.5 <0.6"))
 
@@ -60,6 +62,27 @@ Resolution results:
 
 cachy 0.2.0
 └── msgpack-python >=0.5 <0.6
+"""
+
+    assert tester.io.fetch_output() == expected
+
+
+def test_debug_resolve_shows_marker_when_present(
+    tester: CommandTester, repo: DummyRepository
+) -> None:
+    """Packages with environment markers must show the marker in output."""
+    pkg = get_package("pathlib2", "2.3.0")
+    pkg.marker = parse_marker('sys_platform == "win32"')
+    repo.add_package(pkg)
+
+    tester.execute("pathlib2")
+
+    expected = """\
+Resolving dependencies...
+
+Resolution results:
+
+pathlib2 2.3.0 sys_platform == "win32"
 """
 
     assert tester.io.fetch_output() == expected

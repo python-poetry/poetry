@@ -141,7 +141,7 @@ class DebugResolveCommand(InitCommand):
             ]
 
             if not pkg.marker.is_any():
-                row[2] = str(pkg.marker)
+                row.append(str(pkg.marker))
 
             rows.append(row)
 

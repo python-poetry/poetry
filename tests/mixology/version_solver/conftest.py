@@ -13,7 +13,7 @@ from poetry.repositories import RepositoryPool
 
 
 if TYPE_CHECKING:
-    from tests.helpers import TestRepository
+    from tests.helpers import DummyRepository
 
 
 class Provider(BaseProvider):
@@ -28,7 +28,7 @@ def repo() -> Repository:
 
 
 @pytest.fixture
-def pool(repo: TestRepository) -> RepositoryPool:
+def pool(repo: DummyRepository) -> RepositoryPool:
     pool = RepositoryPool()
     pool.add_repository(repo)
 

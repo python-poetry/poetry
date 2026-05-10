@@ -1,11 +1,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Any
-
-
-if TYPE_CHECKING:
-    from collections.abc import Mapping
 
 import pytest
 
@@ -20,7 +15,7 @@ from tests.console.commands.self.utils import get_self_command_dependencies
 if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
 
-    from tests.helpers import TestRepository
+    from tests.helpers import DummyRepository
     from tests.types import CommandTesterFactory
 
 
@@ -32,18 +27,19 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
 def assert_plugin_add_result(
     tester: CommandTester,
     expected: str,
-    constraint: str | Mapping[str, str | list[str]],
+    constraint: str,
 ) -> None:
     assert tester.io.fetch_output() == expected
-    dependencies: dict[str, Any] = get_self_command_dependencies()
+    dependencies: list[str] | None = get_self_command_dependencies()
 
-    assert "poetry-plugin" in dependencies
-    assert dependencies["poetry-plugin"] == constraint
+    assert dependencies
+    assert "poetry-plugin" in dependencies[0]
+    assert constraint in dependencies[0]
 
 
 def test_add_no_constraint(
     tester: CommandTester,
-    repo: TestRepository,
+    repo: DummyRepository,
 ) -> None:
     repo.add_package(Package("poetry-plugin", "0.1.0"))
 
@@ -61,12 +57,12 @@ Package operations: 1 install, 0 updates, 0 removals
 
 Writing lock file
 """
-    assert_plugin_add_result(tester, expected, "^0.1.0")
+    assert_plugin_add_result(tester, expected, "(>=0.1.0,<0.2.0)")
 
 
 def test_add_with_constraint(
     tester: CommandTester,
-    repo: TestRepository,
+    repo: DummyRepository,
 ) -> None:
     repo.add_package(Package("poetry-plugin", "0.1.0"))
     repo.add_package(Package("poetry-plugin", "0.2.0"))
@@ -84,12 +80,12 @@ Package operations: 1 install, 0 updates, 0 removals
 Writing lock file
 """
 
-    assert_plugin_add_result(tester, expected, "^0.2.0")
+    assert_plugin_add_result(tester, expected, "(>=0.2.0,<0.3.0)")
 
 
 def test_add_with_git_constraint(
     tester: CommandTester,
-    repo: TestRepository,
+    repo: DummyRepository,
 ) -> None:
     repo.add_package(Package("pendulum", "2.0.5"))
 
@@ -108,13 +104,13 @@ Writing lock file
 """
 
     assert_plugin_add_result(
-        tester, expected, {"git": "https://github.com/demo/poetry-plugin.git"}
+        tester, expected, "https://github.com/demo/poetry-plugin.git"
     )
 
 
 def test_add_with_git_constraint_with_extras(
     tester: CommandTester,
-    repo: TestRepository,
+    repo: DummyRepository,
 ) -> None:
     repo.add_package(Package("pendulum", "2.0.5"))
     repo.add_package(Package("tomlkit", "0.7.0"))
@@ -134,11 +130,11 @@ Package operations: 3 installs, 0 updates, 0 removals
 Writing lock file
 """
 
-    constraint: dict[str, str | list[str]] = {
-        "git": "https://github.com/demo/poetry-plugin.git",
-        "extras": ["foo"],
-    }
-    assert_plugin_add_result(tester, expected, constraint)
+    assert_plugin_add_result(
+        tester,
+        expected,
+        "poetry-plugin[foo] @ git+https://github.com/demo/poetry-plugin.git",
+    )
 
 
 @pytest.mark.parametrize(
@@ -155,7 +151,7 @@ def test_add_with_git_constraint_with_subdirectory(
     url: str,
     rev: str | None,
     tester: CommandTester,
-    repo: TestRepository,
+    repo: DummyRepository,
 ) -> None:
     repo.add_package(Package("pendulum", "2.0.5"))
 
@@ -173,25 +169,13 @@ Package operations: 2 installs, 0 updates, 0 removals
 Writing lock file
 """
 
-    constraint = {
-        "git": "https://github.com/demo/poetry-plugin2.git",
-        "subdirectory": "subdir",
-    }
-
-    if rev:
-        constraint["rev"] = rev
-
-    assert_plugin_add_result(
-        tester,
-        expected,
-        constraint,
-    )
+    assert_plugin_add_result(tester, expected, url)
 
 
 def test_add_existing_plugin_warns_about_no_operation(
     tester: CommandTester,
-    repo: TestRepository,
-    installed: TestRepository,
+    repo: DummyRepository,
+    installed: DummyRepository,
 ) -> None:
     pyproject = SelfCommand.get_default_system_pyproject_file()
     with open(pyproject, "w", encoding="utf-8", newline="") as f:
@@ -232,8 +216,8 @@ Nothing to add.
 
 def test_add_existing_plugin_updates_if_requested(
     tester: CommandTester,
-    repo: TestRepository,
-    installed: TestRepository,
+    repo: DummyRepository,
+    installed: DummyRepository,
 ) -> None:
     pyproject = SelfCommand.get_default_system_pyproject_file()
     with open(pyproject, "w", encoding="utf-8", newline="") as f:
@@ -248,8 +232,10 @@ authors = []
 [tool.poetry.dependencies]
 python = "^3.6"
 
-[tool.poetry.group.{SelfCommand.ADDITIONAL_PACKAGE_GROUP}.dependencies]
-poetry-plugin = "^1.2.3"
+[dependency-groups]
+{SelfCommand.ADDITIONAL_PACKAGE_GROUP} = [
+    "poetry-plugin (>=1.2.3,<2.0.0)"
+]
 """
         )
 
@@ -273,13 +259,13 @@ Package operations: 0 installs, 1 update, 0 removals
 Writing lock file
 """
 
-    assert_plugin_add_result(tester, expected, "^2.3.4")
+    assert_plugin_add_result(tester, expected, "(>=2.3.4,<3.0.0)")
 
 
 def test_adding_a_plugin_can_update_poetry_dependencies_if_needed(
     tester: CommandTester,
-    repo: TestRepository,
-    installed: TestRepository,
+    repo: DummyRepository,
+    installed: DummyRepository,
     poetry_package: Package,
 ) -> None:
     poetry_package.add_dependency(Factory.create_dependency("tomlkit", "^0.7.0"))
@@ -310,4 +296,4 @@ Package operations: 1 install, 1 update, 0 removals
 Writing lock file
 """
 
-    assert_plugin_add_result(tester, expected, "^1.2.3")
+    assert_plugin_add_result(tester, expected, "(>=1.2.3,<2.0.0)")

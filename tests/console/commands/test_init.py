@@ -30,8 +30,8 @@ if TYPE_CHECKING:
 
     from poetry.config.config import Config
     from poetry.poetry import Poetry
+    from tests.helpers import DummyRepository
     from tests.helpers import PoetryTestApplication
-    from tests.helpers import TestRepository
     from tests.types import FixtureDirGetter
     from tests.types import MockedPythonRegister
 
@@ -47,7 +47,7 @@ def source_dir(tmp_path: Path) -> Iterator[Path]:
 
 
 @pytest.fixture
-def patches(mocker: MockerFixture, source_dir: Path, repo: TestRepository) -> None:
+def patches(mocker: MockerFixture, source_dir: Path, repo: DummyRepository) -> None:
     mocker.patch("pathlib.Path.cwd", return_value=source_dir)
     mocker.patch(
         "poetry.console.commands.init.InitCommand._get_pool",
@@ -62,17 +62,17 @@ def tester(patches: None) -> CommandTester:
 
 
 def test_basic_interactive(
-    tester: CommandTester, init_basic_inputs: str, init_basic_toml: str
+    tester: CommandTester, init_basic_inputs: str, init_basic_toml_no_readme: str
 ) -> None:
     tester.execute(inputs=init_basic_inputs)
-    assert init_basic_toml in tester.io.fetch_output()
+    assert init_basic_toml_no_readme in tester.io.fetch_output()
 
 
 def test_noninteractive(
     app: PoetryTestApplication,
     mocker: MockerFixture,
     poetry: Poetry,
-    repo: TestRepository,
+    repo: DummyRepository,
     tmp_path: Path,
 ) -> None:
     command = app.find("init")
@@ -106,7 +106,7 @@ def test_noninteractive(
 
 
 def test_interactive_with_dependencies(
-    tester: CommandTester, repo: TestRepository
+    tester: CommandTester, repo: DummyRepository
 ) -> None:
     repo.add_package(get_package("django-pendulum", "0.1.6-pre4"))
     repo.add_package(get_package("pendulum", "2.0.0"))
@@ -145,18 +145,18 @@ description = "This is a description"
 authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
-license = {text = "MIT"}
-readme = "README.md"
+license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
     "pendulum (>=2.0.0,<3.0.0)",
     "flask (>=2.0.0,<3.0.0)"
 ]
 
-[tool.poetry]
+[dependency-groups]
+dev = [
+    "pytest (>=3.6.0,<4.0.0)"
+]
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^3.6.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
@@ -168,7 +168,7 @@ build-backend = "poetry.core.masonry.api"
 
 # Regression test for https://github.com/python-poetry/poetry/issues/2355
 def test_interactive_with_dependencies_and_no_selection(
-    tester: CommandTester, repo: TestRepository
+    tester: CommandTester, repo: DummyRepository
 ) -> None:
     repo.add_package(get_package("django-pendulum", "0.1.6-pre4"))
     repo.add_package(get_package("pendulum", "2.0.0"))
@@ -201,8 +201,7 @@ description = "This is a description"
 authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
-license = {text = "MIT"}
-readme = "README.md"
+license = "MIT"
 requires-python = ">=3.6"
 """
 
@@ -232,14 +231,13 @@ description = ""
 authors = [
     {{name = "Your Name",email = "you@example.com"}}
 ]
-readme = "README.md"
 requires-python = ">={python}"
 """
     assert expected in tester.io.fetch_output()
 
 
 def test_interactive_with_git_dependencies(
-    tester: CommandTester, repo: TestRepository
+    tester: CommandTester, repo: DummyRepository
 ) -> None:
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
@@ -271,17 +269,16 @@ description = "This is a description"
 authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
-license = {text = "MIT"}
-readme = "README.md"
+license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
     "demo @ git+https://github.com/demo/demo.git"
 ]
 
-[tool.poetry]
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^3.6.0"
+[dependency-groups]
+dev = [
+    "pytest (>=3.6.0,<4.0.0)"
+]
 """
 
     assert expected in tester.io.fetch_output()
@@ -335,7 +332,7 @@ def test_generate_choice_list(
 
 
 def test_interactive_with_git_dependencies_with_reference(
-    tester: CommandTester, repo: TestRepository
+    tester: CommandTester, repo: DummyRepository
 ) -> None:
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
@@ -367,24 +364,23 @@ description = "This is a description"
 authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
-license = {text = "MIT"}
-readme = "README.md"
+license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
     "demo @ git+https://github.com/demo/demo.git@develop"
 ]
 
-[tool.poetry]
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^3.6.0"
+[dependency-groups]
+dev = [
+    "pytest (>=3.6.0,<4.0.0)"
+]
 """
 
     assert expected in tester.io.fetch_output()
 
 
 def test_interactive_with_git_dependencies_and_other_name(
-    tester: CommandTester, repo: TestRepository
+    tester: CommandTester, repo: DummyRepository
 ) -> None:
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
@@ -416,17 +412,16 @@ description = "This is a description"
 authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
-license = {text = "MIT"}
-readme = "README.md"
+license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
     "demo @ git+https://github.com/demo/pyproject-demo.git"
 ]
 
-[tool.poetry]
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^3.6.0"
+[dependency-groups]
+dev = [
+    "pytest (>=3.6.0,<4.0.0)"
+]
 """
 
     assert expected in tester.io.fetch_output()
@@ -434,7 +429,7 @@ pytest = "^3.6.0"
 
 def test_interactive_with_directory_dependency(
     tester: CommandTester,
-    repo: TestRepository,
+    repo: DummyRepository,
     source_dir: Path,
     fixture_dir: FixtureDirGetter,
 ) -> None:
@@ -472,24 +467,23 @@ description = "This is a description"
 authors = [
     {{name = "Your Name",email = "you@example.com"}}
 ]
-license = {{text = "MIT"}}
-readme = "README.md"
+license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
     "demo @ {demo_uri}"
 ]
 
-[tool.poetry]
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^3.6.0"
+[dependency-groups]
+dev = [
+    "pytest (>=3.6.0,<4.0.0)"
+]
 """
     assert expected in tester.io.fetch_output()
 
 
 def test_interactive_with_directory_dependency_and_other_name(
     tester: CommandTester,
-    repo: TestRepository,
+    repo: DummyRepository,
     source_dir: Path,
     fixture_dir: FixtureDirGetter,
 ) -> None:
@@ -527,17 +521,16 @@ description = "This is a description"
 authors = [
     {{name = "Your Name",email = "you@example.com"}}
 ]
-license = {{text = "MIT"}}
-readme = "README.md"
+license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
     "demo @ {demo_uri}"
 ]
 
-[tool.poetry]
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^3.6.0"
+[dependency-groups]
+dev = [
+    "pytest (>=3.6.0,<4.0.0)"
+]
 """
 
     assert expected in tester.io.fetch_output()
@@ -545,7 +538,7 @@ pytest = "^3.6.0"
 
 def test_interactive_with_file_dependency(
     tester: CommandTester,
-    repo: TestRepository,
+    repo: DummyRepository,
     source_dir: Path,
     fixture_dir: FixtureDirGetter,
 ) -> None:
@@ -583,24 +576,23 @@ description = "This is a description"
 authors = [
     {{name = "Your Name",email = "you@example.com"}}
 ]
-license = {{text = "MIT"}}
-readme = "README.md"
+license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
     "demo @ {demo_uri}"
 ]
 
-[tool.poetry]
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^3.6.0"
+[dependency-groups]
+dev = [
+    "pytest (>=3.6.0,<4.0.0)"
+]
 """
 
     assert expected in tester.io.fetch_output()
 
 
 def test_interactive_with_wrong_dependency_inputs(
-    tester: CommandTester, repo: TestRepository
+    tester: CommandTester, repo: DummyRepository
 ) -> None:
     inputs = [
         "my-package",  # Package name
@@ -631,18 +623,17 @@ description = "This is a description"
 authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
-license = {text = "MIT"}
-readme = "README.md"
+license = "MIT"
 requires-python = ">=3.8"
 dependencies = [
     "foo (==1.19.2)",
     "pendulum (>=2.0.0,<3.0.0)"
 ]
 
-[tool.poetry]
-
-[tool.poetry.group.dev.dependencies]
-pytest = "3.6.0"
+[dependency-groups]
+dev = [
+    "pytest (==3.6.0)"
+]
 """
 
     assert expected in tester.io.fetch_output()
@@ -669,15 +660,14 @@ description = "This is a description"
 authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
-license = {text = "MIT"}
-readme = "README.md"
+license = "MIT"
 requires-python = ">=3.6"
 """
 
     assert expected in tester.io.fetch_output()
 
 
-def test_predefined_dependency(tester: CommandTester, repo: TestRepository) -> None:
+def test_predefined_dependency(tester: CommandTester, repo: DummyRepository) -> None:
     repo.add_package(get_package("pendulum", "2.0.0"))
 
     inputs = [
@@ -701,8 +691,7 @@ description = "This is a description"
 authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
-license = {text = "MIT"}
-readme = "README.md"
+license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
     "pendulum (>=2.0.0,<3.0.0)"
@@ -713,7 +702,7 @@ dependencies = [
 
 
 def test_predefined_and_interactive_dependencies(
-    tester: CommandTester, repo: TestRepository
+    tester: CommandTester, repo: DummyRepository
 ) -> None:
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pyramid", "1.10"))
@@ -744,8 +733,7 @@ description = "This is a description"
 authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
-license = {text = "MIT"}
-readme = "README.md"
+license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
     "pendulum (>=2.0.0,<3.0.0)",
@@ -755,7 +743,9 @@ dependencies = [
     assert expected in tester.io.fetch_output()
 
 
-def test_predefined_dev_dependency(tester: CommandTester, repo: TestRepository) -> None:
+def test_predefined_dev_dependency(
+    tester: CommandTester, repo: DummyRepository
+) -> None:
     repo.add_package(get_package("pytest", "3.6.0"))
 
     inputs = [
@@ -780,23 +770,22 @@ description = "This is a description"
 authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
-license = {text = "MIT"}
-readme = "README.md"
+license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
 ]
 
-[tool.poetry]
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^3.6.0"
+[dependency-groups]
+dev = [
+    "pytest (>=3.6.0,<4.0.0)"
+]
 """
 
     assert expected in tester.io.fetch_output()
 
 
 def test_predefined_and_interactive_dev_dependencies(
-    tester: CommandTester, repo: TestRepository
+    tester: CommandTester, repo: DummyRepository
 ) -> None:
     repo.add_package(get_package("pytest", "3.6.0"))
     repo.add_package(get_package("pytest-requests", "0.2.0"))
@@ -827,26 +816,23 @@ description = "This is a description"
 authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
-license = {text = "MIT"}
-readme = "README.md"
+license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
 ]
 
-[tool.poetry]
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^3.6.0"
-pytest-requests = "^0.2.0"
+[dependency-groups]
+dev = [
+    "pytest (>=3.6.0,<4.0.0)",
+    "pytest-requests (>=0.2.0,<0.3.0)"
+]
 """
 
     output = tester.io.fetch_output()
     assert expected in output
-    assert 'pytest-requests = "^0.2.0"' in output
-    assert 'pytest = "^3.6.0"' in output
 
 
-def test_predefined_all_options(tester: CommandTester, repo: TestRepository) -> None:
+def test_predefined_all_options(tester: CommandTester, repo: DummyRepository) -> None:
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
 
@@ -877,17 +863,16 @@ description = "This is a description"
 authors = [
     {name = "Foo Bar",email = "foo@example.com"}
 ]
-license = {text = "MIT"}
-readme = "README.md"
+license = "MIT"
 requires-python = ">=3.8"
 dependencies = [
     "pendulum (>=2.0.0,<3.0.0)"
 ]
 
-[tool.poetry]
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^3.6.0"
+[dependency-groups]
+dev = [
+    "pytest (>=3.6.0,<4.0.0)"
+]
 """
 
     output = tester.io.fetch_output()
@@ -909,7 +894,7 @@ def test_init_existing_pyproject_simple(
     tester: CommandTester,
     source_dir: Path,
     init_basic_inputs: str,
-    init_basic_toml: str,
+    init_basic_toml_no_readme: str,
 ) -> None:
     pyproject_file = source_dir / "pyproject.toml"
     existing_section = """
@@ -918,8 +903,9 @@ line-length = 88
 """
     pyproject_file.write_text(existing_section, encoding="utf-8")
     tester.execute(inputs=init_basic_inputs)
-    assert f"{existing_section}\n{init_basic_toml}" in pyproject_file.read_text(
-        encoding="utf-8"
+    assert (
+        f"{existing_section}\n{init_basic_toml_no_readme}"
+        in pyproject_file.read_text(encoding="utf-8")
     )
 
 
@@ -928,7 +914,7 @@ def test_init_existing_pyproject_consistent_linesep(
     tester: CommandTester,
     source_dir: Path,
     init_basic_inputs: str,
-    init_basic_toml: str,
+    init_basic_toml_no_readme: str,
     linesep: str,
 ) -> None:
     pyproject_file = source_dir / "pyproject.toml"
@@ -941,7 +927,7 @@ line-length = 88
     tester.execute(inputs=init_basic_inputs)
     with open(pyproject_file, newline="", encoding="utf-8") as f:
         content = f.read()
-    init_basic_toml = init_basic_toml.replace("\n", linesep)
+    init_basic_toml = init_basic_toml_no_readme.replace("\n", linesep)
     assert f"{existing_section}{linesep}{init_basic_toml}" in content
 
 
@@ -949,7 +935,7 @@ def test_init_non_interactive_existing_pyproject_add_dependency(
     tester: CommandTester,
     source_dir: Path,
     init_basic_inputs: str,
-    repo: TestRepository,
+    repo: DummyRepository,
 ) -> None:
     pyproject_file = source_dir / "pyproject.toml"
     existing_section = """
@@ -976,7 +962,6 @@ description = ""
 authors = [
     {name = "Your Name",email = "you@example.com"}
 ]
-readme = "README.md"
 requires-python = ">=3.6"
 dependencies = [
     "foo (>=1.19.2,<2.0.0)"
@@ -1090,7 +1075,6 @@ def test_package_include(
         "authors = [\n"
         '    {name = "poetry"}\n'
         "]\n"
-        'readme = "README.md"\n'
         'requires-python = ">=3.10"\n'
         "dependencies = [\n"
         "]\n"
@@ -1143,3 +1127,93 @@ def test_get_pool(mocker: MockerFixture, source_dir: Path) -> None:
     assert isinstance(command, InitCommand)
     pool = command._get_pool()
     assert pool.repositories
+
+
+def test_init_does_not_create_project_structure_in_empty_directory(
+    tester: CommandTester, source_dir: Path
+) -> None:
+    """Test that poetry init does not create project structure in empty directory."""
+    inputs = [
+        "my-package",  # Package name
+        "1.0.0",  # Version
+        "",  # Description
+        "n",  # Author
+        "",  # License
+        "",  # Python
+        "n",  # Interactive packages
+        "n",  # Interactive dev packages
+        "\n",  # Generate
+    ]
+
+    tester.execute(inputs="\n".join(inputs))
+
+    # Should only create pyproject.toml
+    assert (source_dir / "pyproject.toml").exists()
+
+    # Should NOT create these
+    assert not (source_dir / "tests").exists()
+    assert not (source_dir / "my_package").exists()
+    assert not (source_dir / "src").exists()
+    assert not (source_dir / "README.md").exists()
+
+
+def test_init_does_not_create_project_structure_in_non_empty_directory(
+    tester: CommandTester, source_dir: Path
+) -> None:
+    """Test that poetry init does not create project structure in non-empty directory."""
+    # Create some existing files
+    (source_dir / "existing_file.txt").write_text("existing content", encoding="utf-8")
+    (source_dir / "existing_dir").mkdir()
+
+    inputs = [
+        "my-package",  # Package name
+        "1.0.0",  # Version
+        "",  # Description
+        "n",  # Author
+        "",  # License
+        "",  # Python
+        "n",  # Interactive packages
+        "n",  # Interactive dev packages
+        "\n",  # Generate
+    ]
+
+    tester.execute(inputs="\n".join(inputs))
+
+    # Should only create pyproject.toml
+    assert (source_dir / "pyproject.toml").exists()
+
+    # Should NOT create these
+    assert not (source_dir / "tests").exists()
+    assert not (source_dir / "my_package").exists()
+    assert not (source_dir / "src").exists()
+    assert not (source_dir / "README.md").exists()
+
+    # Existing files should remain
+    assert (source_dir / "existing_file.txt").exists()
+    assert (source_dir / "existing_dir").exists()
+
+
+def test_init_adds_readme_key_when_readme_exists(
+    tester: CommandTester, tmp_path: Path
+) -> None:
+    # Arrange: ensure README.md exists
+    readme = tmp_path / "README.md"
+    readme.write_text("# My Project\n", encoding="utf-8")
+    # Act
+    tester.execute(interactive=False)
+    # Assert
+    pyproject = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
+    assert 'readme = "README.md"' in pyproject
+
+
+def test_init_does_not_add_readme_key_when_readme_missing(
+    tester: CommandTester, tmp_path: Path
+) -> None:
+    # Arrange: ensure README.md does NOT exist
+    readme = tmp_path / "README.md"
+    assert not readme.exists()
+    # Act
+    tester.execute(interactive=False)
+    # Assert
+    pyproject = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
+    assert "readme =" not in pyproject

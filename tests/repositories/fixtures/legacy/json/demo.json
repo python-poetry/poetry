@@ -1,0 +1,22 @@
+{
+  "alternate-locations": [],
+  "files": [
+    {
+      "core-metadata": false,
+      "data-dist-info-metadata": false,
+      "filename": "demo-0.1.0.tar.gz",
+      "url": "https://files.pythonhosted.org/distributions/demo-0.1.0.tar.gz"
+    }
+  ],
+  "meta": {
+    "_last-serial": 0,
+    "api-version": "1.0"
+  },
+  "name": "demo",
+  "project-status": {
+    "status": "active"
+  },
+  "versions": [
+    "0.1.0"
+  ]
+}

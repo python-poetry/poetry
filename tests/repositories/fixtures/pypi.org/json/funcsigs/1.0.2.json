@@ -55,6 +55,23 @@
     "yanked_reason": null
   },
   "last_serial": 0,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "Aaron.Iles"
+      },
+      {
+        "role": "Owner",
+        "user": "Joshua.Harlow"
+      },
+      {
+        "role": "Owner",
+        "user": "lifeless"
+      }
+    ]
+  },
   "urls": [
     {
       "comment_text": "",

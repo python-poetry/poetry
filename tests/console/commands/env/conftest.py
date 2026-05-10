@@ -26,7 +26,9 @@ def venv_name(app: PoetryTestApplication) -> str:
 
 @pytest.fixture
 def venv_cache(tmp_path: Path) -> Path:
-    return tmp_path
+    path = tmp_path / "venv_cache"
+    path.mkdir()
+    return path
 
 
 @pytest.fixture(scope="module")

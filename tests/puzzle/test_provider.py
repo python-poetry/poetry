@@ -10,6 +10,7 @@ from typing import Any
 import pytest
 
 from cleo.io.null_io import NullIO
+from packaging.utils import NormalizedName
 from packaging.utils import canonicalize_name
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.directory_dependency import DirectoryDependency
@@ -24,6 +25,7 @@ from poetry.inspection.info import PackageInfo
 from poetry.packages import DependencyPackage
 from poetry.puzzle.provider import IncompatibleConstraintsError
 from poetry.puzzle.provider import Provider
+from poetry.repositories.cached_repository import CachedRepository
 from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.repositories.repository import Repository
 from poetry.repositories.repository_pool import Priority
@@ -36,6 +38,7 @@ from tests.helpers import get_dependency
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from poetry.core.constraints.version import Version
     from pytest_mock import MockerFixture
 
     from tests.types import FixtureDirGetter
@@ -47,6 +50,18 @@ SOME_URL = "https://example.com/path.tar.gz"
 class MockEnv(BaseMockEnv):
     def run(self, bin: str, *args: str, **kwargs: Any) -> str:
         raise EnvCommandError(CalledProcessError(1, "python", output=""))
+
+
+class MockCachedRepository(CachedRepository):
+    def _get_release_info(
+        self, name: NormalizedName, version: Version
+    ) -> dict[str, Any]:
+        raise NotImplementedError
+
+    def package(self, name: str, version: Version) -> Package:
+        package = super().package(name, version)
+        package._source_reference = self.name
+        return package
 
 
 @pytest.fixture
@@ -70,6 +85,74 @@ def pool(repository: Repository) -> RepositoryPool:
 @pytest.fixture
 def provider(root: ProjectPackage, pool: RepositoryPool) -> Provider:
     return Provider(root, pool, NullIO())
+
+
+@pytest.fixture
+def release_info() -> PackageInfo:
+    return PackageInfo(
+        name="mylib",
+        version="1.0",
+        summary="",
+        requires_dist=[],
+        requires_python=">=3.9",
+        files=[
+            {
+                "file": "mylib-1.0-py3-none-any.whl",
+                "hash": "sha256:dummyhashvalue1234567890abcdef",
+            },
+            {
+                "file": "mylib-1.0.tar.gz",
+                "hash": "sha256:anotherdummyhashvalueabcdef1234567890",
+            },
+        ],
+        cache_version=str(CachedRepository.CACHE_VERSION),
+    )
+
+
+@pytest.fixture
+def release_info_complete() -> PackageInfo:
+    return PackageInfo(
+        name="mylib",
+        version="1.0",
+        summary="",
+        requires_dist=[],
+        requires_python=">=3.9",
+        files=[
+            {
+                "file": "mylib-1.0-py3-none-any.whl",
+                "hash": "sha256:dummyhashvalue1234567890abcdef",
+                "url": "https://example.org/mylib-1.0-py3-none-any.whl",
+                "size": 12345,
+                "upload_time": "2024-01-01T12:00:00Z",
+            },
+            {
+                "file": "mylib-1.0.tar.gz",
+                "hash": "sha256:anotherdummyhashvalueabcdef1234567890",
+                "url": "https://example.org/mylib-1.0.tar.gz",
+                "size": 12346,
+                "upload_time": "2024-01-01T12:00:01Z",
+            },
+        ],
+        cache_version=str(CachedRepository.CACHE_VERSION),
+    )
+
+
+@pytest.fixture
+def outdated_release_info() -> PackageInfo:
+    return PackageInfo(
+        name="mylib",
+        version="1.0",
+        summary="",
+        requires_dist=[],
+        requires_python=">=3.9",
+        files=[
+            {
+                "file": "mylib-1.0-py3-none-any.whl",
+                "hash": "sha256:dummyhashvalue1234567890abcdef",
+            }
+        ],
+        cache_version=str(CachedRepository.CACHE_VERSION),
+    )
 
 
 @pytest.mark.parametrize(
@@ -489,6 +572,13 @@ def test_search_for_file_sdist(
 
     assert package.name == "demo"
     assert package.version.text == "0.1.0"
+    assert package.files == [
+        {
+            "file": "demo-0.1.0.tar.gz",
+            "hash": "sha256:9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad",
+            "size": 1003,
+        }
+    ]
 
     required = {
         r for r in sorted(package.requires, key=lambda r: r.name) if not r.is_optional()
@@ -520,6 +610,13 @@ def test_search_for_file_sdist_with_extras(
 
     assert package.name == "demo"
     assert package.version.text == "0.1.0"
+    assert package.files == [
+        {
+            "file": "demo-0.1.0.tar.gz",
+            "hash": "sha256:9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad",
+            "size": 1003,
+        }
+    ]
 
     required = {
         r for r in sorted(package.requires, key=lambda r: r.name) if not r.is_optional()
@@ -550,6 +647,13 @@ def test_search_for_file_wheel(
 
     assert package.name == "demo"
     assert package.version.text == "0.1.0"
+    assert package.files == [
+        {
+            "file": "demo-0.1.0-py2.py3-none-any.whl",
+            "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",
+            "size": 1116,
+        }
+    ]
 
     required = {
         r for r in sorted(package.requires, key=lambda r: r.name) if not r.is_optional()
@@ -581,6 +685,13 @@ def test_search_for_file_wheel_with_extras(
 
     assert package.name == "demo"
     assert package.version.text == "0.1.0"
+    assert package.files == [
+        {
+            "file": "demo-0.1.0-py2.py3-none-any.whl",
+            "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",
+            "size": 1116,
+        }
+    ]
 
     required = {
         r for r in sorted(package.requires, key=lambda r: r.name) if not r.is_optional()
@@ -856,6 +967,75 @@ def test_complete_package_raises_packagenotfound_if_locked_source_not_available(
         provider.complete_package(locked)
 
 
+def test_complete_package_outdated_cache(
+    root: ProjectPackage,
+    release_info: PackageInfo,
+    outdated_release_info: PackageInfo,
+    mocker: MockerFixture,
+) -> None:
+    repo = MockCachedRepository("repo")
+    pool = RepositoryPool()
+    pool.add_repository(repo)
+    provider = Provider(root, pool, NullIO())
+    pool_refresh_spy = mocker.spy(provider.pool, "refresh")
+
+    assert release_info.name is not None
+    assert release_info.version is not None
+    package = Package(release_info.name, release_info.version)
+    package.files = release_info.files  # up-to-date files from lock
+
+    # trigger caching of outdated info
+    repo._get_release_info = lambda name, version: outdated_release_info.asdict()  # type: ignore[method-assign]
+    assert len(repo.package(package.name, package.version).files) == 1
+
+    # additional files uploaded -> refresh needed
+    repo._get_release_info = lambda name, version: release_info.asdict()  # type: ignore[method-assign]
+    complete_package = provider.complete_package(
+        DependencyPackage(package.to_dependency(), package)
+    )
+    assert len(complete_package.package.files) == 2
+    assert pool_refresh_spy.call_count == 1
+
+    # cache should have been updated -> no additional refresh needed
+    complete_package = provider.complete_package(
+        DependencyPackage(package.to_dependency(), package)
+    )
+    assert len(complete_package.package.files) == 2
+    assert pool_refresh_spy.call_count == 1
+
+
+def test_complete_package_no_refresh_on_url_size_upload_info(
+    root: ProjectPackage,
+    release_info: PackageInfo,
+    release_info_complete: PackageInfo,
+    mocker: MockerFixture,
+) -> None:
+    repo = MockCachedRepository("repo")
+    pool = RepositoryPool()
+    pool.add_repository(repo)
+    provider = Provider(root, pool, NullIO())
+    pool_refresh_spy = mocker.spy(provider.pool, "refresh")
+
+    assert release_info.name is not None
+    assert release_info.version is not None
+    package = Package(release_info.name, release_info.version)
+    package.files = release_info.files  # up-to-date files from lock
+    assert "url" not in package.files[0]
+
+    # trigger caching complete info
+    repo._get_release_info = lambda name, version: release_info_complete.asdict()  # type: ignore[method-assign]
+    assert len(repo.package(package.name, package.version).files) == 2
+
+    # Only additional information in cache, names and hashes from lock file are the same
+    # -> no refresh needed
+    complete_package = provider.complete_package(
+        DependencyPackage(package.to_dependency(), package)
+    )
+    assert len(complete_package.package.files) == 2
+    assert "url" in complete_package.package.files[0]
+    assert pool_refresh_spy.call_count == 0
+
+
 def test_source_dependency_is_satisfied_by_direct_origin(
     provider: Provider, repository: Repository
 ) -> None:
@@ -889,3 +1069,14 @@ def test_source_dependency_is_not_satisfied_by_incompatible_direct_origin(
     dep.source_name = repository.name
 
     assert provider.search_for(dep) == [repo_package]
+
+
+def test_indicator_context_resets_on_exception() -> None:
+    from poetry.puzzle.provider import Indicator
+
+    with pytest.raises(RuntimeError), Indicator.context() as set_context:
+        set_context("downloading something")
+        assert Indicator.CONTEXT == "downloading something"
+        raise RuntimeError("network error")
+
+    assert Indicator.CONTEXT is None

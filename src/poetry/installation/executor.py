@@ -10,7 +10,6 @@ from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import wait
 from pathlib import Path
-from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -45,6 +44,7 @@ if TYPE_CHECKING:
     from cleo.io.io import IO
     from cleo.io.outputs.section_output import SectionOutput
     from packaging.utils import NormalizedName
+    from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
 
     from poetry.config.config import Config
@@ -68,6 +68,8 @@ class Executor:
         io: IO,
         parallel: bool | None = None,
         disable_cache: bool = False,
+        *,
+        build_constraints: Mapping[NormalizedName, list[Dependency]] | None = None,
     ) -> None:
         self._env = env
         self._io = io
@@ -75,6 +77,7 @@ class Executor:
         self._enabled = True
         self._verbose = False
         self._wheel_installer = WheelInstaller(self._env)
+        self._build_constraints = build_constraints or {}
 
         if parallel is None:
             parallel = config.get("installer.parallel", True)
@@ -222,6 +225,8 @@ class Executor:
                 wait(tasks)
 
                 for operation in serial_operations:
+                    if self._shutdown:
+                        break
                     self._execute_operation(operation)
 
             except KeyboardInterrupt:
@@ -263,6 +268,8 @@ class Executor:
             section.write(line)
 
     def _execute_operation(self, operation: Operation) -> None:
+        if self._shutdown:
+            return
         try:
             op_message = self.get_operation_message(operation)
             if self.supports_fancy_output():
@@ -350,7 +357,10 @@ class Executor:
 
                         if config_settings := self._build_config_settings.get(pkg.name):
                             for setting in config_settings:
-                                for setting_value in config_settings[setting]:
+                                values = config_settings[setting]
+                                if isinstance(values, str):
+                                    values = [values]
+                                for setting_value in values:
                                     pip_command += f" --config-settings='{setting}={setting_value}'"
 
                         message = e.generate_message(
@@ -620,7 +630,7 @@ class Executor:
 
         try:
             return self.run_pip("uninstall", package.name, "-y")
-        except CalledProcessError as e:
+        except EnvCommandError as e:
             if "not installed" in str(e):
                 return 0
 
@@ -647,11 +657,13 @@ class Executor:
 
         self._populate_hashes_dict(archive, package)
 
+        name = operation.package.name
         return self._chef.prepare(
             archive,
             editable=package.develop,
             output_dir=output_dir,
-            config_settings=self._build_config_settings.get(operation.package.name),
+            config_settings=self._build_config_settings.get(name),
+            build_constraints=self._build_constraints.get(name),
         )
 
     def _prepare_git_archive(self, operation: Install | Update) -> Path:
@@ -761,10 +773,12 @@ class Executor:
             )
             self._write(operation, message)
 
+            name = operation.package.name
             archive = self._chef.prepare(
                 archive,
                 output_dir=original_archive.parent,
-                config_settings=self._build_config_settings.get(operation.package.name),
+                config_settings=self._build_config_settings.get(name),
+                build_constraints=self._build_constraints.get(name),
             )
 
         # Use the original archive to provide the correct hash.

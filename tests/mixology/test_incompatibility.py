@@ -12,7 +12,7 @@ from poetry.mixology.term import Term
 
 def get_url_dependency(name: str, url: str, version: str) -> URLDependency:
     dependency = URLDependency(name, url)
-    dependency.constraint = version  # type: ignore[assignment]
+    dependency.constraint = version
     return dependency
 
 

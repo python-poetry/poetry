@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import platform
 import sys
 
@@ -44,7 +45,26 @@ class WheelDestination(SchemeDictionaryDestination):
         from installer.utils import copyfileobj_with_hashing
         from installer.utils import make_file_executable
 
-        target_path = Path(self.scheme_dict[scheme]) / path
+        # See https://docs.python.org/3/library/zipfile.html#zipfile.Path:
+        #  When handling untrusted archives,
+        #  consider resolving filenames using os.path.abspath()
+        #  and checking against the target directory with os.path.commonpath().
+        #
+        # Attention: Path.absolute() is not sufficient because it does not
+        #  normalize, i.e. does not remove "..".
+        #
+        # We want to avoid Path.resolve() because it is significantly slower
+        # than os.path.abspath()!
+        target_dir = Path(os.path.abspath(self.scheme_dict[scheme]))
+        target_path = Path(os.path.abspath(target_dir / path))
+
+        if not target_path.is_relative_to(target_dir):
+            raise ValueError(
+                f"Attempting to write {path} outside of the target directory\n"
+                f"Target directory: {target_dir}\n"
+                f"Target path: {target_path}"
+            )
+
         if target_path.exists():
             # Contrary to the base library we don't raise an error here since it can
             # break pkgutil-style and pkg_resource-style namespace packages.

@@ -42,8 +42,13 @@ class ShutilWhichPythonProvider(findpython.BaseProvider):  # type: ignore[misc]
 @dataclasses.dataclass
 class PoetryPythonPathProvider(PathProvider):  # type: ignore[misc]
     @classmethod
-    def installation_dir(cls, version: Version, implementation: str) -> Path:
-        return Config.create().python_installation_dir / f"{implementation}@{version}"
+    def installation_dir(
+        cls, version: Version, implementation: str, free_threaded: bool
+    ) -> Path:
+        dir_name = f"{implementation}@{version}"
+        if free_threaded:
+            dir_name += "t"
+        return Config.create().python_installation_dir / dir_name
 
     @classmethod
     def _make_bin_paths(cls, base: Path | None = None) -> list[Path]:
@@ -77,9 +82,11 @@ class PoetryPythonPathProvider(PathProvider):  # type: ignore[misc]
 
     @classmethod
     def installation_bin_paths(
-        cls, version: Version, implementation: str
+        cls, version: Version, implementation: str, free_threaded: bool = False
     ) -> list[Path]:
-        return cls._make_bin_paths(cls.installation_dir(version, implementation))
+        return cls._make_bin_paths(
+            cls.installation_dir(version, implementation, free_threaded)
+        )
 
     @classmethod
     def create(cls) -> Self | None:

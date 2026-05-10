@@ -14,6 +14,7 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import TypedDict
 
 from installer.utils import SCHEME_NAMES
 from virtualenv.seed.wheels.embed import get_embed_wheel
@@ -27,11 +28,29 @@ from poetry.utils.helpers import is_dir_writable
 if TYPE_CHECKING:
     from packaging.tags import Tag
     from poetry.core.version.markers import BaseMarker
-    from virtualenv.seed.wheels.util import Wheel
 
     from poetry.utils.env.generic_env import GenericEnv
 
     PythonVersion = tuple[int, int, int, str, int]
+
+
+class MarkerEnv(TypedDict):
+    implementation_name: str
+    implementation_version: str
+    os_name: str
+    platform_machine: str
+    platform_release: str
+    platform_system: str
+    platform_version: str
+    python_full_version: str
+    platform_python_implementation: str
+    python_version: str
+    sys_platform: str
+    version_info: PythonVersion
+    interpreter_name: str
+    interpreter_version: str
+    sysconfig_platform: str
+    free_threading: bool
 
 
 class Env(ABC):
@@ -97,7 +116,7 @@ class Env(ABC):
         return Path(self._bin(self._executable))
 
     @cached_property
-    def marker_env(self) -> dict[str, Any]:
+    def marker_env(self) -> MarkerEnv:
         return self.get_marker_env()
 
     @property
@@ -142,11 +161,12 @@ class Env(ABC):
         self._find_pip_executable()
 
     def get_embedded_wheel(self, distribution: str) -> Path:
-        wheel: Wheel = get_embed_wheel(
+        wheel = get_embed_wheel(
             distribution, f"{self.version_info[0]}.{self.version_info[1]}"
         )
-        path: Path = wheel.path
-        return path
+        if wheel is None:
+            raise RuntimeError(f"embedded {distribution} wheel not found")
+        return wheel.path
 
     @property
     def pip_embedded(self) -> Path:
@@ -352,7 +372,7 @@ class Env(ABC):
         return Path(sys.prefix)
 
     @abstractmethod
-    def get_marker_env(self) -> dict[str, Any]: ...
+    def get_marker_env(self) -> MarkerEnv: ...
 
     def get_pip_command(self, embedded: bool = False) -> list[str]:
         if embedded or not Path(self._bin(self._pip_executable)).exists():
@@ -426,9 +446,8 @@ class Env(ABC):
                 subprocess.check_call(cmd, stderr=stderr, env=env, **kwargs)
                 output = ""
             else:
-                encoding = "locale" if sys.version_info >= (3, 10) else None
                 output = subprocess.check_output(
-                    cmd, stderr=stderr, env=env, text=True, encoding=encoding, **kwargs
+                    cmd, stderr=stderr, env=env, text=True, encoding="locale", **kwargs
                 )
         except CalledProcessError as e:
             raise EnvCommandError(e)

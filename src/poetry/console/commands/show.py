@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import json
 import sys
 
+from enum import Enum
 from typing import TYPE_CHECKING
 from typing import ClassVar
 
@@ -11,6 +13,7 @@ from packaging.utils import canonicalize_name
 
 from poetry.console.commands.env_command import EnvCommand
 from poetry.console.commands.group_command import GroupCommand
+from poetry.utils.constants import POETRY_SYSTEM_PROJECT_NAME
 
 
 if TYPE_CHECKING:
@@ -35,6 +38,11 @@ def reverse_deps(pkg: Package, repo: Repository) -> dict[str, str]:
             required_by[locked.pretty_name] = dependencies[pkg.name]
 
     return required_by
+
+
+class OutputFormats(str, Enum):
+    JSON = "json"
+    TEXT = "text"
 
 
 class ShowCommand(GroupCommand, EnvCommand):
@@ -70,6 +78,13 @@ class ShowCommand(GroupCommand, EnvCommand):
             "no-truncate",
             None,
             "Do not truncate the output based on the terminal width.",
+        ),
+        option(
+            "format",
+            "f",
+            "Specify the output format (`json` or `text`). Default is `text`. `json` cannot be combined with the <info>--tree</info> option.",
+            flag=False,
+            default="text",
         ),
     ]
 
@@ -115,13 +130,26 @@ lists all packages available."""
 
                 return 1
 
+        if self.option("format") not in set(OutputFormats):
+            self.line_error(
+                f"<error>Error: Invalid output format. Supported formats are: {', '.join(OutputFormats)}.</error>"
+            )
+
+            return 1
+
+        if self.option("format") != OutputFormats.TEXT and self.option("tree"):
+            self.line_error(
+                "<error>Error: --tree option can only be used with the text output option.</error>"
+            )
+            return 1
+
         if self.option("outdated"):
             self.io.input.set_option("latest", True)
 
         if not self.poetry.locker.is_locked():
             self.line_error(
-                "<error>Error: poetry.lock not found. Run `poetry lock` to create"
-                " it.</error>"
+                f"<error>Error: poetry.lock not found. Run `{self._lock_create_command()}`"
+                " to create it.</error>"
             )
             return 1
 
@@ -137,6 +165,12 @@ lists all packages available."""
             return self._display_packages_tree_information(locked_repo, root)
 
         return self._display_packages_information(locked_repo, root)
+
+    def _lock_create_command(self) -> str:
+        if self.poetry.package.name == POETRY_SYSTEM_PROJECT_NAME:
+            return "poetry self lock"
+
+        return "poetry lock"
 
     def _display_single_package_information(
         self, package: str, locked_repository: Repository
@@ -178,6 +212,24 @@ lists all packages available."""
 
             else:
                 self.display_package_tree(self.io, pkg, locked_packages)
+
+            return 0
+
+        if self.option("format") == OutputFormats.JSON:
+            package_info: dict[str, str | dict[str, str]] = {
+                "name": pkg.pretty_name,
+                "version": pkg.pretty_version,
+                "description": pkg.description,
+            }
+            if pkg.requires:
+                package_info["dependencies"] = {
+                    dependency.pretty_name: dependency.pretty_constraint
+                    for dependency in pkg.requires
+                }
+            if required_by:
+                package_info["required_by"] = required_by
+
+            self.line(json.dumps(package_info))
 
             return 0
 
@@ -236,6 +288,7 @@ lists all packages available."""
         show_latest = self.option("latest")
         show_all = self.option("all")
         show_top_level = self.option("top-level")
+        show_why = self.option("why")
         width = (
             sys.maxsize
             if self.option("no-truncate")
@@ -245,6 +298,7 @@ lists all packages available."""
         latest_packages = {}
         latest_statuses = {}
         installed_repo = InstalledRepository.load(self.env)
+        requires = root.all_requires
 
         # Computing widths
         for locked in locked_packages:
@@ -289,7 +343,7 @@ lists all packages available."""
                         ),
                     )
 
-                    if self.option("why"):
+                    if show_why:
                         required_by = reverse_deps(locked, locked_repository)
                         required_by_length = max(
                             required_by_length,
@@ -306,11 +360,56 @@ lists all packages available."""
                     ),
                 )
 
-                if self.option("why"):
+                if show_why:
                     required_by = reverse_deps(locked, locked_repository)
                     required_by_length = max(
                         required_by_length, len(" from " + ",".join(required_by.keys()))
                     )
+
+        if self.option("format") == OutputFormats.JSON:
+            packages = []
+
+            for locked in locked_packages:
+                if locked not in required_locked_packages and not show_all:
+                    continue
+
+                if (
+                    show_latest
+                    and self.option("outdated")
+                    and latest_statuses[locked.pretty_name] == "up-to-date"
+                ):
+                    continue
+
+                if show_top_level and not any(locked.satisfies(r) for r in requires):
+                    continue
+
+                package: dict[str, str | list[str]] = {}
+                package["name"] = locked.pretty_name
+                package["installed_status"] = self.get_installed_status(
+                    locked, installed_repo.packages
+                )
+                package["version"] = get_package_version_display_string(
+                    locked, root=self.poetry.file.path.parent
+                )
+
+                if show_latest:
+                    latest = latest_packages[locked.pretty_name]
+                    package["latest_version"] = get_package_version_display_string(
+                        latest, root=self.poetry.file.path.parent
+                    )
+
+                if show_why:
+                    required_by = reverse_deps(locked, locked_repository)
+                    if required_by:
+                        package["required_by"] = list(required_by.keys())
+
+                package["description"] = locked.description
+
+                packages.append(package)
+
+            self.line(json.dumps(packages))
+
+            return 0
 
         write_version = name_length + version_length + 3 <= width
         write_latest = name_length + version_length + latest_length + 3 <= width
@@ -318,10 +417,8 @@ lists all packages available."""
         why_end_column = (
             name_length + version_length + latest_length + required_by_length
         )
-        write_why = self.option("why") and (why_end_column + 3) <= width
+        write_why = show_why and (why_end_column + 3) <= width
         write_description = (why_end_column + 24) <= width
-
-        requires = root.all_requires
 
         for locked in locked_packages:
             color = "cyan"
@@ -457,7 +554,7 @@ lists all packages available."""
             self._write_tree_line(io, info)
 
             tree_bar = tree_bar.replace("└", " ")
-            packages_in_tree = [package.name, dependency.name]
+            packages_in_tree = {package.name, dependency.name}
 
             self._display_tree(
                 io,
@@ -473,7 +570,7 @@ lists all packages available."""
         io: IO,
         dependency: Dependency,
         installed_packages: list[Package],
-        packages_in_tree: list[NormalizedName],
+        packages_in_tree: set[NormalizedName],
         previous_tree_bar: str = "├",
         level: int = 1,
     ) -> None:
@@ -493,7 +590,6 @@ lists all packages available."""
         tree_bar = previous_tree_bar + "   ├"
         total = len(dependencies)
         for i, dependency in enumerate(dependencies, 1):
-            current_tree = packages_in_tree
             if i == total:
                 tree_bar = previous_tree_bar + "   └"
 
@@ -501,7 +597,7 @@ lists all packages available."""
             color = self.colors[color_ident]
 
             circular_warn = ""
-            if dependency.name in current_tree:
+            if dependency.name in packages_in_tree:
                 circular_warn = "(circular dependency aborted here)"
 
             info = (
@@ -512,17 +608,19 @@ lists all packages available."""
 
             tree_bar = tree_bar.replace("└", " ")
 
-            if dependency.name not in current_tree:
-                current_tree.append(dependency.name)
-
-                self._display_tree(
-                    io,
-                    dependency,
-                    installed_packages,
-                    current_tree,
-                    tree_bar,
-                    level + 1,
-                )
+            if dependency.name not in packages_in_tree:
+                packages_in_tree.add(dependency.name)
+                try:
+                    self._display_tree(
+                        io,
+                        dependency,
+                        installed_packages,
+                        packages_in_tree,
+                        tree_bar,
+                        level + 1,
+                    )
+                finally:
+                    packages_in_tree.discard(dependency.name)
 
     def _write_tree_line(self, io: IO, line: str) -> None:
         if not io.output.supports_utf8():

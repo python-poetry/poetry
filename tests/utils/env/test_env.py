@@ -5,6 +5,7 @@ import re
 import subprocess
 import sys
 
+from importlib import metadata
 from pathlib import Path
 from threading import Thread
 from typing import TYPE_CHECKING
@@ -18,7 +19,6 @@ from installer.utils import SCHEME_NAMES
 from poetry.factory import Factory
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils._compat import WINDOWS
-from poetry.utils._compat import metadata
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import EnvManager
 from poetry.utils.env import GenericEnv
@@ -114,6 +114,25 @@ def test_env_get_supported_tags_matches_inside_virtualenv(
 
     assert venv.get_supported_tags() == expected_tags
     assert run_python_script_spy.call_count == expected_call_count
+
+
+@pytest.mark.skipif(
+    sys.implementation.name != "cpython",
+    reason="free threading is only relevant for CPython",
+)
+def test_env_get_supported_tags_free_threading(
+    tmp_path: Path, manager: EnvManager
+) -> None:
+    venv_path = tmp_path / "Virtual Env"
+    manager.build_venv(venv_path)
+    venv = VirtualEnv(venv_path)
+
+    if venv.marker_env["free_threading"]:
+        assert venv.get_supported_tags() == list(packaging.tags.sys_tags())
+    else:
+        assert not any(t.abi.endswith("t") for t in venv.get_supported_tags())
+        venv.marker_env["free_threading"] = True
+        assert any(t.abi.endswith("t") for t in venv.get_supported_tags())
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Symlinks are not support for Windows")
@@ -404,22 +423,21 @@ def test_env_finds_the_correct_executables_for_generic_env(
     venv = GenericEnv(parent_venv.path, child_env=VirtualEnv(child_venv_path))
 
     expected_executable = (
-        f"python{sys.version_info[0]}.{sys.version_info[1]}{'.exe' if WINDOWS else ''}"
+        f"python{sys.version_info[0]}.exe"
+        if WINDOWS
+        else f"python{sys.version_info[0]}.{sys.version_info[1]}"
     )
     expected_pip_executable = (
         f"pip{sys.version_info[0]}.{sys.version_info[1]}{'.exe' if WINDOWS else ''}"
     )
 
-    if WINDOWS:
-        expected_executable = "python.exe"
-        expected_pip_executable = "pip.exe"
-
     assert Path(venv.python).name == expected_executable
     assert Path(venv.pip).name == expected_pip_executable
 
 
+@pytest.mark.parametrize("fallback", ["major", "default"])
 def test_env_finds_fallback_executables_for_generic_env(
-    tmp_path: Path, manager: EnvManager
+    tmp_path: Path, manager: EnvManager, fallback: str
 ) -> None:
     venv_path = tmp_path / "Virtual Env"
     child_venv_path = tmp_path / "Child Virtual Env"
@@ -429,50 +447,29 @@ def test_env_finds_fallback_executables_for_generic_env(
     venv = GenericEnv(parent_venv.path, child_env=VirtualEnv(child_venv_path))
 
     default_executable = f"python{'.exe' if WINDOWS else ''}"
+    default_pip_executable = f"pip{'.exe' if WINDOWS else ''}"
     major_executable = f"python{sys.version_info[0]}{'.exe' if WINDOWS else ''}"
+    major_pip_executable = f"pip{sys.version_info[0]}{'.exe' if WINDOWS else ''}"
     minor_executable = (
         f"python{sys.version_info[0]}.{sys.version_info[1]}{'.exe' if WINDOWS else ''}"
     )
-    expected_executable = minor_executable
-    if (
-        venv._bin_dir.joinpath(expected_executable).exists()
-        and venv._bin_dir.joinpath(major_executable).exists()
-    ):
-        venv._bin_dir.joinpath(expected_executable).unlink()
-        expected_executable = major_executable
-
-    if (
-        venv._bin_dir.joinpath(expected_executable).exists()
-        and venv._bin_dir.joinpath(default_executable).exists()
-    ):
-        venv._bin_dir.joinpath(expected_executable).unlink()
-        expected_executable = default_executable
-
-    default_pip_executable = f"pip{'.exe' if WINDOWS else ''}"
-    major_pip_executable = f"pip{sys.version_info[0]}{'.exe' if WINDOWS else ''}"
     minor_pip_executable = (
         f"pip{sys.version_info[0]}.{sys.version_info[1]}{'.exe' if WINDOWS else ''}"
     )
-    expected_pip_executable = minor_pip_executable
-    if (
-        venv._bin_dir.joinpath(expected_pip_executable).exists()
-        and venv._bin_dir.joinpath(major_pip_executable).exists()
-    ):
-        venv._bin_dir.joinpath(expected_pip_executable).unlink()
-        expected_pip_executable = major_pip_executable
 
-    if (
-        venv._bin_dir.joinpath(expected_pip_executable).exists()
-        and venv._bin_dir.joinpath(default_pip_executable).exists()
-    ):
-        venv._bin_dir.joinpath(expected_pip_executable).unlink()
-        expected_pip_executable = default_pip_executable
+    venv._bin_dir.joinpath(minor_executable).unlink(missing_ok=True)
+    venv._bin_dir.joinpath(minor_pip_executable).unlink(missing_ok=True)
 
-    if not venv._bin_dir.joinpath(expected_executable).exists():
+    if fallback == "default":
+        venv._bin_dir.joinpath(major_executable).unlink(missing_ok=True)
+        venv._bin_dir.joinpath(major_pip_executable).unlink(missing_ok=True)
+
         expected_executable = default_executable
-
-    if not venv._bin_dir.joinpath(expected_pip_executable).exists():
         expected_pip_executable = default_pip_executable
+
+    else:
+        expected_executable = major_executable
+        expected_pip_executable = major_pip_executable
 
     venv = GenericEnv(parent_venv.path, child_env=VirtualEnv(child_venv_path))
 
@@ -560,3 +557,18 @@ def test_env_scheme_dict_returns_modified_when_read_only(
         and scheme_dict[scheme].startswith(paths["userbase"])
         for scheme in SCHEME_NAMES
     )
+
+
+def test_marker_env_is_equal_for_all_envs(tmp_path: Path, manager: EnvManager) -> None:
+    venv_path = tmp_path / "Virtual Env"
+    manager.build_venv(venv_path)
+    venv = VirtualEnv(venv_path)
+    generic_env = GenericEnv(venv.path)
+    system_env = SystemEnv(Path(sys.prefix))
+
+    venv_marker_env = venv.marker_env
+    generic_marker_env = generic_env.marker_env
+    system_marker_env = system_env.marker_env
+
+    assert venv_marker_env == generic_marker_env
+    assert venv_marker_env == system_marker_env

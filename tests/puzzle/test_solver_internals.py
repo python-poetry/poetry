@@ -40,7 +40,7 @@ def dep(
     d = Dependency(name, "1", groups=groups, extras=extras)
     d._in_extras = [canonicalize_name(e) for e in in_extras]
     if marker:
-        d.marker = marker  # type: ignore[assignment]
+        d.marker = marker
     return d
 
 
@@ -334,6 +334,50 @@ def test_propagate_markers_for_groups2(package: ProjectPackage, solver: Solver) 
             ' or sys_platform == "linux" and python_version == "3.9"'
         ),
     }
+
+
+def test_propagate_markers_for_groups_same_dep(
+    package: ProjectPackage, solver: Solver
+) -> None:
+    a = Package("a", "1")
+    b = Package("b", "1")
+    package.add_dependency(dep("a", 'sys_platform == "win32"', groups=["main"]))
+    package.add_dependency(dep("a", 'sys_platform == "linux"', groups=["dev"]))
+    a.add_dependency(dep("b", 'python_version == "3.8"'))
+
+    packages = [package, a, b]
+    result = solver._aggregate_solved_packages(packages)
+
+    assert len(result) == len(packages)
+    assert result[package].groups == set()
+    assert result[a].groups == {"main", "dev"}
+    assert result[b].groups == {"main", "dev"}
+    assert tm(result[package]) == {}
+    assert tm(result[a]) == {
+        "main": 'sys_platform == "win32"',
+        "dev": 'sys_platform == "linux"',
+    }
+    assert tm(result[b]) == {
+        "main": 'sys_platform == "win32" and python_version == "3.8"',
+        "dev": 'sys_platform == "linux" and python_version == "3.8"',
+    }
+
+
+def test_propagate_markers_for_groups_with_extra(
+    package: ProjectPackage, solver: Solver
+) -> None:
+    a = Package("a", "1")
+    package.add_dependency(dep("a", groups=["main"], in_extras=["foo"]))
+    package.add_dependency(dep("a", groups=["dev"]))
+
+    packages = [package, a]
+    result = solver._aggregate_solved_packages(packages)
+
+    assert len(result) == len(packages)
+    assert result[package].groups == set()
+    assert result[a].groups == {"main", "dev"}
+    assert tm(result[package]) == {}
+    assert tm(result[a]) == {"main": 'extra == "foo"', "dev": ""}
 
 
 def test_propagate_markers_with_cycle(package: ProjectPackage, solver: Solver) -> None:

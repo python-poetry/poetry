@@ -5,6 +5,7 @@ import os
 import re
 import shutil
 
+from importlib import metadata
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -21,7 +22,6 @@ from poetry.installation.executor import Executor
 from poetry.packages import Locker
 from poetry.repositories import Repository
 from poetry.repositories.exceptions import PackageNotFoundError
-from poetry.utils._compat import metadata
 from poetry.utils.password_manager import PoetryKeyring
 
 
@@ -30,18 +30,18 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
     from typing import Any
 
-    import httpretty
+    import responses
 
-    from httpretty.core import HTTPrettyRequest
     from keyring.backend import KeyringBackend
     from poetry.core.constraints.version import Version
     from poetry.core.packages.dependency import Dependency
     from pytest_mock import MockerFixture
+    from requests import PreparedRequest
     from tomlkit.toml_document import TOMLDocument
 
     from poetry.installation.operations.operation import Operation
     from poetry.poetry import Poetry
-    from tests.types import HTTPrettyResponse
+    from tests.types import HttpResponse
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures"
 FIXTURE_PATH_INSTALLATION = Path(__file__).parent / "installation" / "fixtures"
@@ -178,11 +178,11 @@ class PoetryTestApplication(Application):
         self._poetry.set_pool(poetry.pool)
         self._poetry.set_config(poetry.config)
         self._poetry.set_locker(
-            TestLocker(poetry.locker.lock, self._poetry.pyproject.data)
+            DummyLocker(poetry.locker.lock, self._poetry.pyproject.data)
         )
 
 
-class TestLocker(Locker):
+class DummyLocker(Locker):
     # class name begins 'Test': tell pytest that it does not contain testcases.
     __test__ = False
 
@@ -197,7 +197,7 @@ class TestLocker(Locker):
     def is_locked(self) -> bool:
         return self._locked
 
-    def locked(self, is_locked: bool = True) -> TestLocker:
+    def locked(self, is_locked: bool = True) -> DummyLocker:
         self._locked = is_locked
 
         return self
@@ -219,7 +219,7 @@ class TestLocker(Locker):
         self._lock_data = data
 
 
-class TestRepository(Repository):
+class DummyRepository(Repository):
     def find_packages(self, dependency: Dependency) -> list[Package]:
         packages = super().find_packages(dependency)
         if len(packages) == 0:
@@ -258,14 +258,14 @@ def make_entry_point_from_plugin(
     name: str, cls: type[Any], dist: metadata.Distribution | None = None
 ) -> metadata.EntryPoint:
     group: str | None = getattr(cls, "group", None)
-    ep = metadata.EntryPoint(
+    ep: metadata.EntryPoint = metadata.EntryPoint(
         name=name,
         group=group,  # type: ignore[arg-type]
         value=f"{cls.__module__}:{cls.__name__}",
     )
 
     if dist:
-        ep = ep._for(dist)  # type: ignore[attr-defined,no-untyped-call]
+        ep = ep._for(dist)  # type: ignore[attr-defined]
         return ep
 
     return ep
@@ -320,24 +320,22 @@ def flatten_dict(obj: Mapping[str, Any], delimiter: str = ".") -> Mapping[str, A
 
 
 def http_setup_redirect(
-    http: type[httpretty.httpretty], *methods: str, status_code: int = 301
+    http: responses.RequestsMock, *methods: str, status_code: int = 301
 ) -> None:
-    redirect_uri_regex = re.compile("^(?P<protocol>https?)://redirect.(?P<uri>.*)$")
+    redirect_uri_regex = re.compile(r"^(?P<protocol>https?)://redirect\.(?P<uri>.*)$")
 
-    def redirect_request_callback(
-        request: HTTPrettyRequest, uri: str, headers: dict[str, Any]
-    ) -> HTTPrettyResponse:
-        redirect_uri_match = redirect_uri_regex.match(uri)
+    def redirect_request_callback(request: PreparedRequest) -> HttpResponse:
+        assert request.url
+        redirect_uri_match = redirect_uri_regex.match(request.url)
         assert redirect_uri_match is not None
         redirect_uri = f"{redirect_uri_match.group('protocol')}://{redirect_uri_match.group('uri')}"
         return status_code, {"Location": redirect_uri}, b""
 
     for method in methods:
-        http.register_uri(
+        http.add_callback(
             method,
             redirect_uri_regex,
-            status=status_code,
-            body=redirect_request_callback,
+            callback=redirect_request_callback,
         )
 
 

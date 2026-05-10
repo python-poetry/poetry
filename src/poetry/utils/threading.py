@@ -10,8 +10,8 @@ from weakref import WeakKeyDictionary
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from typing import Any
-    from typing import Callable
 
 
 T = TypeVar("T")

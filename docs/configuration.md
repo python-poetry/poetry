@@ -35,9 +35,14 @@ Your local configuration of Poetry application is stored in the `poetry.toml` fi
 which is separate from `pyproject.toml`.
 {{% /note %}}
 
-{{% warning %}}
-Be mindful about checking in this file into your repository since it may contain user-specific or sensitive information.
+{{% note %}}
+If a setting is defined in both `poetry.toml` (local/project) and `config.toml` (global),
+the local/project configuration takes precedence over the global configuration.
 {{% /note %}}
+
+{{% warning %}}
+Be mindful when checking in this file into your repository since it may contain user-specific or sensitive information.
+{{% /warning %}}
 
 ## Listing the current configuration
 
@@ -113,6 +118,20 @@ This also works for secret settings, like credentials:
 ```bash
 export POETRY_HTTP_BASIC_MY_REPOSITORY_PASSWORD=secret
 ```
+
+## Configuration sources
+
+When a setting is set in multiple places, Poetry applies the following precedence
+(from highest to lowest):
+
+1. Environment variables (for example, `POETRY_VIRTUALENVS_CREATE`)
+2. The local `poetry.toml` file (created with `poetry config --local`)
+3. The global `config.toml` file
+4. The setting's default value
+
+For repository credentials (`http-basic.*`, `pypi-token.*`), Poetry may also read
+from `auth.toml` and the system keyring (for details see [Repositories]({{< relref "repositories" >}})).
+Environment variables still take precedence over file-based values.
 
 ## Migrate outdated configs
 
@@ -226,6 +245,8 @@ When set, this configuration allows users to disallow the use of binary distribu
 | `:all:` or `true`      | Disallow binary distributions for all packages.            |
 | `:none:` or `false`    | Allow binary distributions for all packages.               |
 | `package[,package,..]` | Disallow binary distributions for specified packages only. |
+
+If both `installer.no-binary` and `installer.only-binary` are set, explicit package names will take precedence over `:all:`.
 
 {{% note %}}
 As with all configurations described here, this is a user specific configuration. This means that this
@@ -346,9 +367,11 @@ This setting has no effect if the server does not support HTTP range requests.
 
 **Type**: `boolean`
 
-**Default**: `true`
+**Default**: `false`
 
 **Environment Variable**: `POETRY_INSTALLER_RE_RESOLVE`
+
+*Changed default from `true` to `false` in 2.3.0*
 
 *Introduced in 2.0.0*
 
@@ -385,6 +408,73 @@ to only download the METADATA files of wheels.
 Especially with slow network connections, this setting can speed up dependency resolution significantly.
 If the cache has already been filled or the server does not support HTTP range requests,
 this setting makes no difference.
+
+### `solver.min-release-age`
+
+**Type**: `int`
+
+**Default**: `0`
+
+**Environment Variable**: `POETRY_SOLVER_MIN_RELEASE_AGE`
+
+*Introduced in 2.4.0*
+
+Minimum age of a package release in **days** before it is considered during dependency resolution.
+When set, any package version where at least one distribution file was uploaded more recently
+than the specified number of days ago will be ignored by the solver.
+
+For example, with a value of `7`, a version is only considered
+if all known distribution files are at least seven days old.
+If the option is not set or set to `0`, all versions are considered.
+
+This option is useful to protect against supply chain attacks where a new release
+of a dependency is published with malicious code.
+This is often detected within hours or days and the compromised release is removed.
+
+{{% note %}}
+This filter can only be enforced for package sources that expose file upload timestamps.
+If a source does not provide upload times for a release,
+that release is not filtered out by this setting.
+{{% /note %}}
+
+### `solver.min-release-age-exclude`
+
+**Type**: `string`
+
+**Default**: *not set*
+
+**Environment Variable**: `POETRY_SOLVER_MIN_RELEASE_AGE_EXCLUDE`
+
+*Introduced in 2.4.0*
+
+A comma-separated list of package names that should be excluded from the
+[`solver.min-release-age`](#solvermin-release-age) filter.
+Versions of these packages will always be considered by the solver,
+regardless of their upload age.
+
+```bash
+poetry config solver.min-release-age-exclude "my-package,other-package"
+```
+
+### `solver.min-release-age-exclude-source`
+
+**Type**: `string`
+
+**Default**: *not set*
+
+**Environment Variable**: `POETRY_SOLVER_MIN_RELEASE_AGE_EXCLUDE_SOURCE`
+
+*Introduced in 2.4.0*
+
+A comma-separated list of source names or URLs that should be excluded from the
+[`solver.min-release-age`](#solvermin-release-age) filter.
+All packages from these sources will always be considered by the solver,
+regardless of their upload age.
+Sources can be referenced by the name defined in `pyproject.toml` or by URL.
+
+```bash
+poetry config solver.min-release-age-exclude-source "private-repo,https://example.com/simple/"
+```
 
 ### `system-git-client`
 

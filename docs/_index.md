@@ -18,7 +18,7 @@ Poetry offers a lockfile to ensure repeatable installs, and can build your proje
 
 ## System requirements
 
-Poetry requires **Python 3.9+**. It is multi-platform and the goal is to make it work equally well
+Poetry requires **Python 3.10+**. It is multi-platform and the goal is to make it work equally well
 on Linux, macOS and Windows.
 
 ## Installation
@@ -40,7 +40,7 @@ See the **advanced** installation instructions to use a preview or alternate ver
 **Install pipx**
 
 If `pipx` is not already installed, you can follow any of the options in the
-[official pipx installation instructions](https://pipx.pypa.io/stable/installation/).
+[official pipx installation instructions](https://pipx.pypa.io/stable/how-to/install-pipx/).
 Any non-ancient version of `pipx` will do.
 
 {{< /step >}}
@@ -189,6 +189,18 @@ The installer creates a `poetry` wrapper in a well-known, platform-specific dire
 - `$HOME/.local/bin` on Unix.
 - `%APPDATA%\Python\Scripts` on Windows.
 - `$POETRY_HOME/bin` if `$POETRY_HOME` is set.
+
+{{% note %}}
+If you have installed Python through the Microsoft Store, the `poetry` binary
+will be installed to a different location, for example:
+
+```
+%LOCALAPPDATA%\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0
+\LocalCache\Roaming\Python\Scripts
+```
+
+Replace `3.12` with your installed Python version and `qbz5n2kfra8p0` with your suffix.
+{{% /note %}}
 
 If this directory is not present in your `$PATH`, you can add it in order to invoke Poetry
 as `poetry`.

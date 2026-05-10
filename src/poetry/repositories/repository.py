@@ -109,3 +109,13 @@ class Repository(AbstractRepository):
                 return package
 
         raise PackageNotFoundError(f"Package {name} ({version}) not found.")
+
+    def log_age_filtered_versions(self, *, level: str, reset: bool) -> None:
+        """Log package versions that were ignored due to solver.min-release-age.
+
+        Must be overridden in Repository classes that support filtering by release age.
+
+        Args:
+            level: The log level to use (e.g. "info", "warning").
+            reset: If True, clear the recorded filtered versions after logging.
+        """

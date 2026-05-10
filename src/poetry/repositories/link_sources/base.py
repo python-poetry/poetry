@@ -76,7 +76,7 @@ class LinkSource:
             name = m.group("name")
             version_string = m.group("ver")
         else:
-            info, ext = link.splitext()
+            info, _ext = link.splitext()
             match = cls.VERSION_REGEX.match(info)
             if match:
                 name = match.group(1)
@@ -124,3 +124,24 @@ class LinkSource:
     @cached_property
     def _link_cache(self) -> LinkCache:
         raise NotImplementedError()
+
+
+class SimpleRepositoryRootPage:
+    """
+    This class represents the parsed content of a "simple" repository's root page.
+    """
+
+    def search(self, query: str | list[str]) -> list[str]:
+        results: list[str] = []
+        tokens = query if isinstance(query, list) else [query]
+
+        for name in self.package_names:
+            if any(token in name for token in tokens):
+                results.append(name)
+
+        return results
+
+    @cached_property
+    def package_names(self) -> list[str]:
+        # should be overridden in subclasses
+        return []

@@ -54,6 +54,23 @@
     "yanked_reason": null
   },
   "last_serial": 0,
+  "ownership": {
+    "organization": "pypa",
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "agronholm"
+      },
+      {
+        "role": "Owner",
+        "user": "joeforker"
+      },
+      {
+        "role": "Owner",
+        "user": "natefoo"
+      }
+    ]
+  },
   "urls": [
     {
       "comment_text": "",

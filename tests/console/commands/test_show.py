@@ -1,6 +1,12 @@
 from __future__ import annotations
 
+import json
+
+from collections.abc import Callable
 from typing import TYPE_CHECKING
+from typing import Any
+from typing import TypeVar
+from typing import cast
 
 import pytest
 
@@ -10,7 +16,7 @@ from poetry.core.packages.dependency_group import DependencyGroup
 from poetry.factory import Factory
 from poetry.utils._compat import tomllib
 from tests.helpers import MOCK_DEFAULT_GIT_REVISION
-from tests.helpers import TestLocker
+from tests.helpers import DummyLocker
 from tests.helpers import get_package
 
 
@@ -19,7 +25,7 @@ if TYPE_CHECKING:
 
     from poetry.poetry import Poetry
     from poetry.repositories import Repository
-    from tests.helpers import TestRepository
+    from tests.helpers import DummyRepository
     from tests.types import CommandTesterFactory
 
 
@@ -28,8 +34,20 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("show")
 
 
+F = TypeVar("F", bound=Callable[..., Any])
+
+
+def output_format_parametrize(func: F) -> F:
+    formats = ["", "--format json"]
+    return cast("F", pytest.mark.parametrize("output_format", formats)(func))
+
+
+@output_format_parametrize
 def test_show_basic_with_installed_packages(
-    tester: CommandTester, poetry: Poetry, installed: Repository
+    output_format: str,
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
 ) -> None:
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
@@ -50,7 +68,7 @@ def test_show_basic_with_installed_packages(
     installed.add_package(pendulum_200)
     installed.add_package(pytest_373)
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -91,15 +109,38 @@ def test_show_basic_with_installed_packages(
         }
     )
 
-    tester.execute()
+    tester.execute(output_format)
 
-    expected = """\
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.1.0",
+                "description": "Cachy package",
+                "installed_status": "installed",
+            },
+            {
+                "name": "pendulum",
+                "version": "2.0.0",
+                "description": "Pendulum package",
+                "installed_status": "installed",
+            },
+            {
+                "name": "pytest",
+                "version": "3.7.3",
+                "description": "Pytest package",
+                "installed_status": "installed",
+            },
+        ]
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = """\
 cachy    0.1.0 Cachy package
 pendulum 2.0.0 Pendulum package
 pytest   3.7.3 Pytest package
 """
-
-    assert tester.io.fetch_output() == expected
+        assert tester.io.fetch_output() == expected
 
 
 def _configure_project_with_groups(poetry: Poetry, installed: Repository) -> None:
@@ -127,7 +168,7 @@ def _configure_project_with_groups(poetry: Poetry, installed: Repository) -> Non
     installed.add_package(pendulum_200)
     installed.add_package(pytest_373)
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -180,6 +221,23 @@ pytest 3.7.3 Pytest package
 """,
         ),
         (
+            "--format json",
+            [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "installed_status": "installed",
+                },
+                {
+                    "name": "pytest",
+                    "version": "3.7.3",
+                    "description": "Pytest package",
+                    "installed_status": "installed",
+                },
+            ],
+        ),
+        (
             "--with time",
             """\
 cachy    0.1.0 Cachy package
@@ -188,10 +246,44 @@ pytest   3.7.3 Pytest package
 """,
         ),
         (
+            "--with time --format json",
+            [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "installed_status": "installed",
+                },
+                {
+                    "name": "pendulum",
+                    "version": "2.0.0",
+                    "description": "Pendulum package",
+                    "installed_status": "installed",
+                },
+                {
+                    "name": "pytest",
+                    "version": "3.7.3",
+                    "description": "Pytest package",
+                    "installed_status": "installed",
+                },
+            ],
+        ),
+        (
             "--without test",
             """\
 cachy 0.1.0 Cachy package
 """,
+        ),
+        (
+            "--without test --format json",
+            [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "installed_status": "installed",
+                },
+            ],
         ),
         (
             f"--without {MAIN_GROUP}",
@@ -200,10 +292,32 @@ pytest 3.7.3 Pytest package
 """,
         ),
         (
+            f"--without {MAIN_GROUP} --format json",
+            [
+                {
+                    "name": "pytest",
+                    "version": "3.7.3",
+                    "description": "Pytest package",
+                    "installed_status": "installed",
+                },
+            ],
+        ),
+        (
             f"--only {MAIN_GROUP}",
             """\
 cachy 0.1.0 Cachy package
 """,
+        ),
+        (
+            f"--only {MAIN_GROUP} --format json",
+            [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "installed_status": "installed",
+                },
+            ],
         ),
         (
             "--with time --without test",
@@ -213,10 +327,38 @@ pendulum 2.0.0 Pendulum package
 """,
         ),
         (
+            "--with time --without test --format json",
+            [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "installed_status": "installed",
+                },
+                {
+                    "name": "pendulum",
+                    "version": "2.0.0",
+                    "description": "Pendulum package",
+                    "installed_status": "installed",
+                },
+            ],
+        ),
+        (
             f"--with time --without {MAIN_GROUP},test",
             """\
 pendulum 2.0.0 Pendulum package
 """,
+        ),
+        (
+            f"--with time --without {MAIN_GROUP},test --format json",
+            [
+                {
+                    "name": "pendulum",
+                    "version": "2.0.0",
+                    "description": "Pendulum package",
+                    "installed_status": "installed",
+                },
+            ],
         ),
         (
             "--only time",
@@ -225,24 +367,38 @@ pendulum 2.0.0 Pendulum package
 """,
         ),
         (
+            "--only time --format json",
+            [
+                {
+                    "name": "pendulum",
+                    "version": "2.0.0",
+                    "description": "Pendulum package",
+                    "installed_status": "installed",
+                },
+            ],
+        ),
+        (
             "--only time --with test",
             """\
 pendulum 2.0.0 Pendulum package
 """,
         ),
         (
-            "--with time",
-            """\
-cachy    0.1.0 Cachy package
-pendulum 2.0.0 Pendulum package
-pytest   3.7.3 Pytest package
-""",
+            "--only time --with test --format json",
+            [
+                {
+                    "name": "pendulum",
+                    "version": "2.0.0",
+                    "description": "Pendulum package",
+                    "installed_status": "installed",
+                },
+            ],
         ),
     ],
 )
 def test_show_basic_with_group_options(
     options: str,
-    expected: str,
+    expected: str | list[dict[str, str]],
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
@@ -251,11 +407,18 @@ def test_show_basic_with_group_options(
 
     tester.execute(options)
 
-    assert tester.io.fetch_output() == expected
+    if "json" in options:
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        assert tester.io.fetch_output() == expected
 
 
+@output_format_parametrize
 def test_show_basic_with_installed_packages_single(
-    tester: CommandTester, poetry: Poetry, installed: Repository
+    output_format: str,
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
 ) -> None:
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
 
@@ -264,7 +427,7 @@ def test_show_basic_with_installed_packages_single(
 
     installed.add_package(cachy_010)
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -287,17 +450,29 @@ def test_show_basic_with_installed_packages_single(
         }
     )
 
-    tester.execute("cachy")
+    tester.execute(f"cachy {output_format}")
 
-    assert [line.strip() for line in tester.io.fetch_output().splitlines()] == [
-        "name         : cachy",
-        "version      : 0.1.0",
-        "description  : Cachy package",
-    ]
+    expected: dict[str, str] | list[str] = {}
+    if "json" in output_format:
+        expected = {"name": "cachy", "version": "0.1.0", "description": "Cachy package"}
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = [
+            "name         : cachy",
+            "version      : 0.1.0",
+            "description  : Cachy package",
+        ]
+        assert [
+            line.strip() for line in tester.io.fetch_output().splitlines()
+        ] == expected
 
 
+@output_format_parametrize
 def test_show_basic_with_installed_packages_single_canonicalized(
-    tester: CommandTester, poetry: Poetry, installed: Repository
+    output_format: str,
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
 ) -> None:
     poetry.package.add_dependency(Factory.create_dependency("foo-bar", "^0.1.0"))
 
@@ -306,7 +481,7 @@ def test_show_basic_with_installed_packages_single_canonicalized(
 
     installed.add_package(foo_bar)
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -329,17 +504,33 @@ def test_show_basic_with_installed_packages_single_canonicalized(
         }
     )
 
-    tester.execute("Foo_Bar")
+    tester.execute(f"Foo_Bar {output_format}")
 
-    assert [line.strip() for line in tester.io.fetch_output().splitlines()] == [
-        "name         : foo-bar",
-        "version      : 0.1.0",
-        "description  : Foobar package",
-    ]
+    expected: dict[str, str] | list[str] = {}
+    if "json" in output_format:
+        expected = {
+            "name": "foo-bar",
+            "version": "0.1.0",
+            "description": "Foobar package",
+        }
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = [
+            "name         : foo-bar",
+            "version      : 0.1.0",
+            "description  : Foobar package",
+        ]
+        assert [
+            line.strip() for line in tester.io.fetch_output().splitlines()
+        ] == expected
 
 
+@output_format_parametrize
 def test_show_basic_with_not_installed_packages_non_decorated(
-    tester: CommandTester, poetry: Poetry, installed: Repository
+    output_format: str,
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
 ) -> None:
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
@@ -352,7 +543,7 @@ def test_show_basic_with_not_installed_packages_non_decorated(
 
     installed.add_package(cachy_010)
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -384,14 +575,31 @@ def test_show_basic_with_not_installed_packages_non_decorated(
         }
     )
 
-    tester.execute()
+    tester.execute(output_format)
 
-    expected = """\
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.1.0",
+                "description": "Cachy package",
+                "installed_status": "installed",
+            },
+            {
+                "name": "pendulum",
+                "version": "2.0.0",
+                "description": "Pendulum package",
+                "installed_status": "not-installed",
+            },
+        ]
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = """\
 cachy        0.1.0 Cachy package
 pendulum (!) 2.0.0 Pendulum package
 """
-
-    assert tester.io.fetch_output() == expected
+        assert tester.io.fetch_output() == expected
 
 
 def test_show_basic_with_not_installed_packages_decorated(
@@ -408,7 +616,7 @@ def test_show_basic_with_not_installed_packages_decorated(
 
     installed.add_package(cachy_010)
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -450,11 +658,13 @@ def test_show_basic_with_not_installed_packages_decorated(
     assert tester.io.fetch_output() == expected
 
 
+@output_format_parametrize
 def test_show_latest_non_decorated(
+    output_format: str,
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
-    repo: TestRepository,
+    repo: DummyRepository,
 ) -> None:
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
@@ -477,7 +687,7 @@ def test_show_latest_non_decorated(
     repo.add_package(pendulum_200)
     repo.add_package(pendulum_201)
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -509,21 +719,40 @@ def test_show_latest_non_decorated(
         }
     )
 
-    tester.execute("--latest")
+    tester.execute(f"--latest {output_format}")
 
-    expected = """\
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.1.0",
+                "latest_version": "0.2.0",
+                "description": "Cachy package",
+                "installed_status": "installed",
+            },
+            {
+                "name": "pendulum",
+                "version": "2.0.0",
+                "latest_version": "2.0.1",
+                "description": "Pendulum package",
+                "installed_status": "installed",
+            },
+        ]
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = """\
 cachy    0.1.0 0.2.0 Cachy package
 pendulum 2.0.0 2.0.1 Pendulum package
 """
-
-    assert tester.io.fetch_output() == expected
+        assert tester.io.fetch_output() == expected
 
 
 def test_show_latest_decorated(
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
-    repo: TestRepository,
+    repo: DummyRepository,
 ) -> None:
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
@@ -546,7 +775,7 @@ def test_show_latest_decorated(
     repo.add_package(pendulum_200)
     repo.add_package(pendulum_201)
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -590,11 +819,13 @@ def test_show_latest_decorated(
     assert tester.io.fetch_output() == expected
 
 
+@output_format_parametrize
 def test_show_outdated(
+    output_format: str,
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
-    repo: TestRepository,
+    repo: DummyRepository,
 ) -> None:
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
@@ -614,7 +845,7 @@ def test_show_outdated(
     repo.add_package(cachy_020)
     repo.add_package(pendulum_200)
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -646,20 +877,34 @@ def test_show_outdated(
         }
     )
 
-    tester.execute("--outdated")
+    tester.execute(f"--outdated {output_format}")
 
-    expected = """\
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.1.0",
+                "latest_version": "0.2.0",
+                "description": "Cachy package",
+                "installed_status": "installed",
+            },
+        ]
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = """\
 cachy 0.1.0 0.2.0 Cachy package
 """
+        assert tester.io.fetch_output() == expected
 
-    assert tester.io.fetch_output() == expected
 
-
+@output_format_parametrize
 def test_show_outdated_with_only_up_to_date_packages(
+    output_format: str,
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
-    repo: TestRepository,
+    repo: DummyRepository,
 ) -> None:
     cachy_020 = get_package("cachy", "0.2.0")
     cachy_020.description = "Cachy package"
@@ -667,7 +912,7 @@ def test_show_outdated_with_only_up_to_date_packages(
     installed.add_package(cachy_020)
     repo.add_package(cachy_020)
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -690,18 +935,24 @@ def test_show_outdated_with_only_up_to_date_packages(
         }
     )
 
-    tester.execute("--outdated")
+    tester.execute(f"--outdated {output_format}")
 
-    expected = ""
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = []
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = ""
+        assert tester.io.fetch_output() == expected
 
-    assert tester.io.fetch_output() == expected
 
-
+@output_format_parametrize
 def test_show_outdated_has_prerelease_but_not_allowed(
+    output_format: str,
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
-    repo: TestRepository,
+    repo: DummyRepository,
 ) -> None:
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
@@ -726,7 +977,7 @@ def test_show_outdated_has_prerelease_but_not_allowed(
     repo.add_package(cachy_020)
     repo.add_package(pendulum_200)
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -758,20 +1009,34 @@ def test_show_outdated_has_prerelease_but_not_allowed(
         }
     )
 
-    tester.execute("--outdated")
+    tester.execute(f"--outdated {output_format}")
 
-    expected = """\
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.1.0",
+                "latest_version": "0.2.0",
+                "description": "Cachy package",
+                "installed_status": "installed",
+            },
+        ]
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = """\
 cachy 0.1.0 0.2.0 Cachy package
 """
+        assert tester.io.fetch_output() == expected
 
-    assert tester.io.fetch_output() == expected
 
-
+@output_format_parametrize
 def test_show_outdated_has_prerelease_and_allowed(
+    output_format: str,
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
-    repo: TestRepository,
+    repo: DummyRepository,
 ) -> None:
     poetry.package.add_dependency(
         Factory.create_dependency(
@@ -800,7 +1065,7 @@ def test_show_outdated_has_prerelease_and_allowed(
     repo.add_package(cachy_020)
     repo.add_package(pendulum_200)
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -832,20 +1097,34 @@ def test_show_outdated_has_prerelease_and_allowed(
         }
     )
 
-    tester.execute("--outdated")
+    tester.execute(f"--outdated {output_format}")
 
-    expected = """\
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.1.0.dev1",
+                "latest_version": "0.3.0.dev123",
+                "description": "Cachy package",
+                "installed_status": "installed",
+            },
+        ]
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = """\
 cachy 0.1.0.dev1 0.3.0.dev123 Cachy package
 """
+        assert tester.io.fetch_output() == expected
 
-    assert tester.io.fetch_output() == expected
 
-
+@output_format_parametrize
 def test_show_outdated_formatting(
+    output_format: str,
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
-    repo: TestRepository,
+    repo: DummyRepository,
 ) -> None:
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
@@ -868,7 +1147,7 @@ def test_show_outdated_formatting(
     repo.add_package(pendulum_200)
     repo.add_package(pendulum_201)
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -900,14 +1179,33 @@ def test_show_outdated_formatting(
         }
     )
 
-    tester.execute("--outdated")
+    tester.execute(f"--outdated {output_format}")
 
-    expected = """\
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.1.0",
+                "latest_version": "0.2.0",
+                "description": "Cachy package",
+                "installed_status": "installed",
+            },
+            {
+                "name": "pendulum",
+                "version": "2.0.0",
+                "latest_version": "2.0.1",
+                "description": "Pendulum package",
+                "installed_status": "installed",
+            },
+        ]
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = """\
 cachy    0.1.0 0.2.0 Cachy package
 pendulum 2.0.0 2.0.1 Pendulum package
 """
-
-    assert tester.io.fetch_output() == expected
+        assert tester.io.fetch_output() == expected
 
 
 @pytest.mark.parametrize(
@@ -919,11 +1217,13 @@ pendulum 2.0.0 2.0.1 Pendulum package
         ),
     ],
 )
+@output_format_parametrize
 def test_show_outdated_local_dependencies(
+    output_format: str,
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
-    repo: TestRepository,
+    repo: DummyRepository,
 ) -> None:
     cachy_010 = get_package("cachy", "0.1.0")
     cachy_010.description = "Cachy package"
@@ -950,7 +1250,7 @@ def test_show_outdated_local_dependencies(
     repo.add_package(cachy_030)
     repo.add_package(pendulum_200)
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1019,24 +1319,46 @@ def test_show_outdated_local_dependencies(
         }
     )
 
-    tester.execute("--outdated")
+    tester.execute(f"--outdated {output_format}")
 
-    expected = """\
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.2.0",
+                "latest_version": "0.3.0",
+                "description": "Cachy package",
+                "installed_status": "installed",
+            },
+            {
+                "name": "project-with-setup",
+                "version": "0.1.1 ../project_with_setup",
+                "latest_version": "0.1.2 ../project_with_setup",
+                "description": "Demo project.",
+                "installed_status": "installed",
+            },
+        ]
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = """\
 cachy              0.2.0                       0.3.0
 project-with-setup 0.1.1 ../project_with_setup 0.1.2 ../project_with_setup
 """
-    assert (
-        "\n".join(line.rstrip() for line in tester.io.fetch_output().splitlines())
-        == expected.rstrip()
-    )
+        assert (
+            "\n".join(line.rstrip() for line in tester.io.fetch_output().splitlines())
+            == expected.rstrip()
+        )
 
 
 @pytest.mark.parametrize("project_directory", ["project_with_git_dev_dependency"])
+@output_format_parametrize
 def test_show_outdated_git_dev_dependency(
+    output_format: str,
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
-    repo: TestRepository,
+    repo: DummyRepository,
 ) -> None:
     cachy_010 = get_package("cachy", "0.1.0")
     cachy_010.description = "Cachy package"
@@ -1062,7 +1384,7 @@ def test_show_outdated_git_dev_dependency(
     repo.add_package(pendulum_200)
     repo.add_package(pytest)
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1118,22 +1440,43 @@ def test_show_outdated_git_dev_dependency(
         }
     )
 
-    tester.execute("--outdated")
+    tester.execute(f"--outdated {output_format}")
 
-    expected = """\
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.1.0",
+                "latest_version": "0.2.0",
+                "description": "Cachy package",
+                "installed_status": "installed",
+            },
+            {
+                "name": "demo",
+                "version": "0.1.1 9cf87a2",
+                "latest_version": "0.1.2 9cf87a2",
+                "description": "Demo package",
+                "installed_status": "installed",
+            },
+        ]
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = """\
 cachy 0.1.0         0.2.0         Cachy package
 demo  0.1.1 9cf87a2 0.1.2 9cf87a2 Demo package
 """
-
-    assert tester.io.fetch_output() == expected
+        assert tester.io.fetch_output() == expected
 
 
 @pytest.mark.parametrize("project_directory", ["project_with_git_dev_dependency"])
+@output_format_parametrize
 def test_show_outdated_no_dev_git_dev_dependency(
+    output_format: str,
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
-    repo: TestRepository,
+    repo: DummyRepository,
 ) -> None:
     cachy_010 = get_package("cachy", "0.1.0")
     cachy_010.description = "Cachy package"
@@ -1159,7 +1502,7 @@ def test_show_outdated_no_dev_git_dev_dependency(
     repo.add_package(pendulum_200)
     repo.add_package(pytest)
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1214,20 +1557,34 @@ def test_show_outdated_no_dev_git_dev_dependency(
         }
     )
 
-    tester.execute("--outdated --without dev")
+    tester.execute(f"--outdated --without dev {output_format}")
 
-    expected = """\
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.1.0",
+                "latest_version": "0.2.0",
+                "description": "Cachy package",
+                "installed_status": "installed",
+            },
+        ]
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = """\
 cachy 0.1.0 0.2.0 Cachy package
 """
+        assert tester.io.fetch_output() == expected
 
-    assert tester.io.fetch_output() == expected
 
-
+@output_format_parametrize
 def test_show_hides_incompatible_package(
+    output_format: str,
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
-    repo: TestRepository,
+    repo: DummyRepository,
 ) -> None:
     poetry.package.add_dependency(
         Factory.create_dependency("cachy", {"version": "^0.1.0", "python": "< 2.0"})
@@ -1242,7 +1599,7 @@ def test_show_hides_incompatible_package(
 
     installed.add_package(pendulum_200)
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1274,20 +1631,33 @@ def test_show_hides_incompatible_package(
         }
     )
 
-    tester.execute()
+    tester.execute(output_format)
 
-    expected = """\
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "pendulum",
+                "version": "2.0.0",
+                "description": "Pendulum package",
+                "installed_status": "installed",
+            },
+        ]
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = """\
 pendulum 2.0.0 Pendulum package
 """
+        assert tester.io.fetch_output() == expected
 
-    assert tester.io.fetch_output() == expected
 
-
+@output_format_parametrize
 def test_show_all_shows_incompatible_package(
+    output_format: str,
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
-    repo: TestRepository,
+    repo: DummyRepository,
 ) -> None:
     cachy_010 = get_package("cachy", "0.1.0")
     cachy_010.description = "Cachy package"
@@ -1297,7 +1667,7 @@ def test_show_all_shows_incompatible_package(
 
     installed.add_package(pendulum_200)
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1330,21 +1700,40 @@ def test_show_all_shows_incompatible_package(
         }
     )
 
-    tester.execute("--all")
+    tester.execute(f"--all {output_format}")
 
-    expected = """\
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.1.0",
+                "description": "Cachy package",
+                "installed_status": "not-installed",
+            },
+            {
+                "name": "pendulum",
+                "version": "2.0.0",
+                "description": "Pendulum package",
+                "installed_status": "installed",
+            },
+        ]
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = """\
 cachy     0.1.0 Cachy package
 pendulum  2.0.0 Pendulum package
 """
+        assert tester.io.fetch_output() == expected
 
-    assert tester.io.fetch_output() == expected
 
-
+@output_format_parametrize
 def test_show_hides_incompatible_package_with_duplicate(
+    output_format: str,
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
-    repo: TestRepository,
+    repo: DummyRepository,
 ) -> None:
     poetry.package.add_dependency(
         Factory.create_dependency("cachy", {"version": "0.1.0", "platform": "linux"})
@@ -1353,7 +1742,7 @@ def test_show_hides_incompatible_package_with_duplicate(
         Factory.create_dependency("cachy", {"version": "0.1.1", "platform": "darwin"})
     )
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1380,20 +1769,33 @@ def test_show_hides_incompatible_package_with_duplicate(
         }
     )
 
-    tester.execute()
+    tester.execute(output_format)
 
-    expected = """\
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.1.1",
+                "description": "Cachy package",
+                "installed_status": "not-installed",
+            }
+        ]
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = """\
 cachy (!) 0.1.1 Cachy package
 """
+        assert tester.io.fetch_output() == expected
 
-    assert tester.io.fetch_output() == expected
 
-
+@output_format_parametrize
 def test_show_all_shows_all_duplicates(
+    output_format: str,
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
-    repo: TestRepository,
+    repo: DummyRepository,
 ) -> None:
     poetry.package.add_dependency(
         Factory.create_dependency("cachy", {"version": "0.1.0", "platform": "linux"})
@@ -1402,7 +1804,7 @@ def test_show_all_shows_all_duplicates(
         Factory.create_dependency("cachy", {"version": "0.1.1", "platform": "darwin"})
     )
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1429,242 +1831,31 @@ def test_show_all_shows_all_duplicates(
         }
     )
 
-    tester.execute("--all")
+    tester.execute(f"--all {output_format}")
 
-    expected = """\
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.1.0",
+                "description": "Cachy package",
+                "installed_status": "not-installed",
+            },
+            {
+                "name": "cachy",
+                "version": "0.1.1",
+                "description": "Cachy package",
+                "installed_status": "not-installed",
+            },
+        ]
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = """\
 cachy     0.1.0 Cachy package
 cachy (!) 0.1.1 Cachy package
 """
-
-    assert tester.io.fetch_output() == expected
-
-
-def test_show_non_dev_with_basic_installed_packages(
-    tester: CommandTester, poetry: Poetry, installed: Repository
-) -> None:
-    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
-    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
-    poetry.package.add_dependency(
-        Factory.create_dependency("pytest", "*", groups=["dev"])
-    )
-
-    cachy_010 = get_package("cachy", "0.1.0")
-    cachy_010.description = "Cachy package"
-
-    pendulum_200 = get_package("pendulum", "2.0.0")
-    pendulum_200.description = "Pendulum package"
-
-    pytest_373 = get_package("pytest", "3.7.3")
-    pytest_373.description = "Pytest package"
-
-    installed.add_package(cachy_010)
-    installed.add_package(pendulum_200)
-    installed.add_package(pytest_373)
-
-    assert isinstance(poetry.locker, TestLocker)
-    poetry.locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "cachy",
-                    "version": "0.1.0",
-                    "description": "Cachy package",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "pendulum",
-                    "version": "2.0.0",
-                    "description": "Pendulum package",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "pytest",
-                    "version": "3.7.3",
-                    "description": "Pytest package",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
-                "platform": "*",
-                "content-hash": "123456789",
-                "files": {"cachy": [], "pendulum": [], "pytest": []},
-            },
-        }
-    )
-
-    tester.execute("--without dev")
-
-    expected = """\
-cachy    0.1.0 Cachy package
-pendulum 2.0.0 Pendulum package
-"""
-
-    assert tester.io.fetch_output() == expected
-
-
-def test_show_with_group_only(
-    tester: CommandTester, poetry: Poetry, installed: Repository
-) -> None:
-    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
-    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
-    poetry.package.add_dependency(
-        Factory.create_dependency("pytest", "*", groups=["dev"])
-    )
-
-    cachy_010 = get_package("cachy", "0.1.0")
-    cachy_010.description = "Cachy package"
-
-    pendulum_200 = get_package("pendulum", "2.0.0")
-    pendulum_200.description = "Pendulum package"
-
-    pytest_373 = get_package("pytest", "3.7.3")
-    pytest_373.description = "Pytest package"
-
-    installed.add_package(cachy_010)
-    installed.add_package(pendulum_200)
-    installed.add_package(pytest_373)
-
-    assert isinstance(poetry.locker, TestLocker)
-    poetry.locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "cachy",
-                    "version": "0.1.0",
-                    "description": "Cachy package",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "pendulum",
-                    "version": "2.0.0",
-                    "description": "Pendulum package",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "pytest",
-                    "version": "3.7.3",
-                    "description": "Pytest package",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
-                "platform": "*",
-                "content-hash": "123456789",
-                "files": {"cachy": [], "pendulum": [], "pytest": []},
-            },
-        }
-    )
-
-    tester.execute("--only dev")
-
-    expected = """\
-pytest 3.7.3 Pytest package
-"""
-
-    assert tester.io.fetch_output() == expected
-
-
-def test_show_with_optional_group(
-    tester: CommandTester, poetry: Poetry, installed: Repository
-) -> None:
-    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
-    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
-    group = DependencyGroup("dev", optional=True)
-    group.add_dependency(Factory.create_dependency("pytest", "*", groups=["dev"]))
-    poetry.package.add_dependency_group(group)
-
-    cachy_010 = get_package("cachy", "0.1.0")
-    cachy_010.description = "Cachy package"
-
-    pendulum_200 = get_package("pendulum", "2.0.0")
-    pendulum_200.description = "Pendulum package"
-
-    pytest_373 = get_package("pytest", "3.7.3")
-    pytest_373.description = "Pytest package"
-
-    installed.add_package(cachy_010)
-    installed.add_package(pendulum_200)
-    installed.add_package(pytest_373)
-
-    assert isinstance(poetry.locker, TestLocker)
-    poetry.locker.mock_lock_data(
-        {
-            "package": [
-                {
-                    "name": "cachy",
-                    "version": "0.1.0",
-                    "description": "Cachy package",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "pendulum",
-                    "version": "2.0.0",
-                    "description": "Pendulum package",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-                {
-                    "name": "pytest",
-                    "version": "3.7.3",
-                    "description": "Pytest package",
-                    "optional": False,
-                    "platform": "*",
-                    "python-versions": "*",
-                    "checksum": [],
-                },
-            ],
-            "metadata": {
-                "python-versions": "*",
-                "platform": "*",
-                "content-hash": "123456789",
-                "files": {"cachy": [], "pendulum": [], "pytest": []},
-            },
-        }
-    )
-
-    tester.execute()
-
-    expected = """\
-cachy    0.1.0 Cachy package
-pendulum 2.0.0 Pendulum package
-"""
-
-    assert tester.io.fetch_output() == expected
-
-    tester.execute("--with dev")
-
-    expected = """\
-cachy    0.1.0 Cachy package
-pendulum 2.0.0 Pendulum package
-pytest   3.7.3 Pytest package
-"""
-
-    assert tester.io.fetch_output() == expected
+        assert tester.io.fetch_output() == expected
 
 
 def test_show_tree(
@@ -1677,7 +1868,7 @@ def test_show_tree(
 
     installed.add_package(cachy2)
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1735,7 +1926,7 @@ def test_show_tree_no_dev(
     pytest = get_package("pytest", "6.1.1")
     installed.add_package(pytest)
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1803,7 +1994,7 @@ def test_show_tree_why_package(
     c = get_package("c", "0.0.1")
     installed.add_package(c)
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1847,6 +2038,91 @@ a 0.0.1
     assert tester.io.fetch_output() == expected
 
 
+def test_show_tree_shared_dependency_not_marked_circular(
+    tester: CommandTester, poetry: Poetry, installed: Repository
+) -> None:
+    """When siblings share a dependency, it must not be flagged as circular.
+
+    a depends on b, which depends on c and d.  Both c and d depend on e.
+    Because c and d are siblings under b, e appearing under d is not circular
+    — only a true ancestor cycle should trigger the warning.
+    """
+    poetry.package.add_dependency(Factory.create_dependency("a", "=0.0.1"))
+
+    a = get_package("a", "0.0.1")
+    a.add_dependency(Factory.create_dependency("b", "=0.0.1"))
+    installed.add_package(a)
+
+    b = get_package("b", "0.0.1")
+    b.add_dependency(Factory.create_dependency("c", "=0.0.1"))
+    b.add_dependency(Factory.create_dependency("d", "=0.0.1"))
+    installed.add_package(b)
+
+    c = get_package("c", "0.0.1")
+    c.add_dependency(Factory.create_dependency("e", "=0.0.1"))
+    installed.add_package(c)
+
+    d = get_package("d", "0.0.1")
+    d.add_dependency(Factory.create_dependency("e", "=0.0.1"))
+    installed.add_package(d)
+
+    e = get_package("e", "0.0.1")
+    installed.add_package(e)
+
+    assert isinstance(poetry.locker, DummyLocker)
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "a",
+                    "version": "0.0.1",
+                    "dependencies": {"b": "=0.0.1"},
+                    "python-versions": "*",
+                    "optional": False,
+                },
+                {
+                    "name": "b",
+                    "version": "0.0.1",
+                    "dependencies": {"c": "=0.0.1", "d": "=0.0.1"},
+                    "python-versions": "*",
+                    "optional": False,
+                },
+                {
+                    "name": "c",
+                    "version": "0.0.1",
+                    "dependencies": {"e": "=0.0.1"},
+                    "python-versions": "*",
+                    "optional": False,
+                },
+                {
+                    "name": "d",
+                    "version": "0.0.1",
+                    "dependencies": {"e": "=0.0.1"},
+                    "python-versions": "*",
+                    "optional": False,
+                },
+                {
+                    "name": "e",
+                    "version": "0.0.1",
+                    "python-versions": "*",
+                    "optional": False,
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "files": {"a": [], "b": [], "c": [], "d": [], "e": []},
+            },
+        }
+    )
+
+    tester.execute("--tree", supports_utf8=False)
+
+    output = tester.io.fetch_output()
+    assert "circular" not in output
+
+
 def test_show_tree_why(
     tester: CommandTester, poetry: Poetry, installed: Repository
 ) -> None:
@@ -1857,13 +2133,13 @@ def test_show_tree_why(
     a.add_dependency(Factory.create_dependency("b", "=0.0.1"))
 
     b = get_package("b", "0.0.1")
-    a.add_dependency(Factory.create_dependency("c", "=0.0.1"))
+    b.add_dependency(Factory.create_dependency("c", "=0.0.1"))
     installed.add_package(b)
 
     c = get_package("c", "0.0.1")
     installed.add_package(c)
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1906,8 +2182,106 @@ def test_show_tree_why(
     assert tester.io.fetch_output() == expected
 
 
+@output_format_parametrize
+def test_show_why(
+    output_format: str, tester: CommandTester, poetry: Poetry, installed: Repository
+) -> None:
+    poetry.package.add_dependency(Factory.create_dependency("a", "=0.0.1"))
+
+    a = get_package("a", "0.0.1")
+    a.description = "Package A"
+    a.add_dependency(Factory.create_dependency("b", "=0.0.1"))
+    a.add_dependency(Factory.create_dependency("c", "=0.0.1"))
+    installed.add_package(a)
+
+    b = get_package("b", "0.0.1")
+    b.description = "Package B"
+    b.add_dependency(Factory.create_dependency("c", "=0.0.1"))
+    installed.add_package(b)
+
+    c = get_package("c", "0.0.1")
+    c.description = "Package C"
+    installed.add_package(c)
+
+    assert isinstance(poetry.locker, DummyLocker)
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "a",
+                    "version": "0.0.1",
+                    "description": "Package A",
+                    "dependencies": {"b": "=0.0.1", "c": "=0.0.1"},
+                    "python-versions": "*",
+                    "optional": False,
+                },
+                {
+                    "name": "b",
+                    "version": "0.0.1",
+                    "description": "Package B",
+                    "dependencies": {"c": "=0.0.1"},
+                    "python-versions": "*",
+                    "optional": False,
+                },
+                {
+                    "name": "c",
+                    "version": "0.0.1",
+                    "description": "Package C",
+                    "python-versions": "*",
+                    "optional": False,
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "files": {"a": [], "b": [], "c": []},
+            },
+        }
+    )
+
+    tester.execute(f"--why {output_format}")
+
+    expected: str | list[dict[str, str | list[str]]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "a",
+                "version": "0.0.1",
+                "description": "Package A",
+                "installed_status": "installed",
+            },
+            {
+                "name": "b",
+                "version": "0.0.1",
+                "description": "Package B",
+                "installed_status": "installed",
+                "required_by": ["a"],
+            },
+            {
+                "name": "c",
+                "version": "0.0.1",
+                "description": "Package C",
+                "installed_status": "installed",
+                "required_by": ["a", "b"],
+            },
+        ]
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = """\
+a 0.0.1          Package A
+b 0.0.1 from a   Package B
+c 0.0.1 from a,b Package C
+"""
+        assert tester.io.fetch_output() == expected
+
+
+@output_format_parametrize
 def test_show_required_by_deps(
-    tester: CommandTester, poetry: Poetry, installed: Repository
+    output_format: str,
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
 ) -> None:
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.2.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "2.0.0"))
@@ -1921,7 +2295,7 @@ def test_show_required_by_deps(
     installed.add_package(cachy2)
     installed.add_package(pendulum)
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1964,9 +2338,20 @@ def test_show_required_by_deps(
         }
     )
 
-    tester.execute("cachy")
+    tester.execute(f"cachy {output_format}")
 
-    expected = """\
+    expected: str | dict[str, str | dict[str, str]] = ""
+    if "json" in output_format:
+        expected = {
+            "name": "cachy",
+            "version": "0.2.0",
+            "description": "",
+            "dependencies": {"msgpack-python": ">=0.5 <0.6"},
+            "required_by": {"pendulum": ">=0.2.0 <0.3.0"},
+        }
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = """\
  name         : cachy
  version      : 0.2.0
  description  :
@@ -1976,9 +2361,9 @@ dependencies
 
 required by
  - pendulum requires >=0.2.0 <0.3.0
-""".splitlines()
-    actual = [line.rstrip() for line in tester.io.fetch_output().splitlines()]
-    assert actual == expected
+"""
+        actual = [line.rstrip() for line in tester.io.fetch_output().splitlines()]
+        assert actual == expected.splitlines()
 
 
 @pytest.mark.parametrize("truncate", [False, True])
@@ -1992,7 +2377,7 @@ def test_show_entire_description_truncate(
 
     installed.add_package(cachy2)
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -2051,11 +2436,13 @@ def test_show_errors_without_lock_file(tester: CommandTester, poetry: Poetry) ->
     assert tester.status_code == 1
 
 
+@output_format_parametrize
 def test_show_dependency_installed_from_git_in_dev(
+    output_format: str,
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
-    repo: TestRepository,
+    repo: DummyRepository,
 ) -> None:
     # Add a regular dependency for a package in main, and a git dependency for the same
     # package in dev.
@@ -2075,7 +2462,7 @@ def test_show_dependency_installed_from_git_in_dev(
     repo.add_package(pendulum_200)
 
     # The git package is the one that gets into the lockfile.
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -2114,15 +2501,23 @@ def test_show_dependency_installed_from_git_in_dev(
 
     # Nothing needs updating, there is no confusion between the git and not-git
     # packages.
-    tester.execute("--outdated")
-    assert tester.io.fetch_output() == ""
+    tester.execute(f"--outdated {output_format}")
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = []
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = ""
+        assert tester.io.fetch_output() == expected
 
 
+@output_format_parametrize
 def test_url_dependency_is_not_outdated_by_repository_package(
+    output_format: str,
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
-    repo: TestRepository,
+    repo: DummyRepository,
 ) -> None:
     demo_url = (
         "https://files.pythonhosted.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
@@ -2138,7 +2533,7 @@ def test_url_dependency_is_not_outdated_by_repository_package(
     demo_100 = get_package("demo", "1.0.0")
     repo.add_package(demo_100)
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -2167,12 +2562,23 @@ def test_url_dependency_is_not_outdated_by_repository_package(
 
     # The url dependency on demo is not made outdated by the existence of a newer
     # version in the repository.
-    tester.execute("--outdated")
-    assert tester.io.fetch_output() == ""
+    tester.execute(f"--outdated {output_format}")
+
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = []
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = ""
+        assert tester.io.fetch_output() == expected
 
 
+@output_format_parametrize
 def test_show_top_level(
-    tester: CommandTester, poetry: Poetry, installed: Repository
+    output_format: str,
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
 ) -> None:
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.2.0"))
 
@@ -2181,7 +2587,7 @@ def test_show_top_level(
 
     installed.add_package(cachy2)
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -2216,15 +2622,30 @@ def test_show_top_level(
         }
     )
 
-    tester.execute("--top-level")
+    tester.execute(f"--top-level {output_format}")
 
-    expected = """cachy              0.2.0 \n"""
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.2.0",
+                "description": "",
+                "installed_status": "installed",
+            },
+        ]
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = """cachy              0.2.0 \n"""
+        assert tester.io.fetch_output() == expected
 
-    assert tester.io.fetch_output() == expected
 
-
+@output_format_parametrize
 def test_show_top_level_with_explicitly_defined_dependency(
-    tester: CommandTester, poetry: Poetry, installed: Repository
+    output_format: str,
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
 ) -> None:
     poetry.package.add_dependency(Factory.create_dependency("a", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("b", "^0.2.0"))
@@ -2236,7 +2657,7 @@ def test_show_top_level_with_explicitly_defined_dependency(
     installed.add_package(a)
     installed.add_package(b)
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -2271,15 +2692,36 @@ def test_show_top_level_with_explicitly_defined_dependency(
         }
     )
 
-    tester.execute("--top-level")
+    tester.execute(f"--top-level {output_format}")
 
-    expected = """a 0.1.0 \nb 0.2.0 \n"""
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "a",
+                "version": "0.1.0",
+                "description": "",
+                "installed_status": "installed",
+            },
+            {
+                "name": "b",
+                "version": "0.2.0",
+                "description": "",
+                "installed_status": "installed",
+            },
+        ]
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = """a 0.1.0 \nb 0.2.0 \n"""
+        assert tester.io.fetch_output() == expected
 
-    assert tester.io.fetch_output() == expected
 
-
+@output_format_parametrize
 def test_show_top_level_with_extras(
-    tester: CommandTester, poetry: Poetry, installed: Repository
+    output_format: str,
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
 ) -> None:
     black_dep = Factory.create_dependency(
         "black", {"version": "23.3.0", "extras": ["d"]}
@@ -2299,7 +2741,7 @@ def test_show_top_level_with_extras(
     )
     installed.add_package(black_package)
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -2340,11 +2782,22 @@ def test_show_top_level_with_extras(
         }
     )
 
-    tester.execute("--top-level")
+    tester.execute(f"--top-level {output_format}")
 
-    expected = """black 23.3.0 \n"""
-
-    assert tester.io.fetch_output() == expected
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "black",
+                "version": "23.3.0",
+                "description": "",
+                "installed_status": "installed",
+            },
+        ]
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = """black 23.3.0 \n"""
+        assert tester.io.fetch_output() == expected
 
 
 def test_show_error_top_level_with_tree(tester: CommandTester) -> None:
@@ -2374,12 +2827,12 @@ def test_show_outdated_missing_directory_dependency(
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
-    repo: TestRepository,
+    repo: DummyRepository,
 ) -> None:
     with (poetry.pyproject.file.path.parent / "poetry.lock").open(mode="rb") as f:
         data = tomllib.load(f)
 
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(data)
 
     poetry.package.add_dependency(
@@ -2391,3 +2844,21 @@ def test_show_outdated_missing_directory_dependency(
 
     with pytest.raises(ValueError, match="does not exist"):
         tester.execute("")
+
+
+def test_show_error_invalid_output_format(
+    tester: CommandTester,
+) -> None:
+    expected = "Error: Invalid output format. Supported formats are: json, text.\n"
+    tester.execute("--format invalid")
+    assert tester.io.fetch_error() == expected
+    assert tester.status_code == 1
+
+
+def test_show_error_invalid_output_format_with_tree_option(
+    tester: CommandTester,
+) -> None:
+    expected = "Error: --tree option can only be used with the text output option.\n"
+    tester.execute("--format json --tree")
+    assert tester.io.fetch_error() == expected
+    assert tester.status_code == 1

@@ -11,6 +11,7 @@ from deepdiff.diff import DeepDiff
 from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import Version
 from poetry.core.constraints.version import parse_constraint
+from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.packages.vcs_dependency import VCSDependency
 
@@ -164,7 +165,7 @@ def test_create_pyproject_from_package(
     poetry = Factory().create_poetry(fixture_dir(project))
     package = poetry.package
 
-    pyproject: dict[str, Any] = Factory.create_pyproject_from_package(package)
+    pyproject: dict[str, Any] = Factory.create_legacy_pyproject_from_package(package)
 
     result = pyproject["tool"]["poetry"]
     expected = poetry.pyproject.poetry_config
@@ -250,6 +251,17 @@ def test_create_poetry_version_ok(fixture_dir: FixtureDirGetter) -> None:
 def test_create_poetry_version_not_ok(fixture_dir: FixtureDirGetter) -> None:
     with pytest.raises(PoetryError) as e:
         Factory().create_poetry(fixture_dir("self_version_not_ok"))
+    assert (
+        str(e.value)
+        == f"This project requires Poetry <1.2, but you are using Poetry {__version__}"
+    )
+
+
+def test_create_poetry_check_version_before_validation(
+    fixture_dir: FixtureDirGetter,
+) -> None:
+    with pytest.raises(PoetryError) as e:
+        Factory().create_poetry(fixture_dir("self_version_not_ok_invalid_config"))
     assert (
         str(e.value)
         == f"This project requires Poetry <1.2, but you are using Poetry {__version__}"
@@ -381,6 +393,29 @@ def test_poetry_with_pypi_explicit_only(
     assert str(e.value) == "At least one source must not be configured as 'explicit'."
 
 
+def test_poetry_with_build_constraints(fixture_dir: FixtureDirGetter) -> None:
+    poetry = Factory().create_poetry(fixture_dir("build_constraints"))
+    assert set(poetry.build_constraints) == {
+        "legacy-lib",
+        "no-constraints",
+        "c-ext-lib",
+    }
+    assert poetry.build_constraints[canonicalize_name("legacy-lib")] == [
+        Dependency("setuptools", "<75")
+    ]
+    assert poetry.build_constraints[canonicalize_name("no-constraints")] == []
+    assert poetry.build_constraints[canonicalize_name("c-ext-lib")] == [
+        Dependency("Cython", "<3.1"),
+        Dependency("setuptools", ">=60,<75"),
+        Dependency("setuptools", ">=75"),
+    ]
+
+
+def test_poetry_with_empty_build_constraints(fixture_dir: FixtureDirGetter) -> None:
+    poetry = Factory().create_poetry(fixture_dir("build_constraints_empty"))
+    assert set(poetry.build_constraints) == set()
+
+
 def test_validate(fixture_dir: FixtureDirGetter) -> None:
     complete = TOMLFile(fixture_dir("complete.toml"))
     pyproject: dict[str, Any] = complete.read()
@@ -392,13 +427,17 @@ def test_validate_fails(fixture_dir: FixtureDirGetter) -> None:
     complete = TOMLFile(fixture_dir("complete.toml"))
     pyproject: dict[str, Any] = complete.read()
     pyproject["tool"]["poetry"]["this key is not in the schema"] = ""
+    pyproject["tool"]["poetry"]["source"] = {}
 
-    expected = (
-        "Additional properties are not allowed "
-        "('this key is not in the schema' was unexpected)"
-    )
+    expected = [
+        "tool.poetry.source must be array",
+        (
+            "Additional properties are not allowed "
+            "('this key is not in the schema' was unexpected)"
+        ),
+    ]
 
-    assert Factory.validate(pyproject) == {"errors": [expected], "warnings": []}
+    assert Factory.validate(pyproject) == {"errors": expected, "warnings": []}
 
 
 def test_create_poetry_fails_on_invalid_configuration(

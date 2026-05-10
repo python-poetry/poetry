@@ -10,7 +10,6 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
 
 import pytest
 
@@ -19,6 +18,8 @@ from build import ProjectBuilder
 from cleo.formatters.style import Style
 from cleo.io.buffered_io import BufferedIO
 from cleo.io.outputs.output import Verbosity
+from packaging.utils import canonicalize_name
+from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.utils import path_to_url
 
@@ -36,10 +37,12 @@ from poetry.vcs.git.backend import Git
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from collections.abc import Iterator
     from collections.abc import Mapping
     from collections.abc import Sequence
 
+    from poetry.core.packages.package import PackageFile
     from pytest_mock import MockerFixture
 
     from poetry.config.config import Config
@@ -52,6 +55,7 @@ if TYPE_CHECKING:
 class Chef(BaseChef):
     _directory_wheels: list[Path] | None = None
     _sdist_wheels: list[Path] | None = None
+    _use_sdist = False
 
     def set_directory_wheel(self, wheels: Path | list[Path]) -> None:
         if not isinstance(wheels, list):
@@ -70,14 +74,17 @@ class Chef(BaseChef):
         archive: Path,
         destination: Path | None = None,
         config_settings: Mapping[str, str | Sequence[str]] | None = None,
+        build_constraints: list[Dependency] | None = None,
     ) -> Path:
         if self._sdist_wheels is not None:
-            wheel = self._sdist_wheels.pop(0)
-            self._sdist_wheels.append(wheel)
+            self._use_sdist = True
 
-            return wheel
-
-        return super()._prepare_sdist(archive)
+        return super()._prepare_sdist(
+            archive,
+            destination,
+            config_settings=config_settings,
+            build_constraints=build_constraints,
+        )
 
     def _prepare(
         self,
@@ -86,7 +93,15 @@ class Chef(BaseChef):
         *,
         editable: bool = False,
         config_settings: Mapping[str, str | Sequence[str]] | None = None,
+        build_constraints: list[Dependency] | None = None,
     ) -> Path:
+        if self._use_sdist and self._sdist_wheels is not None:
+            self._use_sdist = False
+            wheel = self._sdist_wheels.pop(0)
+            self._sdist_wheels.append(wheel)
+
+            return wheel
+
         if self._directory_wheels is not None:
             wheel = self._directory_wheels.pop(0)
             self._directory_wheels.append(wheel)
@@ -96,7 +111,13 @@ class Chef(BaseChef):
             shutil.copyfile(wheel, dst_wheel)
             return dst_wheel
 
-        return super()._prepare(directory, destination, editable=editable)
+        return super()._prepare(
+            directory,
+            destination,
+            editable=editable,
+            config_settings=config_settings,
+            build_constraints=build_constraints,
+        )
 
 
 @pytest.fixture
@@ -253,24 +274,13 @@ Package operations: 4 installs, 2 updates, 1 removal
     assert return_code == 0
 
     assert prepare_spy.call_count == 2
-    assert prepare_spy.call_args_list == [
-        mocker.call(
-            chef,
-            mocker.ANY,
-            destination=mocker.ANY,
-            editable=False,
-            config_settings=None,
-        ),
-        mocker.call(
-            chef,
-            mocker.ANY,
-            destination=mocker.ANY,
-            editable=True,
-            config_settings=None,
-        ),
-    ]
+    assert {
+        args.args[1].name.split("-")[0]: args.kwargs.get("editable")
+        for args in prepare_spy.call_args_list
+    } == {"simple_project": False, "demo": True}
 
 
+@pytest.mark.parametrize("source_type", ["git", "file", "url"])
 def test_execute_build_config_settings_passed(
     mocker: MockerFixture,
     config: Config,
@@ -280,6 +290,7 @@ def test_execute_build_config_settings_passed(
     env: MockEnv,
     copy_wheel: Callable[[], Path],
     fixture_dir: FixtureDirGetter,
+    source_type: str,
 ) -> None:
     wheel_install = mocker.patch.object(WheelInstaller, "install")
 
@@ -308,19 +319,31 @@ def test_execute_build_config_settings_passed(
         source_url=fixture_dir("simple_project").resolve().as_posix(),
     )
 
-    git_package = Package(
-        "demo",
-        "0.1.0",
-        source_type="git",
-        source_reference="master",
-        source_url="https://github.com/demo/demo.git",
-        develop=True,
-    )
+    if source_type == "git":
+        ref = "master"
+        demo_package = Package(
+            "demo",
+            "0.1.0",
+            source_type="git",
+            source_reference=ref,
+            source_url="https://github.com/demo/demo.git",
+        )
+        version_info = ref
+    elif source_type == "file":
+        url = (fixture_dir("distributions") / "demo-0.1.0.tar.gz").resolve().as_posix()
+        demo_package = Package("demo", "0.1.0", source_type="file", source_url=url)
+        version_info = url
+    elif source_type == "url":
+        url = "https://files.pythonhosted.org/demo-0.1.0.tar.gz"
+        demo_package = Package("demo", "0.1.0", source_type="url", source_url=url)
+        version_info = url
+    else:
+        raise ValueError
 
     return_code = executor.execute(
         [
             Install(directory_package),
-            Install(git_package),
+            Install(demo_package),
         ]
     )
 
@@ -328,7 +351,7 @@ def test_execute_build_config_settings_passed(
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing simple-project (1.2.3 {directory_package.source_url})
-  - Installing demo (0.1.0 master)
+  - Installing demo (0.1.0 {version_info})
 """
 
     expected_lines = set(expected.splitlines())
@@ -338,22 +361,91 @@ Package operations: 2 installs, 0 updates, 0 removals
     assert return_code == 0
 
     assert prepare_spy.call_count == 2
-    assert prepare_spy.call_args_list == [
-        mocker.call(
-            chef,
-            mocker.ANY,
-            destination=mocker.ANY,
-            editable=False,
-            config_settings=None,
-        ),
-        mocker.call(
-            chef,
-            mocker.ANY,
-            destination=mocker.ANY,
-            editable=True,
-            config_settings=config_settings_demo,
-        ),
-    ]
+    assert {
+        args.args[1].name.split("-")[0]: args.kwargs.get("config_settings")
+        for args in prepare_spy.call_args_list
+    } == {"simple_project": None, "demo": config_settings_demo}
+
+
+@pytest.mark.parametrize("source_type", ["git", "file"])
+def test_execute_build_constraints_passed(
+    mocker: MockerFixture,
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    tmp_path: Path,
+    env: MockEnv,
+    copy_wheel: Callable[[], Path],
+    fixture_dir: FixtureDirGetter,
+    source_type: str,
+) -> None:
+    wheel_install = mocker.patch.object(WheelInstaller, "install")
+
+    artifact_cache = ArtifactCache(cache_dir=config.artifacts_cache_directory)
+
+    prepare_spy = mocker.spy(Chef, "_prepare")
+    chef = Chef(artifact_cache, env, Factory.create_pool(config))
+    chef.set_directory_wheel([copy_wheel(), copy_wheel()])
+    chef.set_sdist_wheel(copy_wheel())
+
+    build_constraints_demo = [Dependency("setuptools", "<75")]
+    build_constraints = {canonicalize_name("demo"): build_constraints_demo}
+    executor = Executor(env, pool, config, io, build_constraints=build_constraints)
+    executor._chef = chef
+
+    directory_package = Package(
+        "simple-project",
+        "1.2.3",
+        source_type="directory",
+        source_url=fixture_dir("simple_project").resolve().as_posix(),
+    )
+
+    if source_type == "git":
+        ref = "master"
+        demo_package = Package(
+            "demo",
+            "0.1.0",
+            source_type="git",
+            source_reference=ref,
+            source_url="https://github.com/demo/demo.git",
+        )
+        version_info = ref
+    elif source_type == "file":
+        url = (fixture_dir("distributions") / "demo-0.1.0.tar.gz").resolve().as_posix()
+        demo_package = Package("demo", "0.1.0", source_type="file", source_url=url)
+        version_info = url
+    elif source_type == "url":
+        url = "https://files.pythonhosted.org/demo-0.1.0.tar.gz"
+        demo_package = Package("demo", "0.1.0", source_type="url", source_url=url)
+        version_info = url
+    else:
+        raise ValueError
+
+    return_code = executor.execute(
+        [
+            Install(directory_package),
+            Install(demo_package),
+        ]
+    )
+
+    expected = f"""
+Package operations: 2 installs, 0 updates, 0 removals
+
+  - Installing simple-project (1.2.3 {directory_package.source_url})
+  - Installing demo (0.1.0 {version_info})
+"""
+
+    expected_lines = set(expected.splitlines())
+    output_lines = set(io.fetch_output().splitlines())
+    assert output_lines == expected_lines
+    assert wheel_install.call_count == 2
+    assert return_code == 0
+
+    assert prepare_spy.call_count == 2
+    assert {
+        args.args[1].name.split("-")[0]: args.kwargs.get("build_constraints")
+        for args in prepare_spy.call_args_list
+    } == {"simple_project": None, "demo": build_constraints_demo}
 
 
 @pytest.mark.parametrize(
@@ -692,6 +784,7 @@ def verify_installed_distribution(
 
     distribution = distributions[0]
     metadata = distribution.metadata
+    assert metadata
     assert metadata["Name"] == package.name
     assert metadata["Version"] == package.version.text
 
@@ -1213,22 +1306,22 @@ def test_executor_should_install_multiple_packages_from_same_git_repository(
     wheel: Path,
 ) -> None:
     package_a = Package(
-        "package_a",
+        "one",
         "0.1.2",
         source_type="git",
         source_reference="master",
         source_resolved_reference="123456",
         source_url="https://github.com/demo/subdirectories.git",
-        source_subdirectory="package_a",
+        source_subdirectory="one",
     )
     package_b = Package(
-        "package_b",
+        "two",
         "0.1.2",
         source_type="git",
         source_reference="master",
         source_resolved_reference="123456",
         source_url="https://github.com/demo/subdirectories.git",
-        source_subdirectory="package_b",
+        source_subdirectory="two",
     )
 
     chef = Chef(artifact_cache, tmp_venv, Factory.create_pool(config))
@@ -1237,13 +1330,59 @@ def test_executor_should_install_multiple_packages_from_same_git_repository(
 
     executor = Executor(tmp_venv, pool, config, io)
     executor._chef = chef
-    executor.execute([Install(package_a), Install(package_b)])
+    return_code = executor.execute([Install(package_a), Install(package_b)])
+
+    assert return_code == 0, io.fetch_error()
+    assert spy.call_count == 2
 
     archive_arg = spy.call_args_list[0][0][0]
-    assert archive_arg == tmp_venv.path / "src/subdirectories/package_a"
+    assert archive_arg == tmp_venv.path / "src/subdirectories/one"
 
     archive_arg = spy.call_args_list[1][0][0]
-    assert archive_arg == tmp_venv.path / "src/subdirectories/package_b"
+    assert archive_arg == tmp_venv.path / "src/subdirectories/two"
+
+
+def test_executor_should_abort_if_installing_first_package_from_same_git_repository_fails(
+    mocker: MockerFixture,
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    config: Config,
+    artifact_cache: ArtifactCache,
+    io: BufferedIO,
+    wheel: Path,
+) -> None:
+    package_a = Package(
+        "non-existent",
+        "0.1.2",
+        source_type="git",
+        source_reference="master",
+        source_resolved_reference="123456",
+        source_url="https://github.com/demo/subdirectories.git",
+        source_subdirectory="non-existent",
+    )
+    package_b = Package(
+        "two",
+        "0.1.2",
+        source_type="git",
+        source_reference="master",
+        source_resolved_reference="123456",
+        source_url="https://github.com/demo/subdirectories.git",
+        source_subdirectory="two",
+    )
+
+    chef = Chef(artifact_cache, tmp_venv, Factory.create_pool(config))
+    chef.set_directory_wheel(wheel)
+    spy = mocker.spy(chef, "prepare")
+
+    executor = Executor(tmp_venv, pool, config, io)
+    executor._chef = chef
+    return_code = executor.execute([Install(package_a), Install(package_b)])
+
+    assert return_code == 1
+    assert spy.call_count == 1
+
+    archive_arg = spy.call_args_list[0][0][0]
+    assert archive_arg == tmp_venv.path / "src/subdirectories/non-existent"
 
 
 def test_executor_should_install_multiple_packages_from_forked_git_repository(
@@ -1280,7 +1419,9 @@ def test_executor_should_install_multiple_packages_from_forked_git_repository(
 
     executor = Executor(tmp_venv, pool, config, io)
     executor._chef = chef
-    executor.execute([Install(package_a), Install(package_b)])
+    return_code = executor.execute([Install(package_a), Install(package_b)])
+
+    assert return_code == 0, io.fetch_error()
 
     # Verify that the repo for package_a is not re-used for package_b.
     # both repos must be cloned serially into separate directories.
@@ -1477,6 +1618,46 @@ You can verify this by running {expected_pip_command}.
 """
 
     assert io.fetch_output() == expected_output
+
+
+def test_build_backend_error_includes_config_settings_in_pip_command(
+    mocker: MockerFixture,
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    env: MockEnv,
+    fixture_dir: FixtureDirGetter,
+) -> None:
+    """String config setting values must not be iterated per-character."""
+    error = BuildBackendException(Exception("build failed"), description="build failed")
+    mocker.patch.object(ProjectBuilder, "build", side_effect=error)
+    io.set_verbosity(Verbosity.NORMAL)
+
+    config.merge(
+        {
+            "installer": {
+                "build-config-settings": {
+                    "simple-project": {
+                        "CC": "gcc",
+                        "--build-option": ["--one", "--two"],
+                    },
+                },
+            },
+        }
+    )
+
+    executor = Executor(env, pool, config, io)
+    source_url = fixture_dir("simple_project").resolve().as_posix()
+    package = Package(
+        "simple-project", "1.2.3", source_type="directory", source_url=source_url
+    )
+
+    executor.execute([Install(package)])
+
+    output = io.fetch_output()
+    assert "--config-settings='CC=gcc'" in output
+    assert "--config-settings='--build-option=--one'" in output
+    assert "--config-settings='--build-option=--two'" in output
 
 
 @pytest.mark.parametrize("encoding", ["utf-8", "latin-1"])
@@ -1727,7 +1908,7 @@ Package operations: 1 install, 0 updates, 0 removals
     ],
 )
 def test_executor_known_hashes(
-    package_files: list[dict[str, str]],
+    package_files: list[PackageFile],
     expected_url_reference: dict[str, Any],
     tmp_venv: VirtualEnv,
     pool: RepositoryPool,

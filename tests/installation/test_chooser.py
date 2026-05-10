@@ -15,6 +15,8 @@ from poetry.utils.env import MockEnv
 
 
 if TYPE_CHECKING:
+    from poetry.core.packages.package import PackageFile
+
     from poetry.repositories.repository_pool import RepositoryPool
     from tests.conftest import Config
     from tests.types import DistributionHashGetter
@@ -122,14 +124,21 @@ def test_chooser_only_binary_policy(
 @pytest.mark.parametrize(
     ("no_binary", "only_binary", "filename"),
     [
-        (":all:", ":all:", None),
+        # no `no_binary` nor `only_binary`
         (":none:", ":none:", "pytest-3.5.0-py2.py3-none-any.whl"),
-        (":none:", ":all:", "pytest-3.5.0-py2.py3-none-any.whl"),
-        (":all:", ":none:", "pytest-3.5.0.tar.gz"),
         ("black", "black", "pytest-3.5.0-py2.py3-none-any.whl"),
-        ("black", "pytest", "pytest-3.5.0-py2.py3-none-any.whl"),
+        # `no_binary` only
+        (":all:", ":none:", "pytest-3.5.0.tar.gz"),
         ("pytest", "black", "pytest-3.5.0.tar.gz"),
+        # `only_binary` only
+        (":none:", ":all:", "pytest-3.5.0-py2.py3-none-any.whl"),
+        ("black", "pytest", "pytest-3.5.0-py2.py3-none-any.whl"),
+        # both `no_binary` and `only_binary`
         ("pytest", "pytest", None),
+        (":all:", ":all:", None),
+        ("pytest", ":all:", "pytest-3.5.0.tar.gz"),
+        (":all:", "pytest", "pytest-3.5.0-py2.py3-none-any.whl"),
+        # complex cases
         ("pytest,black", "pytest,black", None),
     ],
 )
@@ -204,10 +213,10 @@ def test_chooser_chooses_distributions_that_match_the_package_hashes(
     chooser = Chooser(pool, env)
 
     package = Package("isort", "4.3.4")
-    files = [
+    files: list[PackageFile] = [
         {
             "file": filename,
-            "hash": (f"sha256:{dist_hash_getter(filename).sha256}"),
+            "hash": f"sha256:{dist_hash_getter(filename).sha256}",
         }
         for filename in [
             f"{package.name}-{package.version}.tar.gz",
@@ -239,9 +248,9 @@ def test_chooser_chooses_yanked_if_no_others(
     chooser = Chooser(pool, env)
 
     package = Package("black", "21.11b0")
-    files = [
+    files: list[PackageFile] = [
         {
-            "filename": filename,
+            "file": filename,
             "hash": (f"sha256:{dist_hash_getter(filename).sha256}"),
         }
         for filename in [f"{package.name}-{package.version}-py3-none-any.whl"]
@@ -279,10 +288,10 @@ def test_chooser_does_not_choose_yanked_if_others(
     )
 
     package = Package("futures", "3.2.0")
-    files = [
+    files: list[PackageFile] = [
         {
-            "filename": filename,
-            "hash": (f"sha256:{dist_hash_getter(filename).sha256}"),
+            "file": filename,
+            "hash": f"sha256:{dist_hash_getter(filename).sha256}",
         }
         for filename in [
             f"{package.name}-{package.version}-py2-none-any.whl",
@@ -323,12 +332,12 @@ def test_chooser_throws_an_error_if_package_hashes_do_not_match(
     chooser = Chooser(pool, env)
 
     package = Package("isort", "4.3.4")
-    files = [
+    files: list[PackageFile] = [
         {
             "hash": (
                 "sha256:0000000000000000000000000000000000000000000000000000000000000000"
             ),
-            "filename": "isort-4.3.4.tar.gz",
+            "file": "isort-4.3.4.tar.gz",
         }
     ]
     if source_type == "legacy":
@@ -366,7 +375,7 @@ def test_chooser_md5_remote_fallback_to_sha256_inline_calculation(
     )
     package.files = [
         {
-            "filename": filename,
+            "file": filename,
             "hash": (f"sha256:{dist_hash_getter(filename).sha256}"),
         }
         for filename in [f"{package.name}-{package.version}.tar.gz"]

@@ -11,7 +11,7 @@ from poetry.core.packages.dependency_group import MAIN_GROUP
 
 from poetry.console.commands.installer_command import InstallerCommand
 from poetry.console.exceptions import GroupNotFoundError
-from tests.helpers import TestLocker
+from tests.helpers import DummyLocker
 
 
 if TYPE_CHECKING:
@@ -509,7 +509,7 @@ def test_install_path_dependency_does_not_exist(
     options: str,
 ) -> None:
     poetry = _project_factory(project, project_factory, fixture_dir)
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.locked(True)
     tester = command_tester_factory(command, poetry=poetry)
     if options:
@@ -529,7 +529,7 @@ def test_install_extra_path_dependency_does_not_exist(
 ) -> None:
     project = "missing_extra_directory_dependency"
     poetry = _project_factory(project, project_factory, fixture_dir)
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.locked(True)
     tester = command_tester_factory(command, poetry=poetry)
     if not options:
@@ -550,7 +550,7 @@ def test_install_missing_directory_dependency_with_no_directory(
     poetry = _project_factory(
         "missing_directory_dependency", project_factory, fixture_dir
     )
-    assert isinstance(poetry.locker, TestLocker)
+    assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.locked(True)
     tester = command_tester_factory(command, poetry=poetry)
     if options:

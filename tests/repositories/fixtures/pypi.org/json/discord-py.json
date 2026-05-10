@@ -38,9 +38,12 @@
   ],
   "meta": {
     "_last-serial": 0,
-    "api-version": "1.3"
+    "api-version": "1.4"
   },
   "name": "discord-py",
+  "project-status": {
+    "status": "active"
+  },
   "versions": [
     "2.0.0"
   ]

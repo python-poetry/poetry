@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import subprocess
-import sys
 
 from typing import TYPE_CHECKING
 
@@ -188,8 +187,7 @@ def test_run_console_scripts_of_editable_dependencies_on_windows(
 
     cmd_script_file = tmp_venv._bin_dir / "quix.cmd"
     # `/b` ensures we only exit the script instead of any cmd.exe proc that called it
-    encoding = "locale" if sys.version_info >= (3, 10) else None
-    cmd_script_file.write_text("exit /b 123", encoding=encoding)
+    cmd_script_file.write_text("exit /b 123", encoding="locale")
     # We prove that the CMD script executed successfully by verifying the exit code
     # matches what we wrote in the script
     assert tester.execute("quix") == 123
@@ -203,7 +201,7 @@ def test_run_script_exit_code(
 ) -> None:
     mocker.patch(
         "os.execvpe",
-        lambda file, args, env: subprocess.call([file] + args[1:], env=env),
+        lambda file, args, env: subprocess.call([file, *args[1:]], env=env),
     )
     install_tester = command_tester_factory(
         "install",
@@ -235,7 +233,7 @@ def test_run_script_sys_argv0(
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=tmp_venv)
     mocker.patch(
         "os.execvpe",
-        lambda file, args, env: subprocess.call([file] + args[1:], env=env),
+        lambda file, args, env: subprocess.call([file, *args[1:]], env=env),
     )
 
     install_tester = command_tester_factory(

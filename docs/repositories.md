@@ -41,6 +41,9 @@ Then, assuming the repository requires authentication, configure credentials for
 ```bash
 poetry config http-basic.foo <username> <password>
 ```
+{{% warning %}}
+If you have completed configuring credentials and are receiving authorization failures, check for the presence of `~/.netrc`, which has been known to conflict with Poetry's configured authentication.
+{{% /warning %}}
 
 {{% warning %}}
 Depending on your system configuration, credentials might be saved in your command line history.
@@ -443,6 +446,8 @@ poetry config repositories.testpypi https://test.pypi.org/legacy/
 typically different to the same one provided by the repository for the simple API. You'll note that
 in the example of [Test PyPI](https://test.pypi.org/), both the host (`test.pypi.org`) as
 well as the path (`/legacy`) are different to its simple API (`https://test.pypi.org/simple`).
+
+While the examples show URLs with a trailing slash (e.g., `https://test.pypi.org/legacy/`), Poetry automatically normalizes legacy repository URLs by adding a trailing slash if one is missing. This means both `https://test.pypi.org/legacy` and `https://test.pypi.org/legacy/` will work correctly when publishing.
 
 {{% /note %}}
 

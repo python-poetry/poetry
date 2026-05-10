@@ -13,6 +13,8 @@ import tomlkit
 
 from poetry.core.constraints.version import Version
 
+from poetry.config.config import Config
+from poetry.console.exceptions import PoetryConsoleError
 from poetry.toml.file import TOMLFile
 from poetry.utils.env import GET_BASE_PREFIX
 from poetry.utils.env import GET_PYTHON_VERSION_ONELINER
@@ -30,6 +32,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
     from unittest.mock import MagicMock
 
+    from cleo.io.buffered_io import BufferedIO
     from pytest import LogCaptureFixture
     from pytest_mock import MockerFixture
 
@@ -468,6 +471,56 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
     assert not envs_file.exists()
 
 
+def test_activate_with_in_project_setting_if_venv_is_file(
+    manager: EnvManager,
+    poetry: Poetry,
+    io: BufferedIO,
+    config: Config,
+    tmp_path: Path,
+    mocker: MockerFixture,
+    venv_flags_default: dict[str, bool],
+    mocked_python_register: MockedPythonRegister,
+) -> None:
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
+
+    config.merge(
+        {
+            "virtualenvs": {
+                "path": str(tmp_path / "virtualenvs"),
+                "in-project": True,
+            }
+        }
+    )
+
+    mocked_python_register("3.7.1")
+    m = mocker.patch("poetry.utils.env.EnvManager.build_venv")
+
+    venv_path = poetry.file.path.parent / ".venv"
+    assert not venv_path.exists()
+    venv_path.touch()
+    assert venv_path.is_file()
+
+    manager.activate("python3.7")
+
+    m.assert_called_with(
+        poetry.file.path.parent / ".venv",
+        executable=Path("/usr/bin/python3.7"),
+        flags=venv_flags_default,
+        prompt="simple-project-py3.7",
+    )
+
+    envs_file = TOMLFile(tmp_path / "virtualenvs" / "envs.toml")
+    assert not envs_file.exists()
+
+    # The .venv file is removed, but no .venv is created because we mocked build_venv.
+    assert not venv_path.exists()
+    assert (
+        f"{venv_path} is not a virtual environment but a file. Removing it."
+        in io.fetch_error()
+    )
+
+
 def test_deactivate_non_activated_but_existing(
     tmp_path: Path,
     manager: EnvManager,
@@ -573,6 +626,33 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
 
     assert env.path == tmp_path / f"{venv_name}-py3.7"
     assert env.base == Path(sys.base_prefix)
+
+
+@pytest.mark.parametrize("env_var", ["VIRTUAL_ENV", "CONDA_PREFIX"])
+def test_get_ignores_empty_env_prefix(
+    manager: EnvManager,
+    poetry: Poetry,
+    in_project_venv_dir: Path,
+    env_var: str,
+    mocker: MockerFixture,
+) -> None:
+    """An empty VIRTUAL_ENV or CONDA_PREFIX should be treated as unset.
+
+    After ``conda deactivate``, conda can leave CONDA_PREFIX set to an
+    empty string.  Poetry should not consider that as an active
+    virtualenv and should fall back to the in-project .venv instead.
+
+    See: https://github.com/python-poetry/poetry/issues/10770
+    """
+    os.environ.pop("VIRTUAL_ENV", None)
+    os.environ.pop("CONDA_PREFIX", None)
+    os.environ[env_var] = ""
+    mocker.patch(
+        "poetry.utils.env.virtual_env.VirtualEnv.__init__",
+        lambda self, *args, **kwargs: setattr(self, "_path", args[0]),
+    )
+    venv = manager.get()
+    assert venv.path == in_project_venv_dir
 
 
 def test_list(
@@ -989,14 +1069,16 @@ def test_create_venv_fails_if_no_compatible_python_version_could_be_found(
     assert m.call_count == 0
 
 
+@pytest.mark.parametrize("use_poetry_python", [True, False])
 def test_create_venv_does_not_try_to_find_compatible_versions_with_executable(
     manager: EnvManager,
     poetry: Poetry,
     config: Config,
     mocker: MockerFixture,
     mocked_python_register: MockedPythonRegister,
+    use_poetry_python: bool,
 ) -> None:
-    config.config["virtualenvs"]["use-poetry-python"] = True
+    config.config["virtualenvs"]["use-poetry-python"] = use_poetry_python
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
@@ -1302,3 +1384,30 @@ def test_generate_env_name_uses_real_path(
     venv_name1 = EnvManager.generate_env_name("simple-project", "the_real_dir")
     venv_name2 = EnvManager.generate_env_name("simple-project", "linked_dir")
     assert venv_name1 == venv_name2
+
+
+def test_create_venv_invalid_prompt_template_variable(
+    manager: EnvManager, poetry: Poetry, config: Config
+) -> None:
+    config.merge({"virtualenvs": {"prompt": "{project_name}-{invalid_var}"}})
+
+    with pytest.raises(PoetryConsoleError) as exc_info:
+        manager.create_venv()
+
+    assert "Invalid template variable 'invalid_var'" in str(exc_info.value)
+    assert "Valid variables are: {project_name}, {python_version}" in str(
+        exc_info.value
+    )
+
+
+def test_create_venv_malformed_prompt_template(
+    manager: EnvManager, poetry: Poetry, config: Config
+) -> None:
+    config.merge({"virtualenvs": {"prompt": "{project_name"}})  # Missing closing brace
+
+    with pytest.raises(PoetryConsoleError) as exc_info:
+        manager.create_venv()
+
+    assert "Invalid template string in 'virtualenvs.prompt' setting" in str(
+        exc_info.value
+    )

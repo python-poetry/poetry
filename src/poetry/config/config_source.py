@@ -12,10 +12,27 @@ from cleo.io.null_io import NullIO
 
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from cleo.io.io import IO
 
 
 UNSET = object()
+
+
+def split_key(key: str | Sequence[str]) -> list[str]:
+    """Split a config key into its component parts.
+
+    If the key is a string, split on periods.
+
+    If the key contains segments with periods
+    (e.g. repository names like "my.repo"),
+    this should be handled before calling this function
+    so that a list or tuple of the segments is passed.
+    """
+    if isinstance(key, str):
+        return key.split(".")
+    return list(key)
 
 
 class PropertyNotFoundError(ValueError):
@@ -24,13 +41,13 @@ class PropertyNotFoundError(ValueError):
 
 class ConfigSource(ABC):
     @abstractmethod
-    def get_property(self, key: str) -> Any: ...
+    def get_property(self, key: str | Sequence[str]) -> Any: ...
 
     @abstractmethod
-    def add_property(self, key: str, value: Any) -> None: ...
+    def add_property(self, key: str | Sequence[str], value: Any) -> None: ...
 
     @abstractmethod
-    def remove_property(self, key: str) -> None: ...
+    def remove_property(self, key: str | Sequence[str]) -> None: ...
 
 
 @dataclasses.dataclass
@@ -78,22 +95,3 @@ class ConfigSourceMigration:
 
         if self.new_key is not None and new_value is not UNSET:
             config_source.add_property(self.new_key, new_value)
-
-
-def drop_empty_config_category(
-    keys: list[str], config: dict[Any, Any]
-) -> dict[Any, Any]:
-    config_ = {}
-
-    for key, value in config.items():
-        if not keys or key != keys[0]:
-            config_[key] = value
-            continue
-        if keys and key == keys[0]:
-            if isinstance(value, dict):
-                value = drop_empty_config_category(keys[1:], value)
-
-            if value != {}:
-                config_[key] = value
-
-    return config_

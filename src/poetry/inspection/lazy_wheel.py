@@ -138,8 +138,8 @@ class MergeIntervals:
             right: Index after last overlapping downloaded data
         """
         lslice, rslice = self._left[left:right], self._right[left:right]
-        i = start = min([start] + lslice[:1])
-        end = max([end] + rslice[-1:])
+        i = start = min([start, *lslice[:1]])
+        end = max([end, *rslice[-1:]])
         for j, k in zip(lslice, rslice):
             if j > i:
                 yield i, j - 1
@@ -480,7 +480,7 @@ class LazyFileOverHTTP(ReadOnlyIOWrapper):
                 range_start,
                 range_end,
             ) in self._merge_intervals.minimal_intervals_covering(start, end):
-                self.seek(start)
+                self.seek(range_start)
                 for chunk in self._fetch_content_range(range_start, range_end):
                     self._file.write(chunk)
 
@@ -716,29 +716,29 @@ class LazyWheelOverHTTP(LazyFileOverHTTP):
         # This may perform further requests if __init__() did not pull in the entire
         # central directory at the end of the file (although _initial_chunk_length()
         # should be set large enough to avoid this).
-        zf = ZipFile(self)
-
-        filename = ""
-        for info in zf.infolist():
+        with ZipFile(self) as zf:
+            filename = ""
+            for info in zf.infolist():
+                if start is None:
+                    if self._metadata_regex.search(info.filename):
+                        filename = info.filename
+                        start = info.header_offset
+                        continue
+                else:
+                    # The last .dist-info/ entry may be before the end of the file if
+                    # the wheel's entries are sorted lexicographically (which is
+                    # unusual).
+                    if not self._metadata_regex.search(info.filename):
+                        end = info.header_offset
+                        break
             if start is None:
-                if self._metadata_regex.search(info.filename):
-                    filename = info.filename
-                    start = info.header_offset
-                    continue
-            else:
-                # The last .dist-info/ entry may be before the end of the file if the
-                # wheel's entries are sorted lexicographically (which is unusual).
-                if not self._metadata_regex.search(info.filename):
-                    end = info.header_offset
-                    break
-        if start is None:
-            raise UnsupportedWheelError(
-                f"no {self._metadata_regex!r} found for {name} in {self.name}"
-            )
-        # If it is the last entry of the zip, then give us everything
-        # until the start of the central directory.
-        if end is None:
-            end = zf.start_dir
+                raise UnsupportedWheelError(
+                    f"no {self._metadata_regex!r} found for {name} in {self.name}"
+                )
+            # If it is the last entry of the zip, then give us everything
+            # until the start of the central directory.
+            if end is None:
+                end = zf.start_dir
         logger.debug(f"fetch {filename}")
         self._ensure_downloaded(start, end)
         logger.debug("done prefetching METADATA for %s", name)

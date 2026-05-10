@@ -3,13 +3,13 @@ from __future__ import annotations
 import contextlib
 import itertools
 
+from importlib import metadata
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import overload
 
-from poetry.utils._compat import metadata
 from poetry.utils.helpers import is_dir_writable
 from poetry.utils.helpers import paths_csv
 from poetry.utils.helpers import remove_directory

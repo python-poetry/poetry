@@ -29,14 +29,14 @@ groups = [ "main" ]
 markers = "extra == \"root-extra-one\" and extra != \"root-extra-two\" or extra != \"root-extra-one\" and extra == \"root-extra-two\""
 
 [[package.dependencies.conflicting-dep]]
-version = "1.1.0"
-optional = true
-markers = 'extra == "extra-one" and extra != "extra-two"'
-
-[[package.dependencies.conflicting-dep]]
 version = "1.2.0"
 optional = true
 markers = 'extra != "extra-one" and extra == "extra-two"'
+
+[[package.dependencies.conflicting-dep]]
+version = "1.1.0"
+optional = true
+markers = 'extra == "extra-one" and extra != "extra-two"'
 
   [package.extras]
   extra-one = [ "conflicting-dep (==1.1.0)", "conflicting-dep (==1.2.0)" ]

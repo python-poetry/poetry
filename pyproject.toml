@@ -1,22 +1,19 @@
 [project]
 name = "poetry"
-version = "2.2.0.dev0"
+version = "2.4.1"
 description = "Python dependency management and packaging made easy."
-requires-python = ">=3.9,<4.0"
+requires-python = ">=3.10,<4.0"
 dependencies = [
-    "poetry-core @ git+https://github.com/python-poetry/poetry-core.git",
+    "poetry-core (==2.4.0)",
     "build (>=1.2.1,<2.0.0)",
     "cachecontrol[filecache] (>=0.14.0,<0.15.0)",
     "cleo (>=2.1.0,<3.0.0)",
-    "dulwich (>=0.22.6,<0.23.0)",
+    "dulwich (>=0.25.0,<2)",
     "fastjsonschema (>=2.18.0,<3.0.0)",
-    # <8.7 because .metadata() (and Distribution.metadata) can now return None,
-    # which requires some adaptions to our code.
-    "importlib-metadata (>=4.4,<8.7) ; python_version < '3.10'",
-    "installer (>=0.7.0,<0.8.0)",
+    "installer (>=0.7.0,<2.0.0)",
     "keyring (>=25.1.0,<26.0.0)",
     # packaging uses calver, so version is unclamped
-    "packaging (>=24.0)",
+    "packaging (>=24.2)",  # PEP 639 support was added in 24.2
     "pkginfo (>=1.12,<2.0)",
     "platformdirs (>=3.0.0,<5)",
     "pyproject-hooks (>=1.0.0,<2.0.0)",
@@ -27,10 +24,11 @@ dependencies = [
     "tomlkit (>=0.11.4,<1.0.0)",
     # trove-classifiers uses calver, so version is unclamped
     "trove-classifiers (>=2022.5.19)",
-    "virtualenv (>=20.26.6,<21.0.0)",
+    "virtualenv (>=20.26.6)",
     "xattr (>=1.0.0,<2.0.0) ; sys_platform == 'darwin'",
-    "findpython (>=0.6.2,<0.7.0)",
-    "pbs-installer[download,install] (>=2025.1.6,<2026.0.0)",
+    "findpython (>=0.6.2,<0.9.0)",
+    # pbs-installer uses calver, so version is unclamped
+    "pbs-installer[download,install] (>=2025.6.10)",
 ]
 authors = [
     { name = "Sébastien Eustace", email = "sebastien@eustace.io" }
@@ -44,10 +42,10 @@ maintainers = [
     { name = "finswimmer", email = "finswimmer77@gmail.com" },
     { name = "Bartosz Sokorski", email = "b.sokorski@gmail.com" },
 ]
-license = { text = "MIT" }
+license = "MIT"
 readme = "README.md"
 keywords = ["packaging", "dependency", "poetry"]
-# classifieres is dynamic because we want to create Python classifiers automatically
+# classifiers are dynamic because we want to create Python classifiers automatically
 dynamic = [ "classifiers" ]
 
 [project.urls]
@@ -70,22 +68,20 @@ include = [{ path = "tests", format = "sdist" }]
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = ">=2.10"
-# add setuptools for PyCharm
-# see https://youtrack.jetbrains.com/issue/PY-48909
-# and https://github.com/JetBrains/intellij-community/commit/3f37786ec0bf5066e4527690d1068b5a00680ea3
-setuptools = { version = ">=60", python = "<3.10" }
 
 [tool.poetry.group.test.dependencies]
 coverage = ">=7.2.0"
 deepdiff = ">=6.3"
-httpretty = ">=1.1"
+# test_clone_with_lfs_files relies on being able to use
+# locally cloned LFS stores, which requires dulwich>=1.2.1
+dulwich = ">=1.2.1"
+responses = ">=0.25.8"
 jaraco-classes = ">=3.3.1"
-pytest = ">=8.0"
+pytest = ">=9.0"
 pytest-cov = ">=4.0"
 pytest-mock = ">=3.9"
 pytest-randomly = ">=3.12"
 pytest-xdist = { version = ">=3.1", extras = ["psutil"] }
-urllib3 = "<2.3"  # see https://github.com/gabrielfalcao/HTTPretty/issues/484
 
 [tool.poetry.group.typing.dependencies]
 mypy = ">=1.8.0"
@@ -112,7 +108,6 @@ extend-exclude = [
 ]
 fix = true
 line-length = 88
-target-version = "py39"
 
 [tool.ruff.lint]
 extend-select = [
@@ -170,41 +165,33 @@ exclude = [
     "tests/utils/fixtures",
 ]
 
-# use of importlib-metadata backport makes it impossible to satisfy mypy
-# without some ignores: but we get different sets of ignores at different
-# python versions.
+# ignores that are only required for some Python versions
 [[tool.mypy.overrides]]
 module = [
     'poetry.repositories.installed_repository',
-    'tests.console.commands.self.test_show_plugins',
-    'tests.repositories.test_installed_repository',
-    'tests.helpers',
 ]
 warn_unused_ignores = false
 
 [[tool.mypy.overrides]]
 module = [
-    'deepdiff.*',
     'fastjsonschema.*',
     'findpython.*',
-    'httpretty.*',
     'requests_toolbelt.*',
     'shellingham.*',
-    'virtualenv.*',
     'xattr.*',
 ]
 ignore_missing_imports = true
 
 
-[tool.pytest.ini_options]
-addopts = [ "-n", "logical", "-ra", "--strict-config", "--strict-markers" ]
+[tool.pytest]
+strict = true
+addopts = [ "-n", "logical", "-ra" ]
 testpaths = ["tests"]
 markers = [
     "network: mark tests that require internet access",
-    "skip_git_mock: mark tests that should not auto-apply git_mock"
+    "skip_git_mock: mark tests that should not auto-apply git_mock",
 ]
 log_cli_level = "INFO"
-xfail_strict = true
 
 
 [tool.coverage.report]

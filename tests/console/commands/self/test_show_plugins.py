@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from importlib import metadata
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
 
 import pytest
 
@@ -11,10 +11,10 @@ from poetry.core.packages.package import Package
 
 from poetry.plugins.application_plugin import ApplicationPlugin
 from poetry.plugins.plugin import Plugin
-from poetry.utils._compat import metadata
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from os import PathLike
     from pathlib import Path
 
@@ -83,7 +83,7 @@ def plugin_distro(plugin_package: Package, tmp_path: Path) -> metadata.Distribut
         def locate_file(self, path: str | PathLike[str]) -> Path:
             return tmp_path / path
 
-    return MockDistribution()  # type: ignore[no-untyped-call]
+    return MockDistribution()
 
 
 @pytest.fixture
@@ -104,7 +104,7 @@ def entry_points(
 ) -> Callable[..., list[metadata.EntryPoint]]:
     by_group = {
         key: [
-            EntryPoint(  # type: ignore[no-untyped-call]
+            EntryPoint(
                 name=entry_point_name,
                 group=key,
                 value=value,

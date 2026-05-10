@@ -16,54 +16,75 @@ Poetry replaces `setup.py`, `requirements.txt`, `setup.cfg`, `MANIFEST.in` and `
 based project format.
 
 ```toml
-[tool.poetry]
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[project]
 name = "my-package"
 version = "0.1.0"
 description = "The description of the package"
+readme = "README.md"
 
 license = "MIT"
+license-files = ["LICENSE"]
+
+# No Python upper bound for package metadata
+requires-python = ">=3.9"
 
 authors = [
-    "Sébastien Eustace <sebastien@eustace.io>"
+    { name = "Sébastien Eustace", email = "sebastien@eustace.io" },
 ]
-
-repository = "https://github.com/python-poetry/poetry"
-homepage = "https://python-poetry.org"
-
-# README file(s) are used as the package description
-readme = ["README.md", "LICENSE"]
 
 # Keywords (translated to tags on the package index)
 keywords = ["packaging", "poetry"]
 
+dependencies = [
+    # equivalent to ^3.8.1 with semver constraints
+    "aiohttp (>=3.8.1,<4.0.0)",
+    # dependency with extras
+    "requests[security] (>=2.28,<3.0)",
+    # version-specific dependency with prereleases allowed (see below)
+    "tomli (>=2.0.1,<3.0.0) ; python_version < '3.11'",
+    # git dependency with branch specified
+    "cleo @ git+https://github.com/python-poetry/cleo.git@main",
+]
+
+[project.urls]
+repository = "https://github.com/python-poetry/poetry"
+homepage = "https://python-poetry.org"
+
+# Scripts are easily expressed
+[project.scripts]
+my_package_cli = "my_package.console:run"
+
+[project.optional-dependencies]
+# optional dependency to be installed via 'poetry install -E my-extra'
+my-extra = ["pendulum (>=3.1.0,<4.0.0)"]
+
 [tool.poetry.dependencies]
-# Compatible Python versions
-python = ">=3.8"
-# Standard dependency with semver constraints
-aiohttp = "^3.8.1"
-# Dependency with extras
-requests = { version = "^2.28", extras = ["security"] }
+# Python upper bound for locking
+python = ">=3.9,<4.0"
 # Version-specific dependencies with prereleases allowed
-tomli = { version = "^2.0.1", python = "<3.11", allow-prereleases = true }
-# Git dependencies
-cleo = { git = "https://github.com/python-poetry/cleo.git", branch = "main" }
-# Optional dependencies (installed by extras)
-pendulum = { version = "^2.1.2", optional = true }
+tomli = { allow-prereleases = true }
 
 # Dependency groups are supported for organizing your dependencies
-[tool.poetry.group.dev.dependencies]
-pytest = "^7.1.2"
-pytest-cov = "^3.0"
+[dependency-groups]
+dev = ["pytest (>=7.1.2,<8.0.0)", "pytest-cov (>=3.0,<4.0)"]
+docs = ["Sphinx (>=5.1.1,<6.0.0)"]
 
 # ...and can be installed only when explicitly requested
+# via 'poetry install --with docs'
 [tool.poetry.group.docs]
 optional = true
-[tool.poetry.group.docs.dependencies]
-Sphinx = "^5.1.1"
 
-# Python-style entrypoints and scripts are easily expressed
-[tool.poetry.scripts]
-my-script = "my_package:main"
+# Alternatively, you can use Poetry specific syntax
+# to specify dependency groups
+[tool.poetry.group.lint]
+optional = true
+
+[tool.poetry.group.lint.dependencies]
+ruff = ">=0.10.0"
 ```
 
 ## Installation

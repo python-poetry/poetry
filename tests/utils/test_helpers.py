@@ -1,32 +1,38 @@
 from __future__ import annotations
 
 import base64
+import contextlib
 import re
+import sys
+import tarfile
 
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 
 import pytest
+import responses
 
 from poetry.core.utils.helpers import parse_requires
 from requests.exceptions import ChunkedEncodingError
 
+from poetry.utils._compat import WINDOWS
 from poetry.utils.helpers import Downloader
 from poetry.utils.helpers import HTTPRangeRequestSupportedError
 from poetry.utils.helpers import download_file
 from poetry.utils.helpers import ensure_path
+from poetry.utils.helpers import extractall
 from poetry.utils.helpers import get_file_hash
 from poetry.utils.helpers import get_highest_priority_hash_type
 from poetry.utils.helpers import pluralize
 
 
 if TYPE_CHECKING:
-    from httpretty import httpretty
-    from httpretty.core import HTTPrettyRequest
+    from requests import PreparedRequest
 
     from tests.conftest import Config
     from tests.types import FixtureDirGetter
+    from tests.types import HttpResponse
 
 
 def test_pluralize() -> None:
@@ -146,88 +152,87 @@ def test_guaranteed_hash(
 
 
 def test_download_file(
-    http: type[httpretty], fixture_dir: FixtureDirGetter, tmp_path: Path
+    http: responses.RequestsMock, fixture_dir: FixtureDirGetter, tmp_path: Path
 ) -> None:
     file_path = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
     url = "https://foo.com/demo-0.1.0.tar.gz"
-    http.register_uri(http.GET, url, body=file_path.read_bytes())
+    http.get(url, body=file_path.read_bytes())
     dest = tmp_path / "demo-0.1.0.tar.gz"
 
     download_file(url, dest)
 
     expect_sha_256 = "9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad"
     assert get_file_hash(dest) == expect_sha_256
-    assert http.last_request().headers["Accept-Encoding"] == "Identity"
+    assert http.calls[-1].request.headers["Accept-Encoding"] == "Identity"
 
 
 def test_download_file_recover_from_error(
-    http: type[httpretty], fixture_dir: FixtureDirGetter, tmp_path: Path
+    http: responses.RequestsMock, fixture_dir: FixtureDirGetter, tmp_path: Path
 ) -> None:
     file_path = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
     file_body = file_path.read_bytes()
     file_length = len(file_body)
     url = "https://foo.com/demo-0.1.0.tar.gz"
 
-    def handle_request(
-        request: HTTPrettyRequest, uri: str, response_headers: dict[str, Any]
-    ) -> tuple[int, dict[str, Any], bytes]:
+    def handle_request(request: PreparedRequest) -> HttpResponse:
         if request.headers.get("Range") is None:
-            response_headers["Content-Length"] = str(file_length)
-            response_headers["Accept-Ranges"] = "bytes"
+            response_headers = {
+                "Content-Length": str(file_length),
+                "Accept-Ranges": "bytes",
+            }
             return 200, response_headers, file_body[: file_length // 2]
         else:
             start = int(
                 request.headers.get("Range", "bytes=0-").split("=")[1].split("-")[0]
             )
+            response_headers = {"Content-Length": str(len(file_body[start:]))}
             return 206, response_headers, file_body[start:]
 
-    http.register_uri(http.GET, url, body=handle_request)
+    http.add_callback(responses.GET, url, callback=handle_request)
     dest = tmp_path / "demo-0.1.0.tar.gz"
 
     download_file(url, dest, chunk_size=file_length // 2, max_retries=1)
 
     expect_sha_256 = "9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad"
     assert get_file_hash(dest) == expect_sha_256
-    assert http.last_request().headers["Accept-Encoding"] == "Identity"
-    assert http.last_request().headers["Range"] == f"bytes={file_length // 2}-"
+    assert http.calls[-1].request.headers["Accept-Encoding"] == "Identity"
+    assert http.calls[-1].request.headers["Range"] == f"bytes={file_length // 2}-"
 
 
 def test_download_file_fail_when_no_range(
-    http: type[httpretty], fixture_dir: FixtureDirGetter, tmp_path: Path
+    http: responses.RequestsMock, fixture_dir: FixtureDirGetter, tmp_path: Path
 ) -> None:
     file_path = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
     file_body = file_path.read_bytes()
     file_length = len(file_body)
     url = "https://foo.com/demo-0.1.0.tar.gz"
 
-    def handle_request(
-        request: HTTPrettyRequest, uri: str, response_headers: dict[str, Any]
-    ) -> tuple[int, dict[str, Any], bytes]:
-        response_headers["Content-Length"] = str(file_length)
+    def handle_request(request: PreparedRequest) -> HttpResponse:
+        response_headers = {"Content-Length": str(file_length)}
         return 200, response_headers, file_body[: file_length // 2]
 
-    http.register_uri(http.GET, url, body=handle_request)
+    http.add_callback(responses.GET, url, callback=handle_request)
     dest = tmp_path / "demo-0.1.0.tar.gz"
     with pytest.raises(ChunkedEncodingError):
         download_file(url, dest, chunk_size=file_length // 2, max_retries=1)
 
 
 def test_download_file_fail_when_first_chunk_failed(
-    http: type[httpretty], fixture_dir: FixtureDirGetter, tmp_path: Path
+    http: responses.RequestsMock, fixture_dir: FixtureDirGetter, tmp_path: Path
 ) -> None:
     file_path = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
     file_body = file_path.read_bytes()
     file_length = len(file_body)
     url = "https://foo.com/demo-0.1.0.tar.gz"
 
-    def handle_request(
-        request: HTTPrettyRequest, uri: str, response_headers: dict[str, Any]
-    ) -> tuple[int, dict[str, Any], bytes]:
-        response_headers["Content-Length"] = str(file_length)
-        response_headers["Accept-Ranges"] = "bytes"
+    def handle_request(request: PreparedRequest) -> tuple[int, dict[str, Any], bytes]:
+        response_headers = {
+            "Content-Length": str(file_length),
+            "Accept-Ranges": "bytes",
+        }
         return 200, response_headers, file_body[: file_length // 2]
 
-    http.register_uri(http.GET, url, body=handle_request)
+    http.add_callback(responses.GET, url, callback=handle_request)
     dest = tmp_path / "demo-0.1.0.tar.gz"
     with pytest.raises(ChunkedEncodingError):
         download_file(url, dest, chunk_size=file_length, max_retries=1)
@@ -249,7 +254,7 @@ def test_highest_priority_hash_type(hash_types: set[str], expected: str | None) 
 @pytest.mark.parametrize("accepts_ranges", [False, True])
 @pytest.mark.parametrize("raise_accepts_ranges", [False, True])
 def test_download_file_raise_accepts_ranges(
-    http: type[httpretty],
+    http: responses.RequestsMock,
     fixture_dir: FixtureDirGetter,
     tmp_path: Path,
     accepts_ranges: bool,
@@ -257,16 +262,15 @@ def test_download_file_raise_accepts_ranges(
 ) -> None:
     filename = "demo-0.1.0-py2.py3-none-any.whl"
 
-    def handle_request(
-        request: HTTPrettyRequest, uri: str, response_headers: dict[str, Any]
-    ) -> tuple[int, dict[str, Any], bytes]:
+    def handle_request(request: PreparedRequest) -> tuple[int, dict[str, Any], bytes]:
         file_path = fixture_dir("distributions") / filename
+        response_headers = {}
         if accepts_ranges:
             response_headers["Accept-Ranges"] = "bytes"
         return 200, response_headers, file_path.read_bytes()
 
     url = f"https://foo.com/{filename}"
-    http.register_uri(http.GET, url, body=handle_request)
+    http.add_callback(responses.GET, url, callback=handle_request)
     dest = tmp_path / filename
 
     if accepts_ranges and raise_accepts_ranges:
@@ -280,7 +284,7 @@ def test_download_file_raise_accepts_ranges(
 
 def test_downloader_uses_authenticator_by_default(
     config: Config,
-    http: type[httpretty],
+    http: responses.RequestsMock,
     tmp_working_directory: Path,
 ) -> None:
     import poetry.utils.authenticator
@@ -295,8 +299,7 @@ def test_downloader_uses_authenticator_by_default(
         }
     )
 
-    http.register_uri(
-        http.GET,
+    http.get(
         re.compile("^https?://foo.bar/(.+?)$"),
     )
 
@@ -305,7 +308,7 @@ def test_downloader_uses_authenticator_by_default(
         tmp_working_directory / "foo-0.1.0.tar.gz",
     )
 
-    request = http.last_request()
+    request = http.calls[-1].request
     basic_auth = base64.b64encode(b"bar:baz").decode()
     assert request.headers["Authorization"] == f"Basic {basic_auth}"
 
@@ -352,3 +355,165 @@ def test_ensure_path_directory(tmp_path: Path) -> None:
 
     path.mkdir()
     assert ensure_path(path=path, is_directory=True) is path
+
+
+@pytest.mark.parametrize("relative", [False, True])
+@pytest.mark.parametrize("existing", [False, True])
+def test_extractall_sdist_no_path_traversal(
+    tmp_path: Path, relative: bool, existing: bool
+) -> None:
+    import io
+    import tarfile
+
+    archive = tmp_path / "traversal.tar.gz"
+    dest = tmp_path / "dest"
+    dest.mkdir()
+
+    target = tmp_path / "traversal.txt"
+    if existing:
+        target.write_text("original", encoding="utf-8")
+
+    with tarfile.open(archive, "w:gz") as tar:
+        b = b"path traversal"
+        t = tarfile.TarInfo("../traversal.txt" if relative else target.as_posix())
+        t.size = len(b)
+        tar.addfile(t, io.BytesIO(b))
+
+    has_data_filter = hasattr(tarfile, "data_filter")
+    # The stdlib implementation just strips the leading "/" from absolute paths
+    # and extracts them relative to the target directory (except for Windows).
+    # We do not care and raise an error.
+    raises = (
+        relative
+        or WINDOWS
+        or not has_data_filter
+        or sys.version_info[:3] in {(3, 10, 12), (3, 11, 4)}
+    )
+    exceptions: tuple[type[Exception], ...]
+    if has_data_filter:
+        if relative:
+            exceptions = (tarfile.OutsideDestinationError, ValueError)
+        else:
+            exceptions = (tarfile.AbsolutePathError, ValueError)
+    else:
+        # tarfile.OutsideDestinationError does not exist
+        exceptions = (ValueError,)
+
+    with pytest.raises(exceptions) if raises else contextlib.nullcontext():
+        extractall(source=archive, dest=dest, zip=False)
+
+    if existing:
+        assert target.exists()
+        assert target.read_text(encoding="utf-8") == "original"
+    else:
+        assert not target.exists()
+    if not raises:
+        # check that expected location exists, otherwise we have to check
+        # that there is no traversal in an unexpected location
+        assert (dest / target.as_posix().lstrip("/")).exists()
+
+
+@pytest.mark.parametrize("link_type", [tarfile.SYMTYPE, tarfile.LNKTYPE])
+@pytest.mark.parametrize("relative", [False, True])
+@pytest.mark.parametrize("existing", [False, True])
+def test_extractall_sdist_no_symlink_path_traversal(
+    tmp_path: Path, link_type: bytes, relative: bool, existing: bool
+) -> None:
+    import io
+    import tarfile
+
+    archive = tmp_path / "traversal.tar.gz"
+    dest = tmp_path / "dest"
+    dest.mkdir()
+
+    target = tmp_path / "traversal.txt"
+    if existing:
+        target.write_text("original", encoding="utf-8")
+
+    with tarfile.open(archive, "w:gz") as tar:
+        # We use a link in a subdirectory to test the difference
+        # between symlinks and hardlinks:
+        # symlinks are relative to the directory of the symlink,
+        # while hardlinks are relative to the root of the archive
+        s = tarfile.TarInfo("sub/link")
+        s.type = link_type
+        if relative:
+            s.linkname = (
+                "../../traversal.txt"
+                if link_type == tarfile.SYMTYPE
+                else "../traversal.txt"
+            )
+        else:
+            s.linkname = target.as_posix()
+        tar.addfile(s)
+        p = b"path traversal"
+        f = tarfile.TarInfo("sub/link")
+        f.size = len(p)
+        tar.addfile(f, io.BytesIO(p))
+
+    exceptions: tuple[type[Exception], ...]
+    if hasattr(tarfile, "data_filter"):
+        exceptions = (
+            tarfile.AbsoluteLinkError,
+            tarfile.LinkOutsideDestinationError,
+            ValueError,
+        )
+    else:
+        # tarfile.OutsideDestinationError does not exist
+        exceptions = (ValueError,)
+
+    with pytest.raises(exceptions):
+        extractall(source=archive, dest=dest, zip=False)
+
+    if existing:
+        assert target.exists()
+        assert target.read_text(encoding="utf-8") == "original"
+    else:
+        assert not target.exists()
+
+
+@pytest.mark.parametrize("existing", [False, True])
+def test_extractall_wheel_no_path_traversal(
+    tmp_path: Path, wheel_with_path_traversal: Path, existing: bool
+) -> None:
+    """see also test_no_path_traversal in test_wheel_installer.py"""
+    dest = tmp_path / "dest" / "dir"
+    dest.mkdir(parents=True)
+    target = tmp_path / "traversal.txt"
+    if existing:
+        target.write_text("original", encoding="utf-8")
+
+    extractall(source=wheel_with_path_traversal, dest=dest, zip=True)
+
+    if existing:
+        assert target.exists()
+        assert target.read_text(encoding="utf-8") == "original"
+    else:
+        assert not target.exists()
+
+    # target is "../.." but also check ".." just to be sure
+    assert not (dest.parent / "traversal.txt").exists()
+
+
+@pytest.mark.parametrize("existing", [False, True])
+def test_extractall_wheel_no_path_traversal_via_symlink(
+    tmp_path: Path, wheel_with_path_traversal_via_symlink: Path, existing: bool
+) -> None:
+    """see also test_no_path_traversal_via_symlink in test_wheel_installer.py"""
+    dest = tmp_path / "dest" / "dir"
+    dest.mkdir(parents=True)
+    target_dir = tmp_path / "target"
+    target_dir.mkdir()
+    target = target_dir / "traversal.txt"
+    if existing:
+        target.write_text("original", encoding="utf-8")
+
+    with pytest.raises(FileNotFoundError if WINDOWS else NotADirectoryError):
+        extractall(source=wheel_with_path_traversal_via_symlink, dest=dest, zip=True)
+
+    assert target_dir.exists()
+    if existing:
+        assert target.exists()
+        assert target.read_text(encoding="utf-8") == "original"
+    else:
+        assert not target.exists()

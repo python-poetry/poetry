@@ -47,7 +47,6 @@ from gzip import GzipFile
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
 
 from packaging.metadata import parse_email
 from poetry.core.masonry.utils.helpers import normalize_file_permissions
@@ -63,6 +62,7 @@ from tests.helpers import FIXTURE_PATH_REPOSITORIES_PYPI
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from collections.abc import Iterator
 
     import requests
@@ -294,10 +294,9 @@ class FileManager:
             metadata["description"], ""
         )
 
-        kwargs = {"newline": "\n"} if sys.version_info >= (3, 10) else {}
         FIXTURE_PATH_REPOSITORIES_PYPI.joinpath(
             "metadata", f"{link.filename}.metadata"
-        ).write_text(content, encoding="utf-8", **kwargs)
+        ).write_text(content, encoding="utf-8", newline="\n")
 
     def copy_as_is(self, link: Link) -> ReleaseFileMetadata:
         dst = FIXTURE_PATH_REPOSITORIES_PYPI / "dists" / link.filename
@@ -675,7 +674,7 @@ PROJECTS = [
         "poetry-core",
         releases=[
             Release("poetry-core", "1.5.0", stub=False),
-            Release("poetry-core", "2.0.1", stub=False),
+            Release("poetry-core", "2.1.3", stub=False),
         ],
     ),
     Project("py", releases=[Release("py", "1.5.3")]),

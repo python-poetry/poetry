@@ -23,6 +23,7 @@ from poetry.core.constraints.version import Version
 from poetry.core.constraints.version import VersionConstraint
 from poetry.core.constraints.version import parse_constraint
 
+from poetry.utils._compat import is_relative_to
 from poetry.utils.env.python.exceptions import NoCompatiblePythonVersionFoundError
 from poetry.utils.env.python.providers import PoetryPythonPathProvider
 from poetry.utils.env.python.providers import ShutilWhichPythonProvider
@@ -45,6 +46,7 @@ class PythonInfo(NamedTuple):
     minor: int
     patch: int
     implementation: str
+    free_threaded: bool
     executable: Path | None
 
 
@@ -83,10 +85,10 @@ class Python:
     @classmethod
     def find_all(cls) -> Iterator[Python]:
         venv_path: Path | None = (
-            Path(os.environ["VIRTUAL_ENV"]) if "VIRTUAL_ENV" in os.environ else None
+            Path(venv) if (venv := os.environ.get("VIRTUAL_ENV")) else None
         )
         for python in findpython.find_all():
-            if venv_path and python.executable.is_relative_to(venv_path):
+            if venv_path and is_relative_to(python.executable, venv_path):
                 continue
             yield cls(python=python)
 
@@ -103,6 +105,7 @@ class Python:
         cls,
         constraint: VersionConstraint | str | None = None,
         implementation: str | None = None,
+        free_threaded: bool | None = None,
     ) -> Iterator[PythonInfo]:
         if isinstance(constraint, str):
             constraint = parse_constraint(constraint)
@@ -116,6 +119,10 @@ class Python:
                 python.executable in seen
                 or not constraint.allows(python.version)
                 or (implementation and python.implementation.lower() != implementation)
+                or (
+                    free_threaded is not None
+                    and python.free_threaded is not free_threaded
+                )
             ):
                 continue
 
@@ -125,6 +132,7 @@ class Python:
                 minor=python.minor,
                 patch=python.patch,
                 implementation=python.implementation.lower(),
+                free_threaded=python.free_threaded,
                 executable=python.executable,
             )
 
@@ -155,6 +163,7 @@ class Python:
                     minor=pv.minor,
                     patch=pv.micro,
                     implementation=pv.implementation.lower(),
+                    free_threaded=pv.freethreaded,
                     executable=None,
                 )
 
@@ -173,6 +182,10 @@ class Python:
     @property
     def implementation(self) -> str:
         return cast("str", self._python.implementation.lower())
+
+    @property
+    def free_threaded(self) -> bool:
+        return cast("bool", self._python.freethreaded)
 
     @property
     def major(self) -> int:

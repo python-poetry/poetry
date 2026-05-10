@@ -72,18 +72,29 @@ the config command.
 
         # Building package first, if told
         if self.option("build"):
-            if publisher.files and not self.confirm(
-                f"There are <info>{len(publisher.files)}</info> files ready for"
-                " publishing. Build anyway?"
-            ):
-                self.line_error("<error>Aborted!</error>")
+            if publisher.files:
+                if self.io.is_interactive():
+                    if not self.confirm(
+                        f"There are <info>{len(publisher.files)}</info> files ready for"
+                        f" publishing in {dist_dir}. Build anyway?"
+                    ):
+                        self.line_error("<error>Aborted!</error>")
 
-                return 1
+                        return 1
 
-            self.call("build", args=f"--output {dist_dir}")
+                else:
+                    self.line(
+                        f"<warning>Warning: There are <info>{len(publisher.files)}</info> files "
+                        f"ready for publishing in {dist_dir}. Build anyway!</warning>"
+                    )
 
-        files = publisher.files
-        if not files:
+            exit_code = self.call("build", args=f"--output {dist_dir}")
+            if exit_code:
+                return exit_code
+
+            publisher = Publisher(self.poetry, self.io, Path(dist_dir))
+
+        if not publisher.files:
             self.line_error(
                 "<error>No files to publish. "
                 "Run poetry build first or use the --build option.</error>"

@@ -263,6 +263,7 @@ in the `tool.poetry.requires-plugins` section of the pyproject.toml file:
 ```toml
 [tool.poetry.requires-plugins]
 my-application-plugin = ">1.0"
+custom-plugin = {path = "custom_plugin", develop = true}
 ```
 
 If the plugin is not installed in Poetry's own environment when running `poetry install`,
@@ -270,6 +271,8 @@ it will be installed only for the current project under `.poetry/plugins`
 in the project's directory.
 
 The syntax to specify `plugins` is the same as for [dependencies]({{< relref "managing-dependencies" >}}).
+Plugins can be installed in editable mode using path dependencies with `develop = true`,
+which is useful for plugin development.
 
 {{% warning %}}
 You can even overwrite a plugin in Poetry's own environment with another version.

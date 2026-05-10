@@ -93,6 +93,43 @@
     "yanked_reason": null
   },
   "last_serial": 0,
+  "ownership": {
+    "organization": "jupyter",
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "bgranger"
+      },
+      {
+        "role": "Owner",
+        "user": "fperez"
+      },
+      {
+        "role": "Owner",
+        "user": "ivanov"
+      },
+      {
+        "role": "Owner",
+        "user": "minrk"
+      },
+      {
+        "role": "Owner",
+        "user": "takowl"
+      },
+      {
+        "role": "Maintainer",
+        "user": "krassowski"
+      },
+      {
+        "role": "Maintainer",
+        "user": "mbussonn"
+      },
+      {
+        "role": "Maintainer",
+        "user": "trallard"
+      }
+    ]
+  },
   "urls": [
     {
       "comment_text": "",

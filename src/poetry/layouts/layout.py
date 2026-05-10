@@ -32,16 +32,18 @@ version = ""
 description = ""
 authors = [
 ]
-license = {}
+license = ""
 readme = ""
 requires-python = ""
 dependencies = [
 ]
 
+[dependency-groups]
+dev = [
+]
+
 [tool.poetry]
 packages = []
-
-[tool.poetry.group.dev.dependencies]
 """
 
 poetry_core_version = Version.parse(importlib.metadata.version("poetry-core"))
@@ -134,7 +136,9 @@ class Layout:
         if with_pyproject:
             self._write_poetry(path)
 
-    def generate_project_content(self) -> TOMLDocument:
+    def generate_project_content(
+        self, project_path: Path | None = None
+    ) -> TOMLDocument:
         template = POETRY_DEFAULT
 
         content: dict[str, Any] = loads(template)
@@ -154,11 +158,18 @@ class Layout:
             project_content["authors"].append(author)
 
         if self._license:
-            project_content["license"]["text"] = self._license
+            project_content["license"] = self._license
         else:
             project_content.remove("license")
 
-        project_content["readme"] = f"README.{self._readme_format}"
+        if project_path:
+            project_dir = project_path / f"README.{self._readme_format}"
+            abs_path = project_dir.resolve()
+
+            if abs_path.exists():
+                project_content["readme"] = f"README.{self._readme_format}"
+            else:
+                project_content.remove("readme")
 
         if self._python:
             project_content["requires-python"] = self._python
@@ -179,11 +190,10 @@ class Layout:
 
         if self._dev_dependencies:
             for dep_name, dep_constraint in self._dev_dependencies.items():
-                poetry_content["group"]["dev"]["dependencies"][dep_name] = (
-                    dep_constraint
-                )
+                dependency = Factory.create_dependency(dep_name, dep_constraint)
+                content["dependency-groups"]["dev"].append(dependency.to_pep_508())
         else:
-            del poetry_content["group"]
+            del content["dependency-groups"]
 
         if not poetry_content:
             del content["tool"]["poetry"]

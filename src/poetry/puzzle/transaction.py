@@ -8,6 +8,8 @@ from poetry.utils.extras import get_extra_package_names
 
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from packaging.utils import NormalizedName
     from poetry.core.packages.package import Package
 
@@ -22,7 +24,7 @@ class Transaction:
         result_packages: list[Package] | dict[Package, TransitivePackageInfo],
         installed_packages: list[Package] | None = None,
         root_package: Package | None = None,
-        marker_env: dict[str, Any] | None = None,
+        marker_env: Mapping[str, Any] | None = None,
         groups: set[NormalizedName] | None = None,
     ) -> None:
         self._current_packages = current_packages
@@ -60,7 +62,7 @@ class Transaction:
 
         extra_packages: set[NormalizedName] = set()
         if self._marker_env:
-            marker_env_with_extras = self._marker_env.copy()
+            marker_env_with_extras = dict(self._marker_env)
             if extras is not None:
                 marker_env_with_extras["extra"] = extras
         elif extras is not None:

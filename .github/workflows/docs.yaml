@@ -25,14 +25,14 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
           repository: python-poetry/website
 
       # use .github from pull request target instead of pull_request.head
       # for pull_request_target trigger to avoid arbitrary code execution
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
           path: poetry-github
@@ -40,16 +40,16 @@ jobs:
 
       # only checkout docs from pull_request.head to not use something else by accident
       # for pull_request_target trigger (security)
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
           path: poetry-docs
           ref: ${{ github.event.pull_request.head.sha }}
           sparse-checkout: docs
 
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
-          node-version: "18"
+          node-version: "22"
 
       - uses: ./poetry-github/.github/actions/bootstrap-poetry
 
@@ -66,9 +66,9 @@ jobs:
           # Build the static website.
           npx hugo --minify --logLevel info
 
-      - uses: amondnet/vercel-action@16e87c0a08142b0d0d33b76aeaf20823c381b9b9 # v25.2.0
+      - uses: amondnet/vercel-action@c71810f8732de6b8656e41155e63b6303ca3e4bf # v42.1.0
         with:
-          vercel-version: 39.2.2
+          vercel-version: 50.44.0
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}

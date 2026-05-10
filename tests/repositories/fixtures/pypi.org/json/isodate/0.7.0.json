@@ -54,6 +54,15 @@
     "yanked_reason": "fails for py2.7 but is not marked as py3 only."
   },
   "last_serial": 0,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "gweis"
+      }
+    ]
+  },
   "urls": [
     {
       "comment_text": "",

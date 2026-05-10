@@ -10,6 +10,7 @@ from poetry.core.version.exceptions import InvalidVersionError
 
 from poetry.config.config import Config
 from poetry.console.commands.command import Command
+from poetry.utils._compat import is_relative_to
 from poetry.utils.env.python import Python
 
 
@@ -33,6 +34,9 @@ class PythonListCommand(Command):
             "a",
             "List all versions, including those available for download.",
             flag=True,
+        ),
+        option(
+            "free-threaded", "t", "List only free-threaded Python versions.", flag=True
         ),
         option(
             "implementation", "i", "Python implementation to search for.", flag=False
@@ -61,7 +65,9 @@ class PythonListCommand(Command):
                 return 1
 
         for info in Python.find_all_versions(
-            constraint=constraint, implementation=self.option("implementation")
+            constraint=constraint,
+            implementation=self.option("implementation"),
+            free_threaded=self.option("free-threaded") or None,
         ):
             rows.append(info)
 
@@ -70,7 +76,14 @@ class PythonListCommand(Command):
                 rows.append(info)
 
         rows.sort(
-            key=lambda x: (x.major, x.minor, x.patch, x.implementation), reverse=True
+            key=lambda x: (
+                x.major,
+                x.minor,
+                x.patch,
+                x.implementation,
+                x.free_threaded,
+            ),
+            reverse=True,
         )
 
         table = self.table(style="compact")
@@ -90,12 +103,13 @@ class PythonListCommand(Command):
 
         for pv in rows:
             version = f"{pv.major}.{pv.minor}.{pv.patch}"
+            if pv.free_threaded:
+                version += "t"
             implementation = implementations.get(
                 pv.implementation.lower(), pv.implementation
             )
-            is_poetry_managed = (
-                pv.executable is None
-                or pv.executable.resolve().is_relative_to(python_installation_path)
+            is_poetry_managed = pv.executable is None or is_relative_to(
+                pv.executable.resolve(), python_installation_path
             )
 
             if self.option("managed") and not is_poetry_managed:

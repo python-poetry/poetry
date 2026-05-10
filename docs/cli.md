@@ -21,6 +21,21 @@ then `--help` combined with any of those can give you more information.
 ## Global Options
 
 * `--verbose (-v|vv|vvv)`: Increase the verbosity of messages: "-v" for normal output, "-vv" for more verbose output and "-vvv" for debug.
+
+{{% note %}}
+You can also set the verbosity level using the `SHELL_VERBOSITY` environment variable.
+This is useful in CI/CD pipelines or scripts where you cannot easily modify command-line arguments.
+
+| Value  | Equivalent | Description         |
+|--------|------------|---------------------|
+| `-1`   | `-q`       | Quiet mode          |
+| `0`    | (default)  | Normal output       |
+| `1`    | `-v`       | Verbose output      |
+| `2`    | `-vv`      | More verbose output |
+| `3`    | `-vvv`     | Debug output        |
+
+{{% /note %}}
+
 * `--help (-h)` : Display help information.
 * `--quiet (-q)` : Do not output any message.
 * `--ansi`: Force ANSI output.
@@ -44,8 +59,7 @@ poetry about
 
 The `add` command adds required packages to your `pyproject.toml` and installs them.
 
-If you do not specify a version constraint,
-poetry will choose a suitable one based on the available package versions.
+If you do not specify a version constraint, poetry will attempt to use the latest version.
 
 ```bash
 poetry add requests pendulum
@@ -232,9 +246,15 @@ The `cache` command groups subcommands to interact with Poetry's cache.
 
 ### cache clear
 
-The `cache clear` command removes packages from a cached repository.
+The `cache clear` command removes packages from cached repositories.
 
-For example, to clear the whole cache of packages from the `PyPI` repository, run:
+For example, to clear the whole cache of packages from all repositories, run:
+
+```bash
+poetry cache clear --all
+```
+
+To only clear all packages from the `PyPI` repository, run:
 
 ```bash
 poetry cache clear PyPI --all
@@ -243,7 +263,7 @@ poetry cache clear PyPI --all
 To only remove a specific package from a cache, you have to specify the cache entry in the following form `cache:package:version`:
 
 ```bash
-poetry cache clear pypi:requests:2.24.0
+poetry cache clear PyPI:requests:2.24.0
 ```
 
 ### cache list
@@ -455,14 +475,6 @@ poetry init
 The `install` command reads the `pyproject.toml` file from the current project,
 resolves the dependencies, and installs them.
 
-{{% note %}}
-Normally, you should prefer `poetry sync` to `poetry install` to avoid untracked outdated packages.
-However, if you have set `virtualenvs.create = false` to install dependencies into your system environment,
-which is discouraged, or `virtualenvs.options.system-site-packages = true` to make
-system site-packages available in your virtual environment, you should use `poetry install`
-because `poetry sync` will normally not work well in these cases.
-{{% /note %}}
-
 ```bash
 poetry install
 ```
@@ -472,6 +484,23 @@ it will use the exact versions from there instead of resolving them.
 This ensures that everyone using the library will get the same versions of the dependencies.
 
 If there is no `poetry.lock` file, Poetry will create one after dependency resolution.
+
+{{% note %}}
+**When to use `install` vs `update`:**
+- Use `poetry install` to install dependencies as specified in `poetry.lock` (or resolve dependencies and create the lock file if it is missing).
+  This is what you run after cloning a project. For reproducible installs, prefer `poetry sync`,
+  which also removes packages that are not in the lock file.
+- Use `poetry update` when you want to update dependencies to their latest versions (within the constraints from the `pyproject.toml`)
+  and refresh `poetry.lock`.
+{{% /note %}}
+
+{{% note %}}
+Normally, you should prefer `poetry sync` to `poetry install` to avoid untracked outdated packages.
+However, if you have set `virtualenvs.create = false` to install dependencies into your system environment,
+which is discouraged, or `virtualenvs.options.system-site-packages = true` to make
+system site-packages available in your virtual environment, you should use `poetry install`
+because `poetry sync` will normally not work well in these cases.
+{{% /note %}}
 
 If you want to exclude one or more dependency groups for the installation, you can use
 the `--without` option.
@@ -706,8 +735,14 @@ poetry publish
 It can also build the package if you pass it the `--build` option.
 
 {{% note %}}
-See [Publishable Repositories]({{< relref "repositories/#publishable-repositories" >}}) for more information on how to configure and use publishable repositories.
+See [Publishable Repositories]({{< relref "repositories/#publishable-repositories" >}}) for more information
+on how to configure and use publishable repositories.
 {{% /note %}}
+
+{{% warning %}}
+Only artifacts of the latest version of your package in the dist directory will be uploaded.
+Older versions from previous builds as well as artifacts of other packages are ignored.
+{{% /warning %}}
 
 #### Options
 
@@ -746,10 +781,10 @@ poetry python install <PYTHON_VERSION>
 
 #### Options
 
-* `--clean`: Clean up installation if check fails.
-* `--free-threaded`: Use free-threaded version if available.
-* `--implementation`: Python implementation to use. (cpython, pypy)
-* `--reinstall`: Reinstall if installation already exists.
+* `--clean (-c)`: Clean up installation if check fails.
+* `--free-threaded (-t)`: Use free-threaded version if available. (Same as requesting a version with trailing "t".)
+* `--implementation (-i)`: Python implementation to use. (cpython, pypy)
+* `--reinstall (-r)`: Reinstall if installation already exists.
 
 ### python list
 
@@ -760,9 +795,10 @@ discovered System managed and Poetry managed installations.
 poetry python list
 ```
 #### Options
-* `--all`: List all versions, including those available for download.
-* `--implementation`: Python implementation to search for.
-* `--managed`: List only Poetry managed Python versions.
+* `--all (-a)`: List all versions, including those available for download.
+* `--free-threaded (-t)`: List only free-threaded Python versions.
+* `--implementation (-i)`: Python implementation to search for.
+* `--managed (-m)`: List only Poetry managed Python versions.
 
 ### python remove
 
@@ -774,7 +810,8 @@ poetry python remove <PYTHON_VERSION>
 
 #### Options
 
-* `--implementation`: Python implementation to use. (cpython, pypy)
+* `--free-threaded (-t)`: Remove free-threaded version (Same as requesting a version with trailing "t".)
+* `--implementation (-i)`: Python implementation to remove. (cpython, pypy)
 
 ## remove
 
@@ -975,6 +1012,7 @@ poetry self show
 * `--tree`: List the dependencies as a tree.
 * `--latest (-l)`: Show the latest version.
 * `--outdated (-o)`: Show the latest version but only for packages that are outdated.
+* `--format (-f)`: Specify the output format (`json` or `text`). Default is `text`. `json` cannot be combined with the `--tree` option.
 
 ### self show plugins
 
@@ -1062,6 +1100,7 @@ required by
 * `--all (-a)`: Show all packages (even those not compatible with current system).
 * `--top-level (-T)`: Only show explicitly defined packages.
 * `--no-truncate`: Do not truncate the output based on the terminal width.
+* `--format (-f)`: Specify the output format (`json` or `text`). Default is `text`. `json` cannot be combined with the `--tree` option.
 
 {{% note %}}
 When `--only` is specified, `--with` and `--without` options are ignored.
@@ -1246,7 +1285,14 @@ you should use the `update` command.
 poetry update
 ```
 
-This will resolve all dependencies of the project and write the exact versions into `poetry.lock`.
+This will resolve all dependencies of the project, write the exact versions into `poetry.lock`,
+and install them into your environment.
+
+{{% note %}}
+The `update` command **does not** modify your `pyproject.toml` file. It only updates the
+`poetry.lock` file with the latest compatible versions based on the constraints already
+defined in `pyproject.toml`. To change version constraints, use the `add` command instead.
+{{% /note %}}
 
 If you just want to update a few packages and not all, you can list them as such:
 

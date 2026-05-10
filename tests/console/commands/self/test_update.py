@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
     from pytest_mock import MockerFixture
 
-    from tests.helpers import TestRepository
+    from tests.helpers import DummyRepository
     from tests.types import CommandTesterFactory
     from tests.types import FixtureDirGetter
 
@@ -42,8 +42,8 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
 
 def test_self_update_can_update_from_recommended_installation(
     tester: CommandTester,
-    repo: TestRepository,
-    installed: TestRepository,
+    repo: DummyRepository,
+    installed: DummyRepository,
 ) -> None:
     new_version = Version.parse(__version__).next_minor().text
 

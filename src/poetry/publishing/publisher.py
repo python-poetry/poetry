@@ -18,6 +18,12 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def _normalize_legacy_repository_url(url: str) -> str:
+    if url.endswith("/legacy"):
+        url += "/"
+    return url
+
+
 class Publisher:
     """
     Registers and publishes packages to remote repositories.
@@ -49,9 +55,10 @@ class Publisher:
             repository_name = "pypi"
         else:
             # Retrieving config information
-            url = self._poetry.config.get(f"repositories.{repository_name}.url")
+            url = self._poetry.config.get(["repositories", repository_name, "url"])
             if url is None:
                 raise RuntimeError(f"Repository {repository_name} is not defined")
+            url = _normalize_legacy_repository_url(url)
 
         if not (username and password):
             # Check if we have a token first
@@ -79,7 +86,7 @@ class Publisher:
             repository_name = "PyPI"
         self._io.write_line(
             f"Publishing <c1>{self._package.pretty_name}</c1>"
-            f" (<c2>{self._package.pretty_version}</c2>) to"
+            f" (<c2>{self._uploader.version}</c2>) to"
             f" <info>{repository_name}</info>"
         )
 

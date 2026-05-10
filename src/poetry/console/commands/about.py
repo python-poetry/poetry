@@ -9,7 +9,7 @@ class AboutCommand(Command):
     description = "Shows information about Poetry."
 
     def handle(self) -> int:
-        from poetry.utils._compat import metadata
+        from importlib import metadata
 
         self.line(
             f"""\

@@ -36,7 +36,7 @@ from tests.helpers import get_package
 
 
 if TYPE_CHECKING:
-    import httpretty
+    import responses
 
     from cleo.io.null_io import NullIO
     from poetry.core.packages.project_package import ProjectPackage
@@ -54,6 +54,16 @@ DEFAULT_SOURCE_REF = (
     VCSDependency("poetry", "git", "git@github.com:python-poetry/poetry.git").branch
     or "HEAD"
 )
+
+
+@pytest.fixture
+def legacy_repository(legacy_repository_html: LegacyRepository) -> LegacyRepository:
+    """
+    Override fixture to only test with the html version of the legacy repository
+    because the json version has the same packages as the PyPI repository and thus
+    cause different results in the tests that rely on differences.
+    """
+    return legacy_repository_html
 
 
 def set_package_python_versions(provider: Provider, python_versions: str) -> None:
@@ -564,6 +574,7 @@ def test_solver_returns_extras_if_requested_in_multiple_groups(
         ([], ["a"]),
         (["all"], ["download-package", "install-package", "a"]),
         (["nested"], ["download-package", "install-package", "a"]),
+        (["cyclic"], ["download-package", "install-package", "a"]),
         (["install", "download"], ["download-package", "install-package", "a"]),
         (["install"], ["install-package", "a"]),
         (["download"], ["download-package", "a"]),
@@ -571,6 +582,7 @@ def test_solver_returns_extras_if_requested_in_multiple_groups(
         (["py"], ["py310-package", "a"]),
     ],
 )
+@pytest.mark.parametrize("merge_extras", [True, False])
 @pytest.mark.parametrize("top_level_dependency", [True, False])
 def test_solver_resolves_self_referential_extras(
     enabled_extras: list[str],
@@ -580,6 +592,7 @@ def test_solver_resolves_self_referential_extras(
     repo: Repository,
     package: ProjectPackage,
     create_package: PackageFactory,
+    merge_extras: bool,
 ) -> None:
     dependency = (
         create_package(
@@ -587,13 +600,17 @@ def test_solver_resolves_self_referential_extras(
             str(package.version),
             extras={
                 "download": ["download-package"],
+                "download2": ["download-package"],  # same package as download
                 "install": ["install-package"],
                 "py38": ["py38-package ; python_version == '3.8'"],
                 "py310": ["py310-package ; python_version > '3.8'"],
-                "all": ["a[download,install]"],
+                "all": ["a[download,download2,install]"],
                 "py": ["a[py38,py310]"],
                 "nested": ["a[all]"],
+                "cyclic": ["a[cyclic2]", "download-package"],
+                "cyclic2": ["a[cyclic]", "install-package"],
             },
+            merge_extras=merge_extras,
         )
         .to_dependency()
         .with_features(enabled_extras)
@@ -3834,7 +3851,7 @@ def test_multiple_constraints_incomplete_explicit_source_transitive_locked(
     repo.add_package(package_other)
 
     if locked:
-        # order does not matter because packages are sorted in the provicer
+        # order does not matter because packages are sorted in the provider
         # (latest first) so that the package from the explicit source is preferred
         locked_packages = [package_lib_default, package_lib_explicit, package_other]
     else:
@@ -4151,7 +4168,7 @@ def test_solver_cannot_choose_another_version_for_url_dependencies(
     solver: Solver,
     repo: Repository,
     package: ProjectPackage,
-    http: type[httpretty.httpretty],
+    http: responses.RequestsMock,
     fixture_dir: FixtureDirGetter,
     tmp_path: Path,
 ) -> None:
@@ -4161,11 +4178,9 @@ def test_solver_cannot_choose_another_version_for_url_dependencies(
         fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl", project_dir
     )
 
-    http.register_uri(
-        "GET",
+    http.get(
         "https://files.pythonhosted.org/demo-0.1.0-py2.py3-none-any.whl",
         body=Path(path).read_bytes(),
-        streaming=True,
     )
     pendulum = get_package("pendulum", "2.0.3")
     demo = get_package("demo", "0.0.8")
@@ -5230,3 +5245,39 @@ def test_solver_resolves_duplicate_dependencies_with_restricted_extras(
             ]
         ),
     )
+
+
+def test_solver_logs_age_filtered_versions_on_failure(
+    mocker: MockerFixture, pool: RepositoryPool, solver: Solver
+) -> None:
+    """
+    When the solver fails with a SolverProblemError, it should call
+    RepositoryPool.log_age_filtered_versions(level="warning", reset=True).
+    """
+    log_age_filtered_versions_spy = mocker.spy(pool, "log_age_filtered_versions")
+
+    # Force a SolverProblemError from solve()
+    mock_solve = mocker.patch.object(
+        solver, "_solve", side_effect=SolverProblemError(mocker.MagicMock())
+    )
+
+    with pytest.raises(SolverProblemError):
+        solver.solve()
+
+    mock_solve.assert_called_once()
+    log_age_filtered_versions_spy.assert_called_once_with(level="warning", reset=True)
+
+
+def test_solver_logs_age_filtered_versions_on_success(
+    mocker: MockerFixture, pool: RepositoryPool, solver: Solver
+) -> None:
+    """
+    When the solver succeeds, it should call
+    RepositoryPool.log_age_filtered_versions(level="info", reset=True).
+    """
+    log_age_filtered_versions_spy = mocker.spy(pool, "log_age_filtered_versions")
+    mocker.patch.object(solver, "_solve", return_value=mocker.MagicMock())
+
+    solver.solve()
+
+    log_age_filtered_versions_spy.assert_called_once_with(level="info", reset=True)

@@ -35,6 +35,7 @@ This should be a valid name as defined by [PEP 508](https://peps.python.org/pep-
 
 
 ```toml
+[project]
 name = "my-package"
 ```
 
@@ -45,6 +46,8 @@ The version of the package. **Always required when the `project` section is spec
 This should be a valid [PEP 440](https://peps.python.org/pep-0440/) string.
 
 ```toml
+[project]
+# ...
 version = "0.1.0"
 ```
 
@@ -66,12 +69,15 @@ version = "1.0"  # base version
 A short description of the package.
 
 ```toml
+[project]
+# ...
 description = "A short description of the package."
 ```
 
 ### license
 
-The license of the package.
+An [SPDX expression](https://packaging.python.org/en/latest/glossary/#term-License-Expression)
+representing the license of the package.
 
 The recommended notation for the most common licenses is (alphabetical):
 
@@ -93,25 +99,52 @@ Optional, but it is highly recommended to supply this.
 More identifiers are listed at the [SPDX Open Source License Registry](https://spdx.org/licenses/).
 
 ```toml
-license = { text = "MIT" }
+[project]
+# ...
+license = "MIT"
 ```
-{{% note %}}
-If your project is proprietary and does not use a specific license, you can set this value as `Proprietary`.
-{{% /note %}}
 
-You can also specify a license file. However, when doing this, the complete license text
-will be added to the metadata and the License classifier cannot be determined
-automatically so that you have to add it manually.
+{{% warning %}}
+Specifying license as a table, e.g. `{ text = "MIT" }` is deprecated.
+If you used to specify a license file, e.g. `{ file = "LICENSE" }`,
+use `license-files` instead.
+{{% /warning %}}
+
+### license-files
+
+A list of glob patterns that match the license files of the package
+relative to the root of the project source tree.
 
 ```toml
-license = { file = "LICENSE" }
+[project]
+# ...
+license-files = [
+    "*-LICENSE",
+    "CONTRIBUTORS",
+    "MY-SPECIAL-LICENSE-DIR/**/*"
+]
 ```
+
+By default, Poetry will include the following files:
+- `LICENSE*`
+- `LICENCE*`
+- `COPYING*`
+- `AUTHORS*`
+- `NOTICE*`
+- `LICENSES/**/*`
+
+{{% note %}}
+The default applies only if the `license-files` field is not specified.
+Specifying an empty list results in no license files being included.
+{{% /note %}}
 
 ### readme
 
 A path to the README file or the content.
 
 ```toml
+[project]
+# ...
 readme = "README.md"
 ```
 
@@ -135,6 +168,8 @@ readme = ["docs/README1.md", "docs/README2.md"]
 The Python version requirements of the project.
 
 ```toml
+[project]
+# ...
 requires-python = ">=3.8"
 ```
 
@@ -160,6 +195,8 @@ The authors of the package.
 This is a list of authors and should contain at least one author.
 
 ```toml
+[project]
+# ...
 authors = [
     { name = "Sébastien Eustace", email = "sebastien@eustace.io" },
 ]
@@ -172,6 +209,8 @@ The maintainers of the package.
 This is a list of maintainers and should be distinct from authors.
 
 ```toml
+[project]
+# ...
 maintainers = [
     { name = "John Smith", email = "johnsmith@example.org" },
     { name = "Jane Smith", email = "janesmith@example.org" },
@@ -183,6 +222,8 @@ maintainers = [
 A list of keywords that the package is related to.
 
 ```toml
+[project]
+# ...
 keywords = [ "packaging", "poetry" ]
 ```
 
@@ -191,6 +232,8 @@ keywords = [ "packaging", "poetry" ]
 A list of PyPI [trove classifiers](https://pypi.org/classifiers/) that describe the project.
 
 ```toml
+[project]
+# ...
 classifiers = [
     "Topic :: Software Development :: Build Tools",
     "Topic :: Software Development :: Libraries :: Python Modules"
@@ -198,7 +241,7 @@ classifiers = [
 ```
 
 {{% warning %}}
-Note that suitable classifiers based on your `python` requirement and `license`
+Note that suitable classifiers based on your `python` requirement
 are **not** automatically added for you if you define classifiers statically
 in the `project` section.
 
@@ -302,6 +345,8 @@ export = "poetry_plugin_export.plugins:ExportApplicationPlugin"
 The `dependencies` of the project.
 
 ```toml
+[project]
+# ...
 dependencies = [
     "requests>=2.13.0",
 ]
@@ -342,6 +387,8 @@ Whether Poetry operates in package mode (default) or not.
 See [basic usage]({{< relref "basic-usage#operating-modes" >}}) for more information.
 
 ```toml
+[tool.poetry]
+# ...
 package-mode = false
 ```
 
@@ -355,6 +402,7 @@ This should be a valid name as defined by [PEP 508](https://peps.python.org/pep-
 
 
 ```toml
+[tool.poetry]
 name = "my-package"
 ```
 
@@ -371,6 +419,8 @@ The version of the package. **Required in package mode if not defined in the pro
 This should be a valid [PEP 440](https://peps.python.org/pep-0440/) string.
 
 ```toml
+[tool.poetry]
+# ...
 version = "0.1.0"
 ```
 
@@ -388,6 +438,8 @@ If you would like to use semantic versioning for your project, please see
 A short description of the package.
 
 ```toml
+[tool.poetry]
+# ...
 description = "A short description of the package."
 ```
 
@@ -417,11 +469,10 @@ Optional, but it is highly recommended to supply this.
 More identifiers are listed at the [SPDX Open Source License Registry](https://spdx.org/licenses/).
 
 ```toml
+[tool.poetry]
+# ...
 license = "MIT"
 ```
-{{% note %}}
-If your project is proprietary and does not use a specific licence, you can set this value as `Proprietary`.
-{{% /note %}}
 
 ### authors
 
@@ -432,6 +483,8 @@ The authors of the package.
 This is a list of authors and should contain at least one author. Authors must be in the form `name <email>`.
 
 ```toml
+[tool.poetry]
+# ...
 authors = [
     "Sébastien Eustace <sebastien@eustace.io>",
 ]
@@ -446,6 +499,8 @@ The maintainers of the package.
 This is a list of maintainers and should be distinct from authors. Maintainers may contain an email and be in the form `name <email>`.
 
 ```toml
+[tool.poetry]
+# ...
 maintainers = [
     "John Smith <johnsmith@example.org>",
     "Jane Smith <janesmith@example.org>",
@@ -492,9 +547,11 @@ readme = ["docs/README1.md", "docs/README2.md"]
 
 **Deprecated**: Use `project.urls` instead.
 
-An URL to the website of the project.
+A URL to the website of the project.
 
 ```toml
+[tool.poetry]
+# ...
 homepage = "https://python-poetry.org/"
 ```
 
@@ -502,9 +559,11 @@ homepage = "https://python-poetry.org/"
 
 **Deprecated**: Use `project.urls` instead.
 
-An URL to the repository of the project.
+A URL to the repository of the project.
 
 ```toml
+[tool.poetry]
+# ...
 repository = "https://github.com/python-poetry/poetry"
 ```
 
@@ -512,9 +571,11 @@ repository = "https://github.com/python-poetry/poetry"
 
 **Deprecated**: Use `project.urls` instead.
 
-An URL to the documentation of the project.
+A URL to the documentation of the project.
 
 ```toml
+[tool.poetry]
+# ...
 documentation = "https://python-poetry.org/docs/"
 ```
 
@@ -525,6 +586,8 @@ documentation = "https://python-poetry.org/docs/"
 A list of keywords that the package is related to.
 
 ```toml
+[tool.poetry]
+# ...
 keywords = ["packaging", "poetry"]
 ```
 
@@ -545,19 +608,28 @@ classifiers = [
 Note that Python classifiers are automatically added for you
 and are determined by your `python` requirement.
 
-The `license` property will also set the License classifier automatically.
-
 If you do not want Poetry to automatically add suitable classifiers
-based on the `python` requirement and `license` property,
-use `project.classifiers` instead of this setting.
+based on the `python` requirement, use `project.classifiers` instead of this setting.
 {{% /note %}}
 
 ### packages
 
 A list of packages and modules to include in the final distribution.
 
-If your project structure differs from the standard one supported by `poetry`,
-you can specify the packages you want to include in the final distribution.
+If packages are not automatically detected, you can specify the packages you want
+to include in the final distribution.
+
+{{% note %}}
+Poetry automatically detects a single **module** or **package** whose name matches the
+[normalized](https://packaging.python.org/en/latest/specifications/name-normalization/#name-normalization)
+project name with `-` replaced with `_`.
+
+The detected module or package must be located either:
+
+- at the same level as the `pyproject.toml` file (flat layout), or
+- inside a `src/` directory (src layout).
+
+{{% /note %}}
 
 ```toml
 [tool.poetry]
@@ -612,6 +684,8 @@ For instance, if you have a package named `my_package` and you want to also incl
 another package named `extra_package`, you will need to specify `my_package` explicitly:
 
 ```toml
+[tool.poetry]
+# ...
 packages = [
     { include = "my_package" },
     { include = "extra_package" },
@@ -624,6 +698,15 @@ Poetry is clever enough to detect Python subpackages.
 
 Thus, you only have to specify the directory where your root package resides.
 {{% /note %}}
+
+{{% warning %}}
+If a VCS is being used, files matched by its ignore settings (for example, by
+`.gitignore` for Git) are excluded from the built distributions even when their
+parent directory is listed under `packages`. This can be surprising if a
+`packages` entry points at generated code or another path that is intentionally
+kept out of version control. To ship such files, add them back via
+[`include`]({{< relref "#exclude-and-include" >}}) with an explicit `format`.
+{{% /warning %}}
 
 ### exclude and include
 
@@ -644,12 +727,6 @@ include = ["CHANGELOG.md"]
 You can explicitly specify to Poetry that a set of globs should be ignored or included for the purposes of packaging.
 The globs specified in the exclude field identify a set of files that are not included when a package is built.
 `include` has priority over `exclude`.
-
-If a VCS is being used for a package, the exclude field will be seeded with the VCS’ ignore settings (`.gitignore` for git, for example).
-
-{{% note %}}
-Explicitly declaring entries in `include` will negate VCS' ignore settings.
-{{% /note %}}
 
 You can also specify the formats for which these patterns have to be included, as shown here:
 
@@ -672,6 +749,11 @@ Pay attention to include top level files and directories with common names like
 `CHANGELOG.md`, `LICENSE`, `tests` or `docs` only in sdists and **not** in wheels.
 {{% /warning %}}
 
+If a VCS is being used for a package, the exclude field will be seeded with the VCS’ ignore settings (`.gitignore` for git, for example).
+
+{{% note %}}
+VCS ignore settings can be negated by adding entries in `include`; be sure to explicitly set the `format` as above.
+{{% /note %}}
 
 ### dependencies and dependency groups
 
@@ -892,6 +974,7 @@ an error will be raised.
 
 ```toml
 [tool.poetry]
+# ...
 requires-poetry = ">=2.0"
 ```
 
@@ -906,6 +989,28 @@ my-plugin = ">=1.0,<2.0"
 ```
 
 See [Project plugins]({{< relref "plugins#project-plugins" >}}) for more information.
+
+### build-constraints
+
+In this section, you can specify additional constraints to apply when creating the build
+environment for a dependency. This is useful if a package does not provide wheels
+(or shall be built from source for other reasons)
+and specifies too loose build requirements (without an upper bound)
+and is not compatible with current versions of one of its build requirements.
+
+For example, if your project depends on `some-package`, which only provides an sdist
+and defines its build requirements as `build-requires = ["setuptools"]`,
+but is incompatible with `setuptools >= 78`, building the package will probably fail
+because per default the latest setuptools will be chosen. In this case, you can
+work around this issue of `some-package` as follows:
+
+```toml
+[tool.poetry.build-constraints]
+some-package = { setuptools = "<78" }
+```
+
+The syntax for specifying constraints is the same as for specifying dependencies
+in the `tool.poetry` section.
 
 ## Poetry and PEP-517
 

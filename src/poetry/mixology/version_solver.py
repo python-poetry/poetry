@@ -6,7 +6,6 @@ import time
 
 from enum import IntEnum
 from typing import TYPE_CHECKING
-from typing import Optional
 
 from poetry.core.packages.dependency import Dependency
 
@@ -48,9 +47,7 @@ class Preference(IntEnum):
 
 CompKey = tuple[Preference, int, bool, int]
 
-DependencyCacheKey = tuple[
-    str, Optional[str], Optional[str], Optional[str], Optional[str]
-]
+DependencyCacheKey = tuple[str, str | None, str | None, str | None, str | None]
 
 
 class DependencyCache:
@@ -538,7 +535,8 @@ class VersionSolver:
                 relevant_dependencies = [
                     r
                     for r in package.requires
-                    if not r.in_extras or r.in_extras[0] in dependency.extras
+                    if not r.in_extras
+                    or any(extra in dependency.extras for extra in r.in_extras)
                 ]
             has_deps = bool(relevant_dependencies)
             num_deps_upper_bound = sum(

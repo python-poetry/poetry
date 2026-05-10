@@ -10,7 +10,7 @@ inputs:
 
 outputs:
   cache-hit:
-    description: Whether an exact cache hit occured
+    description: Whether an exact cache hit occurred
     value: ${{ steps.cache.outputs.cache-hit }}
 
 runs:
@@ -26,7 +26,7 @@ runs:
       if: inputs.cache == 'true'
       shell: bash
 
-    - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+    - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
       id: cache
       if: inputs.cache == 'true'
       with:

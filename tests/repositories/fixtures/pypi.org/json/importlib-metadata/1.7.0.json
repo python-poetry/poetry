@@ -55,6 +55,23 @@
     "yanked_reason": null
   },
   "last_serial": 0,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "barry"
+      },
+      {
+        "role": "Owner",
+        "user": "brettcannon"
+      },
+      {
+        "role": "Owner",
+        "user": "jaraco"
+      }
+    ]
+  },
   "urls": [
     {
       "comment_text": "",

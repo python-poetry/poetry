@@ -13,10 +13,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import findpython
-import httpretty
 import keyring
 import packaging.version
 import pytest
+import responses
 
 from installer.utils import SCHEME_NAMES
 from jaraco.classes import properties
@@ -50,8 +50,8 @@ from poetry.utils.env import VirtualEnv
 from poetry.utils.env.python import Python
 from poetry.utils.password_manager import PoetryKeyring
 from tests.helpers import MOCK_DEFAULT_GIT_REVISION
-from tests.helpers import TestLocker
-from tests.helpers import TestRepository
+from tests.helpers import DummyLocker
+from tests.helpers import DummyRepository
 from tests.helpers import get_package
 from tests.helpers import http_setup_redirect
 from tests.helpers import isolated_environment
@@ -62,10 +62,11 @@ from tests.helpers import with_working_directory
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from collections.abc import Iterator
     from collections.abc import Mapping
+    from collections.abc import Sequence
     from typing import Any
-    from typing import Callable
     from unittest.mock import MagicMock
 
     from cleo.io.inputs.argument import Argument
@@ -79,6 +80,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from poetry.poetry import Poetry
+    from poetry.utils.env.base_env import PythonVersion
     from tests.types import CommandFactory
     from tests.types import FixtureCopier
     from tests.types import FixtureDirGetter
@@ -118,7 +120,7 @@ class Config(BaseConfig):
     _config_source: DictConfigSource
     _auth_config_source: DictConfigSource
 
-    def get(self, setting_name: str, default: Any = None) -> Any:
+    def get(self, setting_name: str | Sequence[str], default: Any = None) -> Any:
         self.merge(self._config_source.config)
         self.merge(self._auth_config_source.config)
 
@@ -376,15 +378,16 @@ def git_mock(mocker: MockerFixture, request: FixtureRequest) -> None:
 
 
 @pytest.fixture
-def http() -> Iterator[type[httpretty.httpretty]]:
-    httpretty.reset()
-    with httpretty.enabled(allow_net_connect=False, verbose=True):
-        yield httpretty
+def http() -> Iterator[responses.RequestsMock]:
+    with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
+        yield rsps
 
 
 @pytest.fixture
-def http_redirector(http: type[httpretty.httpretty]) -> None:
-    http_setup_redirect(http, http.HEAD, http.GET, http.PUT, http.POST)
+def http_redirector(http: responses.RequestsMock) -> None:
+    http_setup_redirect(
+        http, responses.HEAD, responses.GET, responses.PUT, responses.POST
+    )
 
 
 @pytest.fixture
@@ -428,29 +431,26 @@ def current_env() -> SystemEnv:
 
 
 @pytest.fixture(scope="session")
-def current_python(current_env: SystemEnv) -> tuple[int, int, int]:
-    return current_env.version_info[:3]
+def current_python(current_env: SystemEnv) -> PythonVersion:
+    return current_env.version_info
 
 
 @pytest.fixture(scope="session")
-def default_python(current_python: tuple[int, int, int]) -> str:
+def default_python(current_python: PythonVersion) -> str:
     return "^" + ".".join(str(v) for v in current_python[:2])
 
 
 @pytest.fixture
-def repo(http: type[httpretty.httpretty]) -> TestRepository:
-    http.register_uri(
-        http.GET,
-        re.compile("^https?://foo.bar/(.+?)$"),
-    )
-    return TestRepository(name="foo")
+def repo(http: responses.RequestsMock) -> DummyRepository:
+    http.get(re.compile(r"^https?://foo\.bar/(.+?)$"))
+    return DummyRepository(name="foo")
 
 
 @pytest.fixture
 def project_factory(
     tmp_path: Path,
     config: Config,
-    repo: TestRepository,
+    repo: DummyRepository,
     installed: InstalledRepository,
     default_python: str,
     load_required_fixtures: None,
@@ -501,7 +501,7 @@ def project_factory(
         poetry = Factory().create_poetry(project_dir)
 
         if use_test_locker:
-            locker = TestLocker(
+            locker = DummyLocker(
                 poetry.locker.lock, locker_config or poetry.locker._pyproject_data
             )
             locker.write()
@@ -543,6 +543,7 @@ def create_package(repo: Repository) -> PackageFactory:
         version: str | None = None,
         dependencies: list[Dependency] | None = None,
         extras: dict[str, list[str]] | None = None,
+        merge_extras: bool = False,
     ) -> Package:
         version = version or "1.0"
         package = get_package(name, version)
@@ -574,16 +575,20 @@ def create_package(repo: Repository) -> PackageFactory:
 
                     extra_dependency.constraint = parse_constraint(f"^{pkg.version}")
 
-                    # if requirement already exists in the package, update the marker
-                    for requirement in package.requires:
-                        if (
-                            requirement.name == extra_dependency.name
-                            and requirement.is_optional()
-                        ):
-                            requirement.marker = requirement.marker.union(
-                                extra_dependency.marker
-                            )
-                            break
+                    if merge_extras:
+                        # if requirement already exists in the package,
+                        # update the marker
+                        for requirement in package.requires:
+                            if (
+                                requirement.name == extra_dependency.name
+                                and requirement.is_optional()
+                            ):
+                                requirement.marker = requirement.marker.union(
+                                    extra_dependency.marker
+                                )
+                                break
+                        else:
+                            package.add_dependency(extra_dependency)
                     else:
                         package.add_dependency(extra_dependency)
 
@@ -652,12 +657,6 @@ def venv_flags_default() -> dict[str, bool]:
         "system-site-packages": False,
         "no-pip": False,
     }
-
-
-@pytest.fixture(autouse=(os.name == "nt"))
-def httpretty_windows_mock_urllib3_wait_for_socket(mocker: MockerFixture) -> None:
-    # this is a workaround for https://github.com/gabrielfalcao/HTTPretty/issues/442
-    mocker.patch("urllib3.util.wait.select_wait_for_socket", returns=True)
 
 
 @pytest.fixture
@@ -898,6 +897,7 @@ def mocked_python_register(
         version: str,
         executable_name: str | Path | None = None,
         implementation: str | None = None,
+        free_threaded: bool = False,
         parent: str | Path | None = None,
         make_system: bool = False,
     ) -> Python:
@@ -912,6 +912,10 @@ def mocked_python_register(
             @property
             def implementation(self) -> str:
                 return implementation or platform.python_implementation()
+
+            @property
+            def freethreaded(self) -> bool:
+                return free_threaded
 
         python = MockPythonVersion(
             executable=parent / executable_name,
@@ -988,11 +992,22 @@ def mock_python_version(mocker: MockerFixture) -> None:
         def implementation(self) -> str:
             return "PyPy" if "pypy" in str(self.executable) else "CPython"
 
-        def _get_version(self) -> packaging.version.Version:
+        @property
+        def freethreaded(self) -> bool:
+            return self._install_dir.name.endswith("t")
+
+        @property
+        def _install_dir(self) -> Path:
             install_dir = self.executable.parent
             if not WINDOWS:
                 install_dir = install_dir.parent
-            return packaging.version.Version(install_dir.name.split("@")[1])
+            assert isinstance(install_dir, Path)
+            return install_dir
+
+        def _get_version(self) -> packaging.version.Version:
+            return packaging.version.Version(
+                self._install_dir.name.removesuffix("t").split("@")[1]
+            )
 
         def _get_architecture(self) -> str:
             return "64bit"
@@ -1013,9 +1028,15 @@ def mocked_poetry_managed_python_register(
     config.python_installation_dir.mkdir()
 
     def register(
-        version: str, implementation: str, with_install_dir: bool = False
+        version: str,
+        implementation: str,
+        free_threaded: bool = False,
+        with_install_dir: bool = False,
     ) -> Path:
-        bin_dir = config.python_installation_dir / f"{implementation}@{version}"
+        python_dir_name = f"{implementation}@{version}"
+        if free_threaded:
+            python_dir_name += "t"
+        bin_dir = config.python_installation_dir / python_dir_name
         if with_install_dir:
             bin_dir /= "install"
         if not WINDOWS:
@@ -1027,3 +1048,85 @@ def mocked_poetry_managed_python_register(
         return bin_dir
 
     return register
+
+
+@pytest.fixture(params=[False, True])  # relative path
+def wheel_with_path_traversal(tmp_path: Path, request: pytest.FixtureRequest) -> Path:
+    import zipfile
+
+    traversal_path = (
+        "../../traversal.txt"
+        if request.param
+        else (tmp_path / "traversal.txt").as_posix()
+    )
+
+    wheel = tmp_path / "traversal-0.1-py3-none-any.whl"
+    files = {
+        "traversal/__init__.py": b"",
+        traversal_path: b"path traversal",
+        "traversal-0.1.dist-info/WHEEL": (
+            b"Wheel-Version: 1.0\nRoot-Is-Purelib: true\nTag: py3-none-any\n"
+        ),
+        "traversal-0.1.dist-info/METADATA": (
+            b"Metadata-Version: 2.1\nName: traversal\nVersion: 0.1\n"
+        ),
+    }
+    files["traversal-0.1.dist-info/RECORD"] = (
+        "\n".join([f"{k},," for k in files] + ["traversal-0.1.dist-info/RECORD,,"])
+        + "\n"
+    ).encode()
+
+    with zipfile.ZipFile(wheel, "w") as z:
+        for k, v in files.items():
+            z.writestr(k, v)
+
+    return wheel
+
+
+@pytest.fixture(params=[False, True])  # relative path
+def wheel_with_path_traversal_via_symlink(
+    tmp_path: Path, request: pytest.FixtureRequest
+) -> Path:
+    import stat
+    import zipfile
+
+    wheel = tmp_path / "symlink-0.1-py3-none-any.whl"
+    files = {
+        "symlink/__init__.py": b"",
+        "symlink-0.1.dist-info/WHEEL": (
+            b"Wheel-Version: 1.0\nRoot-Is-Purelib: true\nTag: py3-none-any\n"
+        ),
+        "symlink-0.1.dist-info/METADATA": (
+            b"Metadata-Version: 2.1\nName: symlink-pkg\nVersion: 0.1\n"
+        ),
+    }
+
+    symlink_entry = "symlink/traversal_link"
+    symlink_target = (
+        b"../../target"
+        if request.param
+        else (tmp_path / "target").as_posix().encode("utf-8")
+    )
+    traversal_file = "symlink/traversal_link/traversal.txt"
+
+    record_lines = [f"{k},," for k in files]
+    record_lines.append(f"{symlink_entry},,")
+    record_lines.append(f"{traversal_file},,")
+    record_lines.append("symlink-0.1.dist-info/RECORD,,")
+    files["symlink-0.1.dist-info/RECORD"] = ("\n".join(record_lines) + "\n").encode()
+
+    with zipfile.ZipFile(wheel, "w") as z:
+        for k, v in files.items():
+            z.writestr(k, v)
+
+        # Add a ZIP entry whose external attributes mark it as a symlink.
+        # The entry's data is the symlink target, pointing outside the
+        # installation directory.
+        info = zipfile.ZipInfo(symlink_entry)
+        info.create_system = 3  # unix
+        info.external_attr = (stat.S_IFLNK | 0o777) << 16
+        z.writestr(info, symlink_target)
+
+        z.writestr(traversal_file, b"path traversal")
+
+    return wheel

@@ -15,39 +15,45 @@ if TYPE_CHECKING:
 @pytest.fixture()
 def temp_repo(tmp_path: Path) -> TempRepoFixture:
     """Temporary repository with 2 commits"""
-    repo = dulwich.repo.Repo.init(str(tmp_path))
+    repo = dulwich.repo.Repo.init(str(tmp_path), default_branch=b"main")
+    worktree = repo.get_worktree()
 
     # init commit
     (tmp_path / "foo").write_text("foo", encoding="utf-8")
-    repo.stage(["foo"])
+    worktree.stage(["foo"])
 
-    init_commit = repo.do_commit(
+    init_commit = worktree.commit(
         committer=b"User <user@example.com>",
         author=b"User <user@example.com>",
         message=b"init",
         no_verify=True,
+        sign=False,
     )
 
     # one commit which is not "head"
     (tmp_path / "bar").write_text("bar", encoding="utf-8")
-    repo.stage(["bar"])
-    middle_commit = repo.do_commit(
+    worktree.stage(["bar"])
+    middle_commit = worktree.commit(
         committer=b"User <user@example.com>",
         author=b"User <user@example.com>",
         message=b"extra",
         no_verify=True,
+        sign=False,
     )
 
     # extra commit
     (tmp_path / "third").write_text("third file", encoding="utf-8")
-    repo.stage(["third"])
+    worktree.stage(["third"])
 
-    head_commit = repo.do_commit(
+    head_commit = worktree.commit(
         committer=b"User <user@example.com>",
         author=b"User <user@example.com>",
         message=b"extra",
         no_verify=True,
+        sign=False,
     )
+
+    repo[b"refs/tags/v1"] = head_commit
 
     return TempRepoFixture(
         path=tmp_path,

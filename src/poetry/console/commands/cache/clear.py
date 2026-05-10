@@ -21,10 +21,10 @@ if TYPE_CHECKING:
 
 class CacheClearCommand(Command):
     name = "cache clear"
-    description = "Clears a Poetry cache by name."
+    description = "Clear Poetry's caches."
 
     arguments: ClassVar[list[Argument]] = [
-        argument("cache", description="The name of the cache to clear.")
+        argument("cache", description="The name of the cache to clear.", optional=True)
     ]
     options: ClassVar[list[Option]] = [
         option("all", description="Clear all entries in the cache.")
@@ -33,8 +33,12 @@ class CacheClearCommand(Command):
     def handle(self) -> int:
         cache = self.argument("cache")
 
-        parts = cache.split(":")
-        root = parts[0]
+        if cache:
+            parts = cache.split(":")
+            root = parts[0]
+        else:
+            parts = []
+            root = ""
 
         config = Config.create()
         cache_dir = config.repository_cache_directory / root
@@ -46,14 +50,16 @@ class CacheClearCommand(Command):
 
         cache = FileCache(cache_dir)
 
-        if len(parts) == 1:
+        if len(parts) < 2:
             if not self.option("all"):
                 raise RuntimeError(
-                    f"Add the --all option if you want to clear all {parts[0]} caches"
+                    "Add the --all option if you want to clear all cache entries"
                 )
 
             if not cache_dir.exists():
-                self.line(f"No cache entries for {parts[0]}")
+                self.line(
+                    f"No cache entries for {root}" if root else "No cache entries"
+                )
                 return 0
 
             # Calculate number of entries

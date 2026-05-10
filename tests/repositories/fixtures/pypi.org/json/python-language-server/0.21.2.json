@@ -38,6 +38,15 @@
     "yanked_reason": null
   },
   "last_serial": 0,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "palantir-pypi"
+      }
+    ]
+  },
   "urls": [
     {
       "comment_text": "",

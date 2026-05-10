@@ -100,8 +100,7 @@ you can set the "package-mode" to false in your pyproject.toml file.
         if with_synchronization:
             self.line_error(
                 "<warning>The `<fg=yellow;options=bold>--sync</>` option is"
-                " deprecated and slated for removal in the next minor release"
-                " after June 2025, use the"
+                " deprecated and slated for removal, use the"
                 f" `<fg=yellow;options=bold>{self._alternative_sync_command}</>`"
                 " command instead.</warning>"
             )

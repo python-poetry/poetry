@@ -48,6 +48,19 @@
     "yanked_reason": null
   },
   "last_serial": 0,
+  "ownership": {
+    "organization": "sqlalchemy",
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "CaselIT"
+      },
+      {
+        "role": "Owner",
+        "user": "zzzeek"
+      }
+    ]
+  },
   "urls": [
     {
       "comment_text": "",

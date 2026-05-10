@@ -12,13 +12,16 @@ from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.repositories.lockfile_repository import LockfileRepository
+from poetry.utils.constants import POETRY_SYSTEM_PROJECT_NAME
 
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+    from collections.abc import Mapping
 
     from cleo.io.io import IO
     from packaging.utils import NormalizedName
+    from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
     from poetry.core.packages.path_dependency import PathDependency
     from poetry.core.packages.project_package import ProjectPackage
@@ -42,6 +45,8 @@ class Installer:
         installed: InstalledRepository | None = None,
         executor: Executor | None = None,
         disable_cache: bool = False,
+        *,
+        build_constraints: Mapping[NormalizedName, list[Dependency]] | None = None,
     ) -> None:
         self._io = io
         self._env = env
@@ -64,7 +69,12 @@ class Installer:
 
         if executor is None:
             executor = Executor(
-                self._env, self._pool, config, self._io, disable_cache=disable_cache
+                self._env,
+                self._pool,
+                config,
+                self._io,
+                disable_cache=disable_cache,
+                build_constraints=build_constraints,
             )
 
         self._executor = executor
@@ -207,7 +217,7 @@ class Installer:
         from poetry.puzzle.solver import Solver
 
         locked_repository = Repository("poetry-locked")
-        reresolve = self._config.get("installer.re-resolve", True)
+        reresolve = self._config.get("installer.re-resolve", False)
         solved_packages: dict[Package, TransitivePackageInfo] = {}
         lockfile_repo = LockfileRepository()
 
@@ -257,7 +267,7 @@ class Installer:
             if not self._locker.is_fresh():
                 raise ValueError(
                     "pyproject.toml changed significantly since poetry.lock was last"
-                    " generated. Run `poetry lock` to fix the lock file."
+                    f" generated. Run `{self._lock_fix_command()}` to fix the lock file."
                 )
             if not (reresolve or self._locker.is_locked_groups_and_markers()):
                 if self._io.is_verbose():
@@ -370,6 +380,14 @@ class Installer:
             self._write_lock_file(solved_packages)
 
         return status
+
+    def _lock_fix_command(self) -> str:
+        # `poetry self` commands operate on Poetry's own system project. When the lock
+        # file is outdated, users should run `poetry self lock` rather than `poetry lock`.
+        if self._package.name == POETRY_SYSTEM_PROJECT_NAME:
+            return "poetry self lock"
+
+        return "poetry lock"
 
     def _write_lock_file(
         self,

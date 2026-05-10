@@ -14,10 +14,10 @@ if TYPE_CHECKING:
     from cleo.io.inputs.option import Option
     from cleo.io.io import IO
     from cleo.testers.command_tester import CommandTester
-    from httpretty.core import HTTPrettyRequest
     from packaging.utils import NormalizedName
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
+    from requests import PreparedRequest
 
     from poetry.config.config import Config
     from poetry.config.source import Source
@@ -30,13 +30,9 @@ if TYPE_CHECKING:
     from poetry.utils.env.python import Python
     from tests.repositories.fixtures.distribution_hashes import DistributionHash
 
-    HTTPrettyResponse = tuple[int, dict[str, Any], bytes]  # status code, headers, body
-    HTTPrettyRequestCallback = Callable[
-        [HTTPrettyRequest, str, dict[str, Any]], HTTPrettyResponse
-    ]
-    HTTPPrettyRequestCallbackWrapper = Callable[
-        [HTTPrettyRequestCallback], HTTPrettyRequestCallback
-    ]
+    HttpResponse = tuple[int, dict[str, str], bytes | str]  # status code, headers, body
+    HttpRequestCallback = Callable[[PreparedRequest], HttpResponse]
+    HttpRequestCallbackWrapper = Callable[[HttpRequestCallback], HttpRequestCallback]
 
 
 class CommandTesterFactory(Protocol):
@@ -78,6 +74,7 @@ class PackageFactory(Protocol):
         version: str | None = None,
         dependencies: list[Dependency] | None = None,
         extras: dict[str, list[str]] | None = None,
+        merge_extras: bool = False,
     ) -> Package: ...
 
 
@@ -146,6 +143,7 @@ class MockedPythonRegister(Protocol):
         version: str,
         executable_name: str | Path | None = None,
         implementation: str | None = None,
+        free_threaded: bool = False,
         parent: str | Path | None = None,
         make_system: bool = False,
     ) -> Python: ...
@@ -156,5 +154,6 @@ class MockedPoetryPythonRegister(Protocol):
         self,
         version: str,
         implementation: str,
+        free_threaded: bool = False,
         with_install_dir: bool = False,
     ) -> Path: ...

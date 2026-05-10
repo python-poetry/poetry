@@ -64,6 +64,39 @@
     "yanked_reason": null
   },
   "last_serial": 0,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "The_Compiler"
+      },
+      {
+        "role": "Owner",
+        "user": "anatoly"
+      },
+      {
+        "role": "Owner",
+        "user": "flub"
+      },
+      {
+        "role": "Owner",
+        "user": "hpk"
+      },
+      {
+        "role": "Owner",
+        "user": "nicoddemus"
+      },
+      {
+        "role": "Owner",
+        "user": "pfctdayelise"
+      },
+      {
+        "role": "Owner",
+        "user": "ronny"
+      }
+    ]
+  },
   "urls": [
     {
       "comment_text": "",

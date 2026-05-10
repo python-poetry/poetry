@@ -19,7 +19,7 @@ def example_system_pyproject() -> str:
     package.add_dependency(
         Dependency(plugin.name, "^1.2.3", groups=[SelfCommand.ADDITIONAL_PACKAGE_GROUP])
     )
-    content = Factory.create_pyproject_from_package(package)
+    content = Factory.create_legacy_pyproject_from_package(package)
     return content.as_string().rstrip("\n")
 
 

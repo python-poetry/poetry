@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from typing import cast
 
 import pytest
+import tomlkit
 
 from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import Version
@@ -16,7 +17,7 @@ from poetry.console.commands.installer_command import InstallerCommand
 from poetry.puzzle.exceptions import SolverProblemError
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.utils.dependency_specification import RequirementsParser
-from tests.helpers import TestLocker
+from tests.helpers import DummyLocker
 from tests.helpers import get_dependency
 from tests.helpers import get_package
 
@@ -32,8 +33,8 @@ if TYPE_CHECKING:
     from poetry.poetry import Poetry
     from poetry.utils.env import MockEnv
     from poetry.utils.env import VirtualEnv
+    from tests.helpers import DummyRepository
     from tests.helpers import PoetryTestApplication
-    from tests.helpers import TestRepository
     from tests.types import CommandTesterFactory
     from tests.types import FixtureDirGetter
     from tests.types import ProjectFactory
@@ -79,7 +80,7 @@ def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
 
 
 @pytest.fixture(autouse=True)
-def repo_add_default_packages(repo: TestRepository) -> None:
+def repo_add_default_packages(repo: DummyRepository) -> None:
     msgpack_optional_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6")
     msgpack = get_package("msgpack-python", "0.5.6")
@@ -595,6 +596,236 @@ Writing lock file
     assert content["dependencies"]["demo"] == expected_content
 
 
+def test_add_to_new_group_keeps_existing_group(
+    app: PoetryTestApplication, tester: CommandTester
+) -> None:
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    groups_content: dict[str, Any] = tomlkit.parse(
+        """\
+[dependency-groups]
+example = [
+    "cachy (>=0.2.0,<0.3.0)",
+]
+"""
+    )
+    pyproject["dependency-groups"] = groups_content["dependency-groups"]
+    pyproject = cast("TOMLDocument", pyproject)
+    app.poetry.file.write(pyproject)
+
+    tester.execute("-G foo pendulum")
+
+    expected = """\
+Using version ^1.4.4 for pendulum
+"""
+
+    assert tester.io.fetch_output().startswith(expected)
+    assert isinstance(tester.command, InstallerCommand)
+    assert tester.command.installer.executor.installations_count == 1
+
+    pyproject = app.poetry.file.read()
+    pyproject = cast("dict[str, Any]", pyproject)
+    assert "example" in pyproject["dependency-groups"]
+    assert pyproject["dependency-groups"]["example"] == [
+        "cachy (>=0.2.0,<0.3.0)",
+    ]
+    assert pyproject["dependency-groups"]["foo"] == [
+        "pendulum (>=1.4.4,<2.0.0)",
+    ]
+
+
+@pytest.mark.parametrize("additional_poetry_group", [False, True])
+def test_add_to_existing_group(
+    app: PoetryTestApplication, tester: CommandTester, additional_poetry_group: bool
+) -> None:
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    groups_content: dict[str, Any] = tomlkit.parse(
+        """\
+[dependency-groups]
+example = [
+    "cachy (>=0.2.0,<0.3.0)",
+    {include-group = "included"},
+]
+included = []
+"""
+    )
+    pyproject["dependency-groups"] = groups_content["dependency-groups"]
+    if additional_poetry_group:
+        poetry_groups_content: dict[str, Any] = tomlkit.parse(
+            """\
+[tool.poetry.group.example.dependencies]
+cachy = { allow-prereleases = true }
+"""
+        )
+        pyproject["tool"]["poetry"]["group"] = poetry_groups_content["tool"]["poetry"][
+            "group"
+        ]
+    pyproject = cast("TOMLDocument", pyproject)
+    app.poetry.file.write(pyproject)
+
+    tester.execute("-G example pendulum")
+
+    expected = """\
+Using version ^1.4.4 for pendulum
+"""
+
+    assert tester.io.fetch_output().startswith(expected)
+    assert isinstance(tester.command, InstallerCommand)
+    assert tester.command.installer.executor.installations_count == 1
+
+    pyproject = app.poetry.file.read()
+    pyproject = cast("dict[str, Any]", pyproject)
+    assert "example" in pyproject["dependency-groups"]
+    assert pyproject["dependency-groups"]["example"] == [
+        "cachy (>=0.2.0,<0.3.0)",
+        {"include-group": "included"},
+        "pendulum (>=1.4.4,<2.0.0)",
+    ]
+    if additional_poetry_group:
+        assert "example" in pyproject["tool"]["poetry"]["group"]
+        assert pyproject["tool"]["poetry"]["group"]["example"]["dependencies"] == {
+            "cachy": {"allow-prereleases": True},
+        }
+    else:
+        assert "group" not in pyproject["tool"]["poetry"]
+
+
+def test_add_to_group_with_latest_overwrite_existing(
+    app: PoetryTestApplication, tester: CommandTester
+) -> None:
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    groups_content: dict[str, Any] = tomlkit.parse(
+        """\
+[dependency-groups]
+example = [
+    {include-group = "included"},
+    "cachy (>=0.1.0,<0.2.0)",
+    "pendulum (>=1.4.4,<2.0.0)",
+]
+included = []
+"""
+    )
+    pyproject["dependency-groups"] = groups_content["dependency-groups"]
+    pyproject = cast("TOMLDocument", pyproject)
+    app.poetry.file.write(pyproject)
+
+    tester.execute("-G example cachy@latest")
+
+    expected = """\
+Using version ^0.2.0 for cachy
+"""
+
+    assert tester.io.fetch_output().startswith(expected)
+    assert isinstance(tester.command, InstallerCommand)
+    # `cachy` has `msgpack-python` as dependency. So installation count increases by 1.
+    assert tester.command.installer.executor.installations_count == 2
+
+    pyproject = app.poetry.file.read()
+    pyproject = cast("dict[str, Any]", pyproject)
+    assert "example" in pyproject["dependency-groups"]
+    assert pyproject["dependency-groups"]["example"] == [
+        {"include-group": "included"},
+        "cachy (>=0.2.0,<0.3.0)",
+        "pendulum (>=1.4.4,<2.0.0)",
+    ]
+
+
+def test_add_multiple_dependencies_to_dependency_group(
+    app: PoetryTestApplication, tester: CommandTester
+) -> None:
+    tester.execute("-G example cachy pendulum")
+
+    expected = """\
+Using version ^0.2.0 for cachy
+Using version ^1.4.4 for pendulum
+"""
+
+    assert tester.io.fetch_output().startswith(expected)
+
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    assert isinstance(tester.command, InstallerCommand)
+    # `cachy` has `msgpack-python` as dependency. So installation count increases by 1.
+    assert tester.command.installer.executor.installations_count == 3
+
+    assert "example" in pyproject["dependency-groups"]
+    assert pyproject["dependency-groups"]["example"] == [
+        "cachy (>=0.2.0,<0.3.0)",
+        "pendulum (>=1.4.4,<2.0.0)",
+    ]
+
+
+def test_add_to_group_uses_existing_legacy_group(
+    app: PoetryTestApplication, tester: CommandTester
+) -> None:
+    pyproject: dict[str, Any] = app.poetry.file.read()
+    groups_content: dict[str, Any] = tomlkit.parse(
+        """\
+[tool.poetry.group.example.dependencies]
+pendulum = "^1.4.4"
+"""
+    )
+    pyproject["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
+
+    pyproject = cast("TOMLDocument", pyproject)
+    app.poetry.file.write(pyproject)
+
+    tester.execute("-G example cachy")
+
+    expected = """\
+Using version ^0.2.0 for cachy
+"""
+
+    assert tester.io.fetch_output().startswith(expected)
+    assert isinstance(tester.command, InstallerCommand)
+    # `cachy` has `msgpack-python` as dependency. So installation count increases by 1.
+    assert tester.command.installer.executor.installations_count == 2
+
+    pyproject = app.poetry.file.read()
+    pyproject = cast("dict[str, Any]", pyproject)
+    assert "dependency-groups" not in pyproject
+    assert "example" in pyproject["tool"]["poetry"]["group"]
+    assert "pendulum" in pyproject["tool"]["poetry"]["group"]["example"]["dependencies"]
+    assert "cachy" in pyproject["tool"]["poetry"]["group"]["example"]["dependencies"]
+
+
+@pytest.mark.parametrize(
+    "required_fixtures",
+    [["git/github.com/demo/demo"]],
+)
+def test_add_group_directory_constraint_mix_pep735(
+    app: PoetryTestApplication,
+    tester: CommandTester,
+) -> None:
+    path = "../git/github.com/demo/demo"
+    tester.execute(f"-G example -e {path}")
+
+    demo_path = app.poetry.file.path.parent.joinpath(path).resolve().as_posix()
+    expected = f"""\
+
+Updating dependencies
+Resolving dependencies...
+
+Package operations: 2 installs, 0 updates, 0 removals
+
+  - Installing pendulum (1.4.4)
+  - Installing demo (0.1.2 {demo_path})
+
+Writing lock file
+"""
+
+    assert tester.io.fetch_output() == expected
+    assert isinstance(tester.command, InstallerCommand)
+    assert tester.command.installer.executor.installations_count == 2
+
+    pyproject: dict[str, Any] = app.poetry.file.read()
+
+    assert "demo @ file://" in pyproject["dependency-groups"]["example"][0]
+    assert demo_path in pyproject["dependency-groups"]["example"][0]
+    assert "demo" in pyproject["tool"]["poetry"]["group"]["example"]["dependencies"]
+    assert pyproject["tool"]["poetry"]["group"]["example"]["dependencies"]["demo"] == {
+        "develop": True
+    }
+
+
 @pytest.mark.parametrize(
     "required_fixtures",
     [["git/github.com/demo/pyproject-demo"]],
@@ -1078,17 +1309,15 @@ Writing lock file
     assert tester.command.installer.executor.installations_count == 2
 
     pyproject: dict[str, Any] = app.poetry.file.read()
-    content = pyproject["tool"]["poetry"]
+    content = pyproject["dependency-groups"]
 
-    assert "cachy" in content["group"][group_name]["dependencies"]
-    assert content["group"][group_name]["dependencies"]["cachy"] == "^0.2.0"
+    assert content[group_name][0] == "cachy (>=0.2.0,<0.3.0)"
 
     escaped_group_name = f'"{group_name}"' if "." in group_name else group_name
     expected = f"""\
-
-[tool.poetry.group.{escaped_group_name}.dependencies]
-cachy = "^0.2.0"
-
+{escaped_group_name} = [
+    "cachy (>=0.2.0,<0.3.0)"
+]
 """
     string_content = content.as_string()
     if "\r\n" in string_content:
@@ -1099,7 +1328,7 @@ cachy = "^0.2.0"
 
 
 def test_add_creating_poetry_section_does_not_remove_existing_tools(
-    repo: TestRepository,
+    repo: DummyRepository,
     project_factory: ProjectFactory,
     command_tester_factory: CommandTesterFactory,
 ) -> None:
@@ -1118,15 +1347,14 @@ def test_add_creating_poetry_section_does_not_remove_existing_tools(
     assert tester.command.installer.executor.installations_count == 2
 
     pyproject: dict[str, Any] = poetry.file.read()
-    content = pyproject["tool"]["poetry"]
+    content = pyproject["dependency-groups"]
 
-    assert "cachy" in content["group"]["dev"]["dependencies"]
-    assert content["group"]["dev"]["dependencies"]["cachy"] == "^0.2.0"
+    assert content["dev"][0] == "cachy (>=0.2.0,<0.3.0)"
     assert "foo" in pyproject["tool"]
     assert pyproject["tool"]["foo"]["key"] == "value"
 
 
-def test_add_to_dev_section(app: PoetryTestApplication, tester: CommandTester) -> None:
+def test_add_to_dev_group(app: PoetryTestApplication, tester: CommandTester) -> None:
     tester.execute("cachy --dev")
 
     expected = """\
@@ -1149,10 +1377,9 @@ Writing lock file
     assert tester.command.installer.executor.installations_count == 2
 
     pyproject: dict[str, Any] = app.poetry.file.read()
-    content = pyproject["tool"]["poetry"]
+    content = pyproject["dependency-groups"]
 
-    assert "cachy" in content["group"]["dev"]["dependencies"]
-    assert content["group"]["dev"]["dependencies"]["cachy"] == "^0.2.0"
+    assert content["dev"][0] == "cachy (>=0.2.0,<0.3.0)"
 
 
 def test_add_should_not_select_prereleases(
@@ -1187,7 +1414,7 @@ Writing lock file
 @pytest.mark.parametrize("project_dependencies", [True, False])
 def test_add_should_skip_when_adding_existing_package_with_no_constraint(
     app: PoetryTestApplication,
-    repo: TestRepository,
+    repo: DummyRepository,
     tester: CommandTester,
     project_dependencies: bool,
 ) -> None:
@@ -1219,7 +1446,7 @@ If you prefer to upgrade it to the latest available version,\
 @pytest.mark.parametrize("project_dependencies", [True, False])
 def test_add_should_skip_when_adding_canonicalized_existing_package_with_no_constraint(
     app: PoetryTestApplication,
-    repo: TestRepository,
+    repo: DummyRepository,
     tester: CommandTester,
     project_dependencies: bool,
 ) -> None:
@@ -1249,7 +1476,7 @@ If you prefer to upgrade it to the latest available version,\
 
 
 def test_add_should_fail_circular_dependency(
-    repo: TestRepository, tester: CommandTester
+    repo: DummyRepository, tester: CommandTester
 ) -> None:
     repo.add_package(get_package("simple-project", "1.1.2"))
     result = tester.execute("simple-project")
@@ -1261,7 +1488,7 @@ def test_add_should_fail_circular_dependency(
 
 
 def test_add_latest_should_strip_out_invalid_pep508_path(
-    tester: CommandTester, repo: TestRepository, mocker: MockerFixture
+    tester: CommandTester, repo: DummyRepository, mocker: MockerFixture
 ) -> None:
     spy = mocker.spy(RequirementsParser, "parse")
     repo.add_package(get_package("foo", "1.1.1"))
@@ -1278,7 +1505,7 @@ def test_add_latest_should_strip_out_invalid_pep508_path(
 @pytest.mark.parametrize("project_dependencies", [True, False])
 def test_add_latest_should_not_create_duplicate_keys(
     project_factory: ProjectFactory,
-    repo: TestRepository,
+    repo: DummyRepository,
     command_tester_factory: CommandTesterFactory,
     project_dependencies: bool,
 ) -> None:
@@ -1332,7 +1559,7 @@ def test_add_latest_should_not_create_duplicate_keys(
 @pytest.mark.parametrize("project_dependencies", [True, False])
 def test_add_should_work_when_adding_existing_package_with_latest_constraint(
     app: PoetryTestApplication,
-    repo: TestRepository,
+    repo: DummyRepository,
     tester: CommandTester,
     project_dependencies: bool,
 ) -> None:
@@ -1377,7 +1604,7 @@ Writing lock file
 
 
 def test_add_chooses_prerelease_if_only_prereleases_are_available(
-    repo: TestRepository, tester: CommandTester
+    repo: DummyRepository, tester: CommandTester
 ) -> None:
     repo.add_package(get_package("foo", "1.2.3b0"))
     repo.add_package(get_package("foo", "1.2.3b1"))
@@ -1400,7 +1627,7 @@ Writing lock file
 
 
 def test_add_prefers_stable_releases(
-    repo: TestRepository, tester: CommandTester
+    repo: DummyRepository, tester: CommandTester
 ) -> None:
     repo.add_package(get_package("foo", "1.2.3"))
     repo.add_package(get_package("foo", "1.2.4b1"))
@@ -1443,7 +1670,7 @@ Writing lock file
 
 def test_add_keyboard_interrupt_restore_content(
     poetry_with_up_to_date_lockfile: Poetry,
-    repo: TestRepository,
+    repo: DummyRepository,
     command_tester_factory: CommandTesterFactory,
     mocker: MockerFixture,
 ) -> None:
@@ -1476,7 +1703,7 @@ def test_add_keyboard_interrupt_restore_content(
 def test_add_with_dry_run_keep_files_intact(
     command: str,
     poetry_with_up_to_date_lockfile: Poetry,
-    repo: TestRepository,
+    repo: DummyRepository,
     command_tester_factory: CommandTesterFactory,
 ) -> None:
     tester = command_tester_factory("add", poetry=poetry_with_up_to_date_lockfile)
@@ -1496,7 +1723,7 @@ def test_add_with_dry_run_keep_files_intact(
 
 def test_add_should_not_change_lock_file_when_dependency_installation_fail(
     poetry_with_up_to_date_lockfile: Poetry,
-    repo: TestRepository,
+    repo: DummyRepository,
     command_tester_factory: CommandTesterFactory,
     mocker: MockerFixture,
 ) -> None:
@@ -1531,7 +1758,7 @@ Resolving dependencies...
 
 def test_add_with_path_dependency_no_loopiness(
     poetry_with_path_dependency: Poetry,
-    repo: TestRepository,
+    repo: DummyRepository,
     command_tester_factory: CommandTesterFactory,
 ) -> None:
     """https://github.com/python-poetry/poetry/issues/7398"""
@@ -1587,7 +1814,7 @@ Writing lock file
     ],
 )
 def test_add_extras_only_accepts_one_package(
-    command: str, tester: CommandTester, repo: TestRepository
+    command: str, tester: CommandTester, repo: DummyRepository
 ) -> None:
     """
     You cannot pass in multiple package values to a single --extras flag.\
@@ -1608,7 +1835,7 @@ def test_add_extras_only_accepts_one_package(
     ("locked", "expected_docker"), [(True, "4.3.1"), (False, "4.3.2")]
 )
 def test_add_does_not_update_locked_dependencies(
-    repo: TestRepository,
+    repo: DummyRepository,
     poetry_with_up_to_date_lockfile: Poetry,
     tester: CommandTester,
     command_tester_factory: CommandTesterFactory,
@@ -1616,7 +1843,7 @@ def test_add_does_not_update_locked_dependencies(
     locked: bool,
     expected_docker: str,
 ) -> None:
-    assert isinstance(poetry_with_up_to_date_lockfile.locker, TestLocker)
+    assert isinstance(poetry_with_up_to_date_lockfile.locker, DummyLocker)
     poetry_with_up_to_date_lockfile.locker.locked(locked)
     tester = command_tester_factory("add", poetry=poetry_with_up_to_date_lockfile)
     docker_locked = get_package("docker", "4.3.1")
@@ -1626,6 +1853,14 @@ def test_add_does_not_update_locked_dependencies(
     foo.add_dependency(docker_dep)
     for package in docker_locked, docker_new, foo:
         repo.add_package(package)
+
+    # set correct files to avoid cache refresh
+    if locked:
+        docker_locked.files = (
+            poetry_with_up_to_date_lockfile.locker.locked_repository()
+            .package("docker", Version.parse("4.3.1"))
+            .files
+        )
 
     tester.execute(command)
 
@@ -1638,7 +1873,7 @@ def test_add_does_not_update_locked_dependencies(
 
 def test_add_creates_dependencies_array_if_necessary(
     project_factory: ProjectFactory,
-    repo: TestRepository,
+    repo: DummyRepository,
     command_tester_factory: CommandTesterFactory,
 ) -> None:
     pyproject_content = """\
@@ -1665,7 +1900,7 @@ def test_add_creates_dependencies_array_if_necessary(
 @pytest.mark.parametrize("has_poetry_section", [True, False])
 def test_add_does_not_add_poetry_dependencies_if_not_necessary(
     project_factory: ProjectFactory,
-    repo: TestRepository,
+    repo: DummyRepository,
     command_tester_factory: CommandTesterFactory,
     has_poetry_section: bool,
 ) -> None:
@@ -1711,7 +1946,7 @@ def test_add_does_not_add_poetry_dependencies_if_not_necessary(
 @pytest.mark.parametrize("has_poetry_section", [True, False])
 def test_add_poetry_dependencies_if_necessary(
     project_factory: ProjectFactory,
-    repo: TestRepository,
+    repo: DummyRepository,
     command_tester_factory: CommandTesterFactory,
     mocker: MockerFixture,
     has_poetry_section: bool,

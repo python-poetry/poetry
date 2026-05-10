@@ -191,7 +191,12 @@ def test_command_new_with_readme(
     poetry = verify_project_directory(path, package, Path("src") / package)
     project_section = poetry.pyproject.data["project"]
     assert isinstance(project_section, dict)
-    assert project_section["readme"] == f"README.{fmt or 'md'}"
+
+    readme_file = path / f"README.{fmt or 'md'}"
+    assert readme_file.exists()
+
+    assert "readme" in project_section
+    assert project_section["readme"] == readme_file.name
 
 
 @pytest.mark.parametrize(
@@ -234,3 +239,48 @@ def test_basic_interactive_new(
     tester.execute(f"--interactive {path.as_posix()}", inputs=init_basic_inputs)
     verify_project_directory(path, "my-package", "src/my_package")
     assert new_basic_toml in tester.io.fetch_output()
+
+
+def test_new_creates_structure_in_empty_existing_directory(
+    tester: CommandTester, tmp_path: Path
+) -> None:
+    """Test that poetry new creates structure in existing but empty directory."""
+    # Create empty directory
+    package_dir = tmp_path / "my-package"
+    package_dir.mkdir()
+
+    tester.execute(str(package_dir))
+
+    # Should create full project structure
+    verify_project_directory(package_dir, "my-package", "src/my_package")
+
+    assert (package_dir / "tests").exists()
+    assert (package_dir / "src" / "my_package").exists()
+    assert (package_dir / "pyproject.toml").exists()
+    assert (package_dir / "README.md").exists()
+
+
+def test_new_with_dot_in_empty_directory(tester: CommandTester, tmp_path: Path) -> None:
+    """Test that poetry new . works in empty directory and creates structure."""
+    import os
+
+    test_dir = "test_new_with_dot_in_empty_directory"
+
+    # Change to the temporary directory
+    original_cwd = os.getcwd()
+    os.chdir(tmp_path)
+    os.mkdir(test_dir)
+    tmp_path = Path(original_cwd) / test_dir
+    os.chdir(tmp_path)
+
+    try:
+        tester.execute(".")
+
+        # Should create full project structure
+        assert (tmp_path / "tests").exists()
+        assert (tmp_path / "src").exists()
+        assert (tmp_path / "pyproject.toml").exists()
+        assert (tmp_path / "README.md").exists()
+    finally:
+        # Always restore original directory
+        os.chdir(original_cwd)

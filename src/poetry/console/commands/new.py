@@ -75,7 +75,7 @@ class NewCommand(InitCommand):
         if path.exists() and list(path.glob("*")):
             # Directory is not empty. Aborting.
             raise RuntimeError(
-                f"Destination <fg=yellow>{path}</> exists and is not empty"
+                f"Destination <fg=yellow>{path}</> exists and is not empty. Did you mean `poetry init`?"
             )
 
         if self.option("src"):
@@ -88,4 +88,5 @@ class NewCommand(InitCommand):
             allow_interactive=self.option("interactive"),
             layout_name="standard" if self.option("flat") else "src",
             readme_format=self.option("readme") or "md",
+            allow_layout_creation_on_empty=True,
         )

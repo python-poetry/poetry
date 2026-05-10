@@ -109,6 +109,24 @@ def expected_metadata_version() -> str:
     return metadata.metadata_version
 
 
+def expected_python_classifiers(min_version: str | None = None) -> str:
+    if min_version:
+        min_version_tuple = tuple(map(int, min_version.split(".")))
+        relevant_versions = set()
+        for version in Package.AVAILABLE_PYTHONS:
+            version_tuple = tuple(map(int, version.split(".")))
+            if version_tuple >= min_version_tuple[: len(version_tuple)]:
+                relevant_versions.add(version)
+    else:
+        relevant_versions = Package.AVAILABLE_PYTHONS
+    return "\n".join(
+        f"Classifier: Programming Language :: Python :: {version}"
+        for version in sorted(
+            relevant_versions, key=lambda x: tuple(map(int, x.split(".")))
+        )
+    )
+
+
 @pytest.mark.parametrize("project", ("simple_project", "simple_project_legacy"))
 def test_builder_installs_proper_files_for_standard_packages(
     project: str,
@@ -141,10 +159,12 @@ def test_builder_installs_proper_files_for_standard_packages(
 
     dist_info = tmp_venv.site_packages.find(dist_info)[0]
 
-    assert dist_info.joinpath("INSTALLER").exists()
-    assert dist_info.joinpath("METADATA").exists()
-    assert dist_info.joinpath("RECORD").exists()
     assert dist_info.joinpath("entry_points.txt").exists()
+    assert dist_info.joinpath("WHEEL").exists()
+    assert dist_info.joinpath("METADATA").exists()
+    assert dist_info.joinpath("licenses/LICENSE").exists()
+    assert dist_info.joinpath("INSTALLER").exists()
+    assert dist_info.joinpath("RECORD").exists()
     assert dist_info.joinpath("direct_url.json").exists()
 
     assert not DeepDiff(
@@ -161,26 +181,19 @@ def test_builder_installs_proper_files_for_standard_packages(
         == "[console_scripts]\nbaz=bar:baz.boom.bim\nfoo=foo:bar\n"
         "fox=fuz.foo:bar.baz\n\n"
     )
-    python_classifiers = "\n".join(
-        f"Classifier: Programming Language :: Python :: {version}"
-        for version in sorted(
-            Package.AVAILABLE_PYTHONS,
-            key=lambda x: tuple(map(int, x.split("."))),
-        )
-    )
-    metadata_version = expected_metadata_version()
     metadata = f"""\
-Metadata-Version: {metadata_version}
+Metadata-Version: {expected_metadata_version()}
 Name: simple-project
 Version: 1.2.3
 Summary: Some description.
 License: MIT
+License-File: LICENSE
 Keywords: packaging,dependency,poetry
 Author: Sébastien Eustace
 Author-email: sebastien@eustace.io
 Requires-Python: >=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*
 Classifier: License :: OSI Approved :: MIT License
-{python_classifiers}
+{expected_python_classifiers()}
 Classifier: Topic :: Software Development :: Build Tools
 Classifier: Topic :: Software Development :: Libraries :: Python Modules
 Project-URL: Documentation, https://python-poetry.org/docs
@@ -192,7 +205,11 @@ My Package
 ==========
 
 """
-    assert metadata == dist_info.joinpath("METADATA").read_text(encoding="utf-8")
+    if project == "simple_project":
+        metadata = metadata.replace("License:", "License-Expression:").replace(
+            "Classifier: License :: OSI Approved :: MIT License\n", ""
+        )
+    assert dist_info.joinpath("METADATA").read_text(encoding="utf-8") == metadata
 
     with open(dist_info.joinpath("RECORD"), encoding="utf-8", newline="") as f:
         reader = csv.reader(f)
@@ -205,9 +222,12 @@ My Package
     assert str(tmp_venv.site_packages.find(pth_file)[0]) in record_entries
     assert str(tmp_venv._bin_dir.joinpath("foo")) in record_entries
     assert str(tmp_venv._bin_dir.joinpath("baz")) in record_entries
-    assert str(dist_info.joinpath("METADATA")) in record_entries
-    assert str(dist_info.joinpath("INSTALLER")) in record_entries
     assert str(dist_info.joinpath("entry_points.txt")) in record_entries
+    assert str(dist_info.joinpath("WHEEL")) in record_entries
+    assert str(dist_info.joinpath("METADATA")) in record_entries
+    assert str(dist_info.joinpath("licenses/LICENSE")) in record_entries
+
+    assert str(dist_info.joinpath("INSTALLER")) in record_entries
     assert str(dist_info.joinpath("RECORD")) in record_entries
     assert str(dist_info.joinpath("direct_url.json")) in record_entries
 
@@ -220,7 +240,7 @@ if __name__ == '__main__':
     sys.exit(baz.boom.bim())
 """
 
-    assert baz_script == tmp_venv._bin_dir.joinpath("baz").read_text(encoding="utf-8")
+    assert tmp_venv._bin_dir.joinpath("baz").read_text(encoding="utf-8") == baz_script
 
     foo_script = f"""\
 #!{tmp_venv.python}
@@ -231,7 +251,7 @@ if __name__ == '__main__':
     sys.exit(bar())
 """
 
-    assert foo_script == tmp_venv._bin_dir.joinpath("foo").read_text(encoding="utf-8")
+    assert tmp_venv._bin_dir.joinpath("foo").read_text(encoding="utf-8") == foo_script
 
     fox_script = f"""\
 #!{tmp_venv.python}
@@ -242,7 +262,7 @@ if __name__ == '__main__':
     sys.exit(bar.baz())
 """
 
-    assert fox_script == tmp_venv._bin_dir.joinpath("fox").read_text(encoding="utf-8")
+    assert tmp_venv._bin_dir.joinpath("fox").read_text(encoding="utf-8") == fox_script
 
 
 def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
@@ -336,9 +356,8 @@ def test_builder_generates_proper_metadata_when_multiple_readme_files(
     dist_info = tmp_venv.site_packages.find(dist_info)[0]
     assert dist_info.joinpath("METADATA").exists()
 
-    metadata_version = expected_metadata_version()
     metadata = f"""\
-Metadata-Version: {metadata_version}
+Metadata-Version: {expected_metadata_version()}
 Name: my-package
 Version: 0.1
 Summary: Some description.
@@ -347,14 +366,7 @@ Author: Your Name
 Author-email: you@example.com
 Requires-Python: >=3.7,<4.0
 Classifier: License :: OSI Approved :: MIT License
-Classifier: Programming Language :: Python :: 3
-Classifier: Programming Language :: Python :: 3.7
-Classifier: Programming Language :: Python :: 3.8
-Classifier: Programming Language :: Python :: 3.9
-Classifier: Programming Language :: Python :: 3.10
-Classifier: Programming Language :: Python :: 3.11
-Classifier: Programming Language :: Python :: 3.12
-Classifier: Programming Language :: Python :: 3.13
+{expected_python_classifiers("3.7")}
 Project-URL: Homepage, https://python-poetry.org
 Description-Content-Type: text/x-rst
 
