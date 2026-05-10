@@ -879,6 +879,58 @@ dev = [
     assert expected in output
 
 
+
+def test_predefined_multiple_authors(
+    tester: CommandTester, repo: DummyRepository
+) -> None:
+    repo.add_package(get_package("pendulum", "2.0.0"))
+    repo.add_package(get_package("pytest", "3.6.0"))
+
+    inputs = [
+        "1.2.3",  # Version
+        "",  # Author (will be provided via --author flags)
+        "n",  # Interactive packages
+        "n",  # Interactive dev packages
+        "\n",  # Generate
+    ]
+
+    tester.execute(
+        "--name my-package "
+        "--description 'Multi-author package' "
+        "--author 'Foo Bar <foo@example.com>' "
+        "--author 'Baz Qux <baz@example.com>' "
+        "--python '>=3.8' "
+        "--license MIT "
+        "--dependency pendulum "
+        "--dev-dependency pytest",
+        inputs="\n".join(inputs),
+    )
+
+    expected = """\
+[project]
+name = "my-package"
+version = "1.2.3"
+description = "Multi-author package"
+authors = [
+    {name = "Foo Bar",email = "foo@example.com"},
+    {name = "Baz Qux",email = "baz@example.com"}
+]
+license = "MIT"
+requires-python = ">=3.8"
+dependencies = [
+    "pendulum (>=2.0.0,<3.0.0)"
+]
+
+[dependency-groups]
+dev = [
+    "pytest (>=3.6.0,<4.0.0)"
+]
+"""
+
+    output = tester.io.fetch_output()
+    assert expected in output
+
+
 def test_add_package_with_extras_and_whitespace(tester: CommandTester) -> None:
     command = tester.command
     assert isinstance(command, InitCommand)
