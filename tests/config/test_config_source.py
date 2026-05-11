@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from copy import deepcopy
 
+import pytest
+
 from cleo.io.buffered_io import BufferedIO
 
 from poetry.config.config_source import UNSET
@@ -91,71 +93,59 @@ def test_config_source_migration_complex_migration() -> None:
     }
 
 
-def test_config_source_migration_dry_run_rename_key() -> None:
+@pytest.mark.parametrize(
+    ("migration", "expected_result", "expected_output"),
+    [
+        pytest.param(
+            ConfigSourceMigration(
+                old_key="virtualenvs.prefer-active-python",
+                new_key="virtualenvs.use-poetry-python",
+            ),
+            True,
+            "virtualenvs.prefer-active-python = true -> "
+            "virtualenvs.use-poetry-python = true",
+            id="rename-key",
+        ),
+        pytest.param(
+            ConfigSourceMigration(
+                old_key="virtualenvs.prefer-active-python",
+                new_key=None,
+            ),
+            True,
+            "virtualenvs.prefer-active-python = true -> Removed from config",
+            id="remove-key",
+        ),
+        pytest.param(
+            ConfigSourceMigration(
+                old_key="virtualenvs.prefer-active-python",
+                new_key="virtualenvs.use-poetry-python",
+                value_migration={True: UNSET, False: True},
+            ),
+            True,
+            "virtualenvs.prefer-active-python = true -> "
+            "virtualenvs.use-poetry-python = Not explicit set",
+            id="unset-value",
+        ),
+        pytest.param(
+            ConfigSourceMigration(
+                old_key="virtualenvs.missing-key",
+                new_key="virtualenvs.use-poetry-python",
+            ),
+            False,
+            "",
+            id="missing-key",
+        ),
+    ],
+)
+def test_config_source_migration_dry_run(
+    migration: ConfigSourceMigration,
+    expected_result: bool,
+    expected_output: str,
+) -> None:
     config_source = make_config_source()
     original_config = deepcopy(config_source._config)
     io = BufferedIO()
 
-    migration = ConfigSourceMigration(
-        old_key="virtualenvs.prefer-active-python",
-        new_key="virtualenvs.use-poetry-python",
-    )
-
-    assert migration.dry_run(config_source, io) is True
-    assert (
-        io.fetch_output() == "virtualenvs.prefer-active-python = true -> "
-        "virtualenvs.use-poetry-python = true\n"
-    )
-    assert config_source._config == original_config
-
-
-def test_config_source_migration_dry_run_remove_key() -> None:
-    config_source = make_config_source()
-    original_config = deepcopy(config_source._config)
-    io = BufferedIO()
-
-    migration = ConfigSourceMigration(
-        old_key="virtualenvs.prefer-active-python",
-        new_key=None,
-    )
-
-    assert migration.dry_run(config_source, io) is True
-    assert (
-        io.fetch_output()
-        == "virtualenvs.prefer-active-python = true -> Removed from config\n"
-    )
-    assert config_source._config == original_config
-
-
-def test_config_source_migration_dry_run_unset_value() -> None:
-    config_source = make_config_source()
-    original_config = deepcopy(config_source._config)
-    io = BufferedIO()
-
-    migration = ConfigSourceMigration(
-        old_key="virtualenvs.prefer-active-python",
-        new_key="virtualenvs.use-poetry-python",
-        value_migration={True: UNSET, False: True},
-    )
-
-    assert migration.dry_run(config_source, io) is True
-    assert (
-        io.fetch_output() == "virtualenvs.prefer-active-python = true -> "
-        "virtualenvs.use-poetry-python = Not explicit set\n"
-    )
-    assert config_source._config == original_config
-
-
-def test_config_source_migration_dry_run_missing_key() -> None:
-    config_source = make_config_source()
-    original_config = deepcopy(config_source._config)
-    io = BufferedIO()
-
-    migration = ConfigSourceMigration(
-        old_key="virtualenvs.missing-key",
-        new_key="virtualenvs.use-poetry-python",
-    )
-
-    assert migration.dry_run(config_source, io) is False
-    assert io.fetch_output() == ""
+    assert migration.dry_run(config_source, io) is expected_result
+    assert io.fetch_output().strip() == expected_output
     assert config_source._config == original_config
