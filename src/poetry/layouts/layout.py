@@ -94,6 +94,22 @@ class Layout:
         else:
             self._authors = ["Your Name <you@example.com>"]
 
+        # Parse and validate authors once, store as dicts for reuse
+        self._parsed_authors: list[dict[str, str]] = []
+        for author_str in self._authors:
+            m = AUTHOR_REGEX.match(author_str)
+            if m is None:
+                raise ValueError(f"Invalid author: {author_str}")
+            author_dict: dict[str, str] = {"name": m.group("name")}
+            if email := m.group("email"):
+                author_dict["email"] = email
+            self._parsed_authors.append(author_dict)
+
+    @property
+    def _author(self) -> str:
+        """Backward-compatible property for single author access."""
+        return self._authors[0] if self._authors else "Your Name <you@example.com>"
+
     @property
     def basedir(self) -> Path:
         return Path()
@@ -150,13 +166,7 @@ class Layout:
         project_content["name"] = self._project
         project_content["version"] = self._version
         project_content["description"] = self._description
-        for author_str in self._authors:
-            m = AUTHOR_REGEX.match(author_str)
-            if m is None:
-                raise ValueError(f"Invalid author: {author_str}")
-            author = {"name": m.group("name")}
-            if email := m.group("email"):
-                author["email"] = email
+        for author in self._parsed_authors:
             project_content["authors"].append(author)
 
         if self._license:
