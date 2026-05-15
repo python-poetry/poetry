@@ -46,8 +46,10 @@ class SimpleJsonPage(LinkSource):
                         metadata = bool(metadata_value)
                     break
 
+            # use filename for performance (and strictly speaking also for correctness)
             link = Link(
                 url,
+                filename=file["filename"],
                 requires_python=requires_python,
                 hashes=hashes,
                 yanked=yanked,
