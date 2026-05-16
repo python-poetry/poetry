@@ -174,6 +174,7 @@ class Config:
             "no-binary": None,
             "only-binary": None,
             "build-config-settings": {},
+            "builtin-uninstall": False,
         },
         "python": {"installation-dir": os.path.join("{data-dir}", "python")},
         "solver": {
@@ -396,6 +397,7 @@ class Config:
             "virtualenvs.use-poetry-python",
             "installer.re-resolve",
             "installer.parallel",
+            "installer.builtin-uninstall",
             "solver.lazy-wheel",
             "system-git-client",
             "keyring.enabled",
