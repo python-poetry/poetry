@@ -35,6 +35,7 @@ if TYPE_CHECKING:
     from cleo.io.io import IO
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
+    from poetry.core.poetry import Poetry as CorePoetry
     from tomlkit.toml_document import TOMLDocument
 
     from poetry.repositories import RepositoryPool
@@ -62,6 +63,33 @@ class Factory(BaseFactory):
                     f"This project requires Poetry {version_constraint},"
                     f" but you are using Poetry {version}"
                 )
+
+    @staticmethod
+    def _load_project_config(
+        base_poetry: CorePoetry,
+        config: Config,
+    ) -> None:
+        """Load project config from [tool.poetry.config]."""
+        project_config = base_poetry.local_config.get("config", {})
+        if not project_config:
+            return
+
+        validated: dict[str, Any] = {}
+        solver = project_config.get("solver")
+        if solver:
+            validated_solver: dict[str, Any] = {}
+            for key in (
+                "min-release-age",
+                "min-release-age-exclude",
+                "min-release-age-exclude-source",
+            ):
+                if key in solver:
+                    validated_solver[key] = solver[key]
+            if validated_solver:
+                validated["solver"] = validated_solver
+
+        if validated:
+            config.merge(validated)
 
     def create_poetry(
         self,
@@ -119,6 +147,9 @@ class Factory(BaseFactory):
                 repositories[name] = {"url": url}
 
         config.merge({"repositories": repositories})
+
+        # Load project config from [tool.poetry.config]
+        self._load_project_config(base_poetry, config)
 
         poetry = Poetry(
             poetry_file,

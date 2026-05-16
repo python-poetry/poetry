@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -34,6 +36,42 @@ if TYPE_CHECKING:
     from poetry.config.config import Config
     from poetry.poetry import Poetry
     from tests.types import FixtureDirGetter
+
+
+def _make_project(
+    tmp_path: Path,
+    extra_config: dict[str, Any] | None = None,
+    poetry_toml: dict[str, Any] | None = None,
+) -> Path:
+    """Create a minimal pyproject.toml (and optionally poetry.toml) project dir."""
+    import tomlkit
+
+    project_dir = tmp_path / "project"
+    project_dir.mkdir()
+
+    pyproject: dict[str, Any] = {
+        "tool": {
+            "poetry": {
+                "name": "test",
+                "version": "1.0",
+                "description": "",
+                "authors": [],
+                "dependencies": {"python": "^3.10"},
+            }
+        }
+    }
+
+    if extra_config:
+        pyproject["tool"]["poetry"]["config"] = extra_config
+
+    with (project_dir / "pyproject.toml").open("w", encoding="utf-8") as f:
+        tomlkit.dump(pyproject, f)
+
+    if poetry_toml:
+        with (project_dir / "poetry.toml").open("w", encoding="utf-8") as f:
+            tomlkit.dump(poetry_toml, f)
+
+    return project_dir
 
 
 class MyPlugin(Plugin):
@@ -510,3 +548,111 @@ def test_create_package_source_invalid(
         Factory().create_poetry(fixture_dir("with_source_pypi_url"))
 
     assert str(e.value) == expected
+
+
+def test_project_config_min_release_age(tmp_path: Path) -> None:
+    project_dir = _make_project(tmp_path, {"solver": {"min-release-age": 7}})
+    poetry = Factory().create_poetry(project_dir)
+    assert poetry._config.get("solver.min-release-age") == 7
+
+
+def test_project_config_exclude_options(tmp_path: Path) -> None:
+    project_dir = _make_project(
+        tmp_path,
+        {
+            "solver": {
+                "min-release-age": 7,
+                "min-release-age-exclude": ["foo", "bar"],
+                "min-release-age-exclude-source": ["private-repo"],
+            }
+        },
+    )
+    poetry = Factory().create_poetry(project_dir)
+    assert poetry._config.get("solver.min-release-age") == 7
+    assert poetry._config.get("solver.min-release-age-exclude") == ["foo", "bar"]
+    assert poetry._config.get("solver.min-release-age-exclude-source") == [
+        "private-repo"
+    ]
+
+
+def test_project_config_invalid_age_type_raises(tmp_path: Path) -> None:
+    project_dir = _make_project(tmp_path, {"solver": {"min-release-age": "not-an-int"}})
+    with pytest.raises(
+        RuntimeError,
+        match=re.escape("tool.poetry.config.solver.min-release-age must be integer"),
+    ):
+        Factory().create_poetry(project_dir)
+
+
+def test_project_config_negative_age_raises(tmp_path: Path) -> None:
+    project_dir = _make_project(tmp_path, {"solver": {"min-release-age": -1}})
+    with pytest.raises(
+        RuntimeError,
+        match=re.escape(
+            "tool.poetry.config.solver.min-release-age must be bigger than or equal to 0"
+        ),
+    ):
+        Factory().create_poetry(project_dir)
+
+
+def test_project_config_bad_exclude_type_raises(tmp_path: Path) -> None:
+    project_dir = _make_project(
+        tmp_path, {"solver": {"min-release-age-exclude": "foo,bar"}}
+    )
+    with pytest.raises(
+        RuntimeError,
+        match=re.escape(
+            "tool.poetry.config.solver.min-release-age-exclude must be array"
+        ),
+    ):
+        Factory().create_poetry(project_dir)
+
+
+def test_project_config_unknown_solver_key_raises(tmp_path: Path) -> None:
+    project_dir = _make_project(
+        tmp_path,
+        {"solver": {"min-release-age": 7, "foo": 1}},
+    )
+    with pytest.raises(
+        RuntimeError,
+        match=re.escape("tool.poetry.config.solver must not contain"),
+    ):
+        Factory().create_poetry(project_dir)
+
+
+def test_project_config_unknown_config_key_raises(tmp_path: Path) -> None:
+    project_dir = _make_project(
+        tmp_path,
+        {"unknown-config-key": 1},
+    )
+    with pytest.raises(
+        RuntimeError,
+        match=re.escape("tool.poetry.config must not contain"),
+    ):
+        Factory().create_poetry(project_dir)
+
+
+def test_project_config_overrides_poetry_toml(tmp_path: Path) -> None:
+    project_dir = _make_project(
+        tmp_path,
+        {"solver": {"min-release-age": 14}},
+        poetry_toml={"solver": {"min-release-age": 7}},
+    )
+    poetry = Factory().create_poetry(project_dir)
+    assert poetry._config.get("solver.min-release-age") == 14
+
+
+def test_project_config_overrides_poetry_toml_array_option(tmp_path: Path) -> None:
+    project_dir = _make_project(
+        tmp_path,
+        {"solver": {"min-release-age-exclude": ["foo", "bar"]}},
+        poetry_toml={"solver": {"min-release-age-exclude": ["baz"]}},
+    )
+    poetry = Factory().create_poetry(project_dir)
+    assert poetry._config.get("solver.min-release-age-exclude") == ["foo", "bar"]
+
+
+def test_project_config_empty_keeps_default(tmp_path: Path) -> None:
+    project_dir = _make_project(tmp_path)
+    poetry = Factory().create_poetry(project_dir)
+    assert poetry._config.get("solver.min-release-age") == 0
