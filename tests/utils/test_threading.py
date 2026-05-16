@@ -4,6 +4,7 @@ import functools
 import logging
 import os
 import sys
+import threading
 import time
 
 from concurrent.futures import wait
@@ -84,8 +85,14 @@ def test_threading_single_thread_safe() -> None:
 
 def run_in_threads(instance: Example, property_name: str) -> None:
     results = []
+    # Synchronize thread start so all workers enter __get__ before any thread
+    # finishes computing the property. Without this, on Python 3.12+ where
+    # functools.cached_property is lockless, the test for maximum-contention
+    # call counts is racy.
+    barrier = threading.Barrier(WORKER_COUNT)
 
     def access_property() -> None:
+        barrier.wait()
         results.append(instance.__getattribute__(property_name))
 
     executor = ThreadPoolExecutor(max_workers=WORKER_COUNT)
