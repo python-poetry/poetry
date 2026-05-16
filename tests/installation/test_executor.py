@@ -1960,3 +1960,60 @@ def test_executor_no_supported_hash_types(
     assert return_code == 1, f"\noutput: {output}\nerror: {error}\n"
     assert "No usable hash type(s) for demo" in output
     assert "hash_blah:1234567890abcdefghijklmnopqrstyzwxyz" in output
+
+
+def test_executor_remove_uses_run_pip_by_default(
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    env: MockEnv,
+) -> None:
+    executor = Executor(env, pool, config, io)
+    package = Package("attrs", "17.4.0")
+
+    assert executor._remove(package) == 0
+    assert len(env.executed) == 1
+    assert env.executed[0][-3:] == ["uninstall", "attrs", "-y"]
+
+
+def test_executor_remove_uses_builtin_when_enabled(
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    env: MockEnv,
+    mocker: MockerFixture,
+) -> None:
+    config.merge({"installer": {"builtin-uninstall": True}})
+    fake_pathset = mocker.MagicMock()
+    uninstall_mock = mocker.patch(
+        "poetry.installation.executor.uninstall_distribution",
+        return_value=fake_pathset,
+    )
+
+    executor = Executor(env, pool, config, io)
+    package = Package("attrs", "17.4.0")
+
+    assert executor._remove(package) == 0
+    assert env.executed == []
+    uninstall_mock.assert_called_once_with(env, "attrs")
+    fake_pathset.commit.assert_called_once()
+
+
+def test_executor_remove_builtin_skips_when_not_installed(
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    env: MockEnv,
+    mocker: MockerFixture,
+) -> None:
+    config.merge({"installer": {"builtin-uninstall": True}})
+    mocker.patch(
+        "poetry.installation.executor.uninstall_distribution",
+        return_value=None,
+    )
+
+    executor = Executor(env, pool, config, io)
+    package = Package("ghost", "1.0.0")
+
+    assert executor._remove(package) == 0
+    assert env.executed == []

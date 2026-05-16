@@ -21,6 +21,7 @@ from poetry.installation.chooser import Chooser
 from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
 from poetry.installation.operations import Update
+from poetry.installation.uninstaller import uninstall_distribution
 from poetry.installation.wheel_installer import WheelInstaller
 from poetry.puzzle.exceptions import SolverProblemError
 from poetry.utils._compat import decode
@@ -78,6 +79,9 @@ class Executor:
         self._verbose = False
         self._wheel_installer = WheelInstaller(self._env)
         self._build_constraints = build_constraints or {}
+        self._use_builtin_uninstall: bool = config.get(
+            "installer.builtin-uninstall", False
+        )
 
         if parallel is None:
             parallel = config.get("installer.parallel", True)
@@ -627,6 +631,12 @@ class Executor:
             src_dir = self._env.path / "src" / package.name
             if src_dir.exists():
                 remove_directory(src_dir, force=True)
+
+        if self._use_builtin_uninstall:
+            pathset = uninstall_distribution(self._env, package.name)
+            if pathset is not None:
+                pathset.commit()
+            return 0
 
         try:
             return self.run_pip("uninstall", package.name, "-y")
