@@ -28,7 +28,14 @@ class SimpleJsonPage(LinkSource):
     def _link_cache(self) -> LinkCache:
         links: LinkCache = defaultdict(lambda: defaultdict(list))
         for file in self.content["files"]:
-            url = self.clean_link(urllib.parse.urljoin(self._url, file["url"]))
+            file_url = file["url"]
+            # This is just a performance shortcut.
+            # urljoin would work just fine for absolute URLs as well,
+            # but it is much faster to skip urljoin in that case.
+            # (Links on pypi.org are absolute.)
+            if not file_url.startswith(("http://", "https://", "file://")):
+                file_url = urllib.parse.urljoin(self._url, file_url)
+            url = self.clean_link(file_url)
             requires_python = file.get("requires-python")
             hashes = file.get("hashes", {})
             yanked = file.get("yanked", False)
