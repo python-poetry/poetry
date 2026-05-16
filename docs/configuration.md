@@ -452,6 +452,19 @@ If a source does not provide upload times for a release,
 that release is not filtered out by this setting.
 {{% /note %}}
 
+This setting can also be configured in your `pyproject.toml`:
+
+```toml
+[tool.poetry.config]
+solver.min-release-age = 7
+```
+
+Values set in `[tool.poetry.config]` take precedence over
+[project-local configuration]({{< relref "#project-local-configuration" >}})
+and global configuration.
+They can still be overridden by the `POETRY_SOLVER_MIN_RELEASE_AGE`
+environment variable.
+
 ### `solver.min-release-age-exclude`
 
 **Type**: `string`
@@ -470,6 +483,19 @@ regardless of their upload age.
 ```bash
 poetry config solver.min-release-age-exclude "my-package,other-package"
 ```
+
+This setting can also be configured in your `pyproject.toml`:
+
+```toml
+[tool.poetry.config]
+solver.min-release-age-exclude = ["my-package", "other-package"]
+```
+
+Values set in `[tool.poetry.config]` take precedence over
+[project-local configuration]({{< relref "#project-local-configuration" >}})
+and global configuration.
+They can still be overridden by the `POETRY_SOLVER_MIN_RELEASE_AGE_EXCLUDE`
+environment variable.
 
 ### `solver.min-release-age-exclude-source`
 
@@ -490,6 +516,19 @@ Sources can be referenced by the name defined in `pyproject.toml` or by URL.
 ```bash
 poetry config solver.min-release-age-exclude-source "private-repo,https://example.com/simple/"
 ```
+
+This setting can also be configured in your `pyproject.toml`:
+
+```toml
+[tool.poetry.config]
+solver.min-release-age-exclude-source = ["private-repo", "https://example.com/simple/"]
+```
+
+Values set in `[tool.poetry.config]` take precedence over
+[project-local configuration]({{< relref "#project-local-configuration" >}})
+and global configuration.
+They can still be overridden by the `POETRY_SOLVER_MIN_RELEASE_AGE_EXCLUDE_SOURCE`
+environment variable.
 
 ### `system-git-client`
 

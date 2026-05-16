@@ -33,6 +33,39 @@
           "$ref": "#/definitions/dependencies"
         }
       }
+    },
+    "config": {
+      "type": "object",
+      "description": "Poetry configuration values that override global and local config.",
+      "properties": {
+        "solver": {
+          "type": "object",
+          "description": "Solver-specific configuration.",
+          "properties": {
+            "min-release-age": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Minimum age in days for a package release to be considered."
+            },
+            "min-release-age-exclude": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Package names excluded from the min-release-age filter."
+            },
+            "min-release-age-exclude-source": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Source names or URLs excluded from the min-release-age filter."
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   },
   "definitions": {
