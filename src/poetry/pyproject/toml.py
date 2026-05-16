@@ -46,10 +46,7 @@ class PyProjectTOML(BasePyProjectTOML):
         data = self.data
 
         if self._build_system is not None:
-            if "build-system" not in data:
-                data["build-system"] = table()
-
-            build_system = data["build-system"]
+            build_system = data.setdefault("build-system", table())
             assert isinstance(build_system, Table)
 
             build_system["requires"] = self._build_system.requires

@@ -6,7 +6,6 @@ import re
 
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import cast
 
 from cleo.io.null_io import NullIO
 from packaging.utils import NormalizedName
@@ -254,7 +253,7 @@ class Factory(BaseFactory):
 
         from poetry.utils.dependency_specification import dependency_to_specification
 
-        pyproject: dict[str, Any] = tomlkit.document()
+        pyproject = tomlkit.document()
 
         pyproject["tool"] = tomlkit.table(is_super_table=True)
 
@@ -349,8 +348,6 @@ class Factory(BaseFactory):
 
         if extras_section:
             content["extras"] = extras_section
-
-        pyproject = cast("TOMLDocument", pyproject)
 
         return pyproject
 

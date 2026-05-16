@@ -189,7 +189,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     envs_file = TOMLFile(tmp_path / "envs.toml")
 
     assert envs_file.exists()
-    envs: dict[str, Any] = envs_file.read()
+    envs = envs_file.read()
     assert envs[venv_name]["minor"] == "3.7"
     assert envs[venv_name]["patch"] == "3.7.1"
 
@@ -247,7 +247,7 @@ def test_activate_activates_existing_virtualenv_no_envs_file(
 
     envs_file = TOMLFile(tmp_path / "envs.toml")
     assert envs_file.exists()
-    envs: dict[str, Any] = envs_file.read()
+    envs = envs_file.read()
     assert envs[venv_name]["minor"] == "3.7"
     assert envs[venv_name]["patch"] == "3.7.1"
 
@@ -284,7 +284,7 @@ def test_activate_activates_same_virtualenv_with_envs_file(
     m.assert_not_called()
 
     assert envs_file.exists()
-    envs: dict[str, Any] = envs_file.read()
+    envs = envs_file.read()
     assert envs[venv_name]["minor"] == "3.7"
     assert envs[venv_name]["patch"] == "3.7.1"
 
@@ -329,7 +329,7 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     )
 
     assert envs_file.exists()
-    envs: dict[str, Any] = envs_file.read()
+    envs = envs_file.read()
     assert envs[venv_name]["minor"] == "3.6"
     assert envs[venv_name]["patch"] == "3.6.6"
 
@@ -378,7 +378,7 @@ def test_activate_activates_recreates_for_different_patch(
     remove_venv_m.assert_called_with(tmp_path / f"{venv_name}-py3.7")
 
     assert envs_file.exists()
-    envs: dict[str, Any] = envs_file.read()
+    envs = envs_file.read()
     assert envs[venv_name]["minor"] == "3.7"
     assert envs[venv_name]["patch"] == "3.7.1"
 
@@ -425,7 +425,7 @@ def test_activate_does_not_recreate_when_switching_minor(
     remove_venv_m.assert_not_called()
 
     assert envs_file.exists()
-    envs: dict[str, Any] = envs_file.read()
+    envs = envs_file.read()
     assert envs[venv_name]["minor"] == "3.6"
     assert envs[venv_name]["patch"] == "3.6.6"
 
@@ -1328,7 +1328,7 @@ def test_create_venv_does_not_keep_inconsistent_envs_entry(
     m.assert_called()
 
     assert envs_file.exists()
-    envs: dict[str, Any] = envs_file.read()
+    envs = envs_file.read()
     assert venv_name not in envs
     assert envs["other"]["minor"] == "3.7"
     assert envs["other"]["patch"] == "3.7.0"

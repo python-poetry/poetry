@@ -12,7 +12,6 @@ from cleo.helpers import option
 from packaging.utils import canonicalize_name
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.dependency_group import MAIN_GROUP
-from tomlkit.toml_document import TOMLDocument
 
 from poetry.console.commands.init import InitCommand
 from poetry.console.commands.installer_command import InstallerCommand
@@ -148,9 +147,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
         if optional and group != MAIN_GROUP:
             raise ValueError("You can only add optional dependencies to the main group")
 
-        # tomlkit types are awkward to work with, treat content as a mostly untyped
-        # dictionary.
-        content: dict[str, Any] = self.poetry.file.read()
+        content = self.poetry.file.read()
         project_content = content.get("project", table())
         poetry_content = content.get("tool", {}).get("poetry", table())
         groups_content = content.get("dependency-groups", {})
@@ -244,7 +241,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                 assert isinstance(version, str)
                 parse_constraint(version)
 
-            constraint: dict[str, Any] = inline_table()
+            constraint = inline_table()
             for key, value in _constraint.items():
                 if key == "name":
                     continue
@@ -331,7 +328,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
                 # create a second constraint for tool.poetry.dependencies with keys
                 # that cannot be stored in the project section
-                poetry_constraint: dict[str, Any] = inline_table()
+                poetry_constraint = inline_table()
                 if not isinstance(constraint, str):
                     for key in ["allow-prereleases", "develop", "source"]:
                         if value := constraint.get(key):
@@ -413,7 +410,6 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
         status = self.installer.run()
 
         if status == 0 and not self.option("dry-run"):
-            assert isinstance(content, TOMLDocument)
             self.poetry.file.write(content)
 
         return status
