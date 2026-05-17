@@ -21,6 +21,7 @@ from poetry.installation.chooser import Chooser
 from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
 from poetry.installation.operations import Update
+from poetry.installation.uninstaller import UninstallPathSet
 from poetry.installation.uninstaller import uninstall_distribution
 from poetry.installation.wheel_installer import WheelInstaller
 from poetry.puzzle.exceptions import SolverProblemError
@@ -607,15 +608,27 @@ class Executor:
         )
         self._write(operation, message)
 
+        old_pathset: UninstallPathSet | None = None
         try:
             if operation.job_type == "update":
-                # Uninstall first
-                # TODO: Make an uninstaller and find a way to rollback in case
-                # the new package can't be installed
                 assert isinstance(operation, Update)
-                self._remove(operation.initial_package)
+                result = self._uninstall(operation.initial_package)
+                if isinstance(result, UninstallPathSet):
+                    old_pathset = result
+                elif result != 0:
+                    # pip uninstall was interrupted; surface that code
+                    # instead of attempting the install.
+                    return result
 
-            self._wheel_installer.install(archive)
+            try:
+                self._wheel_installer.install(archive)
+            except BaseException:  # rollback also on KeyboardInterrupt
+                if old_pathset is not None:
+                    old_pathset.rollback()
+                raise
+
+            if old_pathset is not None:
+                old_pathset.commit()
         finally:
             if cleanup_archive:
                 archive.unlink()
@@ -626,7 +639,25 @@ class Executor:
         return self._install(operation)
 
     def _remove(self, package: Package) -> int:
-        # If we have a VCS package, remove its source directory
+        result = self._uninstall(package)
+        if isinstance(result, int):
+            return result
+        result.commit()
+        return 0
+
+    def _uninstall(self, package: Package) -> int | UninstallPathSet:
+        """Stash an installed package's files.
+
+        Returns either an ``UninstallPathSet`` (builtin installer)
+        so the caller can ``.commit()`` to finalize the removal or
+        ``.rollback()`` to restore the files, or an ``int`` return code
+        (legacy pip path, or builtin path when nothing needs uninstalling).
+        ``-2`` means pip was interrupted; ``0`` means success.
+
+        The git VCS source directory (``<env>/src/<pkg>/``) is removed
+        eagerly and is not part of the returned pathset; it is not
+        restored on rollback.
+        """
         if package.source_type == "git":
             src_dir = self._env.path / "src" / package.name
             if src_dir.exists():
@@ -634,17 +665,17 @@ class Executor:
 
         if self._use_builtin_uninstall:
             pathset = uninstall_distribution(self._env, package.name)
-            if pathset is not None:
-                pathset.commit()
-            return 0
+            # uninstall_distribution returns None when there is nothing to
+            # uninstall (not installed, outside env, in stdlib, missing
+            # RECORD). Treat that as a successful no-op.
+            return pathset if pathset is not None else 0
 
         try:
             return self.run_pip("uninstall", package.name, "-y")
         except EnvCommandError as e:
-            if "not installed" in str(e):
-                return 0
-
-            raise
+            if "not installed" not in str(e):
+                raise
+            return 0
 
     def _prepare_archive(
         self, operation: Install | Update, *, output_dir: Path | None = None
