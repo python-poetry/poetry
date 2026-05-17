@@ -83,14 +83,14 @@ def build_config_setting_normalizer(val: str) -> Mapping[str, str | Sequence[str
 @dataclasses.dataclass
 class PackageFilterPolicy:
     policy: dataclasses.InitVar[str | list[str] | None]
-    packages: list[str] = dataclasses.field(init=False)
+    packages: frozenset[str] = dataclasses.field(init=False)
 
     def __post_init__(self, policy: str | list[str] | None) -> None:
         if not policy:
             policy = []
         elif isinstance(policy, str):
             policy = self.normalize(policy)
-        self.packages = policy
+        self.packages = frozenset(policy)
 
     def allows(self, package_name: str) -> bool:
         if ":all:" in self.packages:
