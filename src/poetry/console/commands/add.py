@@ -126,6 +126,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
     def handle(self) -> int:
         from poetry.core.constraints.version import parse_constraint
+        from poetry.core.constraints.version import VersionUnion
         from tomlkit import array
         from tomlkit import inline_table
         from tomlkit import nl
@@ -318,29 +319,47 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
             )
             self.poetry.package.add_dependency(dependency)
 
+            # Check if the constraint is a union (e.g., ^4|^6) which cannot be
+            # represented in PEP 508 format
+            is_version_union = isinstance(dependency.constraint, VersionUnion)
+
             if use_project_section or use_groups_section:
                 pep_section = (
                     project_section if use_project_section else groups_content[group]
                 )
-                try:
-                    index = project_dependency_names.index(canonical_constraint_name)
-                except ValueError:
-                    pep_section.append(dependency.to_pep_508())
-                else:
-                    pep_section[index] = dependency.to_pep_508()
 
-                # create a second constraint for tool.poetry.dependencies with keys
-                # that cannot be stored in the project section
-                poetry_constraint: dict[str, Any] = inline_table()
-                if not isinstance(constraint, str):
-                    for key in ["allow-prereleases", "develop", "source"]:
-                        if value := constraint.get(key):
-                            poetry_constraint[key] = value
-                    if poetry_constraint:
-                        # add marker related keys to avoid ambiguity
-                        for key in ["python", "platform"]:
+                if is_version_union:
+                    # Union constraints (e.g., ^4|^6) cannot be represented in PEP 508
+                    # Only write to tool.poetry.dependencies
+                    self.line_error(
+                        f"<warning>The constraint <c1>{constraint}</c1> for"
+                        f" <c1>{constraint_name}</c1> uses union syntax (|) which cannot"
+                        " be represented in PEP 508 format.</warning>"
+                    )
+                    self.line_error(
+                        "<warning>Adding to [tool.poetry.dependencies] only.</warning>"
+                    )
+                    poetry_constraint = constraint
+                else:
+                    try:
+                        index = project_dependency_names.index(canonical_constraint_name)
+                    except ValueError:
+                        pep_section.append(dependency.to_pep_508())
+                    else:
+                        pep_section[index] = dependency.to_pep_508()
+
+                    # create a second constraint for tool.poetry.dependencies with keys
+                    # that cannot be stored in the project section
+                    poetry_constraint = inline_table()
+                    if not isinstance(constraint, str):
+                        for key in ["allow-prereleases", "develop", "source"]:
                             if value := constraint.get(key):
                                 poetry_constraint[key] = value
+                        if poetry_constraint:
+                            # add marker related keys to avoid ambiguity
+                            for key in ["python", "platform"]:
+                                if value := constraint.get(key):
+                                    poetry_constraint[key] = value
             else:
                 poetry_constraint = constraint
 
