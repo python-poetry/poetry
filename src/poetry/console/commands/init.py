@@ -39,7 +39,9 @@ class InitCommand(Command):
     options: ClassVar[list[Option]] = [
         option("name", None, "Name of the package.", flag=False),
         option("description", None, "Description of the package.", flag=False),
-        option("author", None, "Author name of the package.", flag=False, multiple=True),
+        option(
+            "author", None, "Author name of the package.", flag=False, multiple=True
+        ),
         option("python", None, "Compatible Python versions.", flag=False),
         option(
             "dependency",
@@ -148,7 +150,9 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         if not description and is_interactive:
             description = self.ask(self.create_question("Description []: ", default=""))
 
-        authors: list[str] = list(self.option("author")) if self.option("author") else []
+        authors: list[str] = (
+            list(self.option("author")) if self.option("author") else []
+        )
         if not authors:
             author = vcs_config.get("user.name", "")
             author_email = vcs_config.get("user.email")
