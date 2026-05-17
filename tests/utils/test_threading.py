@@ -92,13 +92,13 @@ def run_in_threads(instance: Example, property_name: str) -> None:
     barrier = threading.Barrier(WORKER_COUNT)
 
     def access_property() -> None:
-        barrier.wait()
+        barrier.wait(10)
         results.append(instance.__getattribute__(property_name))
 
     executor = ThreadPoolExecutor(max_workers=WORKER_COUNT)
     futures = [executor.submit(access_property) for _ in range(WORKER_COUNT)]
 
-    wait(futures)
+    wait(futures, 10)
     assert len(results) == WORKER_COUNT
     assert all(result == (EXPECTED_VALUE + instance.value) for result in results)
 
