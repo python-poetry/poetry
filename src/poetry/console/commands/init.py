@@ -382,7 +382,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                         "(or leave blank to use the latest version):"
                     )
                     question.set_max_attempts(3)
-                    question.set_validator(lambda x: (x or "").strip() or None)
+                    question.set_validator(self._validate_version_constraint)
 
                     package_constraint = self.ask(question)
 
@@ -520,6 +520,21 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             raise ValueError("Invalid package definition.")
 
         return package
+
+    @staticmethod
+    def _validate_version_constraint(constraint: str | None) -> str | None:
+        from poetry.core.constraints.version import parse_constraint
+
+        constraint = (constraint or "").strip() or None
+        if constraint is None:
+            return None
+
+        try:
+            parse_constraint(constraint)
+        except ValueError as e:
+            raise ValueError(f"Invalid version constraint: {constraint}") from e
+
+        return constraint
 
     def _get_pool(self) -> RepositoryPool:
         from poetry.config.config import Config
