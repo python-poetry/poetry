@@ -41,6 +41,7 @@ class MockEnv(NullEnv):
         self._sys_path = sys_path
         self._mock_marker_env = marker_env
         self._supported_tags = supported_tags
+        self._supported_tags_set = None
 
     @property
     def platform(self) -> str:
