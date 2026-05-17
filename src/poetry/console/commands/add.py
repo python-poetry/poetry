@@ -443,8 +443,8 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
     def notify_about_existing_packages(self, existing_packages: list[str]) -> None:
         self.line(
-            "The following packages are already present in the pyproject.toml and will"
-            " be skipped:\n"
+            f"The following packages are already present in the pyproject.toml"
+            f" (<c2>{self.poetry.file.path}</c2>) and will be skipped:\n"
         )
         for name in existing_packages:
             self.line(f"  - <c1>{name}</c1>")
