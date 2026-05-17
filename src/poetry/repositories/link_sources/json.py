@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import urllib.parse
-
 from collections import defaultdict
 from functools import cached_property
 from typing import TYPE_CHECKING
@@ -11,6 +9,7 @@ from poetry.core.packages.utils.link import Link
 
 from poetry.repositories.link_sources.base import LinkSource
 from poetry.repositories.link_sources.base import SimpleRepositoryRootPage
+from poetry.repositories.link_sources.base import make_absolute_url
 
 
 if TYPE_CHECKING:
@@ -28,14 +27,7 @@ class SimpleJsonPage(LinkSource):
     def _link_cache(self) -> LinkCache:
         links: LinkCache = defaultdict(lambda: defaultdict(list))
         for file in self.content["files"]:
-            file_url = file["url"]
-            # This is just a performance shortcut.
-            # urljoin would work just fine for absolute URLs as well,
-            # but it is much faster to skip urljoin in that case.
-            # (Links on pypi.org are absolute.)
-            if not file_url.startswith(("http://", "https://", "file://")):
-                file_url = urllib.parse.urljoin(self._url, file_url)
-            url = self.clean_link(file_url)
+            url = self.clean_link(make_absolute_url(file["url"], self._url))
             requires_python = file.get("requires-python")
             hashes = file.get("hashes", {})
             yanked = file.get("yanked", False)

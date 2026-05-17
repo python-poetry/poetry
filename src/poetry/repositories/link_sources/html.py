@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import urllib.parse
-
 from collections import defaultdict
 from functools import cached_property
 from html import unescape
@@ -11,6 +9,7 @@ from poetry.core.packages.utils.link import Link
 
 from poetry.repositories.link_sources.base import LinkSource
 from poetry.repositories.link_sources.base import SimpleRepositoryRootPage
+from poetry.repositories.link_sources.base import make_absolute_url
 from poetry.repositories.parsers.html_page_parser import HTMLPageParser
 
 
@@ -30,11 +29,10 @@ class HTMLPage(LinkSource):
     @cached_property
     def _link_cache(self) -> LinkCache:
         links: LinkCache = defaultdict(lambda: defaultdict(list))
+        base_url = self._base_url or self._url
         for anchor in self._parsed:
             if href := anchor.get("href"):
-                url = self.clean_link(
-                    urllib.parse.urljoin(self._base_url or self._url, href)
-                )
+                url = self.clean_link(make_absolute_url(href, base_url))
                 pyrequire = anchor.get("data-requires-python")
                 pyrequire = unescape(pyrequire) if pyrequire else None
                 yanked_value = anchor.get("data-yanked")
