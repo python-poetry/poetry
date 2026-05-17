@@ -34,10 +34,10 @@ def install_plugin(installed: Repository) -> None:
 
     content = Factory.create_legacy_pyproject_from_package(package)
     content["dependency-groups"] = tomlkit.table()
-    content["dependency-groups"][SelfCommand.ADDITIONAL_PACKAGE_GROUP] = tomlkit.array(  # type: ignore[index]
+    content["dependency-groups"][SelfCommand.ADDITIONAL_PACKAGE_GROUP] = tomlkit.array(
         "[\n]"
     )
-    content["dependency-groups"][SelfCommand.ADDITIONAL_PACKAGE_GROUP].append(  # type: ignore[index, union-attr, call-arg]
+    content["dependency-groups"][SelfCommand.ADDITIONAL_PACKAGE_GROUP].append(
         Dependency(plugin.name, "^1.2.3").to_pep_508()
     )
 

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 from tomlkit.items import Array
 
@@ -22,7 +21,7 @@ def get_self_command_dependencies(locked: bool = True) -> Array | None:
 
     poetry = Factory().create_poetry(system_pyproject_file.parent, disable_plugins=True)
 
-    pyproject: dict[str, Any] = poetry.file.read()
+    pyproject = poetry.file.read()
     content = pyproject.get("dependency-groups", {})
 
     if SelfCommand.ADDITIONAL_PACKAGE_GROUP not in content:

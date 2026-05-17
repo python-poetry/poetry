@@ -48,8 +48,7 @@ class FileConfigSource(ConfigSource):
             config = config[sub_key]
 
     def add_property(self, key: str | Sequence[str], value: Any) -> None:
-        with self.secure() as toml:
-            config: dict[str, Any] = toml
+        with self.secure() as config:
             keys = split_key(key)
 
             for i, sub_key in enumerate(keys):
@@ -63,8 +62,7 @@ class FileConfigSource(ConfigSource):
                 config = config[sub_key]
 
     def remove_property(self, key: str | Sequence[str]) -> None:
-        with self.secure() as toml:
-            config: dict[str, Any] = toml
+        with self.secure() as config:
             keys = split_key(key)
 
             # Descend to the leaf, recording the (parent, key) at each step.

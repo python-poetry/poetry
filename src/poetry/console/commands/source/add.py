@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Any
 from typing import ClassVar
 
 from cleo.helpers import argument
@@ -106,9 +105,7 @@ class SourceAddCommand(Command):
             )
             return 1
 
-        # tomlkit types are awkward to work with, treat content as a mostly untyped
-        # dictionary.
-        content: dict[str, Any] = self.poetry.pyproject.data
+        content = self.poetry.pyproject.data
         if "tool" not in content:
             content["tool"] = table()
         if "poetry" not in content["tool"]:

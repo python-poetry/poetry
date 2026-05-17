@@ -13,7 +13,6 @@ from poetry.core.utils.patterns import AUTHOR_REGEX
 from tomlkit import inline_table
 from tomlkit import loads
 from tomlkit import table
-from tomlkit.toml_document import TOMLDocument
 
 from poetry.factory import Factory
 from poetry.pyproject.toml import PyProjectTOML
@@ -23,6 +22,7 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
 
     from tomlkit.items import InlineTable
+    from tomlkit.toml_document import TOMLDocument
 
 
 POETRY_DEFAULT = """\
@@ -141,7 +141,7 @@ class Layout:
     ) -> TOMLDocument:
         template = POETRY_DEFAULT
 
-        content: dict[str, Any] = loads(template)
+        content = loads(template)
 
         project_content = content["project"]
         project_content["name"] = self._project
@@ -212,7 +212,6 @@ class Layout:
         build_system.add("requires", ["poetry-core" + build_system_version])
         build_system.add("build-backend", "poetry.core.masonry.api")
 
-        assert isinstance(content, TOMLDocument)
         content.add("build-system", build_system)
 
         return content

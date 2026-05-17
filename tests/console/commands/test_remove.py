@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Any
-from typing import cast
 
 import pytest
 import tomlkit
@@ -20,7 +18,6 @@ if TYPE_CHECKING:
 
     from cleo.testers.command_tester import CommandTester
     from pytest_mock import MockerFixture
-    from tomlkit import TOMLDocument
 
     from poetry.poetry import Poetry
     from poetry.repositories import Repository
@@ -65,9 +62,9 @@ def test_remove_from_project_and_poetry(
     repo.add_package(Package("foo", "2.0.0"))
     repo.add_package(Package("bar", "1.0.0"))
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
 
-    project_dependencies: dict[str, Any] = tomlkit.parse(
+    project_dependencies = tomlkit.parse(
         """\
 [project]
 dependencies = [
@@ -77,7 +74,7 @@ dependencies = [
 """
     )
 
-    poetry_dependencies: dict[str, Any] = tomlkit.parse(
+    poetry_dependencies = tomlkit.parse(
         """\
 [tool.poetry.dependencies]
 foo = "^2.0.0"
@@ -92,7 +89,6 @@ bar = "^1.0.0"
     pyproject["tool"]["poetry"]["dependencies"] = poetry_dependencies["tool"]["poetry"][
         "dependencies"
     ]
-    pyproject = cast("TOMLDocument", pyproject)
     app.poetry.file.write(pyproject)
 
     app.poetry.package.add_dependency(Factory.create_dependency("foo", "^2.0.0"))
@@ -101,7 +97,6 @@ bar = "^1.0.0"
     tester.execute("foo")
 
     pyproject = app.poetry.file.read()
-    pyproject = cast("dict[str, Any]", pyproject)
     project_dependencies = pyproject["project"]["dependencies"]
     assert "foo>=2.0" not in project_dependencies
     assert "bar>=1.0" in project_dependencies
@@ -120,7 +115,6 @@ dependencies = [
 bar = "^1.0.0"
 
 """
-    pyproject = cast("TOMLDocument", pyproject)
     string_content = pyproject.as_string()
     if "\r\n" in string_content:
         # consistent line endings
@@ -140,9 +134,9 @@ def test_remove_from_pep735_group_and_poetry_group(
     repo.add_package(Package("foo", "2.0.0"))
     repo.add_package(Package("bar", "1.0.0"))
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
 
-    pep735_dependencies: dict[str, Any] = tomlkit.parse(
+    pep735_dependencies = tomlkit.parse(
         """\
 [dependency-groups]
 dev = [
@@ -152,7 +146,7 @@ dev = [
 """
     )
 
-    poetry_dependencies: dict[str, Any] = tomlkit.parse(
+    poetry_dependencies = tomlkit.parse(
         """\
 [tool.poetry.group.dev.dependencies]
 foo = "^2.0.0"
@@ -165,7 +159,6 @@ bar = "^1.0.0"
     pyproject["tool"]["poetry"]["group"] = poetry_dependencies["tool"]["poetry"][
         "group"
     ]
-    pyproject = cast("TOMLDocument", pyproject)
     app.poetry.file.write(pyproject)
 
     app.poetry.package.add_dependency(
@@ -178,7 +171,6 @@ bar = "^1.0.0"
     tester.execute("foo")
 
     pyproject = app.poetry.file.read()
-    pyproject = cast("dict[str, Any]", pyproject)
     pep735_dependencies = pyproject["dependency-groups"]["dev"]
     assert "foo>=2.0" not in pep735_dependencies
     assert "bar>=1.0" in pep735_dependencies
@@ -198,7 +190,6 @@ dev = [
 bar = "^1.0.0"
 
 """
-    pyproject = cast("TOMLDocument", pyproject)
     string_content = pyproject.as_string()
     if "\r\n" in string_content:
         # consistent line endings
@@ -224,11 +215,11 @@ def test_remove_without_specific_group_removes_from_all_groups(
     repo.add_package(Package("foo", "2.0.0"))
     repo.add_package(Package("baz", "1.0.0"))
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     pyproject["tool"]["poetry"]["dependencies"]["foo"] = "^2.0.0"
 
     if pep_735:
-        groups_content: dict[str, Any] = tomlkit.parse(
+        groups_content = tomlkit.parse(
             """\
 [dependency-groups]
 bar = [
@@ -248,10 +239,7 @@ baz = "^1.0.0"
 
 """
         )
-        groups_content = cast("dict[str, Any]", groups_content)
         pyproject["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
-
-    pyproject = cast("TOMLDocument", pyproject)
     app.poetry.file.write(pyproject)
 
     app.poetry.package.add_dependency(Factory.create_dependency("foo", "^2.0.0"))
@@ -265,7 +253,6 @@ baz = "^1.0.0"
     tester.execute("foo")
 
     pyproject = app.poetry.file.read()
-    pyproject = cast("dict[str, Any]", pyproject)
     content = pyproject["tool"]["poetry"]
     assert "foo" not in content["dependencies"]
 
@@ -286,7 +273,6 @@ bar = [
 [tool.poetry.group.bar.dependencies]
 baz = "^1.0.0"
 """
-    pyproject = cast("TOMLDocument", pyproject)
     string_content = pyproject.as_string()
     if "\r\n" in string_content:
         # consistent line endings
@@ -310,11 +296,11 @@ def test_remove_with_specific_group_removes_from_specific_groups(
     repo.add_package(Package("foo", "2.0.0"))
     repo.add_package(Package("baz", "1.0.0"))
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     pyproject["tool"]["poetry"]["dependencies"]["foo"] = "^2.0.0"
 
     if pep_735:
-        groups_content: dict[str, Any] = tomlkit.parse(
+        groups_content = tomlkit.parse(
             """\
 [dependency-groups]
 bar = [
@@ -333,10 +319,7 @@ foo = "^2.0.0"
 baz = "^1.0.0"
     """
         )
-        groups_content = cast("dict[str, Any]", groups_content)
         pyproject["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
-
-    pyproject = cast("TOMLDocument", pyproject)
     app.poetry.file.write(pyproject)
 
     app.poetry.package.add_dependency(Factory.create_dependency("foo", "^2.0.0"))
@@ -350,7 +333,6 @@ baz = "^1.0.0"
     tester.execute("foo --group bar")
 
     pyproject = app.poetry.file.read()
-    pyproject = cast("dict[str, Any]", pyproject)
     content = pyproject["tool"]["poetry"]
     assert "foo" in content["dependencies"]
 
@@ -371,7 +353,6 @@ bar = [
 [tool.poetry.group.bar.dependencies]
 baz = "^1.0.0"
 """
-    pyproject = cast("TOMLDocument", pyproject)
     string_content = pyproject.as_string()
     if "\r\n" in string_content:
         # consistent line endings
@@ -395,11 +376,11 @@ def test_remove_does_not_keep_empty_groups(
     repo.add_package(Package("foo", "2.0.0"))
     repo.add_package(Package("baz", "1.0.0"))
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     pyproject["tool"]["poetry"]["dependencies"]["foo"] = "^2.0.0"
 
     if pep_735:
-        groups_content: dict[str, Any] = tomlkit.parse(
+        groups_content = tomlkit.parse(
             """\
 [dependency-groups]
 bar = [
@@ -418,9 +399,7 @@ baz = "^1.0.0"
 
 """
         )
-        groups_content = cast("dict[str, Any]", groups_content)
         pyproject["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
-    pyproject = cast("TOMLDocument", pyproject)
     app.poetry.file.write(pyproject)
 
     app.poetry.package.add_dependency(Factory.create_dependency("foo", "^2.0.0"))
@@ -434,7 +413,6 @@ baz = "^1.0.0"
     tester.execute("foo baz --group bar")
 
     pyproject = app.poetry.file.read()
-    pyproject = cast("dict[str, Any]", pyproject)
     content = pyproject["tool"]["poetry"]
 
     assert "foo" in content["dependencies"]
@@ -445,7 +423,6 @@ baz = "^1.0.0"
     else:
         # The group 'bar' should be removed entirely from the configuration
         assert "group" not in content
-        content = cast("TOMLDocument", content)
         assert "[tool.poetry.group.bar]" not in content.as_string()
         assert "[tool.poetry.group]" not in content.as_string()
 
@@ -465,11 +442,11 @@ def test_remove_canonicalized_named_removes_dependency_correctly(
     repo.add_package(Package("foo-bar", "2.0.0"))
     repo.add_package(Package("baz", "1.0.0"))
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     pyproject["tool"]["poetry"]["dependencies"]["foo-bar"] = "^2.0.0"
 
     if pep_735:
-        groups_content: dict[str, Any] = tomlkit.parse(
+        groups_content = tomlkit.parse(
             """\
 [dependency-groups]
 bar = [
@@ -488,11 +465,9 @@ baz = "^1.0.0"
 
 """
         )
-        groups_content = cast("dict[str, Any]", groups_content)
         pyproject["tool"]["poetry"].value._insert_after(
             "dependencies", "group", groups_content["tool"]["poetry"]["group"]
         )
-    pyproject = cast("TOMLDocument", pyproject)
     app.poetry.file.write(pyproject)
 
     app.poetry.package.add_dependency(Factory.create_dependency("foo-bar", "^2.0.0"))
@@ -506,7 +481,6 @@ baz = "^1.0.0"
     tester.execute("Foo_Bar")
 
     pyproject = app.poetry.file.read()
-    pyproject = cast("dict[str, Any]", pyproject)
     content = pyproject["tool"]["poetry"]
 
     assert "foo-bar" not in content["dependencies"]
@@ -528,7 +502,6 @@ bar = [
 [tool.poetry.group.bar.dependencies]
 baz = "^1.0.0"
 """
-    pyproject = cast("TOMLDocument", pyproject)
     string_content = pyproject.as_string()
     if "\r\n" in string_content:
         # consistent line endings
@@ -562,10 +535,9 @@ def test_remove_package_no_dependencies(
 ) -> None:
     repo.add_package(Package("foo", "2.0.0"))
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     assert "dependencies" not in pyproject["project"]
     del pyproject["tool"]["poetry"]["dependencies"]
-    pyproject = cast("TOMLDocument", pyproject)
     app.poetry.file.write(pyproject)
     app.poetry.package._dependency_groups = {}
 
@@ -688,11 +660,11 @@ def test_remove_from_nested_pep735_group_and_poetry_group(
     repo.add_package(Package("foo", "2.0.0"))
     repo.add_package(Package("baz", "1.0.0"))
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
     pyproject["tool"]["poetry"]["dependencies"]["foo"] = "^2.0.0"
 
     if pep_735:
-        groups_content: dict[str, Any] = tomlkit.parse(
+        groups_content = tomlkit.parse(
             """\
 [dependency-groups]
 bar = [
@@ -721,9 +693,7 @@ include-groups = [
 baz = "^1.0.0"
 """
         )
-        groups_content = cast("dict[str, Any]", groups_content)
         pyproject["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
-    pyproject = cast("TOMLDocument", pyproject)
     app.poetry.file.write(pyproject)
 
     app.poetry.package.add_dependency(Factory.create_dependency("foo", "^2.0.0"))
@@ -737,7 +707,6 @@ baz = "^1.0.0"
     tester.execute("baz")
 
     pyproject = app.poetry.file.read()
-    pyproject = cast("dict[str, Any]", pyproject)
     content = pyproject["tool"]["poetry"]
 
     if pep_735:
@@ -767,7 +736,6 @@ include-groups = [
     "bar",
 ]
 """
-    pyproject = cast("TOMLDocument", pyproject)
     string_content = pyproject.as_string()
     if "\r\n" in string_content:
         # consistent line endings
@@ -795,10 +763,10 @@ def test_remove_group_cleans_up_include_group_references(
     repo.add_package(Package("foo", "2.0.0"))
     repo.add_package(Package("baz", "1.0.0"))
 
-    pyproject: dict[str, Any] = app.poetry.file.read()
+    pyproject = app.poetry.file.read()
 
     if pep_735:
-        groups_content: dict[str, Any] = tomlkit.parse(
+        groups_content = tomlkit.parse(
             """\
 [dependency-groups]
 bar = [
@@ -845,10 +813,7 @@ include-groups = [
 ]
 """
         )
-        groups_content = cast("dict[str, Any]", groups_content)
         pyproject["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
-
-    pyproject = cast("TOMLDocument", pyproject)
     app.poetry.file.write(pyproject)
 
     app.poetry.package.add_dependency(
@@ -873,7 +838,6 @@ include-groups = [
     tester.execute(f"foo{args}")
 
     pyproject = app.poetry.file.read()
-    pyproject = cast("dict[str, Any]", pyproject)
     content = pyproject["tool"]["poetry"]
 
     if pep_735:
