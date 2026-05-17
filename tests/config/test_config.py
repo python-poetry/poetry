@@ -13,6 +13,7 @@ import pytest
 from deepdiff.diff import DeepDiff
 
 from poetry.config.config import Config
+from poetry.config.config import PackageFilterPolicy
 from poetry.config.config import boolean_normalizer
 from poetry.config.config import int_normalizer
 from poetry.config.config import str_list_normalizer
@@ -48,6 +49,16 @@ def get_options_based_on_normalizer(normalizer: Normalizer) -> Iterator[str]:
 )
 def test_str_list_normalizer(value: str, expected: list[str]) -> None:
     assert str_list_normalizer(value) == expected
+
+
+def test_package_filter_policy_normalizes_and_matches_packages() -> None:
+    policy = PackageFilterPolicy("PyTest,black")
+
+    assert policy.packages == frozenset({"black", "pytest"})
+    assert policy.allows("Poetry")
+    assert not policy.allows("PyTest")
+    assert policy.has_exact_package("PyTest")
+    assert not policy.has_exact_package("Poetry")
 
 
 @pytest.mark.parametrize(
