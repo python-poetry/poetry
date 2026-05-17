@@ -18,6 +18,9 @@ if TYPE_CHECKING:
     from poetry.repositories.link_sources.base import LinkCache
 
 
+ABSOLUTE_LINK_PREFIXES = ("http://", "https://", "file://")
+
+
 class HTMLPage(LinkSource):
     def __init__(self, url: str, content: str) -> None:
         super().__init__(url=url)
@@ -30,11 +33,12 @@ class HTMLPage(LinkSource):
     @cached_property
     def _link_cache(self) -> LinkCache:
         links: LinkCache = defaultdict(lambda: defaultdict(list))
+        base_url = self._base_url or self._url
         for anchor in self._parsed:
             if href := anchor.get("href"):
-                url = self.clean_link(
-                    urllib.parse.urljoin(self._base_url or self._url, href)
-                )
+                if not href.startswith(ABSOLUTE_LINK_PREFIXES):
+                    href = urllib.parse.urljoin(base_url, href)
+                url = self.clean_link(href)
                 pyrequire = anchor.get("data-requires-python")
                 pyrequire = unescape(pyrequire) if pyrequire else None
                 yanked_value = anchor.get("data-yanked")

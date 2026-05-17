@@ -96,6 +96,28 @@ def test_hash_from_url(html_page_content: HTMLPageGetter) -> None:
     assert link.hashes == {"sha256": "abcd1234"}
 
 
+def test_absolute_url_skips_urljoin(
+    html_page_content: HTMLPageGetter, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def fail_urljoin(base: str, url: str) -> str:
+        raise AssertionError("urljoin should not be called for absolute URLs")
+
+    monkeypatch.setattr(
+        "poetry.repositories.link_sources.html.urllib.parse.urljoin", fail_urljoin
+    )
+
+    anchor = (
+        '<a href="https://files.pythonhosted.org/packages/demo-0.1.whl">'
+        "demo-0.1.whl</a><br/>"
+    )
+    content = html_page_content(anchor)
+    page = HTMLPage("https://example.org/simple/demo/", content)
+
+    assert (
+        next(page.links).url == "https://files.pythonhosted.org/packages/demo-0.1.whl"
+    )
+
+
 @pytest.mark.parametrize(
     "yanked_attrs, expected",
     [
