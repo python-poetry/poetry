@@ -58,6 +58,12 @@ class InitCommand(Command):
             multiple=True,
         ),
         option("license", "l", "License of the package.", flag=False),
+        option(
+            "non-package",
+            None,
+            "Initialize the project in non-package mode"
+            " (sets package-mode = false in pyproject.toml).",
+        ),
     ]
 
     help = """\
@@ -98,6 +104,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         from poetry.pyproject.toml import PyProjectTOML
 
         is_interactive = self.io.is_interactive() and allow_interactive
+        non_package = self.option("non-package")
 
         pyproject = PyProjectTOML(project_path / "pyproject.toml")
 
@@ -130,7 +137,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         if not name:
             name = project_path.name.lower()
 
-            if is_interactive:
+            if is_interactive and not non_package:
                 question = self.create_question(
                     f"Package name [<comment>{name}</comment>]: ", default=name
                 )
@@ -138,14 +145,14 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         version = "0.1.0"
 
-        if is_interactive:
+        if is_interactive and not non_package:
             question = self.create_question(
                 f"Version [<comment>{version}</comment>]: ", default=version
             )
             version = self.ask(question)
 
         description = self.option("description") or ""
-        if not description and is_interactive:
+        if not description and is_interactive and not non_package:
             description = self.ask(self.create_question("Description []: ", default=""))
 
         author = self.option("author")
@@ -155,7 +162,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             if author_email:
                 author += f" <{author_email}>"
 
-        if is_interactive:
+        if is_interactive and not non_package:
             question = self.create_question(
                 f"Author [<comment>{author}</comment>, n to skip]: ", default=author
             )
@@ -165,7 +172,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         authors = [author] if author else []
 
         license_name = self.option("license")
-        if not license_name and is_interactive:
+        if not license_name and is_interactive and not non_package:
             license_name = self.ask(self.create_question("License []: ", default=""))
 
         python = self.option("python")
@@ -176,7 +183,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                 + Python.get_preferred_python(config, self.io).minor_version.to_string()
             )
 
-            if is_interactive:
+            if is_interactive and not non_package:
                 question = self.create_question(
                     f"Compatible Python versions [<comment>{python}</comment>]: ",
                     default=python,
@@ -243,6 +250,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             python=python,
             dependencies=requirements,
             dev_dependencies=dev_requirements,
+            package_mode=not non_package,
         )
 
         create_layout = not project_path.exists() or (
