@@ -28,6 +28,16 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+ABSOLUTE_LINK_PREFIXES = ("http://", "https://", "file://")
+
+
+def is_absolute_url_fast_path(url: str) -> bool:
+    # This shortcut covers the absolute URL schemes commonly emitted by simple
+    # repository pages. Other absolute forms still go through urljoin, which
+    # preserves correct handling for protocol-relative URLs and uncommon schemes.
+    return url.startswith(ABSOLUTE_LINK_PREFIXES)
+
+
 class LinkSource:
     VERSION_REGEX = re.compile(r"(?i)([a-z0-9_\-.]+?)-(?=\d)([a-z0-9_.!+-]+)")
     CLEAN_REGEX = re.compile(r"[^a-z0-9$&+,/:;=?@.#%_\\|-]", re.I)

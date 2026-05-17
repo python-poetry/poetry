@@ -11,14 +11,12 @@ from poetry.core.packages.utils.link import Link
 
 from poetry.repositories.link_sources.base import LinkSource
 from poetry.repositories.link_sources.base import SimpleRepositoryRootPage
+from poetry.repositories.link_sources.base import is_absolute_url_fast_path
 from poetry.repositories.parsers.html_page_parser import HTMLPageParser
 
 
 if TYPE_CHECKING:
     from poetry.repositories.link_sources.base import LinkCache
-
-
-ABSOLUTE_LINK_PREFIXES = ("http://", "https://", "file://")
 
 
 class HTMLPage(LinkSource):
@@ -36,7 +34,7 @@ class HTMLPage(LinkSource):
         base_url = self._base_url or self._url
         for anchor in self._parsed:
             if href := anchor.get("href"):
-                if not href.startswith(ABSOLUTE_LINK_PREFIXES):
+                if not is_absolute_url_fast_path(href):
                     href = urllib.parse.urljoin(base_url, href)
                 url = self.clean_link(href)
                 pyrequire = anchor.get("data-requires-python")

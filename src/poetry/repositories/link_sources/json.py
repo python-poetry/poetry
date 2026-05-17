@@ -11,6 +11,7 @@ from poetry.core.packages.utils.link import Link
 
 from poetry.repositories.link_sources.base import LinkSource
 from poetry.repositories.link_sources.base import SimpleRepositoryRootPage
+from poetry.repositories.link_sources.base import is_absolute_url_fast_path
 
 
 if TYPE_CHECKING:
@@ -29,11 +30,7 @@ class SimpleJsonPage(LinkSource):
         links: LinkCache = defaultdict(lambda: defaultdict(list))
         for file in self.content["files"]:
             file_url = file["url"]
-            # This is just a performance shortcut.
-            # urljoin would work just fine for absolute URLs as well,
-            # but it is much faster to skip urljoin in that case.
-            # (Links on pypi.org are absolute.)
-            if not file_url.startswith(("http://", "https://", "file://")):
+            if not is_absolute_url_fast_path(file_url):
                 file_url = urllib.parse.urljoin(self._url, file_url)
             url = self.clean_link(file_url)
             requires_python = file.get("requires-python")
