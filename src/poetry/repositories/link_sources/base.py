@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import re
+import urllib.parse
 
 from functools import cached_property
 from typing import TYPE_CHECKING
@@ -28,14 +29,16 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-ABSOLUTE_LINK_PREFIXES = ("http://", "https://", "file://")
-
-
-def is_absolute_url_fast_path(url: str) -> bool:
+def make_absolute_url(url: str, base_url: str) -> str:
+    """Makes a URL absolute by joining it with a base URL
+    if it is not already absolute.
+    """
     # This shortcut covers the absolute URL schemes commonly emitted by simple
     # repository pages. Other absolute forms still go through urljoin, which
     # preserves correct handling for protocol-relative URLs and uncommon schemes.
-    return url.startswith(ABSOLUTE_LINK_PREFIXES)
+    if url.startswith(("http://", "https://", "file://")):
+        return url
+    return urllib.parse.urljoin(base_url, url)
 
 
 class LinkSource:

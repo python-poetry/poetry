@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import urllib.parse
+
 from collections import defaultdict
 from functools import cached_property
 from typing import TYPE_CHECKING
@@ -14,6 +16,7 @@ from poetry.core.packages.utils.link import Link
 
 from poetry.repositories.link_sources.base import LinkSource
 from poetry.repositories.link_sources.base import SimpleRepositoryRootPage
+from poetry.repositories.link_sources.base import make_absolute_url
 
 
 if TYPE_CHECKING:
@@ -126,3 +129,66 @@ def test_root_page_search(
     root_page: SimpleRepositoryRootPage, query: str | list[str], expected: list[str]
 ) -> None:
     assert root_page.search(query) == expected
+
+
+@pytest.mark.parametrize(
+    ("url", "base_url", "expected", "urljoin_called"),
+    [
+        (
+            "https://files.example.org/demo-1.0.0.whl",
+            "https://example.org/simple/demo/",
+            "https://files.example.org/demo-1.0.0.whl",
+            False,
+        ),
+        (
+            "file:///tmp/demo-1.0.0.tar.gz",
+            "https://example.org/simple/demo/",
+            "file:///tmp/demo-1.0.0.tar.gz",
+            False,
+        ),
+        (
+            "demo-1.0.0.tar.gz",
+            "https://example.org/simple/demo/",
+            "https://example.org/simple/demo/demo-1.0.0.tar.gz",
+            True,
+        ),
+        (
+            "/packages/demo-1.0.0.tar.gz",
+            "https://example.org/simple/demo/",
+            "https://example.org/packages/demo-1.0.0.tar.gz",
+            True,
+        ),
+        (
+            "../demo-1.0.0.tar.gz",
+            "https://example.org/simple/demo/",
+            "https://example.org/simple/demo-1.0.0.tar.gz",
+            True,
+        ),
+        (
+            "//cdn.example.org/demo-1.0.0.whl",
+            "https://example.org/simple/demo/",
+            "https://cdn.example.org/demo-1.0.0.whl",
+            True,
+        ),
+        (
+            "ftp://files.example.org/demo-1.0.0.whl",
+            "https://example.org/simple/demo/",
+            "ftp://files.example.org/demo-1.0.0.whl",
+            True,
+        ),
+    ],
+)
+def test_make_absolute_url(
+    url: str,
+    base_url: str,
+    expected: str,
+    urljoin_called: bool,
+    mocker: MockerFixture,
+) -> None:
+    urljoin_spy = mocker.spy(urllib.parse, "urljoin")
+
+    assert make_absolute_url(url, base_url) == expected
+    if urljoin_called:
+        urljoin_spy.assert_called_once_with(base_url, url)
+    else:
+        urljoin_spy.assert_not_called()

@@ -8,7 +8,6 @@ from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import Version
 from poetry.core.packages.utils.link import Link
 
-from poetry.repositories.link_sources.base import ABSOLUTE_LINK_PREFIXES
 from poetry.repositories.link_sources.html import HTMLPage
 from poetry.repositories.link_sources.html import SimpleRepositoryHTMLRootPage
 
@@ -95,29 +94,6 @@ def test_hash_from_url(html_page_content: HTMLPageGetter) -> None:
     assert len(list(page.links)) == 1
     link = next(iter(page.links))
     assert link.hashes == {"sha256": "abcd1234"}
-
-
-@pytest.mark.parametrize("prefix", ABSOLUTE_LINK_PREFIXES)
-def test_absolute_url_skips_urljoin(
-    html_page_content: HTMLPageGetter, monkeypatch: pytest.MonkeyPatch, prefix: str
-) -> None:
-    def fail_urljoin(base: str, url: str) -> str:
-        raise AssertionError("urljoin should not be called for absolute URLs")
-
-    monkeypatch.setattr(
-        "poetry.repositories.link_sources.html.urllib.parse.urljoin", fail_urljoin
-    )
-
-    anchor = (
-        f'<a href="{prefix}files.pythonhosted.org/packages/demo-0.1.whl">'
-        "demo-0.1.whl</a><br/>"
-    )
-    content = html_page_content(anchor)
-    page = HTMLPage("https://example.org/simple/demo/", content)
-
-    assert (
-        next(page.links).url == f"{prefix}files.pythonhosted.org/packages/demo-0.1.whl"
-    )
 
 
 @pytest.mark.parametrize(
