@@ -71,6 +71,11 @@ class RequirementsParser:
     def parse(self, requirement: str) -> DependencySpec:
         requirement = requirement.strip()
 
+        if os.path.sep not in requirement and "/" not in requirement:
+            specification = self._parse_path(requirement)
+            if specification is not None:
+                return specification
+
         specification = self._parse_pep508(requirement)
 
         if specification is not None:
@@ -153,18 +158,22 @@ class RequirementsParser:
         return None
 
     def _parse_path(self, requirement: str) -> DependencySpec | None:
-        if (os.path.sep in requirement or "/" in requirement) and (
-            self._cwd.joinpath(requirement).exists()
-            or (
-                Path(requirement).expanduser().exists()
-                and Path(requirement).expanduser().is_absolute()
-            )
+        path = Path(requirement).expanduser()
+        relative_path = self._cwd.joinpath(requirement)
+        is_explicit_path = os.path.sep in requirement or "/" in requirement
+        is_relative_path = relative_path.exists()
+        is_relative_file = is_relative_path and relative_path.is_file()
+        is_absolute_path = path.exists() and path.is_absolute()
+
+        if (
+            (is_explicit_path and is_relative_path)
+            or is_relative_file
+            or is_absolute_path
         ):
-            path = Path(requirement).expanduser()
             is_absolute = path.is_absolute()
 
             if not path.is_absolute():
-                path = self._cwd.joinpath(requirement)
+                path = relative_path
 
             if path.is_file():
                 package = self._direct_origin.get_package_from_file(path.resolve())
