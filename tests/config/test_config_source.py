@@ -97,8 +97,10 @@ def test_config_source_migration_complex_migration(
                 new_key="virtualenvs.use-poetry-python",
             ),
             True,
-            "virtualenvs.prefer-active-python = true -> "
-            "virtualenvs.use-poetry-python = true",
+            (
+                "virtualenvs.prefer-active-python = true -> "
+                "virtualenvs.use-poetry-python = true"
+            ),
             id="rename-key",
         ),
         pytest.param(
@@ -117,8 +119,10 @@ def test_config_source_migration_complex_migration(
                 value_migration={True: UNSET, False: True},
             ),
             True,
-            "virtualenvs.prefer-active-python = true -> "
-            "virtualenvs.use-poetry-python = Not explicit set",
+            (
+                "virtualenvs.prefer-active-python = true -> "
+                "virtualenvs.use-poetry-python = Not explicit set"
+            ),
             id="unset-value",
         ),
         pytest.param(
