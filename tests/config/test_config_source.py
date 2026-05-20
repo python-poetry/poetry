@@ -11,7 +11,8 @@ from poetry.config.config_source import ConfigSourceMigration
 from poetry.config.dict_config_source import DictConfigSource
 
 
-def make_config_source() -> DictConfigSource:
+@pytest.fixture
+def config_source() -> DictConfigSource:
     config_source = DictConfigSource()
     config_source._config = {
         "virtualenvs": {
@@ -23,9 +24,7 @@ def make_config_source() -> DictConfigSource:
     return config_source
 
 
-def test_config_source_migration_rename_key() -> None:
-    config_source = make_config_source()
-
+def test_config_source_migration_rename_key(config_source: DictConfigSource) -> None:
     migration = ConfigSourceMigration(
         old_key="virtualenvs.prefer-active-python",
         new_key="virtualenvs.use-poetry-python",
@@ -41,9 +40,7 @@ def test_config_source_migration_rename_key() -> None:
     }
 
 
-def test_config_source_migration_remove_key() -> None:
-    config_source = make_config_source()
-
+def test_config_source_migration_remove_key(config_source: DictConfigSource) -> None:
     migration = ConfigSourceMigration(
         old_key="virtualenvs.prefer-active-python",
         new_key=None,
@@ -57,9 +54,7 @@ def test_config_source_migration_remove_key() -> None:
     }
 
 
-def test_config_source_migration_unset_value() -> None:
-    config_source = make_config_source()
-
+def test_config_source_migration_unset_value(config_source: DictConfigSource) -> None:
     migration = ConfigSourceMigration(
         old_key="virtualenvs.prefer-active-python",
         new_key="virtualenvs.use-poetry-python",
@@ -74,9 +69,9 @@ def test_config_source_migration_unset_value() -> None:
     }
 
 
-def test_config_source_migration_complex_migration() -> None:
-    config_source = make_config_source()
-
+def test_config_source_migration_complex_migration(
+    config_source: DictConfigSource,
+) -> None:
     migration = ConfigSourceMigration(
         old_key="virtualenvs.prefer-active-python",
         new_key="virtualenvs.use-poetry-python",
@@ -138,11 +133,11 @@ def test_config_source_migration_complex_migration() -> None:
     ],
 )
 def test_config_source_migration_dry_run(
+    config_source: DictConfigSource,
     migration: ConfigSourceMigration,
     expected_result: bool,
     expected_output: str,
 ) -> None:
-    config_source = make_config_source()
     original_config = deepcopy(config_source._config)
     io = BufferedIO()
 
