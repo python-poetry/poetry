@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import keyring
 import pytest
+import requests
 
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
@@ -21,6 +22,7 @@ from tests.helpers import copy_path
 from tests.helpers import flatten_dict
 from tests.helpers import get_dependency
 from tests.helpers import get_package
+from tests.helpers import http_setup_redirect
 from tests.helpers import isolated_environment
 from tests.helpers import make_entry_point_from_plugin
 from tests.helpers import mock_clone
@@ -35,6 +37,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from pytest_mock import MockerFixture
+    from responses import RequestsMock
 
 
 class TestGetPackage:
@@ -311,18 +314,35 @@ class TestMakeEntryPointFromPlugin:
             __module__ = "my_plugin.plugin"
 
         ep = make_entry_point_from_plugin("test-plugin", FakePlugin)
-        assert isinstance(ep, metadata.EntryPoint)
+
         assert ep.name == "test-plugin"
         assert ep.group == "poetry.plugin"
         assert ep.value == "my_plugin.plugin:FakePlugin"
+        assert ep.dist is None
 
     def test_creates_entry_point_without_group_attr(self) -> None:
         class NoGroupPlugin:
             __module__ = "my_plugin.plugin"
-            __name__ = "NoGroupPlugin"
 
         ep = make_entry_point_from_plugin("test-plugin", NoGroupPlugin)
+
+        assert ep.name == "test-plugin"
         assert ep.group is None
+        assert ep.value == "my_plugin.plugin:NoGroupPlugin"
+
+    def test_creates_entry_point_with_dist(self, tmp_path: Path) -> None:
+        class FakePlugin:
+            group = "poetry.plugin"
+            __module__ = "my_plugin.plugin"
+
+        dist = metadata.Distribution.at(tmp_path)
+
+        ep = make_entry_point_from_plugin("test-plugin", FakePlugin, dist=dist)
+
+        assert ep.name == "test-plugin"
+        assert ep.group == "poetry.plugin"
+        assert ep.value == "my_plugin.plugin:FakePlugin"
+        assert ep.dist is dist
 
 
 class TestMockMetadataEntryPoints:
@@ -384,6 +404,39 @@ class TestFlattenDict:
 
     def test_handles_empty_dict(self) -> None:
         assert flatten_dict({}) == {}
+
+
+class TestHttpSetupRedirect:
+    def test_redirects_to_original_url(self, http: RequestsMock) -> None:
+        http_setup_redirect(http, "GET")
+
+        response = requests.get(
+            "https://redirect.example.com/files/demo.whl?download=1",
+            allow_redirects=False,
+        )
+
+        assert response.status_code == 301
+        assert (
+            response.headers["Location"]
+            == "https://example.com/files/demo.whl?download=1"
+        )
+
+    def test_uses_custom_status_code(self, http: RequestsMock) -> None:
+        http_setup_redirect(http, "GET", status_code=307)
+
+        response = requests.get(
+            "https://redirect.example.com/files/demo.whl",
+            allow_redirects=False,
+        )
+
+        assert response.status_code == 307
+        assert response.headers["Location"] == "https://example.com/files/demo.whl"
+
+    def test_only_registers_requested_methods(self, http: RequestsMock) -> None:
+        http_setup_redirect(http, "GET")
+
+        with pytest.raises(requests.exceptions.ConnectionError):
+            requests.post("https://redirect.example.com/files/demo.whl")
 
 
 class TestSwitchWorkingDirectory:
