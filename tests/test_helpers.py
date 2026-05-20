@@ -314,27 +314,34 @@ class TestMakeEntryPointFromPlugin:
             __module__ = "my_plugin.plugin"
 
         ep = make_entry_point_from_plugin("test-plugin", FakePlugin)
-        assert isinstance(ep, metadata.EntryPoint)
+
         assert ep.name == "test-plugin"
         assert ep.group == "poetry.plugin"
         assert ep.value == "my_plugin.plugin:FakePlugin"
+        assert ep.dist is None
 
     def test_creates_entry_point_without_group_attr(self) -> None:
         class NoGroupPlugin:
             __module__ = "my_plugin.plugin"
-            __name__ = "NoGroupPlugin"
 
         ep = make_entry_point_from_plugin("test-plugin", NoGroupPlugin)
+
+        assert ep.name == "test-plugin"
         assert ep.group is None
+        assert ep.value == "my_plugin.plugin:NoGroupPlugin"
 
     def test_creates_entry_point_with_dist(self, tmp_path: Path) -> None:
         class FakePlugin:
             group = "poetry.plugin"
+            __module__ = "my_plugin.plugin"
 
         dist = metadata.Distribution.at(tmp_path)
 
         ep = make_entry_point_from_plugin("test-plugin", FakePlugin, dist=dist)
 
+        assert ep.name == "test-plugin"
+        assert ep.group == "poetry.plugin"
+        assert ep.value == "my_plugin.plugin:FakePlugin"
         assert ep.dist is dist
 
 
