@@ -32,7 +32,7 @@ def test_config_source_migration_rename_key(config_source: DictConfigSource) -> 
 
     migration.apply(config_source)
 
-    assert config_source._config == {
+    assert config_source.config == {
         "virtualenvs": {
             "use-poetry-python": True,
         },
@@ -48,7 +48,7 @@ def test_config_source_migration_remove_key(config_source: DictConfigSource) -> 
 
     migration.apply(config_source)
 
-    assert config_source._config == {
+    assert config_source.config == {
         "virtualenvs": {},
         "system-git-client": True,
     }
@@ -63,7 +63,7 @@ def test_config_source_migration_unset_value(config_source: DictConfigSource) ->
 
     migration.apply(config_source)
 
-    assert config_source._config == {
+    assert config_source.config == {
         "virtualenvs": {},
         "system-git-client": True,
     }
@@ -80,7 +80,7 @@ def test_config_source_migration_complex_migration(
 
     migration.apply(config_source)
 
-    assert config_source._config == {
+    assert config_source.config == {
         "virtualenvs": {
             "use-poetry-python": None,
         },
@@ -138,9 +138,9 @@ def test_config_source_migration_dry_run(
     expected_result: bool,
     expected_output: str,
 ) -> None:
-    original_config = deepcopy(config_source._config)
+    original_config = deepcopy(config_source.config)
     io = BufferedIO()
 
     assert migration.dry_run(config_source, io) is expected_result
     assert io.fetch_output().strip() == expected_output
-    assert config_source._config == original_config
+    assert config_source.config == original_config
