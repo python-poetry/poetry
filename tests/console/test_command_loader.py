@@ -25,19 +25,11 @@ def test_register_factory_adds_new_command() -> None:
     assert isinstance(loader.get("dummy"), _DummyCommand)
 
 
-def test_register_factory_raises_on_duplicate() -> None:
+def test_register_factory_rejects_duplicate() -> None:
     loader = CommandLoader({"dummy": _DummyCommand})
 
-    with pytest.raises(CleoLogicError) as exc_info:
+    with pytest.raises(CleoLogicError, match="dummy"):
         loader.register_factory("dummy", _OtherCommand)
 
-    assert "dummy" in str(exc_info.value)
-
-
-def test_register_factory_does_not_overwrite_on_duplicate() -> None:
-    loader = CommandLoader({"dummy": _DummyCommand})
-
-    with pytest.raises(CleoLogicError):
-        loader.register_factory("dummy", _OtherCommand)
-
+    # The originally registered factory must not have been replaced.
     assert isinstance(loader.get("dummy"), _DummyCommand)
