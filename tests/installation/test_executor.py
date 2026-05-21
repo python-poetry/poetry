@@ -949,6 +949,23 @@ def test_executor_should_write_pep610_url_references_for_directories(
     assert not prepare_spy.spy_return.exists(), "archive not cleaned up"
 
 
+def test_executor_should_create_pep610_url_reference_for_relative_directory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source = tmp_path / "source"
+    source.mkdir()
+    monkeypatch.chdir(tmp_path)
+
+    package = Package("demo", "0.1.2", source_type="directory", source_url="source")
+
+    executor = object.__new__(Executor)
+
+    assert executor._create_directory_url_reference(package) == {
+        "dir_info": {},
+        "url": source.as_uri(),
+    }
+
+
 def test_executor_should_write_pep610_url_references_for_editable_directories(
     tmp_venv: VirtualEnv,
     pool: RepositoryPool,

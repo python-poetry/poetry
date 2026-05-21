@@ -922,7 +922,7 @@ class Executor:
 
         assert package.source_url is not None
         return {
-            "url": Path(package.source_url).as_uri(),
+            "url": self._path_to_file_url(package.source_url),
             "archive_info": archive_info,
         }
 
@@ -934,9 +934,17 @@ class Executor:
 
         assert package.source_url is not None
         return {
-            "url": Path(package.source_url).as_uri(),
+            "url": self._path_to_file_url(package.source_url),
             "dir_info": dir_info,
         }
+
+    @staticmethod
+    def _path_to_file_url(path: str) -> str:
+        source = Path(path)
+        if not source.is_absolute():
+            source = source.resolve()
+
+        return source.as_uri()
 
     def _get_archive_info(self, package: Package) -> dict[str, Any]:
         """
