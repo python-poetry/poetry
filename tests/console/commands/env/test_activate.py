@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from poetry.console.commands.env.activate import EnvActivateCommand
 from poetry.console.commands.env.activate import ShellNotSupportedError
 from poetry.utils._compat import WINDOWS
 
@@ -43,7 +44,8 @@ def test_env_activate_prints_correct_script(
     ext: str,
 ) -> None:
     mocker.patch("shellingham.detect_shell", return_value=(shell, None))
-    mocker.patch("poetry.utils.env.EnvManager.get", return_value=tmp_venv)
+    assert isinstance(tester.command, EnvActivateCommand)
+    tester.command.set_env(tmp_venv)
 
     if WINDOWS and shell in {"csh", "tcsh"}:
         with pytest.raises(ShellNotSupportedError):
@@ -74,7 +76,8 @@ def test_env_activate_prints_correct_script_for_windows_shells(
     ext: str,
 ) -> None:
     mocker.patch("shellingham.detect_shell", return_value=(shell, None))
-    mocker.patch("poetry.utils.env.EnvManager.get", return_value=tmp_venv)
+    assert isinstance(tester.command, EnvActivateCommand)
+    tester.command.set_env(tmp_venv)
 
     tester.execute()
 
@@ -91,10 +94,30 @@ def test_no_additional_output_in_verbose_mode(
     verbosity: str,
 ) -> None:
     mocker.patch("shellingham.detect_shell", return_value=("pwsh", None))
-    mocker.patch("poetry.utils.env.EnvManager.get", return_value=tmp_venv)
+    mocker.patch("poetry.utils.env.EnvManager.create_venv", return_value=tmp_venv)
 
     # use an AppTester instead of a CommandTester to catch additional output
     app_tester.execute(f"env activate {verbosity}")
 
     lines = app_tester.io.fetch_output().splitlines()
     assert len(lines) == 1
+
+
+def test_env_activate_uses_configured_environment(
+    tmp_venv: VirtualEnv,
+    mocker: MockerFixture,
+    tester: CommandTester,
+) -> None:
+    mocker.patch("shellingham.detect_shell", return_value=("bash", None))
+    get_env = mocker.patch(
+        "poetry.utils.env.EnvManager.get",
+        side_effect=AssertionError("env activate should use the configured env"),
+    )
+    assert isinstance(tester.command, EnvActivateCommand)
+    tester.command.set_env(tmp_venv)
+
+    tester.execute()
+
+    assert not get_env.called
+    line = tester.io.fetch_output().rstrip("\n")
+    assert line == f"source {tmp_venv.bin_dir.as_posix()}/activate"

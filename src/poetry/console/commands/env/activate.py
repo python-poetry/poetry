@@ -25,9 +25,7 @@ class EnvActivateCommand(EnvCommand):
     description = "Print the command to activate a virtual environment."
 
     def handle(self) -> int:
-        from poetry.utils.env import EnvManager
-
-        env = EnvManager(self.poetry).get()
+        env = self.env
 
         try:
             shell, _ = shellingham.detect_shell()
