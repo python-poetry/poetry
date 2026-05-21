@@ -43,7 +43,7 @@ This is useful in CI/CD pipelines or scripts where you cannot easily modify comm
 * `--version (-V)`: Display this application version.
 * `--no-interaction (-n)`: Do not ask any interactive question.
 * `--no-plugins`: Disables plugins.
-* `--no-cache`: Disables Poetry source caches.
+* `--no-cache`: Disables the use of [Poetry's caches]({{< relref "#cache" >}}) (cached package metadata and distfiles from configured package sources) for the duration of the command, forcing Poetry to behave as if it had a cold cache. This does not delete the caches; use `poetry cache clear` to remove cached data.
 * `--directory=DIRECTORY (-C)`: The working directory for the Poetry command (defaults to the current working directory). All command-line arguments will be resolved relative to the given directory.
 * `--project=PROJECT (-P)`: Specify another path as the project root. All command-line arguments will be resolved relative to the current working directory or directory specified using `--directory` option if used.
 
