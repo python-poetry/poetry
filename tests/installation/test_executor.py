@@ -966,6 +966,24 @@ def test_executor_should_create_pep610_url_reference_for_relative_directory(
     }
 
 
+def test_executor_should_create_pep610_url_reference_for_relative_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source = tmp_path / "source.tar.gz"
+    source.write_bytes(b"archive")
+    monkeypatch.chdir(tmp_path)
+
+    package = Package("demo", "0.1.2", source_type="file", source_url="source.tar.gz")
+
+    executor = object.__new__(Executor)
+    executor._hashes = {}
+
+    assert executor._create_file_url_reference(package) == {
+        "archive_info": {},
+        "url": source.as_uri(),
+    }
+
+
 def test_executor_should_write_pep610_url_references_for_editable_directories(
     tmp_venv: VirtualEnv,
     pool: RepositoryPool,
