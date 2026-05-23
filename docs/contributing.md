@@ -111,7 +111,8 @@ constantly evolving, and this means that sometimes our documentation has gaps. Y
 editing the existing content to be more accessible, or creating new content such as tutorials, FAQs, etc.
 
 {{% note %}}
-GitHub [Discussions] and the [kind/question label] are excellent sources for FAQ
+GitHub [Discussions](https://github.com/python-poetry/poetry/discussions) and the
+[kind/question label](https://github.com/python-poetry/poetry/labels/kind%2Fquestion) are excellent sources for FAQ
 candidates.
 {{% /note %}}
 
@@ -265,7 +266,6 @@ pipx install --suffix @pr1234 git+https://github.com/python-poetry/poetry.git@re
   [FAQ]: {{< relref "faq" >}}
   [Issue Tracker]: https://github.com/python-poetry/poetry/issues
   [area/docs label]: https://github.com/python-poetry/poetry/labels/area%2Fdocs
-  [kind/question label]: https://github.com/python-poetry/poetry/labels/kind%2Fquestion
   [Issue Template]: https://github.com/python-poetry/poetry/issues/new/choose
   [Discussions]: https://github.com/python-poetry/poetry/discussions
   [Discord]: https://discord.com/invite/awxPgve
