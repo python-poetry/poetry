@@ -215,9 +215,8 @@ def test_parse_bare_package_name_does_not_check_path(
     mocker: MockerFixture,
     artifact_cache: ArtifactCache,
 ) -> None:
-    exists = mocker.patch("pathlib.Path.exists")
+    parser = RequirementsParser(artifact_cache=artifact_cache)
+    parse_path = mocker.patch.object(parser, "_parse_path", wraps=parser._parse_path)
 
-    assert RequirementsParser(artifact_cache=artifact_cache).parse("demo") == {
-        "name": "demo"
-    }
-    exists.assert_not_called()
+    assert parser.parse("demo") == {"name": "demo"}
+    parse_path.assert_not_called()
