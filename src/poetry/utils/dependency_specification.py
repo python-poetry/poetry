@@ -27,6 +27,7 @@ DependencySpec = dict[str, str | bool | dict[str, str | bool] | list[str]]
 BaseSpec = TypeVar("BaseSpec", DependencySpec, InlineTable)
 
 GIT_URL_SCHEMES = {"git+http", "git+https", "git+ssh"}
+PACKAGE_ARCHIVE_EXTENSIONS = (".whl", ".tar.gz", ".tar.bz2", ".tar.xz", ".zip")
 
 
 def dependency_to_specification(
@@ -71,7 +72,11 @@ class RequirementsParser:
     def parse(self, requirement: str) -> DependencySpec:
         requirement = requirement.strip()
 
-        if os.path.sep not in requirement and "/" not in requirement:
+        if (
+            os.path.sep not in requirement
+            and "/" not in requirement
+            and requirement.lower().endswith(PACKAGE_ARCHIVE_EXTENSIONS)
+        ):
             specification = self._parse_path(requirement)
             if specification is not None:
                 return specification
@@ -162,14 +167,11 @@ class RequirementsParser:
         relative_path = self._cwd.joinpath(requirement)
         is_explicit_path = os.path.sep in requirement or "/" in requirement
         is_relative_path = relative_path.exists()
-        is_relative_file = is_relative_path and relative_path.is_file()
-        is_absolute_path = path.exists() and path.is_absolute()
+        is_absolute_path = path.is_absolute() and path.exists()
 
         if (
-            (is_explicit_path and is_relative_path)
-            or is_relative_file
-            or is_absolute_path
-        ):
+            is_relative_path and (is_explicit_path or relative_path.is_file())
+        ) or is_absolute_path:
             is_absolute = path.is_absolute()
 
             if not path.is_absolute():

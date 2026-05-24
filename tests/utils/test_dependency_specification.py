@@ -209,3 +209,15 @@ def test_parse_bare_local_file_dependency(
         "name": "demo",
         "path": path.name,
     }
+
+
+def test_parse_bare_package_name_does_not_check_path(
+    mocker: MockerFixture,
+    artifact_cache: ArtifactCache,
+) -> None:
+    exists = mocker.patch("pathlib.Path.exists")
+
+    assert RequirementsParser(artifact_cache=artifact_cache).parse("demo") == {
+        "name": "demo"
+    }
+    exists.assert_not_called()
