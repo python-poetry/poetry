@@ -71,12 +71,11 @@ class RequirementsParser:
 
     def parse(self, requirement: str) -> DependencySpec:
         requirement = requirement.strip()
+        is_explicit_path = os.path.sep in requirement or "/" in requirement
+        is_archive_file = requirement.lower().endswith(PACKAGE_ARCHIVE_EXTENSIONS)
+        is_path_like = is_explicit_path or is_archive_file
 
-        if (
-            os.path.sep not in requirement
-            and "/" not in requirement
-            and requirement.lower().endswith(PACKAGE_ARCHIVE_EXTENSIONS)
-        ):
+        if not is_explicit_path and is_archive_file:
             specification = self._parse_path(requirement)
             if specification is not None:
                 return specification
@@ -92,11 +91,10 @@ class RequirementsParser:
             extras = [e.strip() for e in extras_m.group(1).split(",")]
             requirement, _ = requirement.split("[")
 
-        specification = (
-            self._parse_url(requirement)
-            or self._parse_path(requirement)
-            or self._parse_simple(requirement)
-        )
+        specification = self._parse_url(requirement)
+        if specification is None and is_path_like:
+            specification = self._parse_path(requirement)
+        specification = specification or self._parse_simple(requirement)
 
         if specification:
             if extras:
