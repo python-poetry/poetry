@@ -75,14 +75,16 @@ class Repository(AbstractRepository):
 
     def search(self, query: str | list[str]) -> list[Package]:
         if isinstance(query, str):
+            # performance shortcut
+            # We could also create a list from query and use the more general code below,
+            # but this is a common case that we can optimize for.
             return [package for package in self.packages if query in package.name]
 
-        results: list[Package] = []
-        for package in self.packages:
-            if any(token in package.name for token in query):
-                results.append(package)
-
-        return results
+        return [
+            package
+            for package in self.packages
+            if any(token in package.name for token in query)
+        ]
 
     def _find_packages(
         self, name: NormalizedName, constraint: VersionConstraint

@@ -146,14 +146,14 @@ class SimpleRepositoryRootPage:
 
     def search(self, query: str | list[str]) -> list[str]:
         if isinstance(query, str):
+            # performance shortcut
+            # We could also create a list from query and use the more general code below,
+            # but this is a common case that we can optimize for.
             return [name for name in self.package_names if query in name]
 
-        results: list[str] = []
-        for name in self.package_names:
-            if any(token in name for token in query):
-                results.append(name)
-
-        return results
+        return [
+            name for name in self.package_names if any(token in name for token in query)
+        ]
 
     @cached_property
     def package_names(self) -> list[str]:
