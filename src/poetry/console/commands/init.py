@@ -525,8 +525,8 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
     def _validate_version_constraint(constraint: str | None) -> str | None:
         from poetry.core.constraints.version import parse_constraint
 
-        constraint = (constraint or "").strip() or None
-        if constraint is None:
+        constraint = (constraint or "").strip()
+        if not constraint:
             return None
 
         try:

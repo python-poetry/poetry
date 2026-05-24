@@ -1223,6 +1223,7 @@ def test_init_does_not_add_readme_key_when_readme_missing(
     ("constraint", "expected"),
     [
         ("^1.0", "^1.0"),
+        ("  ^1.0 ", "^1.0"),
         ("==1.2.3", "==1.2.3"),
         (">=1,<2", ">=1,<2"),
         ("", None),
