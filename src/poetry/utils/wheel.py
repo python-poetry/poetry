@@ -44,4 +44,4 @@ class Wheel:
         return min(indexes) if indexes else None
 
     def is_supported_by_environment(self, env: Env) -> bool:
-        return bool(set(env.supported_tags).intersection(self.tags))
+        return not self.tags.isdisjoint(env.supported_tags_set)
