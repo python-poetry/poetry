@@ -41,6 +41,8 @@ class MockEnv(NullEnv):
         self._sys_path = sys_path
         self._mock_marker_env = marker_env
         self._supported_tags = supported_tags
+        # _supported_tags_set should not be set at this point.
+        # We reset it after setting _supported_tags just to be sure.
         self._supported_tags_set = None
 
     @property
