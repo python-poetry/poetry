@@ -1017,6 +1017,38 @@ def test_validate_package_invalid(name: str) -> None:
 
 
 @pytest.mark.parametrize(
+    ("constraint", "expected"),
+    [
+        ("^1.0", "^1.0"),
+        ("  ^1.0 ", "^1.0"),
+        ("==1.2.3", "==1.2.3"),
+        (">=1,<2", ">=1,<2"),
+        ("", None),
+        (None, None),
+        ("   ", None),
+    ],
+)
+def test_validate_version_constraint_accepts_valid_inputs(
+    constraint: str | None, expected: str | None
+) -> None:
+    assert InitCommand._validate_version_constraint(constraint) == expected
+
+
+@pytest.mark.parametrize(
+    "invalid",
+    [
+        "latest",
+        "isort",
+        "==1.,",
+        "not-a-version",
+    ],
+)
+def test_validate_version_constraint_rejects_invalid_inputs(invalid: str) -> None:
+    with pytest.raises(ValueError, match="Invalid version constraint"):
+        InitCommand._validate_version_constraint(invalid)
+
+
+@pytest.mark.parametrize(
     "author",
     [
         str(b"Jos\x65\xcc\x81 Duarte", "utf-8"),
@@ -1217,35 +1249,3 @@ def test_init_does_not_add_readme_key_when_readme_missing(
     # Assert
     pyproject = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
     assert "readme =" not in pyproject
-
-
-@pytest.mark.parametrize(
-    ("constraint", "expected"),
-    [
-        ("^1.0", "^1.0"),
-        ("  ^1.0 ", "^1.0"),
-        ("==1.2.3", "==1.2.3"),
-        (">=1,<2", ">=1,<2"),
-        ("", None),
-        (None, None),
-        ("   ", None),
-    ],
-)
-def test_validate_version_constraint_accepts_valid_inputs(
-    constraint: str | None, expected: str | None
-) -> None:
-    assert InitCommand._validate_version_constraint(constraint) == expected
-
-
-@pytest.mark.parametrize(
-    "invalid",
-    [
-        "latest",
-        "isort",
-        "==1.,",
-        "not-a-version",
-    ],
-)
-def test_validate_version_constraint_rejects_invalid_inputs(invalid: str) -> None:
-    with pytest.raises(ValueError, match="Invalid version constraint"):
-        InitCommand._validate_version_constraint(invalid)
