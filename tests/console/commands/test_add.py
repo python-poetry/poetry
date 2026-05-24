@@ -1416,8 +1416,9 @@ def test_add_should_skip_when_adding_existing_package_with_no_constraint(
     repo.add_package(get_package("foo", "1.1.2"))
     tester.execute("foo")
 
-    expected = """\
-The following packages are already present in the pyproject.toml and will be skipped:
+    expected = f"""\
+The following packages are already present in the pyproject.toml\
+ ({app.poetry.file.path}) and will be skipped:
 
   - foo
 
@@ -1447,8 +1448,9 @@ def test_add_should_skip_when_adding_canonicalized_existing_package_with_no_cons
     repo.add_package(get_package("foo-bar", "1.1.2"))
     tester.execute("Foo_Bar")
 
-    expected = """\
-The following packages are already present in the pyproject.toml and will be skipped:
+    expected = f"""\
+The following packages are already present in the pyproject.toml\
+ ({app.poetry.file.path}) and will be skipped:
 
   - Foo_Bar
 
