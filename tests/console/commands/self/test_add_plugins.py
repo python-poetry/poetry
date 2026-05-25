@@ -203,8 +203,8 @@ poetry-plugin = "^1.2.3"
 
     assert isinstance(tester.command, AddCommand)
     expected = f"""\
-The following packages are already present in the pyproject.toml and will be\
- skipped:
+The following packages are already present in the pyproject.toml\
+ ({tester.command.poetry.file.path}) and will be skipped:
 
   - poetry-plugin
 {tester.command._hint_update_packages}

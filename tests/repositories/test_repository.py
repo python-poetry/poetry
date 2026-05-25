@@ -108,4 +108,5 @@ def test_search() -> None:
 
     assert repo.search("foo") == [package_foo1, package_foo2, package_foobar]
     assert repo.search("bar") == [package_foobar]
+    assert repo.search(["foo", "bar"]) == [package_foo1, package_foo2, package_foobar]
     assert repo.search("nothing") == []

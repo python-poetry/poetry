@@ -80,6 +80,7 @@ class Env(ABC):
 
         self._site_packages: SitePackages | None = None
         self._supported_tags: list[Tag] | None = None
+        self._supported_tags_set: set[Tag] | None = None
         self._purelib: Path | None = None
         self._platlib: Path | None = None
         self._script_dirs: list[Path] | None = None
@@ -358,6 +359,13 @@ class Env(ABC):
             self._supported_tags = self.get_supported_tags()
 
         return self._supported_tags
+
+    @property
+    def supported_tags_set(self) -> set[Tag]:
+        if self._supported_tags_set is None:
+            self._supported_tags_set = set(self.supported_tags)
+
+        return self._supported_tags_set
 
     @classmethod
     def get_base_prefix(cls) -> Path:
