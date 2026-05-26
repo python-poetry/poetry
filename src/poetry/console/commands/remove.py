@@ -93,6 +93,11 @@ list of installed packages
                 for group_name, group_section in poetry_groups_content.items()
                 if group_name not in groups_content and group_name != MAIN_GROUP
             )
+            optional_dependencies = project_content.get("optional-dependencies", {})
+            group_sections.extend(
+                (group_name, dependencies, [])
+                for group_name, dependencies in optional_dependencies.items()
+            )
 
             for group_name, standard_section, poetry_section in group_sections:
                 removed |= self._remove_packages(
@@ -111,11 +116,15 @@ list of installed packages
                             del poetry_content["group"][group_name]
                     if not standard_section and group_name in groups_content:
                         del groups_content[group_name]
-                    if (
-                        group_name not in groups_content
-                        and group_name not in poetry_groups_content
-                    ):
-                        self._remove_references_to_group(group_name, content)
+                    if not standard_section and group_name in optional_dependencies:
+                        del optional_dependencies[group_name]
+
+            if "group" in poetry_content and not poetry_content["group"]:
+                del poetry_content["group"]
+            if "dependency-groups" in content and not content["dependency-groups"]:
+                del content["dependency-groups"]
+            if "optional-dependencies" in project_content and not project_content["optional-dependencies"]:
+                del project_content["optional-dependencies"]
 
         elif group == "dev" and "dev-dependencies" in poetry_content:
             # We need to account for the old `dev-dependencies` section
@@ -152,7 +161,19 @@ list of installed packages
                 )
                 if not groups_content[group]:
                     del groups_content[group]
-            if group not in groups_content and group not in poetry_groups_content:
+            optional_dependencies = project_content.get("optional-dependencies", {})
+            if group in optional_dependencies:
+                removed.update(
+                    self._remove_packages(
+                        packages=packages,
+                        standard_section=optional_dependencies[group],
+                        poetry_section={},
+                        group_name=group,
+                    )
+                )
+                if not optional_dependencies[group]:
+                    del optional_dependencies[group]
+            if group not in groups_content and group not in poetry_groups_content and group not in optional_dependencies:
                 self._remove_references_to_group(group, content)
 
         if "group" in poetry_content and not poetry_content["group"]:
@@ -192,7 +213,10 @@ list of installed packages
         group_name: str,
     ) -> set[str]:
         removed = set()
-        group = self.poetry.package.dependency_group(group_name)
+        try:
+            group = self.poetry.package.dependency_group(group_name)
+        except Exception:
+            group = None
 
         for package in packages:
             normalized_name = canonicalize_name(package)
@@ -208,7 +232,8 @@ list of installed packages
                     removed.add(package)
 
         for package in removed:
-            group.remove_dependency(package)
+            if group:
+                group.remove_dependency(package)
 
         return removed
 
