@@ -1115,6 +1115,54 @@ def test_package_include(
     assert expected in tester.io.fetch_output()
 
 
+def test_init_command_allows_multiple_authors(
+    tester: CommandTester,
+) -> None:
+    inputs = [
+        "1.2.3",  # Version
+        "",  # Description
+        "n",  # Author (skip interactive)
+        "n",  # Interactive packages
+        "n",  # Interactive dev packages
+        "\n",  # Generate
+    ]
+
+    tester.execute(
+        "--name my-package "
+        "--description 'Multi-author' "
+        "--author 'Alice <alice@example.com>' "
+        "--author 'Bob <bob@example.com>' "
+        "--python '>=3.8'",
+        inputs="\n".join(inputs),
+    )
+
+    output = tester.io.fetch_output()
+    assert '{name = "Alice",email = "alice@example.com"}' in output
+    assert '{name = "Bob",email = "bob@example.com"}' in output
+
+
+def test_init_command_single_author_still_works(
+    tester: CommandTester,
+) -> None:
+    inputs = [
+        "1.2.3",  # Version
+        "",  # Description
+        "n",  # Author (skip interactive)
+        "n",  # Interactive packages
+        "n",  # Interactive dev packages
+        "\n",  # Generate
+    ]
+
+    tester.execute(
+        "--name my-package "
+        "--author 'Charlie <charlie@example.com>'",
+        inputs="\n".join(inputs),
+    )
+
+    output = tester.io.fetch_output()
+    assert '{name = "Charlie",email = "charlie@example.com"}' in output
+
+
 @pytest.mark.parametrize(
     ["use_poetry_python", "python"],
     [
