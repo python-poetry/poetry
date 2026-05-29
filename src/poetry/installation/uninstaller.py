@@ -31,13 +31,11 @@ import tempfile
 from importlib.util import cache_from_source
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Any
 
 from poetry.utils._compat import is_relative_to
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
     from collections.abc import Iterable
     from collections.abc import Iterator
     from importlib import metadata
@@ -142,19 +140,6 @@ class _AdjacentTempDirectory(_TempDirectory):
                     yield new_name
 
 
-def _unique(fn: Callable[..., Iterator[Any]]) -> Callable[..., Iterator[Any]]:
-    @functools.wraps(fn)
-    def unique(*args: Any, **kw: Any) -> Iterator[Any]:
-        seen: set[Any] = set()
-        for item in fn(*args, **kw):
-            if item not in seen:
-                seen.add(item)
-                yield item
-
-    return unique
-
-
-@_unique
 def _uninstallation_paths(
     dist_files: list[PackagePath], location: str | Path
 ) -> Iterator[str]:

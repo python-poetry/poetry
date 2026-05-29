@@ -262,6 +262,7 @@ def test_refuses_paths_outside_env_prefix(tmp_path: Path) -> None:
     dist = next(iter(env.site_packages.distributions(name="demo")))
     dist_parent = dist._path.parent  # type: ignore[attr-defined]
     pathset = UninstallPathSet(dist, env.path)
+    assert dist.files
     for path in _uninstallation_paths(dist.files, dist_parent):
         pathset.add(path)
     pathset.add(str(outside_file))
