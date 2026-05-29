@@ -612,13 +612,11 @@ class Executor:
         try:
             if operation.job_type == "update":
                 assert isinstance(operation, Update)
-                result = self._uninstall(operation.initial_package)
-                if isinstance(result, UninstallPathSet):
-                    old_pathset = result
-                elif result != 0:
+                result_code, old_pathset = self._uninstall(operation.initial_package)
+                if result_code != 0:
                     # pip uninstall was interrupted; surface that code
                     # instead of attempting the install.
-                    return result
+                    return result_code
 
             try:
                 self._wheel_installer.install(archive)
@@ -639,20 +637,22 @@ class Executor:
         return self._install(operation)
 
     def _remove(self, package: Package) -> int:
-        result = self._uninstall(package)
-        if isinstance(result, int):
-            return result
-        result.commit()
+        result_code, pathset = self._uninstall(package)
+        if result_code != 0:
+            return result_code
+        if pathset is not None:
+            pathset.commit()
         return 0
 
-    def _uninstall(self, package: Package) -> int | UninstallPathSet:
+    def _uninstall(self, package: Package) -> tuple[int, UninstallPathSet | None]:
         """Stash an installed package's files.
 
-        Returns either an ``UninstallPathSet`` (builtin installer)
-        so the caller can ``.commit()`` to finalize the removal or
-        ``.rollback()`` to restore the files, or an ``int`` return code
-        (legacy pip path, or builtin path when nothing needs uninstalling).
-        ``-2`` means pip was interrupted; ``0`` means success.
+        Returns a tuple of ``(return_code, pathset)`` where ``pathset`` is an
+        ``UninstallPathSet`` (builtin installer) so the caller can ``.commit()``
+        to finalize the removal or ``.rollback()`` to restore the files, or
+        ``None`` (legacy pip path, or builtin path when nothing needs
+        uninstalling). ``return_code`` is ``-2`` when pip was interrupted, or
+        ``0`` on success.
 
         The git VCS source directory (``<env>/src/<pkg>/``) is removed
         eagerly and is not part of the returned pathset; it is not
@@ -668,14 +668,14 @@ class Executor:
             # uninstall_distribution returns None when there is nothing to
             # uninstall (not installed, outside env, in stdlib, missing
             # RECORD). Treat that as a successful no-op.
-            return pathset if pathset is not None else 0
+            return 0, pathset
 
         try:
-            return self.run_pip("uninstall", package.name, "-y")
+            return self.run_pip("uninstall", package.name, "-y"), None
         except EnvCommandError as e:
             if "not installed" not in str(e):
                 raise
-            return 0
+            return 0, None
 
     def _prepare_archive(
         self, operation: Install | Update, *, output_dir: Path | None = None
