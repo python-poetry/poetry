@@ -3,20 +3,17 @@ from __future__ import annotations
 import csv
 
 from pathlib import Path
-from typing import TYPE_CHECKING
+
+import pytest
 
 from poetry.installation.uninstaller import StashedUninstallPathSet
 from poetry.installation.uninstaller import UninstallPathSet
 from poetry.installation.uninstaller import _normalize_path
 from poetry.installation.uninstaller import _uninstallation_paths
-from poetry.installation.uninstaller import compact
 from poetry.installation.uninstaller import compress_for_rename
 from poetry.installation.uninstaller import uninstall_distribution
+from poetry.utils._compat import WINDOWS
 from poetry.utils.env import MockEnv
-
-
-if TYPE_CHECKING:
-    import pytest
 
 
 def _make_env(tmp_path: Path) -> MockEnv:
@@ -41,6 +38,7 @@ def _install_fake_distribution(
     *,
     with_script: bool = True,
     extra_files: list[tuple[str, str]] | None = None,
+    extra_symlinked_dirs: list[str] | None = None,
 ) -> tuple[Path, list[Path]]:
     """Create a fake installed distribution under env's purelib.
 
@@ -88,6 +86,24 @@ def _install_fake_distribution(
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(content, encoding="utf-8")
             installed.append(target)
+            record_rows.append((relpath, "", ""))
+
+    if extra_symlinked_dirs:
+        link_target = purelib / f"{name}-symlink-target"
+        link_target.mkdir(exist_ok=True)
+        for relpath in extra_symlinked_dirs:
+            link = purelib / relpath
+            link.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                link.symlink_to(link_target, target_is_directory=True)
+            except OSError:
+                if WINDOWS:
+                    pytest.skip(
+                        "Symlink creation requires privileges or developer mode"
+                        " on Windows."
+                    )
+                raise
+            installed.append(link)
             record_rows.append((relpath, "", ""))
 
     record_path = dist_info / "RECORD"
@@ -258,10 +274,33 @@ def test_refuses_paths_outside_env_prefix(tmp_path: Path) -> None:
     assert outside_file.exists(), "files outside the env prefix must not be removed"
 
 
-def test_compact_keeps_only_shortest_paths() -> None:
-    paths = {_normalize_path(p) for p in {"/a/b", "/a/b/c", "/a/b/c/d", "/a/e"}}
-    expected = {_normalize_path(p) for p in {"/a/b", "/a/e"}}
-    assert compact(paths) == expected
+def test_uninstall_distribution_with_symlinked_directory(tmp_path: Path) -> None:
+    # A RECORD that lists a symlink to a directory is what makes subtracting
+    # all_subdirs in compress_for_rename() relevant.
+    # Without it, remove() stashes the whole package dir first and then
+    # raises FileNotFoundError trying to stash the now-missing symlink.
+    env = _make_env(tmp_path)
+    _, installed = _install_fake_distribution(
+        env, with_script=False, extra_symlinked_dirs=["demo/datalink"]
+    )
+
+    purelib = Path(env.paths["purelib"])
+    link = purelib / "demo" / "datalink"
+    link_target = purelib / "demo-symlink-target"
+    assert link.is_symlink()
+    assert link_target.is_dir()
+
+    pathset = uninstall_distribution(env, "demo")
+    assert pathset is not None
+    pathset.commit()
+
+    assert not (purelib / "demo").exists()
+    assert not link.exists()
+    for path in installed:
+        assert not path.exists(), f"{path} should have been removed"
+    # The symlink is removed, but its target directory must be left untouched —
+    # the uninstaller removes links, not the things they point at.
+    assert link_target.is_dir()
 
 
 def test_stashed_path_set_stashes_and_rolls_back_individual_file(

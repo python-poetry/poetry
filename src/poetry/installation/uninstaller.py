@@ -173,25 +173,6 @@ def _uninstallation_paths(
             yield os.path.join(dn, base + ".pyo")
 
 
-def compact(paths: Iterable[str]) -> set[str]:
-    """Compact a path set to contain the minimal number of paths
-    necessary to contain all paths in the set. If /a/path/ and
-    /a/path/to/a/file.txt are both in the set, leave only the
-    shorter path."""
-
-    sep = os.path.sep
-    short_paths: set[str] = set()
-    for path in sorted(paths, key=len):
-        should_skip = any(
-            path.startswith(shortpath.rstrip("*"))
-            and path[len(shortpath.rstrip("*").rstrip(sep))] == sep
-            for shortpath in short_paths
-        )
-        if not should_skip:
-            short_paths.add(path)
-    return short_paths
-
-
 def compress_for_rename(paths: Iterable[str]) -> set[str]:
     """Returns a set containing the paths that need to be renamed.
 
@@ -221,6 +202,7 @@ def compress_for_rename(paths: Iterable[str]) -> set[str]:
         # for the directory.
         if not (all_files - remaining):
             remaining.difference_update(all_files)
+            remaining.difference_update(all_subdirs)
             wildcards.add(root + os.sep)
 
     return set(map(case_map.__getitem__, remaining)) | wildcards
@@ -395,7 +377,7 @@ class UninstallPathSet:
         moved = self._moved_paths
         for_rename = compress_for_rename(self._paths)
 
-        for path in sorted(compact(for_rename)):
+        for path in sorted(for_rename):
             moved.stash(path)
             logger.debug("Removing file or directory %s", path)
 
