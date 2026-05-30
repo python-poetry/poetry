@@ -218,7 +218,11 @@ class EnvManager:
         # can leave CONDA_PREFIX set to an empty string after deactivation.
         in_venv = bool(env_prefix) and conda_env_name != "base"
 
-        if os.environ.get("PRE_COMMIT") == "1" and self.in_project_venv_exists():
+        # If the PRE_COMMIT environment variable is set, it means that we are running
+        # inside a pre-commit hook. In this case, we want to use the in-project virtualenv
+        # if it exists, since pre-commit creates its own virtualenv, and we don't want
+        # to manage this one with Poetry.
+        if "PRE_COMMIT" in os.environ and self.in_project_venv_exists():
             return VirtualEnv(self.in_project_venv)
 
         if not in_venv or env is not None:
