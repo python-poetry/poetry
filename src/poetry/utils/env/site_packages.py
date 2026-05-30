@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import itertools
+import sys
 
 from importlib import metadata
 from pathlib import Path
@@ -10,13 +11,41 @@ from typing import Any
 from typing import Literal
 from typing import overload
 
+from poetry.utils._compat import WINDOWS
 from poetry.utils.helpers import is_dir_writable
 from poetry.utils.helpers import paths_csv
 from poetry.utils.helpers import remove_directory
 
 
 if TYPE_CHECKING:
+    import os
+
     from collections.abc import Iterable
+
+
+if WINDOWS and sys.version_info < (3, 12):
+    # See https://github.com/python/importlib_metadata/issues/535
+    # Although Poetry does not depend on importlib-metadata and thus does not use
+    # importlib-metadata directly, it is a transitive dependency at the moment
+    # and replaces importlib.metadata in sys.meta_path so that distributions obtained via
+    # ``SitePackages.distributions()`` are of the type ``importlib_metadata.Distribution``
+    # instead of ``importlib.metadata.Distribution``.
+    try:
+        import importlib_metadata
+
+        from importlib_metadata import SimplePath
+    except ImportError:
+        pass
+    else:
+
+        def _patched_locate_file(
+            self: importlib_metadata.PathDistribution, path: str | os.PathLike[str]
+        ) -> SimplePath:
+            return self._path.parent / str(path)
+
+        importlib_metadata.PathDistribution.locate_file = (  # type: ignore[method-assign]
+            _patched_locate_file
+        )
 
 
 class SitePackages:
