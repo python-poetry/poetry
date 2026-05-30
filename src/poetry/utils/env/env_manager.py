@@ -218,6 +218,9 @@ class EnvManager:
         # can leave CONDA_PREFIX set to an empty string after deactivation.
         in_venv = bool(env_prefix) and conda_env_name != "base"
 
+        if os.environ.get("PRE_COMMIT") == "1" and self.in_project_venv_exists():
+            return VirtualEnv(self.in_project_venv)
+
         if not in_venv or env is not None:
             # Checking if a local virtualenv exists
             if self.in_project_venv_exists():
