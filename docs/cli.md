@@ -1053,6 +1053,19 @@ is different in that the packages managed are for Poetry's runtime environment.
 poetry self update
 ```
 
+#### Custom sources for self update
+
+Unlike the regular `update` command, `self update` does **not** use the `[[tool.poetry.source]]` entries in your project's `pyproject.toml`. Instead, it manages Poetry's own runtime environment using a separate `pyproject.toml` located at Poetry's configuration directory (usually `~/.config/pypoetry/pyproject.toml` on Linux/macOS or `%APPDATA%\pypoetry\pyproject.toml` on Windows).
+
+To use a private PyPI mirror or an internal index when updating Poetry itself, add your source to that file using `poetry self add` with a source specification, or edit the file directly. For example:
+
+```bash
+# Add a custom source to Poetry's own environment
+poetry self add --source my-mirror poetry
+```
+
+Alternatively, you can edit `~/.config/pypoetry/pyproject.toml` to add `[[tool.poetry.source]]` entries, just like in a regular project.
+
 #### Options
 
 * `--preview`: Allow the installation of pre-release versions.
