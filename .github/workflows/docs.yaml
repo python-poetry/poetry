@@ -47,7 +47,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           sparse-checkout: docs
 
-      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version: "22"
 
@@ -66,7 +66,7 @@ jobs:
           # Build the static website.
           npx hugo --minify --logLevel info
 
-      - uses: amondnet/vercel-action@c71810f8732de6b8656e41155e63b6303ca3e4bf # v42.1.0
+      - uses: amondnet/vercel-action@de09aeac2ace6599ec9b11ef87558759a496bac4 # v42.3.0
         with:
           vercel-version: 50.44.0
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
