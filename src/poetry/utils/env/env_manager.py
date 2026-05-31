@@ -219,13 +219,12 @@ class EnvManager:
         in_venv = bool(env_prefix) and conda_env_name != "base"
 
         # If the PRE_COMMIT environment variable is set, it means that we are running
-        # inside a pre-commit hook. In this case, we want to use the in-project virtualenv
-        # if it exists, since pre-commit creates its own virtualenv, and we don't want
-        # to manage this one with Poetry.
-        if "PRE_COMMIT" in os.environ and self.in_project_venv_exists():
-            return VirtualEnv(self.in_project_venv)
-
-        if not in_venv or env is not None:
+        # inside a pre-commit hook. In this case, we don't want to use the pre-commit
+        # hook virtualenv since it could lead to python version issue (if pre-commit
+        # python version is different from the one required by the project) or to
+        # pollution of the pre-commit hook's virtualenv (since poetry install will
+        # install the project dependencies in the pre-commit hook virtualenv).
+        if not in_venv or env is not None or "PRE_COMMIT" in os.environ:
             # Checking if a local virtualenv exists
             if self.in_project_venv_exists():
                 venv = self.in_project_venv
