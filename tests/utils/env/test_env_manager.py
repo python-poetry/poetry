@@ -628,7 +628,7 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
     assert env.base == Path(sys.base_prefix)
 
 
-def test_get_prefers_project_venv_when_running_under_pre_commit(
+def test_get_prefers_project_venv_when_no_active_is_set(
     manager: EnvManager,
     poetry: Poetry,
     in_project_venv_dir: Path,
@@ -636,7 +636,7 @@ def test_get_prefers_project_venv_when_running_under_pre_commit(
 ) -> None:
     mocker.patch.dict(
         os.environ,
-        {"PRE_COMMIT": "1", "VIRTUAL_ENV": "/environment/prefix"},
+        {"VIRTUAL_ENV": "/environment/prefix"},
         clear=False,
     )
     mocker.patch(
@@ -644,7 +644,7 @@ def test_get_prefers_project_venv_when_running_under_pre_commit(
         side_effect=check_output_wrapper(),
     )
 
-    env = manager.get()
+    env = manager.get(no_active=True)
 
     assert env.path == in_project_venv_dir
     assert env.base == Path(sys.base_prefix)

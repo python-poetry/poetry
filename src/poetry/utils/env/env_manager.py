@@ -193,7 +193,7 @@ class EnvManager:
                 f"Deactivating virtualenv: <comment>{venv}</comment>"
             )
 
-    def get(self, reload: bool = False) -> Env:
+    def get(self, reload: bool = False, no_active: bool = False) -> Env:
         if self._env is not None and not reload:
             return self._env
 
@@ -218,13 +218,7 @@ class EnvManager:
         # can leave CONDA_PREFIX set to an empty string after deactivation.
         in_venv = bool(env_prefix) and conda_env_name != "base"
 
-        # If the PRE_COMMIT environment variable is set, it means that we are running
-        # inside a pre-commit hook. In this case, we don't want to use the pre-commit
-        # hook virtualenv since it could lead to python version issue (if pre-commit
-        # python version is different from the one required by the project) or to
-        # pollution of the pre-commit hook's virtualenv (since poetry install will
-        # install the project dependencies in the pre-commit hook virtualenv).
-        if not in_venv or env is not None or "PRE_COMMIT" in os.environ:
+        if not in_venv or env is not None or no_active:
             # Checking if a local virtualenv exists
             if self.in_project_venv_exists():
                 venv = self.in_project_venv
@@ -374,12 +368,13 @@ class EnvManager:
         name: str | None = None,
         python: Python | None = None,
         force: bool = False,
+        no_active: bool = False,
     ) -> Env:
         if self._env is not None and not force:
             return self._env
 
         cwd = self._poetry.file.path.parent
-        env = self.get(reload=True)
+        env = self.get(reload=True, no_active=no_active)
 
         if not env.is_sane():
             force = True

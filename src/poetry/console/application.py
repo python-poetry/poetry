@@ -576,9 +576,10 @@ class Application(BaseApplication):
 
         io = event.io
         poetry = command.poetry
+        no_active = io.input.has_parameter_option("--no-active")
 
         env_manager = EnvManager(poetry, io=io)
-        env = env_manager.create_venv()
+        env = env_manager.create_venv(no_active=no_active)
 
         if env.is_venv() and io.is_verbose():
             io.write_error_line(f"Using virtualenv: <comment>{env.path}</>")
