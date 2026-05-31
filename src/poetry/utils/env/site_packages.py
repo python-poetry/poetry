@@ -37,15 +37,16 @@ if WINDOWS and sys.version_info < (3, 12):
     except ImportError:
         pass
     else:
+        if (
+            path_dist_class := getattr(importlib_metadata, "PathDistribution", None)
+        ) and hasattr(path_dist_class, "locate_file"):
 
-        def _patched_locate_file(
-            self: importlib_metadata.PathDistribution, path: str | os.PathLike[str]
-        ) -> SimplePath:
-            return self._path.parent / str(path)
+            def _patched_locate_file(
+                self: importlib_metadata.PathDistribution, path: str | os.PathLike[str]
+            ) -> SimplePath:
+                return self._path.parent / str(path)
 
-        importlib_metadata.PathDistribution.locate_file = (  # type: ignore[method-assign]
-            _patched_locate_file
-        )
+            path_dist_class.locate_file = _patched_locate_file
 
 
 class SitePackages:
