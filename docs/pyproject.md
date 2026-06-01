@@ -333,7 +333,7 @@ Which are:
 - `C` - python module import path
 - `D` - the entry point of the plugin (a function or class)
 
-Example (from [`poetry-plugin-export`](http://github.com/python-poetry/poetry-plugin-export)):
+Example (from [`poetry-plugin-export`](https://github.com/python-poetry/poetry-plugin-export)):
 
 ```toml
 [project.entry-points."poetry.application.plugin"]
@@ -945,7 +945,7 @@ Which are:
 - `C` - python module import path
 - `D` - the entry point of the plugin (a function or class)
 
-Example (from [`poetry-plugin-export`](http://github.com/python-poetry/poetry-plugin-export)):
+Example (from [`poetry-plugin-export`](https://github.com/python-poetry/poetry-plugin-export)):
 
 ```toml
 [tool.poetry.plugins."poetry.application.plugin"]

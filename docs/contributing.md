@@ -163,7 +163,7 @@ poetry run pytest --cov=src/poetry --cov-report term
 {{% /note %}}
 
 When you contribute to Poetry, automated tools will be run to make sure your code is suitable to be merged. Besides
-pytest, you will need to make sure your code typechecks properly using [mypy](http://mypy-lang.org/):
+pytest, you will need to make sure your code typechecks properly using [mypy](https://mypy-lang.org/):
 
 ```bash
 poetry run mypy
