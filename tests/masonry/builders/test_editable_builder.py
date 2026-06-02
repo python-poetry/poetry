@@ -518,27 +518,13 @@ def test_builder_skips_directory_file_script(
 
 def test_builder_skips_file_script_missing_reference_field(
     fixture_dir: FixtureDirGetter,
-    tmp_path: Path,
 ) -> None:
-    from cleo.io.buffered_io import BufferedIO
-
-    poetry = Factory().create_poetry(
-        fixture_dir("file_scripts_no_ref_field_project")
-    )
-    env_manager = EnvManager(poetry)
-    venv_path = tmp_path / "venv"
-    env_manager.build_venv(venv_path)
-    tmp_venv = VirtualEnv(venv_path)
-
-    io = BufferedIO()
-    builder = EditableBuilder(poetry, tmp_venv, io)
-    builder.build()
-
-    # The file script with missing reference field must not be created
-    script_path = tmp_venv._bin_dir.joinpath("no-ref-script")
-    assert not script_path.exists()
-
-    # The error message should be logged
-    error_output = io.fetch_error()
-    assert "no-ref-script" in error_output
-    assert "reference" in error_output
+    """A file script with no reference field is rejected at config validation
+    time (poetry-core's extra-scripts schema requires `reference`), so this
+    case is never reached by EditableBuilder. This test documents the
+    schema-level enforcement.
+    """
+    with pytest.raises(RuntimeError, match="The Poetry configuration is invalid"):
+        Factory().create_poetry(
+            fixture_dir("file_scripts_no_ref_field_project")
+        )
