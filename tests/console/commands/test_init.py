@@ -879,6 +879,27 @@ dev = [
     assert expected in output
 
 
+def test_noninteractive_multiple_authors(
+    tester: CommandTester, source_dir: Path
+) -> None:
+    tester.execute(
+        "--name my-package "
+        "--author 'Foo Bar <foo@example.com>' "
+        "--author 'Baz Qux <baz@example.com>'",
+        interactive=False,
+    )
+
+    expected = """\
+authors = [
+    {name = "Foo Bar",email = "foo@example.com"},
+    {name = "Baz Qux",email = "baz@example.com"}
+]
+"""
+
+    pyproject_file = source_dir / "pyproject.toml"
+    assert expected in pyproject_file.read_text(encoding="utf-8")
+
+
 def test_add_package_with_extras_and_whitespace(tester: CommandTester) -> None:
     command = tester.command
     assert isinstance(command, InitCommand)
