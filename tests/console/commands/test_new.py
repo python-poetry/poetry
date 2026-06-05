@@ -10,6 +10,7 @@ import pytest
 from poetry.core.utils.helpers import module_name
 
 from poetry.factory import Factory
+from poetry.toml import TOMLFile
 
 
 if TYPE_CHECKING:
@@ -209,14 +210,11 @@ def test_command_new_multiple_authors(tester: CommandTester, tmp_path: Path) -> 
     )
 
     pyproject_file = path / "pyproject.toml"
-    expected = """\
-authors = [
-    {name = "Foo Bar",email = "foo@example.com"},
-    {name = "Baz Qux",email = "baz@example.com"}
-]
-"""
-
-    assert expected in pyproject_file.read_text(encoding="utf-8")
+    authors = TOMLFile(pyproject_file).read()["project"]["authors"]
+    assert [dict(author) for author in authors] == [
+        {"name": "Foo Bar", "email": "foo@example.com"},
+        {"name": "Baz Qux", "email": "baz@example.com"},
+    ]
 
 
 @pytest.mark.parametrize(

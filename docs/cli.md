@@ -467,7 +467,7 @@ poetry init
 * `--description`: Description of the package.
 * `--author`: Author of the package. Can be specified multiple times.
 * `--python` Compatible Python versions.
-* `--dependency`: Package to require with a version constraint. Should be in format `foo:1.0.0`.
+* `--dependency`: Package to require with a version constraint. Should be in the format `foo:1.0.0`.
 * `--dev-dependency`: Development requirements, see `--dependency`.
 
 ## install
@@ -719,7 +719,7 @@ my-package
 * `--description`: Description of the package.
 * `--author`: Author of the package. Can be specified multiple times.
 * `--python` Compatible Python versions.
-* `--dependency`: Package to require with a version constraint. Should be in format `foo:1.0.0`.
+* `--dependency`: Package to require with a version constraint. Should be in the format `foo:1.0.0`.
 * `--dev-dependency`: Development requirements, see `--dependency`.
 
 ## publish

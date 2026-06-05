@@ -154,24 +154,28 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         if not description and is_interactive:
             description = self.ask(self.create_question("Description []: ", default=""))
 
-        authors = self.option("author")
-        author = authors[0] if authors else None
-        if not author and vcs_config.get("user.name"):
-            author = vcs_config["user.name"]
+        provided_authors = self.option("author")
+        default_author = provided_authors[0] if provided_authors else None
+        if not default_author and vcs_config.get("user.name"):
+            default_author = vcs_config["user.name"]
             author_email = vcs_config.get("user.email")
             if author_email:
-                author += f" <{author_email}>"
+                default_author += f" <{author_email}>"
 
-        if is_interactive and len(authors) < 2:
+        if is_interactive and len(provided_authors) < 2:
             question = self.create_question(
-                f"Author [<comment>{author}</comment>, n to skip]: ", default=author
+                f"Author [<comment>{default_author}</comment>, n to skip]: ",
+                default=default_author,
             )
-            question.set_validator(lambda v: self._validate_author(v, author or ""))
-            author = self.ask(question)
-            authors = [author] if author else []
-
-        if not authors and author:
-            authors = [author] if author else []
+            question.set_validator(
+                lambda v: self._validate_author(v, default_author or "")
+            )
+            selected_author = self.ask(question)
+            authors = [selected_author] if selected_author else []
+        else:
+            authors = list(provided_authors) if provided_authors else []
+            if not authors and default_author:
+                authors = [default_author]
 
         license_name = self.option("license")
         if not license_name and is_interactive:
