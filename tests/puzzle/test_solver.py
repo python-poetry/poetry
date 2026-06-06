@@ -2063,6 +2063,56 @@ def test_solver_duplicate_dependencies_sub_dependencies(
     )
 
 
+def test_solver_duplicate_dependencies_conditional_sibling_with_transitive_conflict(
+    solver: Solver, repo: Repository, package: ProjectPackage
+) -> None:
+    """
+    Regression test for https://github.com/python-poetry/poetry/issues/5506.
+
+    The root depends on A and on B with two mutually exclusive markers
+    selecting different versions of B. A itself transitively forces a
+    specific version of B. On the override branch where A's marker does
+    not apply, A must be ignored - otherwise A's transitive constraint
+    on B spuriously conflicts with the overridden version of B.
+    """
+    package.add_dependency(
+        Factory.create_dependency(
+            "A", {"version": "1.0", "markers": "sys_platform != 'darwin'"}
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency(
+            "B", {"version": "1.0", "markers": "sys_platform != 'darwin'"}
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency(
+            "B", {"version": "2.0", "markers": "sys_platform == 'darwin'"}
+        )
+    )
+
+    package_a = get_package("A", "1.0")
+    package_a.add_dependency(Factory.create_dependency("B", "1.0"))
+
+    package_b10 = get_package("B", "1.0")
+    package_b20 = get_package("B", "2.0")
+
+    repo.add_package(package_a)
+    repo.add_package(package_b10)
+    repo.add_package(package_b20)
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": package_b10},
+            {"job": "install", "package": package_a},
+            {"job": "install", "package": package_b20},
+        ],
+    )
+
+
 def test_solver_duplicate_dependencies_with_overlapping_markers_simple(
     solver: Solver, repo: Repository, package: ProjectPackage
 ) -> None:

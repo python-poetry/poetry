@@ -555,6 +555,14 @@ class Provider:
             if dep.name in self.UNSAFE_PACKAGES:
                 continue
 
+            # When solving under an override (i.e. a specific branch of a
+            # duplicate dependency), prune sibling dependencies whose markers
+            # are disjoint with the override's effective marker context.
+            # Otherwise such siblings would erroneously contribute constraints
+            # that only apply outside the current branch (see #5506).
+            if self._overrides_marker_intersection.intersect(dep.marker).is_empty():
+                continue
+
             if self._env:
                 marker_values = (
                     self._marker_values(self._active_root_extras)
