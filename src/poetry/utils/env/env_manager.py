@@ -408,6 +408,18 @@ class EnvManager:
             name = self._poetry.package.name
 
         supported_python = self._poetry.package.python_constraint
+        if create_venv is False:
+            current_python = Version.parse(
+                ".".join(str(c) for c in env.version_info[:3])
+            )
+            if not supported_python.allows(current_python):
+                raise InvalidCurrentPythonVersionError(
+                    self._poetry.package.python_versions,
+                    str(current_python),
+                    "Poetry cannot switch to a compatible Python version because "
+                    "virtualenv creation is disabled.",
+                )
+
         if not supported_python.allows(python.patch_version):
             # The currently activated or chosen Python version
             # is not compatible with the Python constraint specified

@@ -21,6 +21,7 @@ from poetry.utils.env import GET_PYTHON_VERSION_ONELINER
 from poetry.utils.env import EnvManager
 from poetry.utils.env import IncorrectEnvError
 from poetry.utils.env.env_manager import EnvsFile
+from poetry.utils.env.mock_env import MockEnv
 from poetry.utils.env.python.exceptions import InvalidCurrentPythonVersionError
 from poetry.utils.env.python.exceptions import NoCompatiblePythonVersionFoundError
 from poetry.utils.env.python.exceptions import PythonVersionNotFoundError
@@ -32,6 +33,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
     from unittest.mock import MagicMock
 
+    from _pytest.monkeypatch import MonkeyPatch
     from cleo.io.buffered_io import BufferedIO
     from pytest import LogCaptureFixture
     from pytest_mock import MockerFixture
@@ -1067,6 +1069,50 @@ def test_create_venv_fails_if_no_compatible_python_version_could_be_found(
 
     assert str(e.value) == expected_message
     assert m.call_count == 0
+
+
+@pytest.mark.parametrize("use_poetry_python", [True, False])
+def test_create_venv_fails_if_current_python_is_not_supported_without_creating_venv(
+    manager: EnvManager,
+    poetry: Poetry,
+    config: Config,
+    mocker: MockerFixture,
+    mocked_python_register: MockedPythonRegister,
+    monkeypatch: MonkeyPatch,
+    use_poetry_python: bool,
+) -> None:
+    config.config["virtualenvs"]["create"] = False
+    config.config["virtualenvs"]["use-poetry-python"] = use_poetry_python
+    monkeypatch.delenv("VIRTUAL_ENV", raising=False)
+
+    poetry.package.python_versions = "^3.10"
+
+    current_python = mocked_python_register("3.9.0")
+    compatible_python = mocked_python_register("3.10.0")
+    mocker.patch.object(manager, "get", return_value=MockEnv(version_info=(3, 9, 0)))
+    mocker.patch(
+        "poetry.utils.env.env_manager.Python.get_preferred_python",
+        return_value=current_python if use_poetry_python else compatible_python,
+    )
+    get_compatible_python = mocker.patch(
+        "poetry.utils.env.env_manager.Python.get_compatible_python",
+        return_value=compatible_python,
+    )
+    build_venv = mocker.patch("poetry.utils.env.EnvManager.build_venv")
+
+    with pytest.raises(InvalidCurrentPythonVersionError) as e:
+        manager.create_venv()
+
+    expected_message = (
+        "Current Python version (3.9.0) is not allowed by the project (^3.10).\n"
+        'Please change python executable via the "env use" command.\n'
+        "Poetry cannot switch to a compatible Python version because virtualenv "
+        "creation is disabled."
+    )
+
+    assert str(e.value) == expected_message
+    get_compatible_python.assert_not_called()
+    build_venv.assert_not_called()
 
 
 @pytest.mark.parametrize("use_poetry_python", [True, False])
