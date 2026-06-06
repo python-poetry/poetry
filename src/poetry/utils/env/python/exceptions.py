@@ -31,11 +31,13 @@ class NoCompatiblePythonVersionFoundError(PythonVersionError):
 
 
 class InvalidCurrentPythonVersionError(PythonVersionError):
-    def __init__(self, expected: str, given: str) -> None:
+    def __init__(self, expected: str, given: str, note: str | None = None) -> None:
         message = (
             f"Current Python version ({given}) "
             f"is not allowed by the project ({expected}).\n"
             'Please change python executable via the "env use" command.'
         )
+        if note is not None:
+            message = f"{message}\n{note}"
 
         super().__init__(message)
