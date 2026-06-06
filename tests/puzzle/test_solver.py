@@ -5247,6 +5247,42 @@ def test_solver_resolves_duplicate_dependencies_with_restricted_extras(
     )
 
 
+def test_solver_resolves_optional_dependencies_and_group_with_extras(
+    package: ProjectPackage,
+    pool: RepositoryPool,
+    repo: Repository,
+    io: NullIO,
+) -> None:
+    """Regression test for https://github.com/python-poetry/poetry/issues/10447."""
+    dep_alchemy = get_dependency("A", "*", optional=True)
+    dep_alchemy._in_extras = [canonicalize_name("alchemy")]
+    dep_databases = get_dependency("A", "*", optional=True)
+    dep_databases._in_extras = [canonicalize_name("databases")]
+    package.extras = {
+        canonicalize_name("alchemy"): [dep_alchemy],
+        canonicalize_name("databases"): [dep_databases],
+    }
+    package.add_dependency(dep_alchemy)
+    package.add_dependency(dep_databases)
+    package.add_dependency(
+        Factory.create_dependency(
+            "A", {"version": "*", "extras": ["mypy"]}, groups=["test"]
+        )
+    )
+
+    package_a = get_package("A", "1.0")
+    package_a.extras = {canonicalize_name("mypy"): []}
+    repo.add_package(package_a)
+
+    solver = Solver(package, pool, [], [], io)
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [{"job": "install", "package": package_a}],
+    )
+
+
 def test_solver_logs_age_filtered_versions_on_failure(
     mocker: MockerFixture, pool: RepositoryPool, solver: Solver
 ) -> None:
