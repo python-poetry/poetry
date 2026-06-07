@@ -1099,6 +1099,7 @@ required by
 * `--outdated (-o)`: Show the latest version but only for packages that are outdated.
 * `--all (-a)`: Show all packages (even those not compatible with current system).
 * `--top-level (-T)`: Only show explicitly defined packages.
+* `--with-groups`: Show dependency group names.
 * `--no-truncate`: Do not truncate the output based on the terminal width.
 * `--format (-f)`: Specify the output format (`json` or `text`). Default is `text`. `json` cannot be combined with the `--tree` option.
 
