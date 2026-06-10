@@ -61,9 +61,10 @@ class SimpleJsonPage(LinkSource):
             if link.ext not in self.SUPPORTED_FORMATS:
                 continue
 
-            pkg = self.link_package_data(link)
-            if pkg:
-                links[pkg.name][pkg.version].append(link)
+            name_and_version = self._link_package_name_and_version(link)
+            if name_and_version:
+                name, version = name_and_version
+                links[name][version].append(link)
 
         return links
 
