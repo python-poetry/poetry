@@ -8,6 +8,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING
 from typing import ClassVar
 
+from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import Version
 from poetry.core.packages.package import Package
 from poetry.core.version.exceptions import InvalidVersionError
@@ -79,10 +80,18 @@ class LinkSource:
                 yield from links
 
     @classmethod
-    def link_package_data(cls, link: Link) -> Package | None:
+    def _link_package_name_and_version(
+        cls, link: Link
+    ) -> tuple[NormalizedName, Version] | None:
+        """Extract just the (normalized name, version) for a link.
+
+        This is the hot path used when building the link cache: it avoids the
+        cost of constructing a full `Package` (which initializes a large
+        number of attributes) when only the name and version are needed as
+        cache keys.
+        """
         name: str | None = None
         version_string: str | None = None
-        version: Version | None = None
         m = wheel_file_re.match(link.filename) or sdist_file_re.match(link.filename)
 
         if m:
@@ -95,19 +104,29 @@ class LinkSource:
                 name = match.group(1)
                 version_string = match.group(2)
 
-        if version_string:
-            try:
-                version = Version.parse(version_string)
-            except InvalidVersionError:
-                logger.debug(
-                    "Skipping url (%s) due to invalid version (%s)", link.url, version
-                )
-                return None
+        if not (name and version_string):
+            return None
 
-        pkg = None
-        if name and version:
-            pkg = Package(name, version, source_url=link.url)
-        return pkg
+        try:
+            version = Version.parse(version_string)
+        except InvalidVersionError:
+            logger.debug(
+                "Skipping url (%s) due to invalid version (%s)",
+                link.url,
+                version_string,
+            )
+            return None
+
+        return canonicalize_name(name), version
+
+    @classmethod
+    def link_package_data(cls, link: Link) -> Package | None:
+        name_and_version = cls._link_package_name_and_version(link)
+        if name_and_version is None:
+            return None
+
+        name, version = name_and_version
+        return Package(name, version, source_url=link.url)
 
     def links_for_version(
         self, name: NormalizedName, version: Version
