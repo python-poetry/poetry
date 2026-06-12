@@ -49,10 +49,12 @@ def link_source(mocker: MockerFixture) -> LinkSource:
                     list,
                     {
                         Version.parse("0.1.0"): [
-                            Link(f"{url}/demo-0.1.0.tar.gz"),
-                            Link(f"{url}/demo-0.1.0-py2.py3-none-any.whl"),
+                            lambda: Link(f"{url}/demo-0.1.0.tar.gz"),
+                            lambda: Link(f"{url}/demo-0.1.0-py2.py3-none-any.whl"),
                         ],
-                        Version.parse("0.1.1"): [Link(f"{url}/demo-0.1.1.tar.gz")],
+                        Version.parse("0.1.1"): [
+                            lambda: Link(f"{url}/demo-0.1.1.tar.gz")
+                        ],
                     },
                 ),
             },
