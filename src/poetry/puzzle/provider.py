@@ -645,9 +645,18 @@ class Provider:
                 active_extras = (
                     self._active_root_extras if package.is_root() else found_extras
                 )
-                deps = self._resolve_overlapping_markers(package, deps, active_extras)
+                deps = self._resolve_overlapping_markers(
+                    package,
+                    deps,
+                    active_extras,
+                    cover_leftover_marker_space=True,
+                )
             else:
-                # There are duplicates with different extras.
+                # Resolve overlaps within each subgroup of duplicates that share
+                # the same extras. The leftover marker space (where no dep in a
+                # subgroup is required) is covered by the sibling subgroups, so
+                # _resolve_overlapping_markers must not synthesise an
+                # empty-constraint dep for it (see #10447).
                 for complete_dep_name, deps_by_extra in duplicates_by_extras.items():
                     if len(deps_by_extra) > 1:
                         duplicates_by_extras[complete_dep_name] = (
@@ -952,6 +961,8 @@ class Provider:
         package: Package,
         dependencies: list[Dependency],
         active_extras: Collection[NormalizedName] | None,
+        *,
+        cover_leftover_marker_space: bool = False,
     ) -> list[Dependency]:
         """
         Convert duplicate dependencies with potentially overlapping markers
@@ -1009,6 +1020,10 @@ class Provider:
                 raise IncompatibleConstraintsError(package, *used_dependencies)
 
             if not any(uses):
+                if not cover_leftover_marker_space:
+                    # Caller is responsible for the leftover marker space.
+                    continue
+
                 # This is an edge case where the dependency is not required
                 # for the resulting marker. However, we have to consider it anyway
                 #  in order to not miss other dependencies later, for instance:
