@@ -15,7 +15,7 @@ from poetry.repositories.link_sources.base import make_absolute_url
 
 
 if TYPE_CHECKING:
-    from poetry.repositories.link_sources.base import LinkCache
+    from poetry.repositories.link_sources.base import LinkFactoryCache
 
 
 class SimpleJsonPage(LinkSource):
@@ -26,13 +26,13 @@ class SimpleJsonPage(LinkSource):
         self.content = content
 
     @cached_property
-    def _link_cache(self) -> LinkCache:
+    def _link_factory_cache(self) -> LinkFactoryCache:
         # Only the filename is needed to enumerate the available versions, so we
         # defer building the Link (and cleaning its URL) to _make_link, which is
         # only called when the version's links are actually retrieved. For large
         # projects this avoids constructing tens of thousands of Link objects
         # that are never used during resolution.
-        links: LinkCache = defaultdict(lambda: defaultdict(list))
+        links: LinkFactoryCache = defaultdict(lambda: defaultdict(list))
         for file in self.content["files"]:
             filename = file["filename"]
             if splitext(filename, is_filename=True)[1] not in self.SUPPORTED_FORMATS:

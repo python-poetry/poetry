@@ -4,6 +4,7 @@ import logging
 import re
 import urllib.parse
 
+from collections import defaultdict
 from functools import cached_property
 from typing import TYPE_CHECKING
 from typing import ClassVar
@@ -19,18 +20,22 @@ from poetry.utils.patterns import wheel_file_re
 
 
 if TYPE_CHECKING:
-    from collections import defaultdict
     from collections.abc import Callable
     from collections.abc import Iterator
 
     from packaging.utils import NormalizedName
     from poetry.core.packages.utils.link import Link
 
-    # The cache stores factories that build a Link on demand, so that Links are
+    # This cache stores factories that build a Link on demand, so that Links are
     # only constructed for the (few) versions actually retrieved rather than for
     # every file listed by the repository.
     LinkFactory = Callable[[], Link]
-    LinkCache = defaultdict[NormalizedName, defaultdict[Version, list[LinkFactory]]]
+    LinkFactoryCache = defaultdict[
+        NormalizedName, defaultdict[Version, list[LinkFactory]]
+    ]
+    # This cache stores link objects so that Links are only constructed once
+    # for versions that are retrieved multiple times.
+    LinkCache = defaultdict[NormalizedName, dict[Version, list[Link]]]
 
 
 logger = logging.getLogger(__name__)
@@ -63,13 +68,14 @@ class LinkSource:
 
     def __init__(self, url: str) -> None:
         self._url = url
+        self.__link_cache: LinkCache = defaultdict(dict)
 
     @property
     def url(self) -> str:
         return self._url
 
     def versions(self, name: NormalizedName) -> Iterator[Version]:
-        yield from self._link_cache[name]
+        yield from self._link_factory_cache[name]
 
     @property
     def packages(self) -> Iterator[Package]:
@@ -81,10 +87,9 @@ class LinkSource:
 
     @property
     def links(self) -> Iterator[Link]:
-        for links_per_version in self._link_cache.values():
-            for link_factories in links_per_version.values():
-                for make_link in link_factories:
-                    yield make_link()
+        for name, versions in self._link_factory_cache.items():
+            for version in versions:
+                yield from self.links_for_version(name, version)
 
     @classmethod
     def _link_package_name_and_version(
@@ -138,8 +143,13 @@ class LinkSource:
     def links_for_version(
         self, name: NormalizedName, version: Version
     ) -> Iterator[Link]:
-        for make_link in self._link_cache[name][version]:
-            yield make_link()
+        if links := self.__link_cache[name].get(version):
+            yield from links
+        else:
+            self.__link_cache[name][version] = [
+                make_link() for make_link in self._link_factory_cache[name][version]
+            ]
+            yield from self.__link_cache[name][version]
 
     def clean_link(self, url: str) -> str:
         """Makes sure a link is fully encoded.  That is, if a ' ' shows up in
@@ -162,8 +172,13 @@ class LinkSource:
         return True
 
     @cached_property
-    def _link_cache(self) -> LinkCache:
-        raise NotImplementedError()
+    def _link_factory_cache(self) -> LinkFactoryCache:
+        """ATTENTION:
+        The factories should only be called in links_for_version
+        so that the __link_cache, which avoids calling the same factory twice,
+        is populated.
+        """
+        raise NotImplementedError
 
 
 class SimpleRepositoryRootPage:
