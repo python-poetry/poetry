@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import collections
 import functools
+import itertools
 import time
 
 from enum import IntEnum
@@ -12,6 +13,7 @@ from poetry.core.packages.dependency import Dependency
 from poetry.mixology.failure import SolveFailureError
 from poetry.mixology.incompatibility import Incompatibility
 from poetry.mixology.incompatibility_cause import ConflictCauseError
+from poetry.mixology.incompatibility_cause import DependencyCauseError
 from poetry.mixology.incompatibility_cause import NoVersionsCauseError
 from poetry.mixology.incompatibility_cause import RootCauseError
 from poetry.mixology.partial_solution import PartialSolution
@@ -22,13 +24,26 @@ from poetry.packages import PackageCollection
 
 
 if TYPE_CHECKING:
+    from poetry.core.packages.package import Package
     from poetry.core.packages.project_package import ProjectPackage
+    from poetry.core.version.markers import BaseMarker
 
     from poetry.packages import DependencyPackage
     from poetry.puzzle.provider import Provider
 
 
 _conflict = object()
+
+
+def _effective_marker(dependency: Dependency) -> BaseMarker:
+    """
+    The marker describing when a dependency actually applies: its own marker
+    intersected with the marker of the package that required it (a dependency is
+    only reached when its requiring package applies).
+    """
+    return dependency.transitive_marker.without_extras().intersect(
+        dependency.marker.without_extras()
+    )
 
 
 class Preference(IntEnum):
@@ -445,7 +460,75 @@ class VersionSolver:
             self._log(f'! which is caused by "{most_recent_satisfier.cause}"')
             self._log(f"! thus: {incompatibility}")
 
+        overrides = self._recover_from_marker_conflict(incompatibility)
+        if overrides is not None:
+            # Local import to avoid a circular import with poetry.puzzle.
+            from poetry.puzzle.exceptions import OverrideNeededError
+
+            raise OverrideNeededError(*overrides)
+
         raise SolveFailureError(incompatibility)
+
+    def _recover_from_marker_conflict(
+        self, incompatibility: Incompatibility
+    ) -> tuple[dict[Package, dict[str, Dependency]], ...] | None:
+        """
+        Inspect a resolution failure and attempt to recover from it.
+
+        The resolver may fail because a package is required at two incompatible
+        versions even though the two requirements apply under mutually exclusive
+        markers (e.g. one only on Windows, the other only on Linux). Such
+        requirements never actually conflict, but the resolver ignores markers
+        when comparing versions and so reports a conflict (see #5506).
+
+        This typically arises when the requirements come from different packages:
+        the provider only reconciles conflicting requirements that originate from
+        the *same* package, so this case is missed.
+
+        On finding such a pair, return overrides for two further resolution runs,
+        each restricted to one side of the markers so that only one of the
+        requirements applies per run. Otherwise return ``None``.
+
+        This runs only after a resolution has already failed, so it adds no
+        overhead to a resolution that succeeds.
+        """
+        # Collect the requirements behind the failure. Each is recorded as a pair
+        # of terms ``[Term(depending package, True), Term(required package,
+        # False)]``; the negative term is the requirement, and its marker says
+        # when it applies.
+        requirements: dict[str, list[Dependency]] = collections.defaultdict(list)
+        for incompat in incompatibility.external_incompatibilities:
+            if not isinstance(incompat.cause, DependencyCauseError):
+                continue
+            for term in incompat.terms:
+                if not term.is_positive():
+                    requirements[term.dependency.name].append(term.dependency)
+
+        # The markers of the current run: any marker at the top level, or one side
+        # of an earlier split when nested.
+        current_markers = self._provider._overrides_marker_intersection
+        for deps in requirements.values():
+            for dep1, dep2 in itertools.combinations(deps, 2):
+                # Compatible versions are not a real conflict.
+                if not dep1.constraint.intersect(dep2.constraint).is_empty():
+                    continue
+
+                # Where each requirement applies within the current run.
+                world1 = _effective_marker(dep1).intersect(current_markers)
+                world2 = _effective_marker(dep2).intersect(current_markers)
+
+                # Act only if both requirements apply somewhere in this run but
+                # never together. Splitting on ``world1`` then separates them. Both
+                # worlds are non-empty and disjoint, so each run is a strict subset
+                # of the current one: resolution makes progress and terminates.
+                if world1.is_empty() or world2.is_empty():
+                    continue
+                if not world1.intersect(world2).is_empty():
+                    continue
+
+                return self._provider.marker_split_overrides(world1)
+
+        return None
 
     def _get_comp_key(self, dependency: Dependency) -> CompKey:
         """
