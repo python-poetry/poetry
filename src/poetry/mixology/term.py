@@ -8,6 +8,8 @@ from poetry.mixology.set_relation import SetRelation
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from poetry.core.constraints.version import VersionConstraint
     from poetry.core.packages.dependency import Dependency
 
@@ -23,8 +25,15 @@ class Term:
     def __init__(self, dependency: Dependency, is_positive: bool) -> None:
         self._dependency = dependency
         self._positive = is_positive
-        self.relation = functools.lru_cache(maxsize=None)(self._relation)
-        self.intersect = functools.lru_cache(maxsize=None)(self._intersect)
+
+    # The caches are created lazily because most terms never need them.
+    @functools.cached_property
+    def relation(self) -> Callable[[Term], str]:
+        return functools.lru_cache(maxsize=None)(self._relation)
+
+    @functools.cached_property
+    def intersect(self) -> Callable[[Term], Term | None]:
+        return functools.lru_cache(maxsize=None)(self._intersect)
 
     @property
     def inverse(self) -> Term:
