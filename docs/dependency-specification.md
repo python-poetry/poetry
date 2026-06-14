@@ -586,7 +586,9 @@ shorthands for the most common environment markers:
   For example, `python = "^3.9"` is equivalent to the marker
   `python_version >= "3.9" and python_version < "4.0"`.
 - `platform` is an exact match on `sys_platform`. For example, `platform = "darwin"` is
-  equivalent to the marker `sys_platform == "darwin"`.
+  equivalent to the marker `sys_platform == "darwin"`. The value is the raw
+  [`sys.platform`](https://docs.python.org/3/library/sys.html#sys.platform) string
+  (commonly `darwin`, `win32`, or `linux`), not a friendly name like `macOS`.
 
 ```toml
 [tool.poetry.dependencies]
