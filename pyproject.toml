@@ -1,10 +1,10 @@
 [project]
 name = "poetry"
-version = "2.4.1"
+version = "2.5.0.dev0"
 description = "Python dependency management and packaging made easy."
 requires-python = ">=3.10,<4.0"
 dependencies = [
-    "poetry-core (==2.4.0)",
+    "poetry-core @ git+https://github.com/python-poetry/poetry-core.git",
     "build (>=1.2.1,<2.0.0)",
     "cachecontrol[filecache] (>=0.14.0,<0.15.0)",
     "cleo (>=2.1.0,<3.0.0)",

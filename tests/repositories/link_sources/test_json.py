@@ -29,10 +29,11 @@ def test_attributes() -> None:
     content = {
         "files": [
             # minimal
-            {"url": "https://example.org/demo-0.1.whl"},
+            {"url": "https://example.org/demo-0.1.whl", "filename": "demo-0.1.whl"},
             # all (with non-default values)
             {
                 "url": "https://example.org/demo-0.1.tar.gz",
+                "filename": "demo-0.1.tar.gz",
                 "requires-python": ">=3.6",
                 "yanked": True,
                 "hashes": {"sha256": "abcd1234"},
@@ -79,8 +80,16 @@ def test_yanked(
 ) -> None:
     content = {
         "files": [
-            {"url": "https://example.org/demo-0.1.tar.gz", "yanked": yanked[0]},
-            {"url": "https://example.org/demo-0.1.whl", "yanked": yanked[1]},
+            {
+                "url": "https://example.org/demo-0.1.tar.gz",
+                "filename": "demo-0.1.tar.gz",
+                "yanked": yanked[0],
+            },
+            {
+                "url": "https://example.org/demo-0.1.whl",
+                "filename": "demo-0.1.whl",
+                "yanked": yanked[1],
+            },
         ]
     }
     if yanked[0] is None:
@@ -158,7 +167,15 @@ def test_metadata(
     expected_has_metadata: bool,
     expected_metadata_hashes: dict[str, str],
 ) -> None:
-    content = {"files": [{"url": "https://example.org/demo-0.1.whl", **metadata}]}
+    content = {
+        "files": [
+            {
+                "url": "https://example.org/demo-0.1.whl",
+                "filename": "demo-0.1.whl",
+                **metadata,
+            }
+        ]
+    }
     page = SimpleJsonPage("https://example.org", content)
 
     link = next(page.links)
@@ -182,6 +199,8 @@ def test_metadata(
     ),
 )
 def test_base_url(url: str, repo_url: str, expected: str) -> None:
-    page = SimpleJsonPage(repo_url, {"files": [{"url": url}]})
+    page = SimpleJsonPage(
+        repo_url, {"files": [{"url": url, "filename": url.rpartition("/")[-1]}]}
+    )
     link = next(iter(page.links))
     assert link.url == expected
