@@ -11,10 +11,12 @@ from typing import ClassVar
 
 from cleo.helpers import option
 from packaging.utils import canonicalize_name
+from tomlkit import array
 from tomlkit import inline_table
 
 from poetry.console.commands.command import Command
 from poetry.console.commands.env_command import EnvCommand
+from poetry.core.utils.patterns import AUTHOR_REGEX
 from poetry.utils.dependency_specification import RequirementsParser
 from poetry.utils.env.python import Python
 
@@ -39,7 +41,13 @@ class InitCommand(Command):
     options: ClassVar[list[Option]] = [
         option("name", None, "Name of the package.", flag=False),
         option("description", None, "Description of the package.", flag=False),
-        option("author", None, "Author name of the package.", flag=False),
+        option(
+            "author",
+            None,
+            "Author name of the package.",
+            flag=False,
+            multiple=True,
+        ),
         option("python", None, "Compatible Python versions.", flag=False),
         option(
             "dependency",
@@ -148,21 +156,31 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         if not description and is_interactive:
             description = self.ask(self.create_question("Description []: ", default=""))
 
-        author = self.option("author")
-        if not author and vcs_config.get("user.name"):
-            author = vcs_config["user.name"]
-            author_email = vcs_config.get("user.email")
-            if author_email:
-                author += f" <{author_email}>"
-
-        if is_interactive:
-            question = self.create_question(
-                f"Author [<comment>{author}</comment>, n to skip]: ", default=author
+        authors = [
+            author
+            for author in (
+                self._validate_author(author, "") for author in self.option("author")
             )
-            question.set_validator(lambda v: self._validate_author(v, author))
-            author = self.ask(question)
+            if author
+        ]
 
-        authors = [author] if author else []
+        if not authors:
+            author = None
+            if vcs_config.get("user.name"):
+                author = vcs_config["user.name"]
+                author_email = vcs_config.get("user.email")
+                if author_email:
+                    author += f" <{author_email}>"
+
+            if is_interactive:
+                question = self.create_question(
+                    f"Author [<comment>{author}</comment>, n to skip]: ",
+                    default=author,
+                )
+                question.set_validator(lambda v: self._validate_author(v, author))
+                author = self.ask(question)
+
+            authors = [author] if author else []
 
         license_name = self.option("license")
         if not license_name and is_interactive:
@@ -253,6 +271,11 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             layout_.create(project_path, with_pyproject=False)
 
         content = layout_.generate_project_content(project_path)
+        if len(authors) > 1:
+            content["project"]["authors"] = array().multiline(True)
+            for author in authors:
+                content["project"]["authors"].append(self._format_author(author))
+
         for section, item in content.items():
             pyproject.data.append(section, item)
 
@@ -498,7 +521,6 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
     @staticmethod
     def _validate_author(author: str, default: str) -> str | None:
         from poetry.core.utils.helpers import combine_unicode
-        from poetry.core.utils.patterns import AUTHOR_REGEX
 
         author = combine_unicode(author or default)
 
@@ -513,6 +535,19 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             )
 
         return author
+
+    @staticmethod
+    def _format_author(author: str) -> dict[str, str]:
+        m = AUTHOR_REGEX.match(author)
+        if m is None:
+            # This should not happen because author has been validated before.
+            raise ValueError(f"Invalid author: {author}")
+
+        formatted_author = {"name": m.group("name")}
+        if email := m.group("email"):
+            formatted_author["email"] = email
+
+        return formatted_author
 
     @staticmethod
     def _validate_package(package: str | None) -> str | None:
