@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
-from typing import cast
 
 from cleo.helpers import option
 from packaging.utils import canonicalize_name
@@ -157,18 +156,28 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         if not description and is_interactive:
             description = self.ask(self.create_question("Description []: ", default=""))
 
-        option_authors = cast("list[str]", self.option("author") or [])
-        authors = [
+        raw_option_authors = self.option("author")
+        if raw_option_authors is None:
+            option_authors: list[str] = []
+        elif isinstance(raw_option_authors, str):
+            option_authors = [raw_option_authors]
+        else:
+            option_authors = list(raw_option_authors)
+
+        option_authors = [
             author
             for author in (
                 self._validate_author(author, "") for author in option_authors
             )
             if author
         ]
+        authors: list[str] = []
 
-        if not authors:
-            author = None
-            if vcs_config.get("user.name"):
+        if len(option_authors) > 1 or (option_authors and not is_interactive):
+            authors = option_authors
+        else:
+            author = option_authors[0] if option_authors else None
+            if not author and vcs_config.get("user.name"):
                 author = vcs_config["user.name"]
                 author_email = vcs_config.get("user.email")
                 if author_email:
