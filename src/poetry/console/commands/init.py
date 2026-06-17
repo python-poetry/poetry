@@ -12,12 +12,12 @@ from typing import cast
 
 from cleo.helpers import option
 from packaging.utils import canonicalize_name
+from poetry.core.utils.patterns import AUTHOR_REGEX
 from tomlkit import array
 from tomlkit import inline_table
 
 from poetry.console.commands.command import Command
 from poetry.console.commands.env_command import EnvCommand
-from poetry.core.utils.patterns import AUTHOR_REGEX
 from poetry.utils.dependency_specification import RequirementsParser
 from poetry.utils.env.python import Python
 
