@@ -1011,7 +1011,7 @@ poetry self show
 * `--addons`: List only add-on packages installed.
 * `--tree`: List the dependencies as a tree.
 * `--latest (-l)`: Show the latest version.
-* `--outdated (-o)`: Show the latest version but only for packages that are outdated.
+* `--outdated (-o)`: Show the latest and constraint-compatible versions for outdated packages.
 * `--format (-f)`: Specify the output format (`json` or `text`). Default is `text`. `json` cannot be combined with the `--tree` option.
 
 ### self show plugins
@@ -1096,7 +1096,7 @@ required by
 * `--only`: The only dependency groups to include.
 * `--tree`: List the dependencies as a tree.
 * `--latest (-l)`: Show the latest version.
-* `--outdated (-o)`: Show the latest version but only for packages that are outdated.
+* `--outdated (-o)`: Show the latest and constraint-compatible versions for outdated packages.
 * `--all (-a)`: Show all packages (even those not compatible with current system).
 * `--top-level (-T)`: Only show explicitly defined packages.
 * `--no-truncate`: Do not truncate the output based on the terminal width.
