@@ -310,7 +310,16 @@ lists all packages available."""
         latest_statuses = {}
         installed_repo = InstalledRepository.load(self.env)
         requires = root.all_requires
-        package_groups = self._package_groups(root) if show_groups else {}
+        package_groups: dict[NormalizedName, list[NormalizedName]] = {}
+        default_groups = ""
+        formatted_groups: dict[NormalizedName, str] = {}
+        if show_groups:
+            package_groups = self._package_groups(root)
+            default_groups = self._format_groups([])
+            formatted_groups = {
+                package_name: self._format_groups(groups)
+                for package_name, groups in package_groups.items()
+            }
 
         # Computing widths
         for locked in locked_packages:
@@ -365,9 +374,7 @@ lists all packages available."""
                     if show_groups:
                         groups_length = max(
                             groups_length,
-                            len(
-                                self._format_groups(package_groups.get(locked.name, []))
-                            ),
+                            len(formatted_groups.get(locked.name, default_groups)),
                         )
             else:
                 name_length = max(name_length, current_length)
@@ -389,7 +396,7 @@ lists all packages available."""
                 if show_groups:
                     groups_length = max(
                         groups_length,
-                        len(self._format_groups(package_groups.get(locked.name, []))),
+                        len(formatted_groups.get(locked.name, default_groups)),
                     )
 
         if self.option("format") == OutputFormats.JSON:
@@ -504,7 +511,7 @@ lists all packages available."""
                 line += f" <b>{version:{version_length}}</b>"
 
             if write_groups:
-                groups = self._format_groups(package_groups.get(locked.name, []))
+                groups = formatted_groups.get(locked.name, default_groups)
                 line += f" {groups:{groups_length}}"
 
             if show_latest:
@@ -556,7 +563,7 @@ lists all packages available."""
     def _package_groups(
         self, root: ProjectPackage
     ) -> dict[NormalizedName, list[NormalizedName]]:
-        active_groups = set(root._dependency_groups)
+        active_groups = root.dependency_group_names(include_optional=True)
         lock_data = self.poetry.locker.lock_data
 
         if (
@@ -571,7 +578,8 @@ lists all packages available."""
             }
 
         package_groups: dict[NormalizedName, set[NormalizedName]] = {}
-        for group_name, group in root._dependency_groups.items():
+        for group_name in root.dependency_group_names(include_optional=True):
+            group = root.dependency_group(group_name)
             for dependency in group.dependencies_for_locking:
                 package_groups.setdefault(dependency.name, set()).add(group_name)
 
