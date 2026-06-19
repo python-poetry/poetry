@@ -5,6 +5,7 @@ import os
 import platform
 import sys
 
+from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -33,6 +34,20 @@ if TYPE_CHECKING:
 class WheelDestination(SchemeDictionaryDestination):
     """ """
 
+    @cached_property
+    def _abspath_scheme_cache(self) -> dict[Scheme, str]:
+        return {}
+
+    def _abspath_scheme_dir(self, scheme: Scheme) -> str:
+        # The scheme directory is fixed per destination, so normalize it once
+        # and cache it instead of recomputing os.path.abspath() for every
+        # written file.
+        cache = self._abspath_scheme_cache
+        target_dir = cache.get(scheme)
+        if target_dir is None:
+            target_dir = cache[scheme] = os.path.abspath(self.scheme_dict[scheme])
+        return target_dir
+
     def write_to_fs(
         self,
         scheme: Scheme,
@@ -55,15 +70,26 @@ class WheelDestination(SchemeDictionaryDestination):
         #
         # We want to avoid Path.resolve() because it is significantly slower
         # than os.path.abspath()!
-        target_dir = Path(os.path.abspath(self.scheme_dict[scheme]))
-        target_path = Path(os.path.abspath(target_dir / path))
+        #
+        # We operate on plain strings and only build a Path at the end because
+        # this method is called once per file in the wheel: pathlib operations
+        # (especially Path.is_relative_to(), which materializes Path.parents)
+        # add up to a significant overhead during installation.
+        target_dir = self._abspath_scheme_dir(scheme)
+        target_path_str = os.path.abspath(os.path.join(target_dir, path))
 
-        if not target_path.is_relative_to(target_dir):
+        # We do not need os.path.normcase() for this comparison
+        # because both paths are built from target_dir.
+        if target_path_str != target_dir and not target_path_str.startswith(
+            target_dir + os.sep
+        ):
             raise ValueError(
                 f"Attempting to write {path} outside of the target directory\n"
                 f"Target directory: {target_dir}\n"
-                f"Target path: {target_path}"
+                f"Target path: {target_path_str}"
             )
+
+        target_path = Path(target_path_str)
 
         if target_path.exists():
             # Contrary to the base library we don't raise an error here since it can
