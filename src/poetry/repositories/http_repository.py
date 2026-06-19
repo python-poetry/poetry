@@ -76,7 +76,8 @@ class HTTPRepository(CachedRepository):
             pool_size=pool_size,
         )
         self._authenticator.add_repository(name, url)
-        self.get_page = functools.lru_cache(maxsize=None)(self._get_page)
+        self.get_page = functools.cache(self._get_page)
+        self._find_packages = functools.cache(self._find_packages_uncached)  # type: ignore[method-assign]
 
         self._lazy_wheel = config.get("solver.lazy-wheel", True)
         self._max_retries = config.get("requests.max-retries", 0)
@@ -178,7 +179,7 @@ class HTTPRepository(CachedRepository):
                 return True
         return False
 
-    def _find_packages(
+    def _find_packages_uncached(
         self, name: NormalizedName, constraint: VersionConstraint
     ) -> list[Package]:
         """
