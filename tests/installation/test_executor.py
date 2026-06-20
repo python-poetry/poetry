@@ -166,6 +166,13 @@ def pool(pypi_repository: PyPiRepository) -> RepositoryPool:
 
 
 @pytest.fixture
+def executor(
+    env: MockEnv, pool: RepositoryPool, config: Config, io: BufferedIO
+) -> Executor:
+    return Executor(env, pool, config, io)
+
+
+@pytest.fixture
 def copy_wheel(tmp_path: Path, fixture_dir: FixtureDirGetter) -> Callable[[], Path]:
     def _copy_wheel() -> Path:
         tmp_name = tempfile.mktemp()
@@ -950,15 +957,12 @@ def test_executor_should_write_pep610_url_references_for_directories(
 
 
 def test_executor_should_create_pep610_url_reference_for_relative_directory(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, executor: Executor
 ) -> None:
     source = tmp_path / "source"
     source.mkdir()
-    monkeypatch.chdir(tmp_path)
 
     package = Package("demo", "0.1.2", source_type="directory", source_url="source")
-
-    executor = object.__new__(Executor)
 
     assert executor._create_directory_url_reference(package) == {
         "dir_info": {},
@@ -967,16 +971,12 @@ def test_executor_should_create_pep610_url_reference_for_relative_directory(
 
 
 def test_executor_should_create_pep610_url_reference_for_relative_file(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, executor: Executor
 ) -> None:
     source = tmp_path / "source.tar.gz"
     source.write_bytes(b"archive")
-    monkeypatch.chdir(tmp_path)
 
     package = Package("demo", "0.1.2", source_type="file", source_url="source.tar.gz")
-
-    executor = object.__new__(Executor)
-    executor._hashes = {}
 
     assert executor._create_file_url_reference(package) == {
         "archive_info": {},
