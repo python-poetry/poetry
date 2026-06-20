@@ -154,7 +154,15 @@ class Application(BaseApplication):
 
         definition.add_option(
             Option(
-                "--no-cache", flag=True, description="Disables Poetry source caches."
+                "--no-cache",
+                flag=True,
+                description=(
+                    "Disables the use of Poetry's caches (cached package metadata and"
+                    " dist files from configured package sources) for the duration of"
+                    " the command, forcing Poetry to behave as if it had a cold cache."
+                    " This does not delete the caches; use `poetry cache clear`"
+                    " to remove cached data."
+                ),
             )
         )
 
