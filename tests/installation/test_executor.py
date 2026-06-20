@@ -166,6 +166,13 @@ def pool(pypi_repository: PyPiRepository) -> RepositoryPool:
 
 
 @pytest.fixture
+def executor(
+    env: MockEnv, pool: RepositoryPool, config: Config, io: BufferedIO
+) -> Executor:
+    return Executor(env, pool, config, io)
+
+
+@pytest.fixture
 def copy_wheel(tmp_path: Path, fixture_dir: FixtureDirGetter) -> Callable[[], Path]:
     def _copy_wheel() -> Path:
         tmp_name = tempfile.mktemp()
@@ -947,6 +954,34 @@ def test_executor_should_write_pep610_url_references_for_directories(
         tmp_venv, package, {"dir_info": {}, "url": url.as_uri()}
     )
     assert not prepare_spy.spy_return.exists(), "archive not cleaned up"
+
+
+def test_executor_should_create_pep610_url_reference_for_relative_directory(
+    tmp_path: Path, executor: Executor
+) -> None:
+    source = tmp_path / "source"
+    source.mkdir()
+
+    package = Package("demo", "0.1.2", source_type="directory", source_url="source")
+
+    assert executor._create_directory_url_reference(package) == {
+        "dir_info": {},
+        "url": source.as_uri(),
+    }
+
+
+def test_executor_should_create_pep610_url_reference_for_relative_file(
+    tmp_path: Path, executor: Executor
+) -> None:
+    source = tmp_path / "source.tar.gz"
+    source.write_bytes(b"archive")
+
+    package = Package("demo", "0.1.2", source_type="file", source_url="source.tar.gz")
+
+    assert executor._create_file_url_reference(package) == {
+        "archive_info": {},
+        "url": source.as_uri(),
+    }
 
 
 def test_executor_should_write_pep610_url_references_for_editable_directories(
