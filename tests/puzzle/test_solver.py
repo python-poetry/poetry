@@ -2063,6 +2063,289 @@ def test_solver_duplicate_dependencies_sub_dependencies(
     )
 
 
+def test_solver_duplicate_dependencies_conditional_sibling_with_transitive_conflict(
+    solver: Solver, repo: Repository, package: ProjectPackage
+) -> None:
+    """
+    Regression test for https://github.com/python-poetry/poetry/issues/5506.
+
+    The root depends on A and on B with two mutually exclusive markers
+    selecting different versions of B. A itself transitively forces a
+    specific version of B. On the override branch where A's marker does
+    not apply, A must be ignored - otherwise A's transitive constraint
+    on B spuriously conflicts with the overridden version of B.
+    """
+    package.add_dependency(
+        Factory.create_dependency(
+            "A", {"version": "1.0", "markers": "sys_platform != 'darwin'"}
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency(
+            "B", {"version": "1.0", "markers": "sys_platform != 'darwin'"}
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency(
+            "B", {"version": "2.0", "markers": "sys_platform == 'darwin'"}
+        )
+    )
+
+    package_a = get_package("A", "1.0")
+    package_a.add_dependency(Factory.create_dependency("B", "1.0"))
+
+    package_b10 = get_package("B", "1.0")
+    package_b20 = get_package("B", "2.0")
+
+    repo.add_package(package_a)
+    repo.add_package(package_b10)
+    repo.add_package(package_b20)
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": package_b10},
+            {"job": "install", "package": package_a},
+            {"job": "install", "package": package_b20},
+        ],
+    )
+
+
+def test_solver_conditional_sibling_with_transitive_conflict_single_constraint(
+    solver: Solver, repo: Repository, package: ProjectPackage
+) -> None:
+    """
+    Regression test for https://github.com/python-poetry/poetry/issues/5506.
+
+    Unlike the multi-constraint variant above, B is required by the root with
+    only a single constraint guarded by a marker. The conflicting requirement
+    for B is contributed transitively by A, whose marker is disjoint with B's.
+    Since B is not a duplicate in the root's own requirements, no override is
+    triggered for it directly: the root must instead be split on A's marker so
+    that A (and its transitive dependency on B 1.0) is dropped in the marker
+    world where the root pins B 2.0.
+    """
+    package.add_dependency(
+        Factory.create_dependency(
+            "A", {"version": "1.0", "markers": "sys_platform != 'darwin'"}
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency(
+            "B", {"version": "2.0", "markers": "sys_platform == 'darwin'"}
+        )
+    )
+
+    package_a = get_package("A", "1.0")
+    package_a.add_dependency(Factory.create_dependency("B", "1.0"))
+
+    package_b10 = get_package("B", "1.0")
+    package_b20 = get_package("B", "2.0")
+
+    repo.add_package(package_a)
+    repo.add_package(package_b10)
+    repo.add_package(package_b20)
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": package_b10},
+            {"job": "install", "package": package_a},
+            {"job": "install", "package": package_b20},
+        ],
+    )
+
+    solved_packages = transaction.get_solved_packages()
+    assert solved_packages[package_a].markers[MAIN_GROUP] == parse_marker(
+        "sys_platform != 'darwin'"
+    )
+    assert solved_packages[package_b10].markers[MAIN_GROUP] == parse_marker(
+        "sys_platform != 'darwin'"
+    )
+    assert solved_packages[package_b20].markers[MAIN_GROUP] == parse_marker(
+        "sys_platform == 'darwin'"
+    )
+
+
+def test_solver_conditional_transitive_conflict_without_root_requirement(
+    solver: Solver, repo: Repository, package: ProjectPackage
+) -> None:
+    """
+    Regression test for https://github.com/python-poetry/poetry/issues/5506.
+
+    Neither clashing requirement on B comes from the root. The root depends on C
+    and D under mutually exclusive markers, and C and D each require a different,
+    incompatible version of B. The two requirements on B come from different
+    packages, so the provider never pairs them up; but as they never apply
+    together, resolution should still succeed by handling each marker case
+    separately rather than reporting a conflict.
+    """
+    package.add_dependency(
+        Factory.create_dependency(
+            "C", {"version": "1.0", "markers": "sys_platform != 'darwin'"}
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency(
+            "D", {"version": "1.0", "markers": "sys_platform == 'darwin'"}
+        )
+    )
+
+    package_c = get_package("C", "1.0")
+    package_c.add_dependency(Factory.create_dependency("B", "1.0"))
+    package_d = get_package("D", "1.0")
+    package_d.add_dependency(Factory.create_dependency("B", "2.0"))
+
+    package_b10 = get_package("B", "1.0")
+    package_b20 = get_package("B", "2.0")
+
+    repo.add_package(package_c)
+    repo.add_package(package_d)
+    repo.add_package(package_b10)
+    repo.add_package(package_b20)
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": package_b10},
+            {"job": "install", "package": package_b20},
+            {"job": "install", "package": package_c},
+            {"job": "install", "package": package_d},
+        ],
+    )
+
+    solved_packages = transaction.get_solved_packages()
+    assert solved_packages[package_c].markers[MAIN_GROUP] == parse_marker(
+        "sys_platform != 'darwin'"
+    )
+    assert solved_packages[package_d].markers[MAIN_GROUP] == parse_marker(
+        "sys_platform == 'darwin'"
+    )
+    assert solved_packages[package_b10].markers[MAIN_GROUP] == parse_marker(
+        "sys_platform != 'darwin'"
+    )
+    assert solved_packages[package_b20].markers[MAIN_GROUP] == parse_marker(
+        "sys_platform == 'darwin'"
+    )
+
+
+def test_solver_conditional_transitive_conflict_nested_independent_splits(
+    solver: Solver, repo: Repository, package: ProjectPackage
+) -> None:
+    """
+    Regression test for https://github.com/python-poetry/poetry/issues/5506.
+
+    Two independent version conflicts: one on B (distinguished only by
+    ``sys_platform``) and one on F (distinguished only by ``python_version``).
+    Resolving the first requires splitting on ``sys_platform``; the second
+    conflict then surfaces within each side and requires a further split on
+    ``python_version``. Each package must end up with exactly its own marker, with
+    no marker from the other conflict mixed in.
+    """
+    package.add_dependency(
+        Factory.create_dependency(
+            "C", {"version": "1.0", "markers": "sys_platform != 'darwin'"}
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency(
+            "D", {"version": "1.0", "markers": "sys_platform == 'darwin'"}
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency(
+            "E", {"version": "1.0", "markers": "python_version < '3.9'"}
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency(
+            "G", {"version": "1.0", "markers": "python_version >= '3.9'"}
+        )
+    )
+
+    package_c = get_package("C", "1.0")
+    package_c.add_dependency(Factory.create_dependency("B", "1.0"))
+    package_d = get_package("D", "1.0")
+    package_d.add_dependency(Factory.create_dependency("B", "2.0"))
+    package_e = get_package("E", "1.0")
+    package_e.add_dependency(Factory.create_dependency("F", "1.0"))
+    package_g = get_package("G", "1.0")
+    package_g.add_dependency(Factory.create_dependency("F", "2.0"))
+
+    package_b10 = get_package("B", "1.0")
+    package_b20 = get_package("B", "2.0")
+    package_f10 = get_package("F", "1.0")
+    package_f20 = get_package("F", "2.0")
+
+    for pkg in (
+        package_c,
+        package_d,
+        package_e,
+        package_g,
+        package_b10,
+        package_b20,
+        package_f10,
+        package_f20,
+    ):
+        repo.add_package(pkg)
+
+    transaction = solver.solve()
+
+    solved_packages = transaction.get_solved_packages()
+    assert solved_packages[package_b10].markers[MAIN_GROUP] == parse_marker(
+        "sys_platform != 'darwin'"
+    )
+    assert solved_packages[package_b20].markers[MAIN_GROUP] == parse_marker(
+        "sys_platform == 'darwin'"
+    )
+    assert solved_packages[package_f10].markers[MAIN_GROUP] == parse_marker(
+        "python_version < '3.9'"
+    )
+    assert solved_packages[package_f20].markers[MAIN_GROUP] == parse_marker(
+        "python_version >= '3.9'"
+    )
+
+
+def test_solver_conditional_transitive_conflict_overlapping_markers_still_fails(
+    solver: Solver, repo: Repository, package: ProjectPackage
+) -> None:
+    """
+    The #5506 recovery must only apply when the clashing requirements are never
+    active together. Here C and D apply under markers that can both be true at
+    once, so their incompatible requirements on B are a genuine conflict and
+    resolution must still fail.
+    """
+    package.add_dependency(
+        Factory.create_dependency(
+            "C", {"version": "1.0", "markers": "sys_platform != 'darwin'"}
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency(
+            "D", {"version": "1.0", "markers": "python_version >= '3.9'"}
+        )
+    )
+
+    package_c = get_package("C", "1.0")
+    package_c.add_dependency(Factory.create_dependency("B", "1.0"))
+    package_d = get_package("D", "1.0")
+    package_d.add_dependency(Factory.create_dependency("B", "2.0"))
+
+    repo.add_package(package_c)
+    repo.add_package(package_d)
+    repo.add_package(get_package("B", "1.0"))
+    repo.add_package(get_package("B", "2.0"))
+
+    with pytest.raises(SolverProblemError):
+        solver.solve()
+
+
 def test_solver_duplicate_dependencies_with_overlapping_markers_simple(
     solver: Solver, repo: Repository, package: ProjectPackage
 ) -> None:

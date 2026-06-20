@@ -17,6 +17,8 @@ from cleo.ui.progress_indicator import ProgressIndicator
 from poetry.core.constraints.version import EmptyConstraint
 from poetry.core.constraints.version import Version
 from poetry.core.constraints.version import VersionRange
+from poetry.core.packages.dependency import Dependency
+from poetry.core.packages.package import Package
 from poetry.core.packages.utils.utils import get_python_constraint_from_marker
 from poetry.core.version.markers import AnyMarker
 from poetry.core.version.markers import parse_marker
@@ -44,10 +46,8 @@ if TYPE_CHECKING:
     from cleo.io.io import IO
     from packaging.utils import NormalizedName
     from poetry.core.constraints.version import VersionConstraint
-    from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.directory_dependency import DirectoryDependency
     from poetry.core.packages.file_dependency import FileDependency
-    from poetry.core.packages.package import Package
     from poetry.core.packages.package import PackageFile
     from poetry.core.packages.url_dependency import URLDependency
     from poetry.core.packages.vcs_dependency import VCSDependency
@@ -58,6 +58,21 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
+
+
+# A package is sometimes required at conflicting versions under markers that are
+# mutually exclusive (e.g. one requirement applies only on Windows and the other
+# only on Linux). These requirements do not really conflict, but the resolver
+# cannot tell. To resolve such a case we re-run resolution twice, each run
+# restricted to one side of the markers, so that only one requirement applies.
+#
+# A run's restriction is passed as an override carrying a marker. Overrides are
+# keyed by package, but this restriction belongs to no real package, so we key it
+# by this stand-in. Its name is not a valid package name and so cannot clash with
+# a real package. Only the override's marker is ever read; the stand-in itself is
+# never resolved or installed.
+MARKER_SPLIT = "|marker-split|"
+_MARKER_SPLIT_PACKAGE = Package(MARKER_SPLIT, "0")
 
 
 class IncompatibleConstraintsError(Exception):
@@ -172,6 +187,32 @@ class Provider:
                     dep.marker
                 )
         return overrides_marker_intersection
+
+    def marker_split_overrides(
+        self, marker: BaseMarker
+    ) -> tuple[dict[Package, dict[str, Dependency]], ...]:
+        """
+        Build the overrides for two resolution runs, one restricted to ``marker``
+        and one restricted to its complement (see MARKER_SPLIT).
+
+        The restriction is carried by a stand-in dependency under the stand-in
+        package. When already inside such a split, narrow the existing restriction
+        rather than adding another, so there is always exactly one.
+        """
+        overrides = []
+        for side in (marker, marker.invert()):
+            new_overrides = {
+                package: dict(package_overrides)
+                for package, package_overrides in self._overrides.items()
+            }
+            current = new_overrides.get(_MARKER_SPLIT_PACKAGE, {}).get(MARKER_SPLIT)
+            if current is not None:
+                side = current.marker.intersect(side)
+            stand_in = Dependency(MARKER_SPLIT, "*")
+            stand_in.marker = side
+            new_overrides[_MARKER_SPLIT_PACKAGE] = {MARKER_SPLIT: stand_in}
+            overrides.append(new_overrides)
+        return tuple(overrides)
 
     @functools.cached_property
     def _python_constraint(self) -> VersionConstraint:
@@ -553,6 +594,13 @@ class Provider:
                 continue
 
             if dep.name in self.UNSAFE_PACKAGES:
+                continue
+
+            # When this run is restricted to a set of markers (see MARKER_SPLIT),
+            # skip any dependency that cannot apply within that set; otherwise its
+            # requirements would leak into a run where it never applies (see
+            # #5506).
+            if self._overrides_marker_intersection.intersect(dep.marker).is_empty():
                 continue
 
             if self._env:

@@ -14,8 +14,8 @@ from poetry.repositories.parsers.html_page_parser import HTMLPageParser
 
 
 if TYPE_CHECKING:
-    from poetry.repositories.link_sources.base import LinkCache
     from poetry.repositories.link_sources.base import LinkFactory
+    from poetry.repositories.link_sources.base import LinkFactoryCache
 
 
 def _const_factory(link: Link) -> LinkFactory:
@@ -33,8 +33,8 @@ class HTMLPage(LinkSource):
         self._base_url: str | None = parser.base_url
 
     @cached_property
-    def _link_cache(self) -> LinkCache:
-        links: LinkCache = defaultdict(lambda: defaultdict(list))
+    def _link_factory_cache(self) -> LinkFactoryCache:
+        links: LinkFactoryCache = defaultdict(lambda: defaultdict(list))
         base_url = self._base_url or self._url
         for anchor in self._parsed:
             if href := anchor.get("href"):

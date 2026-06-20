@@ -40,7 +40,7 @@ def link_source(mocker: MockerFixture) -> LinkSource:
     url = "https://example.org"
     link_source = LinkSource(url)
     mocker.patch(
-        f"{LinkSource.__module__}.{LinkSource.__qualname__}._link_cache",
+        f"{LinkSource.__module__}.{LinkSource.__qualname__}._link_factory_cache",
         new_callable=PropertyMock,
         return_value=defaultdict(
             lambda: defaultdict(list),
