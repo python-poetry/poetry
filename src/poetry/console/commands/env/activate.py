@@ -25,14 +25,12 @@ class EnvActivateCommand(EnvCommand):
     description = "Print the command to activate a virtual environment."
 
     def handle(self) -> int:
-        env = self.env
-
         try:
             shell, _ = shellingham.detect_shell()
         except shellingham.ShellDetectionFailure:
             shell = ""
 
-        if command := self._get_activate_command(env, shell):
+        if command := self._get_activate_command(self.env, shell):
             self.line(command)
             return 0
 

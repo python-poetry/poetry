@@ -19,8 +19,13 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
-    return command_tester_factory("env activate")
+def tester(
+    command_tester_factory: CommandTesterFactory, tmp_venv: VirtualEnv
+) -> CommandTester:
+    tester = command_tester_factory("env activate")
+    assert isinstance(tester.command, EnvActivateCommand)
+    tester.command.set_env(tmp_venv)
+    return tester
 
 
 @pytest.mark.parametrize(
@@ -44,8 +49,6 @@ def test_env_activate_prints_correct_script(
     ext: str,
 ) -> None:
     mocker.patch("shellingham.detect_shell", return_value=(shell, None))
-    assert isinstance(tester.command, EnvActivateCommand)
-    tester.command.set_env(tmp_venv)
 
     if WINDOWS and shell in {"csh", "tcsh"}:
         with pytest.raises(ShellNotSupportedError):
@@ -76,8 +79,6 @@ def test_env_activate_prints_correct_script_for_windows_shells(
     ext: str,
 ) -> None:
     mocker.patch("shellingham.detect_shell", return_value=(shell, None))
-    assert isinstance(tester.command, EnvActivateCommand)
-    tester.command.set_env(tmp_venv)
 
     tester.execute()
 
@@ -113,8 +114,6 @@ def test_env_activate_uses_configured_environment(
         "poetry.utils.env.EnvManager.get",
         side_effect=AssertionError("env activate should use the configured env"),
     )
-    assert isinstance(tester.command, EnvActivateCommand)
-    tester.command.set_env(tmp_venv)
 
     tester.execute()
 
