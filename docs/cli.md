@@ -955,7 +955,7 @@ The `self install` command ensures all additional packages specified are install
 runtime environment.
 
 {{% note %}}
-The `self install` command works similar to the [`install` command](#install).
+The `self install` command works similarly to the [`install` command](#install).
 However, it is different in that the packages managed are for Poetry's runtime environment.
 {{% /note %}}
 
@@ -1029,7 +1029,7 @@ The `self sync` command ensures all additional (and no other) packages specified
 are installed in the current runtime environment.
 
 {{% note %}}
-The `self sync` command works similar to the [`sync` command](#sync).
+The `self sync` command works similarly to the [`sync` command](#sync).
 However, it is different in that the packages managed are for Poetry's runtime environment.
 {{% /note %}}
 
@@ -1043,7 +1043,8 @@ poetry self sync
 
 ### self update
 
-The `self update` command updates Poetry version in its current runtime environment.
+The `self update` command updates the Poetry version and its dependencies
+in its current runtime environment.
 
 {{% note %}}
 The `self update` command works exactly like the [`update` command](#update).
