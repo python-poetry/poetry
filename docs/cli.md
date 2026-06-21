@@ -898,9 +898,8 @@ and this [discussion](https://discuss.python.org/t/fastly-interfering-with-pypi-
 The `self` namespace groups subcommands to manage the Poetry installation itself.
 
 {{% note %}}
-Use of these commands will create the required `pyproject.toml` and `poetry.lock` files in your
-[configuration directory]({{< relref "configuration#config-directory" >}}). The `pyproject.toml`
-file is the system project used by `poetry self` commands.
+Use of these commands will create the required `pyproject.toml` and `poetry.lock` files
+for Poetry's runtime environment in your [configuration directory]({{< relref "configuration" >}}).
 {{% /note %}}
 
 {{% warning %}}
@@ -917,8 +916,8 @@ also be used to upgrade Poetry's own dependencies or inject additional packages 
 environment
 
 {{% note %}}
-The `self add` command works exactly like the [`add` command](#add). However, is different in that the packages
-managed are for Poetry's runtime environment.
+The `self add` command works exactly like the [`add` command](#add).
+However, it is different in that the packages managed are for Poetry's runtime environment.
 
 The package specification formats supported by the `self add` command are the same as the ones supported
 by the [`add` command](#add).
@@ -956,8 +955,8 @@ The `self install` command ensures all additional packages specified are install
 runtime environment.
 
 {{% note %}}
-The `self install` command works similar to the [`install` command](#install). However,
-it is different in that the packages managed are for Poetry's runtime environment.
+The `self install` command works similar to the [`install` command](#install).
+However, it is different in that the packages managed are for Poetry's runtime environment.
 {{% /note %}}
 
 ```bash
@@ -971,12 +970,9 @@ poetry self install
 
 ### self lock
 
-The `self lock` command reads this Poetry installation's system `pyproject.toml` file. The system
-dependencies are locked in the corresponding `poetry.lock` file.
-
-The system `pyproject.toml` file is stored as `pyproject.toml` in Poetry's
-[configuration directory]({{< relref "configuration#config-directory" >}}). Poetry creates it
-when a `self` command needs it, for example `self lock`, `self add`, or `self update`.
+The `self lock` command reads this Poetry installation's `pyproject.toml` file
+located in the [configuration directory]({{< relref "configuration" >}}).
+Poetry's own dependencies are locked in the corresponding `poetry.lock` file.
 
 ```bash
 poetry self lock
@@ -1033,8 +1029,8 @@ The `self sync` command ensures all additional (and no other) packages specified
 are installed in the current runtime environment.
 
 {{% note %}}
-The `self sync` command works similar to the [`sync` command](#sync). However,
-it is different in that the packages managed are for Poetry's runtime environment.
+The `self sync` command works similar to the [`sync` command](#sync).
+However, it is different in that the packages managed are for Poetry's runtime environment.
 {{% /note %}}
 
 ```bash
@@ -1050,20 +1046,22 @@ poetry self sync
 The `self update` command updates Poetry version in its current runtime environment.
 
 {{% note %}}
-The `self update` command works exactly like the [`update` command](#update). However,
-is different in that the packages managed are for Poetry's runtime environment.
+The `self update` command works exactly like the [`update` command](#update).
+However, it is different in that the packages managed are for Poetry's runtime environment.
 {{% /note %}}
-
-`self update` uses the package sources configured for Poetry's system project. To update Poetry
-from a custom package source, add a `[[tool.poetry.source]]` entry to the system `pyproject.toml`
-in Poetry's [configuration directory]({{< relref "configuration#config-directory" >}}) using the
-same format as [Package Sources]({{< relref "repositories/#package-sources" >}}). Sources configured
-in the current project's `pyproject.toml` do not affect `self update`. Poetry preserves existing
-`tool.poetry.source` entries when it regenerates this file.
 
 ```bash
 poetry self update
 ```
+
+{{% note %}}
+`self update` uses the package sources configured in Poetry's own `pyproject.toml` file,
+which is located in the [configuration directory]({{< relref "configuration" >}}).
+To update Poetry from a custom package source, add a `tool.poetry.source` entry using
+the format described in [Package Sources]({{< relref "repositories/#package-sources" >}}).
+Sources configured in the current project's `pyproject.toml` do not affect `self update`.
+Poetry preserves existing `tool.poetry.source` entries when it regenerates this file.
+{{% /note %}}
 
 #### Options
 
