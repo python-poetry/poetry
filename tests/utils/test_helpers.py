@@ -18,11 +18,13 @@ from requests.exceptions import ChunkedEncodingError
 from poetry.utils._compat import WINDOWS
 from poetry.utils.helpers import Downloader
 from poetry.utils.helpers import HTTPRangeRequestSupportedError
+from poetry.utils.helpers import directory
 from poetry.utils.helpers import download_file
 from poetry.utils.helpers import ensure_path
 from poetry.utils.helpers import extractall
 from poetry.utils.helpers import get_file_hash
 from poetry.utils.helpers import get_highest_priority_hash_type
+from poetry.utils.helpers import merge_dicts
 
 
 if TYPE_CHECKING:
@@ -31,6 +33,46 @@ if TYPE_CHECKING:
     from tests.conftest import Config
     from tests.types import FixtureDirGetter
     from tests.types import HttpResponse
+
+
+def test_directory_restores_working_directory(tmp_path: Path) -> None:
+    cwd = Path.cwd()
+
+    with directory(tmp_path):
+        assert Path.cwd() == tmp_path
+
+    assert Path.cwd() == cwd
+
+
+def test_directory_restores_working_directory_after_error(tmp_path: Path) -> None:
+    cwd = Path.cwd()
+
+    with pytest.raises(RuntimeError), directory(tmp_path):
+        assert Path.cwd() == tmp_path
+        raise RuntimeError("expected failure")
+
+    assert Path.cwd() == cwd
+
+
+def test_merge_dicts_merges_nested_mappings() -> None:
+    config = {
+        "installer": {"parallel": True, "max-workers": 4},
+        "virtualenvs": {"create": True},
+    }
+
+    merge_dicts(
+        config,
+        {
+            "installer": {"max-workers": 8},
+            "repositories": {"foo": {"url": "https://foo.example/simple/"}},
+        },
+    )
+
+    assert config == {
+        "installer": {"parallel": True, "max-workers": 8},
+        "virtualenvs": {"create": True},
+        "repositories": {"foo": {"url": "https://foo.example/simple/"}},
+    }
 
 
 def test_default_hash(fixture_dir: FixtureDirGetter) -> None:
@@ -98,6 +140,20 @@ def test_download_file(
     expect_sha_256 = "9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad"
     assert get_file_hash(dest) == expect_sha_256
     assert http.calls[-1].request.headers["Accept-Encoding"] == "Identity"
+
+
+def test_downloader_with_invalid_content_length(
+    http: responses.RequestsMock, tmp_path: Path
+) -> None:
+    url = "https://foo.com/demo.txt"
+    http.get(url, body=b"demo", headers={"Content-Length": "invalid"})
+    dest = tmp_path / "demo.txt"
+
+    downloader = Downloader(url, dest)
+
+    assert downloader.total_size == 0
+    assert list(downloader.download_with_progress(chunk_size=2)) == [2, 4]
+    assert dest.read_bytes() == b"demo"
 
 
 def test_download_file_recover_from_error(
