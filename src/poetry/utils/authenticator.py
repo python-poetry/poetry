@@ -316,24 +316,22 @@ class Authenticator:
     ) -> HTTPAuthCredential:
         repository = self.get_repository_config_for_url(url, exact_match)
 
-        credential = (
-            self._get_credentials_for_repository(repository=repository)
-            if repository is not None
-            else HTTPAuthCredential()
+        if repository is not None:
+            # _get_credentials_for_repository() already consults the password manager
+            # - by repository name, and (as a keyring fallback) by the repository url
+            # and netloc. Asking the password manager again here would only add
+            # a keyring lookup for the full request url, which is never a meaningful
+            # service name, while repeating the netloc lookup that was just performed.
+            return self._get_credentials_for_repository(repository=repository)
+
+        # No configured repository matches: fall back to a keyring lookup by
+        # the request url and netloc.
+        parsed_url = urllib.parse.urlsplit(url)
+        credential = self._password_manager.get_credential(url, parsed_url.netloc)
+
+        return HTTPAuthCredential(
+            username=credential.username, password=credential.password
         )
-
-        if credential.password is None:
-            parsed_url = urllib.parse.urlsplit(url)
-            netloc = parsed_url.netloc
-            credential = self._password_manager.get_credential(
-                url, netloc, username=credential.username
-            )
-
-            return HTTPAuthCredential(
-                username=credential.username, password=credential.password
-            )
-
-        return credential
 
     def get_credentials_for_git_url(self, url: str) -> HTTPAuthCredential:
         parsed_url = urllib.parse.urlsplit(url)
