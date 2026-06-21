@@ -35,6 +35,46 @@ if TYPE_CHECKING:
     from tests.types import HttpResponse
 
 
+def test_directory_restores_working_directory(tmp_path: Path) -> None:
+    cwd = Path.cwd()
+
+    with directory(tmp_path):
+        assert Path.cwd() == tmp_path
+
+    assert Path.cwd() == cwd
+
+
+def test_directory_restores_working_directory_after_error(tmp_path: Path) -> None:
+    cwd = Path.cwd()
+
+    with pytest.raises(RuntimeError), directory(tmp_path):
+        assert Path.cwd() == tmp_path
+        raise RuntimeError("expected failure")
+
+    assert Path.cwd() == cwd
+
+
+def test_merge_dicts_merges_nested_mappings() -> None:
+    config = {
+        "installer": {"parallel": True, "max-workers": 4},
+        "virtualenvs": {"create": True},
+    }
+
+    merge_dicts(
+        config,
+        {
+            "installer": {"max-workers": 8},
+            "repositories": {"foo": {"url": "https://foo.example/simple/"}},
+        },
+    )
+
+    assert config == {
+        "installer": {"parallel": True, "max-workers": 8},
+        "virtualenvs": {"create": True},
+        "repositories": {"foo": {"url": "https://foo.example/simple/"}},
+    }
+
+
 def test_default_hash(fixture_dir: FixtureDirGetter) -> None:
     sha_256 = "9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad"
     assert get_file_hash(fixture_dir("distributions") / "demo-0.1.0.tar.gz") == sha_256
@@ -305,37 +345,6 @@ def test_ensure_path_directory(tmp_path: Path) -> None:
 
     path.mkdir()
     assert ensure_path(path=path, is_directory=True) is path
-
-
-def test_directory_restores_working_directory_after_error(tmp_path: Path) -> None:
-    cwd = Path.cwd()
-
-    with pytest.raises(RuntimeError), directory(tmp_path):
-        assert Path.cwd() == tmp_path
-        raise RuntimeError("expected failure")
-
-    assert Path.cwd() == cwd
-
-
-def test_merge_dicts_merges_nested_mappings() -> None:
-    config = {
-        "installer": {"parallel": True, "max-workers": 4},
-        "virtualenvs": {"create": True},
-    }
-
-    merge_dicts(
-        config,
-        {
-            "installer": {"max-workers": 8},
-            "repositories": {"foo": {"url": "https://foo.example/simple/"}},
-        },
-    )
-
-    assert config == {
-        "installer": {"parallel": True, "max-workers": 8},
-        "virtualenvs": {"create": True},
-        "repositories": {"foo": {"url": "https://foo.example/simple/"}},
-    }
 
 
 @pytest.mark.parametrize("relative", [False, True])
