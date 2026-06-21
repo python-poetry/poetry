@@ -421,6 +421,14 @@ class EnvManager:
                     python.patch_version.to_string(),
                 )
 
+            if create_venv is False:
+                raise InvalidCurrentPythonVersionError(
+                    self._poetry.package.python_versions,
+                    python.patch_version.to_string(),
+                    "Poetry cannot switch to a compatible Python version because "
+                    "virtualenv creation is disabled.",
+                )
+
             self._io.write_error_line(
                 f"<warning>The currently activated Python version {python.patch_version.to_string()} is not"
                 f" supported by the project ({self._poetry.package.python_versions}).\n"
