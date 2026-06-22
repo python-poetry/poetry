@@ -181,6 +181,18 @@ def test_sync_option_is_passed_to_the_installer(
         assert error == ""
 
 
+def test_no_active_option_is_accepted(
+    tester: CommandTester, mocker: MockerFixture
+) -> None:
+    """
+    The --no-active option is accepted by install and sync.
+    """
+    assert isinstance(tester.command, InstallerCommand)
+    mocker.patch.object(tester.command.installer, "run", return_value=0)
+
+    assert tester.execute("--no-root --no-active") == 0
+
+
 @pytest.mark.parametrize("compile", [False, True])
 def test_compile_option_is_passed_to_the_installer(
     tester: CommandTester, mocker: MockerFixture, compile: bool
