@@ -1012,6 +1012,26 @@ some-package = { setuptools = "<78" }
 The syntax for specifying constraints is the same as for specifying dependencies
 in the `tool.poetry` section.
 
+### config
+
+The `solver.min-release-age`, `solver.min-release-age-exclude`,
+and `solver.min-release-age-exclude-source` options can be configured
+directly in your `pyproject.toml`:
+
+```toml
+[tool.poetry.config]
+solver.min-release-age = 7
+solver.min-release-age-exclude = ["my-package", "other-package"]
+solver.min-release-age-exclude-source = ["private-repo"]
+```
+
+These values override the equivalent settings in
+[project-local]({{< relref "configuration#project-local-configuration" >}})
+and [global configuration]({{< relref "configuration#global-configuration" >}}),
+but can still be overridden by environment variables.
+
+For details, see the [configuration documentation]({{< relref "configuration" >}}).
+
 ## Poetry and PEP-517
 
 [PEP-517](https://www.python.org/dev/peps/pep-0517/) introduces a standard way
