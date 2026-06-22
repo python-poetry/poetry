@@ -233,10 +233,12 @@ My Package
 
     baz_script = f"""\
 #!{tmp_venv.python}
+# -*- coding: utf-8 -*-
+import re
 import sys
 from bar import baz
-
-if __name__ == '__main__':
+if __name__ == "__main__":
+    sys.argv[0] = re.sub(r"(-script\\.pyw|\\.exe)?$", "", sys.argv[0])
     sys.exit(baz.boom.bim())
 """
 
@@ -244,10 +246,12 @@ if __name__ == '__main__':
 
     foo_script = f"""\
 #!{tmp_venv.python}
+# -*- coding: utf-8 -*-
+import re
 import sys
 from foo import bar
-
-if __name__ == '__main__':
+if __name__ == "__main__":
+    sys.argv[0] = re.sub(r"(-script\\.pyw|\\.exe)?$", "", sys.argv[0])
     sys.exit(bar())
 """
 
@@ -255,14 +259,51 @@ if __name__ == '__main__':
 
     fox_script = f"""\
 #!{tmp_venv.python}
+# -*- coding: utf-8 -*-
+import re
 import sys
 from fuz.foo import bar
-
-if __name__ == '__main__':
+if __name__ == "__main__":
+    sys.argv[0] = re.sub(r"(-script\\.pyw|\\.exe)?$", "", sys.argv[0])
     sys.exit(bar.baz())
 """
 
     assert tmp_venv._bin_dir.joinpath("fox").read_text(encoding="utf-8") == fox_script
+
+
+def test_builder_generates_scripts_with_escaped_shebang_when_spaces_in_path(
+    simple_poetry: Poetry,
+    tmp_path: Path,
+    fixture_dir: FixtureDirGetter,
+) -> None:
+    simple_poetry = Factory().create_poetry(fixture_dir("simple_project"))
+    env_manager = EnvManager(simple_poetry)
+    venv_path = tmp_path / "path with space" / "venv"
+    env_manager.build_venv(venv_path)
+    tmp_venv = VirtualEnv(venv_path)
+
+    builder = EditableBuilder(simple_poetry, tmp_venv, NullIO())
+
+    builder.build()
+
+    assert tmp_venv._bin_dir.joinpath("baz").exists()
+
+    expected_shebang = f"""/bin/sh
+'''exec' '{tmp_path}/path with space/venv/bin/python' "$0" "$@"
+' '''"""
+
+    baz_script = f"""\
+#!{expected_shebang}
+# -*- coding: utf-8 -*-
+import re
+import sys
+from bar import baz
+if __name__ == "__main__":
+    sys.argv[0] = re.sub(r"(-script\\.pyw|\\.exe)?$", "", sys.argv[0])
+    sys.exit(baz.boom.bim())
+"""
+
+    assert baz_script == tmp_venv._bin_dir.joinpath("baz").read_text(encoding="utf-8")
 
 
 def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
