@@ -8,7 +8,7 @@ from poetry.repositories.repository_pool import Priority
 
 
 if TYPE_CHECKING:
-    from tomlkit.items import Table
+    from tomlrt import Table
 
 
 @dataclasses.dataclass(order=True, eq=True)
@@ -34,11 +34,6 @@ class Source:
         )
 
     def to_toml_table(self) -> Table:
-        from tomlkit import nl
-        from tomlkit import table
+        from tomlrt import Table
 
-        source_table: Table = table()
-        for key, value in self.to_dict().items():
-            source_table.add(key, value)
-        source_table.add(nl())
-        return source_table
+        return Table.section(self.to_dict())
