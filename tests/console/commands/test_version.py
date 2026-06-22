@@ -130,5 +130,8 @@ def test_dry_run(tester: CommandTester) -> None:
     tester.execute("--dry-run major")
 
     new_pyproject = tester.command.poetry.file.path.read_text(encoding="utf-8")
-    assert tester.io.fetch_output() == "Bumping version from 1.2.3 to 2.0.0\n"
+    assert (
+        tester.io.fetch_output()
+        == "Running in DRY RUN mode\nBumping version from 1.2.3 to 2.0.0\n"
+    )
     assert old_pyproject == new_pyproject
