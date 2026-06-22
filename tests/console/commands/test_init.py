@@ -17,6 +17,7 @@ from poetry.core.utils.helpers import module_name
 from poetry.console.application import Application
 from poetry.console.commands.init import InitCommand
 from poetry.repositories import RepositoryPool
+from poetry.toml import TOMLFile
 from tests.helpers import get_package
 
 
@@ -877,6 +878,24 @@ dev = [
 
     output = tester.io.fetch_output()
     assert expected in output
+
+
+def test_noninteractive_multiple_authors(
+    tester: CommandTester, source_dir: Path
+) -> None:
+    tester.execute(
+        "--name my-package "
+        "--author 'Foo Bar <foo@example.com>' "
+        "--author 'Baz Qux <baz@example.com>'",
+        interactive=False,
+    )
+
+    pyproject_file = source_dir / "pyproject.toml"
+    authors = TOMLFile(pyproject_file).read()["project"]["authors"]
+    assert [dict(author) for author in authors] == [
+        {"name": "Foo Bar", "email": "foo@example.com"},
+        {"name": "Baz Qux", "email": "baz@example.com"},
+    ]
 
 
 def test_add_package_with_extras_and_whitespace(tester: CommandTester) -> None:

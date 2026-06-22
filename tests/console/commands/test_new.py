@@ -10,6 +10,7 @@ import pytest
 from poetry.core.utils.helpers import module_name
 
 from poetry.factory import Factory
+from poetry.toml import TOMLFile
 
 
 if TYPE_CHECKING:
@@ -197,6 +198,23 @@ def test_command_new_with_readme(
 
     assert "readme" in project_section
     assert project_section["readme"] == readme_file.name
+
+
+def test_command_new_multiple_authors(tester: CommandTester, tmp_path: Path) -> None:
+    path = tmp_path / "package"
+
+    tester.execute(
+        "--author 'Foo Bar <foo@example.com>' "
+        "--author 'Baz Qux <baz@example.com>' "
+        f"{path.as_posix()}"
+    )
+
+    pyproject_file = path / "pyproject.toml"
+    authors = TOMLFile(pyproject_file).read()["project"]["authors"]
+    assert [dict(author) for author in authors] == [
+        {"name": "Foo Bar", "email": "foo@example.com"},
+        {"name": "Baz Qux", "email": "baz@example.com"},
+    ]
 
 
 @pytest.mark.parametrize(
