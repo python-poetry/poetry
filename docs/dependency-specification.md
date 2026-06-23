@@ -577,6 +577,41 @@ pathlib2 = { version = "^2.2", markers = "python_version <= '3.4' or sys_platfor
 {{< /tab >}}
 {{< /tabs >}}
 
+### `python` and `platform` shorthands
+
+In the `[tool.poetry.dependencies]` form, Poetry accepts two convenience keys that are
+shorthands for the most common environment markers:
+
+- `python` is a [version constraint](#version-constraints) on `python_version`.
+  For example, `python = "^3.9"` is equivalent to the marker
+  `python_version >= "3.9" and python_version < "4.0"`.
+- `platform` is an exact match on `sys_platform`. For example, `platform = "darwin"` is
+  equivalent to the marker `sys_platform == "darwin"`. The value is the raw
+  [`sys.platform`](https://docs.python.org/3/library/sys.html#sys.platform) string
+  (commonly `darwin`, `win32`, or `linux`), not a friendly name like `macOS`.
+
+```toml
+[tool.poetry.dependencies]
+# Only installed on Python 3.9+ running on macOS
+numpy = { version = "^1.26", python = "^3.9", platform = "darwin" }
+```
+
+These keys are not deprecated; they are simply a shorter way of writing the corresponding
+markers. When you combine them with an explicit `markers` value, all of the conditions are
+joined together with `and`:
+
+```toml
+[tool.poetry.dependencies]
+numpy = { version = "^1.26", python = "^3.9", markers = "platform_machine == 'arm64'" }
+# resolves to:
+# python_version >= "3.9" and python_version < "4.0" and platform_machine == "arm64"
+```
+
+The `python` and `platform` shorthands are only available in the legacy
+`[tool.poetry.dependencies]` table. In the PEP 621 `[project]` table, write the same
+conditions inline as PEP 508 markers instead, e.g.
+`"numpy (>=1.26) ; python_version >= '3.9' and sys_platform == 'darwin'"`.
+
 ### `extra` environment marker
 
 Poetry populates the `extra` marker with each of the selected extras of the root package.
