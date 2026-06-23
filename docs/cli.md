@@ -1371,8 +1371,21 @@ The option `--next-phase` allows the increment of prerelease phase versions.
 | prerelease --next-phase | 1.0.3b0  | 1.0.3rc0 |
 | prerelease --next-phase | 1.0.3rc0 | 1.0.3    |
 
+The option `--dev` creates or bumps development release versions for bump rules.
+
+| rule                           | before        | after         |
+|--------------------------------|---------------|---------------|
+| major --dev                    | 1.1.0         | 2.0.0.dev0    |
+| major --dev                    | 2.0.0.dev0    | 2.0.0.dev1    |
+| major                          | 2.0.0.dev1    | 2.0.0         |
+| prerelease --dev               | 1.1.0         | 1.1.1a0.dev0  |
+| prerelease --dev               | 1.1.1a0.dev0  | 1.1.1a0.dev1  |
+| prerelease                     | 1.1.1a0.dev1  | 1.1.1a0       |
+| prerelease --next-phase --dev  | 1.1.0a2.dev1  | 1.1.0b0.dev0  |
+
 #### Options
 
+* `--dev`: Create or bump a development release for a bump rule.
 * `--next-phase`: Increment the phase of the current version.
 * `--short (-s)`: Output the version number only.
 * `--dry-run`: Do not update pyproject.toml file.
