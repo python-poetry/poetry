@@ -972,6 +972,33 @@ dependencies = [
     )
 
 
+def test_init_non_interactive_with_multiple_authors(
+    tester: CommandTester, source_dir: Path
+) -> None:
+    tester.execute(
+        "--author 'Alice Example <alice@example.com>' "
+        "--author 'Bob Example <bob@example.com>' "
+        "--name 'my-package' "
+        "--python '>=3.12'",
+        interactive=False,
+    )
+
+    expected = """\
+[project]
+name = "my-package"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Alice Example",email = "alice@example.com"},
+    {name = "Bob Example",email = "bob@example.com"},
+]
+requires-python = ">=3.12"
+dependencies = [
+]
+"""
+    assert expected in (source_dir / "pyproject.toml").read_text(encoding="utf-8")
+
+
 def test_init_existing_pyproject_with_build_system_fails(
     tester: CommandTester, source_dir: Path, init_basic_inputs: str
 ) -> None:
