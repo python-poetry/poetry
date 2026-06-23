@@ -36,9 +36,11 @@ if __name__ == '__main__':
     sys.exit({callable_}())
 """
 
-WINDOWS_CMD_TEMPLATE = """\
-@echo off\r\n"{python}" "%~dp0\\{script}" %*\r\n
-"""
+# The .cmd wrapper is written as UTF-8. Switch cmd.exe to UTF-8 before it
+# parses paths so non-ASCII virtualenv locations are handled correctly.
+WINDOWS_CMD_TEMPLATE = (
+    '@echo off\r\nchcp 65001 >nul\r\n"{python}" "%~dp0\\{script}" %*\r\n'
+)
 
 
 class EditableBuilder(Builder):
@@ -206,7 +208,7 @@ class EditableBuilder(Builder):
                     f" <b>{scripts_path}</b>"
                 )
 
-                with cmd_script.open("w", encoding="utf-8") as f:
+                with cmd_script.open("w", encoding="utf-8", newline="") as f:
                     f.write(decode(cmd))
 
                 added.append(cmd_script)
