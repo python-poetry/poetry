@@ -126,11 +126,11 @@ jobs:
       matrix:
         os:
           - name: Ubuntu
-            image: ubuntu-22.04
+            image: ubuntu-24.04
           - name: Windows
-            image: windows-2022
+            image: windows-2025
           - name: macOS aarch64
-            image: macos-14
+            image: macos-15
         python-version:
           - "3.10"
           - "3.11"
