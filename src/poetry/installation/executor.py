@@ -21,6 +21,7 @@ from poetry.installation.chooser import Chooser
 from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
 from poetry.installation.operations import Update
+from poetry.installation.uninstaller import uninstall_distribution
 from poetry.installation.wheel_installer import WheelInstaller
 from poetry.puzzle.exceptions import SolverProblemError
 from poetry.utils._compat import decode
@@ -78,6 +79,9 @@ class Executor:
         self._verbose = False
         self._wheel_installer = WheelInstaller(self._env)
         self._build_constraints = build_constraints or {}
+        self._use_builtin_uninstall: bool = config.get(
+            "installer.builtin-uninstall", False
+        )
 
         if parallel is None:
             parallel = config.get("installer.parallel", True)
@@ -605,11 +609,12 @@ class Executor:
 
         try:
             if operation.job_type == "update":
-                # Uninstall first
-                # TODO: Make an uninstaller and find a way to rollback in case
-                # the new package can't be installed
+                # Uninstall the old version first. If this fails, the install is
+                # aborted so the new version is not installed over the old one.
                 assert isinstance(operation, Update)
-                self._remove(operation.initial_package)
+                result_code = self._remove(operation.initial_package)
+                if result_code != 0:
+                    return result_code
 
             self._wheel_installer.install(archive)
         finally:
@@ -627,6 +632,14 @@ class Executor:
             src_dir = self._env.path / "src" / package.name
             if src_dir.exists():
                 remove_directory(src_dir, force=True)
+
+        if self._use_builtin_uninstall:
+            # The builtin uninstaller removes the files directly and raises if a
+            # file cannot be removed. uninstall_distribution returns None when
+            # there is nothing to uninstall (not installed, outside env, in
+            # stdlib, missing RECORD); treat that as a successful no-op.
+            uninstall_distribution(self._env, package.name)
+            return 0
 
         try:
             return self.run_pip("uninstall", package.name, "-y")

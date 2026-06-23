@@ -307,6 +307,21 @@ values, usage instructions and warnings.
 
 Use parallel execution when using the new (`>=1.1.0`) installer.
 
+### `installer.builtin-uninstall`
+
+**Type**: `boolean`
+
+**Default**: `false`
+
+**Environment Variable**: `POETRY_INSTALLER_BUILTIN_UNINSTALL`
+
+*Introduced in 2.5.0*
+
+If set to `true`, Poetry uninstalls packages using its own built-in routine instead of
+invoking `pip uninstall` as a subprocess. This avoids the overhead of spawning pip.
+Behavior is otherwise equivalent: confirmation is automatic, and files outside the
+target environment's prefix are never removed.
+
 ### `installer.build-config-settings.<package-name>`
 
 **Type**: `Serialised JSON with string or list of string properties`

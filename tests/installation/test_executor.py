@@ -1995,3 +1995,272 @@ def test_executor_no_supported_hash_types(
     assert return_code == 1, f"\noutput: {output}\nerror: {error}\n"
     assert "No usable hash type(s) for demo" in output
     assert "hash_blah:1234567890abcdefghijklmnopqrstyzwxyz" in output
+
+
+def test_executor_remove_uses_run_pip_by_default(
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    env: MockEnv,
+) -> None:
+    executor = Executor(env, pool, config, io)
+    package = Package("attrs", "17.4.0")
+
+    assert executor._remove(package) == 0
+    assert len(env.executed) == 1
+    assert env.executed[0][-3:] == ["uninstall", "attrs", "-y"]
+
+
+def test_executor_remove_uses_builtin_when_enabled(
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    env: MockEnv,
+    mocker: MockerFixture,
+) -> None:
+    config.merge({"installer": {"builtin-uninstall": True}})
+    fake_pathset = mocker.MagicMock()
+    uninstall_mock = mocker.patch(
+        "poetry.installation.executor.uninstall_distribution",
+        return_value=fake_pathset,
+    )
+
+    executor = Executor(env, pool, config, io)
+    package = Package("attrs", "17.4.0")
+
+    assert executor._remove(package) == 0
+    assert env.executed == []
+    uninstall_mock.assert_called_once_with(env, "attrs")
+
+
+def test_executor_remove_builtin_skips_when_not_installed(
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    env: MockEnv,
+    mocker: MockerFixture,
+) -> None:
+    config.merge({"installer": {"builtin-uninstall": True}})
+    mocker.patch(
+        "poetry.installation.executor.uninstall_distribution",
+        return_value=None,
+    )
+
+    executor = Executor(env, pool, config, io)
+    package = Package("ghost", "1.0.0")
+
+    assert executor._remove(package) == 0
+    assert env.executed == []
+
+
+def test_executor_remove_builtin_end_to_end_removes_files(
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    env: MockEnv,
+) -> None:
+    # End-to-end: with the builtin uninstaller enabled, Executor._remove must
+    # actually delete an installed distribution's files from disk. Unlike the
+    # wiring tests above, uninstall_distribution is NOT mocked here.
+    config.merge({"installer": {"builtin-uninstall": True}})
+
+    purelib = Path(env.paths["purelib"])
+    purelib.mkdir(parents=True, exist_ok=True)
+
+    pkg_dir = purelib / "demo"
+    pkg_dir.mkdir()
+    init_py = pkg_dir / "__init__.py"
+    init_py.write_text("# demo\n", encoding="utf-8")
+
+    dist_info = purelib / "demo-1.0.0.dist-info"
+    dist_info.mkdir()
+    (dist_info / "METADATA").write_text(
+        "Metadata-Version: 2.1\nName: demo\nVersion: 1.0.0\n", encoding="utf-8"
+    )
+    with (dist_info / "RECORD").open("w", newline="", encoding="utf-8") as fh:
+        writer = csv.writer(fh)
+        writer.writerow(("demo/__init__.py", "", ""))
+        writer.writerow(("demo-1.0.0.dist-info/METADATA", "", ""))
+        writer.writerow(("demo-1.0.0.dist-info/RECORD", "", ""))
+
+    executor = Executor(env, pool, config, io)
+
+    assert executor._remove(Package("demo", "1.0.0")) == 0
+    # No pip subprocess was spawned ...
+    assert env.executed == []
+    # ... and the distribution's files (and .dist-info) are gone from disk.
+    assert not init_py.exists()
+    assert not pkg_dir.exists()
+    assert not dist_info.exists()
+
+
+def test_uninstall_builtin_failure_propagates(
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    env: MockEnv,
+    mocker: MockerFixture,
+) -> None:
+    # The builtin uninstaller raises when a file cannot be removed. On a
+    # standalone uninstall operation that error must propagate (so the operation
+    # is reported as Failed) rather than being swallowed into a success.
+    config.merge({"installer": {"builtin-uninstall": True}})
+    mocker.patch(
+        "poetry.installation.executor.uninstall_distribution",
+        side_effect=OSError("cannot remove file"),
+    )
+
+    executor = Executor(env, pool, config, io)
+    operation = Uninstall(Package("demo", "1.0.0"))
+
+    with pytest.raises(OSError, match="cannot remove file"):
+        executor._do_execute_operation(operation)
+
+    # No pip subprocess is involved on the builtin path.
+    assert env.executed == []
+
+
+def _make_update_op(tmp_path: Path) -> Update:
+    initial = Package(
+        "demo",
+        "1.0.0",
+        source_type="file",
+        source_url=str(tmp_path / "demo-1.0.0-py3-none-any.whl"),
+    )
+    target = Package(
+        "demo",
+        "2.0.0",
+        source_type="file",
+        source_url=str(tmp_path / "demo-2.0.0-py3-none-any.whl"),
+    )
+    return Update(initial, target)
+
+
+def test_update_uninstalls_then_installs_when_uninstall_succeeds(
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    env: MockEnv,
+    mocker: MockerFixture,
+    tmp_path: Path,
+) -> None:
+    config.merge({"installer": {"builtin-uninstall": True}})
+    uninstall_mock = mocker.patch(
+        "poetry.installation.executor.uninstall_distribution",
+        return_value=mocker.Mock(),
+    )
+    wheel_install = mocker.patch.object(WheelInstaller, "install")
+    fake_archive = tmp_path / "demo-2.0.0-py3-none-any.whl"
+    fake_archive.write_bytes(b"")
+    mocker.patch.object(Executor, "_prepare_archive", return_value=fake_archive)
+
+    executor = Executor(env, pool, config, io)
+    assert executor._install(_make_update_op(tmp_path)) == 0
+
+    # The old version is uninstalled and the new version is then installed.
+    uninstall_mock.assert_called_once_with(env, "demo")
+    wheel_install.assert_called_once()
+
+
+def test_update_continues_when_builtin_uninstall_returns_none(
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    env: MockEnv,
+    mocker: MockerFixture,
+    tmp_path: Path,
+) -> None:
+    config.merge({"installer": {"builtin-uninstall": True}})
+    uninstall_mock = mocker.patch(
+        "poetry.installation.executor.uninstall_distribution",
+        return_value=None,
+    )
+    wheel_install = mocker.patch.object(WheelInstaller, "install")
+    fake_archive = tmp_path / "demo-2.0.0-py3-none-any.whl"
+    fake_archive.write_bytes(b"")
+    mocker.patch.object(Executor, "_prepare_archive", return_value=fake_archive)
+
+    executor = Executor(env, pool, config, io)
+    assert executor._install(_make_update_op(tmp_path)) == 0
+
+    # A no-op builtin uninstall must not block installing the new wheel.
+    uninstall_mock.assert_called_once_with(env, "demo")
+    wheel_install.assert_called_once()
+    assert env.executed == []
+
+
+def test_update_aborts_install_when_builtin_uninstall_fails(
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    env: MockEnv,
+    mocker: MockerFixture,
+    tmp_path: Path,
+) -> None:
+    # The builtin uninstaller raises when a file cannot be removed. The update
+    # must be aborted so the new version is not installed over the old one.
+    config.merge({"installer": {"builtin-uninstall": True}})
+    mocker.patch(
+        "poetry.installation.executor.uninstall_distribution",
+        side_effect=OSError("cannot remove file"),
+    )
+    wheel_install = mocker.patch.object(WheelInstaller, "install")
+    fake_archive = tmp_path / "demo-2.0.0-py3-none-any.whl"
+    fake_archive.write_bytes(b"")
+    mocker.patch.object(Executor, "_prepare_archive", return_value=fake_archive)
+
+    executor = Executor(env, pool, config, io)
+    with pytest.raises(OSError, match="cannot remove file"):
+        executor._install(_make_update_op(tmp_path))
+
+    # The new version must not be installed over the old one.
+    wheel_install.assert_not_called()
+
+
+def test_update_propagates_pip_uninstall_interrupt(
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    env: MockEnv,
+    mocker: MockerFixture,
+    tmp_path: Path,
+) -> None:
+    # pip path; pip uninstall is interrupted (-2). _install must surface
+    # that code without attempting the subsequent wheel install.
+    mocker.patch.object(Executor, "run_pip", return_value=-2)
+    wheel_install = mocker.patch.object(WheelInstaller, "install")
+    fake_archive = tmp_path / "demo-2.0.0-py3-none-any.whl"
+    fake_archive.write_bytes(b"")
+    mocker.patch.object(Executor, "_prepare_archive", return_value=fake_archive)
+
+    executor = Executor(env, pool, config, io)
+    assert executor._install(_make_update_op(tmp_path)) == -2
+    wheel_install.assert_not_called()
+
+
+def test_update_install_failure_propagates_with_pip_path(
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    env: MockEnv,
+    mocker: MockerFixture,
+    tmp_path: Path,
+) -> None:
+    # Default config: builtin-uninstall is False, so the pip path is used and the
+    # builtin uninstaller is not involved. An install failure must still propagate.
+    uninstall_mock = mocker.patch("poetry.installation.executor.uninstall_distribution")
+    mocker.patch.object(
+        WheelInstaller, "install", side_effect=RuntimeError("install blew up")
+    )
+    fake_archive = tmp_path / "demo-2.0.0-py3-none-any.whl"
+    fake_archive.write_bytes(b"")
+    mocker.patch.object(Executor, "_prepare_archive", return_value=fake_archive)
+
+    executor = Executor(env, pool, config, io)
+    with pytest.raises(RuntimeError, match="install blew up"):
+        executor._install(_make_update_op(tmp_path))
+
+    # builtin uninstaller must not be involved on the pip path
+    uninstall_mock.assert_not_called()
+    # pip uninstall was invoked for the initial version
+    assert any(cmd[-3:] == ["uninstall", "demo", "-y"] for cmd in env.executed)
