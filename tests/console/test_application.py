@@ -73,6 +73,24 @@ def test_application_with_plugins_disabled(with_add_command_plugin: None) -> Non
     assert tester.status_code == 0
 
 
+@pytest.mark.parametrize("version_option", ["--version", "-V"])
+def test_application_version_does_not_load_plugins(
+    version_option: str, mocker: MockerFixture
+) -> None:
+    load_plugins = mocker.patch(
+        "poetry.plugins.plugin_manager.PluginManager.load_plugins"
+    )
+    activate = mocker.patch("poetry.plugins.plugin_manager.PluginManager.activate")
+    app = Application()
+
+    tester = ApplicationTester(app)
+    tester.execute(version_option)
+
+    assert "Poetry (version " in tester.io.fetch_output()
+    load_plugins.assert_not_called()
+    activate.assert_not_called()
+
+
 def test_application_execute_plugin_command(with_add_command_plugin: None) -> None:
     app = Application()
 
@@ -83,13 +101,14 @@ def test_application_execute_plugin_command(with_add_command_plugin: None) -> No
     assert tester.status_code == 0
 
 
+@pytest.mark.parametrize("command", ["foo --no-plugins", "foo -- --no-plugins"])
 def test_application_execute_plugin_command_with_plugins_disabled(
-    with_add_command_plugin: None,
+    command: str, with_add_command_plugin: None
 ) -> None:
     app = Application()
 
     tester = ApplicationTester(app)
-    tester.execute("foo --no-plugins")
+    tester.execute(command)
 
     assert tester.io.fetch_output() == ""
     assert "The requested command foo does not exist." in tester.io.fetch_error()

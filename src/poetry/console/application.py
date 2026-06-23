@@ -101,6 +101,8 @@ COMMANDS = [
     "source show",
 ]
 
+VERSION_OPTIONS = ["--version", "-V"]
+
 # these are special messages to override the default message when a command is not found
 # in cases where a previously existing command has been moved to a plugin or outright
 # removed for various reasons
@@ -634,7 +636,7 @@ class Application(BaseApplication):
 
         self._disable_plugins = io.input.has_parameter_option("--no-plugins")
 
-        if not self._disable_plugins:
+        if self._should_load_plugins(io):
             from poetry.plugins.application_plugin import ApplicationPlugin
             from poetry.plugins.plugin_manager import PluginManager
 
@@ -644,6 +646,11 @@ class Application(BaseApplication):
             manager.activate(self)
 
         self._plugins_loaded = True
+
+    def _should_load_plugins(self, io: IO) -> bool:
+        return not self._disable_plugins and not io.input.has_parameter_option(
+            VERSION_OPTIONS, only_params=True
+        )
 
 
 def main() -> int:
