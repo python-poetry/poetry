@@ -9,6 +9,7 @@ from subprocess import CalledProcessError
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import NamedTuple
 from typing import cast
 from typing import overload
