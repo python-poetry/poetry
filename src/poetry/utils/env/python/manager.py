@@ -85,16 +85,20 @@ class Python:
             raise ValueError("Either python or executable must be provided")
 
     @classmethod
+    def _is_valid_python(cls, python: findpython.PythonVersion) -> bool:
+        try:
+            _ = python.interpreter
+            return True
+        except (CalledProcessError, ValueError):
+            return False
+
+    @classmethod
     def find_all(cls) -> Iterator[Python]:
         venv_path: Path | None = (
             Path(venv) if (venv := os.environ.get("VIRTUAL_ENV")) else None
         )
         for python in findpython.find_all():
-            try:
-                # Ensure the python interpreter is valid and can be queried.
-                # Accessing interpreter property runs the check.
-                _ = python.interpreter
-            except (CalledProcessError, ValueError):
+            if not cls._is_valid_python(python):
                 continue
 
             if venv_path and is_relative_to(python.executable, venv_path):
@@ -184,54 +188,39 @@ class Python:
     def name(self) -> str:
         return cast("str", self._python.name)
 
-    @property
-    def executable(self) -> Path:
+    def _get_python_property(self, name: str) -> Any:
         try:
-            return cast("Path", self._python.interpreter)
+            return getattr(self._python, name)
         except CalledProcessError as e:
             raise ValueError(f"Invalid Python executable: {self._python.executable}") from e
+
+    @property
+    def executable(self) -> Path:
+        return cast("Path", self._get_python_property("interpreter"))
 
     @property
     def implementation(self) -> str:
-        try:
-            return cast("str", self._python.implementation.lower())
-        except CalledProcessError as e:
-            raise ValueError(f"Invalid Python executable: {self._python.executable}") from e
+        return cast("str", self._get_python_property("implementation").lower())
 
     @property
     def free_threaded(self) -> bool:
-        try:
-            return cast("bool", self._python.freethreaded)
-        except CalledProcessError as e:
-            raise ValueError(f"Invalid Python executable: {self._python.executable}") from e
+        return cast("bool", self._get_python_property("freethreaded"))
 
     @property
     def major(self) -> int:
-        try:
-            return cast("int", self._python.major)
-        except CalledProcessError as e:
-            raise ValueError(f"Invalid Python executable: {self._python.executable}") from e
+        return cast("int", self._get_python_property("major"))
 
     @property
     def minor(self) -> int:
-        try:
-            return cast("int", self._python.minor)
-        except CalledProcessError as e:
-            raise ValueError(f"Invalid Python executable: {self._python.executable}") from e
+        return cast("int", self._get_python_property("minor"))
 
     @property
     def patch(self) -> int:
-        try:
-            return cast("int", self._python.patch)
-        except CalledProcessError as e:
-            raise ValueError(f"Invalid Python executable: {self._python.executable}") from e
+        return cast("int", self._get_python_property("patch"))
 
     @property
     def version(self) -> Version:
-        try:
-            return Version.parse(str(self._python.version))
-        except CalledProcessError as e:
-            raise ValueError(f"Invalid Python executable: {self._python.executable}") from e
+        return Version.parse(str(self._get_python_property("version")))
 
     @cached_property
     def patch_version(self) -> Version:
@@ -263,20 +252,14 @@ class Python:
                  or None if no valid environment is found.
         """
         for python in ShutilWhichPythonProvider().find_pythons():
-            try:
-                _ = python.interpreter
+            if cls._is_valid_python(python):
                 return cls(python=python)
-            except (CalledProcessError, ValueError):
-                pass
 
         # fallback to findpython, restrict to finding only executables
         # named "python" as the intention here is just that, nothing more
         if python := findpython.find("python"):
-            try:
-                _ = python.interpreter
+            if cls._is_valid_python(python):
                 return cls(python=python)
-            except (CalledProcessError, ValueError):
-                pass
 
         return None
 
@@ -299,15 +282,12 @@ class Python:
         # Ignore broken installations.
         with contextlib.suppress(ValueError, CalledProcessError):
             if python := ShutilWhichPythonProvider.find_python_by_name(python_name):
-                _ = python.interpreter
-                return cls(python=python)
+                if cls._is_valid_python(python):
+                    return cls(python=python)
 
         if python := findpython.find(python_name):
-            try:
-                _ = python.interpreter
+            if cls._is_valid_python(python):
                 return cls(python=python)
-            except (CalledProcessError, ValueError):
-                pass
 
         return None
 
