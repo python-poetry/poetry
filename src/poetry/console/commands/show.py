@@ -4,6 +4,7 @@ import json
 import sys
 
 from enum import Enum
+from functools import cached_property
 from typing import TYPE_CHECKING
 from typing import ClassVar
 
@@ -27,6 +28,7 @@ if TYPE_CHECKING:
     from poetry.core.packages.project_package import ProjectPackage
 
     from poetry.repositories.repository import Repository
+    from poetry.version.version_selector import VersionSelector
 
 
 def reverse_deps(pkg: Package, repo: Repository) -> dict[str, str]:
@@ -66,7 +68,7 @@ class ShowCommand(GroupCommand, EnvCommand):
         option(
             "outdated",
             "o",
-            "Show the latest version but only for packages that are outdated.",
+            "Show the latest and constraint-compatible versions for outdated packages.",
         ),
         option(
             "all",
@@ -286,6 +288,7 @@ lists all packages available."""
         required_locked_packages = {op.package for op in ops if not op.skipped}
 
         show_latest = self.option("latest")
+        show_outdated = self.option("outdated")
         show_all = self.option("all")
         show_top_level = self.option("top-level")
         show_why = self.option("why")
@@ -294,9 +297,11 @@ lists all packages available."""
             if self.option("no-truncate")
             else shutil.get_terminal_size().columns
         )
-        name_length = version_length = latest_length = required_by_length = 0
-        latest_packages = {}
-        latest_statuses = {}
+        name_length = version_length = wanted_length = latest_length = 0
+        required_by_length = 0
+        latest_packages: dict[str, Package] = {}
+        wanted_packages: dict[str, Package] = {}
+        latest_statuses: dict[str, str] = {}
         installed_repo = InstalledRepository.load(self.env)
         requires = root.all_requires
 
@@ -320,11 +325,15 @@ lists all packages available."""
                     latest = locked
 
                 latest_packages[locked.pretty_name] = latest
+                if show_outdated:
+                    wanted = self.find_wanted_package(locked, root, latest)
+                    wanted_packages[locked.pretty_name] = wanted
+
                 update_status = latest_statuses[locked.pretty_name] = (
                     self.get_update_status(latest, locked)
                 )
 
-                if not self.option("outdated") or update_status != "up-to-date":
+                if not show_outdated or update_status != "up-to-date":
                     name_length = max(name_length, current_length)
                     version_length = max(
                         version_length,
@@ -334,6 +343,15 @@ lists all packages available."""
                             )
                         ),
                     )
+                    if show_outdated:
+                        wanted_length = max(
+                            wanted_length,
+                            len(
+                                get_package_version_display_string(
+                                    wanted, root=self.poetry.file.path.parent
+                                )
+                            ),
+                        )
                     latest_length = max(
                         latest_length,
                         len(
@@ -375,7 +393,7 @@ lists all packages available."""
 
                 if (
                     show_latest
-                    and self.option("outdated")
+                    and show_outdated
                     and latest_statuses[locked.pretty_name] == "up-to-date"
                 ):
                     continue
@@ -394,6 +412,11 @@ lists all packages available."""
 
                 if show_latest:
                     latest = latest_packages[locked.pretty_name]
+                    if show_outdated:
+                        wanted = wanted_packages[locked.pretty_name]
+                        package["wanted_version"] = get_package_version_display_string(
+                            wanted, root=self.poetry.file.path.parent
+                        )
                     package["latest_version"] = get_package_version_display_string(
                         latest, root=self.poetry.file.path.parent
                     )
@@ -412,10 +435,23 @@ lists all packages available."""
             return 0
 
         write_version = name_length + version_length + 3 <= width
-        write_latest = name_length + version_length + latest_length + 3 <= width
+        write_wanted = (
+            show_outdated
+            and name_length + version_length + wanted_length + latest_length + 4
+            <= width
+        )
+        wanted_column_length = wanted_length if write_wanted else 0
+        write_latest = (
+            name_length + version_length + wanted_column_length + latest_length + 3
+            <= width
+        )
 
         why_end_column = (
-            name_length + version_length + latest_length + required_by_length
+            name_length
+            + version_length
+            + wanted_column_length
+            + latest_length
+            + required_by_length
         )
         write_why = show_why and (why_end_column + 3) <= width
         write_description = (why_end_column + 24) <= width
@@ -446,7 +482,7 @@ lists all packages available."""
 
             if (
                 show_latest
-                and self.option("outdated")
+                and show_outdated
                 and latest_statuses[locked.pretty_name] == "up-to-date"
             ):
                 continue
@@ -460,6 +496,12 @@ lists all packages available."""
                     locked, root=self.poetry.file.path.parent
                 )
                 line += f" <b>{version:{version_length}}</b>"
+            if write_wanted:
+                wanted = wanted_packages[locked.pretty_name]
+                version = get_package_version_display_string(
+                    wanted, root=self.poetry.file.path.parent
+                )
+                line += f" <fg=green>{version:{wanted_length}}</>"
             if show_latest:
                 latest = latest_packages[locked.pretty_name]
                 update_status = latest_statuses[locked.pretty_name]
@@ -493,6 +535,9 @@ lists all packages available."""
 
                 if show_latest:
                     remaining -= latest_length
+
+                if write_wanted:
+                    remaining -= wanted_length
 
                 if len(locked.description) > remaining:
                     description = description[: remaining - 3] + "..."
@@ -639,13 +684,18 @@ lists all packages available."""
             io.output.formatter.set_style(color, style)
             io.error_output.formatter.set_style(color, style)
 
+    @cached_property
+    def _version_selector(self) -> VersionSelector:
+        from poetry.version.version_selector import VersionSelector
+
+        return VersionSelector(self.poetry.pool)
+
     def find_latest_package(
         self, package: Package, root: ProjectPackage
     ) -> Package | None:
         from cleo.io.null_io import NullIO
 
         from poetry.puzzle.provider import Provider
-        from poetry.version.version_selector import VersionSelector
 
         # find the latest version allowed in this pool
         requires = root.all_requires
@@ -662,11 +712,36 @@ lists all packages available."""
                 break
 
         name = package.name
-        selector = VersionSelector(self.poetry.pool)
-
-        return selector.find_best_candidate(
+        return self._version_selector.find_best_candidate(
             name, f">={package.pretty_version}", allow_prereleases
         )
+
+    def find_wanted_package(
+        self, package: Package, root: ProjectPackage, latest: Package
+    ) -> Package:
+        if package.is_direct_origin():
+            return latest
+
+        wanted = package
+        has_root_dependency = False
+        for dep in root.all_requires:
+            if dep.name != package.name or dep.is_direct_origin():
+                continue
+
+            has_root_dependency = True
+            candidate = self._version_selector.find_best_candidate(
+                package.name,
+                dep.pretty_constraint,
+                dep.allows_prereleases(),
+                dep.source_name,
+            )
+            if candidate is not None and wanted.version < candidate.version:
+                wanted = candidate
+
+        if not has_root_dependency:
+            return latest
+
+        return wanted
 
     def get_update_status(self, latest: Package, package: Package) -> str:
         from poetry.core.constraints.version import parse_constraint
