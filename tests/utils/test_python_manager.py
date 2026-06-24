@@ -141,3 +141,77 @@ def test_python_find_compatible(
     python = Python.get_compatible_python(poetry)
 
     assert Version.from_parts(3, 4) <= python.version <= Version.from_parts(4, 0)
+
+
+def test_python_ignores_broken_installations(mocker: MockerFixture) -> None:
+    from subprocess import CalledProcessError
+
+    mock_good_pv = mocker.MagicMock(spec=findpython.PythonVersion)
+    mock_good_pv.executable = Path("/usr/bin/python3.12")
+    mock_good_pv.interpreter = Path("/usr/bin/python3.12")
+    mock_good_pv.version = packaging.version.Version("3.12.0")
+
+    mock_bad_pv = mocker.MagicMock(spec=findpython.PythonVersion)
+    mock_bad_pv.executable = Path("/usr/bin/python2.7")
+    type(mock_bad_pv).interpreter = mocker.PropertyMock(
+        side_effect=CalledProcessError(2, ["/usr/bin/python2.7", "-Ic", "..."])
+    )
+
+    mocker.patch("findpython.find_all", return_value=[mock_bad_pv, mock_good_pv])
+
+    pythons = list(Python.find_all())
+    assert len(pythons) == 1
+    assert pythons[0].executable == Path("/usr/bin/python3.12")
+
+
+def test_get_active_python_ignores_broken_installations(mocker: MockerFixture) -> None:
+    from subprocess import CalledProcessError
+
+    mock_bad_pv = mocker.MagicMock(spec=findpython.PythonVersion)
+    mock_bad_pv.executable = Path("/usr/bin/python2.7")
+    type(mock_bad_pv).interpreter = mocker.PropertyMock(
+        side_effect=CalledProcessError(2, ["/usr/bin/python2.7", "-Ic", "..."])
+    )
+
+    mocker.patch(
+        "poetry.utils.env.python.providers.ShutilWhichPythonProvider.find_pythons",
+        return_value=[mock_bad_pv],
+    )
+    mocker.patch("findpython.find", return_value=None)
+
+    assert Python.get_active_python() is None
+
+
+def test_get_by_name_ignores_broken_installations(mocker: MockerFixture) -> None:
+    from subprocess import CalledProcessError
+
+    mock_bad_pv = mocker.MagicMock(spec=findpython.PythonVersion)
+    mock_bad_pv.executable = Path("/usr/bin/python2.7")
+    type(mock_bad_pv).interpreter = mocker.PropertyMock(
+        side_effect=CalledProcessError(2, ["/usr/bin/python2.7", "-Ic", "..."])
+    )
+
+    mocker.patch(
+        "poetry.utils.env.python.providers.ShutilWhichPythonProvider.find_python_by_name",
+        return_value=mock_bad_pv,
+    )
+    mocker.patch("findpython.find", return_value=None)
+
+    assert Python.get_by_name("python") is None
+
+
+def test_python_properties_raise_value_error_on_subprocess_failure(
+    mocker: MockerFixture,
+) -> None:
+    from subprocess import CalledProcessError
+
+    mock_bad_pv = mocker.MagicMock(spec=findpython.PythonVersion)
+    mock_bad_pv.executable = Path("/usr/bin/python2.7")
+    type(mock_bad_pv).interpreter = mocker.PropertyMock(
+        side_effect=CalledProcessError(2, ["/usr/bin/python2.7", "-Ic", "..."])
+    )
+
+    python = Python(python=mock_bad_pv)
+    with pytest.raises(ValueError, match="Invalid Python executable"):
+        _ = python.executable
+
