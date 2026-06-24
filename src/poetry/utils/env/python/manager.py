@@ -258,9 +258,8 @@ class Python:
 
         # fallback to findpython, restrict to finding only executables
         # named "python" as the intention here is just that, nothing more
-        if python := findpython.find("python"):
-            if cls._is_valid_python(python):
-                return cls(python=python)
+        if (python := findpython.find("python")) and cls._is_valid_python(python):
+            return cls(python=python)
 
         return None
 
@@ -282,13 +281,13 @@ class Python:
     def get_by_name(cls, python_name: str) -> Python | None:
         # Ignore broken installations.
         with contextlib.suppress(ValueError, CalledProcessError):
-            if python := ShutilWhichPythonProvider.find_python_by_name(python_name):
-                if cls._is_valid_python(python):
-                    return cls(python=python)
-
-        if python := findpython.find(python_name):
-            if cls._is_valid_python(python):
+            if (
+                python := ShutilWhichPythonProvider.find_python_by_name(python_name)
+            ) and cls._is_valid_python(python):
                 return cls(python=python)
+
+        if (python := findpython.find(python_name)) and cls._is_valid_python(python):
+            return cls(python=python)
 
         return None
 
