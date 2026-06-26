@@ -72,6 +72,7 @@ COMMANDS = [
     # Cache commands
     "cache clear",
     "cache list",
+    "cache prune",
     # Debug commands
     "debug info",
     "debug resolve",

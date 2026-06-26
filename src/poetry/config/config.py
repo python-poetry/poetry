@@ -49,6 +49,14 @@ def str_list_normalizer(val: str) -> list[str]:
     return [vs for v in val.split(",") if (vs := v.strip())]
 
 
+def link_mode_validator(val: str) -> bool:
+    return val in {"copy", "hardlink", "reflink"}
+
+
+def link_mode_normalizer(val: str) -> str:
+    return val.lower()
+
+
 def build_config_setting_validator(val: str) -> bool:
     try:
         value = build_config_setting_normalizer(val)
@@ -174,6 +182,7 @@ class Config:
             "no-binary": None,
             "only-binary": None,
             "build-config-settings": {},
+            "link-mode": "copy",
         },
         "python": {"installation-dir": os.path.join("{data-dir}", "python")},
         "solver": {
@@ -424,6 +433,9 @@ class Config:
 
         if name.startswith("installer.build-config-settings."):
             return build_config_setting_normalizer
+
+        if name == "installer.link-mode":
+            return link_mode_normalizer
 
         return lambda val: val
 

@@ -76,7 +76,8 @@ class Executor:
         self._dry_run = False
         self._enabled = True
         self._verbose = False
-        self._wheel_installer = WheelInstaller(self._env)
+        self._link_mode = config.get("installer.link-mode", "copy")
+        self._wheel_installer = WheelInstaller(self._env, link_mode=self._link_mode)
         self._build_constraints = build_constraints or {}
 
         if parallel is None:

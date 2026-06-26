@@ -15,6 +15,7 @@ from installer.sources import _WheelFileValidationError
 
 from poetry.__version__ import __version__
 from poetry.utils._compat import WINDOWS
+from poetry.utils.filesystem import link_or_copy
 
 
 logger = logging.getLogger(__name__)
@@ -32,6 +33,24 @@ if TYPE_CHECKING:
 
 class WheelDestination(SchemeDictionaryDestination):
     """ """
+
+    def __init__(
+        self,
+        scheme_dict: dict[str, str],
+        interpreter: str,
+        script_kind: str,
+        bytecode_optimization_levels: Collection[int],
+        link_mode: str = "copy",
+        store_path: Path | None = None,
+    ) -> None:
+        super().__init__(
+            scheme_dict,
+            interpreter=interpreter,
+            script_kind=script_kind,
+            bytecode_optimization_levels=bytecode_optimization_levels,
+        )
+        self._link_mode = link_mode
+        self._store_path = store_path
 
     def write_to_fs(
         self,
@@ -76,6 +95,31 @@ class WheelDestination(SchemeDictionaryDestination):
             # that two threads try to create the directory.
             parent_folder.mkdir(parents=True, exist_ok=True)
 
+        # Check if we should link from store
+        if self._store_path and self._link_mode != "copy":
+            store_file = self._store_path / path
+            if store_file.exists():
+                # Files that must always be copied (not linked)
+                force_copy = path.endswith(".dist-info/RECORD") or \
+                           path.endswith(".dist-info/direct_url.json") or \
+                           path.endswith(".dist-info/.pth") or \
+                           path == ""
+
+                link_or_copy(
+                    store_file,
+                    target_path,
+                    link_mode=self._link_mode,
+                    is_executable=is_executable,
+                    force_copy=force_copy,
+                )
+
+                # Calculate hash and size for the record
+                with target_path.open("rb") as f:
+                    hash_, size = copyfileobj_with_hashing(f, None, self.hash_algorithm)
+
+                return RecordEntry(path, Hash(self.hash_algorithm, hash_), size)
+
+        # Fallback to normal copy
         with target_path.open("wb") as f:
             hash_, size = copyfileobj_with_hashing(stream, f, self.hash_algorithm)
 
@@ -86,8 +130,9 @@ class WheelDestination(SchemeDictionaryDestination):
 
 
 class WheelInstaller:
-    def __init__(self, env: Env) -> None:
+    def __init__(self, env: Env, link_mode: str = "copy") -> None:
         self._env = env
+        self._link_mode = link_mode
 
         script_kind: LauncherKind
         if not WINDOWS:
@@ -106,6 +151,17 @@ class WheelInstaller:
         self._bytecode_optimization_levels = (-1,) if enable else ()
 
     def install(self, wheel: Path) -> None:
+        # Import here to avoid circular imports
+        from poetry.installation.unpacked_wheel_store import UnpackedWheelStore
+        from poetry.utils.wheel import Wheel
+
+        # Extract wheel to unpacked store if using link mode
+        store_path = None
+        if self._link_mode != "copy":
+            wheel_obj = Wheel(wheel.name)
+            store = UnpackedWheelStore(self._env.path / ".." / ".." / "cache")
+            store_path = store.extract_wheel(wheel)
+
         with WheelFile.open(wheel) as source:
             try:
                 # Content validation is temporarily disabled because of
@@ -124,6 +180,8 @@ class WheelInstaller:
                 interpreter=str(self._env.python),
                 script_kind=self._script_kind,
                 bytecode_optimization_levels=self._bytecode_optimization_levels,
+                link_mode=self._link_mode,
+                store_path=store_path,
             )
 
             install(
