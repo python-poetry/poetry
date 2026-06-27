@@ -413,6 +413,135 @@ def test_show_basic_with_group_options(
         assert tester.io.fetch_output() == expected
 
 
+@pytest.mark.parametrize(
+    ("options", "expected"),
+    [
+        (
+            "--with-groups",
+            """\
+cachy  0.1.0 main Cachy package
+pytest 3.7.3 test Pytest package
+""",
+        ),
+        (
+            "--with time --with-groups",
+            """\
+cachy    0.1.0 main Cachy package
+pendulum 2.0.0 time Pendulum package
+pytest   3.7.3 test Pytest package
+""",
+        ),
+    ],
+)
+def test_show_with_groups(
+    options: str,
+    expected: str,
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+) -> None:
+    _configure_project_with_groups(poetry, installed)
+
+    tester.execute(options)
+
+    assert tester.io.fetch_output() == expected
+
+
+def test_show_with_groups_json(
+    tester: CommandTester, poetry: Poetry, installed: Repository
+) -> None:
+    _configure_project_with_groups(poetry, installed)
+
+    tester.execute("--with time --without test --with-groups --format json")
+
+    assert json.loads(tester.io.fetch_output()) == [
+        {
+            "name": "cachy",
+            "version": "0.1.0",
+            "groups": ["main"],
+            "description": "Cachy package",
+            "installed_status": "installed",
+        },
+        {
+            "name": "pendulum",
+            "version": "2.0.0",
+            "groups": ["time"],
+            "description": "Pendulum package",
+            "installed_status": "installed",
+        },
+    ]
+
+
+def test_show_with_groups_uses_lock_groups_for_transitive_packages(
+    tester: CommandTester, poetry: Poetry, installed: Repository
+) -> None:
+    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
+
+    cachy_010 = get_package("cachy", "0.1.0")
+    cachy_010.description = "Cachy package"
+    cachy_010.add_dependency(Factory.create_dependency("msgpack", "^1.0.0"))
+
+    msgpack_100 = get_package("msgpack", "1.0.0")
+    msgpack_100.description = "Msgpack package"
+
+    installed.add_package(cachy_010)
+    installed.add_package(msgpack_100)
+
+    assert isinstance(poetry.locker, DummyLocker)
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "optional": False,
+                    "python-versions": "*",
+                    "groups": ["main"],
+                    "files": [],
+                    "dependencies": {"msgpack": "^1.0.0"},
+                },
+                {
+                    "name": "msgpack",
+                    "version": "1.0.0",
+                    "description": "Msgpack package",
+                    "optional": False,
+                    "python-versions": "*",
+                    "groups": ["main"],
+                    "files": [],
+                },
+            ],
+            "metadata": {
+                "lock-version": "2.1",
+                "python-versions": "*",
+                "content-hash": "123456789",
+            },
+        }
+    )
+
+    tester.execute("--with-groups")
+
+    assert (
+        tester.io.fetch_output()
+        == """\
+cachy   0.1.0 main Cachy package
+msgpack 1.0.0 main Msgpack package
+"""
+    )
+
+
+def test_show_with_groups_cannot_be_combined_with_tree(
+    tester: CommandTester,
+) -> None:
+    tester.execute("--tree --with-groups")
+
+    assert tester.status_code == 1
+    assert (
+        tester.io.fetch_error()
+        == "Error: Cannot use --tree and --with-groups at the same time.\n"
+    )
+
+
 @output_format_parametrize
 def test_show_basic_with_installed_packages_single(
     output_format: str,
