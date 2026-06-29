@@ -17,6 +17,8 @@ from poetry.utils.constants import POETRY_SYSTEM_PROJECT_NAME
 
 
 if TYPE_CHECKING:
+    from collections.abc import Collection
+
     from cleo.io.inputs.argument import Argument
     from cleo.io.inputs.option import Option
     from cleo.io.io import IO
@@ -509,10 +511,12 @@ lists all packages available."""
         packages = locked_repository.packages
 
         for p in packages:
-            for require in root.all_requires:
-                if p.name == require.name:
-                    self.display_package_tree(self.io, p, packages)
-                    break
+            requires = [r for r in root.all_requires if r.name == p.name]
+            if requires:
+                active_extras = {extra for r in requires for extra in r.extras}
+                self.display_package_tree(
+                    self.io, p, packages, active_extras=active_extras
+                )
 
         return 0
 
@@ -522,6 +526,7 @@ lists all packages available."""
         package: Package,
         installed_packages: list[Package],
         why_package: Package | None = None,
+        active_extras: Collection[NormalizedName] | None = None,
     ) -> None:
         io.write(f"<c1>{package.pretty_name}</c1>")
         description = ""
@@ -534,6 +539,13 @@ lists all packages available."""
             dependencies = [p for p in package.requires if p.name == why_package.name]
         else:
             dependencies = package.requires
+            if active_extras is not None:
+                dependencies = [
+                    d
+                    for d in dependencies
+                    if not d.in_extras
+                    or any(extra in active_extras for extra in d.in_extras)
+                ]
             dependencies = sorted(
                 dependencies,
                 key=lambda x: x.name,
@@ -563,6 +575,7 @@ lists all packages available."""
                 packages_in_tree,
                 tree_bar,
                 level + 1,
+                active_extras=dependency.extras if active_extras is not None else None,
             )
 
     def _display_tree(
@@ -573,6 +586,7 @@ lists all packages available."""
         packages_in_tree: set[NormalizedName],
         previous_tree_bar: str = "├",
         level: int = 1,
+        active_extras: Collection[NormalizedName] | None = None,
     ) -> None:
         previous_tree_bar = previous_tree_bar.replace("├", "│")
 
@@ -582,6 +596,14 @@ lists all packages available."""
                 dependencies = package.requires
 
                 break
+
+        if active_extras is not None:
+            dependencies = [
+                d
+                for d in dependencies
+                if not d.in_extras
+                or any(extra in active_extras for extra in d.in_extras)
+            ]
 
         dependencies = sorted(
             dependencies,
@@ -618,6 +640,9 @@ lists all packages available."""
                         packages_in_tree,
                         tree_bar,
                         level + 1,
+                        active_extras=(
+                            dependency.extras if active_extras is not None else None
+                        ),
                     )
                 finally:
                     packages_in_tree.discard(dependency.name)
