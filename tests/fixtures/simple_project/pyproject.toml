@@ -20,6 +20,9 @@ foo = "foo:bar"
 baz = "bar:baz.boom.bim"
 fox = "fuz.foo:bar.baz"
 
+[project.gui-scripts]
+gui-foo = "foo:gui"
+
 [tool.poetry]
 classifiers = [
     "Topic :: Software Development :: Build Tools",

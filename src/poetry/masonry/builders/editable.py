@@ -153,7 +153,9 @@ class EditableBuilder(Builder):
             )
             return []
 
-        scripts = entry_points.get("console_scripts", [])
+        scripts = entry_points.get("console_scripts", []) + entry_points.get(
+            "gui_scripts", []
+        )
         for script in scripts:
             name, script_with_extras = script.split(" = ")
             script_without_extras = script_with_extras.split("[")[0]
