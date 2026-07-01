@@ -35,6 +35,7 @@ from poetry.repositories.exceptions import RepositoryError
 from poetry.repositories.link_sources.html import HTMLPage
 from poetry.repositories.link_sources.json import SimpleJsonPage
 from poetry.utils.authenticator import Authenticator
+from poetry.utils.constants import get_requests_timeout
 from poetry.utils.helpers import HTTPRangeRequestSupportedError
 from poetry.utils.helpers import download_file
 from poetry.utils.helpers import get_highest_priority_hash_type
@@ -538,7 +539,10 @@ class HTTPRepository(CachedRepository):
         url = self._url + endpoint
         try:
             response: requests.Response = self.session.get(
-                url, raise_for_status=False, headers=headers
+                url,
+                raise_for_status=False,
+                timeout=get_requests_timeout(),
+                headers=headers,
             )
             if response.status_code in (401, 403):
                 self._log(

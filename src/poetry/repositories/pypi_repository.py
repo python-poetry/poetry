@@ -206,6 +206,7 @@ class PyPiRepository(HTTPRepository):
             json_response = self.session.get(
                 self._base_url + endpoint,
                 raise_for_status=False,
+                timeout=get_requests_timeout(),
                 headers=headers,
             )
         except requests.exceptions.TooManyRedirects:
@@ -215,6 +216,7 @@ class PyPiRepository(HTTPRepository):
             json_response = self.session.get(
                 self._base_url + endpoint,
                 raise_for_status=False,
+                timeout=get_requests_timeout(),
                 headers=headers,
             )
 
