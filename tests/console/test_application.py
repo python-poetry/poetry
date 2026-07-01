@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import os
 import re
 import shutil
+import subprocess
+import sys
 
 from typing import TYPE_CHECKING
 from typing import ClassVar
@@ -61,6 +64,27 @@ def test_application_with_plugins(with_add_command_plugin: None) -> None:
 
     assert re.search(r"\s+foo\s+Foo Command", tester.io.fetch_output()) is not None
     assert tester.status_code == 0
+
+
+def test_application_version_ignores_invalid_requests_timeout(
+    project_root: Path,
+) -> None:
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(project_root / "src")
+    env["POETRY_REQUESTS_TIMEOUT"] = "abc"
+
+    result = subprocess.run(
+        [sys.executable, "-m", "poetry", "--version"],
+        cwd=project_root,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout.startswith("Poetry (version ")
+    assert "ValueError" not in result.stderr
 
 
 def test_application_with_plugins_disabled(with_add_command_plugin: None) -> None:

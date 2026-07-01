@@ -25,9 +25,9 @@ from poetry.config.config import Config
 from poetry.console.exceptions import ConsoleMessage
 from poetry.console.exceptions import PoetryRuntimeError
 from poetry.exceptions import PoetryError
-from poetry.utils.constants import REQUESTS_TIMEOUT
 from poetry.utils.constants import RETRY_AFTER_HEADER
 from poetry.utils.constants import STATUS_FORCELIST
+from poetry.utils.constants import get_requests_timeout
 from poetry.utils.password_manager import HTTPAuthCredential
 from poetry.utils.password_manager import PasswordManager
 
@@ -226,8 +226,9 @@ class Authenticator:
         )
 
         # Send the request.
+        timeout = kwargs["timeout"] if "timeout" in kwargs else get_requests_timeout()
         send_kwargs = {
-            "timeout": kwargs.get("timeout", REQUESTS_TIMEOUT),
+            "timeout": timeout,
             "allow_redirects": kwargs.get("allow_redirects", True),
         }
         send_kwargs.update(settings)
