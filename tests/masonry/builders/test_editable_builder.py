@@ -204,10 +204,9 @@ def test_builder_installs_proper_files_for_standard_packages(
     )
 
     assert dist_info.joinpath("INSTALLER").read_text(encoding="utf-8") == "poetry"
-    assert (
-        dist_info.joinpath("entry_points.txt").read_text(encoding="utf-8")
-        == expected_entry_points_for(project)
-    )
+    assert dist_info.joinpath("entry_points.txt").read_text(
+        encoding="utf-8"
+    ) == expected_entry_points_for(project)
     metadata = f"""\
 Metadata-Version: {expected_metadata_version()}
 Name: simple-project
