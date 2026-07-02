@@ -127,6 +127,34 @@ def expected_python_classifiers(min_version: str | None = None) -> str:
     )
 
 
+def expected_entry_points_for(project: str) -> str:
+    entry_points = (
+        "[console_scripts]\nbaz=bar:baz.boom.bim\nfoo=foo:bar\nfox=fuz.foo:bar.baz\n\n"
+    )
+    if project == "simple_project":
+        entry_points += "[gui_scripts]\ngui-foo=foo:gui\n\n"
+
+    return entry_points
+
+
+def assert_gui_script_installed(tmp_venv: VirtualEnv, record_entries: set[str]) -> None:
+    gui_foo = tmp_venv._bin_dir.joinpath("gui-foo")
+
+    assert gui_foo.exists()
+    assert str(gui_foo) in record_entries
+
+    gui_foo_script = f"""\
+#!{tmp_venv.python}
+import sys
+from foo import gui
+
+if __name__ == '__main__':
+    sys.exit(gui())
+"""
+
+    assert gui_foo.read_text(encoding="utf-8") == gui_foo_script
+
+
 @pytest.mark.parametrize("project", ("simple_project", "simple_project_legacy"))
 def test_builder_installs_proper_files_for_standard_packages(
     project: str,
@@ -145,10 +173,6 @@ def test_builder_installs_proper_files_for_standard_packages(
     builder.build()
 
     assert tmp_venv._bin_dir.joinpath("foo").exists()
-    # GUI scripts are only available via PEP 621 [project.gui-scripts];
-    # the legacy [tool.poetry] schema does not support a gui-scripts table.
-    if project == "simple_project":
-        assert tmp_venv._bin_dir.joinpath("gui-foo").exists()
     pth_file = Path("simple_project.pth")
     assert tmp_venv.site_packages.exists(pth_file)
     assert (
@@ -180,14 +204,9 @@ def test_builder_installs_proper_files_for_standard_packages(
     )
 
     assert dist_info.joinpath("INSTALLER").read_text(encoding="utf-8") == "poetry"
-    expected_entry_points = (
-        "[console_scripts]\nbaz=bar:baz.boom.bim\nfoo=foo:bar\nfox=fuz.foo:bar.baz\n\n"
-    )
-    if project == "simple_project":
-        expected_entry_points += "[gui_scripts]\ngui-foo=foo:gui\n\n"
     assert (
         dist_info.joinpath("entry_points.txt").read_text(encoding="utf-8")
-        == expected_entry_points
+        == expected_entry_points_for(project)
     )
     metadata = f"""\
 Metadata-Version: {expected_metadata_version()}
@@ -273,21 +292,7 @@ if __name__ == '__main__':
     assert tmp_venv._bin_dir.joinpath("fox").read_text(encoding="utf-8") == fox_script
 
     if project == "simple_project":
-        assert str(tmp_venv._bin_dir.joinpath("gui-foo")) in record_entries
-
-        gui_foo_script = f"""\
-#!{tmp_venv.python}
-import sys
-from foo import gui
-
-if __name__ == '__main__':
-    sys.exit(gui())
-"""
-
-        assert (
-            tmp_venv._bin_dir.joinpath("gui-foo").read_text(encoding="utf-8")
-            == gui_foo_script
-        )
+        assert_gui_script_installed(tmp_venv, record_entries)
 
 
 def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
