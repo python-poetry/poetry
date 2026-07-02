@@ -127,14 +127,18 @@ def expected_python_classifiers(min_version: str | None = None) -> str:
     )
 
 
-def expected_entry_points_for(project: str) -> str:
-    entry_points = (
-        "[console_scripts]\nbaz=bar:baz.boom.bim\nfoo=foo:bar\nfox=fuz.foo:bar.baz\n\n"
-    )
-    if project == "simple_project":
-        entry_points += "[gui_scripts]\ngui-foo=foo:gui\n\n"
+CONSOLE_ENTRY_POINTS = (
+    "[console_scripts]\nbaz=bar:baz.boom.bim\nfoo=foo:bar\nfox=fuz.foo:bar.baz\n\n"
+)
+GUI_ENTRY_POINTS = "[gui_scripts]\ngui-foo=foo:gui\n\n"
 
-    return entry_points
+
+def record_entries_for(dist_info: Path) -> set[str]:
+    with open(dist_info.joinpath("RECORD"), encoding="utf-8", newline="") as f:
+        records = list(csv.reader(f))
+
+    assert all(len(row) == 3 for row in records)
+    return {row[0] for row in records}
 
 
 def assert_gui_script_installed(tmp_venv: VirtualEnv, record_entries: set[str]) -> None:
@@ -155,9 +159,16 @@ if __name__ == '__main__':
     assert gui_foo.read_text(encoding="utf-8") == gui_foo_script
 
 
-@pytest.mark.parametrize("project", ("simple_project", "simple_project_legacy"))
+@pytest.mark.parametrize(
+    ("project", "expected_entry_points"),
+    [
+        ("simple_project", CONSOLE_ENTRY_POINTS + GUI_ENTRY_POINTS),
+        ("simple_project_legacy", CONSOLE_ENTRY_POINTS),
+    ],
+)
 def test_builder_installs_proper_files_for_standard_packages(
     project: str,
+    expected_entry_points: str,
     simple_poetry: Poetry,
     tmp_path: Path,
     fixture_dir: FixtureDirGetter,
@@ -204,9 +215,10 @@ def test_builder_installs_proper_files_for_standard_packages(
     )
 
     assert dist_info.joinpath("INSTALLER").read_text(encoding="utf-8") == "poetry"
-    assert dist_info.joinpath("entry_points.txt").read_text(
-        encoding="utf-8"
-    ) == expected_entry_points_for(project)
+    assert (
+        dist_info.joinpath("entry_points.txt").read_text(encoding="utf-8")
+        == expected_entry_points
+    )
     metadata = f"""\
 Metadata-Version: {expected_metadata_version()}
 Name: simple-project
@@ -237,12 +249,7 @@ My Package
         )
     assert dist_info.joinpath("METADATA").read_text(encoding="utf-8") == metadata
 
-    with open(dist_info.joinpath("RECORD"), encoding="utf-8", newline="") as f:
-        reader = csv.reader(f)
-        records = list(reader)
-
-    assert all(len(row) == 3 for row in records)
-    record_entries = {row[0] for row in records}
+    record_entries = record_entries_for(dist_info)
     pth_file = Path("simple_project.pth")
     assert tmp_venv.site_packages.exists(pth_file)
     assert str(tmp_venv.site_packages.find(pth_file)[0]) in record_entries
@@ -290,8 +297,15 @@ if __name__ == '__main__':
 
     assert tmp_venv._bin_dir.joinpath("fox").read_text(encoding="utf-8") == fox_script
 
-    if project == "simple_project":
-        assert_gui_script_installed(tmp_venv, record_entries)
+
+def test_builder_installs_gui_scripts(
+    simple_poetry: Poetry, tmp_venv: VirtualEnv
+) -> None:
+    builder = EditableBuilder(simple_poetry, tmp_venv, NullIO())
+    builder.build()
+
+    dist_info = tmp_venv.site_packages.find(Path("simple_project-1.2.3.dist-info"))[0]
+    assert_gui_script_installed(tmp_venv, record_entries_for(dist_info))
 
 
 def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
