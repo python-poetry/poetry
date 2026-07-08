@@ -265,6 +265,40 @@ if __name__ == '__main__':
     assert tmp_venv._bin_dir.joinpath("fox").read_text(encoding="utf-8") == fox_script
 
 
+def test_builder_installs_project_gui_scripts(
+    tmp_path: Path, fixture_dir: FixtureDirGetter, mocker: MockerFixture
+) -> None:
+    project = tmp_path / "simple_project"
+    shutil.copytree(fixture_dir("simple_project"), project)
+    with project.joinpath("pyproject.toml").open("a", encoding="utf-8") as f:
+        f.write('\n[project.gui-scripts]\nfoo-gui = "foo:bar"\n')
+
+    poetry = Factory().create_poetry(project)
+    env_manager = EnvManager(poetry)
+    venv_path = tmp_path / "venv"
+    env_manager.build_venv(venv_path)
+    tmp_venv = VirtualEnv(venv_path)
+    mocker.patch("poetry.masonry.builders.editable.WINDOWS", True)
+
+    EditableBuilder(poetry, tmp_venv, NullIO()).build()
+
+    script_file = tmp_venv._bin_dir.joinpath("foo-gui")
+    cmd_script_file = script_file.with_suffix(".cmd")
+    assert script_file.exists()
+    assert cmd_script_file.exists()
+
+    dist_info = tmp_venv.site_packages.find(Path("simple_project-1.2.3.dist-info"))[0]
+    assert "[gui_scripts]\nfoo-gui=foo:bar\n" in dist_info.joinpath(
+        "entry_points.txt"
+    ).read_text(encoding="utf-8")
+
+    with dist_info.joinpath("RECORD").open(encoding="utf-8", newline="") as f:
+        record_entries = {row[0] for row in csv.reader(f)}
+
+    assert str(script_file) in record_entries
+    assert str(cmd_script_file) in record_entries
+
+
 def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
     mocker: MockerFixture, extended_poetry: Poetry, tmp_path: Path
 ) -> None:
