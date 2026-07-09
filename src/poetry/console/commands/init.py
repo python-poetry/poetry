@@ -128,7 +128,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         name = self.option("name")
         if not name:
-            name = project_path.name.lower()
+            name = self._sanitize_package_name(project_path.name)
 
             if is_interactive:
                 question = self.create_question(
@@ -494,6 +494,16 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             requires[name] = constraint
 
         return requires
+
+    @staticmethod
+    def _sanitize_package_name(name: str) -> str:
+        """Turn an arbitrary string (e.g. a directory name) into a name that
+        conforms to the PyPA name format: only ASCII letters, numbers,
+        period, underscore and hyphen.
+        https://packaging.python.org/en/latest/specifications/name-normalization/#name-format
+        """
+        replaced = re.sub(r"[^A-Za-z0-9._-]+", "-", name)
+        return str(canonicalize_name(replaced)).strip("-")
 
     @staticmethod
     def _validate_author(author: str, default: str) -> str | None:
