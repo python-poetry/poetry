@@ -5439,10 +5439,53 @@ def test_solver_resolves_conflicting_dependency_in_root_extras(
     )
     solved_packages = transaction.get_solved_packages()
     assert solved_packages[package_a1].markers[MAIN_GROUP] == parse_marker(
-        "extra != 'bar' and extra == 'foo'"
+        "extra == 'foo' and extra != 'bar'"
     )
     assert solved_packages[package_a2].markers[MAIN_GROUP] == parse_marker(
-        "extra != 'foo' and extra == 'bar'"
+        "extra == 'bar' and extra != 'foo'"
+    )
+
+
+def test_solver_keeps_overlapping_root_extra_versions_disjoint(
+    package: ProjectPackage,
+    pool: RepositoryPool,
+    repo: Repository,
+    io: NullIO,
+) -> None:
+    package_a1 = get_package("A", "1.0")
+    package_a2 = get_package("A", "2.0")
+    package_b = get_package("B", "1.0")
+    package_b.add_dependency(get_dependency("A", "*"))
+
+    dep_a_networks = get_dependency("A", "1.0", optional=True)
+    dep_a_networks._in_extras = [canonicalize_name("networks")]
+    dep_b_sbml = get_dependency("B", "*", optional=True)
+    dep_b_sbml._in_extras = [canonicalize_name("sbml")]
+    dep_a_all = get_dependency("A", "1.0", optional=True)
+    dep_a_all._in_extras = [canonicalize_name("all")]
+    dep_b_all = get_dependency("B", "*", optional=True)
+    dep_b_all._in_extras = [canonicalize_name("all")]
+
+    package.extras = {
+        canonicalize_name("networks"): [dep_a_networks],
+        canonicalize_name("sbml"): [dep_b_sbml],
+        canonicalize_name("all"): [dep_a_all, dep_b_all],
+    }
+    for dependency in (dep_a_networks, dep_b_sbml, dep_a_all, dep_b_all):
+        package.add_dependency(dependency)
+
+    repo.add_package(package_a1)
+    repo.add_package(package_a2)
+    repo.add_package(package_b)
+
+    transaction = Solver(package, pool, [], [], io).solve()
+    solved_packages = transaction.get_solved_packages()
+
+    assert solved_packages[package_a1].markers[MAIN_GROUP] == parse_marker(
+        "extra == 'networks' or extra == 'all'"
+    )
+    assert solved_packages[package_a2].markers[MAIN_GROUP] == parse_marker(
+        "extra != 'networks' and extra != 'all' and extra == 'sbml'"
     )
 
 

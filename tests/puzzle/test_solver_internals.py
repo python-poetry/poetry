@@ -446,14 +446,15 @@ def test_merge_override_packages_restricted(package: ProjectPackage) -> None:
     }
 
 
-def test_merge_override_packages_extras(package: ProjectPackage) -> None:
-    """Extras from overrides should not be visible in the resulting marker."""
+def test_merge_override_packages_dependency_extras() -> None:
+    """Extras from non-root overrides should not reach the resulting marker."""
     a = Package("a", "1")
+    owner = Package("owner", "1")
 
     packages = merge_override_packages(
         [
             (
-                {package: {"a": dep("b", 'python_version < "3.9" and extra == "foo"')}},
+                {owner: {"a": dep("b", 'python_version < "3.9" and extra == "foo"')}},
                 {
                     a: TransitivePackageInfo(
                         0,
@@ -463,11 +464,7 @@ def test_merge_override_packages_extras(package: ProjectPackage) -> None:
                 },
             ),
             (
-                {
-                    package: {
-                        "a": dep("b", 'python_version >= "3.9" and extra == "foo"')
-                    }
-                },
+                {owner: {"a": dep("b", 'python_version >= "3.9" and extra == "foo"')}},
                 {
                     a: TransitivePackageInfo(
                         0,
