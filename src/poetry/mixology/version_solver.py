@@ -497,16 +497,70 @@ class VersionSolver:
         # False)]``; the negative term is the requirement, and its marker says
         # when it applies.
         requirements: dict[str, list[Dependency]] = collections.defaultdict(list)
+        root_edges: list[Dependency] = []
+        dependency_edges: dict[str, list[tuple[Dependency, Dependency]]] = (
+            collections.defaultdict(list)
+        )
         for incompat in incompatibility.external_incompatibilities:
             if not isinstance(incompat.cause, DependencyCauseError):
                 continue
-            for term in incompat.terms:
-                if not term.is_positive():
-                    requirements[term.dependency.name].append(term.dependency)
+            positive_terms = [term for term in incompat.terms if term.is_positive()]
+            negative_terms = [term for term in incompat.terms if not term.is_positive()]
+            if len(positive_terms) != 1 or len(negative_terms) != 1:
+                continue
+            depender = positive_terms[0].dependency
+            dependency = negative_terms[0].dependency
+            requirements[dependency.name].append(dependency)
+            if depender.is_root:
+                root_edges.append(dependency)
+            else:
+                dependency_edges[depender.complete_name].append((depender, dependency))
 
         # The markers of the current run: any marker at the top level, or one side
         # of an earlier split when nested.
         current_markers = self._provider._overrides_marker_intersection
+
+        # Walk dependency causes from the root to recover the marker world for each
+        # requirement. An ``extra`` marker on a non-root edge is local to its
+        # depending package, so evaluate it against that package's active features
+        # instead of leaking it into the root marker world.
+        package_markers: dict[str, BaseMarker] = {}
+        requirement_markers: dict[int, BaseMarker] = {}
+        pending: collections.deque[str] = collections.deque()
+        queued: set[str] = set()
+
+        def add_requirement_marker(dependency: Dependency, marker: BaseMarker) -> None:
+            previous = requirement_markers.get(id(dependency))
+            requirement_marker = marker if previous is None else previous.union(marker)
+            if previous != requirement_marker:
+                requirement_markers[id(dependency)] = requirement_marker
+
+            complete_name = dependency.complete_name
+            previous = package_markers.get(complete_name)
+            package_marker = marker if previous is None else previous.union(marker)
+            if previous == package_marker:
+                return
+
+            package_markers[complete_name] = package_marker
+            if complete_name not in queued:
+                pending.append(complete_name)
+                queued.add(complete_name)
+
+        for dependency in root_edges:
+            add_requirement_marker(
+                dependency, current_markers.intersect(dependency.marker)
+            )
+
+        while pending:
+            complete_name = pending.popleft()
+            queued.remove(complete_name)
+            depender_marker = package_markers[complete_name]
+            for depender, dependency in dependency_edges.get(complete_name, []):
+                edge_marker = dependency.marker.apply({"extra": set(depender.extras)})
+                add_requirement_marker(
+                    dependency, depender_marker.intersect(edge_marker)
+                )
+
         for deps in requirements.values():
             for dep1, dep2 in itertools.combinations(deps, 2):
                 # Compatible versions are not a real conflict.
@@ -514,8 +568,12 @@ class VersionSolver:
                     continue
 
                 # Where each requirement applies within the current run.
-                world1 = _effective_marker(dep1).intersect(current_markers)
-                world2 = _effective_marker(dep2).intersect(current_markers)
+                world1 = requirement_markers.get(
+                    id(dep1), _effective_marker(dep1).intersect(current_markers)
+                )
+                world2 = requirement_markers.get(
+                    id(dep2), _effective_marker(dep2).intersect(current_markers)
+                )
 
                 # Act only if both requirements apply somewhere in this run but
                 # never together. Splitting on ``world1`` then separates them. Both

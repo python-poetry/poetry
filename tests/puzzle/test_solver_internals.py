@@ -14,6 +14,7 @@ from poetry.core.version.markers import parse_marker
 
 from poetry.factory import Factory
 from poetry.packages.transitive_package_info import TransitivePackageInfo
+from poetry.puzzle.provider import MARKER_SPLIT
 from poetry.puzzle.solver import PackageNode
 from poetry.puzzle.solver import Solver
 from poetry.puzzle.solver import depth_first_search
@@ -484,6 +485,29 @@ def test_merge_override_packages_dependency_extras() -> None:
             ' or sys_platform == "linux" and python_version >= "3.9"'
         )
     }
+
+
+def test_merge_override_packages_marker_split_extras() -> None:
+    marker_split = Package(MARKER_SPLIT, "0")
+    a1 = Package("a", "1")
+    a2 = Package("a", "2")
+
+    packages = merge_override_packages(
+        [
+            (
+                {marker_split: {MARKER_SPLIT: dep(MARKER_SPLIT, 'extra == "foo"')}},
+                {a1: TransitivePackageInfo(0, {MAIN_GROUP}, {MAIN_GROUP: AnyMarker()})},
+            ),
+            (
+                {marker_split: {MARKER_SPLIT: dep(MARKER_SPLIT, 'extra != "foo"')}},
+                {a2: TransitivePackageInfo(0, {MAIN_GROUP}, {MAIN_GROUP: AnyMarker()})},
+            ),
+        ],
+        parse_constraint("*"),
+    )
+
+    assert tm(packages[a1]) == {"main": 'extra == "foo"'}
+    assert tm(packages[a2]) == {"main": 'extra != "foo"'}
 
 
 @pytest.mark.parametrize(

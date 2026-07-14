@@ -18,6 +18,7 @@ from poetry.mixology.failure import SolveFailureError
 from poetry.packages.transitive_package_info import TransitivePackageInfo
 from poetry.puzzle.exceptions import OverrideNeededError
 from poetry.puzzle.exceptions import SolverProblemError
+from poetry.puzzle.provider import MARKER_SPLIT
 from poetry.puzzle.provider import Indicator
 from poetry.puzzle.provider import Provider
 
@@ -465,7 +466,7 @@ def merge_override_packages(
             for dep in deps.values():
                 marker = (
                     dep.marker
-                    if override_package.is_root()
+                    if override_package.name == MARKER_SPLIT
                     else dep.marker.without_extras()
                 )
                 override_marker = override_marker.intersect(marker)

@@ -596,11 +596,21 @@ class Provider:
             if dep.name in self.UNSAFE_PACKAGES:
                 continue
 
+            dependency_marker = dep.marker
+            if package.is_root() and dep.in_extras:
+                dependency_marker = dependency_marker.intersect(
+                    parse_marker(
+                        " or ".join(f'extra == "{extra}"' for extra in dep.in_extras)
+                    )
+                )
+
             # When this run is restricted to a set of markers (see MARKER_SPLIT),
             # skip any dependency that cannot apply within that set; otherwise its
             # requirements would leak into a run where it never applies (see
             # #5506).
-            if self._overrides_marker_intersection.intersect(dep.marker).is_empty():
+            if self._overrides_marker_intersection.intersect(
+                dependency_marker
+            ).is_empty():
                 continue
 
             if self._env:
@@ -630,11 +640,7 @@ class Provider:
                 # without an existing lock file because the root package is used
                 # once for solving and a second time for re-resolving for installation.
                 dep = dep.clone()
-                dep.marker = dep.marker.intersect(
-                    parse_marker(
-                        " or ".join(f'extra == "{extra}"' for extra in dep.in_extras)
-                    )
-                )
+                dep.marker = dependency_marker
 
             _dependencies.append(dep)
 
@@ -749,6 +755,21 @@ class Provider:
                     dependencies.append(deps[0])
                 self.debug(msg)
                 continue
+
+            if package.is_root():
+                marker = next(
+                    (
+                        dep.marker
+                        for dep in deps
+                        if dep.marker.without_extras() != dep.marker
+                    ),
+                    None,
+                )
+                if marker is not None:
+                    # Root extras are global lock markers. Carry their branch in
+                    # the synthetic marker split instead of a package override,
+                    # whose extras are deliberately local and removed on merge.
+                    raise OverrideNeededError(*self.marker_split_overrides(marker))
 
             # At this point, we raise an exception that will
             # tell the solver to make new resolutions with specific overrides.
