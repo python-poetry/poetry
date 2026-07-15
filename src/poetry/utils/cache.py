@@ -232,7 +232,7 @@ class ArtifactCache:
         *,
         strict: bool,
         env: Env | None = ...,
-        download_func: Callable[[str, Path], None],
+        download_func: Callable[[str, Path], Path | None],
     ) -> Path: ...
 
     @overload
@@ -251,7 +251,7 @@ class ArtifactCache:
         *,
         strict: bool,
         env: Env | None = None,
-        download_func: Callable[[str, Path], None] | None = None,
+        download_func: Callable[[str, Path], Path | None] | None = None,
     ) -> Path | None:
         cache_dir = self.get_cache_directory_for_link(link)
 
@@ -267,7 +267,9 @@ class ArtifactCache:
                 if not cached_archive.exists():
                     cache_dir.mkdir(parents=True, exist_ok=True)
                     try:
-                        download_func(link.url, cached_archive)
+                        downloaded_archive = download_func(link.url, cached_archive)
+                        if downloaded_archive is not None:
+                            cached_archive = downloaded_archive
                     except BaseException:
                         cached_archive.unlink(missing_ok=True)
                         raise

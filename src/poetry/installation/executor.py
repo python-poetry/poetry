@@ -592,7 +592,10 @@ class Executor:
             cleanup_archive = True
         elif package.source_type == "url":
             assert package.source_url is not None
-            archive = self._download_link(operation, Link(package.source_url))
+            filename = package.files[0]["file"] if len(package.files) == 1 else None
+            archive = self._download_link(
+                operation, Link(package.source_url, filename=filename)
+            )
         else:
             archive = self._download(operation)
 

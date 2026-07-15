@@ -142,6 +142,44 @@ def test_download_file(
     assert http.calls[-1].request.headers["Accept-Encoding"] == "Identity"
 
 
+@pytest.mark.parametrize(
+    ("content_disposition", "expected_filename"),
+    [
+        ("attachment; filename=demo-0.1.0.tar.gz", "demo-0.1.0.tar.gz"),
+        (
+            "attachment; filename=../../demo-0.1.0.tar.gz",
+            "demo-0.1.0.tar.gz",
+        ),
+        (
+            "attachment; filename=..\\\\..\\\\demo-0.1.0.tar.gz",
+            "demo-0.1.0.tar.gz",
+        ),
+        (
+            "attachment; filename*=UTF-8''d%C3%A9mo-0.1.0.tar.gz",
+            "démo-0.1.0.tar.gz",
+        ),
+        ("attachment; filename=..", "content"),
+    ],
+)
+def test_download_file_uses_content_disposition_filename(
+    http: responses.RequestsMock,
+    tmp_path: Path,
+    content_disposition: str,
+    expected_filename: str,
+) -> None:
+    url = "https://foo.com/content"
+    http.get(
+        url,
+        body=b"demo",
+        headers={"Content-Disposition": content_disposition},
+    )
+
+    path = download_file(url, tmp_path / "content", use_content_disposition=True)
+
+    assert path == tmp_path / expected_filename
+    assert path.read_bytes() == b"demo"
+
+
 def test_downloader_with_invalid_content_length(
     http: responses.RequestsMock, tmp_path: Path
 ) -> None:

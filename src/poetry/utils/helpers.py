@@ -14,10 +14,12 @@ import zipfile
 from collections.abc import Mapping
 from contextlib import contextmanager
 from contextlib import suppress
+from email.message import Message
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Literal
 from typing import overload
 
 from requests.exceptions import ChunkedEncodingError
@@ -129,6 +131,7 @@ class HTTPRangeRequestSupportedError(Exception):
     """Raised when server unexpectedly supports byte ranges."""
 
 
+@overload
 def download_file(
     url: str,
     dest: Path,
@@ -137,10 +140,42 @@ def download_file(
     chunk_size: int = 1024,
     raise_accepts_ranges: bool = False,
     max_retries: int = 0,
-) -> None:
+    use_content_disposition: Literal[False] = False,
+) -> None: ...
+
+
+@overload
+def download_file(
+    url: str,
+    dest: Path,
+    *,
+    session: Authenticator | Session | None = None,
+    chunk_size: int = 1024,
+    raise_accepts_ranges: bool = False,
+    max_retries: int = 0,
+    use_content_disposition: Literal[True],
+) -> Path: ...
+
+
+def download_file(
+    url: str,
+    dest: Path,
+    *,
+    session: Authenticator | Session | None = None,
+    chunk_size: int = 1024,
+    raise_accepts_ranges: bool = False,
+    max_retries: int = 0,
+    use_content_disposition: bool = False,
+) -> Path | None:
     from poetry.puzzle.provider import Indicator
 
-    downloader = Downloader(url, dest, session, max_retries=max_retries)
+    downloader = Downloader(
+        url,
+        dest,
+        session,
+        max_retries=max_retries,
+        use_content_disposition=use_content_disposition,
+    )
 
     if raise_accepts_ranges and downloader.accepts_ranges:
         raise HTTPRangeRequestSupportedError(f"URL {url} supports range requests.")
@@ -165,6 +200,21 @@ def download_file(
                     last_percent = percent
                     update_context(f"Downloading {url} {percent:3}%")
 
+    return downloader.destination if use_content_disposition else None
+
+
+def _filename_from_content_disposition(content_disposition: str, default: str) -> str:
+    message = Message()
+    message["Content-Disposition"] = content_disposition
+    filename = message.get_filename()
+    if not filename:
+        return default
+
+    # Content-Disposition is controlled by the remote server. Strip both POSIX and
+    # Windows path components so it cannot write outside of the cache directory.
+    filename = filename.replace("\\", "/").rsplit("/", 1)[-1]
+    return default if filename in {"", ".", ".."} else filename
+
 
 class Downloader:
     def __init__(
@@ -173,12 +223,23 @@ class Downloader:
         dest: Path,
         session: Authenticator | Session | None = None,
         max_retries: int = 0,
+        use_content_disposition: bool = False,
     ):
         self._dest = dest
         self._max_retries = max_retries
         self._session = session or get_default_authenticator()
         self._url = url
         self._response = self._get()
+        if use_content_disposition and (
+            content_disposition := self._response.headers.get("Content-Disposition")
+        ):
+            self._dest = dest.with_name(
+                _filename_from_content_disposition(content_disposition, dest.name)
+            )
+
+    @property
+    def destination(self) -> Path:
+        return self._dest
 
     @cached_property
     def accepts_ranges(self) -> bool:

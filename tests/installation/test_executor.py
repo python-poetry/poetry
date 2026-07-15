@@ -1078,6 +1078,33 @@ def test_executor_should_write_pep610_url_references_for_wheel_urls(
         assert dest.exists(), "cached file should not be deleted"
 
 
+def test_executor_uses_locked_filename_for_url_dependency(
+    executor: Executor,
+    fixture_dir: FixtureDirGetter,
+    mocker: MockerFixture,
+) -> None:
+    filename = "demo-0.1.0-py2.py3-none-any.whl"
+    package = Package(
+        "demo",
+        "0.1.0",
+        source_type="url",
+        source_url="https://files.example.org/content",
+    )
+    package.files = [{"file": filename, "hash": "sha256:unused"}]
+    download_link = mocker.patch.object(
+        executor,
+        "_download_link",
+        return_value=fixture_dir("distributions") / filename,
+    )
+    mocker.patch.object(executor._wheel_installer, "install")
+
+    executor._install(Install(package))
+
+    link = download_link.call_args.args[1]
+    assert link.url == package.source_url
+    assert link.filename == filename
+
+
 @pytest.mark.parametrize(
     (
         "is_sdist_cached",

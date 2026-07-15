@@ -12,6 +12,8 @@ from poetry.utils.cache import ArtifactCache
 if TYPE_CHECKING:
     from pathlib import Path
 
+    import responses
+
     from pytest_mock import MockerFixture
 
     from tests.types import FixtureDirGetter
@@ -46,6 +48,30 @@ def test_direct_origin_caches_url_dependency(tmp_path: Path) -> None:
         }
     ]
     assert artifact_cache.get_cached_archive_for_link(Link(url), strict=True)
+
+
+def test_direct_origin_uses_content_disposition_filename(
+    http: responses.RequestsMock,
+    fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
+) -> None:
+    artifact_cache = ArtifactCache(cache_dir=tmp_path)
+    direct_origin = DirectOrigin(artifact_cache)
+    filename = "demo-0.1.0-py2.py3-none-any.whl"
+    url = "https://files.example.org/content"
+    http.get(
+        url,
+        body=(fixture_dir("distributions") / filename).read_bytes(),
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+    package = direct_origin.get_package_from_url(url)
+
+    assert package.name == "demo"
+    assert package.files[0]["file"] == filename
+    assert artifact_cache.get_cached_archive_for_link(
+        Link(url, filename=filename), strict=True
+    )
 
 
 def test_direct_origin_does_not_download_url_dependency_when_cached(
