@@ -6,7 +6,7 @@ import pytest
 
 from poetry.core.constraints.version import Version
 
-from tests.console.commands.env.helpers import check_output_wrapper
+from tests.helpers import check_output_wrapper
 
 
 if TYPE_CHECKING:

@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 
 import keyring
 
+from poetry.core.constraints.version import Version
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
 from poetry.core.vcs.git import ParsedUrl
@@ -26,6 +27,7 @@ from poetry.utils.password_manager import PoetryKeyring
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from collections.abc import Iterator
     from collections.abc import Mapping
     from typing import Any
@@ -33,7 +35,6 @@ if TYPE_CHECKING:
     import responses
 
     from keyring.backend import KeyringBackend
-    from poetry.core.constraints.version import Version
     from poetry.core.packages.dependency import Dependency
     from pytest_mock import MockerFixture
     from requests import PreparedRequest
@@ -52,6 +53,36 @@ FIXTURE_PATH_REPOSITORIES_PYPI = FIXTURE_PATH_REPOSITORIES / "pypi.org"
 
 # Used as a mock for latest git revision.
 MOCK_DEFAULT_GIT_REVISION = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
+VERSION_3_7_1 = Version.parse("3.7.1")
+
+
+def check_output_wrapper(
+    version: Version = VERSION_3_7_1, base_prefix: str = "/usr"
+) -> Callable[[list[str], Any, Any], str]:
+    def check_output(cmd: list[str], *args: Any, **kwargs: Any) -> str:
+        python_cmd = cmd[-1]
+        if "print(json.dumps(env))" in python_cmd:
+            return (
+                f'{{"version_info": [{version.major}, {version.minor},'
+                f" {version.patch}]}}"
+            )
+
+        if "sys.version_info[:3]" in python_cmd:
+            return version.text
+
+        if "sys.version_info[:2]" in python_cmd:
+            return f"{version.major}.{version.minor}"
+
+        if "import sys; print(sys.executable)" in python_cmd:
+            return f"/usr/bin/{os.path.basename(cmd[0])}"
+
+        if "print(sys.base_prefix)" in python_cmd:
+            return base_prefix
+
+        assert "import sys; print(sys.prefix)" in python_cmd
+        return "/prefix"
+
+    return check_output
 
 
 def get_package(
