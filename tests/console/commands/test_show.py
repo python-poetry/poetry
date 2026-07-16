@@ -14,9 +14,11 @@ from poetry.core.packages.dependency_group import MAIN_GROUP
 from poetry.core.packages.dependency_group import DependencyGroup
 
 from poetry.factory import Factory
+from poetry.repositories.repository_pool import Priority
 from poetry.utils._compat import tomllib
 from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.helpers import DummyLocker
+from tests.helpers import DummyRepository
 from tests.helpers import get_package
 
 
@@ -25,7 +27,6 @@ if TYPE_CHECKING:
 
     from poetry.poetry import Poetry
     from poetry.repositories import Repository
-    from tests.helpers import DummyRepository
     from tests.types import CommandTesterFactory
 
 
@@ -2570,6 +2571,82 @@ def test_url_dependency_is_not_outdated_by_repository_package(
         assert json.loads(tester.io.fetch_output()) == expected
     else:
         expected = ""
+        assert tester.io.fetch_output() == expected
+
+
+@output_format_parametrize
+def test_show_outdated_explicit_source(
+    output_format: str,
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    repo: DummyRepository,
+) -> None:
+    explicit_repo = DummyRepository(name="explicit")
+    poetry.pool.add_repository(explicit_repo, priority=Priority.EXPLICIT)
+
+    poetry.package.add_dependency(
+        Factory.create_dependency("cachy", {"version": "^0.1.0", "source": "explicit"})
+    )
+
+    cachy_010 = get_package("cachy", "0.1.0")
+    cachy_010.description = "Cachy package"
+    cachy_020 = get_package("cachy", "0.2.0")
+    cachy_020.description = "Cachy package"
+
+    installed.add_package(cachy_010)
+
+    # Only the explicit repository knows about cachy; it must still be
+    # consulted when checking for a newer version.
+    explicit_repo.add_package(cachy_010)
+    explicit_repo.add_package(cachy_020)
+
+    assert isinstance(poetry.locker, DummyLocker)
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "source": {
+                        "type": "legacy",
+                        "url": "https://foo.bar/explicit",
+                        "reference": "explicit",
+                    },
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "files": {"cachy": []},
+            },
+        }
+    )
+
+    tester.execute(f"--outdated {output_format}")
+
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.1.0",
+                "latest_version": "0.2.0",
+                "description": "Cachy package",
+                "installed_status": "installed",
+            },
+        ]
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = """\
+cachy 0.1.0 0.2.0 Cachy package
+"""
         assert tester.io.fetch_output() == expected
 
 

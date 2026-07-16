@@ -656,16 +656,18 @@ lists all packages available."""
                     return provider.search_for_direct_origin_dependency(dep)
 
         allow_prereleases: bool | None = None
+        source: str | None = None
         for dep in requires:
             if dep.name == package.name:
                 allow_prereleases = dep.allows_prereleases()
+                source = dep.source_name
                 break
 
         name = package.name
         selector = VersionSelector(self.poetry.pool)
 
         return selector.find_best_candidate(
-            name, f">={package.pretty_version}", allow_prereleases
+            name, f">={package.pretty_version}", allow_prereleases, source=source
         )
 
     def get_update_status(self, latest: Package, package: Package) -> str:
