@@ -26,11 +26,10 @@ To achieve this, Poetry chooses a project virtual environment in this order:
 3. Otherwise, it reuses an environment it previously created for the project, or creates
    a new one.
 
-This matters if you manage virtual environments yourself (for example with `direnv` or
-`python -m venv`) and also run `poetry env use`: after that point, Poetry will prefer
-its remembered environment over the one your shell has activated. Use
-`poetry env use system` to clear the explicit selection and return to the default
-behavior above.
+If you bring your own virtualenv tooling (for example `direnv` or `python -m venv`),
+prefer relying on step 2 above and avoid `poetry env use`, or clear an earlier
+selection with `poetry env use system` when you want the shell-activated environment
+to win again.
 
 By default, Poetry will try to use the Python version used during Poetry's installation
 to create the virtual environment for the current project.
@@ -91,11 +90,16 @@ poetry env use system
 ```
 
 {{% note %}}
-`poetry env use` records the chosen environment for the **current project** in Poetry's
-virtualenvs cache (commonly an `envs.toml` file under the directory controlled by the
-[`virtualenvs.path`]({{< relref "configuration" >}}) setting). That record can outlive a
-Poetry reinstall and will keep overriding an externally activated venv until you run
-`poetry env use system` (or remove the project's entry).
+`poetry env use` stores that project selection in an `envs.toml` file under Poetry's
+virtualenvs directory. Print the directory with:
+
+```bash
+poetry config virtualenvs.path
+```
+
+The file is typically `envs.toml` in that directory. It can remain after a Poetry
+reinstall; remove the project's entry there, or run `poetry env use system`, to clear
+the explicit selection. Precedence details are in the list at the top of this page.
 {{% /note %}}
 
 ## Activating the environment
