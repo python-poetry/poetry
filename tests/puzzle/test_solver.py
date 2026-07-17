@@ -5446,12 +5446,12 @@ def test_solver_resolves_conflicting_dependency_in_root_extras(
     )
 
 
-def test_solver_resolves_conflicting_dependency_in_transitive_extras(
+def _configure_transitive_extra_conflict(
     package: ProjectPackage,
-    pool: RepositoryPool,
     repo: Repository,
-    io: NullIO,
-) -> None:
+    *,
+    disjoint_root_extras: bool,
+) -> tuple[Package, Package]:
     package_a = get_package("A", "1.0")
     package_c1 = get_package("C", "1.0")
     package_c2 = get_package("C", "2.0")
@@ -5474,20 +5474,24 @@ def test_solver_resolves_conflicting_dependency_in_transitive_extras(
     package_d.add_dependency(get_dependency("A", {"version": "*", "extras": ["one"]}))
     package_e.add_dependency(get_dependency("A", {"version": "*", "extras": ["two"]}))
 
-    dep_d = get_dependency(
-        "D", {"version": "*", "markers": "extra != 'y'"}, optional=True
-    )
-    dep_d._in_extras = [canonicalize_name("x")]
-    dep_e = get_dependency(
-        "E", {"version": "*", "markers": "extra != 'x'"}, optional=True
-    )
-    dep_e._in_extras = [canonicalize_name("y")]
-    package.extras = {
-        canonicalize_name("x"): [dep_d],
-        canonicalize_name("y"): [dep_e],
-    }
-    package.add_dependency(dep_d)
-    package.add_dependency(dep_e)
+    if disjoint_root_extras:
+        dep_d = get_dependency(
+            "D", {"version": "*", "markers": "extra != 'y'"}, optional=True
+        )
+        dep_d._in_extras = [canonicalize_name("x")]
+        dep_e = get_dependency(
+            "E", {"version": "*", "markers": "extra != 'x'"}, optional=True
+        )
+        dep_e._in_extras = [canonicalize_name("y")]
+        package.extras = {
+            canonicalize_name("x"): [dep_d],
+            canonicalize_name("y"): [dep_e],
+        }
+        package.add_dependency(dep_d)
+        package.add_dependency(dep_e)
+    else:
+        package.add_dependency(get_dependency("D", "*"))
+        package.add_dependency(get_dependency("E", "*"))
 
     for dependency_package in (
         package_a,
@@ -5497,6 +5501,19 @@ def test_solver_resolves_conflicting_dependency_in_transitive_extras(
         package_e,
     ):
         repo.add_package(dependency_package)
+
+    return package_c1, package_c2
+
+
+def test_solver_resolves_conflicting_dependency_in_transitive_extras(
+    package: ProjectPackage,
+    pool: RepositoryPool,
+    repo: Repository,
+    io: NullIO,
+) -> None:
+    package_c1, package_c2 = _configure_transitive_extra_conflict(
+        package, repo, disjoint_root_extras=True
+    )
 
     transaction = Solver(package, pool, [], [], io).solve()
     solved_packages = transaction.get_solved_packages()
@@ -5515,38 +5532,7 @@ def test_solver_does_not_split_conflicting_transitive_extras_without_root_marker
     repo: Repository,
     io: NullIO,
 ) -> None:
-    package_a = get_package("A", "1.0")
-    package_c1 = get_package("C", "1.0")
-    package_c2 = get_package("C", "2.0")
-    package_d = get_package("D", "1.0")
-    package_e = get_package("E", "1.0")
-
-    dep_c1 = get_dependency("C", "1.0", optional=True)
-    dep_c1._in_extras = [canonicalize_name("one")]
-    dep_c1.marker = parse_marker("extra == 'one'")
-    dep_c2 = get_dependency("C", "2.0", optional=True)
-    dep_c2._in_extras = [canonicalize_name("two")]
-    dep_c2.marker = parse_marker("extra == 'two'")
-    package_a.extras = {
-        canonicalize_name("one"): [dep_c1],
-        canonicalize_name("two"): [dep_c2],
-    }
-    package_a.add_dependency(dep_c1)
-    package_a.add_dependency(dep_c2)
-
-    package_d.add_dependency(get_dependency("A", {"version": "*", "extras": ["one"]}))
-    package_e.add_dependency(get_dependency("A", {"version": "*", "extras": ["two"]}))
-    package.add_dependency(get_dependency("D", "*"))
-    package.add_dependency(get_dependency("E", "*"))
-
-    for dependency_package in (
-        package_a,
-        package_c1,
-        package_c2,
-        package_d,
-        package_e,
-    ):
-        repo.add_package(dependency_package)
+    _configure_transitive_extra_conflict(package, repo, disjoint_root_extras=False)
 
     with pytest.raises(SolverProblemError):
         Solver(package, pool, [], [], io).solve()

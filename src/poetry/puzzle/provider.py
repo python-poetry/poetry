@@ -809,19 +809,18 @@ class Provider:
         # Modifying dependencies as needed
         clean_dependencies = []
         for dep in dependencies:
-            if not dependency.transitive_marker.without_extras().is_any():
-                transitive_marker_intersection = (
-                    dependency.transitive_marker.without_extras().intersect(
-                        dep.marker.without_extras()
-                    )
-                )
-                if transitive_marker_intersection.is_empty():
-                    # The dependency is not needed, since the markers specified
-                    # for the current package selection are not compatible with
-                    # the markers for the current dependency, so we skip it
-                    continue
+            transitive_marker = (
+                dep.marker
+                if package.is_root()
+                else dependency.transitive_marker.intersect(dep.marker.without_extras())
+            )
+            if transitive_marker.is_empty():
+                # The dependency is not needed, since the markers specified
+                # for the current package selection are not compatible with
+                # the markers for the current dependency, so we skip it
+                continue
 
-                dep.transitive_marker = transitive_marker_intersection
+            dep.transitive_marker = transitive_marker
 
             if not dependency.python_constraint.is_any():
                 python_constraint_intersection = dep.python_constraint.intersect(
