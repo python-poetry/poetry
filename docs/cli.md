@@ -855,12 +855,12 @@ poetry run pytest tests/ -k "test_login"
 
 ### Running console scripts
 
-`poetry run` can also execute [console scripts]({{< relref "pyproject#scripts" >}})
+`poetry run` can also execute [console scripts (Python entry points)]({{< relref "pyproject#scripts" >}})
 defined in `pyproject.toml`.
 
-A console script maps a **command name** to a Python callable with the form
-`package.module:function`. Poetry must be able to import that module and call
-that function after the project is installed into the virtualenv.
+A console script (entry point) maps a **command name** to a Python callable with
+the form `package.module:function`. Poetry must be able to import that module and
+call that function after the project is installed into the virtualenv.
 
 For example, with this layout:
 
@@ -919,8 +919,9 @@ poetry run greet Ada
 ```
 
 {{% note %}}
-After adding or changing scripts in `pyproject.toml`, run `poetry install` again
-so the wrappers in the virtualenv are updated.
+After adding or changing scripts, re-run `poetry install` so the wrappers are
+updated. See [`project.scripts`]({{< relref "pyproject#scripts" >}}) for the
+canonical guidance.
 {{% /note %}}
 
 {{% note %}}

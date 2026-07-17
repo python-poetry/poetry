@@ -278,12 +278,12 @@ If you publish your package on PyPI, they will appear in the `Project Links` sec
 
 ### scripts
 
-This section describes the console scripts that will be installed when installing the package.
+This section describes the **console scripts** (Python
+[entry points](https://packaging.python.org/en/latest/specifications/entry-points/))
+that will be installed when installing the package.
 
 Each entry maps a **command name** to a Python callable using
-`package.module:function` (an
-[entry point](https://packaging.python.org/en/latest/specifications/entry-points/)).
-In practical terms:
+`package.module:function`. In practical terms:
 
 * `package` / `module` are import paths (directories and `.py` files under your
   project, typically matching a layout like `my_package/console.py`)
@@ -318,7 +318,10 @@ Pass CLI arguments after the script name; parse them inside your function
 (for example with [`argparse`](https://docs.python.org/3/library/argparse.html)).
 
 {{% note %}}
-When a script is added or updated, run `poetry install` to make them available in the project's virtualenv.
+When a console script (entry point) is added or updated, run `poetry install`
+again so the command wrappers are created/updated in the project's virtualenv.
+This is the canonical place for that requirement; [`poetry run`]({{< relref "cli#run" >}})
+relies on the same step.
 {{% /note %}}
 
 {{% note %}}
