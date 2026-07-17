@@ -846,34 +846,96 @@ The `run` command executes the given command inside the project's virtualenv.
 poetry run python -V
 ```
 
-It can also execute one of the scripts defined in `pyproject.toml`.
+Any extra arguments are forwarded to the command:
 
-So, if you have a script defined like this:
+```bash
+poetry run python scripts/train.py --epochs 10
+poetry run pytest tests/ -k "test_login"
+```
 
-{{< tabs tabTotal="2" tabID1="script-project" tabID2=script-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
+### Running console scripts
+
+`poetry run` can also execute [console scripts]({{< relref "pyproject#scripts" >}})
+defined in `pyproject.toml`.
+
+A console script maps a **command name** to a Python callable with the form
+`package.module:function`. Poetry must be able to import that module and call
+that function after the project is installed into the virtualenv.
+
+For example, with this layout:
+
+```text
+my-package/
+├── pyproject.toml
+└── my_package/
+    ├── __init__.py
+    └── console.py
+```
+
+and this configuration:
+
+{{< tabs tabTotal="2" tabID1="script-project" tabID2="script-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
 
 {{< tab tabID="script-project" >}}
 ```toml
 [project]
+name = "my-package"
 # ...
 [project.scripts]
-my-script = "my_module:main"
+greet = "my_package.console:main"
 ```
 {{< /tab >}}
 
 {{< tab tabID="script-poetry" >}}
 ```toml
+[tool.poetry]
+name = "my-package"
+# ...
 [tool.poetry.scripts]
-my-script = "my_module:main"
+greet = "my_package.console:main"
 ```
 {{< /tab >}}
 {{< /tabs >}}
 
-You can execute it like so:
+where `my_package/console.py` contains:
+
+```python
+import argparse
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Greet someone.")
+    parser.add_argument("name", nargs="?", default="World")
+    args = parser.parse_args()
+    print(f"Hello, {args.name}!")
+```
+
+install the project so the script wrapper is created, then run it:
 
 ```bash
-poetry run my-script
+poetry install
+poetry run greet
+poetry run greet Ada
 ```
+
+{{% note %}}
+After adding or changing scripts in `pyproject.toml`, run `poetry install` again
+so the wrappers in the virtualenv are updated.
+{{% /note %}}
+
+{{% note %}}
+`poetry run python path/to/script.py` runs a file directly and does **not**
+require a `[project.scripts]` entry. Use `[project.scripts]` when you want an
+installable command name (also available after installing your package with pip).
+{{% /note %}}
+
+Common problems:
+
+* **Command not found**: the script name is missing from `pyproject.toml`, or you
+  have not run `poetry install` since adding it.
+* **`ModuleNotFoundError`**: the dotted path on the right-hand side does not match
+  your package layout (wrong package/module name, or the package is not installed).
+* **`AttributeError`**: the name after `:` does not exist in that module.
 
 Note that this command has no option.
 

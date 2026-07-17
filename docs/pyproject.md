@@ -280,12 +280,42 @@ If you publish your package on PyPI, they will appear in the `Project Links` sec
 
 This section describes the console scripts that will be installed when installing the package.
 
+Each entry maps a **command name** to a Python callable using
+`package.module:function` (an
+[entry point](https://packaging.python.org/en/latest/specifications/entry-points/)).
+In practical terms:
+
+* `package` / `module` are import paths (directories and `.py` files under your
+  project, typically matching a layout like `my_package/console.py`)
+* `function` is the callable Poetry should invoke when the command runs
+
 ```toml
 [project.scripts]
 my_package_cli = 'my_package.console:run'
 ```
 
-Here, we will have the `my_package_cli` script installed which will execute the `run` function in the `console` module in the `my_package` package.
+With a project laid out like this:
+
+```text
+my-package/
+├── pyproject.toml
+└── my_package/
+    ├── __init__.py
+    └── console.py      # defines run()
+```
+
+installing the package creates a `my_package_cli` command that calls
+`my_package.console:run`. During development you can run it with
+[`poetry run`]({{< relref "cli#run" >}}):
+
+```bash
+poetry install
+poetry run my_package_cli
+poetry run my_package_cli --help
+```
+
+Pass CLI arguments after the script name; parse them inside your function
+(for example with [`argparse`](https://docs.python.org/3/library/argparse.html)).
 
 {{% note %}}
 When a script is added or updated, run `poetry install` to make them available in the project's virtualenv.
