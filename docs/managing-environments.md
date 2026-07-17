@@ -14,9 +14,23 @@ menu:
 Poetry makes project environment isolation one of its core features.
 
 What this means is that it will always work isolated from your global Python installation.
-To achieve this, it will first check if it's currently running inside a virtual environment.
-If it is, it will use it directly without creating a new one. But if it's not, it will use
-one that it has already created or create a brand new one for you.
+To achieve this, Poetry chooses a project virtual environment in this order:
+
+1. If you previously ran [`poetry env use`](#switching-between-environments) for this
+   project, Poetry uses that **explicitly selected** environment (stored for the project
+   in Poetry's virtualenvs cache, typically as an `envs.toml` entry). This selection
+   takes precedence even if your shell currently has another virtual environment
+   activated (`VIRTUAL_ENV`).
+2. Otherwise, if Poetry is already running inside a virtual environment, it uses that
+   environment directly without creating a new one.
+3. Otherwise, it reuses an environment it previously created for the project, or creates
+   a new one.
+
+This matters if you manage virtual environments yourself (for example with `direnv` or
+`python -m venv`) and also run `poetry env use`: after that point, Poetry will prefer
+its remembered environment over the one your shell has activated. Use
+`poetry env use system` to clear the explicit selection and return to the default
+behavior above.
 
 By default, Poetry will try to use the Python version used during Poetry's installation
 to create the virtual environment for the current project.
@@ -75,6 +89,14 @@ special `system` Python version to retrieve the default behavior:
 ```bash
 poetry env use system
 ```
+
+{{% note %}}
+`poetry env use` records the chosen environment for the **current project** in Poetry's
+virtualenvs cache (commonly an `envs.toml` file under the directory controlled by the
+[`virtualenvs.path`]({{< relref "configuration" >}}) setting). That record can outlive a
+Poetry reinstall and will keep overriding an externally activated venv until you run
+`poetry env use system` (or remove the project's entry).
+{{% /note %}}
 
 ## Activating the environment
 
