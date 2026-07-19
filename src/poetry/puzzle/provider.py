@@ -555,6 +555,13 @@ class Provider:
         optional_dependencies = set()
         _dependencies = []
 
+        # Dependencies backing an extra (eg. "psycopg" for "postgresql") that aren't
+        # found in `requires` below fall back to these, keyed by name. This can
+        # happen for a package reused from the lock file: its `requires` may have
+        # been pruned down to whatever extras were active in an earlier resolution,
+        # while `package.extras` always keeps the complete, unpruned mapping.
+        extra_dependency_by_name: dict[str, Dependency] = {}
+
         if dependency.extras:
             # Find all the optional dependencies that are wanted - taking care to allow
             # for self-referential extras.
@@ -571,6 +578,9 @@ class Provider:
                         stack += sorted(extra_dependency.extras)
                     else:
                         optional_dependencies.add(extra_dependency.name)
+                        extra_dependency_by_name.setdefault(
+                            extra_dependency.name, extra_dependency
+                        )
 
             # If some extras/features were required, we need to add a special dependency
             # representing the base package to the current package.
@@ -588,6 +598,8 @@ class Provider:
                 new_dependency.source_name = dependency.source_name
 
             _dependencies.append(new_dependency)
+
+        names_in_requires = {dep.name for dep in requires}
 
         for dep in requires:
             if not self._python_constraint.allows_any(dep.python_constraint):
@@ -637,6 +649,17 @@ class Provider:
                 )
 
             _dependencies.append(dep)
+
+        # An activated extra's dependency may be entirely absent from `requires`
+        # above (see the comment on extra_dependency_by_name): add it directly so
+        # activating the extra actually pulls in what it needs. Only do this for
+        # names that don't appear in `requires` at all - if a same-named dependency
+        # is there but got filtered out (eg. a marker like python_version=='3.8'
+        # that doesn't match the current environment), that exclusion is
+        # deliberate and must be respected, not overridden.
+        for name in optional_dependencies:
+            if name not in names_in_requires and name in extra_dependency_by_name:
+                _dependencies.append(extra_dependency_by_name[name])
 
         if self._load_deferred:
             # Retrieving constraints for deferred dependencies

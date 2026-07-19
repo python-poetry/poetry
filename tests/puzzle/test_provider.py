@@ -19,6 +19,7 @@ from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.packages.url_dependency import URLDependency
 from poetry.core.packages.vcs_dependency import VCSDependency
+from poetry.core.version.markers import parse_marker
 
 from poetry.factory import Factory
 from poetry.inspection.info import PackageInfo
@@ -883,6 +884,65 @@ def test_complete_package_with_extras_preserves_source_name(
     assert requires[0].source_name == source_name
     assert requires[1].name == "b"
     assert requires[1].source_name is None
+
+
+def test_complete_package_resolves_extra_dependency_missing_from_requires(
+    provider: Provider, repository: Repository
+) -> None:
+    """
+    A locked package's `requires` may have been pruned down to whatever extras
+    were active in an earlier resolution (see locker._get_locked_package()),
+    while `extras` always keeps the complete mapping. Activating an extra whose
+    dependency isn't in `requires` must still resolve it from `extras`
+    (regression test for #10314).
+    """
+    package_a = Package("A", "1.0")
+    package_b = Package("B", "1.0")
+    dep = get_dependency("B", "^1.0", optional=True)
+    # dep is only present in `extras`, not added via package_a.add_dependency(dep)
+    package_a.extras = {canonicalize_name("foo"): [dep]}
+    repository.add_package(package_a)
+    repository.add_package(package_b)
+
+    dependency = Dependency("A", "1.0", extras=["foo"])
+
+    complete_package = provider.complete_package(
+        DependencyPackage(dependency, package_a)
+    )
+
+    requires = complete_package.package.all_requires
+    assert {r.name for r in requires} == {"a", "b"}
+
+
+def test_complete_package_respects_marker_exclusion_over_missing_requires(
+    pool: RepositoryPool, repository: Repository
+) -> None:
+    """
+    A dependency present in `requires` but excluded by a marker mismatch must
+    stay excluded, even though it's also absent from the filtered result (same
+    as a genuinely-missing-from-requires dependency would be).
+    """
+    root = ProjectPackage("root", "1.2.3")
+    root.python_versions = "^3.9"
+    provider = Provider(root, pool, NullIO())
+
+    package_a = Package("A", "1.0")
+    package_b = Package("B", "1.0")
+    dep = get_dependency("B", "^1.0", optional=True)
+    dep.marker = parse_marker("python_version == '2.7'")
+    package_a.add_dependency(dep)
+    package_a.extras = {canonicalize_name("foo"): [dep]}
+    repository.add_package(package_a)
+    repository.add_package(package_b)
+
+    dependency = Dependency("A", "1.0", extras=["foo"])
+
+    complete_package = provider.complete_package(
+        DependencyPackage(dependency, package_a)
+    )
+
+    requires = complete_package.package.all_requires
+    assert "b" not in {r.name for r in requires}
 
 
 @pytest.mark.parametrize("with_extra", [False, True])
