@@ -560,7 +560,10 @@ class Provider:
         # happen for a package reused from the lock file: its `requires` may have
         # been pruned down to whatever extras were active in an earlier resolution,
         # while `package.extras` always keeps the complete, unpruned mapping.
-        extra_dependency_by_name: dict[str, Dependency] = {}
+        # An extra can list several same-named dependencies with different markers
+        # (eg. a platform-restricted variant per `sys_platform`), so this keeps a
+        # list per name rather than a single entry.
+        extra_dependency_by_name: dict[str, list[Dependency]] = defaultdict(list)
 
         if dependency.extras:
             # Find all the optional dependencies that are wanted - taking care to allow
@@ -578,8 +581,8 @@ class Provider:
                         stack += sorted(extra_dependency.extras)
                     else:
                         optional_dependencies.add(extra_dependency.name)
-                        extra_dependency_by_name.setdefault(
-                            extra_dependency.name, extra_dependency
+                        extra_dependency_by_name[extra_dependency.name].append(
+                            extra_dependency
                         )
 
             # If some extras/features were required, we need to add a special dependency
@@ -658,8 +661,8 @@ class Provider:
         # that doesn't match the current environment), that exclusion is
         # deliberate and must be respected, not overridden.
         for name in optional_dependencies:
-            if name not in names_in_requires and name in extra_dependency_by_name:
-                _dependencies.append(extra_dependency_by_name[name])
+            if name not in names_in_requires:
+                _dependencies.extend(extra_dependency_by_name[name])
 
         if self._load_deferred:
             # Retrieving constraints for deferred dependencies
