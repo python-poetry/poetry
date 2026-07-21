@@ -153,10 +153,10 @@ class EditableBuilder(Builder):
             )
             return []
 
-        scripts = entry_points.get("console_scripts", []) + entry_points.get(
-            "gui_scripts", []
-        )
-        for script in scripts:
+        scripts = [
+            (script, False) for script in entry_points.get("console_scripts", [])
+        ] + [(script, True) for script in entry_points.get("gui_scripts", [])]
+        for script, is_gui in scripts:
             name, script_with_extras = script.split(" = ")
             script_without_extras = script_with_extras.split("[")[0]
             try:
@@ -202,7 +202,12 @@ class EditableBuilder(Builder):
 
             if WINDOWS:
                 cmd_script = script_file.with_suffix(".cmd")
-                cmd = WINDOWS_CMD_TEMPLATE.format(python=self._env.python, script=name)
+                python = (
+                    self._env.python.with_name("pythonw.exe")
+                    if is_gui
+                    else self._env.python
+                )
+                cmd = WINDOWS_CMD_TEMPLATE.format(python=python, script=name)
                 self._debug(
                     f"  - Adding the <c2>{cmd_script.name}</c2> script wrapper to"
                     f" <b>{scripts_path}</b>"

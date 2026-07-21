@@ -290,6 +290,11 @@ def test_builder_installs_project_gui_scripts(
     cmd_script_file = script_file.with_suffix(".cmd")
     assert script_file.exists()
     assert cmd_script_file.exists() is windows
+    if windows:
+        console_cmd = tmp_venv._bin_dir.joinpath("foo.cmd").read_text(encoding="utf-8")
+        gui_cmd = cmd_script_file.read_text(encoding="utf-8")
+        assert f'"{tmp_venv.python}"' in console_cmd
+        assert f'"{tmp_venv.python.with_name("pythonw.exe")}"' in gui_cmd
 
     dist_info = tmp_venv.site_packages.find(Path("simple_project-1.2.3.dist-info"))[0]
     assert "[gui_scripts]\nfoo-gui=foo:bar\n" in dist_info.joinpath(
