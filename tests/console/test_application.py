@@ -87,11 +87,14 @@ def test_application_version_does_not_load_plugins(
     assert tester.status_code == 0
 
 
-def test_application_subcommand_version_loads_plugins(mocker: MockerFixture) -> None:
+@pytest.mark.parametrize("command", ["run python -V", "run -- python -V"])
+def test_application_subcommand_version_loads_plugins(
+    command: str, mocker: MockerFixture
+) -> None:
     load_plugins = mocker.spy(PluginManager, "load_plugins")
     tester = ApplicationTester(Application())
 
-    tester.execute("run -- python -V")
+    tester.execute(command)
 
     load_plugins.assert_called_once()
 
