@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 class MockEnv(NullEnv):
     def __init__(
         self,
-        version_info: tuple[int, int, int] | PythonVersion = (3, 7, 0),
+        version_info: tuple[int, int, int] | PythonVersion = (3, 9, 0),
         *,
         python_implementation: str = "CPython",
         platform: str = "darwin",

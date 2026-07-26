@@ -22,7 +22,10 @@ def setup(mocker: MockerFixture) -> None:
     mocker.patch(
         "poetry.utils.env.EnvManager.get",
         return_value=MockEnv(
-            path=Path("/prefix"), base=Path("/base/prefix"), is_venv=True
+            version_info=(3, 7, 0),
+            path=Path("/prefix"),
+            base=Path("/base/prefix"),
+            is_venv=True,
         ),
     )
 
