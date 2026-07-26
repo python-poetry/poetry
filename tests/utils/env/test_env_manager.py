@@ -1198,11 +1198,44 @@ def test_create_venv_fails_if_current_python_version_is_not_supported(
 
     expected_message = (
         f"Current Python version ({current_version}) is not allowed by the project"
-        f' ({package_version}).\nPlease change python executable via the "env use"'
-        " command."
+        f" ({package_version}).\n"
+        f'Please change python executable via the "env use" command.'
     )
 
-    assert expected_message == str(e.value)
+    assert str(e.value) == expected_message
+
+
+@pytest.mark.parametrize("use_poetry_python", [True, False])
+def test_create_venv_fails_if_current_python_version_is_not_supported_no_venv_creation(
+    manager: EnvManager,
+    poetry: Poetry,
+    config: Config,
+    use_poetry_python: bool,
+) -> None:
+    config.config["virtualenvs"]["create"] = False
+    config.config["virtualenvs"]["use-poetry-python"] = use_poetry_python
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
+
+    current_version = Version.parse(".".join(str(c) for c in sys.version_info[:3]))
+    assert current_version.minor is not None
+    next_version = ".".join(
+        str(c) for c in (current_version.major, current_version.minor + 1, 0)
+    )
+    package_version = "~" + next_version
+    poetry.package.python_versions = package_version
+
+    with pytest.raises(InvalidCurrentPythonVersionError) as e:
+        manager.create_venv()
+
+    expected_message = (
+        f"Current Python version ({current_version}) is not allowed by the project"
+        f" ({package_version}).\n"
+        "Poetry cannot switch to a compatible Python version"
+        " because virtualenv creation is disabled."
+    )
+
+    assert str(e.value) == expected_message
 
 
 def test_create_venv_project_name_empty_sets_correct_prompt(
