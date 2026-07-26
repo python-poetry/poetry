@@ -34,8 +34,7 @@ class InvalidCurrentPythonVersionError(PythonVersionError):
     def __init__(self, expected: str, given: str, note: str | None = None) -> None:
         message = (
             f"Current Python version ({given}) "
-            f"is not allowed by the project ({expected}).\n"
-            'Please change python executable via the "env use" command.'
+            f"is not allowed by the project ({expected})."
         )
         if note is not None:
             message = f"{message}\n{note}"
