@@ -158,7 +158,16 @@ def test_download_file(
             "attachment; filename*=UTF-8''d%C3%A9mo-0.1.0.tar.gz",
             "démo-0.1.0.tar.gz",
         ),
+        ("attachment; filename=", "content"),
+        (
+            "attachment; filename=plain.tar.gz; filename*=UTF-8''encoded.tar.gz",
+            "plain.tar.gz",
+        ),
         ("attachment; filename=..", "content"),
+        ("attachment; filename=demo:0.1.0.tar.gz", "content"),
+        ('attachment; filename="demo\x00.tar.gz"', "content"),
+        ("attachment; filename=" + "a" * 255, "a" * 255),
+        ("attachment; filename=" + "a" * 256, "content"),
     ],
 )
 def test_download_file_uses_content_disposition_filename(

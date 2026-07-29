@@ -66,9 +66,12 @@ def test_direct_origin_uses_content_disposition_filename(
     )
 
     package = direct_origin.get_package_from_url(url)
+    cached_package = direct_origin.get_package_from_url(url)
 
     assert package.name == "demo"
     assert package.files[0]["file"] == filename
+    assert cached_package.files == package.files
+    assert len(http.calls) == 1
     assert artifact_cache.get_cached_archive_for_link(
         Link(url, filename=filename), strict=True
     )

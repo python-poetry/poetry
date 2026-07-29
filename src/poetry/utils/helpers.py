@@ -131,6 +131,10 @@ class HTTPRangeRequestSupportedError(Exception):
     """Raised when server unexpectedly supports byte ranges."""
 
 
+_MAX_REMOTE_FILENAME_LENGTH = 255
+_INVALID_REMOTE_FILENAME_CHARS = {"\x00", ":"}
+
+
 @overload
 def download_file(
     url: str,
@@ -213,7 +217,14 @@ def _filename_from_content_disposition(content_disposition: str, default: str) -
     # Content-Disposition is controlled by the remote server. Strip both POSIX and
     # Windows path components so it cannot write outside of the cache directory.
     filename = filename.replace("\\", "/").rsplit("/", 1)[-1]
-    return default if filename in {"", ".", ".."} else filename
+    if (
+        filename in {"", ".", ".."}
+        or len(filename) > _MAX_REMOTE_FILENAME_LENGTH
+        or any(char in filename for char in _INVALID_REMOTE_FILENAME_CHARS)
+    ):
+        return default
+
+    return filename
 
 
 class Downloader:

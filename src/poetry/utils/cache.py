@@ -52,6 +52,7 @@ _HASHES = {
     "sha1": (hashlib.sha1, 4),
     "sha256": (hashlib.sha256, 8),
 }
+_REDIRECT_FILE = "redirect.json"
 
 
 @dataclasses.dataclass(frozen=True)
@@ -264,14 +265,35 @@ class ArtifactCache:
                 # Check again if the archive exists (under the lock) to avoid
                 # duplicate downloads because it may have already been downloaded
                 # by another thread in the meantime
-                if not cached_archive.exists():
+                cached_archive = self._get_cached_archive(
+                    cache_dir, strict=True, filename=link.filename
+                )
+                if cached_archive is None:
+                    cached_archive = cache_dir / link.filename
                     cache_dir.mkdir(parents=True, exist_ok=True)
+                    downloaded_archive: Path | None = None
                     try:
                         downloaded_archive = download_func(link.url, cached_archive)
                         if downloaded_archive is not None:
+                            if downloaded_archive.parent != cache_dir:
+                                raise ValueError(
+                                    "Downloaded archive must be in the artifact cache "
+                                    "directory"
+                                )
+                            if downloaded_archive != cached_archive:
+                                self._write_redirect(
+                                    cache_dir,
+                                    original=cached_archive.name,
+                                    resolved=downloaded_archive.name,
+                                )
                             cached_archive = downloaded_archive
                     except BaseException:
                         cached_archive.unlink(missing_ok=True)
+                        if (
+                            downloaded_archive is not None
+                            and downloaded_archive.parent == cache_dir
+                        ):
+                            downloaded_archive.unlink(missing_ok=True)
                         raise
 
         return cached_archive
@@ -299,6 +321,9 @@ class ArtifactCache:
         archives = self._get_cached_archives(cache_dir)
         if not archives:
             return None
+
+        if strict:
+            filename = self._get_redirected_filename(cache_dir, filename)
 
         candidates: list[tuple[float | None, Path]] = []
 
@@ -332,6 +357,32 @@ class ArtifactCache:
             return None
 
         return min(candidates)[1]
+
+    def _get_redirected_filename(
+        self, cache_dir: Path, filename: str | None
+    ) -> str | None:
+        redirect_file = cache_dir / _REDIRECT_FILE
+        try:
+            redirect = json.loads(redirect_file.read_text(encoding="utf-8"))
+        except (FileNotFoundError, json.JSONDecodeError, OSError):
+            return filename
+
+        if (
+            isinstance(redirect, dict)
+            and redirect.get("original") == filename
+            and isinstance(resolved := redirect.get("resolved"), str)
+            and Path(resolved).name == resolved
+        ):
+            return resolved
+
+        return filename
+
+    def _write_redirect(self, cache_dir: Path, *, original: str, resolved: str) -> None:
+        redirect_file = cache_dir / _REDIRECT_FILE
+        redirect_file.write_text(
+            json.dumps({"original": original, "resolved": resolved}),
+            encoding="utf-8",
+        )
 
     def _get_cached_archives(self, cache_dir: Path) -> list[Path]:
         archive_types = ["whl", "tar.gz", "tar.bz2", "bz2", "zip"]

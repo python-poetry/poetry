@@ -1078,10 +1078,29 @@ def test_executor_should_write_pep610_url_references_for_wheel_urls(
         assert dest.exists(), "cached file should not be deleted"
 
 
+@pytest.mark.parametrize(
+    ("files", "expected_filename"),
+    [
+        ([], None),
+        (
+            [
+                {"file": "demo-0.1.0-py2.py3-none-any.whl", "hash": "sha256:unused"},
+                {"file": "demo-0.1.0.tar.gz", "hash": "sha256:unused"},
+            ],
+            None,
+        ),
+        (
+            [{"file": "demo-0.1.0-py2.py3-none-any.whl", "hash": "sha256:unused"}],
+            "demo-0.1.0-py2.py3-none-any.whl",
+        ),
+    ],
+)
 def test_executor_uses_locked_filename_for_url_dependency(
     executor: Executor,
     fixture_dir: FixtureDirGetter,
     mocker: MockerFixture,
+    files: list[dict[str, str]],
+    expected_filename: str | None,
 ) -> None:
     filename = "demo-0.1.0-py2.py3-none-any.whl"
     package = Package(
@@ -1090,7 +1109,7 @@ def test_executor_uses_locked_filename_for_url_dependency(
         source_type="url",
         source_url="https://files.example.org/content",
     )
-    package.files = [{"file": filename, "hash": "sha256:unused"}]
+    package.files = files
     download_link = mocker.patch.object(
         executor,
         "_download_link",
@@ -1102,7 +1121,7 @@ def test_executor_uses_locked_filename_for_url_dependency(
 
     link = download_link.call_args.args[1]
     assert link.url == package.source_url
-    assert link.filename == filename
+    assert link.filename == expected_filename
 
 
 @pytest.mark.parametrize(
