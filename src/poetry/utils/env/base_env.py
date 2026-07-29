@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import logging
 import os
 import re
 import subprocess
@@ -23,6 +24,9 @@ from poetry.utils.env.exceptions import EnvCommandError
 from poetry.utils.env.site_packages import SitePackages
 from poetry.utils.helpers import get_real_windows_path
 from poetry.utils.helpers import is_dir_writable
+
+
+logger = logging.getLogger(__name__)
 
 
 if TYPE_CHECKING:
@@ -162,12 +166,24 @@ class Env(ABC):
         self._find_pip_executable()
 
     def get_embedded_wheel(self, distribution: str) -> Path:
-        wheel = get_embed_wheel(
-            distribution, f"{self.version_info[0]}.{self.version_info[1]}"
-        )
-        if wheel is None:
-            raise RuntimeError(f"embedded {distribution} wheel not found")
-        return wheel.path
+        target_version = f"{self.version_info[0]}.{self.version_info[1]}"
+        host_version = f"{sys.version_info[0]}.{sys.version_info[1]}"
+
+        candidates = [target_version]
+        if host_version != target_version:
+            candidates.append(host_version)
+
+        for version in candidates:
+            wheel = get_embed_wheel(distribution, version)
+            if wheel is not None:
+                if version != target_version:
+                    logger.debug(
+                        f"Embedded {distribution} wheel not found for simulated version {target_version}. "
+                        f"Fell back to host Python version {host_version}."
+                    )
+                return wheel.path
+
+        raise RuntimeError(f"embedded {distribution} wheel not found")
 
     @property
     def pip_embedded(self) -> Path:
