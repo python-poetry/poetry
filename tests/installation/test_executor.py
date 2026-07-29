@@ -1099,7 +1099,7 @@ def test_executor_uses_locked_filename_for_url_dependency(
     executor: Executor,
     fixture_dir: FixtureDirGetter,
     mocker: MockerFixture,
-    files: list[dict[str, str]],
+    files: list[PackageFile],
     expected_filename: str | None,
 ) -> None:
     filename = "demo-0.1.0-py2.py3-none-any.whl"
@@ -1121,7 +1121,7 @@ def test_executor_uses_locked_filename_for_url_dependency(
 
     link = download_link.call_args.args[1]
     assert link.url == package.source_url
-    assert link.filename == expected_filename
+    assert link.filename == (expected_filename or "content")
 
 
 @pytest.mark.parametrize(
