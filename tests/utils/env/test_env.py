@@ -526,6 +526,51 @@ def test_command_from_bin_preserves_relative_path(manager: EnvManager) -> None:
 
 
 @pytest.fixture
+def windows_env(tmp_path: Path) -> VirtualEnv:
+    """A ``VirtualEnv`` that resolves executables using Windows rules.
+
+    ``Env._is_windows`` and ``Env._bin_dir`` are derived from ``sys.platform`` in
+    ``Env.__init__``, so they are overridden here to exercise the Windows lookup
+    from any host platform.
+    """
+    path = tmp_path / "venv"
+    env = VirtualEnv(path, path)
+    env._is_windows = True
+    # `Env.__init__` may rewrite `_path` on Windows, so derive from it rather than
+    # from `path` to keep both directories consistent on every platform.
+    env._bin_dir = env._path / "Scripts"
+    env._bin_dir.mkdir(parents=True)
+    return env
+
+
+def test_bin_prefers_exe_over_cmd_on_windows(windows_env: VirtualEnv) -> None:
+    exe = windows_env._bin_dir / "mytool.exe"
+    exe.touch()
+    (windows_env._bin_dir / "mytool.cmd").touch()
+
+    assert windows_env._bin("mytool") == str(exe)
+
+
+def test_bin_finds_cmd_script_on_windows(windows_env: VirtualEnv) -> None:
+    # https://github.com/python-poetry/poetry/issues/10482
+    # Editable installs write a shebang script plus a `.cmd` wrapper, never a
+    # `.exe`, so resolution must not depend on `cmd.exe` searching PATH.
+    (windows_env._bin_dir / "pepscript").touch()
+    cmd_script = windows_env._bin_dir / "pepscript.cmd"
+    cmd_script.touch()
+
+    assert windows_env._bin("pepscript") == str(cmd_script)
+
+
+def test_bin_accepts_explicit_suffix_on_windows(windows_env: VirtualEnv) -> None:
+    cmd_script = windows_env._bin_dir / "pepscript.cmd"
+    cmd_script.touch()
+
+    # A suffix that is already present must not have another one appended.
+    assert windows_env._bin("pepscript.cmd") == str(cmd_script)
+
+
+@pytest.fixture
 def system_env_read_only(system_env: SystemEnv, mocker: MockerFixture) -> SystemEnv:
     original_is_dir_writable = is_dir_writable
 

@@ -34,6 +34,12 @@ if TYPE_CHECKING:
     PythonVersion = tuple[int, int, int, str, int]
 
 
+# Executable suffixes to look for on Windows, in lookup order; `.exe` first so
+# that resolution of already-working executables is unchanged. Not read from
+# PATHEXT, so lookup cannot be influenced by the environment Poetry runs in.
+WINDOWS_BIN_SUFFIXES = (".exe", ".cmd")
+
+
 class MarkerEnv(TypedDict):
     implementation_name: str
     implementation_version: str
@@ -492,28 +498,26 @@ class Env(ABC):
         """
         Return path to the given executable.
         """
-        if self._is_windows and not bin.endswith(".exe"):
-            bin_path = self._bin_dir / (bin + ".exe")
+        if self._is_windows and not bin.endswith(WINDOWS_BIN_SUFFIXES):
+            candidates = [bin + suffix for suffix in WINDOWS_BIN_SUFFIXES]
         else:
-            bin_path = self._bin_dir / bin
+            candidates = [bin]
 
-        if not bin_path.exists():
+        directories = [self._bin_dir]
+        if self._is_windows:
             # On Windows, some executables can be in the base path
             # This is especially true when installing Python with
             # the official installer, where python.exe will be at
             # the root of the env path.
-            if self._is_windows:
-                if not bin.endswith(".exe"):
-                    bin_path = self._path / (bin + ".exe")
-                else:
-                    bin_path = self._path / bin
+            directories.append(self._path)
 
+        for candidate in candidates:
+            for directory in directories:
+                bin_path = directory / candidate
                 if bin_path.exists():
                     return str(bin_path)
 
-            return bin
-
-        return str(bin_path)
+        return bin
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Env):
