@@ -559,6 +559,61 @@ def test_env_scheme_dict_returns_modified_when_read_only(
     )
 
 
+def test_env_scheme_dict_does_not_relocate_writable_paths(
+    system_env_read_only: SystemEnv, tmp_path: Path
+) -> None:
+    """https://github.com/python-poetry/poetry/issues/10341
+
+    When installing project plugins, "purelib" and "platlib" are redirected
+    to the project's plugin cache. The plugin cache is writable and must be
+    left untouched even if the other scheme paths are read-only.
+    """
+    plugin_cache = tmp_path / ".poetry" / "plugins"
+    plugin_cache.mkdir(parents=True)
+
+    system_env_read_only.set_paths(purelib=plugin_cache, platlib=plugin_cache)
+
+    scheme_dict = system_env_read_only.scheme_dict
+    paths = system_env_read_only.paths
+    assert scheme_dict["purelib"] == str(plugin_cache)
+    assert scheme_dict["platlib"] == str(plugin_cache)
+    assert all(
+        Path(scheme_dict[scheme]).exists()
+        and scheme_dict[scheme].startswith(paths["userbase"])
+        for scheme in SCHEME_NAMES
+        if scheme not in {"purelib", "platlib"}
+    )
+
+
+def test_env_scheme_dict_returns_original_when_only_root_in_common(
+    system_env: SystemEnv, mocker: MockerFixture
+) -> None:
+    """https://github.com/python-poetry/poetry/issues/10341
+
+    If the read-only paths only have the filesystem root in common, there is
+    no meaningful prefix that could be replaced with "userbase". The original
+    paths must be returned instead of being relocated to bogus locations.
+    """
+    anchor = system_env.path.anchor
+    read_only_paths = {
+        str(scheme): str(Path(anchor) / f"poetry-test-{scheme}")
+        for scheme in SCHEME_NAMES
+    }
+    system_env.paths.update(read_only_paths)
+    system_env.set_paths()
+
+    original_is_dir_writable = is_dir_writable
+
+    def mock_is_dir_writable(path: Path, create: bool = False) -> bool:
+        if str(path) in read_only_paths.values():
+            return False
+        return original_is_dir_writable(path, create)
+
+    mocker.patch("poetry.utils.env.base_env.is_dir_writable", new=mock_is_dir_writable)
+
+    assert not DeepDiff(system_env.scheme_dict, system_env.paths, ignore_order=True)
+
+
 def test_marker_env_is_equal_for_all_envs(tmp_path: Path, manager: EnvManager) -> None:
     venv_path = tmp_path / "Virtual Env"
     manager.build_venv(venv_path)

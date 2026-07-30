@@ -12,6 +12,7 @@ import pytest
 
 from cleo.io.buffered_io import BufferedIO
 from cleo.io.outputs.output import Verbosity
+from installer.utils import SCHEME_NAMES
 from poetry.core.constraints.version import Version
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.file_dependency import FileDependency
@@ -30,6 +31,7 @@ from poetry.puzzle.exceptions import SolverProblemError
 from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
 from poetry.repositories.installed_repository import InstalledRepository
+from poetry.utils.helpers import is_dir_writable
 from tests.helpers import mock_metadata_entry_points
 
 
@@ -623,5 +625,53 @@ def test_project_plugins_are_installed_in_project_folder(
         assert "demo-0.1.0.dist-info" not in orig_site_packages
     else:
         assert not any(p.startswith("demo") for p in orig_site_packages)
+    if orig_platlib != orig_purelib:
+        assert not any(p.name.startswith("demo") for p in orig_platlib.iterdir())
+
+
+def test_project_plugins_are_installed_in_project_folder_if_env_read_only(
+    poetry_with_plugins: Poetry,
+    io: BufferedIO,
+    system_env: Env,
+    fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
+    mocker: MockerFixture,
+) -> None:
+    """https://github.com/python-poetry/poetry/issues/10341
+
+    If the scheme paths of Poetry's environment are not writable
+    (e.g. Poetry was installed system-wide and is run as an unprivileged user),
+    project plugins must still be installed into the project's plugin cache.
+    """
+    orig_purelib = system_env.purelib
+    orig_platlib = system_env.platlib
+
+    read_only_paths = {system_env.paths[key] for key in SCHEME_NAMES}
+    original_is_dir_writable = is_dir_writable
+
+    def mock_is_dir_writable(path: Path, create: bool = False) -> bool:
+        if str(path) in read_only_paths:
+            return False
+        return original_is_dir_writable(path, create)
+
+    mocker.patch("poetry.utils.env.base_env.is_dir_writable", new=mock_is_dir_writable)
+
+    # make sure that the path dependency is on the same drive (for Windows tests in CI)
+    orig_wheel_path = (
+        fixture_dir("wheel_with_no_requires_dist") / "demo-0.1.0-py2.py3-none-any.whl"
+    )
+    wheel_path = tmp_path / orig_wheel_path.name
+    shutil.copy(orig_wheel_path, wheel_path)
+
+    cache = ProjectPluginCache(poetry_with_plugins, io)
+
+    # just use a file dependency so that we do not have to set up a repository
+    cache._install([FileDependency("demo", wheel_path)], system_env, [])
+
+    project_site_packages = [p.name for p in cache._path.iterdir()]
+    assert "demo" in project_site_packages
+    assert "demo-0.1.0.dist-info" in project_site_packages
+
+    assert not any(p.name.startswith("demo") for p in orig_purelib.iterdir())
     if orig_platlib != orig_purelib:
         assert not any(p.name.startswith("demo") for p in orig_platlib.iterdir())
