@@ -176,7 +176,6 @@ To run a Python script, use `poetry run` followed by the interpreter and the scr
 
 ```shell
 poetry run python scripts/hello.py
-
 ```
 
 For example, if `scripts/hello.py` contains `print("hello")`, the file can be laid out
