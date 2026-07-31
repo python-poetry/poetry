@@ -1,2 +1,5 @@
-def main():
-    print("Hello from console entry point")
+from __future__ import annotations
+
+
+def main() -> None:
+    return None

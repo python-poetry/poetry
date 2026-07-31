@@ -213,15 +213,13 @@ class EditableBuilder(Builder):
                 added.append(cmd_script)
 
         # Handle file scripts (type = "file" in [tool.poetry.scripts])
-        for name, specification in self._poetry.local_config.get(
-            "scripts", {}
-        ).items():
+        for name, specification in self._poetry.local_config.get("scripts", {}).items():
             if isinstance(specification, dict) and specification.get("type") == "file":
                 source = specification.get("reference")
                 if not source:
                     self._io.write_error_line(
                         f"  - File script <c2>{name}</c2> is missing"
-                        " a \"reference\" field"
+                        ' a "reference" field'
                     )
                     continue
                 source_path = self._path / source

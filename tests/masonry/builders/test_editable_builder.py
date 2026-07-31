@@ -525,6 +525,4 @@ def test_builder_skips_file_script_missing_reference_field(
     schema-level enforcement.
     """
     with pytest.raises(RuntimeError, match="The Poetry configuration is invalid"):
-        Factory().create_poetry(
-            fixture_dir("file_scripts_no_ref_field_project")
-        )
+        Factory().create_poetry(fixture_dir("file_scripts_no_ref_field_project"))
