@@ -1915,7 +1915,9 @@ def test_show_single_package_selects_env_compatible_duplicate_8945(
         assert "0.1.0" not in output
 
 
+@output_format_parametrize
 def test_show_single_package_with_duplicate_falls_back_when_env_excluded_8945(
+    output_format: str,
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
@@ -1959,11 +1961,15 @@ def test_show_single_package_with_duplicate_falls_back_when_env_excluded_8945(
         }
     )
 
-    tester.execute("cachy")
+    tester.execute(f"cachy {output_format}")
 
-    output = tester.io.fetch_output()
-    assert "0.1.0" in output
-    assert "0.1.1" not in output
+    if "json" in output_format:
+        result = json.loads(tester.io.fetch_output())
+        assert result["version"] == "0.1.0"
+    else:
+        output = tester.io.fetch_output()
+        assert "0.1.0" in output
+        assert "0.1.1" not in output
 
 
 def test_show_tree(
