@@ -1858,6 +1858,114 @@ cachy (!) 0.1.1 Cachy package
         assert tester.io.fetch_output() == expected
 
 
+@output_format_parametrize
+def test_show_single_package_selects_env_compatible_duplicate_8945(
+    output_format: str,
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    repo: DummyRepository,
+) -> None:
+    # https://github.com/python-poetry/poetry/issues/8945
+    # When the lock file has several marker-conditioned entries for the same
+    # package, `poetry show <package>` must report the version applicable to the
+    # current environment (darwin here), matching what `poetry show` reports.
+    poetry.package.add_dependency(
+        Factory.create_dependency("cachy", {"version": "0.1.0", "platform": "linux"})
+    )
+    poetry.package.add_dependency(
+        Factory.create_dependency("cachy", {"version": "0.1.1", "platform": "darwin"})
+    )
+
+    assert isinstance(poetry.locker, DummyLocker)
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "files": [],
+                },
+                {
+                    "name": "cachy",
+                    "version": "0.1.1",
+                    "description": "Cachy package",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "files": [],
+                },
+            ],
+            "metadata": {"content-hash": "123456789"},
+        }
+    )
+
+    tester.execute(f"cachy {output_format}")
+
+    if "json" in output_format:
+        result = json.loads(tester.io.fetch_output())
+        assert result["version"] == "0.1.1"
+    else:
+        output = tester.io.fetch_output()
+        assert "0.1.1" in output
+        assert "0.1.0" not in output
+
+
+def test_show_single_package_with_duplicate_falls_back_when_env_excluded_8945(
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    repo: DummyRepository,
+) -> None:
+    # https://github.com/python-poetry/poetry/issues/8945
+    # If none of the duplicate lock entries applies to the current environment,
+    # `poetry show <package>` should still display a version (the first match)
+    # rather than raising.
+    poetry.package.add_dependency(
+        Factory.create_dependency("cachy", {"version": "0.1.0", "platform": "linux"})
+    )
+    poetry.package.add_dependency(
+        Factory.create_dependency("cachy", {"version": "0.1.1", "platform": "win32"})
+    )
+
+    assert isinstance(poetry.locker, DummyLocker)
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "files": [],
+                },
+                {
+                    "name": "cachy",
+                    "version": "0.1.1",
+                    "description": "Cachy package",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "files": [],
+                },
+            ],
+            "metadata": {"content-hash": "123456789"},
+        }
+    )
+
+    tester.execute("cachy")
+
+    output = tester.io.fetch_output()
+    assert "0.1.0" in output
+    assert "0.1.1" not in output
+
+
 def test_show_tree(
     tester: CommandTester, poetry: Poetry, installed: Repository
 ) -> None:
