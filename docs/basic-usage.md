@@ -172,8 +172,32 @@ any Poetry commands that expect to manipulate an environment.
 
 ### Using `poetry run`
 
-To run your script simply use `poetry run python your_script.py`.
-Likewise if you have command line tools such as `pytest` or `black` you can run them using `poetry run pytest`.
+To run a Python script, use `poetry run` followed by the interpreter and the script path:
+
+```shell
+poetry run python scripts/hello.py
+
+```
+
+For example, if `scripts/hello.py` contains `print("hello")`, the file can be laid out
+like this:
+
+```text
+my-project/
+├── pyproject.toml
+└── scripts/
+    └── hello.py
+```
+
+Arguments after the script name are passed to Python unchanged. The following command
+prints `['Ada', 'Lovelace']` from `sys.argv[1:]`:
+
+```shell
+poetry run python scripts/hello.py Ada Lovelace
+```
+
+Likewise, command-line tools such as `pytest` or `black` can be run with `poetry run pytest`
+or `poetry run black`.
 
 {{% note %}}
 If managing your own virtual environment externally, you do not need to use `poetry run` since
