@@ -20,11 +20,6 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import overload
 
-from requests.exceptions import ChunkedEncodingError
-from requests.exceptions import ConnectionError
-from requests.utils import atomic_open
-
-from poetry.utils.authenticator import get_default_authenticator
 from poetry.utils.constants import REQUESTS_TIMEOUT
 
 
@@ -176,7 +171,11 @@ class Downloader:
     ):
         self._dest = dest
         self._max_retries = max_retries
-        self._session = session or get_default_authenticator()
+        if session is None:
+            from poetry.utils.authenticator import get_default_authenticator
+
+            session = get_default_authenticator()
+        self._session = session
         self._url = url
         self._response = self._get()
 
@@ -216,7 +215,7 @@ class Downloader:
                     for chunk in self._response.iter_content(chunk_size=chunk_size):
                         yield chunk
                         fetched_size += len(chunk)
-            except (ChunkedEncodingError, ConnectionError):
+            except _resumable_errors():
                 if (
                     retries < self._max_retries
                     and self.accepts_ranges
@@ -234,6 +233,8 @@ class Downloader:
 
     def download_with_progress(self, chunk_size: int = 1024) -> Iterator[int]:
         fetched_size = 0
+        from requests.utils import atomic_open
+
         with atomic_open(self._dest) as f:
             for chunk in self._iter_content_with_resume(chunk_size=chunk_size):
                 if chunk:
@@ -457,3 +458,33 @@ def extractall(source: Path, dest: Path, zip: bool) -> None:
                             )
                     safe_members.append(member)
                 archive.extractall(dest, members=safe_members)
+
+
+def _resumable_errors() -> tuple[type[BaseException], ...]:
+    from requests.exceptions import ChunkedEncodingError
+    from requests.exceptions import ConnectionError as RequestsConnectionError
+
+    return (ChunkedEncodingError, RequestsConnectionError)
+
+
+_LAZY_REEXPORTS = {
+    "ChunkedEncodingError": ("requests.exceptions", "ChunkedEncodingError"),
+    "ConnectionError": ("requests.exceptions", "ConnectionError"),
+    "atomic_open": ("requests.utils", "atomic_open"),
+    "get_default_authenticator": ("poetry.utils.authenticator", "get_default_authenticator"),
+}
+
+
+def __getattr__(name: str) -> Any:
+    target = _LAZY_REEXPORTS.get(name)
+    if target is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    from importlib import import_module
+
+    value = getattr(import_module(target[0]), target[1])
+    globals()[name] = value
+    return value
+
+
+def __dir__() -> list[str]:
+    return sorted([*globals(), *_LAZY_REEXPORTS])
