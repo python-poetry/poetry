@@ -471,7 +471,10 @@ _LAZY_REEXPORTS = {
     "ChunkedEncodingError": ("requests.exceptions", "ChunkedEncodingError"),
     "ConnectionError": ("requests.exceptions", "ConnectionError"),
     "atomic_open": ("requests.utils", "atomic_open"),
-    "get_default_authenticator": ("poetry.utils.authenticator", "get_default_authenticator"),
+    "get_default_authenticator": (
+        "poetry.utils.authenticator",
+        "get_default_authenticator",
+    ),
 }
 
 
