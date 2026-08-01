@@ -924,7 +924,6 @@ def test_complete_package_respects_marker_exclusion_over_missing_requires(
     stay excluded, even though it's also absent from the filtered result (same
     as a genuinely-missing-from-requires dependency would be).
     """
-    root = ProjectPackage("root", "1.2.3")
     root.python_versions = "^3.9"
     locked_package = Package("A", "1.0", source_type="url", source_url=SOME_URL)
     provider = Provider(root, pool, NullIO(), locked=[locked_package])
