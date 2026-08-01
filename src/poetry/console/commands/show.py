@@ -661,11 +661,19 @@ lists all packages available."""
                 allow_prereleases = dep.allows_prereleases()
                 break
 
+        # Use the locked package's own source rather than guessing from the first
+        # matching dependency. A package may be declared with several constraints
+        # (different markers and/or sources); the one active in the current
+        # environment is the one that was locked, and its source is recorded
+        # unambiguously on the locked package as ``source_reference`` (empty for
+        # the default repository). Direct-origin packages are handled above.
+        source = None if package.is_direct_origin() else package.source_reference
+
         name = package.name
         selector = VersionSelector(self.poetry.pool)
 
         return selector.find_best_candidate(
-            name, f">={package.pretty_version}", allow_prereleases
+            name, f">={package.pretty_version}", allow_prereleases, source=source
         )
 
     def get_update_status(self, latest: Package, package: Package) -> str:
