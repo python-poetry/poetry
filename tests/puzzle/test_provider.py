@@ -19,7 +19,6 @@ from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.packages.url_dependency import URLDependency
 from poetry.core.packages.vcs_dependency import VCSDependency
-from poetry.core.version.markers import parse_marker
 
 from poetry.factory import Factory
 from poetry.inspection.info import PackageInfo
@@ -887,7 +886,7 @@ def test_complete_package_with_extras_preserves_source_name(
 
 
 def test_complete_package_resolves_extra_dependency_missing_from_requires(
-    provider: Provider, repository: Repository
+    root: ProjectPackage, repository: Repository, pool: RepositoryPool
 ) -> None:
     """
     A locked package's `requires` may have been pruned down to whatever extras
@@ -896,13 +895,16 @@ def test_complete_package_resolves_extra_dependency_missing_from_requires(
     dependency isn't in `requires` must still resolve it from `extras`
     (regression test for #10314).
     """
-    package_a = Package("A", "1.0")
+    package_a = Package("A", "1.0", source_type="url", source_url=SOME_URL)
     package_b = Package("B", "1.0")
     dep = get_dependency("B", "^1.0", optional=True)
     # dep is only present in `extras`, not added via package_a.add_dependency(dep)
     package_a.extras = {canonicalize_name("foo"): [dep]}
     repository.add_package(package_a)
     repository.add_package(package_b)
+
+    locked_package = Package("A", "1.0", source_type="url", source_url=SOME_URL)
+    provider = Provider(root, pool, NullIO(), locked=[locked_package])
 
     dependency = Dependency("A", "1.0", extras=["foo"])
 
@@ -915,7 +917,7 @@ def test_complete_package_resolves_extra_dependency_missing_from_requires(
 
 
 def test_complete_package_respects_marker_exclusion_over_missing_requires(
-    pool: RepositoryPool, repository: Repository
+    root: ProjectPackage, repository: Repository, pool: RepositoryPool
 ) -> None:
     """
     A dependency present in `requires` but excluded by a marker mismatch must
@@ -924,12 +926,13 @@ def test_complete_package_respects_marker_exclusion_over_missing_requires(
     """
     root = ProjectPackage("root", "1.2.3")
     root.python_versions = "^3.9"
-    provider = Provider(root, pool, NullIO())
+    locked_package = Package("A", "1.0", source_type="url", source_url=SOME_URL)
+    provider = Provider(root, pool, NullIO(), locked=[locked_package])
 
-    package_a = Package("A", "1.0")
+    package_a = Package("A", "1.0", source_type="url", source_url=SOME_URL)
     package_b = Package("B", "1.0")
     dep = get_dependency("B", "^1.0", optional=True)
-    dep.marker = parse_marker("python_version == '2.7'")
+    dep.marker = "python_version == '2.7'"
     package_a.add_dependency(dep)
     package_a.extras = {canonicalize_name("foo"): [dep]}
     repository.add_package(package_a)

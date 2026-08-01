@@ -509,13 +509,14 @@ class Provider:
     ) -> DependencyPackage:
         package = dependency_package.package
         dependency = dependency_package.dependency
+        is_direct_origin = package.is_direct_origin()
 
         if package.is_root():
             dependency_package = dependency_package.clone()
             package = dependency_package.package
             dependency = dependency_package.dependency
             requires = package.all_requires
-        elif package.is_direct_origin():
+        elif is_direct_origin:
             requires = package.requires
         else:
             if (
@@ -555,20 +556,23 @@ class Provider:
         optional_dependencies = set()
         _dependencies = []
 
-        # Dependencies backing an extra (eg. "psycopg" for "postgresql") that aren't
-        # found in `requires` below fall back to these, keyed by name. This can
-        # happen for a package reused from the lock file: its `requires` may have
-        # been pruned down to whatever extras were active in an earlier resolution,
-        # while `package.extras` always keeps the complete, unpruned mapping.
-        # An extra can list several same-named dependencies with different markers
-        # (eg. a platform-restricted variant per `sys_platform`), so this keeps a
-        # list per name rather than a single entry.
-        extra_dependency_by_name: dict[str, list[Dependency]] = defaultdict(list)
-
         if dependency.extras:
             # Find all the optional dependencies that are wanted - taking care to allow
             # for self-referential extras.
             stack = sorted(dependency.extras)
+
+            # For direct origin dependencies from the lock file,
+            # only used extra dependencies are found in `requires`.
+            # If the package locked for a direct origin dependency is reused,
+            # its `requires` have been pruned down to whatever extras were active
+            # in an earlier resolution. This is an issue in subsequent resolutions
+            # if an additional extra is requested via changes in the pyproject.toml.
+            # (Dependencies from repositories are looked up again
+            # so that this is not issue for them.)
+            if is_direct_origin:
+                requires = requires.copy()
+                requires_extras = {extra for dep in requires for extra in dep.in_extras}
+
             while stack:
                 extra = stack.pop()
                 if extra in found_extras:
@@ -581,9 +585,8 @@ class Provider:
                         stack += sorted(extra_dependency.extras)
                     else:
                         optional_dependencies.add(extra_dependency.name)
-                        extra_dependency_by_name[extra_dependency.name].append(
-                            extra_dependency
-                        )
+                        if is_direct_origin and extra not in requires_extras:
+                            requires.append(extra_dependency)
 
             # If some extras/features were required, we need to add a special dependency
             # representing the base package to the current package.
@@ -601,8 +604,6 @@ class Provider:
                 new_dependency.source_name = dependency.source_name
 
             _dependencies.append(new_dependency)
-
-        names_in_requires = {dep.name for dep in requires}
 
         for dep in requires:
             if not self._python_constraint.allows_any(dep.python_constraint):
@@ -652,17 +653,6 @@ class Provider:
                 )
 
             _dependencies.append(dep)
-
-        # An activated extra's dependency may be entirely absent from `requires`
-        # above (see the comment on extra_dependency_by_name): add it directly so
-        # activating the extra actually pulls in what it needs. Only do this for
-        # names that don't appear in `requires` at all - if a same-named dependency
-        # is there but got filtered out (eg. a marker like python_version=='3.8'
-        # that doesn't match the current environment), that exclusion is
-        # deliberate and must be respected, not overridden.
-        for name in optional_dependencies:
-            if name not in names_in_requires:
-                _dependencies.extend(extra_dependency_by_name[name])
 
         if self._load_deferred:
             # Retrieving constraints for deferred dependencies

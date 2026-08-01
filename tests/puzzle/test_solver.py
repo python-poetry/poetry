@@ -5547,7 +5547,7 @@ def test_solver_resolves_duplicate_extra_dependencies_missing_from_requires(
         Factory.create_dependency("A", {"version": "*", "extras": ["foo"]})
     )
 
-    package_a = get_package("A", "1.0")
+    package_a = Package("A", "1.0", source_type="url", source_url="https://example.org")
     package_b1 = get_package("B", "1.0")
     package_b2 = get_package("B", "2.0")
 
@@ -5557,11 +5557,10 @@ def test_solver_resolves_duplicate_extra_dependencies_missing_from_requires(
     dep2.marker = parse_marker("sys_platform == 'linux' and extra == 'foo'")
     package_a.extras = {canonicalize_name("foo"): [dep1, dep2]}
 
-    repo.add_package(package_a)
     repo.add_package(package_b1)
     repo.add_package(package_b2)
 
-    solver = Solver(package, pool, [], [], io)
+    solver = Solver(package, pool, [], [package_a], io)
     transaction = solver.solve()
 
     check_solver_result(
