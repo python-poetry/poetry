@@ -137,6 +137,11 @@ def test_noninteractive_sanitizes_default_name_from_directory(
         ("My_Package.Name", "my-package-name"),
         ("MyProject", "myproject"),
         ("  --my..name__ ", "my-name"),
+        # nothing survives sanitization: keep the lowercased directory name
+        # rather than returning an empty default
+        ("日本語", "日本語"),
+        ("проект", "проект"),
+        ("---", "---"),
     ],
 )
 def test_sanitize_package_name(name: str, expected: str) -> None:
