@@ -20,7 +20,7 @@ from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.repositories.http_repository import HTTPRepository
 from poetry.repositories.link_sources.json import SimpleJsonPage
 from poetry.repositories.parsers.pypi_search_parser import SearchResultParser
-from poetry.utils.constants import REQUESTS_TIMEOUT
+from poetry.utils.constants import get_requests_timeout
 
 
 cache_control_logger.setLevel(logging.ERROR)
@@ -61,7 +61,9 @@ class PyPiRepository(HTTPRepository):
         results = []
 
         response = requests.get(
-            self._base_url + "search", params={"q": query}, timeout=REQUESTS_TIMEOUT
+            self._base_url + "search",
+            params={"q": query},
+            timeout=get_requests_timeout(),
         )
         parser = SearchResultParser()
         parser.feed(response.text)
@@ -204,7 +206,7 @@ class PyPiRepository(HTTPRepository):
             json_response = self.session.get(
                 self._base_url + endpoint,
                 raise_for_status=False,
-                timeout=REQUESTS_TIMEOUT,
+                timeout=get_requests_timeout(),
                 headers=headers,
             )
         except requests.exceptions.TooManyRedirects:
@@ -214,7 +216,7 @@ class PyPiRepository(HTTPRepository):
             json_response = self.session.get(
                 self._base_url + endpoint,
                 raise_for_status=False,
-                timeout=REQUESTS_TIMEOUT,
+                timeout=get_requests_timeout(),
                 headers=headers,
             )
 

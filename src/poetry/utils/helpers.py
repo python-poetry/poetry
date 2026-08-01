@@ -25,7 +25,7 @@ from requests.exceptions import ConnectionError
 from requests.utils import atomic_open
 
 from poetry.utils.authenticator import get_default_authenticator
-from poetry.utils.constants import REQUESTS_TIMEOUT
+from poetry.utils.constants import get_requests_timeout
 
 
 if TYPE_CHECKING:
@@ -198,7 +198,7 @@ class Downloader:
             headers["Range"] = f"bytes={start}-"
 
         response = self._session.get(
-            self._url, stream=True, headers=headers, timeout=REQUESTS_TIMEOUT
+            self._url, stream=True, headers=headers, timeout=get_requests_timeout()
         )
         try:
             response.raise_for_status()
