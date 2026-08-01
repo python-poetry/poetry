@@ -509,13 +509,14 @@ class Provider:
     ) -> DependencyPackage:
         package = dependency_package.package
         dependency = dependency_package.dependency
+        is_direct_origin = package.is_direct_origin()
 
         if package.is_root():
             dependency_package = dependency_package.clone()
             package = dependency_package.package
             dependency = dependency_package.dependency
             requires = package.all_requires
-        elif package.is_direct_origin():
+        elif is_direct_origin:
             requires = package.requires
         else:
             if (
@@ -559,6 +560,19 @@ class Provider:
             # Find all the optional dependencies that are wanted - taking care to allow
             # for self-referential extras.
             stack = sorted(dependency.extras)
+
+            # For direct origin dependencies from the lock file,
+            # only used extra dependencies are found in `requires`.
+            # If the package locked for a direct origin dependency is reused,
+            # its `requires` have been pruned down to whatever extras were active
+            # in an earlier resolution. This is an issue in subsequent resolutions
+            # if an additional extra is requested via changes in the pyproject.toml.
+            # (Dependencies from repositories are looked up again
+            # so that this is not issue for them.)
+            if is_direct_origin:
+                requires = requires.copy()
+                requires_extras = {extra for dep in requires for extra in dep.in_extras}
+
             while stack:
                 extra = stack.pop()
                 if extra in found_extras:
@@ -571,6 +585,8 @@ class Provider:
                         stack += sorted(extra_dependency.extras)
                     else:
                         optional_dependencies.add(extra_dependency.name)
+                        if is_direct_origin and extra not in requires_extras:
+                            requires.append(extra_dependency)
 
             # If some extras/features were required, we need to add a special dependency
             # representing the base package to the current package.
