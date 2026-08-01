@@ -5,6 +5,8 @@ import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import pytest
+
 from poetry.core.packages.dependency import Dependency
 
 from poetry.repositories.exceptions import PackageNotFoundError
@@ -13,6 +15,8 @@ from poetry.repositories.single_page_repository import SinglePageRepository
 
 
 if TYPE_CHECKING:
+    import responses
+
     from packaging.utils import NormalizedName
 
 
@@ -77,3 +81,24 @@ def test_single_page_repository_get_page_with_relative_links() -> None:
     for link in page.links:
         path = Path(link.path)
         assert path.parent == base_path
+
+
+def test_get_page_fetches_repository_url(http: responses.RequestsMock) -> None:
+    url = "https://single-page.example.org/packages.html"
+    http.get(url, body='<a href="demo-1.2.3.tar.gz">demo</a>')
+    repo = SinglePageRepository("single-page", url=url, disable_cache=True)
+
+    page = repo.get_page("ignored")
+
+    assert [link.filename for link in page.links] == ["demo-1.2.3.tar.gz"]
+
+
+def test_get_page_raises_if_repository_is_missing(
+    http: responses.RequestsMock,
+) -> None:
+    url = "https://single-page.example.org/packages.html"
+    http.get(url, status=404)
+    repo = SinglePageRepository("single-page", url=url, disable_cache=True)
+
+    with pytest.raises(PackageNotFoundError, match=r"Package \[demo\] not found\."):
+        repo.get_page("demo")
