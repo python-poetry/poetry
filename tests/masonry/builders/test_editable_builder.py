@@ -265,6 +265,30 @@ if __name__ == '__main__':
     assert tmp_venv._bin_dir.joinpath("fox").read_text(encoding="utf-8") == fox_script
 
 
+def test_builder_windows_cmd_wrapper_uses_utf8_code_page_for_non_ascii_paths(
+    simple_poetry: Poetry, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class WindowsScriptEnv(MockEnv):
+        @property
+        def python(self) -> Path:
+            return Path(
+                r"C:\Users\jmoni\OneDrive\Área de Trabalho\example\.venv\Scripts\python.exe"
+            )
+
+    env = WindowsScriptEnv(path=tmp_path / "Área de Trabalho" / ".venv")
+    python = env.python
+
+    monkeypatch.setattr("poetry.masonry.builders.editable.WINDOWS", True)
+
+    builder = EditableBuilder(simple_poetry, env, NullIO())
+    builder._add_scripts()
+
+    assert (
+        env.script_dirs[0].joinpath("foo.cmd").read_bytes()
+        == (f'@echo off\r\nchcp 65001 >nul\r\n"{python}" "%~dp0\\foo" %*\r\n').encode()
+    )
+
+
 def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
     mocker: MockerFixture, extended_poetry: Poetry, tmp_path: Path
 ) -> None:
