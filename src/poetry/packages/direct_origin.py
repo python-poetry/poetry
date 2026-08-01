@@ -87,9 +87,13 @@ class DirectOrigin:
     def get_package_from_directory(cls, directory: Path) -> Package:
         return PackageInfo.from_directory(path=directory).to_package(root_dir=directory)
 
-    def _download_file(self, url: str, dest: Path) -> None:
-        download_file(
-            url, dest, session=self._authenticator, max_retries=self._max_retries
+    def _download_file(self, url: str, dest: Path) -> Path:
+        return download_file(
+            url,
+            dest,
+            session=self._authenticator,
+            max_retries=self._max_retries,
+            use_content_disposition=True,
         )
 
     def get_package_from_url(self, url: str) -> Package:

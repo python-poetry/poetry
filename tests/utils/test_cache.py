@@ -362,6 +362,51 @@ def test_get_cached_archive_for_link_no_race_condition(
         download_mock.assert_called_once()
 
 
+def test_get_cached_archive_for_link_uses_downloaded_filename(
+    tmp_path: Path, mocker: MockerFixture
+) -> None:
+    cache = ArtifactCache(cache_dir=tmp_path)
+    link = Link("https://example.org/content")
+    downloaded_filename = "demo-0.1.0.tar.gz"
+
+    def download(_: str, dest: Path) -> Path:
+        downloaded = dest.with_name(downloaded_filename)
+        downloaded.write_bytes(b"demo")
+        return downloaded
+
+    download_mock = mocker.Mock(side_effect=download)
+
+    first = cache.get_cached_archive_for_link(
+        link, strict=True, download_func=download_mock
+    )
+    second = cache.get_cached_archive_for_link(
+        link, strict=True, download_func=download_mock
+    )
+
+    expected = cache.get_cache_directory_for_link(link) / downloaded_filename
+    assert first == second == expected
+    download_mock.assert_called_once()
+
+
+def test_get_cached_archive_for_link_rejects_download_outside_cache(
+    tmp_path: Path,
+) -> None:
+    cache = ArtifactCache(cache_dir=tmp_path / "cache")
+    link = Link("https://example.org/content")
+    outside = tmp_path / "demo-0.1.0.tar.gz"
+
+    def download(_: str, __: Path) -> Path:
+        outside.write_bytes(b"demo")
+        return outside
+
+    with pytest.raises(
+        ValueError, match="Downloaded archive must be in the artifact cache directory"
+    ):
+        cache.get_cached_archive_for_link(link, strict=True, download_func=download)
+
+    assert outside.exists()
+
+
 def test_get_cached_archive_for_git() -> None:
     """Smoke test that checks that no assertion is raised."""
     cache = ArtifactCache(cache_dir=Path())
