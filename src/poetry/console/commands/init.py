@@ -475,7 +475,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             cwd=cwd,
         )
         return [
-            parser.parse(re.sub(r"@\s*latest$", "", requirement, flags=re.I))
+            parser.parse(re.sub(r"@\s*latest$", "", requirement, flags=re.IGNORECASE))
             for requirement in requirements
         ]
 
@@ -501,9 +501,16 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         conforms to the PyPA name format: only ASCII letters, numbers,
         period, underscore and hyphen.
         https://packaging.python.org/en/latest/specifications/name-normalization/#name-format
+
+        A directory name that holds no ASCII alphanumerics at all (say a
+        non-Latin script) sanitizes to an empty string, which is not a usable
+        default. Fall back to the lowercased directory name in that case, which
+        is what this used to do for every directory.
         """
         replaced = re.sub(r"[^A-Za-z0-9._-]+", "-", name)
-        return str(canonicalize_name(replaced)).strip("-")
+        sanitized = str(canonicalize_name(replaced)).strip("-")
+
+        return sanitized or name.lower()
 
     @staticmethod
     def _validate_author(author: str, default: str) -> str | None:
