@@ -36,8 +36,8 @@ from poetry.repositories.link_sources.html import HTMLPage
 from poetry.repositories.link_sources.json import SimpleJsonPage
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.constants import REQUESTS_TIMEOUT
+from poetry.utils.download import download_file
 from poetry.utils.helpers import HTTPRangeRequestSupportedError
-from poetry.utils.helpers import download_file
 from poetry.utils.helpers import get_highest_priority_hash_type
 from poetry.utils.patterns import wheel_file_re
 

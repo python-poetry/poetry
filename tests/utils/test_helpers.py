@@ -16,10 +16,10 @@ import responses
 from requests.exceptions import ChunkedEncodingError
 
 from poetry.utils._compat import WINDOWS
-from poetry.utils.helpers import Downloader
+from poetry.utils.download import Downloader
+from poetry.utils.download import download_file
 from poetry.utils.helpers import HTTPRangeRequestSupportedError
 from poetry.utils.helpers import directory
-from poetry.utils.helpers import download_file
 from poetry.utils.helpers import ensure_path
 from poetry.utils.helpers import extractall
 from poetry.utils.helpers import get_file_hash

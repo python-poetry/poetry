@@ -2,61 +2,40 @@ from __future__ import annotations
 
 import subprocess
 import sys
+import tempfile
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Literal
 
 import pytest
 
-from typing_extensions import Self
-
 from poetry.utils import helpers
+from poetry.utils.download import Downloader
+from poetry.utils.download import download_file
 
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
 
-LAZY_NAMES = [
-    "ChunkedEncodingError",
-    "ConnectionError",
-    "atomic_open",
-    "get_default_authenticator",
-]
-
-
-@pytest.mark.parametrize("name", LAZY_NAMES)
-def test_lazily_reexported_names_are_still_importable(name: str) -> None:
-    """These were module-level imports and stay part of the module's public surface."""
-    assert hasattr(helpers, name)
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    [("Downloader", Downloader), ("download_file", download_file)],
+)
+def test_deprecated_helpers_download_reexports(name: str, expected: object) -> None:
+    with pytest.warns(DeprecationWarning, match="poetry.utils.download"):
+        assert getattr(helpers, name) is expected
     assert name in dir(helpers)
 
 
-@pytest.mark.parametrize("name", LAZY_NAMES)
-def test_lazily_reexported_names_resolve_to_the_real_objects(name: str) -> None:
-    import requests.exceptions
-    import requests.utils
-
-    from poetry.utils import authenticator
-
-    expected = {
-        "ChunkedEncodingError": requests.exceptions.ChunkedEncodingError,
-        "ConnectionError": requests.exceptions.ConnectionError,
-        "atomic_open": requests.utils.atomic_open,
-        "get_default_authenticator": authenticator.get_default_authenticator,
-    }[name]
-    assert getattr(helpers, name) is expected
-
-
-def test_unknown_attribute_still_raises_attribute_error() -> None:
+def test_unknown_helpers_attribute_still_raises_attribute_error() -> None:
     with pytest.raises(AttributeError):
         helpers.definitely_not_a_real_attribute  # noqa: B018
 
 
 def test_importing_the_cli_entrypoint_does_not_import_requests() -> None:
-    """The CLI imports this module for two filesystem helpers, so it must not drag the
-    HTTP stack in. This is the regression the lazy imports exist to prevent."""
     code = (
         "import sys;"
         "import poetry.console.application;"
@@ -69,18 +48,9 @@ def test_importing_the_cli_entrypoint_does_not_import_requests() -> None:
 
 
 def test_downloader_retries_only_the_resumable_requests_errors() -> None:
-    """`except ConnectionError` inside this module must be the requests class, not the
-    builtin. A module-level ``__getattr__`` serves attribute access on the module object
-    but never bare global lookup inside the module's own functions, so a lazy rewrite can
-    silently bind the builtin -- which requests' ConnectionError is not a subclass of --
-    and stop retrying resumable downloads."""
     import requests.exceptions
 
-    def run_with(exc: type[BaseException], tmp_path_factory: object = None) -> int:
-        import tempfile
-
-        from pathlib import Path
-
+    def run_with(exc: type[BaseException]) -> int:
         state = {"n": 0}
 
         class _Resp:
@@ -91,7 +61,7 @@ def test_downloader_retries_only_the_resumable_requests_errors() -> None:
 
             def raise_for_status(self) -> None: ...
             def close(self) -> None: ...
-            def __enter__(self) -> Self:
+            def __enter__(self) -> _Resp:
                 return self
 
             def __exit__(self, *_: object) -> Literal[False]:
@@ -108,7 +78,7 @@ def test_downloader_retries_only_the_resumable_requests_errors() -> None:
                 return _Resp()
 
         with tempfile.TemporaryDirectory() as td:
-            downloader = helpers.Downloader(
+            downloader = Downloader(
                 "https://example.invalid/x",
                 Path(td) / "out.bin",
                 session=_Session(),  # type: ignore[arg-type]
@@ -117,15 +87,51 @@ def test_downloader_retries_only_the_resumable_requests_errors() -> None:
             list(downloader.download_with_progress(chunk_size=2))
         return state["n"]
 
-    # Retried on unmodified main, so the stub is asked for content twice. SSLError is
-    # included deliberately: it subclasses requests' ConnectionError, so it is caught by
-    # the same clause, and it is caught only if that name is the requests class rather
-    # than the builtin.
     assert run_with(requests.exceptions.ConnectionError) == 2
     assert run_with(requests.exceptions.ChunkedEncodingError) == 2
     assert run_with(requests.exceptions.SSLError) == 2
 
-    # Not resumable: must propagate rather than be swallowed by a broad except clause.
     for exc in (ValueError, AttributeError):
         with pytest.raises(exc):
             run_with(exc)
+
+
+def test_downloader_stops_after_max_retries() -> None:
+    import requests.exceptions
+
+    state = {"n": 0}
+
+    class _Resp:
+        headers: ClassVar[dict[str, str]] = {
+            "Accept-Ranges": "bytes",
+            "Content-Length": "8",
+        }
+
+        def raise_for_status(self) -> None: ...
+        def close(self) -> None: ...
+        def __enter__(self) -> _Resp:
+            return self
+
+        def __exit__(self, *_: object) -> Literal[False]:
+            return False
+
+        def iter_content(self, chunk_size: int = 1) -> Iterator[bytes]:
+            state["n"] += 1
+            yield b"ab"
+            raise requests.exceptions.ConnectionError("stub failure")
+
+    class _Session:
+        def get(self, *_: object, **__: object) -> _Resp:
+            return _Resp()
+
+    with tempfile.TemporaryDirectory() as td:
+        downloader = Downloader(
+            "https://example.invalid/x",
+            Path(td) / "out.bin",
+            session=_Session(),  # type: ignore[arg-type]
+            max_retries=2,
+        )
+        with pytest.raises(requests.exceptions.ConnectionError):
+            list(downloader.download_with_progress(chunk_size=2))
+
+    assert state["n"] == 3
