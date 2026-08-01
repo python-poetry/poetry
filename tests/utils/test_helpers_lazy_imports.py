@@ -3,13 +3,19 @@ from __future__ import annotations
 import subprocess
 import sys
 
+from typing import TYPE_CHECKING
 from typing import ClassVar
+from typing import Literal
 
 import pytest
 
 from typing_extensions import Self
 
 from poetry.utils import helpers
+
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 
 LAZY_NAMES = [
@@ -88,10 +94,10 @@ def test_downloader_retries_only_the_resumable_requests_errors() -> None:
             def __enter__(self) -> Self:
                 return self
 
-            def __exit__(self, *_: object) -> bool:
+            def __exit__(self, *_: object) -> Literal[False]:
                 return False
 
-            def iter_content(self, chunk_size: int = 1):
+            def iter_content(self, chunk_size: int = 1) -> Iterator[bytes]:
                 state["n"] += 1
                 yield b"ab"
                 if state["n"] == 1:
