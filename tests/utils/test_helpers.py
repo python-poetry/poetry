@@ -342,7 +342,7 @@ def test_extractall_wheel_no_path_traversal_via_symlink(
 def test_deprecated_helpers_download_reexports(name: str, expected: object) -> None:
     from poetry.utils import helpers
 
-    with pytest.warns(DeprecationWarning, match="poetry.utils.download"):
+    with pytest.warns(DeprecationWarning, match=r"poetry\.utils\.download"):
         assert getattr(helpers, name) is expected
 
 
