@@ -11,6 +11,7 @@ import pytest
 
 from poetry.utils._compat import WINDOWS
 from poetry.utils.download import Downloader
+from poetry.utils.download import HTTPRangeRequestSupportedError
 from poetry.utils.download import download_file
 from poetry.utils.helpers import directory
 from poetry.utils.helpers import ensure_path
@@ -337,7 +338,11 @@ def test_extractall_wheel_no_path_traversal_via_symlink(
 
 @pytest.mark.parametrize(
     ("name", "expected"),
-    [("Downloader", Downloader), ("download_file", download_file)],
+    [
+        ("Downloader", Downloader),
+        ("download_file", download_file),
+        ("HTTPRangeRequestSupportedError", HTTPRangeRequestSupportedError),
+    ],
 )
 def test_deprecated_helpers_download_reexports(name: str, expected: object) -> None:
     from poetry.utils import helpers
