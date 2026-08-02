@@ -25,8 +25,8 @@ from poetry.installation.wheel_installer import WheelInstaller
 from poetry.puzzle.exceptions import SolverProblemError
 from poetry.utils._compat import decode
 from poetry.utils.authenticator import Authenticator
+from poetry.utils.download import Downloader
 from poetry.utils.env import EnvCommandError
-from poetry.utils.helpers import Downloader
 from poetry.utils.helpers import get_file_hash
 from poetry.utils.helpers import get_highest_priority_hash_type
 from poetry.utils.helpers import pluralize
