@@ -11,7 +11,6 @@ from requests.utils import atomic_open
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.authenticator import get_default_authenticator
 from poetry.utils.constants import REQUESTS_TIMEOUT
-from poetry.utils.helpers import HTTPRangeRequestSupportedError
 
 
 if TYPE_CHECKING:
@@ -20,6 +19,10 @@ if TYPE_CHECKING:
 
     from requests import Response
     from requests import Session
+
+
+class HTTPRangeRequestSupportedError(Exception):
+    """Raised when server unexpectedly supports byte ranges."""
 
 
 def download_file(

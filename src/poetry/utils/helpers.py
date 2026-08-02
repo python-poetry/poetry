@@ -9,7 +9,7 @@ import stat
 import sys
 import tarfile
 import tempfile
-import warnings as _warnings
+import warnings
 import zipfile
 
 from collections.abc import Mapping
@@ -27,6 +27,8 @@ if TYPE_CHECKING:
     from types import TracebackType
 
     from poetry.core.packages.package import Package
+
+
 logger = logging.getLogger(__name__)
 prioritised_hash_types: tuple[str, ...] = tuple(
     t
@@ -110,10 +112,6 @@ def merge_dicts(d1: dict[str, Any], d2: dict[str, Any]) -> None:
             merge_dicts(d1[k], d2[k])
         else:
             d1[k] = d2[k]
-
-
-class HTTPRangeRequestSupportedError(Exception):
-    """Raised when server unexpectedly supports byte ranges."""
 
 
 def get_package_version_display_string(
@@ -333,14 +331,18 @@ def extractall(source: Path, dest: Path, zip: bool) -> None:
                 archive.extractall(dest, members=safe_members)
 
 
-_DEPRECATED_DOWNLOAD_EXPORTS = {"Downloader", "download_file"}
+_DEPRECATED_DOWNLOAD_EXPORTS = {
+    "Downloader",
+    "download_file",
+    "HTTPRangeRequestSupportedError",
+}
 
 
-def __getattr__(name: str) -> Any:
+def __getattr__(name: str) -> object:
     if name in _DEPRECATED_DOWNLOAD_EXPORTS:
-        _warnings.warn(
-            f"Importing `{name}` from `poetry.utils.helpers` is deprecated; "
-            f"use `poetry.utils.download.{name}` instead.",
+        warnings.warn(
+            f"Importing `{name}` from `poetry.utils.helpers` is deprecated;"
+            f" use `poetry.utils.download.{name}` instead.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -348,7 +350,3 @@ def __getattr__(name: str) -> Any:
 
         return getattr(download, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
-
-def __dir__() -> list[str]:
-    return sorted([*globals(), *_DEPRECATED_DOWNLOAD_EXPORTS])
