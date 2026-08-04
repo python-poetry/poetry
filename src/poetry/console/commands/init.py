@@ -498,14 +498,22 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
     @staticmethod
     def _sanitize_package_name(name: str) -> str:
         """Turn an arbitrary string (e.g. a directory name) into a name that
-        conforms to the PyPA name format: only ASCII letters, numbers,
-        period, underscore and hyphen.
+        conforms to the PyPA name format.
         https://packaging.python.org/en/latest/specifications/name-normalization/#name-format
+
+        Characters outside the format are replaced with a hyphen, then
+        ``canonicalize_name`` normalizes the result, so the return value is
+        narrower than the format allows: lowercase ASCII letters, numbers and
+        hyphens only. Runs of period, underscore and hyphen all collapse to a
+        single hyphen ("My_Project" and "my.project" both give "my-project").
 
         A directory name that holds no ASCII alphanumerics at all (say a
         non-Latin script) sanitizes to an empty string, which is not a usable
         default. Fall back to the lowercased directory name in that case, which
-        is what this used to do for every directory.
+        is what this used to do for every directory. That fallback is the one
+        return value that need not conform to the format -- "日本語" stays
+        "日本語" -- matching the pre-existing behaviour rather than replacing a
+        meaningful directory name with a placeholder.
         """
         replaced = re.sub(r"[^A-Za-z0-9._-]+", "-", name)
         sanitized = str(canonicalize_name(replaced)).strip("-")
