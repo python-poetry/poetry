@@ -219,8 +219,28 @@ class Solver:
                                 continue
 
                             _package.add_dependency(dep)
+            elif info := results.get(package):
+                solved_packages[package] = info
             else:
-                solved_packages[package] = results[package]
+                # The solver decided this package, but the depth-first search
+                # above did not reach it from the project's dependencies, so
+                # nothing in the solution requires it.
+                #
+                # This happens when two builds share a base version and differ
+                # only by a local segment, e.g. `torch 2.12.1`, which requires
+                # `triton`, and a `torch 2.12.1+cpu` build, which does not.
+                # While backtracking, the solver records the incompatibilities
+                # of the `2.12.1` build and then settles on `2.12.1+cpu`. Since
+                # a local segment is ignored by `==`, `2.12.1+cpu` satisfies the
+                # term `torch (==2.12.1)`, so the discarded build's
+                # incompatibilities keep deriving its transitive dependencies,
+                # which are left behind as orphan decisions. They must not be
+                # carried into the solution.
+                self._provider.debug(
+                    f"<warning>Discarding orphan package {package.complete_name}"
+                    f" ({package.full_pretty_version}): not reachable from the"
+                    f" project's dependencies.</warning>"
+                )
 
         return solved_packages
 
