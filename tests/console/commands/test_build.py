@@ -113,6 +113,7 @@ def test_build_with_config_settings_local_version(
 
     assert len(build_artifacts) > 0
     assert all(archive.exists() for archive in build_artifacts)
+    assert all(local_version_label in archive.name for archive in build_artifacts)
     assert "`--local-version` is deprecated." not in tmp_tester.io.fetch_error()
 
 
