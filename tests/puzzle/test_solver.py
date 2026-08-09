@@ -132,16 +132,13 @@ def test_solver_local_version_variant_does_not_leak_dependencies(
     The explicit source serves two builds of the same base version: "2.12.1+cpu",
     which needs no "triton", and a plain "2.12.1" (the macOS wheel), whose
     metadata does. The "setuptools" conflict makes the solver record the
-    incompatibilities of both builds before it settles on "2.12.1+cpu" -- which
-    *satisfies* the term "torch (==2.12.1)", because a local version segment is
-    ignored by "==". The discarded build's incompatibilities therefore keep
-    deriving "triton", leaving it behind as a decision that no package in the
-    solution requires.
+    incompatibilities of both builds before it settles on "2.12.1+cpu".
 
-    The solver now drops such orphan decisions instead of raising a KeyError.
-    Note that this only treats the symptom: "triton" is still resolved and
-    completed for nothing, and the leak still causes false resolution failures
-    (see the xfail-ed tests below).
+    Because a local version segment is ignored by "==", "2.12.1+cpu" satisfies
+    the term "torch (==2.12.1)". Unless that term is narrowed to the build it
+    describes, the plain build's incompatibilities keep deriving "triton",
+    which is then left in the solution as a decision that nothing requires --
+    and which used to crash the aggregation step with a KeyError.
     """
 
     def torchcpu_build(version: str) -> Package:
@@ -194,12 +191,11 @@ def test_solver_local_version_variant_does_not_leak_dependencies(
     )
 
     # The assertion below isn't the point of this test, but pins down the
-    # resolution order the reproduction depends on. Which build is completed
-    # first matters: the bug only occurs because the plain 2.12.1 build is
-    # completed -- recording its triton incompatibility -- while a *different*
+    # resolution order the leak depends on: the plain 2.12.1 build has to be
+    # completed -- recording its `triton` incompatibility -- while a *different*
     # build satisfying the same "torch (==2.12.1)" term is what gets decided.
-    # If the solver ever settled on 2.12.1 instead, triton would be a genuine
-    # dependency and this test would silently stop covering the bug.
+    # If the solver ever stopped completing the plain build, or settled on it
+    # instead, this test would silently stop covering the bug.
     assert [
         (call.args[0].package.name, str(call.args[0].package.version))
         for call in complete_package_spy.mock_calls
@@ -213,22 +209,13 @@ def test_solver_local_version_variant_does_not_leak_dependencies(
         ("torch", "2.12.1"),
         # backtracking settles the setuptools conflict...
         ("setuptools", "81.0.0"),
-        # ...and 2.12.1+cpu is decided after all, inheriting the
-        # incompatibility recorded for 2.12.1 above, which derives...
+        # ...and 2.12.1+cpu is decided after all. The incompatibility recorded
+        # for 2.12.1 above does not apply to it, so nothing follows: no triton
+        # is ever completed, let alone left behind in the solution.
         ("torch", "2.12.1+cpu"),
-        # ...this orphan, which nothing in the solution actually requires.
-        ("triton", "3.7.1"),
     ]
 
 
-@pytest.mark.xfail(
-    reason=(
-        "The dependencies of a plain release leak onto its local variants,"
-        " because `==2.12.1` also matches `2.12.1+cpu`. Only the resulting"
-        " orphan decisions are handled, not the leak itself."
-    ),
-    strict=True,
-)
 def test_solver_local_version_variant_is_not_wrongly_excluded(
     package: ProjectPackage,
     repo: Repository,
@@ -242,23 +229,18 @@ def test_solver_local_version_variant_is_not_wrongly_excluded(
     ``test_solver_local_version_variant_does_not_leak_dependencies`` with one
     change: the "triton" that the plain 2.12.1 build requires exists in no
     repository. The "2.12.1+cpu" build needs no triton and satisfies
-    "torch (==2.12.1)", so the solver should settle on it and succeed.
+    "torch (==2.12.1)", so the solver must settle on it and succeed.
 
-    It does select it, but then the incompatibility recorded for the plain
-    build leaks onto it exactly as in the test above -- only here the leaked
-    requirement is unsatisfiable, so instead of an orphan decision it takes the
-    whole resolution down::
+    Before the incompatibility terms were narrowed, the solver did select
+    2.12.1+cpu, but the plain build's incompatibility then leaked onto it and,
+    because the leaked requirement was unsatisfiable, took the whole resolution
+    down instead of merely leaving an orphan behind:
 
         selecting torch (2.12.1+cpu)
         derived: triton (==3.7.1)
         fact: no versions of triton match 3.7.1
         conflict: torch (2.12.1) depends on triton (==3.7.1)
         ! thus: torch is forbidden
-
-    Unlike an orphan decision, this cannot be repaired when aggregating the
-    solved packages, because resolution has already failed by then. A fix has
-    to stop the incompatibilities recorded for one build from applying to a
-    sibling build of the same base version.
     """
 
     def torchcpu_build(version: str) -> Package:
@@ -304,14 +286,6 @@ def test_solver_local_version_variant_is_not_wrongly_excluded(
     )
 
 
-@pytest.mark.xfail(
-    reason=(
-        "The dependencies of a plain release leak onto its local variants,"
-        " because `==2.12.1` also matches `2.12.1+cpu`. Only the resulting"
-        " orphan decisions are handled, not the leak itself."
-    ),
-    strict=True,
-)
 def test_solver_local_version_variant_is_not_wrongly_excluded_via_stale_lock(
     package: ProjectPackage,
     repo: Repository,

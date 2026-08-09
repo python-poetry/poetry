@@ -32,6 +32,7 @@ from poetry.packages import DependencyPackage
 from poetry.packages.direct_origin import DirectOrigin
 from poetry.packages.package_collection import PackageCollection
 from poetry.puzzle.exceptions import OverrideNeededError
+from poetry.repositories.exceptions import PackageNotFoundError
 from poetry.repositories.repository_pool import Priority
 
 
@@ -151,6 +152,9 @@ class Provider:
         self._source_root: Path | None = None
         self._direct_origin_packages: dict[str, Package] = {}
         self._locked: dict[NormalizedName, list[DependencyPackage]] = defaultdict(list)
+        self._local_variants: dict[
+            tuple[NormalizedName, str, str | None], list[Version]
+        ] = {}
         self._use_latest: Collection[NormalizedName] = []
         self._active_root_extras = (
             frozenset(active_root_extras) if active_root_extras is not None else None
@@ -439,6 +443,67 @@ class Provider:
             _dependencies.append(dep)
         return _dependencies
 
+    def _local_version_variants(
+        self, package: Package, dependency: Dependency
+    ) -> list[Version]:
+        """
+        The local variants of ``package``'s release that the same search offers,
+        e.g. ``2.12.1+cpu`` for ``2.12.1``.
+
+        The repositories are asked rather than the versions seen so far being
+        remembered: a locked package is handed to the solver without being
+        searched for at all, so its variants would still be unknown when its
+        incompatibilities are recorded. Querying with ``dependency``'s source
+        covers exactly the repositories this run draws candidates from, and the
+        answer does not depend on how far resolution has progressed.
+        """
+        key = (package.name, package.version.text, dependency.source_name)
+        if (variants := self._local_variants.get(key)) is None:
+            query = Dependency(package.name, f"=={package.version}")
+            if dependency.source_name:
+                query.source_name = dependency.source_name
+            try:
+                candidates = self._pool.find_packages(query)
+            except PackageNotFoundError:
+                candidates = []
+            variants = sorted({c.version for c in candidates if c.version.is_local()})
+            self._local_variants[key] = variants
+        return variants
+
+    def _identity_dependency(
+        self, package: Package, dependency: Dependency
+    ) -> Dependency:
+        """
+        The dependency used as the positive term of ``package``'s
+        incompatibilities, i.e. the term meaning "this very build".
+
+        ``Package.to_dependency()`` pins the version with ``==``, which per
+        PEP 440 also matches local variants of the same release: ``==2.12.1``
+        matches ``2.12.1+cpu``. That is right for a version specifier written by
+        a user, but wrong for a term that is supposed to denote one build -- it
+        lets the incompatibilities recorded for ``torch 2.12.1`` apply to a
+        ``torch 2.12.1+cpu`` build that does not have those dependencies at all.
+        So exclude the local variants of the same release explicitly.
+
+        (PEP 440 arbitrary equality, ``===2.12.1``, expresses this directly, but
+        cannot be used here: an arbitrary equality never merges with an adjacent
+        range, so the incompatibilities built during conflict resolution stop
+        shrinking and the solver fails to terminate.)
+        """
+        self_dependency = package.to_dependency()
+        version = package.version
+        if version.is_local() or package.is_direct_origin():
+            # `==2.12.1+cpu` already matches nothing but itself, and a direct
+            # origin has no sibling builds to be confused with.
+            return self_dependency
+
+        constraint: VersionConstraint = version
+        for variant in self._local_version_variants(package, dependency):
+            constraint = constraint.difference(variant)
+        if constraint != self_dependency.constraint:
+            self_dependency.constraint = constraint
+        return self_dependency
+
     def incompatibilities_for(
         self, dependency_package: DependencyPackage
     ) -> list[Incompatibility]:
@@ -479,16 +544,27 @@ class Provider:
                 ):
                     return [
                         Incompatibility(
-                            [Term(package.to_dependency(), True)],
+                            [
+                                Term(
+                                    self._identity_dependency(
+                                        package, dependency_package.dependency
+                                    ),
+                                    True,
+                                )
+                            ],
                             PythonCauseError(
                                 package.python_versions, str(self._python_constraint)
                             ),
                         )
                     ]
 
+        self_dependency = self._identity_dependency(
+            package, dependency_package.dependency
+        )
+
         return [
             Incompatibility(
-                [Term(package.to_dependency(), True), Term(dep, False)],
+                [Term(self_dependency, True), Term(dep, False)],
                 DependencyCauseError(),
             )
             for dep in self._get_dependencies_with_overrides(dependencies, package)
