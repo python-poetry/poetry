@@ -1645,9 +1645,9 @@ develop = false
 
 [package.source]
 type = "git"
-url = "https://github.com/python-poetry/poetry-core.git"
-reference = "HEAD"
-resolved_reference = "5de24118d23a05a23af5d9eb1d8bd98850d09205"
+url = "https://github.com/radoering/poetry-core.git"
+reference = "fix-excluding-local-versions"
+resolved_reference = "97d3c24f2451c82b23a4c714bf8fcc50511d05a8"
 
 [[package]]
 name = "pre-commit"
@@ -2393,4 +2393,4 @@ type = ["pytest-mypy (>=1.0.1) ; platform_python_implementation != \"PyPy\""]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "afaa5fde455af4891db15f45aeaab108a0e666284d10be763880d134f3ecf639"
+content-hash = "1590c7a79d60394233eac5049cc40416eda400abfa5f1f354f28ef8267b67442"
