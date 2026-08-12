@@ -321,6 +321,40 @@ def test_generic_env_system_packages(poetry: Poetry) -> None:
     assert not env.includes_system_site_packages
 
 
+def test_generic_env_is_venv_resolves_aliased_paths(
+    tmp_path: Path, poetry: Poetry
+) -> None:
+    """https://github.com/python-poetry/poetry/issues/10991
+
+    A version manager (e.g. mise) may expose the same interpreter through two
+    different filesystem paths: an unversioned symlink/alias and the concrete
+    fully-versioned install dir it points to. ``is_venv()`` must resolve both
+    sides before comparing so it isn't fooled into thinking such an aliased
+    path is an isolated virtualenv.
+
+    Creating an actual symlink would require elevated privileges on Windows,
+    so the alias is simulated with a non-canonical (but equivalent) path
+    containing redundant ".." segments -- this still isolates whether
+    ``is_venv()`` performs its own ``.resolve()`` before comparing.
+    """
+    real_dir = tmp_path / "versions" / "3.11.9"
+    real_dir.mkdir(parents=True)
+
+    aliased_dir = tmp_path / "aliases" / ".." / "versions" / "3.11.9"
+
+    # Sanity check: they differ as strings but resolve to the same real path.
+    assert str(aliased_dir) != str(real_dir)
+    assert aliased_dir.resolve() == real_dir.resolve()
+
+    env = GenericEnv(Path(sys.base_prefix))
+    # Override directly, bypassing Env.__init__'s own pre-normalization
+    # (e.g. get_real_windows_path), to isolate is_venv()'s .resolve() logic.
+    env._path = aliased_dir
+    env._base = real_dir
+
+    assert env.is_venv() is False
+
+
 @pytest.mark.parametrize("with_system_site_packages", [True, False])
 def test_env_system_packages_are_relative_to_lib(
     tmp_path: Path, poetry: Poetry, with_system_site_packages: bool

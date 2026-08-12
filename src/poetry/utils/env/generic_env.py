@@ -103,4 +103,4 @@ class GenericEnv(VirtualEnv):
         return super(VirtualEnv, self)._run(cmd, **kwargs)
 
     def is_venv(self) -> bool:
-        return self._path != self._base
+        return self._path.resolve() != self._base.resolve()
