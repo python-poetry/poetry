@@ -265,6 +265,7 @@ lists all packages available."""
 
         from cleo.io.null_io import NullIO
 
+        from poetry.puzzle.exceptions import SolverProblemError
         from poetry.puzzle.solver import Solver
         from poetry.repositories.installed_repository import InstalledRepository
         from poetry.repositories.repository_pool import RepositoryPool
@@ -280,8 +281,18 @@ lists all packages available."""
             io=NullIO(),
         )
         solver.provider.load_deferred(False)
-        with solver.use_environment(self.env):
-            ops = solver.solve().calculate_operations()
+        try:
+            with solver.use_environment(self.env):
+                ops = solver.solve().calculate_operations()
+        except SolverProblemError:
+            if not self.poetry.locker.is_fresh():
+                self.line_error(
+                    "<error>Error: pyproject.toml changed significantly since"
+                    " poetry.lock was last generated."
+                    f" Run `{self._lock_create_command()}` to fix the lock file.</error>"
+                )
+                return 1
+            raise
 
         required_locked_packages = {op.package for op in ops if not op.skipped}
 

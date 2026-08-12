@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from poetry.poetry import Poetry
     from poetry.repositories import Repository
     from tests.types import CommandTesterFactory
+    from tests.types import SetProjectContext
 
 
 @pytest.fixture
@@ -2433,6 +2434,24 @@ def test_show_errors_without_lock_file(tester: CommandTester, poetry: Poetry) ->
     tester.execute()
 
     expected = "Error: poetry.lock not found. Run `poetry lock` to create it.\n"
+    assert tester.io.fetch_error() == expected
+    assert tester.status_code == 1
+
+
+def test_show_errors_with_outdated_lock_file(
+    command_tester_factory: CommandTesterFactory,
+    set_project_context: SetProjectContext,
+) -> None:
+    with set_project_context("outdated_lock", in_place=False) as cwd:
+        poetry = Factory().create_poetry(cwd)
+        tester = command_tester_factory("show", poetry=poetry)
+
+        tester.execute()
+
+    expected = (
+        "Error: pyproject.toml changed significantly since poetry.lock was last "
+        "generated. Run `poetry lock` to fix the lock file.\n"
+    )
     assert tester.io.fetch_error() == expected
     assert tester.status_code == 1
 
