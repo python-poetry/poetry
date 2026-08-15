@@ -112,6 +112,13 @@ def test_version_update(tester: CommandTester) -> None:
     assert tester.io.fetch_output() == "Bumping version from 1.2.3 to 2.0.0\n"
 
 
+def test_version_update_writes_project_version(tester: CommandTester) -> None:
+    tester.execute("2.0.0")
+
+    content = tester.command.poetry.file.read()
+    assert content["project"]["version"] == "2.0.0"
+
+
 def test_short_version_update(tester: CommandTester) -> None:
     tester.execute("--short 2.0.0")
     assert tester.io.fetch_output() == "2.0.0\n"
