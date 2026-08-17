@@ -1929,6 +1929,37 @@ def test_executor_known_hashes(
     verify_installed_distribution(tmp_venv, package, expected_url_reference)
 
 
+def test_executor_rejects_an_archive_not_listed_in_the_lock_file(
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    config: Config,
+    io: BufferedIO,
+    fixture_dir: FixtureDirGetter,
+) -> None:
+    """The served filename must not decide whether the hash is checked. A lock
+    file that pins hashes has to reject an archive it does not list.
+    """
+    url = (fixture_dir("distributions") / "demo-0.1.0.tar.gz").resolve()
+    package = Package("demo", "0.1.0", source_type="file", source_url=url.as_posix())
+    # The lock pins a hash, but under a filename the served archive does not use.
+    package.files = [
+        {
+            "file": "demo-0.1.0-py2.py3-none-any.whl",
+            "hash": "sha256:" + "0" * 64,
+        },
+    ]
+
+    executor = Executor(tmp_venv, pool, config, io)
+    return_code = executor.execute([Install(package)])
+
+    distributions = list(tmp_venv.site_packages.distributions(name=package.name))
+    assert len(distributions) == 0
+
+    output = io.fetch_output()
+    assert return_code == 1, f"\noutput: {output}\n"
+    assert "is not listed in the lock file" in output
+
+
 def test_executor_no_supported_hash_types(
     tmp_venv: VirtualEnv,
     pool: RepositoryPool,
