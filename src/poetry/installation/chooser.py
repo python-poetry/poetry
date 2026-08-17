@@ -215,10 +215,8 @@ class Chooser:
         skipped = []
         locked_hash_names = {h.split(":")[0] for h in locked_hashes}
         for link in links:
-            if not link.hashes:
-                selected_links.append(link)
-                continue
-
+            # A link that advertises no hash is not trusted: the lock file requires
+            # a hash for this package, so fall through and compute one to compare.
             link_hash: str | None = None
             if (candidates := locked_hash_names.intersection(link.hashes.keys())) and (
                 hash_name := get_highest_priority_hash_type(candidates, link.filename)
