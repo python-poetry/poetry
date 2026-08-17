@@ -787,7 +787,7 @@ class Executor:
         return archive
 
     def _populate_hashes_dict(self, archive: Path, package: Package) -> None:
-        if package.files and archive.name in {f["file"] for f in package.files}:
+        if package.files:
             archive_hash = self._validate_archive_hash(archive, package)
             self._hashes[package.name] = archive_hash
 
@@ -796,6 +796,14 @@ class Executor:
         known_hashes = {f["hash"] for f in package.files if f["file"] == archive.name}
         hash_types = {t.split(":")[0] for t in known_hashes}
         hash_type = get_highest_priority_hash_type(hash_types, archive.name)
+
+        if not known_hashes:
+            locked_files = sorted(f["file"] for f in package.files)
+            raise RuntimeError(
+                f"Downloaded archive {archive.name} for {package} is not listed in"
+                f" the lock file, so its hash cannot be verified"
+                f" (locked files: {locked_files})"
+            )
 
         if hash_type is None:
             raise RuntimeError(
