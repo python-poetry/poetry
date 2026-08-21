@@ -582,7 +582,9 @@ class Application(BaseApplication):
         # so a warning that's irrelevant in this command's context doesn't
         # surface. Skipped when verbose/debug so the full picture is still
         # available on request.
-        to_suppress = set(command.suppressed_loggers) if level >= logging.WARNING else set()
+        to_suppress = (
+            set(command.suppressed_loggers) if level >= logging.WARNING else set()
+        )
 
         # Reset any logger a previous command in this process suppressed but
         # this one doesn't, so the suppression doesn't leak into commands
