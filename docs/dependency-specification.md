@@ -431,6 +431,13 @@ To install directory path dependencies in editable mode, use the `develop` keywo
 {{< /tab >}}
 {{< /tabs >}}
 
+{{% note %}}
+Path dependencies are intended for local development.
+When building a wheel or sdist, Poetry records directory path dependencies as `file://` requirements,
+which are not portable. Before distributing your project, publish each path dependency and replace
+the path with a version constraint.
+{{% /note %}}
+
 ## `url` dependencies
 
 `url` dependencies are libraries located on a remote archive.
