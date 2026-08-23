@@ -253,6 +253,98 @@ def test_it_should_update_installed_packages_if_sources_are_different() -> None:
 
 
 @pytest.mark.parametrize(
+    ("source_type", "source_url"),
+    [
+        ("directory", "/path/to/package"),
+        ("git", "https://github.com/demo/demo.git"),
+    ],
+)
+@pytest.mark.parametrize(
+    ("installed_develop", "result_develop"),
+    [(False, True), (True, False)],
+)
+def test_it_should_update_installed_editable_package_if_develop_changes(
+    source_type: str,
+    source_url: str,
+    installed_develop: bool,
+    result_develop: bool,
+) -> None:
+    installed_package = Package(
+        "a",
+        "1.0.0",
+        source_type=source_type,
+        source_url=source_url,
+        develop=installed_develop,
+    )
+    result_package = Package(
+        "a",
+        "1.0.0",
+        source_type=source_type,
+        source_url=source_url,
+        develop=result_develop,
+    )
+    transaction = Transaction(
+        [installed_package],
+        {result_package: get_transitive_info(1)},
+        installed_packages=[installed_package],
+    )
+
+    operations = transaction.calculate_operations(synchronize=True)
+
+    assert len(operations) == 1
+    operation = operations[0]
+    assert isinstance(operation, Update)
+    assert operation.initial_package.develop is installed_develop
+    assert operation.target_package.develop is result_develop
+
+
+@pytest.mark.parametrize(
+    ("source_type", "source_url"),
+    [
+        (None, None),
+        ("url", "https://example.org/package.whl"),
+        ("file", "/path/to/package.whl"),
+    ],
+)
+@pytest.mark.parametrize(
+    ("installed_develop", "result_develop"),
+    [(False, True), (True, False)],
+)
+def test_it_should_ignore_develop_for_non_editable_package_types(
+    source_type: str | None,
+    source_url: str | None,
+    installed_develop: bool,
+    result_develop: bool,
+) -> None:
+    installed_package = Package(
+        "a",
+        "1.0.0",
+        source_type=source_type,
+        source_url=source_url,
+        develop=installed_develop,
+    )
+    result_package = Package(
+        "a",
+        "1.0.0",
+        source_type=source_type,
+        source_url=source_url,
+        develop=result_develop,
+    )
+    transaction = Transaction(
+        [installed_package],
+        {result_package: get_transitive_info(1)},
+        installed_packages=[installed_package],
+    )
+
+    operations = transaction.calculate_operations(synchronize=True)
+
+    assert len(operations) == 1
+    operation = operations[0]
+    assert operation.job_type == "install"
+    assert operation.skipped
+
+
+@pytest.mark.parametrize(
     ("groups", "expected"),
     [
         (set(), []),
