@@ -128,7 +128,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         name = self.option("name")
         if not name:
-            name = project_path.name.lower()
+            name = self._sanitize_package_name(project_path.name)
 
             if is_interactive:
                 question = self.create_question(
@@ -513,6 +513,22 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             )
 
         return author
+
+    @staticmethod
+    def _sanitize_package_name(name: str) -> str:
+        """Turn an arbitrary directory name into a valid default project name.
+
+        Project names may only contain ASCII letters, digits, periods,
+        underscores and hyphens (see
+        https://packaging.python.org/en/latest/specifications/name-normalization/#name-format).
+        Anything else - spaces in particular, since directory names commonly
+        contain them - is collapsed into a single hyphen so that ``poetry
+        init`` never proposes an invalid name by default.
+        """
+        name = re.sub(r"[^A-Za-z0-9._-]+", "-", name.lower())
+        name = re.sub(r"-{2,}", "-", name).strip("-_.")
+
+        return name or "project"
 
     @staticmethod
     def _validate_package(package: str | None) -> str | None:

@@ -105,6 +105,29 @@ def test_noninteractive(
     assert expected_build_system in toml_content
 
 
+def test_noninteractive_default_name_sanitizes_directory_with_spaces(
+    app: PoetryTestApplication,
+    mocker: MockerFixture,
+    poetry: Poetry,
+    repo: DummyRepository,
+    tmp_path: Path,
+) -> None:
+    command = app.find("init")
+    assert isinstance(command, InitCommand)
+    command._pool = poetry.pool
+
+    project_dir = tmp_path / "my project with spaces"
+    project_dir.mkdir()
+
+    mocker.patch("pathlib.Path.cwd", return_value=project_dir)
+
+    tester = CommandTester(command)
+    tester.execute(args="", interactive=False)
+
+    toml_content = (project_dir / "pyproject.toml").read_text(encoding="utf-8")
+    assert 'name = "my-project-with-spaces"' in toml_content
+
+
 def test_interactive_with_dependencies(
     tester: CommandTester, repo: DummyRepository
 ) -> None:
@@ -1014,6 +1037,25 @@ def test_validate_package_valid(name: str | None) -> None:
 def test_validate_package_invalid(name: str) -> None:
     with pytest.raises(ValueError):
         assert InitCommand._validate_package(name)
+
+
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    [
+        ("my project with spaces", "my-project-with-spaces"),
+        ("My Project With Spaces", "my-project-with-spaces"),
+        ("my-package", "my-package"),
+        ("my_package", "my_package"),
+        ("my.package", "my.package"),
+        ("  leading and trailing  ", "leading-and-trailing"),
+        ("under__score--mix..dot", "under__score-mix..dot"),
+        ("café project", "caf-project"),
+        ("!!!", "project"),
+        ("", "project"),
+    ],
+)
+def test_sanitize_package_name(name: str, expected: str) -> None:
+    assert InitCommand._sanitize_package_name(name) == expected
 
 
 @pytest.mark.parametrize(
