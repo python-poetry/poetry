@@ -15,7 +15,7 @@ from poetry.toml.file import TOMLFile
 from poetry.utils.env import MockEnv
 from poetry.utils.env.python.exceptions import NoCompatiblePythonVersionFoundError
 from tests.console.commands.env.helpers import build_venv
-from tests.console.commands.env.helpers import check_output_wrapper
+from tests.helpers import check_output_wrapper
 
 
 if TYPE_CHECKING:

@@ -25,10 +25,10 @@ from poetry.utils.env.python.exceptions import InvalidCurrentPythonVersionError
 from poetry.utils.env.python.exceptions import NoCompatiblePythonVersionFoundError
 from poetry.utils.env.python.exceptions import PythonVersionNotFoundError
 from poetry.utils.helpers import remove_directory
+from tests.helpers import check_output_wrapper as make_check_output
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
     from collections.abc import Iterator
     from unittest.mock import MagicMock
 
@@ -42,43 +42,9 @@ if TYPE_CHECKING:
     from tests.types import MockedPythonRegister
     from tests.types import ProjectFactory
 
-VERSION_3_7_1 = Version.parse("3.7.1")
-
 
 def build_venv(path: Path | str, **__: Any) -> None:
     os.mkdir(str(path))
-
-
-def check_output_wrapper(
-    version: Version = VERSION_3_7_1,
-) -> Callable[[list[str], Any, Any], str]:
-    def check_output(cmd: list[str], *args: Any, **kwargs: Any) -> str:
-        # cmd is a list, like ["python", "-c", "do stuff"]
-        python_cmd = cmd[-1]
-        if "print(json.dumps(env))" in python_cmd:
-            return (
-                f'{{"version_info": [{version.major}, {version.minor},'
-                f" {version.patch}]}}"
-            )
-
-        if "sys.version_info[:3]" in python_cmd:
-            return version.text
-
-        if "sys.version_info[:2]" in python_cmd:
-            return f"{version.major}.{version.minor}"
-
-        if "import sys; print(sys.executable)" in python_cmd:
-            executable = cmd[0]
-            basename = os.path.basename(executable)
-            return f"/usr/bin/{basename}"
-
-        if "print(sys.base_prefix)" in python_cmd:
-            return sys.base_prefix
-
-        assert "import sys; print(sys.prefix)" in python_cmd
-        return "/prefix"
-
-    return check_output
 
 
 @pytest.fixture
@@ -572,7 +538,7 @@ def test_deactivate_activated(
 
     mocker.patch(
         "subprocess.check_output",
-        side_effect=check_output_wrapper(),
+        side_effect=make_check_output(base_prefix=sys.base_prefix),
     )
 
     manager.deactivate()
@@ -619,7 +585,7 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
 
     mocker.patch(
         "subprocess.check_output",
-        side_effect=check_output_wrapper(),
+        side_effect=make_check_output(base_prefix=sys.base_prefix),
     )
 
     env = manager.get()
@@ -689,7 +655,9 @@ def test_remove_by_python_version(
 
     mocker.patch(
         "subprocess.check_output",
-        side_effect=check_output_wrapper(Version.parse("3.6.6")),
+        side_effect=make_check_output(
+            Version.parse("3.6.6"), base_prefix=sys.base_prefix
+        ),
     )
 
     venv = manager.remove("3.6")
@@ -714,7 +682,9 @@ def test_remove_by_name(
 
     mocker.patch(
         "subprocess.check_output",
-        side_effect=check_output_wrapper(Version.parse("3.6.6")),
+        side_effect=make_check_output(
+            Version.parse("3.6.6"), base_prefix=sys.base_prefix
+        ),
     )
 
     venv = manager.remove(f"{venv_name}-py3.6")
@@ -739,7 +709,9 @@ def test_remove_by_string_with_python_and_version(
 
     mocker.patch(
         "subprocess.check_output",
-        side_effect=check_output_wrapper(Version.parse("3.6.6")),
+        side_effect=make_check_output(
+            Version.parse("3.6.6"), base_prefix=sys.base_prefix
+        ),
     )
 
     venv = manager.remove("python3.6")
@@ -764,7 +736,9 @@ def test_remove_by_full_path_to_python(
 
     mocker.patch(
         "subprocess.check_output",
-        side_effect=check_output_wrapper(Version.parse("3.6.6")),
+        side_effect=make_check_output(
+            Version.parse("3.6.6"), base_prefix=sys.base_prefix
+        ),
     )
 
     expected_venv_path = tmp_path / f"{venv_name}-py3.6"
@@ -872,7 +846,9 @@ def test_remove_also_deactivates(
 
     mocker.patch(
         "subprocess.check_output",
-        side_effect=check_output_wrapper(Version.parse("3.6.6")),
+        side_effect=make_check_output(
+            Version.parse("3.6.6"), base_prefix=sys.base_prefix
+        ),
     )
 
     envs_file = TOMLFile(tmp_path / "envs.toml")
@@ -916,7 +892,9 @@ def test_remove_keeps_dir_if_not_deleteable(
 
     mocker.patch(
         "subprocess.check_output",
-        side_effect=check_output_wrapper(Version.parse("3.6.6")),
+        side_effect=make_check_output(
+            Version.parse("3.6.6"), base_prefix=sys.base_prefix
+        ),
     )
 
     def err_on_rm_venv_only(path: Path, *args: Any, **kwargs: Any) -> None:
