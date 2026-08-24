@@ -1,5 +1,12 @@
 # Change Log
 
+## [2.4.2] - Unreleased
+
+### Fixed
+
+- Fix an issue where Poetry commands fail when Python 2.7 is present in the `PATH` ([#10897](https://github.com/python-poetry/poetry/issues/10897)).
+
+
 ## [2.4.1] - 2026-05-09
 
 ### Changed

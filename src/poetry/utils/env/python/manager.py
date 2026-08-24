@@ -4,9 +4,12 @@ import contextlib
 import os
 import sys
 
+from subprocess import CalledProcessError
+
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import NamedTuple
 from typing import cast
 from typing import overload
@@ -83,11 +86,22 @@ class Python:
             raise ValueError("Either python or executable must be provided")
 
     @classmethod
+    def _is_valid_python(cls, python: findpython.PythonVersion) -> bool:
+        try:
+            _ = python.interpreter
+            return True
+        except (CalledProcessError, ValueError):
+            return False
+
+    @classmethod
     def find_all(cls) -> Iterator[Python]:
         venv_path: Path | None = (
             Path(venv) if (venv := os.environ.get("VIRTUAL_ENV")) else None
         )
         for python in findpython.find_all():
+            if not cls._is_valid_python(python):
+                continue
+
             if venv_path and is_relative_to(python.executable, venv_path):
                 continue
             yield cls(python=python)
@@ -175,33 +189,39 @@ class Python:
     def name(self) -> str:
         return cast("str", self._python.name)
 
+    def _get_python_property(self, name: str) -> Any:
+        try:
+            return getattr(self._python, name)
+        except CalledProcessError as e:
+            raise ValueError(f"Invalid Python executable: {self._python.executable}") from e
+
     @property
     def executable(self) -> Path:
-        return cast("Path", self._python.interpreter)
+        return cast("Path", self._get_python_property("interpreter"))
 
     @property
     def implementation(self) -> str:
-        return cast("str", self._python.implementation.lower())
+        return cast("str", self._get_python_property("implementation").lower())
 
     @property
     def free_threaded(self) -> bool:
-        return cast("bool", self._python.freethreaded)
+        return cast("bool", self._get_python_property("freethreaded"))
 
     @property
     def major(self) -> int:
-        return cast("int", self._python.major)
+        return cast("int", self._get_python_property("major"))
 
     @property
     def minor(self) -> int:
-        return cast("int", self._python.minor)
+        return cast("int", self._get_python_property("minor"))
 
     @property
     def patch(self) -> int:
-        return cast("int", self._python.patch)
+        return cast("int", self._get_python_property("patch"))
 
     @property
     def version(self) -> Version:
-        return Version.parse(str(self._python.version))
+        return Version.parse(str(self._get_python_property("version")))
 
     @cached_property
     def patch_version(self) -> Version:
@@ -233,11 +253,12 @@ class Python:
                  or None if no valid environment is found.
         """
         for python in ShutilWhichPythonProvider().find_pythons():
-            return cls(python=python)
+            if cls._is_valid_python(python):
+                return cls(python=python)
 
         # fallback to findpython, restrict to finding only executables
         # named "python" as the intention here is just that, nothing more
-        if python := findpython.find("python"):
+        if (python := findpython.find("python")) and cls._is_valid_python(python):
             return cls(python=python)
 
         return None
@@ -259,11 +280,13 @@ class Python:
     @classmethod
     def get_by_name(cls, python_name: str) -> Python | None:
         # Ignore broken installations.
-        with contextlib.suppress(ValueError):
-            if python := ShutilWhichPythonProvider.find_python_by_name(python_name):
+        with contextlib.suppress(ValueError, CalledProcessError):
+            if (
+                python := ShutilWhichPythonProvider.find_python_by_name(python_name)
+            ) and cls._is_valid_python(python):
                 return cls(python=python)
 
-        if python := findpython.find(python_name):
+        if (python := findpython.find(python_name)) and cls._is_valid_python(python):
             return cls(python=python)
 
         return None
