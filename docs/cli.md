@@ -1329,6 +1329,13 @@ You can do this using the `add` command.
 * `--sync`: Synchronize the environment with the locked packages and the specified groups.
 
 {{% note %}}
+The group options determine which dependency groups are installed or synchronized in the
+environment. They do not limit resolution of the lock file: `poetry.lock` keeps one consistent
+solution for all declared groups, so packages that belong to an excluded group can still change.
+To restrict which packages Poetry updates, pass their names to the command.
+{{% /note %}}
+
+{{% note %}}
 When `--only` is specified, `--with` and `--without` options are ignored.
 {{% /note %}}
 
