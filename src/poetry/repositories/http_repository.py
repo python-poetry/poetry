@@ -147,7 +147,7 @@ class HTTPRepository(CachedRepository):
         )
 
     @contextmanager
-    def _cached_or_downloaded_file(
+    def _downloaded_file(
         self, link: Link, *, raise_accepts_ranges: bool = False
     ) -> Iterator[Path]:
         self._log(f"Downloading: {link.url}", level="debug")
@@ -247,7 +247,7 @@ class HTTPRepository(CachedRepository):
                 return package_info
 
         try:
-            with self._cached_or_downloaded_file(
+            with self._downloaded_file(
                 link, raise_accepts_ranges=raise_accepts_ranges
             ) as filepath:
                 return PackageInfo.from_wheel(filepath)
@@ -266,7 +266,7 @@ class HTTPRepository(CachedRepository):
     def _get_info_from_sdist(self, link: Link) -> PackageInfo:
         from poetry.inspection.info import PackageInfo
 
-        with self._cached_or_downloaded_file(link) as filepath:
+        with self._downloaded_file(link) as filepath:
             return PackageInfo.from_sdist(filepath)
 
     def _get_info_from_metadata(self, link: Link) -> PackageInfo | None:
@@ -506,7 +506,7 @@ class HTTPRepository(CachedRepository):
         return data.asdict()
 
     def calculate_sha256(self, link: Link) -> str | None:
-        with self._cached_or_downloaded_file(link) as filepath:
+        with self._downloaded_file(link) as filepath:
             hash_name = get_highest_priority_hash_type(link.hashes, link.filename)
             known_hash = None
             with suppress(ValueError, AttributeError):
