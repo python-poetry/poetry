@@ -372,12 +372,28 @@ class Factory(BaseFactory):
 
         dependencies = {canonicalize_name(d) for d in dependencies}
 
-        project_name = toml_data.get("project", {}).get("name") or poetry_config.get(
-            "name"
-        )
+        project = toml_data.get("project", {})
+        project_name = project.get("name") or poetry_config.get("name")
         if project_name is not None and canonicalize_name(project_name) in dependencies:
             results["errors"].append(
                 f"Project name ({project_name}) is same as one of its dependencies"
+            )
+
+        # PEP 621 requires a "version" in the [project] table unless it is listed
+        # in [project.dynamic]. In package mode this is already enforced (a
+        # version is always required), but in non-package mode the requirement
+        # was not checked, so a [project] table with a name but no version was
+        # silently accepted even though it is invalid per PEP 621.
+        if (
+            poetry_config.get("package-mode", True) is False
+            and project.get("name") is not None
+            and "version" not in project
+            and "version" not in project.get("dynamic", [])
+        ):
+            results["errors"].append(
+                "The [project] table requires a 'version' key when a 'name' key is"
+                " present. Either define 'version' statically or list it in the"
+                " 'dynamic' array."
             )
 
         return results
