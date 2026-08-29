@@ -78,7 +78,7 @@ class SystemEnv(Env):
         }
 
     def is_venv(self) -> bool:
-        return self._path != self._base
+        return self._path != self.base
 
     def _get_lib_dirs(self) -> list[Path]:
         return super()._get_lib_dirs() + [Path(d) for d in site.getsitepackages()]
