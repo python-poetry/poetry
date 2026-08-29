@@ -7,17 +7,16 @@ import pytest
 
 from packaging.tags import Tag
 from poetry.core.packages.package import Package
+from poetry.core.packages.utils.link import Link
 
 from poetry.console.exceptions import PoetryRuntimeError
 from poetry.installation.chooser import Chooser
-from poetry.core.packages.utils.link import Link
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.utils.env import MockEnv
 
 
 if TYPE_CHECKING:
     from poetry.core.packages.package import PackageFile
-
     from pytest_mock import MockerFixture
 
     from poetry.repositories.repository_pool import RepositoryPool
@@ -378,6 +377,50 @@ def test_chooser_accepts_a_hashless_link_whose_computed_hash_matches(
     link = Chooser(pool, env).choose_for(package)
 
     assert link.filename == "isort-4.3.4.tar.gz"
+
+
+def test_chooser_stops_checking_hashes_once_a_candidate_matches(
+    env: MockEnv, pool: RepositoryPool, mocker: MockerFixture
+) -> None:
+    """Candidates are checked best-first and verification stops at the first
+    match, so a worse candidate must never be downloaded/hashed once a better
+    one has already matched.
+    """
+    package = Package(
+        "isort",
+        "4.3.4",
+        source_type="legacy",
+        source_reference="foo",
+        source_url="https://legacy.foo.bar/simple/",
+    )
+    sha1 = "sha256:" + "1" * 64
+    sha2 = "sha256:" + "2" * 64
+    package.files = [
+        {"file": "isort-4.3.4.tar.gz", "hash": sha1},
+        {"file": "isort-4.3.4-py3-none-any.whl", "hash": sha2},
+    ]
+
+    # A compatible wheel outranks an sdist, so it must be tried first.
+    best_wheel = Link("https://legacy.foo.bar/isort-4.3.4-py3-none-any.whl")
+    worse_sdist = Link("https://legacy.foo.bar/isort-4.3.4.tar.gz")
+    assert not best_wheel.hashes
+    assert not worse_sdist.hashes
+
+    mocker.patch.object(
+        LegacyRepository,
+        "find_links_for_package",
+        return_value=[worse_sdist, best_wheel],
+    )
+    calculate_sha256 = mocker.patch.object(
+        LegacyRepository, "calculate_sha256", return_value=sha2
+    )
+
+    link = Chooser(pool, env).choose_for(package)
+
+    assert link.filename == "isort-4.3.4-py3-none-any.whl"
+    # the worse sdist candidate must never be checked once the wheel matched
+    calculate_sha256.assert_called_once()
+    assert calculate_sha256.call_args.args[0] is best_wheel
 
 
 @pytest.mark.parametrize("source_type", ["", "legacy"])
