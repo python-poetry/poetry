@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import hashlib
 import io
 import logging
@@ -410,8 +411,8 @@ def get_highest_priority_hash_type(
 def extractall(source: Path, dest: Path, zip: bool) -> None:
     """Extract all members from either a zip or tar archive."""
     if zip:
-        with zipfile.ZipFile(source) as archive:
-            archive.extractall(dest)
+        with zipfile.ZipFile(source) as zip_archive:
+            zip_archive.extractall(dest)
     else:
         # These versions of python shipped with a broken tarfile data_filter, per
         # https://github.com/python/cpython/issues/107845.
@@ -423,37 +424,106 @@ def extractall(source: Path, dest: Path, zip: bool) -> None:
             ):
                 archive.extractall(dest, filter="data")
             else:
-                # Validate all member paths before extraction
-                #
-                # Attention: Path.absolute() is not sufficient because it does not
-                #  normalize, i.e. does not remove "..".
-                #
-                # We want to avoid Path.resolve() because it is significantly slower
-                # than os.path.abspath()!
-                dest = Path(os.path.abspath(dest))
-                safe_members = []
-                for member in archive.getmembers():
-                    member_path = Path(os.path.abspath(dest / member.name))
-                    if not member_path.is_relative_to(dest):
+
+                def _get_filtered_attrs(
+                    member: tarfile.TarInfo, dest_path: str
+                ) -> dict[str, Any]:
+                    """copied from CPython 3.14.7 with slight adaptions:
+                    - removed parameter for_data (always True in this case)
+                    - replaced exceptions with ValueError
+                    - removed ALLOW_MISSING
+                    - added some type hints to make mypy happy
+                    """
+                    new_attrs: dict[str, Any] = {}
+                    name = member.name
+                    dest_path = os.path.realpath(
+                        dest_path,
+                    )
+                    # Strip leading / (tar's directory separator) from filenames.
+                    # Include os.sep (target OS directory separator) as well.
+                    if name.startswith(("/", os.sep)):
+                        name = new_attrs["name"] = member.path.lstrip("/" + os.sep)
+                    if os.path.isabs(name):
+                        # Path is absolute even after stripping.
+                        # For example, 'C:/foo' on Windows.
                         raise ValueError(
-                            f"Refusing to extract {member.name}: "
-                            f"would write outside {dest}"
+                            f"Refusing to extract {member.name}: absolute path"
                         )
-                    if member.issym():
-                        link_target = Path(
-                            os.path.abspath(member_path.parent / member.linkname)
+                    # Ensure we stay in the destination
+                    target_path = os.path.realpath(os.path.join(dest_path, name))
+                    if os.path.commonpath([target_path, dest_path]) != dest_path:
+                        raise ValueError(
+                            f"Refusing to extract {member.name}: would write outside {dest_path}"
                         )
-                        if not link_target.is_relative_to(dest):
+                    # Limit permissions (no high bits, and go-w)
+                    mode: int | None = member.mode
+                    if mode is not None:
+                        # Strip high bits & group/other write bits
+                        mode = mode & 0o755
+                        # For data, handle permissions & file types
+                        if member.isreg() or member.islnk():
+                            if not mode & 0o100:
+                                # Clear executable bits if not executable by user
+                                mode &= ~0o111
+                            # Ensure owner can read & write
+                            mode |= 0o600
+                        elif member.isdir() or member.issym():
+                            # Ignore mode for directories & symlinks
+                            mode = None
+                        else:
+                            # Reject special files
                             raise ValueError(
-                                f"Refusing symlink {member.name}: "
-                                f"target {member.linkname} outside {dest}"
+                                f"Refusing to extract special file {member.name}"
                             )
-                    elif member.islnk():
-                        link_target = Path(os.path.abspath(dest / member.linkname))
-                        if not link_target.is_relative_to(dest):
+                        if mode != member.mode:
+                            new_attrs["mode"] = mode
+                    # Ignore ownership for 'data'
+                    if member.uid is not None:
+                        new_attrs["uid"] = None
+                    if member.gid is not None:
+                        new_attrs["gid"] = None
+                    if member.uname is not None:
+                        new_attrs["uname"] = None
+                    if member.gname is not None:
+                        new_attrs["gname"] = None
+                    # Check link destination for 'data'
+                    if member.islnk() or member.issym():
+                        if os.path.isabs(member.linkname):
                             raise ValueError(
-                                f"Refusing hardlink {member.name}: "
-                                f"target {member.linkname} outside {dest}"
+                                f"Refusing to extract {member.name}: link has an absolute target"
                             )
-                    safe_members.append(member)
-                archive.extractall(dest, members=safe_members)
+                        # A link member that resolves to the destination directory itself
+                        # would replace it with a (sym)link, redirecting the destination
+                        # for all subsequent members.
+                        if target_path == dest_path:
+                            raise ValueError(
+                                f"Refusing to extract {member.name}: "
+                                "link target is the destination directory"
+                            )
+                        normalized = os.path.normpath(member.linkname)
+                        if normalized != member.linkname:
+                            new_attrs["linkname"] = normalized
+                        if member.issym():
+                            # The symlink is created at `name` with trailing separators
+                            # stripped, so its target is relative to the directory
+                            # containing that path.
+                            link_dir = os.path.dirname(name.rstrip("/" + os.sep))
+                            target_path = os.path.join(dest_path, link_dir, normalized)
+                        else:
+                            target_path = os.path.join(dest_path, normalized)
+                        target_path = os.path.realpath(target_path)
+                        if os.path.commonpath([target_path, dest_path]) != dest_path:
+                            raise ValueError(
+                                f"Refusing to extract {member.name}: "
+                                f"link target {member.linkname} outside {dest_path}"
+                            )
+                    return new_attrs
+
+                dest = Path(os.path.abspath(dest))
+                for member in archive.getmembers():
+                    new_attrs = _get_filtered_attrs(member, str(dest))
+                    if new_attrs:
+                        member = copy.copy(member)
+                        for name, value in new_attrs.items():
+                            setattr(member, name, value)
+                    archive.extract(member, dest, set_attrs=not member.isdir())

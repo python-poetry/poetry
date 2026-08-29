@@ -3,7 +3,6 @@ from __future__ import annotations
 import base64
 import contextlib
 import re
-import sys
 import tarfile
 
 from pathlib import Path
@@ -373,13 +372,7 @@ def test_extractall_sdist_no_path_traversal(
     has_data_filter = hasattr(tarfile, "data_filter")
     # The stdlib implementation just strips the leading "/" from absolute paths
     # and extracts them relative to the target directory (except for Windows).
-    # We do not care and raise an error.
-    raises = (
-        relative
-        or WINDOWS
-        or not has_data_filter
-        or sys.version_info[:3] in {(3, 10, 12), (3, 11, 4)}
-    )
+    raises = relative or WINDOWS
     exceptions: tuple[type[Exception], ...]
     if has_data_filter:
         if relative:
@@ -461,6 +454,45 @@ def test_extractall_sdist_no_symlink_path_traversal(
         assert target.read_text(encoding="utf-8") == "original"
     else:
         assert not target.exists()
+
+
+def test_extractall_sdist_no_symlink_path_traversal_via_directory_symlink(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """
+    A symlink "dir" pointing at "." is created first. A later member is then
+    named "dir/../traversal.txt". The path looks safe when resolving ".."
+    without resolving the symlink.
+    """
+    import io
+    import tarfile
+
+    archive = tmp_path / "traversal.tar.gz"
+    dest = tmp_path / "dest"
+    dest.mkdir()
+
+    with tarfile.open(archive, "w:gz") as tar:
+        symlink = tarfile.TarInfo("dir")
+        symlink.type = tarfile.SYMTYPE
+        symlink.linkname = "."
+        tar.addfile(symlink)
+
+        data = b"path traversal"
+        regular = tarfile.TarInfo("dir/../traversal.txt")
+        regular.size = len(data)
+        tar.addfile(regular, io.BytesIO(data))
+
+    exception: type[Exception]
+    if hasattr(tarfile, "data_filter"):
+        exception = tarfile.OutsideDestinationError
+    else:
+        # tarfile.OutsideDestinationError does not exist
+        exception = ValueError
+
+    with pytest.raises(exception) if not WINDOWS else contextlib.nullcontext():
+        extractall(source=archive, dest=dest, zip=False)
+
+    assert not (tmp_path / "traversal.txt").exists()
 
 
 @pytest.mark.parametrize("existing", [False, True])
