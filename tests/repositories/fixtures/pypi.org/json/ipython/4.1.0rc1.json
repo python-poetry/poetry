@@ -121,6 +121,9 @@
   "urls": [
     {
       "comment_text": "",
+      "core-metadata": {
+        "sha256": "ad06c78c59547c822f72c2758b51935ae8e4056bd8909a8fd8912bf7d9f88fa7"
+      },
       "digests": {
         "blake2b_256": "ac0204a5d372b4e64f9c97b2846646aec1ce4532885005aa4ba51eb20b80e17f",
         "md5": "512f0431c850c75a12baa9f8c4a9f12f",
@@ -142,6 +145,7 @@
     },
     {
       "comment_text": "",
+      "core-metadata": false,
       "digests": {
         "blake2b_256": "a0def71f0c8b8a26ef28cc968fbf1859729ad3e68146cd2eb4a759e9c88da218",
         "md5": "2aff56d8e78341f64663bcbc81366376",
@@ -163,6 +167,7 @@
     },
     {
       "comment_text": "",
+      "core-metadata": false,
       "digests": {
         "blake2b_256": "71f09d670266b840b8b921dc7106ecddd892f6fb893424883498e1ba3ec3a3a1",
         "md5": "a9ff233f176dd99b076b81dc8904ab7a",
