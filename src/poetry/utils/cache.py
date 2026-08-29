@@ -259,6 +259,9 @@ class ArtifactCache:
             cache_dir, strict=strict, filename=link.filename, env=env
         )
         if cached_archive is None and strict and download_func is not None:
+            # TODO: remove check as soon as this is handled in poetry-core
+            if "/" in link.filename or "\\" in link.filename:
+                raise ValueError(f"Invalid filename: '{link.filename}'")
             cached_archive = cache_dir / link.filename
             with self._archive_locks[cached_archive]:
                 # Check again if the archive exists (under the lock) to avoid

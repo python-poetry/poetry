@@ -151,6 +151,9 @@ class HTTPRepository(CachedRepository):
     ) -> Iterator[Path]:
         self._log(f"Downloading: {link.url}", level="debug")
         with TemporaryDirectory(ignore_cleanup_errors=True) as temp_dir:
+            # TODO: remove check as soon as this is handled in poetry-core
+            if "/" in link.filename or "\\" in link.filename:
+                raise ValueError(f"Invalid filename: '{link.filename}'")
             filepath = Path(temp_dir) / link.filename
             self._download(
                 link.url, filepath, raise_accepts_ranges=raise_accepts_ranges
