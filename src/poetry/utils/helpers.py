@@ -345,7 +345,7 @@ def extractall(source: Path, dest: Path, zip: bool) -> None:
                         else:
                             # Reject special files
                             raise ValueError(
-                                "Refusing to extract special file {member.name}"
+                                f"Refusing to extract special file {member.name}"
                             )
                         if mode != member.mode:
                             new_attrs["mode"] = mode
