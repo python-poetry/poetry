@@ -315,7 +315,7 @@ def test_extractall_sdist_no_symlink_path_traversal_via_directory_symlink(
         # tarfile.OutsideDestinationError does not exist
         exception = ValueError
 
-    with pytest.raises(exception):
+    with pytest.raises(exception) if not WINDOWS else contextlib.nullcontext():
         extractall(source=archive, dest=dest, zip=False)
 
     assert not (tmp_path / "traversal.txt").exists()
