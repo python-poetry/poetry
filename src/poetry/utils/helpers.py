@@ -398,10 +398,7 @@ def extractall(source: Path, dest: Path, zip: bool) -> None:
                         member = copy.copy(member)
                         for name, value in new_attrs.items():
                             setattr(member, name, value)
-                    archive.extract(
-                        member,
-                        dest,  # , set_attrs=not member.isdir()
-                    )
+                    archive.extract(member, dest, set_attrs=not member.isdir())
 
 
 _DEPRECATED_DOWNLOAD_EXPORTS = {
