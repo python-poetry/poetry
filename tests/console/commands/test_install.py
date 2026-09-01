@@ -404,11 +404,13 @@ def test_dry_run_populates_installer(
     """
 
     assert isinstance(tester.command, InstallerCommand)
-    mocker.patch.object(tester.command.installer, "run", return_value=1)
+    mocker.patch.object(tester.command.installer, "_do_install", return_value=1)
 
     tester.execute("--dry-run")
+    output = tester.io.fetch_output()
 
     assert tester.command.installer._dry_run is True
+    assert "Running in DRY RUN mode" in output
 
 
 def test_dry_run_does_not_build(tester: CommandTester, mocker: MockerFixture) -> None:
