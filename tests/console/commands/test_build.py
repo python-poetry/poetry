@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from cleo.io.buffered_io import BufferedIO
 from cleo.io.null_io import NullIO
 from cleo.testers.application_tester import ApplicationTester
 
@@ -92,6 +93,28 @@ def test_build_with_local_version_label(
 
     assert len(build_artifacts) > 0
     assert all(archive.exists() for archive in build_artifacts)
+    assert "`--local-version` is deprecated." in tmp_tester.io.fetch_error()
+
+
+def test_build_with_config_settings_local_version(
+    tmp_tester: CommandTester, tmp_project_path: Path, tmp_poetry: Poetry
+) -> None:
+    shutil.rmtree(tmp_project_path / "dist")
+    local_version_label = "local-version"
+    assert (
+        tmp_tester.execute(f"--config-settings local-version={local_version_label}")
+        == 0
+    )
+    build_artifacts = tuple(
+        (tmp_project_path / "dist").glob(
+            get_package_glob(tmp_poetry, local_version=local_version_label)
+        )
+    )
+
+    assert len(build_artifacts) > 0
+    assert all(archive.exists() for archive in build_artifacts)
+    assert all(local_version_label in archive.name for archive in build_artifacts)
+    assert "`--local-version` is deprecated." not in tmp_tester.io.fetch_error()
 
 
 @pytest.mark.parametrize("clean", [True, False])
@@ -283,6 +306,20 @@ def test_requires_isolated_build(
     handler = BuildHandler(poetry=poetry, env=mocker.Mock(), io=NullIO())
 
     assert handler._requires_isolated_build() is isolated_build
+
+
+@pytest.mark.parametrize("project", ["no_build_system", "no_build_backend"])
+def test_requires_isolated_build_warns_when_no_build_backend(
+    project: str,
+    fixture_dir: FixtureDirGetter,
+    mocker: MockerFixture,
+) -> None:
+    poetry = Factory().create_poetry(fixture_dir(f"build_systems/{project}"))
+    io = BufferedIO()
+    handler = BuildHandler(poetry=poetry, env=mocker.Mock(), io=io)
+
+    assert handler._requires_isolated_build() is False
+    assert "No build backend defined" in io.fetch_error()
 
 
 def test_build_handler_build_isolated(
