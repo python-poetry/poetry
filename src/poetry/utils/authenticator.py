@@ -10,6 +10,7 @@ from os.path import commonprefix
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Literal
 
 import requests
 import requests.adapters
@@ -17,7 +18,9 @@ import requests.auth
 import requests.exceptions
 
 from cachecontrol import CacheControlAdapter
+from cachecontrol import CacheController
 from cachecontrol.caches import SeparateBodyFileCache
+from requests import PreparedRequest
 from requests_toolbelt import user_agent
 
 from poetry.__version__ import __version__
@@ -25,6 +28,7 @@ from poetry.config.config import Config
 from poetry.console.exceptions import ConsoleMessage
 from poetry.console.exceptions import PoetryRuntimeError
 from poetry.exceptions import PoetryError
+from poetry.utils.constants import FORCE_HTTP_CACHE
 from poetry.utils.constants import REQUESTS_TIMEOUT
 from poetry.utils.constants import RETRY_AFTER_HEADER
 from poetry.utils.constants import STATUS_FORCELIST
@@ -34,9 +38,27 @@ from poetry.utils.password_manager import PasswordManager
 
 if TYPE_CHECKING:
     from cleo.io.io import IO
+    from urllib3 import HTTPResponse
 
 
 logger = logging.getLogger(__name__)
+
+
+class ForceCacheController(CacheController):
+    """
+    A custom CacheController that forces the use of cached responses
+    if they are available, even if they are stale, and does not attempt
+    to revalidate them with the server.
+
+    This is useful for performance analyses
+    to rule out a source of uncertainty.
+    """
+
+    def cached_request(self, request: PreparedRequest) -> HTTPResponse | Literal[False]:
+        resp = self._load_from_cache(request)
+        if not resp:
+            return False  # genuinely not cached -> nothing we can do
+        return resp
 
 
 @dataclasses.dataclass(frozen=True)
@@ -145,6 +167,7 @@ class Authenticator:
         adapter = CacheControlAdapter(
             cache=self._cache_control,
             pool_maxsize=self._pool_size,
+            controller_class=ForceCacheController if FORCE_HTTP_CACHE else None,
         )
         session.mount("http://", adapter)
         session.mount("https://", adapter)
