@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "file-scripts-missing-ref-project"
+version = "1.0.0"
+description = "A project with a file script referencing a non-existent file."
+authors = ["Test Author <test@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+
+[tool.poetry.scripts]
+missing-script = { reference = "bin/does-not-exist.sh", type = "file" }
+console-entry = "file_scripts_missing_ref_project:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
