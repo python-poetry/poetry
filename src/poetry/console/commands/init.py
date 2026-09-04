@@ -181,6 +181,8 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                     f"Compatible Python versions [<comment>{python}</comment>]: ",
                     default=python,
                 )
+                question.set_validator(self._validate_version_constraint)
+                question.set_max_attempts(3)
                 python = self.ask(question)
 
         if is_interactive:

@@ -1048,6 +1048,29 @@ def test_validate_version_constraint_rejects_invalid_inputs(invalid: str) -> Non
         InitCommand._validate_version_constraint(invalid)
 
 
+def test_python_version_constraint_validated_in_interactive_prompt(
+    tester: CommandTester,
+) -> None:
+    """Invalid Python version constraints should be rejected and re-prompted."""
+    inputs = [
+        "my-package",      # Package name
+        "1.2.3",           # Version
+        "",                # Description
+        "n",               # Author
+        "",                # License
+        "invalid-python",  # Python version -- INVALID, gets rejected
+        ">=3.8",           # Python version -- VALID on retry
+        "n",               # Interactive packages
+        "n",               # Interactive dev packages
+        "\n",              # Generate
+    ]
+    tester.execute(inputs="\n".join(inputs))
+    output = tester.io.fetch_output()
+
+    assert 'requires-python = ">=3.8"' in output
+    assert 'requires-python = "invalid-python"' not in output
+
+
 @pytest.mark.parametrize(
     "author",
     [
