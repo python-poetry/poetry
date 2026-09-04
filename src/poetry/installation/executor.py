@@ -25,8 +25,8 @@ from poetry.installation.wheel_installer import WheelInstaller
 from poetry.puzzle.exceptions import SolverProblemError
 from poetry.utils._compat import decode
 from poetry.utils.authenticator import Authenticator
+from poetry.utils.download import Downloader
 from poetry.utils.env import EnvCommandError
-from poetry.utils.helpers import Downloader
 from poetry.utils.helpers import get_file_hash
 from poetry.utils.helpers import get_highest_priority_hash_type
 from poetry.utils.helpers import pluralize
@@ -787,7 +787,7 @@ class Executor:
         return archive
 
     def _populate_hashes_dict(self, archive: Path, package: Package) -> None:
-        if package.files and archive.name in {f["file"] for f in package.files}:
+        if package.files:
             archive_hash = self._validate_archive_hash(archive, package)
             self._hashes[package.name] = archive_hash
 
@@ -796,6 +796,14 @@ class Executor:
         known_hashes = {f["hash"] for f in package.files if f["file"] == archive.name}
         hash_types = {t.split(":")[0] for t in known_hashes}
         hash_type = get_highest_priority_hash_type(hash_types, archive.name)
+
+        if not known_hashes:
+            locked_files = sorted(f["file"] for f in package.files)
+            raise RuntimeError(
+                f"Downloaded archive {archive.name} for {package} is not listed in"
+                f" the lock file, so its hash cannot be verified"
+                f" (locked files: {locked_files})"
+            )
 
         if hash_type is None:
             raise RuntimeError(

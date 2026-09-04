@@ -1,5 +1,14 @@
 # Change Log
 
+## [2.4.2] - 2026-08-29
+
+### Fixed
+
+- Fix an issue where Poetry installs an artifact that is not listed in the lockfile when the package source does not provide a hash for this artifact ([#11030](https://github.com/python-poetry/poetry/pull/11030)).
+- Fix a path traversal vulnerability when downloading files from a compromised URL and/or package source ([#11029](https://github.com/python-poetry/poetry/pull/11029)).
+- Fix a path traversal vulnerability in sdist extraction on Python 3.10.0-3.10.12 and 3.11.0-3.11.4 that could allow malicious tarball files to write files outside the target directory ([#11027](https://github.com/python-poetry/poetry/pull/11027)).
+
+
 ## [2.4.1] - 2026-05-09
 
 ### Changed
@@ -2756,7 +2765,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/2.4.1...main
+[Unreleased]: https://github.com/python-poetry/poetry/compare/2.4.2...main
+[2.4.2]: https://github.com/python-poetry/poetry/releases/tag/2.4.2
 [2.4.1]: https://github.com/python-poetry/poetry/releases/tag/2.4.1
 [2.4.0]: https://github.com/python-poetry/poetry/releases/tag/2.4.0
 [2.3.4]: https://github.com/python-poetry/poetry/releases/tag/2.3.4

@@ -5530,6 +5530,51 @@ def test_solver_resolves_duplicate_dependencies_with_restricted_extras(
     )
 
 
+def test_solver_resolves_duplicate_extra_dependencies_missing_from_requires(
+    package: ProjectPackage,
+    pool: RepositoryPool,
+    repo: Repository,
+    io: NullIO,
+) -> None:
+    """
+    Same shape as test_solver_resolves_duplicate_dependencies_with_restricted_extras,
+    but neither same-named dependency is added to package_a's own `requires`
+    (only `extras`), simulating a package reused from the lock file whose
+    `requires` was pruned down to whatever extras were active during an
+    earlier resolution (regression test for #10314).
+    """
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "*", "extras": ["foo"]})
+    )
+
+    package_a = Package("A", "1.0", source_type="url", source_url="https://example.org")
+    package_b1 = get_package("B", "1.0")
+    package_b2 = get_package("B", "2.0")
+
+    dep1 = get_dependency("B", "^1.0", optional=True)
+    dep1.marker = parse_marker("sys_platform == 'win32' and extra == 'foo'")
+    dep2 = get_dependency("B", "^2.0", optional=True)
+    dep2.marker = parse_marker("sys_platform == 'linux' and extra == 'foo'")
+    package_a.extras = {canonicalize_name("foo"): [dep1, dep2]}
+
+    repo.add_package(package_b1)
+    repo.add_package(package_b2)
+
+    solver = Solver(package, pool, [], [package_a], io)
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        (
+            [
+                {"job": "install", "package": package_b1},
+                {"job": "install", "package": package_b2},
+                {"job": "install", "package": package_a},
+            ]
+        ),
+    )
+
+
 def test_solver_resolves_optional_dependencies_and_group_with_extras(
     package: ProjectPackage,
     pool: RepositoryPool,

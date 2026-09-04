@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from poetry.core.packages.package import Package
     from poetry.core.packages.utils.link import Link
 
+    from poetry.repositories.repository import Repository
     from poetry.repositories.repository_pool import RepositoryPool
     from poetry.utils.env import Env
 
@@ -57,7 +58,9 @@ class Chooser:
         wheels_skipped = 0
         sdists_skipped = 0
 
-        for link in self._get_links(package):
+        repository = self._get_repository(package)
+
+        for link in repository.find_links_for_package(package):
             links_seen += 1
 
             if link.is_wheel:
@@ -117,10 +120,7 @@ class Chooser:
                 package, links_seen, wheels_skipped, sdists_skipped, unsupported_wheels
             )
 
-        # Get the best link
-        chosen = max(links, key=lambda link: self._sort_key(package, link))
-
-        return chosen
+        return self._choose_hash_verified_link(package, repository, links)
 
     def _no_links_found_error(
         self,
@@ -196,7 +196,7 @@ class Chooser:
             messages=messages,
         )
 
-    def _get_links(self, package: Package) -> list[Link]:
+    def _get_repository(self, package: Package) -> Repository:
         if package.source_type:
             assert package.source_reference is not None
             repository = self._pool.repository(package.source_reference)
@@ -205,20 +205,27 @@ class Chooser:
             repository = self._pool.repositories[0]
         else:
             repository = self._pool.repository("pypi")
-        links = repository.find_links_for_package(package)
+
+        return repository
+
+    def _choose_hash_verified_link(
+        self, package: Package, repository: Repository, links: list[Link]
+    ) -> Link:
+        # Best candidate first, so we can stop at the first verified hash match
+        # instead of verifying every candidate.
+        ordered_links = sorted(
+            links, key=lambda link: self._sort_key(package, link), reverse=True
+        )
 
         locked_hashes = {f["hash"] for f in package.files}
         if not locked_hashes:
-            return links
+            return ordered_links[0]
 
-        selected_links = []
         skipped = []
         locked_hash_names = {h.split(":")[0] for h in locked_hashes}
-        for link in links:
-            if not link.hashes:
-                selected_links.append(link)
-                continue
-
+        for link in ordered_links:
+            # A link that advertises no hash is not trusted: the lock file requires
+            # a hash for this package, so fall through and compute one to compare.
             link_hash: str | None = None
             if (candidates := locked_hash_names.intersection(link.hashes.keys())) and (
                 hash_name := get_highest_priority_hash_type(candidates, link.filename)
@@ -228,42 +235,38 @@ class Chooser:
             elif isinstance(repository, HTTPRepository):
                 link_hash = repository.calculate_sha256(link)
 
-            if link_hash not in locked_hashes:
-                skipped.append((link.filename, link_hash))
-                logger.debug(
-                    "Skipping %s as %s checksum does not match expected value",
-                    link.filename,
-                    link_hash,
-                )
-                continue
+            if link_hash in locked_hashes:
+                return link
 
-            selected_links.append(link)
+            skipped.append((link.filename, link_hash))
+            logger.debug(
+                "Skipping %s as %s checksum does not match expected value",
+                link.filename,
+                link_hash,
+            )
 
-        if links and not selected_links:
-            reason = f"Downloaded distributions for <b>{package.pretty_name} ({package.pretty_version})</> did not match any known checksums in your lock file."
-            link_hashes = "\n".join(f"  - {link}({h})" for link, h in skipped)
-            known_hashes = "\n".join(f"  - {h}" for h in locked_hashes)
-            messages = [
-                ConsoleMessage(
-                    "<options=bold>Causes:</>\n"
-                    "  - invalid or corrupt cache either during locking or installation\n"
-                    "  - network interruptions or errors causing corrupted downloads\n\n"
-                    "<b>Solutions:</>\n"
-                    "  1. Try running your command again using the <c1>--no-cache</> global option enabled.\n"
-                    "  2. Try regenerating your lock file using (<c1>poetry lock --no-cache --regenerate</>).\n\n"
-                    "If any of those solutions worked, you will have to clear your caches using (<c1>poetry cache clear --all CACHE_NAME</>)."
-                ),
-                ConsoleMessage(
-                    f"Poetry retrieved the following links:\n"
-                    f"{link_hashes}\n\n"
-                    f"The lockfile contained only the following hashes:\n"
-                    f"{known_hashes}",
-                    debug=True,
-                ),
-            ]
-            raise PoetryRuntimeError(reason, messages)
-
-        return selected_links
+        reason = f"Downloaded distributions for <b>{package.pretty_name} ({package.pretty_version})</> did not match any known checksums in your lock file."
+        link_hashes = "\n".join(f"  - {link}({h})" for link, h in skipped)
+        known_hashes = "\n".join(f"  - {h}" for h in locked_hashes)
+        messages = [
+            ConsoleMessage(
+                "<options=bold>Causes:</>\n"
+                "  - invalid or corrupt cache either during locking or installation\n"
+                "  - network interruptions or errors causing corrupted downloads\n\n"
+                "<b>Solutions:</>\n"
+                "  1. Try running your command again using the <c1>--no-cache</> global option enabled.\n"
+                "  2. Try regenerating your lock file using (<c1>poetry lock --no-cache --regenerate</>).\n\n"
+                "If any of those solutions worked, you will have to clear your caches using (<c1>poetry cache clear --all CACHE_NAME</>)."
+            ),
+            ConsoleMessage(
+                f"Poetry retrieved the following links:\n"
+                f"{link_hashes}\n\n"
+                f"The lockfile contained only the following hashes:\n"
+                f"{known_hashes}",
+                debug=True,
+            ),
+        ]
+        raise PoetryRuntimeError(reason, messages)
 
     def _sort_key(
         self, package: Package, link: Link

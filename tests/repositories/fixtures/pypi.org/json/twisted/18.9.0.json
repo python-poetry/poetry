@@ -52,6 +52,7 @@
   "urls": [
     {
       "comment_text": "",
+      "core-metadata": false,
       "digests": {
         "md5": "35ff4705ea90a76bf972ff3b229546ca",
         "sha256": "4335327da58be11dd6e482ec6b85eb055bcc953a9570cd59e7840a2ce9419a8e"

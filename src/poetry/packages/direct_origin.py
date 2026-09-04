@@ -11,7 +11,7 @@ from poetry.config.config import Config
 from poetry.inspection.info import PackageInfo
 from poetry.inspection.info import PackageInfoError
 from poetry.utils.authenticator import get_default_authenticator
-from poetry.utils.helpers import download_file
+from poetry.utils.download import download_file
 from poetry.utils.helpers import get_file_hash
 from poetry.vcs.git import Git
 

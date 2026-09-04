@@ -306,7 +306,7 @@ class FileManager:
             dst.relative_to(FIXTURE_PATH_REPOSITORIES_PYPI),
         )
 
-        with self.pypi._cached_or_downloaded_file(link) as src:
+        with self.pypi._downloaded_file(link) as src:
             shutil.copy(src, dst)
 
         return ReleaseFileMetadata(dst)
@@ -322,7 +322,7 @@ class FileManager:
         )
 
         with (
-            self.pypi._cached_or_downloaded_file(link) as src,
+            self.pypi._downloaded_file(link) as src,
             zipfile.ZipFile(
                 dst, "w", compression=zipfile.ZIP_DEFLATED
             ) as stubbed_sdist,
@@ -371,7 +371,7 @@ class FileManager:
         )
 
         with (
-            self.pypi._cached_or_downloaded_file(link) as src,
+            self.pypi._downloaded_file(link) as src,
             GzipFile(dst.as_posix(), mode="wb", mtime=0) as gz,
             tarfile.TarFile(
                 dst, mode="w", fileobj=gz, format=tarfile.PAX_FORMAT

@@ -22,7 +22,7 @@ from poetry.core.packages.utils.link import Link
 from poetry.inspection.info import PackageInfoError
 from poetry.inspection.lazy_wheel import HTTPRangeRequestUnsupportedError
 from poetry.repositories.http_repository import HTTPRepository
-from poetry.utils.helpers import HTTPRangeRequestSupportedError
+from poetry.utils.download import HTTPRangeRequestSupportedError
 
 
 if TYPE_CHECKING:

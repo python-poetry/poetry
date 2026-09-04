@@ -654,7 +654,7 @@ def test_cached_or_downloaded_file_supports_trailing_slash(
     legacy_repository: LegacyRepository,
 ) -> None:
     repo = legacy_repository
-    with repo._cached_or_downloaded_file(
+    with repo._downloaded_file(
         Link("https://files.pythonhosted.org/pytest-3.5.0-py2.py3-none-any.whl/")
     ) as filepath:
         assert filepath.name == "pytest-3.5.0-py2.py3-none-any.whl"
