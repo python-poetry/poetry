@@ -1367,6 +1367,48 @@ def test_create_venv_does_not_keep_inconsistent_envs_entry(
     assert envs["other"]["patch"] == "3.7.0"
 
 
+def test_create_venv_does_not_mistake_a_sibling_venv_for_the_target_venv(
+    manager: EnvManager,
+    poetry: Poetry,
+    config: Config,
+    mocker: MockerFixture,
+    config_virtualenvs_path: Path,
+    venv_name: str,
+    mocked_python_register: MockedPythonRegister,
+) -> None:
+    """Regression test for https://github.com/python-poetry/poetry/issues/10357.
+
+    A sibling virtualenv whose directory name merely *extends* the target
+    venv's name as a string (e.g. Poetry itself running from ``.venv-poetry``
+    while the project venv is ``.venv``) must not be mistaken for "already
+    running inside the target venv". Otherwise `create_venv()` wrongly
+    returns `get_system_env()` and the project gets installed into the
+    system/base Python instead of its own virtualenv.
+    """
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
+
+    poetry.package.python_versions = "^3.9"
+
+    mocker.patch(
+        "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
+    )
+
+    python = mocked_python_register("3.9.0")
+    venv = config_virtualenvs_path / f"{venv_name}-py3.9"
+
+    # A sibling interpreter whose resolved path merely *starts with* the
+    # target venv's path as a string (".venv-poetry" extends ".venv") while
+    # living in a completely separate directory, not inside it.
+    sibling_executable = Path(f"{venv}-poetry") / "bin" / "python3.9"
+    mocker.patch("sys.executable", str(sibling_executable))
+    mocker.patch("os.path.islink", return_value=False)
+
+    env = manager.create_venv(python=python)
+
+    assert env.path == venv
+
+
 def test_build_venv_does_not_change_loglevel(
     tmp_path: Path, manager: EnvManager, caplog: LogCaptureFixture
 ) -> None:
