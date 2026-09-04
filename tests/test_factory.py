@@ -440,6 +440,48 @@ def test_validate_fails(fixture_dir: FixtureDirGetter) -> None:
     assert Factory.validate(pyproject) == {"errors": expected, "warnings": []}
 
 
+_PROJECT_VERSION_ERROR = (
+    "The [project] table requires a 'version' key when a 'name' key is present."
+    " Either define 'version' statically or list it in the 'dynamic' array."
+)
+
+
+@pytest.mark.parametrize(
+    ("project", "expected_errors"),
+    [
+        # non-package mode: name but no version and not dynamic -> error
+        ({"name": "foo"}, [_PROJECT_VERSION_ERROR]),
+        # non-package mode: static version -> valid
+        ({"name": "foo", "version": "1.0"}, []),
+        # non-package mode: version declared as dynamic -> valid
+        ({"name": "foo", "dynamic": ["version"]}, []),
+    ],
+)
+def test_validate_non_package_mode_requires_project_version(
+    project: dict[str, Any], expected_errors: list[str]
+) -> None:
+    toml_data: dict[str, Any] = {
+        "project": project,
+        "tool": {"poetry": {"package-mode": False}},
+    }
+
+    assert Factory.validate(toml_data) == {"errors": expected_errors, "warnings": []}
+
+
+def test_validate_package_mode_missing_version_not_duplicated() -> None:
+    # In package mode a missing version is already reported by the core schema
+    # validation, so the additional PEP 621 check must not fire (no duplicate).
+    toml_data: dict[str, Any] = {
+        "project": {"name": "foo"},
+        "tool": {"poetry": {}},
+    }
+
+    errors = Factory.validate(toml_data)["errors"]
+
+    assert _PROJECT_VERSION_ERROR not in errors
+    assert any("required in package mode" in error for error in errors)
+
+
 def test_create_poetry_fails_on_invalid_configuration(
     fixture_dir: FixtureDirGetter,
 ) -> None:
