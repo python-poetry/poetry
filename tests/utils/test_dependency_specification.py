@@ -18,6 +18,7 @@ if TYPE_CHECKING:
 
     from poetry.utils.cache import ArtifactCache
     from poetry.utils.dependency_specification import DependencySpec
+    from tests.types import FixtureDirGetter
 
 
 @pytest.mark.parametrize(
@@ -190,3 +191,32 @@ def test_parse_dependency_specification(
         )
         for specification in expected_variants
     )
+
+
+def test_parse_bare_local_file_dependency(
+    tmp_path: Path,
+    fixture_dir: FixtureDirGetter,
+    artifact_cache: ArtifactCache,
+) -> None:
+    source = fixture_dir("distributions") / "demo-0.1.2-py2.py3-none-any.whl"
+    path = tmp_path / source.name
+    path.write_bytes(source.read_bytes())
+
+    assert RequirementsParser(
+        artifact_cache=artifact_cache,
+        cwd=tmp_path,
+    ).parse(path.name) == {
+        "name": "demo",
+        "path": path.name,
+    }
+
+
+def test_parse_bare_package_name_does_not_check_path(
+    mocker: MockerFixture,
+    artifact_cache: ArtifactCache,
+) -> None:
+    parser = RequirementsParser(artifact_cache=artifact_cache)
+    parse_path = mocker.patch.object(parser, "_parse_path", wraps=parser._parse_path)
+
+    assert parser.parse("demo") == {"name": "demo"}
+    parse_path.assert_not_called()
