@@ -301,7 +301,7 @@ The `config` command allows you to edit poetry config settings and repositories.
 poetry config --list
 ```
 
-### Usage
+Usage:
 
 ````bash
 poetry config [options] [setting-key] [setting-value1] ... [setting-valueN]
