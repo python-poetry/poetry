@@ -13,6 +13,7 @@ from packaging.utils import canonicalize_name
 
 from poetry.console.commands.env_command import EnvCommand
 from poetry.console.commands.group_command import GroupCommand
+from poetry.packages.transitive_package_info import group_sort_key
 from poetry.utils.constants import POETRY_SYSTEM_PROJECT_NAME
 
 
@@ -74,6 +75,7 @@ class ShowCommand(GroupCommand, EnvCommand):
             "Show all packages (even those not compatible with current system).",
         ),
         option("top-level", "T", "Show only top-level dependencies."),
+        option("with-groups", None, "Show dependency group names."),
         option(
             "no-truncate",
             None,
@@ -112,6 +114,13 @@ lists all packages available."""
                     " package.</error>"
                 )
                 return 1
+
+        if self.option("with-groups") and self.option("tree"):
+            self.line_error(
+                "<error>Error: Cannot use --tree and --with-groups at the same"
+                " time.</error>"
+            )
+            return 1
 
         if self.option("why"):
             if self.option("tree") and package is None:
@@ -289,16 +298,28 @@ lists all packages available."""
         show_all = self.option("all")
         show_top_level = self.option("top-level")
         show_why = self.option("why")
+        show_groups = self.option("with-groups")
         width = (
             sys.maxsize
             if self.option("no-truncate")
             else shutil.get_terminal_size().columns
         )
         name_length = version_length = latest_length = required_by_length = 0
+        groups_length = 0
         latest_packages = {}
         latest_statuses = {}
         installed_repo = InstalledRepository.load(self.env)
         requires = root.all_requires
+        package_groups: dict[NormalizedName, list[NormalizedName]] = {}
+        default_groups = ""
+        formatted_groups: dict[NormalizedName, str] = {}
+        if show_groups:
+            package_groups = self._package_groups(root)
+            default_groups = self._format_groups([])
+            formatted_groups = {
+                package_name: self._format_groups(groups)
+                for package_name, groups in package_groups.items()
+            }
 
         # Computing widths
         for locked in locked_packages:
@@ -349,6 +370,12 @@ lists all packages available."""
                             required_by_length,
                             len(" from " + ",".join(required_by.keys())),
                         )
+
+                    if show_groups:
+                        groups_length = max(
+                            groups_length,
+                            len(formatted_groups.get(locked.name, default_groups)),
+                        )
             else:
                 name_length = max(name_length, current_length)
                 version_length = max(
@@ -364,6 +391,12 @@ lists all packages available."""
                     required_by = reverse_deps(locked, locked_repository)
                     required_by_length = max(
                         required_by_length, len(" from " + ",".join(required_by.keys()))
+                    )
+
+                if show_groups:
+                    groups_length = max(
+                        groups_length,
+                        len(formatted_groups.get(locked.name, default_groups)),
                     )
 
         if self.option("format") == OutputFormats.JSON:
@@ -403,6 +436,11 @@ lists all packages available."""
                     if required_by:
                         package["required_by"] = list(required_by.keys())
 
+                if show_groups:
+                    package["groups"] = [
+                        str(group) for group in package_groups.get(locked.name, [])
+                    ]
+
                 package["description"] = locked.description
 
                 packages.append(package)
@@ -412,10 +450,21 @@ lists all packages available."""
             return 0
 
         write_version = name_length + version_length + 3 <= width
-        write_latest = name_length + version_length + latest_length + 3 <= width
+        write_groups = (
+            show_groups and name_length + version_length + groups_length + 3 <= width
+        )
+        group_column_length = groups_length if write_groups else 0
+        write_latest = (
+            name_length + version_length + group_column_length + latest_length + 3
+            <= width
+        )
 
         why_end_column = (
-            name_length + version_length + latest_length + required_by_length
+            name_length
+            + version_length
+            + group_column_length
+            + latest_length
+            + required_by_length
         )
         write_why = show_why and (why_end_column + 3) <= width
         write_description = (why_end_column + 24) <= width
@@ -460,6 +509,11 @@ lists all packages available."""
                     locked, root=self.poetry.file.path.parent
                 )
                 line += f" <b>{version:{version_length}}</b>"
+
+            if write_groups:
+                groups = formatted_groups.get(locked.name, default_groups)
+                line += f" {groups:{groups_length}}"
+
             if show_latest:
                 latest = latest_packages[locked.pretty_name]
                 update_status = latest_statuses[locked.pretty_name]
@@ -494,6 +548,9 @@ lists all packages available."""
                 if show_latest:
                     remaining -= latest_length
 
+                if write_groups:
+                    remaining -= groups_length
+
                 if len(locked.description) > remaining:
                     description = description[: remaining - 3] + "..."
 
@@ -502,6 +559,38 @@ lists all packages available."""
             self.line(line)
 
         return 0
+
+    def _package_groups(
+        self, root: ProjectPackage
+    ) -> dict[NormalizedName, list[NormalizedName]]:
+        active_groups = root.dependency_group_names(include_optional=True)
+        lock_data = self.poetry.locker.lock_data
+
+        if (
+            lock_data.get("metadata", {}).get("lock-version")
+            and self.poetry.locker.is_locked_groups_and_markers()
+        ):
+            return {
+                package.name: sorted(
+                    info.groups.intersection(active_groups), key=group_sort_key
+                )
+                for package, info in self.poetry.locker.locked_packages().items()
+            }
+
+        package_groups: dict[NormalizedName, set[NormalizedName]] = {}
+        for group_name in root.dependency_group_names(include_optional=True):
+            group = root.dependency_group(group_name)
+            for dependency in group.dependencies_for_locking:
+                package_groups.setdefault(dependency.name, set()).add(group_name)
+
+        return {
+            package_name: sorted(groups, key=group_sort_key)
+            for package_name, groups in package_groups.items()
+        }
+
+    @staticmethod
+    def _format_groups(groups: list[NormalizedName]) -> str:
+        return ", ".join(groups) if groups else "-"
 
     def _display_packages_tree_information(
         self, locked_repository: Repository, root: ProjectPackage
