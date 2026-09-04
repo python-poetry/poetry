@@ -853,14 +853,12 @@ poetry run python scripts/train.py --epochs 10
 poetry run pytest tests/ -k "test_login"
 ```
 
-### Running console scripts
-
-`poetry run` can also execute [console scripts (Python entry points)]({{< relref "pyproject#scripts" >}})
-defined in `pyproject.toml`.
+The `run` command can also execute [console scripts (Python entry points)]({{< relref "pyproject#scripts" >}})
+defined in the `pyproject.toml` file.
 
 A console script (entry point) maps a **command name** to a Python callable with
 the form `package.module:function`. Poetry must be able to import that module and
-call that function after the project is installed into the virtualenv.
+call that function after the project is installed into the environment.
 
 For example, with this layout:
 
@@ -901,7 +899,6 @@ where `my_package/console.py` contains:
 
 ```python
 import argparse
-
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Greet someone.")
