@@ -105,6 +105,30 @@ def test_noninteractive(
     assert expected_build_system in toml_content
 
 
+def test_noninteractive_normalizes_default_project_name(
+    app: PoetryTestApplication,
+    mocker: MockerFixture,
+    poetry: Poetry,
+    tmp_path: Path,
+) -> None:
+    command = app.find("init")
+    assert isinstance(command, InitCommand)
+    command._pool = poetry.pool
+
+    project_path = tmp_path / "my project with spaces"
+    project_path.mkdir()
+    mocker.patch("pathlib.Path.cwd", return_value=project_path)
+
+    tester = CommandTester(command)
+    tester.execute(
+        "--author 'Your Name <you@example.com>' --python '>=3.12'",
+        interactive=False,
+    )
+
+    toml_content = (project_path / "pyproject.toml").read_text(encoding="utf-8")
+    assert 'name = "my-project-with-spaces"' in toml_content
+
+
 def test_interactive_with_dependencies(
     tester: CommandTester, repo: DummyRepository
 ) -> None:
