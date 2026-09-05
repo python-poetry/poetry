@@ -1,5 +1,12 @@
 # Change Log
 
+## [2.4.3] - 2026-09-05
+
+### Fixed
+
+- Fix an issue where Poetry could not extract sdists on Python 3.10.0-3.10.12 and 3.11.0-3.11.4 ([#11037](https://github.com/python-poetry/poetry/pull/11037)).
+
+
 ## [2.4.2] - 2026-08-29
 
 ### Fixed
@@ -2765,7 +2772,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/2.4.2...main
+[Unreleased]: https://github.com/python-poetry/poetry/compare/2.4.3...main
+[2.4.3]: https://github.com/python-poetry/poetry/releases/tag/2.4.3
 [2.4.2]: https://github.com/python-poetry/poetry/releases/tag/2.4.2
 [2.4.1]: https://github.com/python-poetry/poetry/releases/tag/2.4.1
 [2.4.0]: https://github.com/python-poetry/poetry/releases/tag/2.4.0
