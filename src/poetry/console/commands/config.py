@@ -93,6 +93,7 @@ To remove a repository (repo is a short alias for repositories):
             "requests.max-retries": (lambda val: int(val) >= 0, int_normalizer),
             "installer.re-resolve": (boolean_validator, boolean_normalizer),
             "installer.parallel": (boolean_validator, boolean_normalizer),
+            "installer.builtin-uninstall": (boolean_validator, boolean_normalizer),
             "installer.max-workers": (lambda val: int(val) > 0, int_normalizer),
             "installer.no-binary": (
                 PackageFilterPolicy.validator,
