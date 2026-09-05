@@ -628,6 +628,28 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
     assert env.base == Path(sys.base_prefix)
 
 
+def test_get_prefers_project_venv_when_no_active_is_set(
+    manager: EnvManager,
+    poetry: Poetry,
+    in_project_venv_dir: Path,
+    mocker: MockerFixture,
+) -> None:
+    mocker.patch.dict(
+        os.environ,
+        {"VIRTUAL_ENV": "/environment/prefix"},
+        clear=False,
+    )
+    mocker.patch(
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(),
+    )
+
+    env = manager.get(no_active=True)
+
+    assert env.path == in_project_venv_dir
+    assert env.base == Path(sys.base_prefix)
+
+
 @pytest.mark.parametrize("env_var", ["VIRTUAL_ENV", "CONDA_PREFIX"])
 def test_get_ignores_empty_env_prefix(
     manager: EnvManager,
