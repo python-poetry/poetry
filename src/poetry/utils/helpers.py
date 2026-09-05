@@ -478,14 +478,15 @@ def extractall(source: Path, dest: Path, zip: bool) -> None:
                         if mode != member.mode:
                             new_attrs["mode"] = mode
                     # Ignore ownership for 'data'
-                    if member.uid is not None:
-                        new_attrs["uid"] = None
-                    if member.gid is not None:
-                        new_attrs["gid"] = None
-                    if member.uname is not None:
-                        new_attrs["uname"] = None
-                    if member.gname is not None:
-                        new_attrs["gname"] = None
+                    # Unlike newer versions, TarFile.chown() of older Python
+                    # versions does not tolerate None here: it passes the ids
+                    # straight to os.chown() and looks the names up with
+                    # pwd/grp, catching only KeyError. Use values that are
+                    # accepted and resolve to "leave ownership alone".
+                    new_attrs["uid"] = -1
+                    new_attrs["gid"] = -1
+                    new_attrs["uname"] = ""
+                    new_attrs["gname"] = ""
                     # Check link destination for 'data'
                     if member.islnk() or member.issym():
                         if os.path.isabs(member.linkname):

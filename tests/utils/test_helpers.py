@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import contextlib
 import re
+import sys
 import tarfile
 
 from pathlib import Path
@@ -395,6 +396,67 @@ def test_extractall_sdist_no_path_traversal(
         # check that expected location exists, otherwise we have to check
         # that there is no traversal in an unexpected location
         assert (dest / target.as_posix().lstrip("/")).exists()
+
+
+def test_extractall_sdist_old_python_owner_filter(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The fallback filter must not hand None to old TarFile.chown()."""
+    import io
+
+    archive = tmp_path / "owner.tar.gz"
+    dest = tmp_path / "dest"
+    dest.mkdir()
+    with tarfile.open(archive, "w:gz") as tar:
+        member = tarfile.TarInfo("file.txt")
+        member.size = 4
+        tar.addfile(member, io.BytesIO(b"data"))
+
+    # Take the fallback path and skip the stdlib filter, as on old Python.
+    monkeypatch.setattr(sys, "version_info", (3, 10, 12))
+    monkeypatch.setattr(
+        tarfile.TarFile,
+        "_get_filter_function",
+        lambda self, filter: lambda member, dest_path: member,
+        raising=False,
+    )
+
+    original_getmembers = tarfile.TarFile.getmembers
+
+    def unowned_members(self: tarfile.TarFile) -> list[tarfile.TarInfo]:
+        members = original_getmembers(self)
+        for member in members:
+            for attr in ("uid", "gid", "uname", "gname"):
+                # object.__setattr__ because the declared types are not optional
+                object.__setattr__(member, attr, None)
+        return members
+
+    monkeypatch.setattr(tarfile.TarFile, "getmembers", unowned_members)
+
+    def lookup(name: str) -> int:
+        """Behaves like pwd.getpwnam()/grp.getgrnam() for an unknown name."""
+        if not isinstance(name, str):
+            raise TypeError(f"argument must be str, not {type(name).__name__}")
+        raise KeyError(name)
+
+    chown_args: list[tuple[int, int, str, str]] = []
+
+    def old_chown(
+        self: tarfile.TarFile, member: tarfile.TarInfo, target: str, numeric_owner: bool
+    ) -> None:
+        # Old TarFile.chown() resolved the names and caught only KeyError.
+        with contextlib.suppress(KeyError):
+            lookup(member.gname)
+        with contextlib.suppress(KeyError):
+            lookup(member.uname)
+        chown_args.append((member.uid, member.gid, member.uname, member.gname))
+
+    monkeypatch.setattr(tarfile.TarFile, "chown", old_chown)
+
+    extractall(source=archive, dest=dest, zip=False)
+
+    assert (dest / "file.txt").read_bytes() == b"data"
+    assert chown_args == [(-1, -1, "", "")]
 
 
 @pytest.mark.parametrize("link_type", [tarfile.SYMTYPE, tarfile.LNKTYPE])
