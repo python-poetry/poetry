@@ -109,22 +109,30 @@ class Transaction:
                     pass
 
                 # We have to perform an update if the version or another
-                # attribute of the package has changed (source type, url, ref, ...).
-                elif result_package.version != installed_package.version or (
-                    (
-                        # This has to be done because installed packages cannot
-                        # have type "legacy". If a package with type "legacy"
-                        # is installed, the installed package has no source_type.
-                        # Thus, if installed_package has no source_type and
-                        # the result_package has source_type "legacy" (negation of
-                        # the following condition), update must not be performed.
-                        # This quirk has the side effect that when switching
-                        # from PyPI to legacy (or vice versa),
-                        # no update is performed.
-                        installed_package.source_type
-                        or result_package.source_type != "legacy"
+                # attribute of the package has changed
+                # (source type, url, ref, develop, ...).
+                elif (
+                    result_package.version != installed_package.version
+                    or (
+                        result_package.source_type in {"directory", "git"}
+                        and result_package.develop != installed_package.develop
                     )
-                    and not result_package.is_same_package_as(installed_package)
+                    or (
+                        (
+                            # This has to be done because installed packages cannot
+                            # have type "legacy". If a package with type "legacy"
+                            # is installed, the installed package has no source_type.
+                            # Thus, if installed_package has no source_type and
+                            # the result_package has source_type "legacy" (negation of
+                            # the following condition), update must not be performed.
+                            # This quirk has the side effect that when switching
+                            # from PyPI to legacy (or vice versa),
+                            # no update is performed.
+                            installed_package.source_type
+                            or result_package.source_type != "legacy"
+                        )
+                        and not result_package.is_same_package_as(installed_package)
+                    )
                 ):
                     operations.append(
                         Update(

@@ -12,6 +12,10 @@ from typing import NamedTuple
 
 import pytest
 
+from poetry.core.packages.package import Package
+
+from poetry.installation.operations.update import Update
+from poetry.puzzle.transaction import Transaction
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils._compat import getencoding
 from poetry.utils.env import EnvManager
@@ -23,7 +27,6 @@ from tests.helpers import with_working_directory
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from poetry.core.packages.package import Package
     from pytest import LogCaptureFixture
     from pytest_mock.plugin import MockerFixture
 
@@ -285,6 +288,34 @@ def test_load_editable_package(
     assert editable.version.text == "2.3.4"
     assert editable.source_type == "directory"
     assert editable.source_url == editable_source_directory_path
+    assert editable.develop
+
+
+def test_legacy_editable_package_is_updated_to_non_editable(
+    repository: InstalledRepository, editable_source_directory_path: str
+) -> None:
+    installed_package = get_package_from_repository("editable", repository)
+    assert installed_package is not None
+    result_package = Package(
+        installed_package.name,
+        installed_package.version,
+        source_type="directory",
+        source_url=editable_source_directory_path,
+        develop=False,
+    )
+    transaction = Transaction(
+        [installed_package],
+        [result_package],
+        installed_packages=[installed_package],
+    )
+
+    operations = transaction.calculate_operations(synchronize=True)
+
+    assert len(operations) == 1
+    operation = operations[0]
+    assert isinstance(operation, Update)
+    assert operation.initial_package.develop
+    assert not operation.target_package.develop
 
 
 def test_load_editable_src_dir_package(
@@ -297,6 +328,7 @@ def test_load_editable_src_dir_package(
     assert editable.version.text == "2.3.4"
     assert editable.source_type == "directory"
     assert editable.source_url == editable_source_directory_path
+    assert editable.develop
 
 
 def test_load_editable_with_import_package(repository: InstalledRepository) -> None:
@@ -465,7 +497,7 @@ def test_system_site_packages_source_type(
     """
     venv_path = tmp_path / "venv"
     site_path = tmp_path / "site"
-    for dist_info in {"cleo-0.7.6.dist-info", "directory_pep_610-1.2.3.dist-info"}:
+    for dist_info in ("cleo-0.7.6.dist-info", "directory_pep_610-1.2.3.dist-info"):
         shutil.copytree(site_purelib / dist_info, site_path / dist_info)
     mocker.patch("poetry.utils.env.virtual_env.VirtualEnv.sys_path", [str(site_path)])
     mocker.patch(
