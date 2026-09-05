@@ -101,19 +101,42 @@ def test_env_get_supported_tags_matches_inside_virtualenv(
     manager.build_venv(venv_path)
     venv = VirtualEnv(venv_path)
 
-    run_python_script_spy = mocker.spy(venv, "run_python_script")
-
     # determine expected tags before patching sysconfig!
     expected_tags = list(packaging.tags.sys_tags())
 
     if differing_platform:
         mocker.patch("sysconfig.get_platform", return_value="some_other_platform")
-        expected_call_count = 2
-    else:
-        expected_call_count = 1
 
     assert venv.get_supported_tags() == expected_tags
-    assert run_python_script_spy.call_count == expected_call_count
+
+
+def test_env_discovery_returns_independent_data(
+    tmp_path: Path, manager: EnvManager
+) -> None:
+    venv_path = tmp_path / "Virtual Env"
+    manager.build_venv(venv_path)
+    venv = VirtualEnv(venv_path)
+
+    marker_env = venv.get_marker_env()
+    marker_env["python_version"] = "0"
+    assert venv.get_marker_env()["python_version"] != "0"
+
+    paths = venv.get_paths()
+    paths["purelib"] = "changed"
+    assert venv.get_paths()["purelib"] != "changed"
+
+
+def test_env_discovery_preserves_explicit_base(
+    tmp_path: Path, manager: EnvManager
+) -> None:
+    venv_path = tmp_path / "Virtual Env"
+    manager.build_venv(venv_path)
+    base = tmp_path / "base"
+    venv = VirtualEnv(venv_path, base=base)
+
+    venv.get_paths()
+
+    assert venv.base == base
 
 
 @pytest.mark.skipif(

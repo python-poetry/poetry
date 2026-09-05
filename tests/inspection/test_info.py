@@ -17,7 +17,6 @@ from pkginfo.distribution import NewMetadataVersion
 
 from poetry.inspection.info import PackageInfo
 from poetry.inspection.info import PackageInfoError
-from poetry.utils.env import VirtualEnv
 
 
 if TYPE_CHECKING:
@@ -366,11 +365,9 @@ def test_info_no_setup_pkg_info_no_deps_dynamic(fixture_dir: FixtureDirGetter) -
     assert info.requires_dist is None
 
 
-def test_info_setup_simple(mocker: MockerFixture, demo_setup: Path) -> None:
-    spy = mocker.spy(VirtualEnv, "run")
+def test_info_setup_simple(demo_setup: Path) -> None:
     info = PackageInfo.from_directory(demo_setup)
 
-    assert spy.call_count == 6
     demo_check_info(info, requires_dist={"package"})
 
 

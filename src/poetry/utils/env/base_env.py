@@ -76,7 +76,8 @@ class Env(ABC):
 
         self.find_executables()
 
-        self._base = base or path
+        # Preserve an unspecified base so VirtualEnv can discover it lazily.
+        self._base = base
 
         self._site_packages: SitePackages | None = None
         self._supported_tags: list[Tag] | None = None
@@ -97,7 +98,7 @@ class Env(ABC):
 
     @property
     def base(self) -> Path:
-        return self._base
+        return self._base or self._path
 
     @property
     def version_info(self) -> PythonVersion:
