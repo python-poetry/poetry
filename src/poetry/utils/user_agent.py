@@ -14,4 +14,4 @@ def get_user_agent() -> str:
     if user_data is not None:
         extras.append(("user_data", user_data))
 
-    return requests_user_agent("poetry", __version__, extras=extras)
+    return str(requests_user_agent("poetry", __version__, extras=extras))
