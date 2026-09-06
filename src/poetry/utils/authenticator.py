@@ -18,9 +18,7 @@ import requests.exceptions
 
 from cachecontrol import CacheControlAdapter
 from cachecontrol.caches import SeparateBodyFileCache
-from requests_toolbelt import user_agent
 
-from poetry.__version__ import __version__
 from poetry.config.config import Config
 from poetry.console.exceptions import ConsoleMessage
 from poetry.console.exceptions import PoetryRuntimeError
@@ -30,6 +28,7 @@ from poetry.utils.constants import RETRY_AFTER_HEADER
 from poetry.utils.constants import STATUS_FORCELIST
 from poetry.utils.password_manager import HTTPAuthCredential
 from poetry.utils.password_manager import PasswordManager
+from poetry.utils.user_agent import get_user_agent
 
 
 if TYPE_CHECKING:
@@ -133,7 +132,7 @@ class Authenticator:
             self._get_repository_config_for_url
         )
         self._pool_size = pool_size
-        self._user_agent = user_agent("poetry", __version__)
+        self._user_agent = get_user_agent()
 
     def create_session(self) -> requests.Session:
         session = requests.Session()
