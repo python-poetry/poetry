@@ -15,7 +15,6 @@ from typing import TypedDict
 
 from poetry.utils.env.base_env import Env
 from poetry.utils.env.base_env import MarkerEnv
-from poetry.utils.env.script_strings import GET_BASE_PREFIX
 from poetry.utils.env.script_strings import GET_ENVIRONMENT_DATA
 from poetry.utils.env.script_strings import GET_PLATFORMS
 from poetry.utils.env.script_strings import GET_SYS_PATH
@@ -44,8 +43,7 @@ class VirtualEnv(Env):
     @property
     def base(self) -> Path:
         if self._base is None:
-            output = self.run_python_script(GET_BASE_PREFIX)
-            self._base = Path(output.strip())
+            self._base = Path(self._environment_data["base_prefix"])
 
         return self._base
 
@@ -53,8 +51,6 @@ class VirtualEnv(Env):
     def _environment_data(self) -> _EnvironmentData:
         output = self.run_python_script(GET_ENVIRONMENT_DATA)
         data: _EnvironmentData = json.loads(output)
-        if self._base is None:
-            self._base = Path(data["base_prefix"])
         return data
 
     @property

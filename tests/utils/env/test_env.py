@@ -100,13 +100,19 @@ def test_env_get_supported_tags_matches_inside_virtualenv(
     manager.build_venv(venv_path)
     venv = VirtualEnv(venv_path)
 
+    run_python_script_spy = mocker.spy(venv, "run_python_script")
+
     # determine expected tags before patching sysconfig!
     expected_tags = list(packaging.tags.sys_tags())
 
     if differing_platform:
         mocker.patch("sysconfig.get_platform", return_value="some_other_platform")
+        expected_call_count = 2
+    else:
+        expected_call_count = 1
 
     assert venv.get_supported_tags() == expected_tags
+    assert run_python_script_spy.call_count == expected_call_count
 
 
 def test_env_discovery_returns_independent_data(
