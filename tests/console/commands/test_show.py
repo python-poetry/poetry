@@ -886,6 +886,7 @@ def test_show_outdated(
             {
                 "name": "cachy",
                 "version": "0.1.0",
+                "wanted_version": "0.1.0",
                 "latest_version": "0.2.0",
                 "description": "Cachy package",
                 "installed_status": "installed",
@@ -894,7 +895,156 @@ def test_show_outdated(
         assert json.loads(tester.io.fetch_output()) == expected
     else:
         expected = """\
-cachy 0.1.0 0.2.0 Cachy package
+cachy 0.1.0 0.1.0 0.2.0 Cachy package
+"""
+        assert tester.io.fetch_output() == expected
+
+
+@output_format_parametrize
+def test_show_outdated_wanted_version_respects_dependency_constraint(
+    output_format: str,
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    repo: DummyRepository,
+) -> None:
+    poetry.package.add_dependency(Factory.create_dependency("cachy", ">=0.1.0,<0.3.0"))
+
+    cachy_010 = get_package("cachy", "0.1.0")
+    cachy_010.description = "Cachy package"
+    cachy_020 = get_package("cachy", "0.2.0")
+    cachy_020.description = "Cachy package"
+    cachy_030 = get_package("cachy", "0.3.0")
+    cachy_030.description = "Cachy package"
+
+    installed.add_package(cachy_010)
+
+    repo.add_package(cachy_010)
+    repo.add_package(cachy_020)
+    repo.add_package(cachy_030)
+
+    assert isinstance(poetry.locker, DummyLocker)
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "files": {"cachy": []},
+            },
+        }
+    )
+
+    tester.execute(f"--outdated {output_format}")
+
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.1.0",
+                "wanted_version": "0.2.0",
+                "latest_version": "0.3.0",
+                "description": "Cachy package",
+                "installed_status": "installed",
+            },
+        ]
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = """\
+cachy 0.1.0 0.2.0 0.3.0 Cachy package
+"""
+        assert tester.io.fetch_output() == expected
+
+
+@output_format_parametrize
+def test_show_outdated_wanted_version_uses_latest_for_transitive_dependency(
+    output_format: str,
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    repo: DummyRepository,
+) -> None:
+    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
+
+    cachy_010 = get_package("cachy", "0.1.0")
+    cachy_010.description = "Cachy package"
+    cachy_020 = get_package("cachy", "0.2.0")
+    cachy_020.description = "Cachy package"
+
+    pendulum_200 = get_package("pendulum", "2.0.0")
+    pendulum_200.description = "Pendulum package"
+    pendulum_200.add_dependency(Factory.create_dependency("cachy", ">=0.1.0"))
+
+    installed.add_package(cachy_010)
+    installed.add_package(pendulum_200)
+
+    repo.add_package(cachy_010)
+    repo.add_package(cachy_020)
+    repo.add_package(pendulum_200)
+
+    assert isinstance(poetry.locker, DummyLocker)
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "pendulum",
+                    "version": "2.0.0",
+                    "description": "Pendulum package",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {"cachy": ">=0.1.0"},
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "files": {"cachy": [], "pendulum": []},
+            },
+        }
+    )
+
+    tester.execute(f"--outdated {output_format}")
+
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.1.0",
+                "wanted_version": "0.2.0",
+                "latest_version": "0.2.0",
+                "description": "Cachy package",
+                "installed_status": "installed",
+            },
+        ]
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = """\
+cachy 0.1.0 0.2.0 0.2.0 Cachy package
 """
         assert tester.io.fetch_output() == expected
 
@@ -1018,6 +1168,7 @@ def test_show_outdated_has_prerelease_but_not_allowed(
             {
                 "name": "cachy",
                 "version": "0.1.0",
+                "wanted_version": "0.1.0",
                 "latest_version": "0.2.0",
                 "description": "Cachy package",
                 "installed_status": "installed",
@@ -1026,7 +1177,7 @@ def test_show_outdated_has_prerelease_but_not_allowed(
         assert json.loads(tester.io.fetch_output()) == expected
     else:
         expected = """\
-cachy 0.1.0 0.2.0 Cachy package
+cachy 0.1.0 0.1.0 0.2.0 Cachy package
 """
         assert tester.io.fetch_output() == expected
 
@@ -1106,6 +1257,7 @@ def test_show_outdated_has_prerelease_and_allowed(
             {
                 "name": "cachy",
                 "version": "0.1.0.dev1",
+                "wanted_version": "0.3.0.dev123",
                 "latest_version": "0.3.0.dev123",
                 "description": "Cachy package",
                 "installed_status": "installed",
@@ -1114,7 +1266,7 @@ def test_show_outdated_has_prerelease_and_allowed(
         assert json.loads(tester.io.fetch_output()) == expected
     else:
         expected = """\
-cachy 0.1.0.dev1 0.3.0.dev123 Cachy package
+cachy 0.1.0.dev1 0.3.0.dev123 0.3.0.dev123 Cachy package
 """
         assert tester.io.fetch_output() == expected
 
@@ -1188,6 +1340,7 @@ def test_show_outdated_formatting(
             {
                 "name": "cachy",
                 "version": "0.1.0",
+                "wanted_version": "0.1.0",
                 "latest_version": "0.2.0",
                 "description": "Cachy package",
                 "installed_status": "installed",
@@ -1195,6 +1348,7 @@ def test_show_outdated_formatting(
             {
                 "name": "pendulum",
                 "version": "2.0.0",
+                "wanted_version": "2.0.1",
                 "latest_version": "2.0.1",
                 "description": "Pendulum package",
                 "installed_status": "installed",
@@ -1203,10 +1357,82 @@ def test_show_outdated_formatting(
         assert json.loads(tester.io.fetch_output()) == expected
     else:
         expected = """\
-cachy    0.1.0 0.2.0 Cachy package
-pendulum 2.0.0 2.0.1 Pendulum package
+cachy    0.1.0 0.1.0 0.2.0 Cachy package
+pendulum 2.0.0 2.0.1 2.0.1 Pendulum package
 """
         assert tester.io.fetch_output() == expected
+
+
+def test_show_outdated_hides_wanted_column_when_terminal_is_narrow(
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    repo: DummyRepository,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
+    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
+
+    cachy_010 = get_package("cachy", "0.1.0")
+    cachy_010.description = "Cachy package"
+    cachy_020 = get_package("cachy", "0.2.0")
+    cachy_020.description = "Cachy package"
+
+    pendulum_200 = get_package("pendulum", "2.0.0")
+    pendulum_200.description = "Pendulum package"
+    pendulum_201 = get_package("pendulum", "2.0.1")
+    pendulum_201.description = "Pendulum package"
+
+    installed.add_package(cachy_010)
+    installed.add_package(pendulum_200)
+
+    repo.add_package(cachy_010)
+    repo.add_package(cachy_020)
+    repo.add_package(pendulum_200)
+    repo.add_package(pendulum_201)
+
+    assert isinstance(poetry.locker, DummyLocker)
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "pendulum",
+                    "version": "2.0.0",
+                    "description": "Pendulum package",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "files": {"cachy": [], "pendulum": []},
+            },
+        }
+    )
+
+    monkeypatch.setenv("COLUMNS", "21")
+    monkeypatch.setenv("LINES", "24")
+
+    tester.execute("--outdated")
+
+    expected = """\
+cachy    0.1.0 0.2.0
+pendulum 2.0.0 2.0.1
+"""
+    assert tester.io.fetch_output() == expected
 
 
 @pytest.mark.parametrize(
@@ -1328,6 +1554,7 @@ def test_show_outdated_local_dependencies(
             {
                 "name": "cachy",
                 "version": "0.2.0",
+                "wanted_version": "0.3.0",
                 "latest_version": "0.3.0",
                 "description": "Cachy package",
                 "installed_status": "installed",
@@ -1335,6 +1562,7 @@ def test_show_outdated_local_dependencies(
             {
                 "name": "project-with-setup",
                 "version": "0.1.1 ../project_with_setup",
+                "wanted_version": "0.1.2 ../project_with_setup",
                 "latest_version": "0.1.2 ../project_with_setup",
                 "description": "Demo project.",
                 "installed_status": "installed",
@@ -1449,6 +1677,7 @@ def test_show_outdated_git_dev_dependency(
             {
                 "name": "cachy",
                 "version": "0.1.0",
+                "wanted_version": "0.1.0",
                 "latest_version": "0.2.0",
                 "description": "Cachy package",
                 "installed_status": "installed",
@@ -1456,6 +1685,7 @@ def test_show_outdated_git_dev_dependency(
             {
                 "name": "demo",
                 "version": "0.1.1 9cf87a2",
+                "wanted_version": "0.1.2 9cf87a2",
                 "latest_version": "0.1.2 9cf87a2",
                 "description": "Demo package",
                 "installed_status": "installed",
@@ -1464,8 +1694,8 @@ def test_show_outdated_git_dev_dependency(
         assert json.loads(tester.io.fetch_output()) == expected
     else:
         expected = """\
-cachy 0.1.0         0.2.0         Cachy package
-demo  0.1.1 9cf87a2 0.1.2 9cf87a2 Demo package
+cachy 0.1.0         0.1.0         0.2.0         Cachy package
+demo  0.1.1 9cf87a2 0.1.2 9cf87a2 0.1.2 9cf87a2 Demo package
 """
         assert tester.io.fetch_output() == expected
 
@@ -1566,6 +1796,7 @@ def test_show_outdated_no_dev_git_dev_dependency(
             {
                 "name": "cachy",
                 "version": "0.1.0",
+                "wanted_version": "0.1.0",
                 "latest_version": "0.2.0",
                 "description": "Cachy package",
                 "installed_status": "installed",
@@ -1574,7 +1805,7 @@ def test_show_outdated_no_dev_git_dev_dependency(
         assert json.loads(tester.io.fetch_output()) == expected
     else:
         expected = """\
-cachy 0.1.0 0.2.0 Cachy package
+cachy 0.1.0 0.1.0 0.2.0 Cachy package
 """
         assert tester.io.fetch_output() == expected
 
@@ -2586,13 +2817,17 @@ def test_show_outdated_explicit_source(
     poetry.pool.add_repository(explicit_repo, priority=Priority.EXPLICIT)
 
     poetry.package.add_dependency(
-        Factory.create_dependency("cachy", {"version": "^0.1.0", "source": "explicit"})
+        Factory.create_dependency(
+            "cachy", {"version": ">=0.1.0,<0.3.0", "source": "explicit"}
+        )
     )
 
     cachy_010 = get_package("cachy", "0.1.0")
     cachy_010.description = "Cachy package"
     cachy_020 = get_package("cachy", "0.2.0")
     cachy_020.description = "Cachy package"
+    cachy_030 = get_package("cachy", "0.3.0")
+    cachy_030.description = "Cachy package"
 
     installed.add_package(cachy_010)
 
@@ -2600,6 +2835,7 @@ def test_show_outdated_explicit_source(
     # consulted when checking for a newer version.
     explicit_repo.add_package(cachy_010)
     explicit_repo.add_package(cachy_020)
+    explicit_repo.add_package(cachy_030)
 
     assert isinstance(poetry.locker, DummyLocker)
     poetry.locker.mock_lock_data(
@@ -2637,7 +2873,8 @@ def test_show_outdated_explicit_source(
             {
                 "name": "cachy",
                 "version": "0.1.0",
-                "latest_version": "0.2.0",
+                "wanted_version": "0.2.0",
+                "latest_version": "0.3.0",
                 "description": "Cachy package",
                 "installed_status": "installed",
             },
@@ -2645,7 +2882,7 @@ def test_show_outdated_explicit_source(
         assert json.loads(tester.io.fetch_output()) == expected
     else:
         expected = """\
-cachy 0.1.0 0.2.0 Cachy package
+cachy 0.1.0 0.2.0 0.3.0 Cachy package
 """
         assert tester.io.fetch_output() == expected
 
@@ -2675,7 +2912,7 @@ def test_show_outdated_multiple_constraints_uses_locked_source(
         Factory.create_dependency(
             "cachy",
             {
-                "version": "^0.1.0",
+                "version": ">=0.1.0,<0.3.0",
                 "source": "explicit-linux",
                 "markers": "sys_platform == 'linux'",
             },
@@ -2685,7 +2922,7 @@ def test_show_outdated_multiple_constraints_uses_locked_source(
         Factory.create_dependency(
             "cachy",
             {
-                "version": "^0.1.0",
+                "version": ">=0.1.0,<0.2.0",
                 "source": "explicit-darwin",
                 "markers": "sys_platform == 'darwin'",
             },
@@ -2704,6 +2941,7 @@ def test_show_outdated_multiple_constraints_uses_locked_source(
     explicit_linux.add_package(cachy_010)
     explicit_linux.add_package(cachy_020)
     explicit_darwin.add_package(cachy_010)
+    explicit_darwin.add_package(cachy_020)
     explicit_darwin.add_package(cachy_030)
 
     assert isinstance(poetry.locker, DummyLocker)
@@ -2742,6 +2980,7 @@ def test_show_outdated_multiple_constraints_uses_locked_source(
             {
                 "name": "cachy",
                 "version": "0.1.0",
+                "wanted_version": "0.1.0",
                 "latest_version": "0.3.0",
                 "description": "Cachy package",
                 "installed_status": "installed",
@@ -2750,7 +2989,7 @@ def test_show_outdated_multiple_constraints_uses_locked_source(
         assert json.loads(tester.io.fetch_output()) == expected
     else:
         expected = """\
-cachy 0.1.0 0.3.0 Cachy package
+cachy 0.1.0 0.1.0 0.3.0 Cachy package
 """
         assert tester.io.fetch_output() == expected
 
