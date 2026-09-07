@@ -501,22 +501,20 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         conforms to the PyPA name format.
         https://packaging.python.org/en/latest/specifications/name-normalization/#name-format
 
-        Characters outside the format are replaced with a hyphen, then
-        ``canonicalize_name`` normalizes the result, so the return value is
-        narrower than the format allows: lowercase ASCII letters, numbers and
-        hyphens only. Runs of period, underscore and hyphen all collapse to a
-        single hyphen ("My_Project" and "my.project" both give "my-project").
+        Characters outside the format are replaced with a hyphen and the result
+        is lowercased, which is what ``init`` already did with the directory
+        name. The name is otherwise left as it was typed: ``My_Package`` gives
+        ``my_package``, not the canonical ``my-package``, since the format
+        allows either and indexes normalize names themselves.
 
         A directory name that holds no ASCII alphanumerics at all (say a
         non-Latin script) sanitizes to an empty string, which is not a usable
         default. Fall back to the lowercased directory name in that case, which
-        is what this used to do for every directory. That fallback is the one
-        return value that need not conform to the format -- "日本語" stays
-        "日本語" -- matching the pre-existing behaviour rather than replacing a
-        meaningful directory name with a placeholder.
+        is what this used to do for every directory: a name in a non-Latin
+        script is kept rather than replaced with a placeholder.
         """
-        replaced = re.sub(r"[^A-Za-z0-9._-]+", "-", name)
-        sanitized = str(canonicalize_name(replaced)).strip("-")
+        replaced = re.sub(r"[^A-Za-z0-9._-]+", "-", name).lower()
+        sanitized = replaced.strip("-._")
 
         return sanitized or name.lower()
 
