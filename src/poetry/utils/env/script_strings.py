@@ -25,7 +25,8 @@ spec.loader.exec_module(packaging_tags)
 print(json.dumps(list(packaging_tags.platform_tags())))
 """
 
-GET_ENVIRONMENT_INFO = """\
+# Shared bodies keep standalone and combined discovery scripts in sync.
+_ENVIRONMENT_INFO_SCRIPT = """\
 import json
 import os
 import platform
@@ -88,9 +89,15 @@ env = {
     "sysconfig_platform": sysconfig.get_platform(),
     "free_threading": bool(sysconfig.get_config_var("Py_GIL_DISABLED")),
 }
+"""
 
+
+GET_ENVIRONMENT_INFO = (
+    _ENVIRONMENT_INFO_SCRIPT
+    + """\
 print(json.dumps(env))
 """
+)
 
 GET_BASE_PREFIX = """\
 import sys
@@ -116,7 +123,7 @@ import sys
 print(json.dumps(sys.path))
 """
 
-GET_PATHS = """\
+_PATHS_SCRIPT = """\
 import json
 import site
 import sysconfig
@@ -132,6 +139,28 @@ if site.check_enableusersite():
     paths["usersite"] = site.getusersitepackages()
 
 paths["userbase"] = site.getuserbase()
+"""
 
+
+GET_PATHS = (
+    _PATHS_SCRIPT
+    + """\
 print(json.dumps(paths))
 """
+)
+
+
+GET_ENVIRONMENT_DATA = (
+    _ENVIRONMENT_INFO_SCRIPT
+    + _PATHS_SCRIPT
+    + """\
+base_prefix = getattr(sys, "base_prefix", sys.prefix)
+base_prefix = getattr(sys, "real_prefix", base_prefix)
+
+print(json.dumps({
+    "base_prefix": base_prefix,
+    "marker_env": env,
+    "paths": paths,
+}))
+"""
+)

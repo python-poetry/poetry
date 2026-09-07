@@ -263,7 +263,11 @@ def test_no_slow_imports_when_importing_the_cli_entrypoint() -> None:
     )
     loaded_modules = json.loads(
         subprocess.run(
-            [sys.executable, "-c", code], capture_output=True, text=True, check=True
+            [sys.executable, "-c", code],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            check=True,
         ).stdout
     )
     assert "requests" not in loaded_modules

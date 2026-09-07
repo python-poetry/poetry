@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING
 import packaging.tags
 import pytest
 
-from deepdiff.diff import DeepDiff
 from installer.utils import SCHEME_NAMES
 
 from poetry.factory import Factory
@@ -114,6 +113,35 @@ def test_env_get_supported_tags_matches_inside_virtualenv(
 
     assert venv.get_supported_tags() == expected_tags
     assert run_python_script_spy.call_count == expected_call_count
+
+
+def test_env_discovery_returns_independent_data(
+    tmp_path: Path, manager: EnvManager
+) -> None:
+    venv_path = tmp_path / "Virtual Env"
+    manager.build_venv(venv_path)
+    venv = VirtualEnv(venv_path)
+
+    marker_env = venv.get_marker_env()
+    marker_env["python_version"] = "0"
+    assert venv.get_marker_env()["python_version"] != "0"
+
+    paths = venv.get_paths()
+    paths["purelib"] = "changed"
+    assert venv.get_paths()["purelib"] != "changed"
+
+
+def test_env_discovery_preserves_explicit_base(
+    tmp_path: Path, manager: EnvManager
+) -> None:
+    venv_path = tmp_path / "Virtual Env"
+    manager.build_venv(venv_path)
+    base = tmp_path / "base"
+    venv = VirtualEnv(venv_path, base=base)
+
+    venv.get_paths()
+
+    assert venv.base == base
 
 
 @pytest.mark.skipif(
@@ -542,14 +570,14 @@ def system_env_read_only(system_env: SystemEnv, mocker: MockerFixture) -> System
 
 
 def test_env_scheme_dict_returns_original_when_writable(system_env: SystemEnv) -> None:
-    assert not DeepDiff(system_env.scheme_dict, system_env.paths, ignore_order=True)
+    assert system_env.scheme_dict == system_env.paths
 
 
 def test_env_scheme_dict_returns_modified_when_read_only(
     system_env_read_only: SystemEnv,
 ) -> None:
     scheme_dict = system_env_read_only.scheme_dict
-    assert DeepDiff(scheme_dict, system_env_read_only.paths, ignore_order=True)
+    assert scheme_dict != system_env_read_only.paths
 
     paths = system_env_read_only.paths
     assert all(

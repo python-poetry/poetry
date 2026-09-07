@@ -10,8 +10,6 @@ from typing import Any
 
 import pytest
 
-from deepdiff.diff import DeepDiff
-
 from poetry.config.config import Config
 from poetry.config.config import PackageFilterPolicy
 from poetry.config.config import boolean_normalizer
@@ -197,4 +195,4 @@ def test_config_get_from_environment_variable_build_config_settings(
         if invalid:
             assert configured_value is None
         else:
-            assert not DeepDiff(configured_value, json.loads(value))
+            assert configured_value == json.loads(value)

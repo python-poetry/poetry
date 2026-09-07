@@ -7,7 +7,6 @@ from typing import Any
 import pytest
 
 from cleo.io.buffered_io import BufferedIO
-from deepdiff.diff import DeepDiff
 from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import Version
 from poetry.core.constraints.version import parse_constraint
@@ -188,7 +187,7 @@ def test_create_pyproject_from_package(
         if not expected[section]:
             expected.pop(section)
 
-    assert not DeepDiff(expected, result)
+    assert result == expected
 
 
 def test_create_poetry_with_packages_and_includes(

@@ -71,7 +71,6 @@ pre-commit = ">=2.10"
 
 [tool.poetry.group.test.dependencies]
 coverage = ">=7.2.0"
-deepdiff = ">=6.3"
 # test_clone_with_lfs_files relies on being able to use
 # locally cloned LFS stores, which requires dulwich>=1.2.1
 dulwich = ">=1.2.1"

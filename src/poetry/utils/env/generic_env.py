@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import os
 import re
 import subprocess
@@ -9,7 +8,6 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 from poetry.utils._compat import WINDOWS
-from poetry.utils.env.script_strings import GET_PATHS
 from poetry.utils.env.virtual_env import VirtualEnv
 
 
@@ -81,12 +79,6 @@ class GenericEnv(VirtualEnv):
             if pip_executable:
                 self._pip_executable = pip_executable
 
-    def get_paths(self) -> dict[str, str]:
-        output = self.run_python_script(GET_PATHS)
-
-        paths: dict[str, str] = json.loads(output)
-        return paths
-
     def execute(self, bin: str, *args: str, **kwargs: Any) -> int:
         command = self.get_command_from_bin(bin) + list(args)
         env = kwargs.pop("env", dict(os.environ))
@@ -103,4 +95,4 @@ class GenericEnv(VirtualEnv):
         return super(VirtualEnv, self)._run(cmd, **kwargs)
 
     def is_venv(self) -> bool:
-        return self._path != self._base
+        return self._path != self.base

@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING
 import pytest
 
 from cleo.io.null_io import NullIO
-from deepdiff.diff import DeepDiff
 from poetry.core.constraints.version import Version
 from poetry.core.masonry.metadata import Metadata
 from poetry.core.packages.package import Package
@@ -167,13 +166,12 @@ def test_builder_installs_proper_files_for_standard_packages(
     assert dist_info.joinpath("RECORD").exists()
     assert dist_info.joinpath("direct_url.json").exists()
 
-    assert not DeepDiff(
-        {
-            "dir_info": {"editable": True},
-            "url": simple_poetry.file.path.parent.as_uri(),
-        },
-        json.loads(dist_info.joinpath("direct_url.json").read_text(encoding="utf-8")),
-    )
+    assert json.loads(
+        dist_info.joinpath("direct_url.json").read_text(encoding="utf-8")
+    ) == {
+        "dir_info": {"editable": True},
+        "url": simple_poetry.file.path.parent.as_uri(),
+    }
 
     assert dist_info.joinpath("INSTALLER").read_text(encoding="utf-8") == "poetry"
     assert (

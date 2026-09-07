@@ -370,7 +370,7 @@ def test_info_setup_simple(mocker: MockerFixture, demo_setup: Path) -> None:
     spy = mocker.spy(VirtualEnv, "run")
     info = PackageInfo.from_directory(demo_setup)
 
-    assert spy.call_count == 6
+    assert spy.call_count == 3
     demo_check_info(info, requires_dist={"package"})
 
 

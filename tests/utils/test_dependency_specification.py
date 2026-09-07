@@ -5,8 +5,6 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from deepdiff.diff import DeepDiff
-
 from poetry.inspection.info import PackageInfo
 from poetry.utils.dependency_specification import RequirementsParser
 
@@ -140,7 +138,7 @@ if TYPE_CHECKING:
                     "name": "name",
                     "markers": 'python_version == "2.7"',
                     "url": "http://foo.com",
-                    "extras": ["fred", "bar"],
+                    "extras": ["bar", "fred"],
                 },
             ),
         ),
@@ -182,11 +180,7 @@ def test_parse_dependency_specification(
         return_value=PackageInfo(name="demo", version="0.1.2"),
     )
 
-    assert any(
-        not DeepDiff(
-            RequirementsParser(artifact_cache=artifact_cache).parse(requirement),
-            specification,
-            ignore_order=True,
-        )
-        for specification in expected_variants
+    assert (
+        RequirementsParser(artifact_cache=artifact_cache).parse(requirement)
+        in expected_variants
     )
