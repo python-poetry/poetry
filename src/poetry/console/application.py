@@ -7,6 +7,7 @@ from contextlib import suppress
 from importlib import import_module
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import ClassVar
 from typing import cast
 
 from cleo._utils import find_similar_names
@@ -122,6 +123,15 @@ Since <info>Poetry (<b>2.0.0</>)</>, the <c1>shell</> command is not installed b
 
 
 class Application(BaseApplication):
+    # Logger names raised to ERROR by a previous command's suppressed_loggers
+    # (see register_command_loggers). A ClassVar because logging levels are
+    # process-global state on the named logger, shared across Application
+    # instances -- so the bookkeeping for "what did we previously suppress"
+    # has to be process-global too, or a fresh Application() (e.g. a new
+    # test, or another poetry.console.application.Application().run() call
+    # in the same process) won't know to reset it.
+    _suppressed_logger_names: ClassVar[set[str]] = set()
+
     def __init__(self) -> None:
         super().__init__("poetry", __version__)
 
@@ -567,6 +577,28 @@ class Application(BaseApplication):
                 _level = logging.INFO
 
             logger.setLevel(_level)
+
+        # Raise these loggers above WARNING for this command specifically,
+        # so a warning that's irrelevant in this command's context doesn't
+        # surface. Skipped when verbose/debug so the full picture is still
+        # available on request.
+        to_suppress = (
+            set(command.suppressed_loggers) if level >= logging.WARNING else set()
+        )
+
+        # Reset any logger a previous command in this process suppressed but
+        # this one doesn't, so the suppression doesn't leak into commands
+        # that never asked for it (logger levels are global process state).
+        # Mutated in place (rather than `self._suppressed_logger_names = ...`)
+        # so the update lands on the shared ClassVar instead of shadowing it
+        # with a same-named instance attribute.
+        for name in Application._suppressed_logger_names - to_suppress:
+            logging.getLogger(name).setLevel(level)
+
+        for name in to_suppress:
+            logging.getLogger(name).setLevel(logging.ERROR)
+
+        Application._suppressed_logger_names = to_suppress
 
     def configure_env(self, event: Event, event_name: str, _: EventDispatcher) -> None:
         from poetry.console.commands.env_command import EnvCommand

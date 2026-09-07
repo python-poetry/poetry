@@ -56,6 +56,65 @@ def with_add_command_plugin(mocker: MockerFixture) -> None:
     mock_metadata_entry_points(mocker, AddCommandPlugin)
 
 
+SUPPRESSIBLE_LOGGER_NAME = "tests.console.some_irrelevant_logger"
+
+
+class WarnCommand(Command):
+    name = "warn"
+
+    description = "A command that has a logger it wants suppressed by default."
+
+    suppressed_loggers: ClassVar[list[str]] = [SUPPRESSIBLE_LOGGER_NAME]
+
+    def handle(self) -> int:
+        return 0
+
+
+class AddWarnCommandPlugin(ApplicationPlugin):
+    commands: ClassVar[list[type[Command]]] = [WarnCommand]
+
+
+@pytest.fixture
+def with_add_warn_command_plugin(mocker: MockerFixture) -> None:
+    mock_metadata_entry_points(mocker, AddWarnCommandPlugin)
+
+
+@pytest.mark.parametrize(
+    ("options", "expected_suppressed"),
+    [
+        ("", True),
+        ("--verbose", False),
+        ("-vv", False),
+    ],
+)
+def test_application_suppressed_loggers_are_raised_above_warning(
+    with_add_warn_command_plugin: None,
+    options: str,
+    expected_suppressed: bool,
+) -> None:
+    """
+    A command's suppressed_loggers are raised above WARNING at default
+    verbosity, so a warning logged by that logger doesn't reach the user --
+    this is what InstallCommand uses to stop poetry-core's group-unaware
+    path-dependency warning from firing for a group that isn't part of the
+    current install/sync invocation (see issue #10461). Verbose/debug runs
+    leave it alone so the full picture is still available on request.
+    """
+    import logging
+
+    logger = logging.getLogger(SUPPRESSIBLE_LOGGER_NAME)
+
+    app = Application()
+    tester = ApplicationTester(app)
+    tester.execute(f"warn {options}".strip())
+
+    assert tester.status_code == 0
+    if expected_suppressed:
+        assert logger.getEffectiveLevel() > logging.WARNING
+    else:
+        assert logger.getEffectiveLevel() <= logging.WARNING
+
+
 def test_application_with_plugins(with_add_command_plugin: None) -> None:
     app = Application()
 
