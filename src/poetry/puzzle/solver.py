@@ -457,7 +457,7 @@ def merge_override_packages(
 ) -> dict[Package, TransitivePackageInfo]:
     result: dict[Package, TransitivePackageInfo] = {}
     all_packages: dict[
-        Package, list[tuple[Package, TransitivePackageInfo, BaseMarker]]
+        Package, list[tuple[Package, TransitivePackageInfo, BaseMarker, set[str]]]
     ] = {}
     for override, o_packages in override_packages:
         override_marker: BaseMarker = AnyMarker()
@@ -466,6 +466,7 @@ def merge_override_packages(
                 override_marker = override_marker.intersect(dep.marker.without_extras())
         override_marker = simplify_marker(override_marker, python_constraint)
         for package, info in o_packages.items():
+            removed_override_groups: set[str] = set()
             for group, marker in info.markers.items():
                 # `override_marker` is often a SingleMarker or a MultiMarker,
                 # `marker` often is a MultiMarker that contains `override_marker`.
@@ -473,9 +474,14 @@ def merge_override_packages(
                 # because we will do an intersection later anyway.
                 # By removing it now, it is more likely that we hit
                 # the performance shortcut instead of the fallback algorithm.
-                info.markers[group] = remove_other_from_marker(marker, override_marker)
+                marker_without_override = remove_other_from_marker(
+                    marker, override_marker
+                )
+                if marker_without_override != marker:
+                    removed_override_groups.add(group)
+                info.markers[group] = marker_without_override
             all_packages.setdefault(package, []).append(
-                (package, info, override_marker)
+                (package, info, override_marker, removed_override_groups)
             )
     for package_duplicates in all_packages.values():
         base = package_duplicates[0]
@@ -483,17 +489,26 @@ def merge_override_packages(
         package = base[0]
         package_info = base[1]
         first_override_marker = base[2]
+        first_removed_override_groups = base[3]
+        first_override_names = _marker_names(first_override_marker)
         result[package] = package_info
-        package_info.depth = max(info.depth for _, info, _ in package_duplicates)
+        package_info.depth = max(info.depth for _, info, _, _ in package_duplicates)
         package_info.groups = {
-            g for _, info, _ in package_duplicates for g in info.groups
+            g for _, info, _, _ in package_duplicates for g in info.groups
         }
-        if all(info.markers == package_info.markers for _, info, _ in remaining):
+        if not remaining:
+            for group, marker in package_info.markers.items():
+                marker_with_override = first_override_marker.intersect(marker)
+                if group not in first_removed_override_groups or not _marker_names(
+                    marker
+                ).isdisjoint(first_override_names):
+                    package_info.markers[group] = marker_with_override
+        elif all(info.markers == package_info.markers for _, info, _, _ in remaining):
             # performance shortcut:
             # if markers are the same for all overrides,
             # we can use less expensive marker operations
             override_marker = EmptyMarker()
-            for _, _, marker in package_duplicates:
+            for _, _, marker, _ in package_duplicates:
                 override_marker = override_marker.union(marker)
             package_info.markers = {
                 group: override_marker.intersect(marker)
@@ -503,12 +518,12 @@ def merge_override_packages(
             # fallback / general algorithm with performance issues
             for group, marker in package_info.markers.items():
                 package_info.markers[group] = first_override_marker.intersect(marker)
-            for _, info, override_marker in remaining:
+            for _, info, override_marker, _ in remaining:
                 for group, marker in info.markers.items():
                     package_info.markers[group] = package_info.markers.get(
                         group, EmptyMarker()
                     ).union(override_marker.intersect(marker))
-        for duplicate_package, _, _ in remaining:
+        for duplicate_package, _, _, _ in remaining:
             for dep in duplicate_package.requires:
                 if dep not in package.requires:
                     package.add_dependency(dep)
@@ -525,6 +540,14 @@ def remove_other_from_marker(marker: BaseMarker, other: BaseMarker) -> BaseMarke
     if isinstance(marker, MultiMarker) and other_markers.issubset(marker.markers):
         return MultiMarker.of(*(m for m in marker.markers if m not in other_markers))
     return marker
+
+
+def _marker_names(marker: BaseMarker) -> set[str]:
+    if isinstance(marker, SingleMarker):
+        return {marker.name}
+    if isinstance(marker, MultiMarker):
+        return {name for child in marker.markers for name in _marker_names(child)}
+    return set()
 
 
 @functools.cache
