@@ -127,6 +127,32 @@ def test_noninteractive_directory_with_spaces(
     assert 'name = "my-project-with-spaces"' in toml_content
 
 
+def test_noninteractive_directory_with_only_whitespace(
+    app: PoetryTestApplication,
+    mocker: MockerFixture,
+    poetry: Poetry,
+    tmp_path: Path,
+) -> None:
+    command = app.find("init")
+    assert isinstance(command, InitCommand)
+    command._pool = poetry.pool
+
+    # Some filesystems disallow literal whitespace dirnames, so mock Path.name
+    project_dir = tmp_path / "whitespace_dir"
+    project_dir.mkdir()
+
+    mocker.patch("pathlib.Path.cwd", return_value=project_dir)
+    mocker.patch.object(
+        Path, "name", new_callable=mocker.PropertyMock(return_value="   ")
+    )
+
+    tester = CommandTester(command)
+    tester.execute(interactive=False)
+
+    toml_content = (project_dir / "pyproject.toml").read_text(encoding="utf-8")
+    assert 'name = "package"' in toml_content
+
+
 def test_interactive_with_dependencies(
     tester: CommandTester, repo: DummyRepository
 ) -> None:

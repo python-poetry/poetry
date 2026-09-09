@@ -128,7 +128,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         name = self.option("name")
         if not name:
-            name = re.sub(r"\s+", "-", project_path.name.strip().lower())
+            name = re.sub(r"\s+", "-", project_path.name.strip().lower()) or "package"
 
             if is_interactive:
                 question = self.create_question(

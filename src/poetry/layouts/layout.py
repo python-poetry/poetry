@@ -72,7 +72,7 @@ class Layout:
         dependencies: Mapping[str, str | Mapping[str, Any]] | None = None,
         dev_dependencies: Mapping[str, str | Mapping[str, Any]] | None = None,
     ) -> None:
-        project = re.sub(r"\s+", "-", project.strip())
+        project = re.sub(r"\s+", "-", project.strip()) or "package"
         self._project = canonicalize_name(project)
         self._package_path_relative = Path(
             *(module_name(part) for part in project.split("."))
