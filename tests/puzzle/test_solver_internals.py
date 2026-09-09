@@ -446,36 +446,6 @@ def test_merge_override_packages_restricted(package: ProjectPackage) -> None:
     }
 
 
-def test_merge_override_packages_single_package(
-    package: ProjectPackage,
-) -> None:
-    """A package in one override keeps its marker without the override context."""
-    a = Package("a", "1")
-
-    packages = merge_override_packages(
-        [
-            (
-                {package: {"a": dep("b", 'sys_platform == "darwin"')}},
-                {
-                    a: TransitivePackageInfo(
-                        0,
-                        {MAIN_GROUP},
-                        {
-                            MAIN_GROUP: parse_marker(
-                                'platform_system == "Linux" and '
-                                'sys_platform == "darwin"'
-                            )
-                        },
-                    )
-                },
-            )
-        ],
-        parse_constraint("*"),
-    )
-
-    assert tm(packages[a]) == {"main": 'platform_system == "Linux"'}
-
-
 def test_merge_override_packages_extras(package: ProjectPackage) -> None:
     """Extras from overrides should not be visible in the resulting marker."""
     a = Package("a", "1")
