@@ -128,7 +128,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         name = self.option("name")
         if not name:
-            name = project_path.name.lower()
+            name = re.sub(r"\s+", "-", project_path.name.strip().lower())
 
             if is_interactive:
                 question = self.create_question(
@@ -475,7 +475,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             cwd=cwd,
         )
         return [
-            parser.parse(re.sub(r"@\s*latest$", "", requirement, flags=re.I))
+            parser.parse(re.sub(r"@\s*latest$", "", requirement, flags=re.IGNORECASE))
             for requirement in requirements
         ]
 

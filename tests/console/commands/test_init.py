@@ -105,6 +105,28 @@ def test_noninteractive(
     assert expected_build_system in toml_content
 
 
+def test_noninteractive_directory_with_spaces(
+    app: PoetryTestApplication,
+    mocker: MockerFixture,
+    poetry: Poetry,
+    tmp_path: Path,
+) -> None:
+    command = app.find("init")
+    assert isinstance(command, InitCommand)
+    command._pool = poetry.pool
+
+    project_dir = tmp_path / "my project with spaces"
+    project_dir.mkdir()
+
+    mocker.patch("pathlib.Path.cwd", return_value=project_dir)
+
+    tester = CommandTester(command)
+    tester.execute(interactive=False)
+
+    toml_content = (project_dir / "pyproject.toml").read_text(encoding="utf-8")
+    assert 'name = "my-project-with-spaces"' in toml_content
+
+
 def test_interactive_with_dependencies(
     tester: CommandTester, repo: DummyRepository
 ) -> None:

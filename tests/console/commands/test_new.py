@@ -284,3 +284,11 @@ def test_new_with_dot_in_empty_directory(tester: CommandTester, tmp_path: Path) 
     finally:
         # Always restore original directory
         os.chdir(original_cwd)
+
+
+def test_new_directory_with_spaces(tester: CommandTester, tmp_path: Path) -> None:
+    path = tmp_path / "my project with spaces"
+    tester.execute(f'"{path.as_posix()}"')
+    verify_project_directory(
+        path, "my-project-with-spaces", "src/my_project_with_spaces"
+    )

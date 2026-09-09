@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.metadata
+import re
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -71,6 +72,7 @@ class Layout:
         dependencies: Mapping[str, str | Mapping[str, Any]] | None = None,
         dev_dependencies: Mapping[str, str | Mapping[str, Any]] | None = None,
     ) -> None:
+        project = re.sub(r"\s+", "-", project.strip())
         self._project = canonicalize_name(project)
         self._package_path_relative = Path(
             *(module_name(part) for part in project.split("."))
