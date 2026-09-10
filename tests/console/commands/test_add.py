@@ -1811,10 +1811,11 @@ def test_add_extras_only_accepts_one_package(
 
     with pytest.raises(ValueError) as e:
         tester.execute(command)
-        assert (
-            str(e.value)
-            == "You can only specify one package when using the --extras option"
-        )
+
+    assert (
+        str(e.value)
+        == "You can only specify one package when using the --extras option"
+    )
 
 
 @pytest.mark.parametrize("command", ["foo", "foo --lock"])
