@@ -62,7 +62,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/bootstrap-poetry
+      - uses: $/.github/actions/bootstrap-poetry
 
       - run: poetry check --lock
 
@@ -82,7 +82,7 @@ jobs:
 
       - run: pipx install --suffix=@build dist/*.whl
 
-      - uses: ./.github/actions/bootstrap-poetry
+      - uses: $/.github/actions/bootstrap-poetry
 
       # Smoke test: confirm the version of the installed wheel matches the project.
       - run: poetry@build --version | grep $(poetry version --short)
@@ -97,9 +97,9 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/bootstrap-poetry
+      - uses: $/.github/actions/bootstrap-poetry
 
-      - uses: ./.github/actions/poetry-install
+      - uses: $/.github/actions/poetry-install
         with:
           args: --only main,test
 
@@ -109,7 +109,7 @@ jobs:
 
   tests-matrix:
     # Use this matrix with multiple jobs defined in a reusable workflow:
-    uses: ./.github/workflows/.tests-matrix.yaml
+    uses: $/.github/workflows/.tests-matrix.yaml
     name: "${{ matrix.os.name }} (Python ${{ matrix.python-version }})"
     if: '!failure()'
     needs:

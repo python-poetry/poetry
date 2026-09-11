@@ -51,9 +51,9 @@ jobs:
         with:
           node-version: "22"
 
-      - uses: ./poetry-github/.github/actions/bootstrap-poetry
+      - uses: $/poetry-github/.github/actions/bootstrap-poetry
 
-      - uses: ./poetry-github/.github/actions/poetry-install
+      - uses: $/poetry-github/.github/actions/poetry-install
         with:
           args: --no-root --only main
 
