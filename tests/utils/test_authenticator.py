@@ -751,3 +751,40 @@ def test_repository_certificate_configuration_create(
     config.merge({"certificates": {"foo": cert_config}})
 
     assert RepositoryCertificateConfig.create("foo", config) == result
+
+
+def test_authenticator_configured_repositories_skips_invalid_url(
+    config: Config, caplog: LogCaptureFixture
+) -> None:
+    config.merge(
+        {
+            "repositories": {
+                "valid": {"url": "https://valid.repo/simple/"},
+                "corrupted_dict": {"url": {"url": "https://invalid.repo/simple/"}},
+                "none_url": {"url": None},
+            }
+        }
+    )
+    authenticator = Authenticator(config, NullIO())
+    configured = authenticator.configured_repositories
+
+    assert "valid" in configured
+    assert configured["valid"].url == "https://valid.repo/simple/"
+    assert "corrupted_dict" not in configured
+    assert "none_url" not in configured
+    assert (
+        "Repository 'corrupted_dict' has an invalid url configured in settings;"
+        " skipping." in caplog.text
+    )
+    assert (
+        "Repository 'none_url' has an invalid url configured in settings;"
+        " skipping." in caplog.text
+    )
+
+
+def test_authenticator_repository_config_non_string_url() -> None:
+    from poetry.utils.authenticator import AuthenticatorRepositoryConfig
+
+    repo_config = AuthenticatorRepositoryConfig("bad", {"url": "https://invalid.repo"})  # type: ignore[arg-type]
+    assert repo_config.netloc == ""
+    assert repo_config.path == ""
