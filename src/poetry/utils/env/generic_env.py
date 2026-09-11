@@ -56,11 +56,7 @@ class GenericEnv(VirtualEnv):
                 )
 
                 if python_executables:
-                    executable = python_executables[0]
-                    if executable.endswith(".exe"):
-                        executable = executable[:-4]
-
-                    python_executable = executable
+                    python_executable = python_executables[0].removesuffix(".exe")
 
             if not pip_executable:
                 pip_executables = sorted(
@@ -69,9 +65,7 @@ class GenericEnv(VirtualEnv):
                     if re.match(r"pip(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
                 )
                 if pip_executables:
-                    pip_executable = pip_executables[0]
-                    if pip_executable.endswith(".exe"):
-                        pip_executable = pip_executable[:-4]
+                    pip_executable = pip_executables[0].removesuffix(".exe")
 
             if python_executable:
                 self._executable = python_executable

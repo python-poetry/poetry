@@ -465,7 +465,7 @@ def test_system_site_packages_source_type(
     """
     venv_path = tmp_path / "venv"
     site_path = tmp_path / "site"
-    for dist_info in {"cleo-0.7.6.dist-info", "directory_pep_610-1.2.3.dist-info"}:
+    for dist_info in ("cleo-0.7.6.dist-info", "directory_pep_610-1.2.3.dist-info"):
         shutil.copytree(site_purelib / dist_info, site_path / dist_info)
     mocker.patch("poetry.utils.env.virtual_env.VirtualEnv.sys_path", [str(site_path)])
     mocker.patch(

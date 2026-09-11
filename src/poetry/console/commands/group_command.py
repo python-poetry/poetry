@@ -75,7 +75,7 @@ class GroupCommand(Command):
     def activated_groups(self) -> set[NormalizedName]:
         groups = {}
 
-        for key in {"with", "without", "only"}:
+        for key in ("with", "without", "only"):
             groups[key] = {
                 group.strip()
                 for groups in self.option(key, "")

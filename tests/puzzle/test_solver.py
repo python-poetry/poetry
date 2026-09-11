@@ -2426,7 +2426,7 @@ def test_solver_duplicate_dependencies_with_overlapping_markers_complex(
     for dep in deps:
         opencv_package.add_dependency(dep)
 
-    for version in {"1.13.3", "1.21.2", "1.19.3", "1.14.5", "1.17.3"}:
+    for version in ("1.13.3", "1.21.2", "1.19.3", "1.14.5", "1.17.3"):
         repo.add_package(get_package("numpy", version))
     repo.add_package(opencv_package)
 

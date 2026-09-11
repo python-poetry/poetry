@@ -92,7 +92,7 @@ class EnvManager:
 
     ENVS_FILE = "envs.toml"
 
-    def __init__(self, poetry: Poetry, io: None | IO = None) -> None:
+    def __init__(self, poetry: Poetry, io: IO | None = None) -> None:
         self._poetry = poetry
         self._io = io or NullIO()
 

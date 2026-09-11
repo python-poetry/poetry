@@ -55,7 +55,7 @@ def make_absolute_url(url: str, base_url: str) -> str:
 
 class LinkSource:
     VERSION_REGEX = re.compile(r"(?i)([a-z0-9_\-.]+?)-(?=\d)([a-z0-9_.!+-]+)")
-    CLEAN_REGEX = re.compile(r"[^a-z0-9$&+,/:;=?@.#%_\\|-]", re.I)
+    CLEAN_REGEX = re.compile(r"[^a-z0-9$&+,/:;=?@.#%_\\|-]", re.IGNORECASE)
     SUPPORTED_FORMATS: ClassVar[list[str]] = [
         ".tar.gz",
         ".whl",

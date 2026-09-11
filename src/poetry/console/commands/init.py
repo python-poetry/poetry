@@ -475,7 +475,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             cwd=cwd,
         )
         return [
-            parser.parse(re.sub(r"@\s*latest$", "", requirement, flags=re.I))
+            parser.parse(re.sub(r"@\s*latest$", "", requirement, flags=re.IGNORECASE))
             for requirement in requirements
         ]
 

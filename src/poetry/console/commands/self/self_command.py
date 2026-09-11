@@ -72,7 +72,7 @@ class SelfCommand(InstallerCommand):
             toml_file = PyProjectTOML(self.system_pyproject)
             content = toml_file.data
 
-            for key in {"group", "source"}:
+            for key in ("group", "source"):
                 if key in toml_file.poetry_config:
                     preserved[key] = toml_file.poetry_config[key]
 
