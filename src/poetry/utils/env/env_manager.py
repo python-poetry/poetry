@@ -517,7 +517,7 @@ class EnvManager:
             paths.append(p)
 
         p_venv = os.path.normcase(str(venv))
-        if any(p.startswith(p_venv) for p in paths):
+        if any(p == p_venv or p.startswith(p_venv + os.sep) for p in paths):
             # Running properly in the virtualenv, don't need to do anything
             return self.get_system_env()
 
