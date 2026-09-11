@@ -134,6 +134,14 @@ def test_authenticator_ignores_failing_keyring(
     assert spy_get_credential.call_count == spy_get_password.call_count == 0
 
 
+def test_authenticator_user_agent_includes_user_data(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setenv("POETRY_USER_AGENT_USER_DATA", "build/42")
+
+    authenticator = Authenticator(disable_cache=True)
+
+    assert "user_data/build/42" in authenticator.create_session().headers["User-Agent"]
+
+
 def test_authenticator_uses_password_only_credentials(
     mock_config: Config, mock_remote: None, http: responses.RequestsMock
 ) -> None:
