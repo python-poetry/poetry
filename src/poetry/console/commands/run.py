@@ -79,10 +79,12 @@ class RunCommand(EnvCommand):
         cmd = ["python", "-c"]
 
         cmd += [
-            "import sys; "
-            "from importlib import import_module; "
-            f"sys.argv = {args!r}; {src_in_sys_path}"
-            f"sys.exit(import_module('{module}').{callable_}())"
+            (
+                "import sys; "
+                "from importlib import import_module; "
+                f"sys.argv = {args!r}; {src_in_sys_path}"
+                f"sys.exit(import_module('{module}').{callable_}())"
+            )
         ]
 
         return self.env.execute(*cmd)

@@ -89,8 +89,8 @@ class SelfCommand(InstallerCommand):
         content = Factory.create_legacy_pyproject_from_package(package=package)
         content["tool"]["poetry"]["package-mode"] = False
 
-        for key in preserved:
-            content["tool"]["poetry"][key] = preserved[key]
+        for key, value in preserved.items():
+            content["tool"]["poetry"][key] = value
 
         if preserved_groups:
             content["dependency-groups"] = preserved_groups

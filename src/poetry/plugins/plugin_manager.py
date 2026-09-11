@@ -87,7 +87,7 @@ class PluginManager:
 
     def _add_plugin(self, plugin: Plugin) -> None:
         if not isinstance(plugin, (Plugin, ApplicationPlugin)):
-            raise ValueError(
+            raise TypeError(
                 "The Poetry plugin must be an instance of Plugin or ApplicationPlugin"
             )
 
@@ -99,7 +99,7 @@ class PluginManager:
         plugin = ep.load()
 
         if not issubclass(plugin, (Plugin, ApplicationPlugin)):
-            raise ValueError(
+            raise TypeError(
                 "The Poetry plugin must be an instance of Plugin or ApplicationPlugin"
             )
 

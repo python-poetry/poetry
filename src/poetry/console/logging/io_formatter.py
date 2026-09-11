@@ -50,7 +50,7 @@ class IOFormatter(logging.Formatter):
 def _log_prefix(record: LogRecord) -> str:
     prefix = _path_to_package(Path(record.pathname)) or record.module
     if record.name != "root":
-        prefix = ":".join([prefix, record.name])
+        prefix = f"{prefix}:{record.name}"
     return prefix
 
 

@@ -68,16 +68,16 @@ class FileConfigSource(ConfigSource):
             # Descend to the leaf, recording the (parent, key) at each step.
             stack = []
             current = config
-            for key in keys:
-                if key not in current:
+            for sub_key in keys:
+                if sub_key not in current:
                     return
-                stack.append((current, key))
-                current = current[key]
+                stack.append((current, sub_key))
+                current = current[sub_key]
 
             # Delete the leaf, then walk back up pruning any now-empty parents.
             while stack:
-                parent, key = stack.pop()
-                del parent[key]
+                parent, sub_key = stack.pop()
+                del parent[sub_key]
                 if parent:
                     break
 

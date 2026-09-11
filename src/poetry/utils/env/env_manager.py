@@ -590,7 +590,7 @@ class EnvManager:
         except OSError as e:
             # Continue only if e.errno == 16
             if e.errno != 16:  # ERRNO 16: Device or resource busy
-                raise e
+                raise
 
         # Delete all files and folders but the toplevel one. This is because sometimes
         # the venv folder is mounted by the OS, such as in a docker volume. In such

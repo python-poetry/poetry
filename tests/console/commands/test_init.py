@@ -1080,7 +1080,7 @@ def test_package_include(
     include: str | None,
 ) -> None:
     tester.execute(
-        inputs="\n".join(
+        inputs="\n".join(  # noqa: FLY002
             (
                 package_name,
                 "",  # Version
