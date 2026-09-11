@@ -72,7 +72,7 @@ class SelfCommand(InstallerCommand):
             toml_file = PyProjectTOML(self.system_pyproject)
             content = toml_file.data
 
-            for key in {"group", "source"}:
+            for key in ("group", "source"):
                 if key in toml_file.poetry_config:
                     preserved[key] = toml_file.poetry_config[key]
 
@@ -89,8 +89,8 @@ class SelfCommand(InstallerCommand):
         content = Factory.create_legacy_pyproject_from_package(package=package)
         content["tool"]["poetry"]["package-mode"] = False
 
-        for key in preserved:
-            content["tool"]["poetry"][key] = preserved[key]
+        for key, value in preserved.items():
+            content["tool"]["poetry"][key] = value
 
         if preserved_groups:
             content["dependency-groups"] = preserved_groups

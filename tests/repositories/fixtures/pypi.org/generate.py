@@ -287,7 +287,7 @@ class FileManager:
 
         if response.status_code != 200:
             logger.info("Skipping metadata for %s", link.filename)
-            return None
+            return
 
         metadata, _ = parse_email(response.content)
         content = response.content.decode(encoding="utf-8").replace(

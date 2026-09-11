@@ -238,7 +238,7 @@ present), and the development branch.
 #### Multiple versions
 
 When trying to reproduce issues, you often want to use multiple versions of Poetry at the same time.
-[pipx](https://pypa.github.io/pipx/) makes this easy to do:
+[pipx](https://pipx.pypa.io/stable/) makes this easy to do:
 
 ```sh
 pipx install --suffix @1.2.1 'poetry==1.2.1'

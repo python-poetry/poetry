@@ -758,7 +758,7 @@ def test_executor_should_delete_incomplete_downloads(
 
     def download_fail(*_: Any) -> None:
         cached_archive.touch()  # broken archive
-        raise Exception("Download error")
+        raise Exception("Download error")  # noqa: TRY002
 
     mocker.patch(
         "poetry.installation.executor.Executor._download_archive",
@@ -1206,7 +1206,6 @@ def test_executor_should_write_pep610_url_references_for_git(
     clone_spy = mocker.spy(Git, "clone")
 
     source_resolved_reference = "123456"
-    source_url = source_url
 
     package = Package(
         "demo",

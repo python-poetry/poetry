@@ -35,12 +35,12 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/bootstrap-poetry
+      - uses: $/.github/actions/bootstrap-poetry
         id: bootstrap-poetry
         with:
           python-version: ${{ inputs.python-version }}
 
-      - uses: ./.github/actions/poetry-install
+      - uses: $/.github/actions/poetry-install
 
       - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
@@ -61,11 +61,11 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/bootstrap-poetry
+      - uses: $/.github/actions/bootstrap-poetry
         with:
           python-version: ${{ inputs.python-version }}
 
-      - uses: ./.github/actions/poetry-install
+      - uses: $/.github/actions/poetry-install
         with:
           args: --with github-actions
 
@@ -86,7 +86,7 @@ jobs:
           persist-credentials: false
           path: poetry
 
-      - uses: ./poetry/.github/actions/bootstrap-poetry
+      - uses: $/.github/actions/bootstrap-poetry
         with:
           python-version: ${{ inputs.python-version }}
 

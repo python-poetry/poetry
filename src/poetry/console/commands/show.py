@@ -589,7 +589,7 @@ lists all packages available."""
         )
         tree_bar = previous_tree_bar + "   ├"
         total = len(dependencies)
-        for i, dependency in enumerate(dependencies, 1):
+        for i, dep in enumerate(dependencies, 1):
             if i == total:
                 tree_bar = previous_tree_bar + "   └"
 
@@ -597,30 +597,30 @@ lists all packages available."""
             color = self.colors[color_ident]
 
             circular_warn = ""
-            if dependency.name in packages_in_tree:
+            if dep.name in packages_in_tree:
                 circular_warn = "(circular dependency aborted here)"
 
             info = (
-                f"{tree_bar}── <{color}>{dependency.name}</{color}>"
-                f" {dependency.pretty_constraint} {circular_warn}"
+                f"{tree_bar}── <{color}>{dep.name}</{color}>"
+                f" {dep.pretty_constraint} {circular_warn}"
             )
             self._write_tree_line(io, info)
 
             tree_bar = tree_bar.replace("└", " ")
 
-            if dependency.name not in packages_in_tree:
-                packages_in_tree.add(dependency.name)
+            if dep.name not in packages_in_tree:
+                packages_in_tree.add(dep.name)
                 try:
                     self._display_tree(
                         io,
-                        dependency,
+                        dep,
                         installed_packages,
                         packages_in_tree,
                         tree_bar,
                         level + 1,
                     )
                 finally:
-                    packages_in_tree.discard(dependency.name)
+                    packages_in_tree.discard(dep.name)
 
     def _write_tree_line(self, io: IO, line: str) -> None:
         if not io.output.supports_utf8():

@@ -949,7 +949,7 @@ poetry search requests pendulum
 PyPI no longer allows for the search of packages without a browser. Please use https://pypi.org/search
 (via a browser) instead.
 
-For more information, please see [warehouse documentation](https://warehouse.pypa.io/api-reference/xml-rpc.html#deprecated-methods)
+For more information, please see [PyPI API documentation](https://docs.pypi.org/api/#api-preference)
 and this [discussion](https://discuss.python.org/t/fastly-interfering-with-pypi-search/73597/6).
 {{% /note %}}
 

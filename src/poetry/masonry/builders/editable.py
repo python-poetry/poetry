@@ -232,8 +232,7 @@ class EditableBuilder(Builder):
         )
 
         builder.prepare_metadata(dist_info.parent)
-        for path in sorted(f for f in dist_info.rglob("*") if f.is_file()):
-            added_files.append(path)
+        added_files.extend(sorted(f for f in dist_info.rglob("*") if f.is_file()))
 
         with dist_info.joinpath("INSTALLER").open("w", encoding="utf-8") as f:
             f.write("poetry")

@@ -517,8 +517,8 @@ def project_factory(
 
         if install_deps:
             for deps in [dependencies, dev_dependencies]:
-                for name, version in deps.items():
-                    pkg = get_package(name, version)
+                for dep_name, version in deps.items():
+                    pkg = get_package(dep_name, version)
                     repo.add_package(pkg)
                     installed.add_package(pkg)
 

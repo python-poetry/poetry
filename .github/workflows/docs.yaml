@@ -30,14 +30,6 @@ jobs:
           persist-credentials: false
           repository: python-poetry/website
 
-      # use .github from pull request target instead of pull_request.head
-      # for pull_request_target trigger to avoid arbitrary code execution
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-          path: poetry-github
-          sparse-checkout: .github
-
       # only checkout docs from pull_request.head to not use something else by accident
       # for pull_request_target trigger (security)
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -51,9 +43,9 @@ jobs:
         with:
           node-version: "22"
 
-      - uses: ./poetry-github/.github/actions/bootstrap-poetry
+      - uses: $/.github/actions/bootstrap-poetry
 
-      - uses: ./poetry-github/.github/actions/poetry-install
+      - uses: $/.github/actions/poetry-install
         with:
           args: --no-root --only main
 

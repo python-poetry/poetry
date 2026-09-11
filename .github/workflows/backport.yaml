@@ -29,6 +29,8 @@ jobs:
         with:
           app-id: ${{ secrets.POETRY_TOKEN_APP_ID }}
           private-key: ${{ secrets.POETRY_TOKEN_APP_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
       - uses: tibdex/backport@9565281eda0731b1d20c4025c43339fb0a23812e # v2.0.4
         with:
           github_token: ${{ steps.app-token.outputs.token }}
