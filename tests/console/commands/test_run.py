@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import subprocess
 
 from typing import TYPE_CHECKING
@@ -165,6 +166,7 @@ def test_run_has_helpful_error_when_command_not_found(
 def test_run_console_scripts_of_editable_dependencies_on_windows(
     tmp_venv: VirtualEnv,
     command_tester_factory: CommandTesterFactory,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """
     On Windows, Poetry installs console scripts of editable dependencies by creating
@@ -182,7 +184,18 @@ def test_run_console_scripts_of_editable_dependencies_on_windows(
 
     This test validates that you can also run such a CMD script file via `poetry run`
     just by providing the script's name without the `.cmd` extension.
+
+    PATH is padded past the ~8191 character limit at which `cmd.exe` stops resolving
+    unqualified command names, so that this also covers python-poetry/poetry#10482.
+    Poetry must therefore resolve the script to a full path itself rather than leave
+    the lookup to the shell.
     """
+    # `VirtualEnv.execute` builds the subprocess PATH from `os.environ`, so padding
+    # it here is what ends up reaching `cmd.exe`.
+    padded_path = os.pathsep.join([os.environ["PATH"], *["C:\\NotAPath"] * 1000])
+    assert len(padded_path) > 8191, "PATH is too short to reproduce #10482"
+    monkeypatch.setenv("PATH", padded_path)
+
     tester = command_tester_factory("run", environment=tmp_venv)
 
     cmd_script_file = tmp_venv._bin_dir / "quix.cmd"
