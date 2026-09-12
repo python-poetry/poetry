@@ -117,6 +117,60 @@ def test_build_with_config_settings_local_version(
     assert "`--local-version` is deprecated." not in tmp_tester.io.fetch_error()
 
 
+def test_build_with_multiple_config_settings(
+    tmp_tester: CommandTester,
+    tmp_project_path: Path,
+    tmp_poetry: Poetry,
+    mocker: MockerFixture,
+) -> None:
+    shutil.rmtree(tmp_project_path / "dist")
+
+    mock_build = mocker.patch.object(BuildHandler, "_build")
+    mock_build.return_value = None
+
+    assert (
+        tmp_tester.execute(
+            "--config-settings key1=value1 --config-settings key2=value2"
+            " --config-settings key3=value3"
+        )
+        == 0
+    )
+
+    assert mock_build.call_count == 2
+    for call in mock_build.call_args_list:
+        config_settings = call[1]["config_settings"]
+        assert config_settings["key1"] == "value1"
+        assert config_settings["key2"] == "value2"
+        assert config_settings["key3"] == "value3"
+
+
+def test_build_with_local_version_and_config_settings(
+    tmp_tester: CommandTester,
+    tmp_project_path: Path,
+    tmp_poetry: Poetry,
+    mocker: MockerFixture,
+) -> None:
+    shutil.rmtree(tmp_project_path / "dist")
+
+    mock_build = mocker.patch.object(BuildHandler, "_build")
+    mock_build.return_value = None
+
+    assert (
+        tmp_tester.execute(
+            "--local-version custom-label --config-settings key1=value1"
+        )
+        == 0
+    )
+
+    assert "`--local-version` is deprecated." in tmp_tester.io.fetch_error()
+
+    assert mock_build.call_count == 2
+    for call in mock_build.call_args_list:
+        config_settings = call[1]["config_settings"]
+        assert config_settings["local-version"] == "custom-label"
+        assert config_settings["key1"] == "value1"
+
+
 @pytest.mark.parametrize("clean", [True, False])
 def test_build_with_clean(
     tmp_tester: CommandTester, tmp_project_path: Path, tmp_poetry: Poetry, clean: bool
@@ -269,6 +323,31 @@ def test_prepare_config_settings_raise_on_invalid_setting() -> None:
         )
 
 
+def test_prepare_config_settings_with_empty_value() -> None:
+    config_settings = BuildCommand._prepare_config_settings(
+        local_version=None,
+        config_settings=["key1=", "key2=value2"],
+        io=NullIO(),
+    )
+
+    assert config_settings == {
+        "key1": "",
+        "key2": "value2",
+    }
+
+
+def test_prepare_config_settings_with_equals_in_value() -> None:
+    config_settings = BuildCommand._prepare_config_settings(
+        local_version=None,
+        config_settings=["key1=value=with=equals"],
+        io=NullIO(),
+    )
+
+    assert config_settings == {
+        "key1": "value=with=equals",
+    }
+
+
 @pytest.mark.parametrize(
     ["fmt", "expected_formats"],
     [
@@ -322,6 +401,25 @@ def test_requires_isolated_build_warns_when_no_build_backend(
     assert "No build backend defined" in io.fetch_error()
 
 
+@pytest.mark.parametrize("project", ["no_build_system", "no_build_backend"])
+def test_build_warns_when_no_build_backend(
+    project: str,
+    fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
+    command_tester_factory: CommandTesterFactory,
+) -> None:
+    poetry = Factory().create_poetry(fixture_dir(f"build_systems/{project}"))
+    tester = command_tester_factory("build", poetry)
+
+    dist_dir = tmp_path / "dist"
+    assert tester.execute(f"--output {dist_dir}") == 0
+
+    error_output = tester.io.fetch_error()
+    assert "No build backend defined" in error_output
+    assert "pyproject.toml" in error_output
+    assert "https://python-poetry.org/docs/libraries/#packaging" in error_output
+
+
 def test_build_handler_build_isolated(
     fixture_dir: FixtureDirGetter, mocker: MockerFixture
 ) -> None:
@@ -339,3 +437,30 @@ def test_build_handler_build_isolated(
     handler.build(BuildOptions(clean=True, formats=["wheel"], output="dist"))
 
     assert mock_builder.build.call_count == 1
+
+
+def test_build_handler_build_isolated_with_config_settings(
+    fixture_dir: FixtureDirGetter, mocker: MockerFixture
+) -> None:
+    from build import ProjectBuilder
+
+    poetry = Factory().create_poetry(fixture_dir("build_systems/has_build_script"))
+
+    mock_builder = mocker.MagicMock(spec=ProjectBuilder)
+    mock_isolated_builder = mocker.patch(
+        "poetry.console.commands.build.isolated_builder"
+    )
+    mock_isolated_builder.return_value.__enter__.return_value = mock_builder
+
+    config_settings = {"key1": "value1", "key2": "value2"}
+    handler = BuildHandler(poetry=poetry, env=mocker.Mock(), io=NullIO())
+    handler.build(
+        BuildOptions(
+            clean=True, formats=["wheel"], output="dist", config_settings=config_settings
+        )
+    )
+
+    assert mock_builder.build.call_count == 1
+    mock_builder.build.assert_called_once_with(
+        "wheel", mocker.ANY, config_settings=config_settings
+    )
