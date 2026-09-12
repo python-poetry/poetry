@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import zipfile
@@ -12,6 +13,10 @@ from typing import NamedTuple
 
 import pytest
 
+from poetry.core.packages.package import Package
+
+from poetry.installation.operations.update import Update
+from poetry.puzzle.transaction import Transaction
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils._compat import getencoding
 from poetry.utils.env import EnvManager
@@ -23,7 +28,6 @@ from tests.helpers import with_working_directory
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from poetry.core.packages.package import Package
     from pytest import LogCaptureFixture
     from pytest_mock.plugin import MockerFixture
 
@@ -273,6 +277,65 @@ def test_load_package_with_source_directory(tmp_path: Path, has_pth: bool) -> No
         assert package.source_url is None
         assert package.source_reference is None
         assert source.is_dir()
+
+
+@pytest.mark.parametrize("has_direct_url", [False, True])
+@pytest.mark.parametrize("change_revision", [False, True])
+def test_git_revision_update_without_pth(
+    tmp_path: Path, has_direct_url: bool, change_revision: bool
+) -> None:
+    env = MockEnv(path=tmp_path, sys_path=[str(tmp_path / "purelib")])
+    dist_info = env.purelib / "demo-1.2.3.dist-info"
+    dist_info.mkdir(parents=True)
+    (dist_info / "METADATA").write_text(
+        "Name: demo\nVersion: 1.2.3\n", encoding="utf-8"
+    )
+    (env.path / "src" / "demo").mkdir(parents=True)
+    source_url = "https://github.com/sdispater/pendulum.git"
+    old_revision = "bb058f6b78b2d28ef5d9a5e759cfa179a1a713d6"
+    new_revision = "1234567890abcdef1234567890abcdef12345678"
+    if has_direct_url:
+        (dist_info / "direct_url.json").write_text(
+            json.dumps(
+                {
+                    "url": source_url,
+                    "vcs_info": {
+                        "vcs": "git",
+                        "requested_revision": "main",
+                        "commit_id": old_revision,
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
+
+    repository = InstalledRepository.load(env)
+    target = Package(
+        "demo",
+        "1.2.3",
+        source_type="git",
+        source_url=source_url,
+        source_reference="main",
+        source_resolved_reference=new_revision if change_revision else old_revision,
+    )
+    operations = Transaction(
+        [], [target], installed_packages=repository.packages
+    ).calculate_operations()
+
+    assert len(operations) == 1
+    operation = operations[0]
+    if change_revision or not has_direct_url:
+        # Legacy installations without origin metadata must be reinstalled even
+        # at the same version, rather than skipping a required Git revision update.
+        assert isinstance(operation, Update)
+        assert not operation.skipped
+        assert operation.initial_package.version == operation.target_package.version
+        assert operation.target_package.source_resolved_reference == (
+            new_revision if change_revision else old_revision
+        )
+    else:
+        assert operation.skipped
+        assert operation.skip_reason == "Already installed"
 
 
 def test_load_git_package(repository: InstalledRepository) -> None:
