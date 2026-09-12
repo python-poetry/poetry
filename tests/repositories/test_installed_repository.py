@@ -246,6 +246,34 @@ def test_load_standard_package(repository: InstalledRepository) -> None:
     assert foo.version.text == "0.1.0"
 
 
+@pytest.mark.parametrize("has_pth", [False, True])
+def test_load_package_with_source_directory(tmp_path: Path, has_pth: bool) -> None:
+    env = MockEnv(path=tmp_path, sys_path=[str(tmp_path / "purelib")])
+    dist_info = env.purelib / "demo-1.2.3.dist-info"
+    dist_info.mkdir(parents=True)
+    (dist_info / "METADATA").write_text(
+        "Name: demo\nVersion: 1.2.3\n", encoding="utf-8"
+    )
+    source = env.path / "src" / "demo"
+    source.mkdir(parents=True)
+    if has_pth:
+        (env.purelib / "demo.pth").write_text(str(source), encoding=getencoding())
+
+    repository = InstalledRepository.load(env)
+
+    package = get_package_from_repository("demo", repository)
+    assert package is not None
+    assert package.version.text == "1.2.3"
+    if has_pth:
+        assert package.source_type == "git"
+        assert package.source_reference == "bb058f6b78b2d28ef5d9a5e759cfa179a1a713d6"
+    else:
+        assert package.source_type is None
+        assert package.source_url is None
+        assert package.source_reference is None
+        assert source.is_dir()
+
+
 def test_load_git_package(repository: InstalledRepository) -> None:
     pendulum = get_package_from_repository("pendulum", repository)
     assert pendulum is not None
