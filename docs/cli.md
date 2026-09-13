@@ -1171,6 +1171,7 @@ required by
 * `--all (-a)`: Show all packages (even those not compatible with current system).
 * `--top-level (-T)`: Only show explicitly defined packages.
 * `--no-truncate`: Do not truncate the output based on the terminal width.
+* `--source`: Show the source of each package (`PyPI`, a configured source name, or a direct source URL).
 * `--format (-f)`: Specify the output format (`json` or `text`). Default is `text`. `json` cannot be combined with the `--tree` option.
 
 {{% note %}}
