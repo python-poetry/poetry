@@ -57,6 +57,10 @@ class Publisher:
             # Retrieving config information
             url = self._poetry.config.get(["repositories", repository_name, "url"])
             if url is None:
+                url = self._poetry.config.get(
+                    ["repositories", repository_name.replace("_", "-"), "url"]
+                )
+            if url is None:
                 raise RuntimeError(f"Repository {repository_name} is not defined")
             url = _normalize_legacy_repository_url(url)
 
