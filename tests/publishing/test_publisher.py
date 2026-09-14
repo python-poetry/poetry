@@ -248,6 +248,30 @@ def test_publish_prefers_exact_repository_name_over_normalized_name(
     ]
 
 
+def test_publish_supports_normalized_repository_name(
+    fixture_dir: FixtureDirGetter, mocker: MockerFixture, config: Config
+) -> None:
+    uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
+    uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
+    poetry = Factory().create_poetry(fixture_dir("sample_project"))
+    poetry._config = config
+    poetry.config.merge(
+        {
+            "repositories": {"my-repo": {"url": "https://hyphen.example"}},
+            "http-basic": {"my-repo": {"username": "hyphen", "password": "secret"}},
+        }
+    )
+    publisher = Publisher(poetry, NullIO())
+
+    publisher.publish("my_repo", None, None)
+
+    assert uploader_auth.call_args == [("hyphen", "secret")]
+    assert uploader_upload.call_args == [
+        ("https://hyphen.example",),
+        {"cert": True, "client_cert": None, "dry_run": False, "skip_existing": False},
+    ]
+
+
 @pytest.mark.parametrize(
     ("configured_url", "expected_url"),
     [
