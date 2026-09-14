@@ -1979,6 +1979,104 @@ cachy 0.2.0
     assert tester.io.fetch_output() == expected
 
 
+def test_show_tree_only_group_respects_active_extras(
+    tester: CommandTester, poetry: Poetry, installed: Repository
+) -> None:
+    # The same package is required by two groups, but only group "a" activates
+    # the "foo" extra. The tree for group "b" must not show the extra's
+    # dependencies, while the tree for group "a" must.
+    poetry.package.add_dependency(
+        Factory.create_dependency(
+            "cachy", {"version": "^0.2.0", "extras": ["foo"]}, groups=["a"]
+        )
+    )
+    poetry.package.add_dependency(
+        Factory.create_dependency("cachy", "^0.2.0", groups=["b"])
+    )
+
+    cachy2 = get_package("cachy", "0.2.0")
+    cachy2.add_dependency(Factory.create_dependency("msgpack-python", ">=0.5 <0.6"))
+    cachy2.add_dependency(
+        Factory.create_dependency(
+            "email-validator", {"version": ">=2.0", "markers": 'extra == "foo"'}
+        )
+    )
+    installed.add_package(cachy2)
+
+    assert isinstance(poetry.locker, DummyLocker)
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.2.0",
+                    "description": "",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {
+                        "msgpack-python": ">=0.5 <0.6",
+                        "email-validator": {
+                            "version": ">=2.0",
+                            "markers": 'extra == "foo"',
+                        },
+                    },
+                },
+                {
+                    "name": "msgpack-python",
+                    "version": "0.5.1",
+                    "description": "",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "email-validator",
+                    "version": "2.0.0",
+                    "description": "",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "files": {
+                    "cachy": [],
+                    "msgpack-python": [],
+                    "email-validator": [],
+                },
+            },
+        }
+    )
+
+    tester.execute("--tree --only b")
+
+    assert (
+        tester.io.fetch_output()
+        == """\
+cachy 0.2.0
+└── msgpack-python >=0.5 <0.6
+"""
+    )
+
+    tester.execute("--tree --only a")
+
+    assert (
+        tester.io.fetch_output()
+        == """\
+cachy 0.2.0
+├── email-validator >=2.0
+└── msgpack-python >=0.5 <0.6
+"""
+    )
+
+
 def test_show_tree_why_package(
     tester: CommandTester, poetry: Poetry, installed: Repository
 ) -> None:
