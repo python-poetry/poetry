@@ -72,6 +72,11 @@ class AuthenticatorRepositoryConfig:
     path: str = dataclasses.field(init=False)
 
     def __post_init__(self) -> None:
+        if not isinstance(self.url, str):
+            self.netloc = ""
+            self.path = ""
+            return
+
         parsed_url = urllib.parse.urlsplit(self.url)
         self.netloc = parsed_url.netloc
         self.path = parsed_url.path
@@ -397,6 +402,13 @@ class Authenticator:
             self._configured_repositories = {}
             for repository_name in self._config.get("repositories", []):
                 url = self._config.get(["repositories", repository_name, "url"])
+                if not isinstance(url, str):
+                    logger.warning(
+                        "Repository '%s' has an invalid url configured in settings;"
+                        " skipping.",
+                        repository_name,
+                    )
+                    continue
                 self._configured_repositories[repository_name] = (
                     AuthenticatorRepositoryConfig(repository_name, url)
                 )
