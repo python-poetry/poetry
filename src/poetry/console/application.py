@@ -632,7 +632,9 @@ class Application(BaseApplication):
         if self._plugins_loaded:
             return
 
-        self._disable_plugins = io.input.has_parameter_option("--no-plugins")
+        self._disable_plugins = io.input.has_parameter_option(
+            "--no-plugins"
+        ) or io.input.has_parameter_option(["--version", "-V"], only_params=True)
 
         if not self._disable_plugins:
             from poetry.plugins.application_plugin import ApplicationPlugin
