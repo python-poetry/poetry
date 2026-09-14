@@ -375,21 +375,33 @@ class Authenticator:
         return self._password_manager.get_pypi_token(name)
 
     def get_http_auth(self, name: str) -> HTTPAuthCredential | None:
+        repository: AuthenticatorRepositoryConfig | None
         if name == "pypi":
             repository = AuthenticatorRepositoryConfig(
                 name, "https://upload.pypi.org/legacy/"
             )
         else:
-            if name not in self.configured_repositories:
+            repository = self._get_configured_repository(name)
+            if repository is None:
                 return None
-            repository = self.configured_repositories[name]
 
         return self._get_credentials_for_repository(repository=repository)
 
     def get_certs_for_repository(self, name: str) -> RepositoryCertificateConfig:
-        if name.lower() == "pypi" or name not in self.configured_repositories:
+        if name.lower() == "pypi":
             return RepositoryCertificateConfig()
-        return self.configured_repositories[name].certs(self._config)
+        repository = self._get_configured_repository(name)
+        if repository is None:
+            return RepositoryCertificateConfig()
+        return repository.certs(self._config)
+
+    def _get_configured_repository(
+        self, name: str
+    ) -> AuthenticatorRepositoryConfig | None:
+        repository = self.configured_repositories.get(name)
+        if repository is None:
+            repository = self.configured_repositories.get(name.replace("_", "-"))
+        return repository
 
     @property
     def configured_repositories(self) -> dict[str, AuthenticatorRepositoryConfig]:
