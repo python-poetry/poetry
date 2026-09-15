@@ -502,10 +502,9 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         https://packaging.python.org/en/latest/specifications/name-normalization/#name-format
 
         Characters outside the format are replaced with a hyphen and the result
-        is lowercased, which is what ``init`` already did with the directory
-        name. The name is otherwise left as it was typed: ``My_Package`` gives
-        ``my_package``, not the canonical ``my-package``, since the format
-        allows either and indexes normalize names themselves.
+        is canonicalized, so ``My_Package.Name`` gives ``my-package-name``.
+        A canonical name is the least error-prone default; it can still be
+        edited in pyproject.toml.
 
         A directory name that holds no ASCII alphanumerics at all (say a
         non-Latin script) sanitizes to an empty string, which is not a usable
@@ -513,10 +512,10 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         is what this used to do for every directory: a name in a non-Latin
         script is kept rather than replaced with a placeholder.
         """
-        replaced = re.sub(r"[^A-Za-z0-9._-]+", "-", name).lower()
+        replaced = re.sub(r"[^A-Za-z0-9._-]+", "-", name)
         sanitized = replaced.strip("-._")
 
-        return sanitized or name.lower()
+        return canonicalize_name(sanitized) if sanitized else name.lower()
 
     @staticmethod
     def _validate_author(author: str, default: str) -> str | None:
