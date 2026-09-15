@@ -469,6 +469,7 @@ poetry init
 * `--python` Compatible Python versions.
 * `--dependency`: Package to require with a version constraint. Should be in format `foo:1.0.0`.
 * `--dev-dependency`: Development requirements, see `--dependency`.
+* `--license (-l)`: License of the package.
 
 ## install
 
@@ -721,6 +722,7 @@ my-package
 * `--python` Compatible Python versions.
 * `--dependency`: Package to require with a version constraint. Should be in format `foo:1.0.0`.
 * `--dev-dependency`: Development requirements, see `--dependency`.
+* `--license (-l)`: License of the package.
 
 ## publish
 
