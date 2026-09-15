@@ -134,9 +134,9 @@ def test_noninteractive_sanitizes_default_name_from_directory(
     [
         ("foo", "foo"),
         ("my project with spaces", "my-project-with-spaces"),
-        ("My_Package.Name", "my_package.name"),
+        ("My_Package.Name", "my-package-name"),
         ("MyProject", "myproject"),
-        ("  --my..name__ ", "my..name"),
+        ("  --my..name__ ", "my-name"),
         # nothing survives sanitization: keep the lowercased directory name
         # rather than returning an empty default
         ("日本語", "日本語"),
