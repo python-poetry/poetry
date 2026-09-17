@@ -245,7 +245,7 @@ class UninstallPathSet:
                 deferred_dirs.append(path)
                 continue
             except PermissionError:
-                # Windows raises a PermissionError instead of a IsDirectoryError.
+                # Windows raises a PermissionError instead of an IsADirectoryError.
                 if os.path.isdir(path):
                     # should not happen, just in case
                     deferred_dirs.append(path)
