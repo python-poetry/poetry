@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 import shutil
 import subprocess
@@ -26,6 +27,7 @@ from tests.helpers import mock_metadata_entry_points
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from pathlib import Path
 
     from cleo.io.inputs.argv_input import ArgvInput
@@ -78,8 +80,21 @@ class AddWarnCommandPlugin(ApplicationPlugin):
 
 
 @pytest.fixture
-def with_add_warn_command_plugin(mocker: MockerFixture) -> None:
+def with_add_warn_command_plugin(mocker: MockerFixture) -> Iterator[None]:
     mock_metadata_entry_points(mocker, AddWarnCommandPlugin)
+
+    def _reset() -> None:
+        # Application._suppressed_logger_levels is a process-global
+        # ClassVar (see its own docstring), so a test that leaves
+        # SUPPRESSIBLE_LOGGER_NAME suppressed and never runs a second,
+        # non-suppressing command would otherwise leak that state into
+        # whichever test happens to run next in the same worker process.
+        logging.getLogger(SUPPRESSIBLE_LOGGER_NAME).setLevel(logging.NOTSET)
+        Application._suppressed_logger_levels.pop(SUPPRESSIBLE_LOGGER_NAME, None)
+
+    _reset()
+    yield
+    _reset()
 
 
 @pytest.mark.parametrize(
@@ -103,7 +118,6 @@ def test_application_suppressed_loggers_are_raised_above_warning(
     current install/sync invocation (see issue #10461). Verbose/debug runs
     leave it alone so the full picture is still available on request.
     """
-    import logging
 
     logger = logging.getLogger(SUPPRESSIBLE_LOGGER_NAME)
 
@@ -130,22 +144,18 @@ def test_application_suppressed_logger_is_restored_to_its_prior_level(
     silently lowered the next time an unrelated command runs in the same
     process.
     """
-    import logging
 
     logger = logging.getLogger(SUPPRESSIBLE_LOGGER_NAME)
     logger.setLevel(logging.CRITICAL)
-    try:
-        app = Application()
-        tester = ApplicationTester(app)
 
-        tester.execute("warn")
-        assert logger.level == logging.ERROR
+    app = Application()
+    tester = ApplicationTester(app)
 
-        tester.execute("foo")
-        assert logger.level == logging.CRITICAL
-    finally:
-        logger.setLevel(logging.NOTSET)
-        Application._suppressed_logger_levels.pop(SUPPRESSIBLE_LOGGER_NAME, None)
+    tester.execute("warn")
+    assert logger.level == logging.ERROR
+
+    tester.execute("foo")
+    assert logger.level == logging.CRITICAL
 
 
 def test_application_with_plugins(with_add_command_plugin: None) -> None:
