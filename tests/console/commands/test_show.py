@@ -2427,6 +2427,76 @@ msgpack-python (!) 0.5.1"""
     assert tester.io.fetch_output().strip() == expected
 
 
+def test_show_uses_compact_versions_when_source_versions_do_not_fit(
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    demo_url = (
+        "https://files.pythonhosted.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+    )
+    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.2.0"))
+    poetry.package.add_dependency(Factory.create_dependency("demo", {"url": demo_url}))
+
+    installed.add_package(get_package("cachy", "0.2.0"))
+    installed.add_package(get_package("demo", "0.1.0"))
+
+    assert isinstance(poetry.locker, DummyLocker)
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.2.0",
+                    "description": "Cachy package",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "demo",
+                    "version": "0.1.0",
+                    "description": "Demo package",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "source": {"type": "url", "url": demo_url},
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "files": {"cachy": [], "demo": []},
+            },
+        }
+    )
+    monkeypatch.setenv("COLUMNS", "40")
+
+    tester.execute()
+
+    assert tester.io.fetch_output() == (
+        "cachy 0.2.0 Cachy package\ndemo  0.1.0 Demo package\n"
+    )
+
+    tester.execute("--no-truncate")
+
+    assert f"0.1.0 {demo_url}" in tester.io.fetch_output()
+
+    monkeypatch.setattr(
+        "poetry.console.commands.show.ShowCommand.find_latest_package",
+        lambda _self, package, _root: package,
+    )
+    tester.execute("--latest")
+
+    assert tester.io.fetch_output() == (
+        "cachy 0.2.0 0.2.0 Cachy package\ndemo  0.1.0 0.1.0 Demo package\n"
+    )
+
+
 def test_show_errors_without_lock_file(tester: CommandTester, poetry: Poetry) -> None:
     assert not poetry.locker.lock.exists()
 
