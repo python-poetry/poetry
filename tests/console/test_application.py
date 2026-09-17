@@ -71,7 +71,10 @@ class WarnCommand(Command):
 
 
 class AddWarnCommandPlugin(ApplicationPlugin):
-    commands: ClassVar[list[type[Command]]] = [WarnCommand]
+    # FooCommand (defined above) is included here too so a single
+    # Application() built from this plugin can run both a command that
+    # suppresses SUPPRESSIBLE_LOGGER_NAME and one that doesn't.
+    commands: ClassVar[list[type[Command]]] = [WarnCommand, FooCommand]
 
 
 @pytest.fixture
@@ -113,6 +116,36 @@ def test_application_suppressed_loggers_are_raised_above_warning(
         assert logger.getEffectiveLevel() > logging.WARNING
     else:
         assert logger.getEffectiveLevel() <= logging.WARNING
+
+
+def test_application_suppressed_logger_is_restored_to_its_prior_level(
+    with_add_warn_command_plugin: None,
+) -> None:
+    """
+    A logger that was suppressed by one command must be restored to the
+    level it actually held before poetry touched it, not to whichever level
+    a later, non-suppressing command happens to run at -- otherwise a
+    logger configured stricter than WARNING by something outside this
+    mechanism (an embedding caller, another library, a plugin) gets
+    silently lowered the next time an unrelated command runs in the same
+    process.
+    """
+    import logging
+
+    logger = logging.getLogger(SUPPRESSIBLE_LOGGER_NAME)
+    logger.setLevel(logging.CRITICAL)
+    try:
+        app = Application()
+        tester = ApplicationTester(app)
+
+        tester.execute("warn")
+        assert logger.level == logging.ERROR
+
+        tester.execute("foo")
+        assert logger.level == logging.CRITICAL
+    finally:
+        logger.setLevel(logging.NOTSET)
+        Application._suppressed_logger_levels.pop(SUPPRESSIBLE_LOGGER_NAME, None)
 
 
 def test_application_with_plugins(with_add_command_plugin: None) -> None:
