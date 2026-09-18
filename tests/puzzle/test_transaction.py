@@ -259,10 +259,8 @@ def test_it_should_update_installed_packages_if_sources_are_different() -> None:
         ("git", "https://github.com/demo/demo.git"),
     ],
 )
-@pytest.mark.parametrize(
-    ("installed_develop", "result_develop"),
-    [(False, True), (True, False)],
-)
+@pytest.mark.parametrize("installed_develop", [False, True])
+@pytest.mark.parametrize("result_develop", [False, True])
 def test_it_should_update_installed_editable_package_if_develop_changes(
     source_type: str,
     source_url: str,
@@ -293,9 +291,13 @@ def test_it_should_update_installed_editable_package_if_develop_changes(
 
     assert len(operations) == 1
     operation = operations[0]
-    assert isinstance(operation, Update)
-    assert operation.initial_package.develop is installed_develop
-    assert operation.target_package.develop is result_develop
+    if installed_develop is not result_develop:
+        assert isinstance(operation, Update)
+        assert operation.initial_package.develop is installed_develop
+        assert operation.target_package.develop is result_develop
+    else:
+        assert operation.job_type == "install"
+        assert operation.skipped
 
 
 @pytest.mark.parametrize(
