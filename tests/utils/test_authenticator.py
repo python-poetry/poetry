@@ -80,6 +80,31 @@ def test_authenticator_uses_credentials_from_config_if_not_provided(
     assert request.headers["Authorization"] == f"Basic {basic_auth}"
 
 
+def test_authenticator_does_not_send_https_credentials_over_http(
+    mock_config: Config,
+    mock_remote: None,
+    http: responses.RequestsMock,
+    with_simple_keyring: None,
+) -> None:
+    authenticator = Authenticator(mock_config, NullIO())
+    authenticator.request("get", "http://foo.bar/files/foo-0.1.0.tar.gz")
+
+    request = http.calls[-1].request
+    assert "Authorization" not in request.headers
+
+
+@pytest.mark.parametrize("repo", [{"foo": {"url": "http://foo.bar/simple/"}}])
+def test_authenticator_sends_http_credentials_over_https(
+    mock_config: Config, mock_remote: None, http: responses.RequestsMock
+) -> None:
+    authenticator = Authenticator(mock_config, NullIO())
+    authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
+
+    request = http.calls[-1].request
+    basic_auth = base64.b64encode(b"bar:baz").decode()
+    assert request.headers["Authorization"] == f"Basic {basic_auth}"
+
+
 def test_authenticator_uses_username_only_credentials(
     mock_config: Config,
     mock_remote: None,

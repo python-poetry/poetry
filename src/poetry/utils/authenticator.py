@@ -67,12 +67,14 @@ class RepositoryCertificateConfig:
 class AuthenticatorRepositoryConfig:
     name: str
     url: str
+    scheme: str = dataclasses.field(init=False)
     netloc: str = dataclasses.field(init=False)
     path: str = dataclasses.field(init=False)
     _path_segments: list[str] = dataclasses.field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         parsed_url = urllib.parse.urlsplit(self.url)
+        self.scheme = parsed_url.scheme
         self.netloc = parsed_url.netloc
         self.path = parsed_url.path
         self._path_segments = _path_segments(self.path)
@@ -442,6 +444,10 @@ class Authenticator:
         candidates = []
 
         for repository in self.configured_repositories.values():
+            if repository.scheme == "https" and parsed_url.scheme != "https":
+                # never send credentials configured for https in the clear
+                continue
+
             if exact_match:
                 if parsed_url.path == repository.path:
                     return repository
