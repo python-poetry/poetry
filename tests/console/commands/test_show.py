@@ -1860,17 +1860,18 @@ cachy (!) 0.1.1 Cachy package
 
 
 @output_format_parametrize
-def test_show_single_package_selects_env_compatible_duplicate_8945(
+def test_show_single_package_selects_env_compatible_duplicate(
     output_format: str,
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
     repo: DummyRepository,
 ) -> None:
-    # https://github.com/python-poetry/poetry/issues/8945
-    # When the lock file has several marker-conditioned entries for the same
-    # package, `poetry show <package>` must report the version applicable to the
-    # current environment (darwin here), matching what `poetry show` reports.
+    """
+    When the lock file has several marker-conditioned entries for the same
+    package, `poetry show <package>` must report the version applicable to the
+    current environment (darwin here), matching what `poetry show` reports.
+    """
     poetry.package.add_dependency(
         Factory.create_dependency("cachy", {"version": "0.1.0", "platform": "linux"})
     )
@@ -1917,17 +1918,18 @@ def test_show_single_package_selects_env_compatible_duplicate_8945(
 
 
 @output_format_parametrize
-def test_show_single_package_with_duplicate_falls_back_when_env_excluded_8945(
+def test_show_single_package_with_duplicate_falls_back_when_env_excluded(
     output_format: str,
     tester: CommandTester,
     poetry: Poetry,
     installed: Repository,
     repo: DummyRepository,
 ) -> None:
-    # https://github.com/python-poetry/poetry/issues/8945
-    # If none of the duplicate lock entries applies to the current environment,
-    # `poetry show <package>` should still display a version (the first match)
-    # rather than raising.
+    """
+    If none of the duplicate lock entries applies to the current environment,
+    `poetry show <package>` should still display a version (the first match)
+    rather than raising.
+    """
     poetry.package.add_dependency(
         Factory.create_dependency("cachy", {"version": "0.1.0", "platform": "linux"})
     )
