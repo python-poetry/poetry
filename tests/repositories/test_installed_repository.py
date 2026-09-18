@@ -244,6 +244,7 @@ def test_load_standard_package(repository: InstalledRepository) -> None:
     foo = get_package_from_repository("foo", repository)
     assert foo is not None
     assert foo.version.text == "0.1.0"
+    assert not foo.develop
 
 
 def test_load_git_package(repository: InstalledRepository) -> None:
@@ -258,6 +259,7 @@ def test_load_git_package(repository: InstalledRepository) -> None:
         "https://github.com/sdispater/pendulum.git",
     ]
     assert pendulum.source_reference == "bb058f6b78b2d28ef5d9a5e759cfa179a1a713d6"
+    assert not pendulum.develop
 
 
 def test_load_git_package_pth(repository: InstalledRepository) -> None:
@@ -266,6 +268,7 @@ def test_load_git_package_pth(repository: InstalledRepository) -> None:
     assert bender.name == "bender"
     assert bender.version.text == "2.0.5"
     assert bender.source_type == "git"
+    assert not bender.develop
 
 
 def test_load_platlib_package(repository: InstalledRepository) -> None:
@@ -273,6 +276,7 @@ def test_load_platlib_package(repository: InstalledRepository) -> None:
     assert lib64 is not None
     assert lib64.name == "lib64"
     assert lib64.version.text == "2.3.4"
+    assert not lib64.develop
 
 
 def test_load_editable_package(
@@ -285,6 +289,7 @@ def test_load_editable_package(
     assert editable.version.text == "2.3.4"
     assert editable.source_type == "directory"
     assert editable.source_url == editable_source_directory_path
+    assert editable.develop
 
 
 def test_load_editable_src_dir_package(
@@ -297,6 +302,7 @@ def test_load_editable_src_dir_package(
     assert editable.version.text == "2.3.4"
     assert editable.source_type == "directory"
     assert editable.source_url == editable_source_directory_path
+    assert editable.develop
 
 
 def test_load_editable_with_import_package(repository: InstalledRepository) -> None:
@@ -307,6 +313,7 @@ def test_load_editable_with_import_package(repository: InstalledRepository) -> N
     assert editable.version.text == "2.3.4"
     assert editable.source_type is None
     assert editable.source_url is None
+    assert not editable.develop
 
 
 def test_load_standard_package_with_pth_file(repository: InstalledRepository) -> None:
@@ -317,6 +324,7 @@ def test_load_standard_package_with_pth_file(repository: InstalledRepository) ->
     assert standard.version.text == "1.2.3"
     assert standard.source_type is None
     assert standard.source_url is None
+    assert not standard.develop
 
 
 def test_load_pep_610_compliant_git_packages(repository: InstalledRepository) -> None:
@@ -329,6 +337,7 @@ def test_load_pep_610_compliant_git_packages(repository: InstalledRepository) ->
     assert package.source_url == "https://github.com/demo/git-pep-610.git"
     assert package.source_reference == "my-branch"
     assert package.source_resolved_reference == "123456"
+    assert not package.develop
 
 
 def test_load_pep_610_compliant_git_packages_no_requested_version(
@@ -348,6 +357,7 @@ def test_load_pep_610_compliant_git_packages_no_requested_version(
     )
     assert package.source_resolved_reference == "123456"
     assert package.source_reference == package.source_resolved_reference
+    assert not package.develop
 
 
 def test_load_pep_610_compliant_git_packages_with_subdirectory(
@@ -362,6 +372,7 @@ def test_load_pep_610_compliant_git_packages_with_subdirectory(
     assert package.source_reference == "my-branch"
     assert package.source_resolved_reference == "123456"
     assert package.source_subdirectory == "subdir"
+    assert not package.develop
 
 
 def test_load_pep_610_compliant_url_packages(repository: InstalledRepository) -> None:
@@ -375,6 +386,7 @@ def test_load_pep_610_compliant_url_packages(repository: InstalledRepository) ->
         package.source_url
         == "https://mock.pythonhosted.org/distributions/url-pep-610-1.2.3.tar.gz"
     )
+    assert not package.develop
 
 
 def test_load_pep_610_compliant_file_packages(repository: InstalledRepository) -> None:
@@ -385,6 +397,7 @@ def test_load_pep_610_compliant_file_packages(repository: InstalledRepository) -
     assert package.version.text == "1.2.3"
     assert package.source_type == "file"
     assert package.source_url == "/path/to/distributions/file-pep-610-1.2.3.tar.gz"
+    assert not package.develop
 
 
 def test_load_pep_610_compliant_directory_packages(
