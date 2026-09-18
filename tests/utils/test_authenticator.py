@@ -18,6 +18,7 @@ from keyring.credentials import SimpleCredential
 
 from poetry.console.exceptions import PoetryRuntimeError
 from poetry.utils.authenticator import Authenticator
+from poetry.utils.authenticator import AuthenticatorRepositoryConfig
 from poetry.utils.authenticator import RepositoryCertificateConfig
 from poetry.utils.password_manager import PoetryKeyring
 
@@ -581,6 +582,104 @@ def test_authenticator_uses_env_provided_credentials_matched_by_url_path(
     request = http.calls[-1].request
 
     basic_auth = base64.b64encode(b"baz:beta").decode()
+    assert request.headers["Authorization"] == f"Basic {basic_auth}"
+
+
+@pytest.mark.parametrize(
+    ("repository_path", "request_path", "expected"),
+    [
+        ("/repo/private", "/repo/private/pkg.whl", (2, True)),
+        ("/repo/private/", "/repo/private/pkg.whl", (2, True)),
+        ("/repo/private", "/repo/private", (2, True)),
+        ("/repo/private", "/repo/private/", (2, True)),
+        # textual prefixes are not path matches
+        ("/repo/private", "/repo/private2/pkg.whl", (1, False)),
+        ("/repo/private", "/repo/private-ns/pkg.whl", (1, False)),
+        ("/repo/private", "/repo/priv/pkg.whl", (1, False)),
+        ("/repo/priv", "/repo/private/pkg.whl", (1, False)),
+        # partially shared paths (e.g. Azure feed GUIDs) still count shared segments
+        ("/org/_packaging/feed/pypi/simple/", "/org/_packaging/GUID/x.whl", (2, False)),
+        ("/simple/", "/files/pkg.whl", (0, False)),
+        ("/", "/files/pkg.whl", (0, True)),
+        ("", "/files/pkg.whl", (0, True)),
+    ],
+)
+def test_repository_config_path_match_key(
+    repository_path: str, request_path: str, expected: tuple[int, bool]
+) -> None:
+    repository = AuthenticatorRepositoryConfig(
+        "repo", f"https://foo.bar{repository_path}"
+    )
+    assert repository.path_match_key(request_path) == expected
+
+
+@pytest.mark.parametrize(
+    ("url", "expected"),
+    [
+        ("https://foo.bar/repo/private/pkg.whl", "private"),
+        ("https://foo.bar/repo/private2/pkg.whl", "private2"),
+        ("https://foo.bar/repo/private-ns/pkg.whl", "private-ns"),
+        # "/repo/private" shares as many characters with this url as "/repo/priv",
+        # but only "/repo/priv" matches on whole path segments
+        ("https://foo.bar/repo/priv/pkg.whl", "priv"),
+        # a repository containing the url beats one merely sharing its segments
+        ("https://foo.bar/repo/priv/sub/pkg.whl", "priv"),
+        # the most specific repository wins for nested paths
+        ("https://foo.bar/repo/priv/deeper/pkg.whl", "deeper"),
+        # credentials stay scoped to the host: urls outside every repository path
+        # fall back to the first configured repository on that host
+        ("https://foo.bar/files/pkg.whl", "private"),
+        ("https://other.host/repo/private/pkg.whl", None),
+    ],
+)
+def test_authenticator_matches_repository_by_whole_path_segments(
+    config: Config, url: str, expected: str | None
+) -> None:
+    # deliberately ordered so that textual prefix matching picks the wrong one
+    config.merge(
+        {
+            "repositories": {
+                "private": {"url": "https://foo.bar/repo/private"},
+                "priv": {"url": "https://foo.bar/repo/priv"},
+                "private2": {"url": "https://foo.bar/repo/private2/"},
+                "private-ns": {"url": "https://foo.bar/repo/private-ns/"},
+                "deeper": {"url": "https://foo.bar/repo/priv/deeper/"},
+            },
+        }
+    )
+
+    authenticator = Authenticator(config, NullIO())
+    repository = authenticator.get_repository_config_for_url(url)
+
+    assert (repository.name if repository else None) == expected
+
+
+def test_authenticator_does_not_send_sibling_repository_credentials(
+    config: Config, mock_remote: None, http: responses.RequestsMock
+) -> None:
+    config.merge(
+        {
+            "repositories": {
+                "private": {"url": "https://foo.bar/repo/private"},
+                "priv": {"url": "https://foo.bar/repo/priv"},
+            },
+            "http-basic": {
+                "private": {"username": "alice", "password": "secret"},
+                "priv": {"username": "bob", "password": "other-secret"},
+            },
+        }
+    )
+
+    authenticator = Authenticator(config, NullIO())
+
+    authenticator.request("get", "https://foo.bar/repo/priv/pkg.whl")
+    request = http.calls[-1].request
+    basic_auth = base64.b64encode(b"bob:other-secret").decode()
+    assert request.headers["Authorization"] == f"Basic {basic_auth}"
+
+    authenticator.request("get", "https://foo.bar/repo/private/pkg.whl")
+    request = http.calls[-1].request
+    basic_auth = base64.b64encode(b"alice:secret").decode()
     assert request.headers["Authorization"] == f"Basic {basic_auth}"
 
 
