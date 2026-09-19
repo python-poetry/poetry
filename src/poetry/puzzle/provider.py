@@ -157,9 +157,9 @@ class Provider:
         )
 
         self._explicit_sources: dict[str, str] = {}
-        for package in locked or []:
-            self._locked[package.name].append(
-                DependencyPackage(package.to_dependency(), package)
+        for locked_package in locked or []:
+            self._locked[locked_package.name].append(
+                DependencyPackage(locked_package.to_dependency(), locked_package)
             )
         for dependency_packages in self._locked.values():
             dependency_packages.sort(

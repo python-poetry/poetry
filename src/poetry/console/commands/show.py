@@ -154,11 +154,10 @@ lists all packages available."""
             return 1
 
         locked_repo = self.poetry.locker.locked_repository()
+        root = self.project_with_activated_groups_only()
 
         if package:
-            return self._display_single_package_information(package, locked_repo)
-
-        root = self.project_with_activated_groups_only()
+            return self._display_single_package_information(package, locked_repo, root)
 
         # Show tree view if requested
         if self.option("tree"):
@@ -173,19 +172,28 @@ lists all packages available."""
         return "poetry lock"
 
     def _display_single_package_information(
-        self, package: str, locked_repository: Repository
+        self, package: str, locked_repository: Repository, root: ProjectPackage
     ) -> int:
         locked_packages = locked_repository.packages
         canonicalized_package = canonicalize_name(package)
-        pkg = None
+        matches = [
+            locked for locked in locked_packages if locked.name == canonicalized_package
+        ]
 
-        for locked in locked_packages:
-            if locked.name == canonicalized_package:
-                pkg = locked
-                break
-
-        if not pkg:
+        if not matches:
             raise ValueError(f"Package {package} not found")
+
+        pkg = matches[0]
+        if len(matches) > 1:
+            # The lock file may contain several entries for the same name (e.g.
+            # platform- or marker-conditioned variants). Select the one that
+            # applies to the current environment, consistent with the
+            # all-packages view. Fall back to the first match if none of them
+            # apply, so the command still displays something.
+            required_locked_packages = self._required_locked_packages(
+                root, locked_packages
+            )
+            pkg = next((p for p in matches if p in required_locked_packages), pkg)
 
         required_by = reverse_deps(pkg, locked_repository)
 
@@ -258,19 +266,15 @@ lists all packages available."""
 
         return 0
 
-    def _display_packages_information(
-        self, locked_repository: Repository, root: ProjectPackage
-    ) -> int:
-        import shutil
-
+    def _required_locked_packages(
+        self, root: ProjectPackage, locked_packages: list[Package]
+    ) -> set[Package]:
+        """Return the locked packages required by the current environment."""
         from cleo.io.null_io import NullIO
 
         from poetry.puzzle.solver import Solver
-        from poetry.repositories.installed_repository import InstalledRepository
         from poetry.repositories.repository_pool import RepositoryPool
-        from poetry.utils.helpers import get_package_version_display_string
 
-        locked_packages = locked_repository.packages
         pool = RepositoryPool.from_packages(locked_packages, self.poetry.config)
         solver = Solver(
             root,
@@ -283,7 +287,18 @@ lists all packages available."""
         with solver.use_environment(self.env):
             ops = solver.solve().calculate_operations()
 
-        required_locked_packages = {op.package for op in ops if not op.skipped}
+        return {op.package for op in ops if not op.skipped}
+
+    def _display_packages_information(
+        self, locked_repository: Repository, root: ProjectPackage
+    ) -> int:
+        import shutil
+
+        from poetry.repositories.installed_repository import InstalledRepository
+        from poetry.utils.helpers import get_package_version_display_string
+
+        locked_packages = locked_repository.packages
+        required_locked_packages = self._required_locked_packages(root, locked_packages)
 
         show_latest = self.option("latest")
         show_all = self.option("all")
@@ -589,7 +604,7 @@ lists all packages available."""
         )
         tree_bar = previous_tree_bar + "   ├"
         total = len(dependencies)
-        for i, dependency in enumerate(dependencies, 1):
+        for i, dep in enumerate(dependencies, 1):
             if i == total:
                 tree_bar = previous_tree_bar + "   └"
 
@@ -597,30 +612,30 @@ lists all packages available."""
             color = self.colors[color_ident]
 
             circular_warn = ""
-            if dependency.name in packages_in_tree:
+            if dep.name in packages_in_tree:
                 circular_warn = "(circular dependency aborted here)"
 
             info = (
-                f"{tree_bar}── <{color}>{dependency.name}</{color}>"
-                f" {dependency.pretty_constraint} {circular_warn}"
+                f"{tree_bar}── <{color}>{dep.name}</{color}>"
+                f" {dep.pretty_constraint} {circular_warn}"
             )
             self._write_tree_line(io, info)
 
             tree_bar = tree_bar.replace("└", " ")
 
-            if dependency.name not in packages_in_tree:
-                packages_in_tree.add(dependency.name)
+            if dep.name not in packages_in_tree:
+                packages_in_tree.add(dep.name)
                 try:
                     self._display_tree(
                         io,
-                        dependency,
+                        dep,
                         installed_packages,
                         packages_in_tree,
                         tree_bar,
                         level + 1,
                     )
                 finally:
-                    packages_in_tree.discard(dependency.name)
+                    packages_in_tree.discard(dep.name)
 
     def _write_tree_line(self, io: IO, line: str) -> None:
         if not io.output.supports_utf8():

@@ -25,11 +25,11 @@ jobs:
       src: ${{ steps.changes.outputs.src }}
       tests: ${{ steps.changes.outputs.tests }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: changes
         with:
           filters: |
@@ -58,11 +58,11 @@ jobs:
     if: needs.changes.outputs.project == 'true'
     needs: changes
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/bootstrap-poetry
+      - uses: $/.github/actions/bootstrap-poetry
 
       - run: poetry check --lock
 
@@ -72,7 +72,7 @@ jobs:
     if: needs.changes.outputs.project == 'true'
     needs: lockfile
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -82,7 +82,7 @@ jobs:
 
       - run: pipx install --suffix=@build dist/*.whl
 
-      - uses: ./.github/actions/bootstrap-poetry
+      - uses: $/.github/actions/bootstrap-poetry
 
       # Smoke test: confirm the version of the installed wheel matches the project.
       - run: poetry@build --version | grep $(poetry version --short)
@@ -93,13 +93,13 @@ jobs:
     if: needs.changes.outputs.fixtures-pypi == 'true'
     needs: changes
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/bootstrap-poetry
+      - uses: $/.github/actions/bootstrap-poetry
 
-      - uses: ./.github/actions/poetry-install
+      - uses: $/.github/actions/poetry-install
         with:
           args: --only main,test
 
@@ -109,7 +109,7 @@ jobs:
 
   tests-matrix:
     # Use this matrix with multiple jobs defined in a reusable workflow:
-    uses: ./.github/workflows/.tests-matrix.yaml
+    uses: $/.github/workflows/.tests-matrix.yaml
     name: "${{ matrix.os.name }} (Python ${{ matrix.python-version }})"
     if: '!failure()'
     needs:
@@ -126,11 +126,11 @@ jobs:
       matrix:
         os:
           - name: Ubuntu
-            image: ubuntu-22.04
+            image: ubuntu-24.04
           - name: Windows
-            image: windows-2022
+            image: windows-2025
           - name: macOS aarch64
-            image: macos-14
+            image: macos-15
         python-version:
           - "3.10"
           - "3.11"

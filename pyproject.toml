@@ -134,6 +134,7 @@ extend-safe-fixes = [
 unfixable = [
     "ERA", # do not autoremove commented out code
 ]
+typing-extensions = false
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"

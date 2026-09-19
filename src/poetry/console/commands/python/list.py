@@ -64,16 +64,16 @@ class PythonListCommand(Command):
                 )
                 return 1
 
-        for info in Python.find_all_versions(
-            constraint=constraint,
-            implementation=self.option("implementation"),
-            free_threaded=self.option("free-threaded") or None,
-        ):
-            rows.append(info)
+        rows.extend(
+            Python.find_all_versions(
+                constraint=constraint,
+                implementation=self.option("implementation"),
+                free_threaded=self.option("free-threaded") or None,
+            )
+        )
 
         if self.option("all"):
-            for info in Python.find_downloadable_versions(constraint):
-                rows.append(info)
+            rows.extend(Python.find_downloadable_versions(constraint))
 
         rows.sort(
             key=lambda x: (

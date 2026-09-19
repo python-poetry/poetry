@@ -108,7 +108,7 @@ def remove_directory(path: Path, force: bool = False) -> None:
 
 
 def merge_dicts(d1: dict[str, Any], d2: dict[str, Any]) -> None:
-    for k in d2:
+    for k in d2:  # noqa: PLC0206
         if k in d1 and isinstance(d1[k], dict) and isinstance(d2[k], Mapping):
             merge_dicts(d1[k], d2[k])
         else:

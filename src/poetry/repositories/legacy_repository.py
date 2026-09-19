@@ -134,8 +134,6 @@ class LegacyRepository(HTTPRepository):
         for candidate in self.root_page.search(query):
             with suppress(PackageNotFoundError):
                 page = self.get_page(candidate)
-
-                for package in page.packages:
-                    results.append(package)
+                results.extend(page.packages)
 
         return results

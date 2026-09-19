@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 
 from pathlib import Path
@@ -25,6 +26,21 @@ def check_output_wrapper(
     def check_output(cmd: list[str], *args: Any, **kwargs: Any) -> str:
         # cmd is a list, like ["python", "-c", "do stuff"]
         python_cmd = cmd[-1]
+        if '"marker_env": env' in python_cmd:
+            return json.dumps(
+                {
+                    "base_prefix": "/usr",
+                    "marker_env": {
+                        "version_info": [
+                            version.major,
+                            version.minor,
+                            version.patch,
+                        ]
+                    },
+                    "paths": {},
+                }
+            )
+
         if "print(json.dumps(env))" in python_cmd:
             return (
                 f'{{"version_info": [{version.major}, {version.minor},'

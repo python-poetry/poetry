@@ -123,7 +123,7 @@ you can set the "package-mode" to false in your pyproject.toml file.
             return 1
 
         if self.option("only-root") and any(
-            self.option(key) for key in {"with", "without", "only", "all-groups"}
+            self.option(key) for key in ("with", "without", "only", "all-groups")
         ):
             self.line_error(
                 "<error>The `<fg=yellow;options=bold>--with</>`,"

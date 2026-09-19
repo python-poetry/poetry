@@ -469,6 +469,7 @@ poetry init
 * `--python` Compatible Python versions.
 * `--dependency`: Package to require with a version constraint. Should be in format `foo:1.0.0`.
 * `--dev-dependency`: Development requirements, see `--dependency`.
+* `--license (-l)`: License of the package.
 
 ## install
 
@@ -721,6 +722,7 @@ my-package
 * `--python` Compatible Python versions.
 * `--dependency`: Package to require with a version constraint. Should be in format `foo:1.0.0`.
 * `--dev-dependency`: Development requirements, see `--dependency`.
+* `--license (-l)`: License of the package.
 
 ## publish
 
@@ -949,7 +951,7 @@ poetry search requests pendulum
 PyPI no longer allows for the search of packages without a browser. Please use https://pypi.org/search
 (via a browser) instead.
 
-For more information, please see [warehouse documentation](https://warehouse.pypa.io/api-reference/xml-rpc.html#deprecated-methods)
+For more information, please see [PyPI API documentation](https://docs.pypi.org/api/#api-preference)
 and this [discussion](https://discuss.python.org/t/fastly-interfering-with-pypi-search/73597/6).
 {{% /note %}}
 
@@ -1387,6 +1389,13 @@ You can do this using the `add` command.
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables `--verbose`).
 * `--lock` : Do not perform install (only update the lockfile).
 * `--sync`: Synchronize the environment with the locked packages and the specified groups.
+
+{{% note %}}
+The group options determine which dependency groups are installed or synchronized in the
+environment. They do not limit resolution of the lock file: `poetry.lock` keeps one consistent
+solution for all declared groups, so packages that belong to an excluded group can still change.
+To restrict which packages Poetry updates, pass their names to the command.
+{{% /note %}}
 
 {{% note %}}
 When `--only` is specified, `--with` and `--without` options are ignored.

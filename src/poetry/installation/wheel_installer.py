@@ -32,8 +32,6 @@ if TYPE_CHECKING:
 
 
 class WheelDestination(SchemeDictionaryDestination):
-    """ """
-
     @cached_property
     def _abspath_scheme_cache(self) -> dict[Scheme, str]:
         return {}

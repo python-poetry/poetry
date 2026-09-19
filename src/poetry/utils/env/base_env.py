@@ -76,7 +76,8 @@ class Env(ABC):
 
         self.find_executables()
 
-        self._base = base or path
+        # Preserve an unspecified base so VirtualEnv can discover it lazily.
+        self._base = base
 
         self._site_packages: SitePackages | None = None
         self._supported_tags: list[Tag] | None = None
@@ -97,7 +98,7 @@ class Env(ABC):
 
     @property
     def base(self) -> Path:
-        return self._base
+        return self._base or self._path
 
     @property
     def version_info(self) -> PythonVersion:
@@ -138,11 +139,7 @@ class Env(ABC):
             if re.match(r"python(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
         )
         if python_executables:
-            executable = python_executables[0]
-            if executable.endswith(".exe"):
-                executable = executable[:-4]
-
-            self._executable = executable
+            self._executable = python_executables[0].removesuffix(".exe")
 
     def _find_pip_executable(self) -> None:
         pip_executables = sorted(
@@ -151,11 +148,7 @@ class Env(ABC):
             if re.match(r"pip(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
         )
         if pip_executables:
-            pip_executable = pip_executables[0]
-            if pip_executable.endswith(".exe"):
-                pip_executable = pip_executable[:-4]
-
-            self._pip_executable = pip_executable
+            self._pip_executable = pip_executables[0].removesuffix(".exe")
 
     def find_executables(self) -> None:
         self._find_python_executable()
