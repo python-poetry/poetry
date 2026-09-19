@@ -6,7 +6,6 @@ import logging
 import time
 import urllib.parse
 
-from os.path import commonprefix
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -70,11 +69,31 @@ class AuthenticatorRepositoryConfig:
     url: str
     netloc: str = dataclasses.field(init=False)
     path: str = dataclasses.field(init=False)
+    _path_segments: list[str] = dataclasses.field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         parsed_url = urllib.parse.urlsplit(self.url)
         self.netloc = parsed_url.netloc
         self.path = parsed_url.path
+        self._path_segments = _path_segments(self.path)
+
+    def path_match_key(self, path: str) -> tuple[int, bool]:
+        """
+        Rank how well a request path matches this repository's path.
+
+        The key is the number of leading segments shared with the request
+        and whether the request lies within the repository path
+        (i.e. all repository segments are shared).
+        Higher keys are better matches.
+        """
+        segments = _path_segments(path)
+        shared = 0
+        for own, other in zip(self._path_segments, segments):
+            if own != other:
+                break
+            shared += 1
+
+        return shared, shared == len(self._path_segments)
 
     def certs(self, config: Config) -> RepositoryCertificateConfig:
         return RepositoryCertificateConfig.create(self.name, config)
@@ -420,8 +439,7 @@ class Authenticator:
         self, url: str, exact_match: bool = False
     ) -> AuthenticatorRepositoryConfig | None:
         parsed_url = urllib.parse.urlsplit(url)
-        candidates_netloc_only = []
-        candidates_path_match = []
+        candidates = []
 
         for repository in self.configured_repositories.values():
             if exact_match:
@@ -429,19 +447,13 @@ class Authenticator:
                     return repository
                 continue
 
+            # Credentials are scoped to the host: PEP 503 places no constraints on
+            # where an index hosts its files, so every repository on the same
+            # netloc is a candidate.
             if repository.netloc == parsed_url.netloc:
-                if parsed_url.path.startswith(repository.path) or commonprefix(
-                    (parsed_url.path, repository.path)
-                ):
-                    candidates_path_match.append(repository)
-                    continue
-                candidates_netloc_only.append(repository)
+                candidates.append(repository)
 
-        if candidates_path_match:
-            candidates = candidates_path_match
-        elif candidates_netloc_only:
-            candidates = candidates_netloc_only
-        else:
+        if not candidates:
             return None
 
         if len(candidates) > 1:
@@ -450,9 +462,11 @@ class Authenticator:
                 parsed_url.netloc,
                 ", ".join(c.name for c in candidates),
             )
-            # prefer the more specific path
+            # Prefer the repository sharing the most whole path segments with the
+            # request; among equals, one whose path contains the request. The sort
+            # is stable, so remaining ties keep the configuration order.
             candidates.sort(
-                key=lambda c: len(commonprefix([parsed_url.path, c.path])), reverse=True
+                key=lambda c: c.path_match_key(parsed_url.path), reverse=True
             )
 
         return candidates[0]
@@ -462,6 +476,10 @@ class Authenticator:
         if selected:
             return selected.certs(config=self._config)
         return RepositoryCertificateConfig()
+
+
+def _path_segments(path: str) -> list[str]:
+    return [segment for segment in path.split("/") if segment]
 
 
 _authenticator: Authenticator | None = None
