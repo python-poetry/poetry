@@ -449,7 +449,10 @@ class Authenticator:
                 continue
 
             if exact_match:
-                if parsed_url.path == repository.path:
+                if (
+                    parsed_url.netloc == repository.netloc
+                    and parsed_url.path == repository.path
+                ):
                     return repository
                 continue
 

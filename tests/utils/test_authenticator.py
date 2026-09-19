@@ -829,6 +829,47 @@ def test_authenticator_git_repositories(
 
 
 @pytest.mark.parametrize(
+    ("repository_url", "git_url", "expect_credentials"),
+    [
+        ("https://foo.bar/org/one.git", "https://foo.bar/org/one.git", True),
+        # same path on another host must not receive the credentials
+        ("https://foo.bar/org/one.git", "https://evil.example/org/one.git", False),
+        ("https://foo.bar/org/one.git", "https://foo.bar:8443/org/one.git", False),
+        ("https://foo.bar/simple/", "https://evil.example/simple/", False),
+        # credentials configured for https must not be sent in the clear
+        ("https://foo.bar/org/one.git", "http://foo.bar/org/one.git", False),
+        ("http://foo.bar/org/one.git", "http://foo.bar/org/one.git", True),
+        ("http://foo.bar/org/one.git", "https://foo.bar/org/one.git", True),
+    ],
+)
+def test_authenticator_git_repositories_match_host_and_scheme(
+    config: Config,
+    mock_remote: None,
+    with_simple_keyring: None,
+    dummy_keyring: DummyBackend,
+    repository_url: str,
+    git_url: str,
+    expect_credentials: bool,
+) -> None:
+    config.merge(
+        {
+            "repositories": {"one": {"url": repository_url}},
+            "http-basic": {"one": {"username": "foo", "password": "bar"}},
+        }
+    )
+
+    authenticator = Authenticator(config, NullIO())
+    credentials = authenticator.get_credentials_for_git_url(git_url)
+
+    if expect_credentials:
+        assert credentials.username == "foo"
+        assert credentials.password == "bar"
+    else:
+        assert not credentials.username
+        assert not credentials.password
+
+
+@pytest.mark.parametrize(
     ("ca_cert", "client_cert", "result"),
     [
         (None, None, RepositoryCertificateConfig()),
