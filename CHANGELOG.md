@@ -1,5 +1,12 @@
 # Change Log
 
+## [2.5.1] - 2026-09-20
+
+### Fixed
+
+- Fix an issue where uninstalling a package with `installer.builtin-uninstall` set failed with a `TypeError` ([#11077](https://github.com/python-poetry/poetry/pull/11077)).
+
+
 ## [2.5.0] - 2026-09-19
 
 ### Added
@@ -2852,7 +2859,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/2.5.0...main
+[Unreleased]: https://github.com/python-poetry/poetry/compare/2.5.1...main
+[2.5.1]: https://github.com/python-poetry/poetry/releases/tag/2.5.1
 [2.5.0]: https://github.com/python-poetry/poetry/releases/tag/2.5.0
 [2.4.3]: https://github.com/python-poetry/poetry/releases/tag/2.4.3
 [2.4.2]: https://github.com/python-poetry/poetry/releases/tag/2.4.2
