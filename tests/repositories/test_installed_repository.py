@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from pytest_mock.plugin import MockerFixture
 
     from poetry.poetry import Poetry
+    from poetry.utils.env.base_env import EnvPaths
     from poetry.utils.env.base_env import PythonVersion
     from tests.types import FixtureDirGetter
     from tests.types import ProjectFactory
@@ -97,7 +98,7 @@ def env(
 ) -> MockEnv:
     class _MockEnv(MockEnv):
         @cached_property
-        def paths(self) -> dict[str, str]:
+        def paths(self) -> EnvPaths:
             return {
                 "purelib": site_purelib.as_posix(),
                 "platlib": site_platlib.as_posix(),

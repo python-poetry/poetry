@@ -25,11 +25,13 @@ if TYPE_CHECKING:
 
     from packaging.tags import Tag
 
+    from poetry.utils.env.base_env import EnvPaths
+
 
 class _EnvironmentData(TypedDict):
     base_prefix: str
     marker_env: MarkerEnv
-    paths: dict[str, str]
+    paths: EnvPaths
 
 
 class VirtualEnv(Env):
@@ -110,7 +112,7 @@ class VirtualEnv(Env):
         env["version_info"] = tuple(env["version_info"])  # type: ignore[typeddict-item]
         return env
 
-    def get_paths(self) -> dict[str, str]:
+    def get_paths(self) -> EnvPaths:
         return deepcopy(self._environment_data["paths"])
 
     def is_venv(self) -> bool:
