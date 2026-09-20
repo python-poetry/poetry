@@ -4,9 +4,14 @@ import sys
 
 from functools import cached_property
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
 
 from poetry.utils.env.system_env import SystemEnv
+
+
+if TYPE_CHECKING:
+    from poetry.utils.env.base_env import EnvPaths
 
 
 class NullEnv(SystemEnv):
@@ -22,7 +27,7 @@ class NullEnv(SystemEnv):
         self.executed: list[list[str]] = []
 
     @cached_property
-    def paths(self) -> dict[str, str]:
+    def paths(self) -> EnvPaths:
         paths = self.get_paths()
         paths["platlib"] = str(self._path / "platlib")
         paths["purelib"] = str(self._path / "purelib")

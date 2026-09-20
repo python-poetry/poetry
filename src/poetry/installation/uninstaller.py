@@ -60,6 +60,17 @@ def _normalize_path(path: str | Path, resolve_symlinks: bool = True) -> str:
     return os.path.normcase(path)
 
 
+def _protected_dirs(env: Env) -> set[str]:
+    # env.paths["fallbacks"] is a list of paths (in contrast to the other values),
+    # which is covered by env.fallbacks.
+    protected_dirs = {
+        _normalize_path(p) for p in env.paths.values() if p and isinstance(p, str)
+    }
+    protected_dirs.update(_normalize_path(p) for p in env.fallbacks)
+    protected_dirs.add(_normalize_path(env.path))
+    return protected_dirs
+
+
 def _safe_listdir(path: str) -> tuple[str, ...]:
     """Return directory entries (empty if it is missing or not a directory)."""
     try:
@@ -334,8 +345,7 @@ def uninstall_distribution(env: Env, package_name: str) -> UninstallPathSet | No
 
     # Protect the env's install-scheme roots (site-packages, scripts, data, ...)
     # so the empty-directory pruning never removes them, even when emptied.
-    protected_dirs = {_normalize_path(p) for p in env.paths.values() if p}
-    protected_dirs.add(_normalize_path(env.path))
+    protected_dirs = _protected_dirs(env)
 
     path_set = UninstallPathSet(dist, env.path, protected_dirs=protected_dirs)
     for entry in dist_files:

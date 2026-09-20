@@ -752,7 +752,7 @@ def system_env(tmp_path_factory: TempPathFactory, mocker: MockerFixture) -> Syst
     env.paths["userbase"] = str(userbase)
 
     paths = {str(scheme): str(env.path / scheme) for scheme in SCHEME_NAMES}
-    env.paths.update(paths)
+    env.paths.update(paths)  # type: ignore[typeddict-item]
 
     for path in paths.values():
         Path(path).mkdir(exist_ok=False)
