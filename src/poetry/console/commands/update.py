@@ -22,7 +22,7 @@ _VERSION_SPECIFIER_RE = re.compile(r"[><=!~]")
 class UpdateCommand(InstallerCommand):
     name = "update"
     description = (
-        "Update the dependencies as according to the <comment>pyproject.toml</> file."
+        "Update the dependencies according to the <comment>pyproject.toml</> file."
     )
 
     arguments: ClassVar[list[Argument]] = [
