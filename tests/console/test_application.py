@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 import shutil
 import subprocess
@@ -26,6 +27,7 @@ from tests.helpers import mock_metadata_entry_points
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from pathlib import Path
 
     from cleo.io.inputs.argv_input import ArgvInput
@@ -54,6 +56,106 @@ class AddCommandPlugin(ApplicationPlugin):
 @pytest.fixture
 def with_add_command_plugin(mocker: MockerFixture) -> None:
     mock_metadata_entry_points(mocker, AddCommandPlugin)
+
+
+SUPPRESSIBLE_LOGGER_NAME = "tests.console.some_irrelevant_logger"
+
+
+class WarnCommand(Command):
+    name = "warn"
+
+    description = "A command that has a logger it wants suppressed by default."
+
+    suppressed_loggers: ClassVar[list[str]] = [SUPPRESSIBLE_LOGGER_NAME]
+
+    def handle(self) -> int:
+        return 0
+
+
+class AddWarnCommandPlugin(ApplicationPlugin):
+    # FooCommand (defined above) is included here too so a single
+    # Application() built from this plugin can run both a command that
+    # suppresses SUPPRESSIBLE_LOGGER_NAME and one that doesn't.
+    commands: ClassVar[list[type[Command]]] = [WarnCommand, FooCommand]
+
+
+@pytest.fixture
+def with_add_warn_command_plugin(mocker: MockerFixture) -> Iterator[None]:
+    mock_metadata_entry_points(mocker, AddWarnCommandPlugin)
+
+    def _reset() -> None:
+        # Application._suppressed_logger_levels is a process-global
+        # ClassVar (see its own docstring), so a test that leaves
+        # SUPPRESSIBLE_LOGGER_NAME suppressed and never runs a second,
+        # non-suppressing command would otherwise leak that state into
+        # whichever test happens to run next in the same worker process.
+        logging.getLogger(SUPPRESSIBLE_LOGGER_NAME).setLevel(logging.NOTSET)
+        Application._suppressed_logger_levels.pop(SUPPRESSIBLE_LOGGER_NAME, None)
+
+    _reset()
+    yield
+    _reset()
+
+
+@pytest.mark.parametrize(
+    ("options", "expected_suppressed"),
+    [
+        ("", True),
+        ("--verbose", False),
+        ("-vv", False),
+    ],
+)
+def test_application_suppressed_loggers_are_raised_above_warning(
+    with_add_warn_command_plugin: None,
+    options: str,
+    expected_suppressed: bool,
+) -> None:
+    """
+    A command's suppressed_loggers are raised above WARNING at default
+    verbosity, so a warning logged by that logger doesn't reach the user --
+    this is what InstallCommand uses to stop poetry-core's group-unaware
+    path-dependency warning from firing for a group that isn't part of the
+    current install/sync invocation (see issue #10461). Verbose/debug runs
+    leave it alone so the full picture is still available on request.
+    """
+
+    logger = logging.getLogger(SUPPRESSIBLE_LOGGER_NAME)
+
+    app = Application()
+    tester = ApplicationTester(app)
+    tester.execute(f"warn {options}".strip())
+
+    assert tester.status_code == 0
+    if expected_suppressed:
+        assert logger.getEffectiveLevel() > logging.WARNING
+    else:
+        assert logger.getEffectiveLevel() <= logging.WARNING
+
+
+def test_application_suppressed_logger_is_restored_to_its_prior_level(
+    with_add_warn_command_plugin: None,
+) -> None:
+    """
+    A logger that was suppressed by one command must be restored to the
+    level it actually held before poetry touched it, not to whichever level
+    a later, non-suppressing command happens to run at -- otherwise a
+    logger configured stricter than WARNING by something outside this
+    mechanism (an embedding caller, another library, a plugin) gets
+    silently lowered the next time an unrelated command runs in the same
+    process.
+    """
+
+    logger = logging.getLogger(SUPPRESSIBLE_LOGGER_NAME)
+    logger.setLevel(logging.CRITICAL)
+
+    app = Application()
+    tester = ApplicationTester(app)
+
+    tester.execute("warn")
+    assert logger.level == logging.ERROR
+
+    tester.execute("foo")
+    assert logger.level == logging.CRITICAL
 
 
 def test_application_with_plugins(with_add_command_plugin: None) -> None:
