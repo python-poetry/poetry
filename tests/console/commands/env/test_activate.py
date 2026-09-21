@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
@@ -62,11 +63,11 @@ def test_env_activate_prints_correct_script(
 
 
 @pytest.mark.parametrize(
-    "shell, command, ext",
+    "shell, command, ext, quote",
     (
-        ("cmd", "", ".bat"),
-        ("pwsh", "&", ".ps1"),
-        ("powershell", "&", ".ps1"),
+        ("cmd", "", ".bat", '"'),
+        ("pwsh", "&", ".ps1", "'"),
+        ("powershell", "&", ".ps1", "'"),
     ),
 )
 @pytest.mark.skipif(not WINDOWS, reason="Only Windows shells")
@@ -77,6 +78,7 @@ def test_env_activate_prints_correct_script_for_windows_shells(
     shell: str,
     command: str,
     ext: str,
+    quote: str,
 ) -> None:
     mocker.patch("shellingham.detect_shell", return_value=(shell, None))
 
@@ -84,7 +86,38 @@ def test_env_activate_prints_correct_script_for_windows_shells(
 
     line = tester.io.fetch_output().rstrip("\n")
     activation_script = tmp_venv.bin_dir / f"activate{ext}"
-    assert line == f'{command} "{activation_script}"'.strip()
+    assert line == f"{command} {quote}{activation_script}{quote}".strip()
+
+
+@pytest.mark.parametrize("shell", ["powershell", "pwsh"])
+@pytest.mark.parametrize("windows", [False, True])
+@pytest.mark.parametrize(
+    "directory, quoted_directory",
+    [
+        ("simple", "simple"),
+        ("with spaces", "with spaces"),
+        ("$variable", "$variable"),
+        ("$(1+1)", "$(1+1)"),
+        ("back`tick", "back`tick"),
+        ("it's", "it''s"),
+        ("it\u2018s", "it\u2018\u2018s"),
+        ("it\u2019s", "it\u2019\u2019s"),
+        ("it\u201as", "it\u201a\u201as"),
+        ("it\u201bs", "it\u201b\u201bs"),
+    ],
+)
+def test_env_activate_quotes_powershell_paths(
+    mocker: MockerFixture,
+    shell: str,
+    windows: bool,
+    directory: str,
+    quoted_directory: str,
+) -> None:
+    mocker.patch("poetry.console.commands.env.activate.WINDOWS", windows)
+    activation_script = Path(directory) / "activate.ps1"
+    expected_path = Path(quoted_directory) / "activate.ps1"
+
+    assert EnvActivateCommand._quote(activation_script, shell) == f"'{expected_path}'"
 
 
 @pytest.mark.parametrize("verbosity", ["", "-v", "-vv", "-vvv"])

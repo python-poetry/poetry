@@ -61,6 +61,12 @@ class EnvActivateCommand(EnvCommand):
 
     @staticmethod
     def _quote(activation_script: Path, shell: str) -> str:
-        if WINDOWS and shell in {"cmd", "powershell", "pwsh"}:
+        if shell in {"powershell", "pwsh"}:
+            path = str(activation_script)
+            # PowerShell also treats smart quotes as string delimiters.
+            for quote in "'\u2018\u2019\u201a\u201b":
+                path = path.replace(quote, quote * 2)
+            return f"'{path}'"
+        if WINDOWS and shell == "cmd":
             return f'"{activation_script}"'
         return shlex.quote(activation_script.as_posix())
