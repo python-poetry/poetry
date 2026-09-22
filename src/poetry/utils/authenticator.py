@@ -73,13 +73,15 @@ class AuthenticatorRepositoryConfig:
     _path_segments: list[str] = dataclasses.field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
+        if isinstance(self.url, bytes):
+            self.url = self.url.decode()
         parsed_url = urllib.parse.urlsplit(self.url)
         self.scheme = parsed_url.scheme
         self.netloc = parsed_url.netloc
         self.path = parsed_url.path
         self._path_segments = _path_segments(self.path)
 
-    def path_match_key(self, path: str) -> tuple[int, bool]:
+    def path_match_key(self, path: str | bytes) -> tuple[int, bool]:
         """
         Rank how well a request path matches this repository's path.
 
@@ -438,8 +440,10 @@ class Authenticator:
         return self._certs[url]
 
     def _get_repository_config_for_url(
-        self, url: str, exact_match: bool = False
+        self, url: str | bytes, exact_match: bool = False
     ) -> AuthenticatorRepositoryConfig | None:
+        if isinstance(url, bytes):
+            url = url.decode()
         parsed_url = urllib.parse.urlsplit(url)
         candidates = []
 
@@ -487,7 +491,9 @@ class Authenticator:
         return RepositoryCertificateConfig()
 
 
-def _path_segments(path: str) -> list[str]:
+def _path_segments(path: str | bytes) -> list[str]:
+    if isinstance(path, bytes):
+        path = path.decode()
     return [segment for segment in path.split("/") if segment]
 
 
