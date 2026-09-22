@@ -14,6 +14,32 @@ menu:
 For the basic usage introduction we will be installing `pendulum`, a datetime library.
 If you have not yet installed Poetry, refer to the [Introduction]({{< relref "docs" >}} "Introduction") chapter.
 
+## Using an existing Poetry project
+
+If a project already contains a `pyproject.toml` file, you do not need to create or initialize it again.
+After cloning the project, change into its directory and install its dependencies:
+
+```bash
+cd existing-project
+poetry install
+```
+
+If the project contains a `poetry.lock` file, Poetry uses the exact dependency versions recorded there. Otherwise,
+Poetry resolves the dependencies listed in `pyproject.toml` and creates a lock file.
+
+You can run a command in the project's virtual environment with [`poetry run`]({{< relref "cli#run" >}}):
+
+```bash
+poetry run pytest
+```
+
+Alternatively, use [`poetry env activate`]({{< relref "managing-environments#activating-the-environment" >}})
+to print the command that activates the environment in your shell.
+
+To add or remove a dependency, use [`poetry add`]({{< relref "cli#add" >}}) or
+[`poetry remove`]({{< relref "cli#remove" >}}). These commands update both `pyproject.toml` and `poetry.lock`.
+Review and commit both files when contributing the dependency change to the project.
+
 ## Project setup
 
 First, let's create our new project, let's call it `poetry-demo`:
