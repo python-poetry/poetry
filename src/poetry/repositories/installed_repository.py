@@ -68,14 +68,19 @@ class InstalledRepository(Repository):
             if not pth_file.exists():
                 continue
 
-            with pth_file.open(encoding=getencoding()) as f:
-                for line in f:
-                    line = line.strip()
-                    if line and not line.startswith(("#", "import ", "import\t")):
-                        path = Path(line)
-                        if not path.is_absolute():
-                            path = lib.joinpath(path).resolve()
-                        paths.add(path)
+            # Match site.addpackage decoding: UTF-8 (with optional BOM) first,
+            # then the locale encoding for .pth files written by older tools.
+            try:
+                pth_content = pth_file.read_text(encoding="utf-8-sig")
+            except UnicodeDecodeError:
+                pth_content = pth_file.read_text(encoding=getencoding())
+            for line in pth_content.split("\n"):
+                line = line.strip()
+                if line and not line.startswith(("#", "import ", "import\t")):
+                    path = Path(line)
+                    if not path.is_absolute():
+                        path = lib.joinpath(path).resolve()
+                    paths.add(path)
 
         src_path = env.path / "src" / name
         if not paths and src_path.exists():
