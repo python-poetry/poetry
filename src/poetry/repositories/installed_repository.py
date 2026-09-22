@@ -74,7 +74,7 @@ class InstalledRepository(Repository):
                 pth_content = pth_file.read_text(encoding="utf-8-sig")
             except UnicodeDecodeError:
                 pth_content = pth_file.read_text(encoding=getencoding())
-            for line in pth_content.splitlines():
+            for line in pth_content.split("\n"):
                 line = line.strip()
                 if line and not line.startswith(("#", "import ", "import\t")):
                     path = Path(line)
