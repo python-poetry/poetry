@@ -278,6 +278,16 @@ def test_run_python_script_called_process_error(
     assert "some error" in str(error.value)
 
 
+def test_run_python_script_excludes_host_pythonpath(
+    tmp_venv: VirtualEnv, mocker: MockerFixture
+) -> None:
+    mocker.patch.dict(os.environ, {"PYTHONPATH": "/path/to/nowhere"})
+
+    output = tmp_venv.run_python_script("import os; print(os.getenv('PYTHONPATH'))")
+
+    assert output.strip() == "None"
+
+
 def test_run_python_script_only_stdout(tmp_path: Path, tmp_venv: VirtualEnv) -> None:
     output = tmp_venv.run_python_script(
         "import sys; print('some warning', file=sys.stderr); print('some output')"
