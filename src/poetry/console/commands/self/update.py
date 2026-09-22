@@ -48,6 +48,11 @@ environment.
         add_command.set_env(self.env)
         add_command.set_poetry(self.poetry)
         application.configure_installer_for_command(add_command, self.io)
+        # `add` pins everything but the added package to the locked versions, and the
+        # lock file of Poetry's system environment may have been written by a much
+        # older Poetry version, so Poetry's dependencies are resolved from scratch
+        # instead of being downgraded to the versions in the lock file.
+        add_command.installer.ignore_lock_file()
 
         argv = ["add", f"poetry@{self.argument('version')}"]
 
