@@ -133,7 +133,7 @@ class VirtualEnv(Env):
         **kwargs: str,
     ) -> dict[str, str]:
         exclude = exclude or []
-        exclude.extend(["PYTHONHOME", "__PYVENV_LAUNCHER__"])
+        exclude.extend(["PYTHONPATH", "PYTHONHOME", "__PYVENV_LAUNCHER__"])
 
         if environ:
             environ = deepcopy(environ)
