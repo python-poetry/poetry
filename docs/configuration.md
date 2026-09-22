@@ -473,7 +473,7 @@ poetry config solver.min-release-age-exclude "my-package,other-package"
 
 ### `solver.min-release-age-exclude-source`
 
-**Type**: `string`
+**Type**: `array`
 
 **Default**: *not set*
 
@@ -481,14 +481,22 @@ poetry config solver.min-release-age-exclude "my-package,other-package"
 
 *Introduced in 2.4.0*
 
-A comma-separated list of source names or URLs that should be excluded from the
-[`solver.min-release-age`](#solvermin-release-age) filter.
+A list of source names or URLs that should be excluded from the
+[`solver.min-release-age`](#solvermin-release-age) filter. When setting the
+value with `poetry config` or the environment variable, provide a
+comma-separated list. When setting it directly in `poetry.toml`, use a TOML
+array.
 All packages from these sources will always be considered by the solver,
 regardless of their upload age.
 Sources can be referenced by the name defined in `pyproject.toml` or by URL.
 
 ```bash
 poetry config solver.min-release-age-exclude-source "private-repo,https://example.com/simple/"
+```
+
+```toml title="poetry.toml"
+[solver]
+min-release-age-exclude-source = ["private-repo", "https://example.com/simple/"]
 ```
 
 ### `system-git-client`
