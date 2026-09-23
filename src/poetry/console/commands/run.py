@@ -57,7 +57,13 @@ class RunCommand(EnvCommand):
 
         Otherwise (when an entry point script does not exist), ``sys.argv[0]`` is the
         script name only, i.e. ``poetry run foo`` has ``sys.argv == ['foo']``.
+
+        A script declared with ``type = "file"`` is a plain, already-executable file
+        (for example a shell script) rather than a Python console entry point, so it
+        is run directly instead of being imported as ``module:callable``.
         """
+        is_file_script = isinstance(script, dict) and script.get("type") == "file"
+
         for script_dir in self.env.script_dirs:
             script_path = script_dir / args[0]
             if WINDOWS:
@@ -68,6 +74,19 @@ class RunCommand(EnvCommand):
         else:
             # If we reach this point, the script is not installed
             self._warning_not_installed_script(args[0])
+            if is_file_script:
+                # File scripts have no importable ``module:callable`` fallback, so
+                # fall back to running the referenced file directly.
+                assert isinstance(script, dict)
+                reference = script.get("reference")
+                if reference:
+                    args = [
+                        str(self.poetry.file.path.parent / reference),
+                        *args[1:],
+                    ]
+
+        if is_file_script:
+            return self.env.execute(*args)
 
         if isinstance(script, dict):
             script = script["callable"]

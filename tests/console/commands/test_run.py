@@ -216,6 +216,37 @@ def test_run_script_exit_code(
     assert tester.execute("return-code") == 42
 
 
+def test_run_file_script(
+    poetry_with_scripts: Poetry,
+    command_tester_factory: CommandTesterFactory,
+    tmp_venv: VirtualEnv,
+    mocker: MockerFixture,
+    capfd: pytest.CaptureFixture[str],
+) -> None:
+    """
+    A script declared with type = "file" in [tool.poetry.scripts] is a
+    plain executable file rather than a Python console entry point, and must be
+    runnable directly via poetry run once installed instead of raising
+    KeyError: 'callable' (see #11090).
+    """
+    mocker.patch(
+        "os.execvpe",
+        lambda file, args, env: subprocess.call([file, *args[1:]], env=env),
+    )
+    install_tester = command_tester_factory(
+        "install",
+        poetry=poetry_with_scripts,
+        environment=tmp_venv,
+    )
+    assert install_tester.execute() == 0
+
+    tester = command_tester_factory(
+        "run", poetry=poetry_with_scripts, environment=tmp_venv
+    )
+    assert tester.execute("file-script") == 0
+    assert "Hello from file script" in capfd.readouterr().out
+
+
 @pytest.mark.parametrize(
     "installed_script", [False, True], ids=["not installed", "installed"]
 )
