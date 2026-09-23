@@ -39,7 +39,9 @@ class InitCommand(Command):
     options: ClassVar[list[Option]] = [
         option("name", None, "Name of the package.", flag=False),
         option("description", None, "Description of the package.", flag=False),
-        option("author", None, "Author name of the package.", flag=False),
+        option(
+            "author", None, "Author name of the package.", flag=False, multiple=True
+        ),
         option("python", None, "Compatible Python versions.", flag=False),
         option(
             "dependency",
@@ -148,21 +150,27 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         if not description and is_interactive:
             description = self.ask(self.create_question("Description []: ", default=""))
 
-        author = self.option("author")
-        if not author and vcs_config.get("user.name"):
+        authors = list(self.option("author"))
+        if not authors and vcs_config.get("user.name"):
             author = vcs_config["user.name"]
             author_email = vcs_config.get("user.email")
             if author_email:
                 author += f" <{author_email}>"
+            authors = [author]
 
         if is_interactive:
+            # Only the first author is asked for interactively, any further author
+            # given on the command line is kept as is.
+            default_author = authors[0] if authors else None
             question = self.create_question(
-                f"Author [<comment>{author}</comment>, n to skip]: ", default=author
+                f"Author [<comment>{default_author}</comment>, n to skip]: ",
+                default=default_author,
             )
-            question.set_validator(lambda v: self._validate_author(v, author))
+            question.set_validator(
+                lambda v: self._validate_author(v, default_author or "")
+            )
             author = self.ask(question)
-
-        authors = [author] if author else []
+            authors = [author, *authors[1:]] if author else []
 
         license_name = self.option("license")
         if not license_name and is_interactive:
@@ -237,7 +245,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             name,
             version,
             description=description,
-            author=authors[0] if authors else None,
+            authors=authors,
             readme_format=readme_format,
             license=license_name,
             python=python,
