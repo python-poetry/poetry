@@ -487,7 +487,7 @@ def project_factory(
             layout("src")(
                 name,
                 "0.1.0",
-                author="PyTest Tester <mc.testy@testface.com>",
+                authors=["PyTest Tester <mc.testy@testface.com>"],
                 readme_format="md",
                 python=default_python,
                 dependencies=dependencies,

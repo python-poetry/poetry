@@ -922,6 +922,56 @@ dev = [
     assert expected in output
 
 
+def test_multiple_authors(tester: CommandTester, source_dir: Path) -> None:
+    tester.execute(
+        "--name my-package "
+        "--author 'Foo Bar <foo@example.com>' "
+        "--author 'Baz Qux <baz@example.com>' "
+        "--python '>=3.8'",
+        interactive=False,
+    )
+
+    expected = """\
+authors = [
+    {name = "Foo Bar",email = "foo@example.com"},
+    {name = "Baz Qux",email = "baz@example.com"}
+]
+"""
+
+    assert expected in (source_dir / "pyproject.toml").read_text(encoding="utf-8")
+
+
+def test_multiple_authors_interactive_only_asks_for_the_first(
+    tester: CommandTester,
+) -> None:
+    inputs = [
+        "1.2.3",  # Version
+        "",  # Author, keeps the first one given on the command line
+        "n",  # Interactive packages
+        "n",  # Interactive dev packages
+        "\n",  # Generate
+    ]
+
+    tester.execute(
+        "--name my-package "
+        "--description 'This is a description' "
+        "--author 'Foo Bar <foo@example.com>' "
+        "--author 'Baz Qux <baz@example.com>' "
+        "--python '>=3.8' "
+        "--license MIT",
+        inputs="\n".join(inputs),
+    )
+
+    expected = """\
+authors = [
+    {name = "Foo Bar",email = "foo@example.com"},
+    {name = "Baz Qux",email = "baz@example.com"}
+]
+"""
+
+    assert expected in tester.io.fetch_output()
+
+
 def test_add_package_with_extras_and_whitespace(tester: CommandTester) -> None:
     command = tester.command
     assert isinstance(command, InitCommand)
