@@ -296,3 +296,41 @@ Run `poetry install` to resolve and get rid of this message.
 
 """
     assert tester.io.fetch_error() == expected_message
+
+
+def test_run_file_script_on_windows_finds_installed_script(
+    poetry_with_scripts: Poetry,
+    command_tester_factory: CommandTesterFactory,
+    tmp_venv: VirtualEnv,
+    mocker: MockerFixture,
+    capfd: pytest.CaptureFixture[str],
+) -> None:
+    """
+    Regression test for #11092: on Windows, `type = "file"` scripts are installed
+    under their plain name (see `EditableBuilder`), not with a `.cmd` suffix like
+    console entry points get. `RunCommand.run_script()` must not force a `.cmd`
+    suffix onto the installed-script lookup for file scripts, or it will never find
+    the installed script, emit a bogus "not installed" warning, and fall back to
+    re-running the (possibly stale) un-installed source file instead.
+    """
+    mocker.patch("poetry.console.commands.run.WINDOWS", True)
+    mocker.patch(
+        "os.execvpe",
+        lambda file, args, env: subprocess.call([file, *args[1:]], env=env),
+    )
+    install_tester = command_tester_factory(
+        "install",
+        poetry=poetry_with_scripts,
+        environment=tmp_venv,
+    )
+    assert install_tester.execute() == 0
+
+    tester = command_tester_factory(
+        "run", poetry=poetry_with_scripts, environment=tmp_venv
+    )
+    rc = tester.execute("file-script")
+    out = capfd.readouterr()
+    err = tester.io.fetch_error()
+    assert rc == 0, (rc, out, err)
+    assert "Hello from file script" in out.out
+    assert "not installed as a script" not in err, (out, err)
