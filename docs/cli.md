@@ -855,6 +855,13 @@ poetry run python scripts/train.py --epochs 10
 poetry run pytest tests/ -k "test_login"
 ```
 
+If the arguments of the command contain `--`, put `--` right after `run`.
+Otherwise, options before the `--` are handled by Poetry itself:
+
+```bash
+poetry run -- tox -e py -- --junit-xml=tests.xml
+```
+
 The `run` command can also execute [console scripts (Python entry points)]({{< relref "pyproject#scripts" >}})
 defined in the `pyproject.toml` file.
 
