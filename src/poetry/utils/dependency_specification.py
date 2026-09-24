@@ -27,6 +27,7 @@ DependencySpec = dict[str, str | bool | dict[str, str | bool] | list[str]]
 BaseSpec = TypeVar("BaseSpec", DependencySpec, InlineTable)
 
 GIT_URL_SCHEMES = {"git+http", "git+https", "git+ssh"}
+PACKAGE_ARCHIVE_EXTENSIONS = (".whl", ".tar.gz", ".tar.bz2", ".tar.xz", ".zip")
 
 
 def dependency_to_specification(
@@ -70,6 +71,14 @@ class RequirementsParser:
 
     def parse(self, requirement: str) -> DependencySpec:
         requirement = requirement.strip()
+        is_explicit_path = os.path.sep in requirement or "/" in requirement
+        is_archive_file = requirement.lower().endswith(PACKAGE_ARCHIVE_EXTENSIONS)
+        is_path_like = is_explicit_path or is_archive_file
+
+        if not is_explicit_path and is_archive_file:
+            specification = self._parse_path(requirement)
+            if specification is not None:
+                return specification
 
         specification = self._parse_pep508(requirement)
 
@@ -82,11 +91,10 @@ class RequirementsParser:
             extras = [e.strip() for e in extras_m.group(1).split(",")]
             requirement, _ = requirement.split("[")
 
-        specification = (
-            self._parse_url(requirement)
-            or self._parse_path(requirement)
-            or self._parse_simple(requirement)
-        )
+        specification = self._parse_url(requirement)
+        if specification is None and is_path_like:
+            specification = self._parse_path(requirement)
+        specification = specification or self._parse_simple(requirement)
 
         if specification:
             if extras:
@@ -153,18 +161,19 @@ class RequirementsParser:
         return None
 
     def _parse_path(self, requirement: str) -> DependencySpec | None:
-        if (os.path.sep in requirement or "/" in requirement) and (
-            self._cwd.joinpath(requirement).exists()
-            or (
-                Path(requirement).expanduser().exists()
-                and Path(requirement).expanduser().is_absolute()
-            )
-        ):
-            path = Path(requirement).expanduser()
+        path = Path(requirement).expanduser()
+        relative_path = self._cwd.joinpath(requirement)
+        is_explicit_path = os.path.sep in requirement or "/" in requirement
+        is_relative_path = relative_path.exists()
+        is_absolute_path = path.is_absolute() and path.exists()
+
+        if (
+            is_relative_path and (is_explicit_path or relative_path.is_file())
+        ) or is_absolute_path:
             is_absolute = path.is_absolute()
 
             if not path.is_absolute():
-                path = self._cwd.joinpath(requirement)
+                path = relative_path
 
             if path.is_file():
                 package = self._direct_origin.get_package_from_file(path.resolve())
