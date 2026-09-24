@@ -23,6 +23,7 @@ class LockCommand(InstallerCommand):
             "Ignore existing lock file"
             " and overwrite it with a new lock file created from scratch.",
         ),
+        InstallerCommand._resolution_strategy_option(),
     ]
 
     help = """
@@ -39,6 +40,9 @@ will not be updated.
     loggers: ClassVar[list[str]] = ["poetry.repositories.pypi_repository"]
 
     def handle(self) -> int:
+        self.installer.resolution_strategy(
+            self.option("resolution-strategy") or "highest"
+        )
         self.installer.lock(update=self.option("regenerate"))
 
         return self.installer.run()

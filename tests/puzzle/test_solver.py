@@ -5912,3 +5912,152 @@ def test_solver_logs_age_filtered_versions_on_success(
     solver.solve()
 
     log_age_filtered_versions_spy.assert_called_once_with(level="info", reset=True)
+
+
+@pytest.mark.parametrize(
+    ("strategy", "expected"),
+    [
+        ("highest", {"a": "2.0", "b": "2.0", "c": "2.0"}),
+        ("lowest", {"a": "1.0", "b": "1.0", "c": "1.0"}),
+        ("lowest-direct", {"a": "1.0", "b": "1.0", "c": "2.0"}),
+    ],
+)
+def test_solver_resolution_strategy_prefers_versions(
+    package: ProjectPackage,
+    repo: Repository,
+    pool: RepositoryPool,
+    io: NullIO,
+    strategy: str,
+    expected: dict[str, str],
+) -> None:
+    package.add_dependency(Dependency("a", "*"))
+    package.add_dependency(Dependency("b", "*"))
+    repo.add_package(get_package("b", "1.0"))
+    repo.add_package(get_package("b", "2.0"))
+    for version in ("1.0", "2.0"):
+        dependency_package = get_package("a", version)
+        dependency_package.add_dependency(Dependency("c", "*"))
+        repo.add_package(dependency_package)
+    repo.add_package(get_package("c", "1.0"))
+    repo.add_package(get_package("c", "2.0"))
+
+    result = (
+        Solver(package, pool, [], [], io)
+        .solve(resolution_strategy=strategy)
+        .get_solved_packages()
+    )
+
+    assert {p.name: str(p.version) for p in result} == expected
+
+
+@pytest.mark.parametrize(
+    ("strategy", "expected_c"),
+    [("lowest", "1.0"), ("lowest-direct", "2.0")],
+)
+def test_solver_resolution_strategy_with_extras(
+    package: ProjectPackage,
+    repo: Repository,
+    pool: RepositoryPool,
+    io: NullIO,
+    strategy: str,
+    expected_c: str,
+) -> None:
+    package.add_dependency(
+        Factory.create_dependency("a", {"version": "*", "extras": ["feature"]})
+    )
+    for version in ("1.0", "2.0"):
+        dependency_package = get_package("a", version)
+        dependency_package.extras = {
+            canonicalize_name("feature"): [Dependency("c", "*")]
+        }
+        dependency_package.add_dependency(Dependency("c", "*"))
+        repo.add_package(dependency_package)
+    repo.add_package(get_package("c", "1.0"))
+    repo.add_package(get_package("c", "2.0"))
+
+    result = (
+        Solver(package, pool, [], [], io)
+        .solve(resolution_strategy=strategy)
+        .get_solved_packages()
+    )
+
+    assert {p.name: str(p.version) for p in result} == {
+        "a": "1.0",
+        "c": expected_c,
+    }
+
+
+def test_solver_lowest_resolution_backtracks(
+    package: ProjectPackage,
+    repo: Repository,
+    pool: RepositoryPool,
+    io: NullIO,
+) -> None:
+    package.add_dependency(Dependency("a", "*"))
+    package.add_dependency(Dependency("b", "*"))
+    a1 = get_package("a", "1.0")
+    a1.add_dependency(Dependency("c", "<2.0"))
+    b1 = get_package("b", "1.0")
+    b1.add_dependency(Dependency("c", ">=2.0"))
+    b2 = get_package("b", "2.0")
+    b2.add_dependency(Dependency("c", "<2.0"))
+    repo.add_package(a1)
+    repo.add_package(b1)
+    repo.add_package(b2)
+    repo.add_package(get_package("c", "1.0"))
+
+    result = (
+        Solver(package, pool, [], [], io)
+        .solve(resolution_strategy="lowest")
+        .get_solved_packages()
+    )
+
+    assert {p.name: str(p.version) for p in result} == {
+        "a": "1.0",
+        "b": "2.0",
+        "c": "1.0",
+    }
+
+
+def test_solver_resolution_strategy_rejects_invalid_value(
+    solver: Solver,
+) -> None:
+    with pytest.raises(ValueError, match="Invalid resolution strategy"):
+        solver.solve(resolution_strategy="middle")
+
+
+def test_solver_lowest_respects_python_markers(
+    package: ProjectPackage, repo: Repository, pool: RepositoryPool, io: NullIO
+) -> None:
+    package.python_versions = ">=3.9"
+    package.add_dependency(Dependency("a", "*"))
+    incompatible = get_package("a", "1.0")
+    incompatible.python_versions = "<3.9"
+    compatible = get_package("a", "2.0")
+    compatible.python_versions = ">=3.9"
+    repo.add_package(incompatible)
+    repo.add_package(compatible)
+
+    result = (
+        Solver(package, pool, [], [], io)
+        .solve(resolution_strategy="lowest")
+        .get_solved_packages()
+    )
+
+    assert {p.name: str(p.version) for p in result} == {"a": "2.0"}
+
+
+def test_solver_lowest_does_not_choose_prerelease_without_permission(
+    package: ProjectPackage, repo: Repository, pool: RepositoryPool, io: NullIO
+) -> None:
+    package.add_dependency(Dependency("a", "*"))
+    repo.add_package(get_package("a", "1.0a1"))
+    repo.add_package(get_package("a", "1.0"))
+
+    result = (
+        Solver(package, pool, [], [], io)
+        .solve(resolution_strategy="lowest")
+        .get_solved_packages()
+    )
+
+    assert {p.name: str(p.version) for p in result} == {"a": "1.0"}

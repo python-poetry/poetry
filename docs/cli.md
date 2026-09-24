@@ -604,6 +604,7 @@ poetry install --compile
 * `--all-extras`: Install all extra features (conflicts with `--extras`).
 * `--all-groups`: Install dependencies from all groups (conflicts with `--only`, `--with`, and `--without`).
 * `--compile`: Compile Python source files to bytecode.
+* `--resolution-strategy`: Select the version preference when a lock file must be created. Supported values are `highest` (the default), `lowest`, and `lowest-direct`.
 
 {{% note %}}
 When `--only` is specified, `--with` and `--without` options are ignored.
@@ -635,6 +636,7 @@ poetry lock
 #### Options
 
 * `--regenerate`: Ignore existing lock file and overwrite it with a new lock file created from scratch.
+* `--resolution-strategy`: Select the version preference used when resolving. The supported values are `highest` (the default), `lowest`, and `lowest-direct`. The `lowest` strategy prefers the lowest compatible version for direct and transitive dependencies, while `lowest-direct` prefers the lowest compatible version only for direct dependencies. These are preferences subject to constraints, markers, and backtracking; use `--regenerate` to replace an existing lock file.
 
 ## new
 
@@ -1344,6 +1346,7 @@ poetry sync --compile
 * `--all-extras`: Install all extra features (conflicts with `--extras`).
 * `--all-groups`: Install dependencies from all groups (conflicts with `--only`, `--with`, and `--without`).
 * `--compile`: Compile Python source files to bytecode.
+* `--resolution-strategy`: Select the version preference when a lock file must be created. Supported values are `highest` (the default), `lowest`, and `lowest-direct`.
 
 {{% note %}}
 When `--only` is specified, `--with` and `--without` options are ignored.
