@@ -66,7 +66,11 @@ class RunCommand(EnvCommand):
 
         for script_dir in self.env.script_dirs:
             script_path = script_dir / args[0]
-            if WINDOWS:
+            if WINDOWS and not is_file_script:
+                # Console entry point scripts are installed with a ``.cmd``
+                # wrapper on Windows, but ``type = "file"`` scripts are copied
+                # as-is (see ``EditableBuilder``), so they keep their original
+                # name and must not have ``.cmd`` appended here.
                 script_path = script_path.with_suffix(".cmd")
             if script_path.exists():
                 args = [str(script_path), *args[1:]]
