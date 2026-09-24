@@ -767,6 +767,39 @@ def test_run_install_with_synchronization(
     assert {r.name for r in installer.executor.removals} == expected_removals
 
 
+def test_run_install_with_synchronization_removes_missing_directory_dependency(
+    installer: Installer,
+    locker: Locker,
+    installed: CustomInstalledRepository,
+    tmp_path: Path,
+) -> None:
+    installed.add_package(
+        Package(
+            "demo",
+            "1.0",
+            source_type="directory",
+            source_url=str(tmp_path / "missing"),
+        )
+    )
+
+    lock_data = {
+        "package": [],
+        "metadata": {
+            "lock-version": "2.1",
+            "python-versions": "*",
+            "content-hash": "123456789",
+        },
+    }
+    locker.locked(True)
+    locker.mock_lock_data(lock_data)
+
+    installer.requires_synchronization(True)
+    result = installer.run()
+    assert result == 0
+
+    assert installer.executor.removals_count == 1
+
+
 @pytest.mark.parametrize("lock_version", ("1.1", "2.1"))
 def test_run_whitelist_add(
     installer: Installer,
