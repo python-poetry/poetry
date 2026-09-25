@@ -216,6 +216,52 @@ def test_run_script_exit_code(
     assert tester.execute("return-code") == 42
 
 
+@pytest.mark.skipif(
+    WINDOWS,
+    reason=(
+        'type = "file" scripts are copied verbatim with no Windows dispatch'
+        " mechanism, unlike console entry points which get a generated `.cmd`"
+        " wrapper (see EditableBuilder._add_scripts). On real Windows,"
+        " Env.execute() runs the resolved command through cmd.exe"
+        " (`shell=True`), which refuses to execute an extension-less file at"
+        " all -- cmd.exe has no notion of a `#!/bin/sh` shebang, independent"
+        ' of whether the path is correctly resolved. Making type = "file"'
+        " scripts run on Windows would need shebang parsing and a generated"
+        " wrapper, which is a separate, larger change; see this PR's"
+        " description for details."
+    ),
+)
+def test_run_file_script(
+    poetry_with_scripts: Poetry,
+    command_tester_factory: CommandTesterFactory,
+    tmp_venv: VirtualEnv,
+    mocker: MockerFixture,
+    capfd: pytest.CaptureFixture[str],
+) -> None:
+    """
+    A script declared with type = "file" in [tool.poetry.scripts] is a
+    plain executable file rather than a Python console entry point, and must be
+    runnable directly via poetry run once installed instead of raising
+    KeyError: 'callable' (see #11090).
+    """
+    mocker.patch(
+        "os.execvpe",
+        lambda file, args, env: subprocess.call([file, *args[1:]], env=env),
+    )
+    install_tester = command_tester_factory(
+        "install",
+        poetry=poetry_with_scripts,
+        environment=tmp_venv,
+    )
+    assert install_tester.execute() == 0
+
+    tester = command_tester_factory(
+        "run", poetry=poetry_with_scripts, environment=tmp_venv
+    )
+    assert tester.execute("file-script") == 0
+    assert "Hello from file script" in capfd.readouterr().out
+
+
 @pytest.mark.parametrize(
     "installed_script", [False, True], ids=["not installed", "installed"]
 )
@@ -265,3 +311,55 @@ Run `poetry install` to resolve and get rid of this message.
 
 """
     assert tester.io.fetch_error() == expected_message
+
+
+@pytest.mark.skipif(
+    WINDOWS,
+    reason=(
+        "This test mocks WINDOWS = True to exercise the Windows lookup path on"
+        " POSIX, so it can verify the .cmd-normalization fix without needing a"
+        " native shebang interpreter. On real Windows the lookup itself"
+        " succeeds (no bogus 'not installed' warning), but actually running"
+        " the resolved file-script still fails: Env.execute() invokes it"
+        " through cmd.exe (`shell=True`), which cannot dispatch an"
+        " extension-less `#!/bin/sh` script at all. See"
+        " test_run_file_script's skip reason and this PR's description for"
+        " the same, separate limitation."
+    ),
+)
+def test_run_file_script_on_windows_finds_installed_script(
+    poetry_with_scripts: Poetry,
+    command_tester_factory: CommandTesterFactory,
+    tmp_venv: VirtualEnv,
+    mocker: MockerFixture,
+    capfd: pytest.CaptureFixture[str],
+) -> None:
+    """
+    Regression test for #11092: on Windows, `type = "file"` scripts are installed
+    under their plain name (see `EditableBuilder`), not with a `.cmd` suffix like
+    console entry points get. `RunCommand.run_script()` must not force a `.cmd`
+    suffix onto the installed-script lookup for file scripts, or it will never find
+    the installed script, emit a bogus "not installed" warning, and fall back to
+    re-running the (possibly stale) un-installed source file instead.
+    """
+    mocker.patch("poetry.console.commands.run.WINDOWS", True)
+    mocker.patch(
+        "os.execvpe",
+        lambda file, args, env: subprocess.call([file, *args[1:]], env=env),
+    )
+    install_tester = command_tester_factory(
+        "install",
+        poetry=poetry_with_scripts,
+        environment=tmp_venv,
+    )
+    assert install_tester.execute() == 0
+
+    tester = command_tester_factory(
+        "run", poetry=poetry_with_scripts, environment=tmp_venv
+    )
+    rc = tester.execute("file-script")
+    out = capfd.readouterr()
+    err = tester.io.fetch_error()
+    assert rc == 0, (rc, out, err)
+    assert "Hello from file script" in out.out
+    assert "not installed as a script" not in err, (out, err)

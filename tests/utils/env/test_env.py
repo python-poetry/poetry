@@ -553,6 +553,22 @@ def test_command_from_bin_preserves_relative_path(manager: EnvManager) -> None:
     assert command == ["./foo.py"]
 
 
+def test_command_from_bin_does_not_mangle_absolute_existing_path(
+    manager: EnvManager, tmp_path: Path
+) -> None:
+    # An absolute path to an existing file -- for example a resolved
+    # ``type = "file"`` script from ``[tool.poetry.scripts]`` (see run.py) -- must be
+    # executed as-is. It must not be treated like a bare command name and have a
+    # platform-specific suffix such as ``.exe`` appended to it, which would corrupt an
+    # already-correct path and make it impossible to find (see #11092).
+    script = tmp_path / "a-file-script"
+    script.write_text("#!/bin/sh\necho hi\n", encoding="utf-8")
+
+    env = manager.get()
+    command = env.get_command_from_bin(str(script))
+    assert command == [str(script)]
+
+
 @pytest.fixture
 def system_env_read_only(system_env: SystemEnv, mocker: MockerFixture) -> SystemEnv:
     original_is_dir_writable = is_dir_writable
