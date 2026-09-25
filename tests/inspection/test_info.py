@@ -72,7 +72,7 @@ def demo_setup(source_dir: Path) -> Path:
 def demo_setup_cfg(source_dir: Path) -> Path:
     setup_cfg = source_dir / "setup.cfg"
     setup_cfg.write_text(
-        "\n".join(
+        "\n".join(  # noqa: FLY002
             [
                 "[metadata]",
                 "name = demo",

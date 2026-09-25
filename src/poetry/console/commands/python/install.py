@@ -114,7 +114,7 @@ class PythonInstallCommand(Command):
 
         try:
             installer.exists()
-        except PoetryRuntimeError as e:
+        except PoetryRuntimeError:
             self.io.write("<fg=red>Failed</>\n")
 
             if installer.installation_directory.exists() and self.option("clean"):
@@ -122,7 +122,7 @@ class PythonInstallCommand(Command):
                     str(installer.version), impl, free_threaded, self.io
                 )
 
-            raise e
+            raise
 
         self.io.write("<fg=green>Done</>\n")
 

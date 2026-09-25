@@ -140,7 +140,7 @@ start a [Discussion][Discussions].
 Poetry is developed using Poetry. Refer to the [documentation] to install Poetry in your local environment.
 
 {{% note %}}
-Poetry's development toolchain requires Python 3.9 or newer.
+Poetry's development toolchain requires Python 3.10 or newer.
 {{% /note %}}
 
 You should first fork the Poetry repository and then clone it locally, so that you can make pull requests against the
@@ -238,7 +238,7 @@ present), and the development branch.
 #### Multiple versions
 
 When trying to reproduce issues, you often want to use multiple versions of Poetry at the same time.
-[pipx](https://pypa.github.io/pipx/) makes this easy to do:
+[pipx](https://pipx.pypa.io/stable/) makes this easy to do:
 
 ```sh
 pipx install --suffix @1.2.1 'poetry==1.2.1'

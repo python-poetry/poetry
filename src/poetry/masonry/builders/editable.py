@@ -4,6 +4,7 @@ import csv
 import hashlib
 import json
 import os
+import shutil
 
 from base64 import urlsafe_b64encode
 from pathlib import Path
@@ -218,6 +219,41 @@ class EditableBuilder(Builder):
 
                 added.append(cmd_script)
 
+        # Handle file scripts (type = "file" in [tool.poetry.scripts])
+        for name, specification in self._poetry.local_config.get("scripts", {}).items():
+            if isinstance(specification, dict) and specification.get("type") == "file":
+                source = specification.get("reference")
+                if not source:
+                    self._io.write_error_line(
+                        f"  - File script <c2>{name}</c2> is missing"
+                        ' a "reference" field'
+                    )
+                    continue
+                source_path = self._path / source
+
+                if not source_path.exists():
+                    self._io.write_error_line(
+                        f"  - File script <c2>{name}</c2> references"
+                        f" <b>{source}</b> which does not exist"
+                    )
+                    continue
+
+                if not source_path.is_file():
+                    self._io.write_error_line(
+                        f"  - File script <c2>{name}</c2> references"
+                        f" <b>{source}</b> which is not a file"
+                    )
+                    continue
+
+                target = scripts_path.joinpath(name)
+                self._debug(
+                    f"  - Adding the <c2>{name}</c2> file script"
+                    f" to <b>{scripts_path}</b>"
+                )
+                shutil.copy2(source_path, target)
+                target.chmod(0o755)
+                added.append(target)
+
         return added
 
     def _add_dist_info(self, added_files: list[Path]) -> None:
@@ -232,8 +268,7 @@ class EditableBuilder(Builder):
         )
 
         builder.prepare_metadata(dist_info.parent)
-        for path in sorted(f for f in dist_info.rglob("*") if f.is_file()):
-            added_files.append(path)
+        added_files.extend(sorted(f for f in dist_info.rglob("*") if f.is_file()))
 
         with dist_info.joinpath("INSTALLER").open("w", encoding="utf-8") as f:
             f.write("poetry")

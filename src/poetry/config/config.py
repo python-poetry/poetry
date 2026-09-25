@@ -226,7 +226,7 @@ class Config:
         def _all(config: dict[str, Any], parent_key: str = "") -> dict[str, Any]:
             all_ = {}
 
-            for key in config:
+            for key in config:  # noqa: PLC0206
                 value = self.get(parent_key + key)
                 if isinstance(value, dict):
                     if parent_key != "":

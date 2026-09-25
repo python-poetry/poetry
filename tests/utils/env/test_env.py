@@ -557,7 +557,7 @@ def test_command_from_bin_preserves_relative_path(manager: EnvManager) -> None:
 def system_env_read_only(system_env: SystemEnv, mocker: MockerFixture) -> SystemEnv:
     original_is_dir_writable = is_dir_writable
 
-    read_only_paths = {system_env.paths[key] for key in SCHEME_NAMES}
+    read_only_paths = {system_env.paths[key] for key in SCHEME_NAMES}  # type: ignore[literal-required]
 
     def mock_is_dir_writable(path: Path, create: bool = False) -> bool:
         if str(path) in read_only_paths:

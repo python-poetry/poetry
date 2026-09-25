@@ -5,7 +5,7 @@ import pytest
 
 @pytest.fixture
 def init_basic_inputs() -> str:
-    return "\n".join(
+    return "\n".join(  # noqa: FLY002
         [
             "my-package",  # Package name
             "1.2.3",  # Version

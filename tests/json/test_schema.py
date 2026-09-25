@@ -26,8 +26,10 @@ def test_pyproject_toml_invalid_priority() -> None:
     ).read()
     assert Factory.validate(toml) == {
         "errors": [
-            "tool.poetry.source[0].priority must be one of ['primary',"
-            " 'supplemental', 'explicit']"
+            (
+                "tool.poetry.source[0].priority must be one of ['primary',"
+                " 'supplemental', 'explicit']"
+            )
         ],
         "warnings": [],
     }
@@ -50,8 +52,10 @@ def test_self_invalid_plugin() -> None:
     toml: dict[str, Any] = TOMLFile(FIXTURE_DIR / "self_invalid_plugin.toml").read()
     assert Factory.validate(toml) == {
         "errors": [
-            "tool.poetry.requires-plugins.foo must be valid exactly by one definition"
-            " (0 matches found)"
+            (
+                "tool.poetry.requires-plugins.foo must be valid exactly by one definition"
+                " (0 matches found)"
+            )
         ],
         "warnings": [],
     }

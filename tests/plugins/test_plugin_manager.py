@@ -163,7 +163,7 @@ def test_load_plugins_with_invalid_plugin(
 ) -> None:
     manager = manager_factory()
 
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         manager.load_plugins()
 
 

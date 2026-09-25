@@ -22,8 +22,10 @@ if TYPE_CHECKING:
 
 BAD_PYTHON_INSTALL_INFO = [
     "This could happen because you are missing platform dependencies required.",
-    "Please refer to https://gregoryszorc.com/docs/python-build-standalone/main/running.html#runtime-requirements "
-    "for more information about the necessary requirements.",
+    (
+        "Please refer to https://gregoryszorc.com/docs/python-build-standalone/main/running.html#runtime-requirements "
+        "for more information about the necessary requirements."
+    ),
     "Please remove the failing Python installation using <c1>poetry python remove <version></> before continuing.",
 ]
 

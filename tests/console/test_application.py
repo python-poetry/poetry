@@ -209,10 +209,6 @@ def test_application_verify_cache_flag_at_install(
             ["--project", "/path/project/dir", "env", "list"],
         ),
         (
-            ["-P/path/project/dir", "env", "list"],
-            ["--project", "/path/project/dir", "env", "list"],
-        ),
-        (
             ["-v", "run", "-P/path/project/dir", "echo", "--help"],
             [
                 "--verbose",

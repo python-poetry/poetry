@@ -92,7 +92,7 @@ class EnvManager:
 
     ENVS_FILE = "envs.toml"
 
-    def __init__(self, poetry: Poetry, io: None | IO = None) -> None:
+    def __init__(self, poetry: Poetry, io: IO | None = None) -> None:
         self._poetry = poetry
         self._io = io or NullIO()
 
@@ -568,7 +568,7 @@ class EnvManager:
 
         cli_result = virtualenv.cli_run(args, setup_logging=False)
 
-        # Exclude the venv folder from from macOS Time Machine backups
+        # Exclude the venv folder from macOS Time Machine backups
         # TODO: Add backup-ignore markers for other platforms too
         if sys.platform == "darwin":
             import xattr
@@ -590,7 +590,7 @@ class EnvManager:
         except OSError as e:
             # Continue only if e.errno == 16
             if e.errno != 16:  # ERRNO 16: Device or resource busy
-                raise e
+                raise
 
         # Delete all files and folders but the toplevel one. This is because sometimes
         # the venv folder is mounted by the OS, such as in a docker volume. In such

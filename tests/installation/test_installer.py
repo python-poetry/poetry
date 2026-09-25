@@ -1165,7 +1165,7 @@ def test_solver_resolves_self_referential_extras_with_markers(
     result = installer.run()
     assert result == 0
 
-    name = "-".join(["with-self-referencing-extras", "b", "markers"])
+    name = "with-self-referencing-extras-b-markers"
 
     # FIXME: At the time of writing this test case, the markers from self-ref extras are not
     #  correctly propagated into the dependency specs. For example, given this case,
