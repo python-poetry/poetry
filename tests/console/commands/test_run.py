@@ -216,6 +216,21 @@ def test_run_script_exit_code(
     assert tester.execute("return-code") == 42
 
 
+@pytest.mark.skipif(
+    WINDOWS,
+    reason=(
+        'type = "file" scripts are copied verbatim with no Windows dispatch'
+        " mechanism, unlike console entry points which get a generated `.cmd`"
+        " wrapper (see EditableBuilder._add_scripts). On real Windows,"
+        " Env.execute() runs the resolved command through cmd.exe"
+        " (`shell=True`), which refuses to execute an extension-less file at"
+        " all -- cmd.exe has no notion of a `#!/bin/sh` shebang, independent"
+        ' of whether the path is correctly resolved. Making type = "file"'
+        " scripts run on Windows would need shebang parsing and a generated"
+        " wrapper, which is a separate, larger change; see this PR's"
+        " description for details."
+    ),
+)
 def test_run_file_script(
     poetry_with_scripts: Poetry,
     command_tester_factory: CommandTesterFactory,
@@ -298,6 +313,20 @@ Run `poetry install` to resolve and get rid of this message.
     assert tester.io.fetch_error() == expected_message
 
 
+@pytest.mark.skipif(
+    WINDOWS,
+    reason=(
+        "This test mocks WINDOWS = True to exercise the Windows lookup path on"
+        " POSIX, so it can verify the .cmd-normalization fix without needing a"
+        " native shebang interpreter. On real Windows the lookup itself"
+        " succeeds (no bogus 'not installed' warning), but actually running"
+        " the resolved file-script still fails: Env.execute() invokes it"
+        " through cmd.exe (`shell=True`), which cannot dispatch an"
+        " extension-less `#!/bin/sh` script at all. See"
+        " test_run_file_script's skip reason and this PR's description for"
+        " the same, separate limitation."
+    ),
+)
 def test_run_file_script_on_windows_finds_installed_script(
     poetry_with_scripts: Poetry,
     command_tester_factory: CommandTesterFactory,
