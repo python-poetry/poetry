@@ -4,10 +4,12 @@ import logging
 import os
 import platform
 import sys
+import threading
 
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING
+from weakref import WeakValueDictionary
 
 from installer import install
 from installer.destinations import SchemeDictionaryDestination
@@ -29,6 +31,25 @@ if TYPE_CHECKING:
     from installer.utils import Scheme
 
     from poetry.utils.env import Env
+
+
+# Several wheels may contain the same file (e.g. the __init__.py of a
+# pkgutil-style namespace package). Since wheels are installed in parallel,
+# two threads may write such a file at the same time, which results in a file
+# with interleaved contents. Therefore, each file is written under a lock
+# that is specific to its path.
+_file_locks: WeakValueDictionary[str, threading.Lock] = WeakValueDictionary()
+_file_locks_lock = threading.Lock()
+
+
+def _file_lock(path: str) -> threading.Lock:
+    key = os.path.normcase(path)
+    with _file_locks_lock:
+        lock = _file_locks.get(key)
+        if lock is None:
+            lock = _file_locks[key] = threading.Lock()
+
+    return lock
 
 
 class WheelDestination(SchemeDictionaryDestination):
@@ -100,11 +121,12 @@ class WheelDestination(SchemeDictionaryDestination):
             # that two threads try to create the directory.
             parent_folder.mkdir(parents=True, exist_ok=True)
 
-        with target_path.open("wb") as f:
-            hash_, size = copyfileobj_with_hashing(stream, f, self.hash_algorithm)
+        with _file_lock(target_path_str):
+            with target_path.open("wb") as f:
+                hash_, size = copyfileobj_with_hashing(stream, f, self.hash_algorithm)
 
-        if is_executable:
-            make_file_executable(target_path)
+            if is_executable:
+                make_file_executable(target_path)
 
         return RecordEntry(path, Hash(self.hash_algorithm, hash_), size)
 

@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 import re
+import threading
+import zipfile
 
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import installer.utils
 import pytest
 
 from poetry.core.constraints.version import parse_constraint
@@ -15,7 +19,10 @@ from poetry.utils.env import MockEnv
 
 
 if TYPE_CHECKING:
+    from typing import BinaryIO
+
     from pytest import TempPathFactory
+    from pytest_mock import MockerFixture
 
     from tests.types import FixtureDirGetter
 
@@ -144,3 +151,94 @@ def test_no_path_traversal_via_symlink(
         assert target.read_text(encoding="utf-8") == "original"
     else:
         assert not list(target_dir.iterdir())
+
+
+def _build_wheel(directory: Path, name: str, files: dict[str, bytes]) -> Path:
+    dist_info = f"{name}-0.1.dist-info"
+    files = {
+        **files,
+        f"{dist_info}/WHEEL": (
+            b"Wheel-Version: 1.0\nRoot-Is-Purelib: true\nTag: py3-none-any\n"
+        ),
+        f"{dist_info}/METADATA": (
+            f"Metadata-Version: 2.1\nName: {name}\nVersion: 0.1\n".encode()
+        ),
+    }
+    files[f"{dist_info}/RECORD"] = (
+        "\n".join([f"{k},," for k in files] + [f"{dist_info}/RECORD,,"]) + "\n"
+    ).encode()
+
+    wheel = directory / f"{name}-0.1-py3-none-any.whl"
+    with zipfile.ZipFile(wheel, "w") as z:
+        for k, v in files.items():
+            z.writestr(k, v)
+
+    return wheel
+
+
+def test_parallel_installation_of_file_contained_in_several_wheels(
+    tmp_path: Path, env: MockEnv, mocker: MockerFixture
+) -> None:
+    """
+    Several wheels may contain the same file, e.g. the __init__.py
+    of a pkgutil-style namespace package. If such wheels are installed
+    in parallel, the file must not end up with interleaved contents.
+    """
+    shared_file = "namespace/__init__.py"
+    content_first = b"# first\n" * 100
+    content_second = b"# second\n"
+    wheel_first = _build_wheel(tmp_path, "first", {shared_file: content_first})
+    wheel_second = _build_wheel(tmp_path, "second", {shared_file: content_second})
+    target = Path(env.paths["purelib"]) / shared_file
+
+    first_write_started = threading.Event()
+    second_write_finished = threading.Event()
+    copyfileobj_with_hashing = installer.utils.copyfileobj_with_hashing
+
+    class PausingWriter:
+        """Write a part of the data and pause to give the other thread the chance
+        to write the same file before the rest of the data is written."""
+
+        def __init__(self, dest: BinaryIO) -> None:
+            self._dest = dest
+
+        def write(self, data: bytes) -> int:
+            written = self._dest.write(data[:10])
+            self._dest.flush()
+            first_write_started.set()
+            # If writes of the same file are serialized,
+            # the second write cannot finish and the wait times out.
+            second_write_finished.wait(timeout=1)
+            return written + self._dest.write(data[10:])
+
+    def copy(source: BinaryIO, dest: BinaryIO, hash_algorithm: str) -> tuple[str, int]:
+        if Path(dest.name) != target:
+            return copyfileobj_with_hashing(source, dest, hash_algorithm)
+        if not first_write_started.is_set():
+            return copyfileobj_with_hashing(
+                source,
+                PausingWriter(dest),  # type: ignore[arg-type]
+                hash_algorithm,
+            )
+        result = copyfileobj_with_hashing(source, dest, hash_algorithm)
+        second_write_finished.set()
+        return result
+
+    mocker.patch("installer.utils.copyfileobj_with_hashing", new=copy)
+
+    wheel_installer = WheelInstaller(env)
+
+    def install_second() -> None:
+        assert first_write_started.wait(timeout=10)
+        wheel_installer.install(wheel_second)
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        futures = [
+            executor.submit(wheel_installer.install, wheel_first),
+            executor.submit(install_second),
+        ]
+        for future in futures:
+            future.result()
+
+    # The file written last wins.
+    assert target.read_bytes() == content_second
