@@ -70,6 +70,9 @@ class RequirementsParser:
 
     def parse(self, requirement: str) -> DependencySpec:
         requirement = requirement.strip()
+        requirement = re.sub(
+            r"@\s*latest(\s*;|$)", r"\1", requirement, flags=re.IGNORECASE
+        )
 
         specification = self._parse_pep508(requirement)
 
@@ -96,8 +99,11 @@ class RequirementsParser:
         raise ValueError(f"Invalid dependency specification: {requirement}")
 
     def _parse_pep508(self, requirement: str) -> DependencySpec | None:
-        if " ; " not in requirement and re.search(r"@[\^~!=<>\d]", requirement):
-            # this is of the form package@<semver>, do not attempt to parse it
+        if " ; " not in requirement and (
+            re.search(r"@[\^~!=<>\d]", requirement)
+            or re.search(r"@\s*latest(\s|;|$)", requirement, re.IGNORECASE)
+        ):
+            # this is of the form package@<semver> or package@latest, do not attempt to parse it
             return None
 
         with contextlib.suppress(ValueError):
