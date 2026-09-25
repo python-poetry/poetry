@@ -22,6 +22,17 @@ class VersionCommand(Command):
         "Shows the version of the project or bumps it when a valid "
         "bump rule is provided."
     )
+    BUMP_RULES: ClassVar[frozenset[str]] = frozenset(
+        {
+            "major",
+            "minor",
+            "patch",
+            "premajor",
+            "preminor",
+            "prepatch",
+            "prerelease",
+        }
+    )
 
     arguments: ClassVar[list[Argument]] = [
         argument(
@@ -38,6 +49,7 @@ class VersionCommand(Command):
             "Do not update pyproject.toml file",
         ),
         option("next-phase", None, "Increment the phase of the current version"),
+        option("dev", None, "Create or bump a development release for a bump rule"),
     ]
 
     help = """\
@@ -54,7 +66,10 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
 
         if version:
             version = self.increment_version(
-                self.poetry.package.pretty_version, version, self.option("next-phase")
+                self.poetry.package.pretty_version,
+                version,
+                self.option("next-phase"),
+                self.option("dev"),
             )
 
             if self.option("short"):
@@ -87,7 +102,7 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
         return 0
 
     def increment_version(
-        self, version: str, rule: str, next_phase: bool = False
+        self, version: str, rule: str, next_phase: bool = False, dev: bool = False
     ) -> Version:
         from poetry.core.constraints.version import Version
 
@@ -95,6 +110,12 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
             parsed = Version.parse(version)
         except InvalidVersionError:
             raise ValueError("The project's version doesn't seem to follow semver")
+
+        if dev and rule not in self.BUMP_RULES:
+            raise ValueError(
+                "The --dev option can only be used with a bump rule, "
+                "not an explicit version."
+            )
 
         if rule in {"major", "premajor"}:
             new = parsed.next_major()
@@ -109,7 +130,9 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
             if rule == "prepatch":
                 new = new.first_prerelease()
         elif rule == "prerelease":
-            if parsed.is_unstable():
+            if parsed.dev is not None and (not next_phase or parsed.pre is None):
+                new = parsed.without_devrelease()
+            elif parsed.is_unstable():
                 pre = parsed.pre
                 assert pre is not None
                 pre = pre.next_phase() if next_phase else pre.next()
@@ -118,5 +141,11 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
                 new = parsed.next_patch().first_prerelease()
         else:
             new = Version.parse(rule)
+
+        if dev:
+            if parsed.dev is not None and new == parsed.without_devrelease():
+                new = parsed.next_devrelease()
+            else:
+                new = new.first_devrelease()
 
         return new
