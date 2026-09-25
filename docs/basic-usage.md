@@ -33,8 +33,12 @@ You can run a command in the project's virtual environment with [`poetry run`]({
 poetry run pytest
 ```
 
-Alternatively, use [`poetry env activate`]({{< relref "managing-environments#activating-the-environment" >}})
-to print the command that activates the environment in your shell.
+Alternatively, in Bash or Zsh, evaluate the output of
+[`poetry env activate`]({{< relref "managing-environments#activating-the-environment" >}}):
+
+```bash
+eval "$(poetry env activate)"
+```
 
 To add or remove a dependency, use [`poetry add`]({{< relref "cli#add" >}}) or
 [`poetry remove`]({{< relref "cli#remove" >}}). These commands update both `pyproject.toml` and `poetry.lock`.
