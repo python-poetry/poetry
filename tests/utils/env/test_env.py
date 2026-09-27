@@ -257,7 +257,7 @@ import sys
 
     results: list[int] = []
     # use a separate thread, so that the test does not block in case of error
-    thread = Thread(target=target, args=(results,))
+    thread = Thread(target=target, args=(results,), daemon=True)
     thread.start()
     thread.join(10)  # a real deadlock never finishes; absorb slow runners
     assert not thread.is_alive()
