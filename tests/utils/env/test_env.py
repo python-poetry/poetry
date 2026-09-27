@@ -245,8 +245,8 @@ def test_call_does_not_block_on_full_pipe(
     script.write_text(
         f"""\
 import sys
-for i in range(10000):
-    print('just print a lot of text to fill the buffer', file={out})
+# one big write: far exceeds any OS pipe buffer (4 KiB default on Windows, 64 KiB on Linux)
+{out}.write("x" * 1_000_000)
 """,
         encoding="utf-8",
     )
@@ -257,10 +257,11 @@ for i in range(10000):
 
     results: list[int] = []
     # use a separate thread, so that the test does not block in case of error
-    thread = Thread(target=target, args=(results,))
+    thread = Thread(target=target, args=(results,), daemon=True)
     thread.start()
-    thread.join(1)  # must not block
-    assert results and results[0] == 0
+    thread.join(10)  # a real deadlock never finishes; absorb slow runners
+    assert not thread.is_alive()
+    assert results == [0]
 
 
 def test_run_python_script_called_process_error(
