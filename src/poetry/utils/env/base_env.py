@@ -466,7 +466,13 @@ class Env(ABC):
                 output = ""
             else:
                 output = subprocess.check_output(
-                    cmd, stderr=stderr, env=env, text=True, encoding="locale", **kwargs
+                    cmd,
+                    stderr=stderr,
+                    env=env,
+                    text=True,
+                    encoding="locale",
+                    errors="replace",
+                    **kwargs,
                 )
         except CalledProcessError as e:
             raise EnvCommandError(e)

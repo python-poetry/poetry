@@ -600,3 +600,16 @@ def test_marker_env_is_equal_for_all_envs(tmp_path: Path, manager: EnvManager) -
 
     assert venv_marker_env == generic_marker_env
     assert venv_marker_env == system_marker_env
+
+
+def test_run_tolerates_output_that_cannot_be_decoded(tmp_venv: VirtualEnv) -> None:
+    # A command can print bytes that are not valid in the locale encoding: pip
+    # does so on Windows hosts whose code page is not UTF-8 (e.g. GBK). Reading
+    # that output must not raise UnicodeDecodeError.
+    output = tmp_venv._run(
+        [sys.executable, "-c", "import sys; sys.stdout.buffer.write(b'\\x80')"]
+    )
+
+    # Whether 0x80 decodes at all depends on the locale (Latin-1 and cp1252 accept
+    # it), so the contract under test is that the read returns instead of raising.
+    assert output
