@@ -104,7 +104,7 @@ def test_build_with_clean(
     tmp_tester.execute("--clean" if clean else "")
     build_artifacts = tuple(dist_dir.glob("*"))
 
-    assert len(build_artifacts) == 2 if clean else 3
+    assert len(build_artifacts) == (2 if clean else 3)
     assert all(archive.exists() for archive in build_artifacts)
 
 
