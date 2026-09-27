@@ -14,9 +14,22 @@ menu:
 Poetry makes project environment isolation one of its core features.
 
 What this means is that it will always work isolated from your global Python installation.
-To achieve this, it will first check if it's currently running inside a virtual environment.
-If it is, it will use it directly without creating a new one. But if it's not, it will use
-one that it has already created or create a brand new one for you.
+To achieve this, Poetry chooses a project virtual environment in this order:
+
+1. If you previously ran [`poetry env use`](#switching-between-environments) for this
+   project, Poetry uses that **explicitly selected** environment (stored for the project
+   in Poetry's virtualenvs cache, typically as an `envs.toml` entry). This selection
+   takes precedence even if your shell currently has another virtual environment
+   activated (`VIRTUAL_ENV`).
+2. Otherwise, if Poetry is already running inside a virtual environment, it uses that
+   environment directly without creating a new one.
+3. Otherwise, it reuses an environment it previously created for the project, or creates
+   a new one.
+
+If you bring your own virtualenv tooling (for example `direnv` or `python -m venv`),
+prefer relying on step 2 above and avoid `poetry env use`, or clear an earlier
+selection with `poetry env use system` when you want the shell-activated environment
+to win again.
 
 By default, Poetry will try to use the Python version used during Poetry's installation
 to create the virtual environment for the current project.
@@ -75,6 +88,19 @@ special `system` Python version to retrieve the default behavior:
 ```bash
 poetry env use system
 ```
+
+{{% note %}}
+`poetry env use` stores that project selection in an `envs.toml` file under Poetry's
+virtualenvs directory. Print the directory with:
+
+```bash
+poetry config virtualenvs.path
+```
+
+The file is typically `envs.toml` in that directory. It can remain after a Poetry
+reinstall; remove the project's entry there, or run `poetry env use system`, to clear
+the explicit selection. Precedence details are in the list at the top of this page.
+{{% /note %}}
 
 ## Activating the environment
 
