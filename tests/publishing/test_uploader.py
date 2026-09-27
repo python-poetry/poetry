@@ -18,6 +18,7 @@ if TYPE_CHECKING:
 
     import responses
 
+    from pytest import MonkeyPatch
     from pytest_mock import MockerFixture
 
     from poetry.poetry import Poetry
@@ -32,6 +33,14 @@ def poetry(fixture_dir: FixtureDirGetter) -> Poetry:
 @pytest.fixture
 def uploader(poetry: Poetry) -> Uploader:
     return Uploader(poetry, NullIO())
+
+
+def test_user_agent_includes_user_data(
+    uploader: Uploader, monkeypatch: MonkeyPatch
+) -> None:
+    monkeypatch.setenv("POETRY_USER_AGENT_USER_DATA", "build/42")
+
+    assert "user_data/build/42" in uploader.user_agent
 
 
 @pytest.mark.parametrize(
