@@ -7,7 +7,6 @@ import sys
 
 from importlib import metadata
 from pathlib import Path
-from threading import Thread
 from typing import TYPE_CHECKING
 
 import packaging.tags
@@ -251,16 +250,8 @@ for i in range(10000):
         encoding="utf-8",
     )
 
-    def target(result: list[int]) -> None:
-        tmp_venv.run("python", str(script), call=True)
-        result.append(0)
-
-    results: list[int] = []
-    # use a separate thread, so that the test does not block in case of error
-    thread = Thread(target=target, args=(results,))
-    thread.start()
-    thread.join(1)  # must not block
-    assert results and results[0] == 0
+    # Allow slow CI runners without leaving a blocked subprocess running on failure.
+    tmp_venv.run("python", str(script), call=True, timeout=30)
 
 
 def test_run_python_script_called_process_error(

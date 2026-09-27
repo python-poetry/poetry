@@ -50,8 +50,10 @@ def project_with_include(fixture_dir: FixtureDirGetter) -> Poetry:
 
 
 @pytest.fixture()
-def extended_poetry(fixture_dir: FixtureDirGetter) -> Poetry:
-    poetry = Factory().create_poetry(fixture_dir("extended_project"))
+def extended_poetry(fixture_dir: FixtureDirGetter, tmp_path: Path) -> Poetry:
+    project = tmp_path / "extended_project"
+    shutil.copytree(fixture_dir("extended_project"), project)
+    poetry = Factory().create_poetry(project)
 
     return poetry
 
@@ -309,6 +311,9 @@ def test_builder_installs_project_gui_scripts(
 def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
     mocker: MockerFixture, extended_poetry: Poetry, tmp_path: Path
 ) -> None:
+    # Generated setup files must not touch the shared fixture copied by other tests.
+    project = extended_poetry.pyproject.file.path.parent
+    assert project.is_relative_to(tmp_path)
     pip_install = mocker.patch("poetry.masonry.builders.editable.pip_install")
     env = MockEnv(path=tmp_path / "foo")
     builder = EditableBuilder(extended_poetry, env, NullIO())

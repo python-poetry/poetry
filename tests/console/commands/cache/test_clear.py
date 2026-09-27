@@ -141,3 +141,62 @@ def test_cache_clear_pkg(
         assert caches[1].has("cashy:0.2")
 
     assert caches[0].has("cachy:0.1")
+
+
+def _cache_contents(repository_cache_dir: Path) -> dict[Path, bytes]:
+    return {
+        path.relative_to(repository_cache_dir): path.read_bytes()
+        for path in repository_cache_dir.rglob("*")
+        if path.is_file()
+    }
+
+
+@pytest.mark.parametrize(
+    ("cache_key", "expected_error"),
+    [
+        (
+            "cachy",
+            (
+                "Only specifying the package name is not yet supported. "
+                "Add a specific version to clear"
+            ),
+        ),
+        ("cachy:0.1:extra", "Invalid cache key"),
+    ],
+)
+@pytest.mark.parametrize("options", ["", " --all"])
+def test_cache_clear_invalid_key_preserves_entries(
+    tester: ApplicationTester,
+    repository_cache_dir: Path,
+    repositories: list[str],
+    caches: list[FileCache[dict[str, str]]],
+    cache_key: str,
+    expected_error: str,
+    options: str,
+) -> None:
+    before = _cache_contents(repository_cache_dir)
+
+    exit_code = tester.execute(f"cache clear {repositories[1]}:{cache_key}{options}")
+
+    assert exit_code == 1
+    assert expected_error in tester.io.fetch_error()
+    assert tester.io.fetch_output() == ""
+    assert _cache_contents(repository_cache_dir) == before
+
+
+@pytest.mark.parametrize("cache_key", ["cachy:9.9", "missing:0.1"])
+def test_cache_clear_missing_entry_preserves_entries(
+    tester: ApplicationTester,
+    repository_cache_dir: Path,
+    repositories: list[str],
+    caches: list[FileCache[dict[str, str]]],
+    cache_key: str,
+) -> None:
+    before = _cache_contents(repository_cache_dir)
+
+    exit_code = tester.execute(f"cache clear {repositories[1]}:{cache_key}")
+
+    assert exit_code == 0
+    assert tester.io.fetch_output() == f"No cache entries for {cache_key}\n"
+    assert tester.io.fetch_error() == ""
+    assert _cache_contents(repository_cache_dir) == before
