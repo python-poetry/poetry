@@ -72,7 +72,11 @@ class RunCommand(EnvCommand):
             self._warning_not_installed_script(args[0])
 
         if is_file_script:
-            return self.env.execute(*args)
+            try:
+                return self.env.execute(*args)
+            except FileNotFoundError:
+                self.line_error(f"<error>Command not found: <c1>{args[0]}</c1></error>")
+                return 1
 
         if isinstance(script, dict):
             script = script["callable"]

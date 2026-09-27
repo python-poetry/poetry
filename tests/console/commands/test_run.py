@@ -237,6 +237,26 @@ def test_run_file_script(
     assert env.executed == [[str(script_path), "argument"]]
 
 
+def test_run_file_script_not_installed(
+    project_factory: ProjectFactory,
+    fixture_dir: FixtureDirGetter,
+    command_tester_factory: CommandTesterFactory,
+    env: MockEnv,
+    mocker: MockerFixture,
+) -> None:
+    source = fixture_dir("file_scripts_project")
+    poetry = project_factory(
+        name="file-scripts-project",
+        pyproject_content=(source / "pyproject.toml").read_text(encoding="utf-8"),
+        source=source,
+    )
+    mocker.patch.object(env, "execute", side_effect=FileNotFoundError)
+    tester = command_tester_factory("run", poetry=poetry, environment=env)
+
+    assert tester.execute("my-script") == 1
+    assert "Command not found: my-script" in tester.io.fetch_error()
+
+
 @pytest.mark.parametrize(
     "installed_script", [False, True], ids=["not installed", "installed"]
 )
