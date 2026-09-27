@@ -58,9 +58,11 @@ class RunCommand(EnvCommand):
         Otherwise (when an entry point script does not exist), ``sys.argv[0]`` is the
         script name only, i.e. ``poetry run foo`` has ``sys.argv == ['foo']``.
         """
+        is_file_script = isinstance(script, dict) and script.get("type") == "file"
+
         for script_dir in self.env.script_dirs:
             script_path = script_dir / args[0]
-            if WINDOWS:
+            if WINDOWS and not is_file_script:
                 script_path = script_path.with_suffix(".cmd")
             if script_path.exists():
                 args = [str(script_path), *args[1:]]
@@ -68,6 +70,9 @@ class RunCommand(EnvCommand):
         else:
             # If we reach this point, the script is not installed
             self._warning_not_installed_script(args[0])
+
+        if is_file_script:
+            return self.env.execute(*args)
 
         if isinstance(script, dict):
             script = script["callable"]
