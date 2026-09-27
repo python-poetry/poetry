@@ -20,6 +20,8 @@ from poetry.puzzle.exceptions import OverrideNeededError
 from poetry.puzzle.exceptions import SolverProblemError
 from poetry.puzzle.provider import Indicator
 from poetry.puzzle.provider import Provider
+from poetry.puzzle.resolution import ResolutionStrategy
+from poetry.puzzle.resolution import parse_resolution_strategy
 
 
 if TYPE_CHECKING:
@@ -56,12 +58,14 @@ class Solver:
         locked: list[Package],
         io: IO,
         active_root_extras: Collection[NormalizedName] | None = None,
+        resolution_strategy: ResolutionStrategy | str = ResolutionStrategy.HIGHEST,
     ) -> None:
         self._package = package
         self._pool = pool
         self._installed_packages = installed
         self._locked_packages = locked
         self._io = io
+        self._resolution_strategy = parse_resolution_strategy(resolution_strategy)
 
         self._provider = Provider(
             self._package,
@@ -69,6 +73,7 @@ class Solver:
             self._io,
             locked=locked,
             active_root_extras=active_root_extras,
+            resolution_strategy=self._resolution_strategy,
         )
         self._overrides: list[dict[Package, dict[str, Dependency]]] = []
 
@@ -82,9 +87,15 @@ class Solver:
             yield
 
     def solve(
-        self, use_latest: Collection[NormalizedName] | None = None
+        self,
+        use_latest: Collection[NormalizedName] | None = None,
+        resolution_strategy: ResolutionStrategy | str | None = None,
     ) -> Transaction:
         from poetry.puzzle.transaction import Transaction
+
+        if resolution_strategy is not None:
+            self._resolution_strategy = parse_resolution_strategy(resolution_strategy)
+            self._provider.set_resolution_strategy(self._resolution_strategy)
 
         try:
             with self._progress(), self._provider.use_latest_for(use_latest or []):

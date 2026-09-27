@@ -32,6 +32,7 @@ from poetry.packages import DependencyPackage
 from poetry.packages.direct_origin import DirectOrigin
 from poetry.packages.package_collection import PackageCollection
 from poetry.puzzle.exceptions import OverrideNeededError
+from poetry.puzzle.resolution import ResolutionStrategy
 from poetry.repositories.repository_pool import Priority
 
 
@@ -137,6 +138,7 @@ class Provider:
         *,
         locked: list[Package] | None = None,
         active_root_extras: Collection[NormalizedName] | None = None,
+        resolution_strategy: ResolutionStrategy = ResolutionStrategy.HIGHEST,
     ) -> None:
         self._package = package
         self._pool = pool
@@ -155,6 +157,10 @@ class Provider:
         self._active_root_extras = (
             frozenset(active_root_extras) if active_root_extras is not None else None
         )
+        self._resolution_strategy = resolution_strategy
+        self._direct_dependency_names = {
+            dependency.name for dependency in package.all_requires
+        }
 
         self._explicit_sources: dict[str, str] = {}
         for locked_package in locked or []:
@@ -177,6 +183,9 @@ class Provider:
     @property
     def use_latest(self) -> Collection[NormalizedName]:
         return self._use_latest
+
+    def set_resolution_strategy(self, resolution_strategy: ResolutionStrategy) -> None:
+        self._resolution_strategy = resolution_strategy
 
     @functools.cached_property
     def _overrides_marker_intersection(self) -> BaseMarker:
@@ -343,14 +352,27 @@ class Provider:
 
         packages = self._pool.find_packages(dependency)
 
-        packages.sort(
-            key=lambda p: (
-                not p.yanked,
-                not p.is_prerelease() and not dependency.allows_prereleases(),
-                p.version,
-            ),
-            reverse=True,
+        use_lowest = self._resolution_strategy is ResolutionStrategy.LOWEST or (
+            self._resolution_strategy is ResolutionStrategy.LOWEST_DIRECT
+            and dependency.name in self._direct_dependency_names
         )
+        if use_lowest:
+            packages.sort(
+                key=lambda p: (
+                    p.yanked,
+                    p.is_prerelease() and not dependency.allows_prereleases(),
+                    p.version,
+                )
+            )
+        else:
+            packages.sort(
+                key=lambda p: (
+                    not p.yanked,
+                    not p.is_prerelease() and not dependency.allows_prereleases(),
+                    p.version,
+                ),
+                reverse=True,
+            )
 
         return PackageCollection(dependency, packages)
 
