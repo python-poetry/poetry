@@ -525,3 +525,40 @@ def test_pipx_shared_lib_site_packages(
     # that the package does not seem to be a valid Python package.
     assert caplog.messages == []
     assert cleo_package.source_type is None
+
+
+def test_get_package_paths_utf8_pth_with_non_utf8_locale(
+    mocker: MockerFixture, tmp_path: Path
+) -> None:
+    # .pth files written as UTF-8 (pip/setuptools, or poetry for a >= 3.12.4
+    # target) must still be read correctly under a legacy locale.
+    env = MockEnv(path=tmp_path / "env")
+    purelib = Path(env.paths["purelib"])
+    purelib.mkdir(parents=True)
+    source_dir = tmp_path / "s\xf6urce"
+    source_dir.mkdir()
+    (purelib / "utf8pkg.pth").write_text(source_dir.as_posix(), encoding="utf-8")
+    mocker.patch(
+        "poetry.repositories.installed_repository.getencoding", return_value="cp1252"
+    )
+
+    assert InstalledRepository.get_package_paths(env, "utf8pkg") == {source_dir}
+
+
+def test_get_package_paths_pth_locale_fallback(
+    mocker: MockerFixture, tmp_path: Path
+) -> None:
+    # Legacy .pth files written with the locale encoding keep working.
+    env = MockEnv(path=tmp_path / "env")
+    purelib = Path(env.paths["purelib"])
+    purelib.mkdir(parents=True)
+    source_dir = tmp_path / "s\xf6urce"
+    source_dir.mkdir()
+    (purelib / "legacypkg.pth").write_bytes(
+        source_dir.as_posix().encode("cp1252")
+    )
+    mocker.patch(
+        "poetry.repositories.installed_repository.getencoding", return_value="cp1252"
+    )
+
+    assert InstalledRepository.get_package_paths(env, "legacypkg") == {source_dir}

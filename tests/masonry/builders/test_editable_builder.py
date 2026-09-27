@@ -567,3 +567,31 @@ def test_builder_skips_file_script_missing_reference_field(
     """
     with pytest.raises(RuntimeError, match="The Poetry configuration is invalid"):
         Factory().create_poetry(fixture_dir("file_scripts_no_ref_field_project"))
+
+
+@pytest.mark.parametrize(
+    ("version_info", "expected_encoding"),
+    [((3, 11, 9), "cp1252"), ((3, 12, 4), "utf-8"), ((3, 13, 0), "utf-8")],
+)
+def test_builder_pth_encoding_matches_target_python(
+    mocker: MockerFixture,
+    fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
+    version_info: tuple[int, int, int],
+    expected_encoding: str,
+) -> None:
+    # Interpreters >= 3.12.4 decode .pth files as UTF-8 first (locale
+    # fallback deprecated for removal); older ones use the locale encoding.
+    # The .pth must be written for the target env, not poetry's runtime.
+    project_dir = tmp_path / "pr\xf6ject"
+    shutil.copytree(fixture_dir("simple_project"), project_dir)
+    poetry = Factory().create_poetry(project_dir)
+    env = MockEnv(path=tmp_path / "env", version_info=version_info)
+    mocker.patch(
+        "poetry.masonry.builders.editable.getencoding", return_value="cp1252"
+    )
+
+    added = EditableBuilder(poetry, env, NullIO())._add_pth()
+
+    path_line = added[0].read_bytes().splitlines()[0].rstrip(b"\r")
+    assert path_line == project_dir.resolve().as_posix().encode(expected_encoding)
