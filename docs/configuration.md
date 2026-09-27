@@ -475,6 +475,11 @@ regardless of their upload age.
 poetry config solver.min-release-age-exclude "my-package,other-package"
 ```
 
+```toml title="poetry.toml"
+[solver]
+min-release-age-exclude = ["my-package", "other-package"]
+```
+
 ### `solver.min-release-age-exclude-source`
 
 **Type**: `array`
