@@ -25,21 +25,17 @@ if TYPE_CHECKING:
     from tests.types import FixtureDirGetter
 
 
-def test_directory_restores_working_directory(tmp_path: Path) -> None:
+@pytest.mark.parametrize("raises", [False, True], ids=["normal-exit", "exception"])
+def test_directory_restores_working_directory(tmp_path: Path, raises: bool) -> None:
     cwd = Path.cwd()
 
-    with directory(tmp_path):
+    with (
+        pytest.raises(RuntimeError) if raises else contextlib.nullcontext(),
+        directory(tmp_path),
+    ):
         assert Path.cwd() == tmp_path
-
-    assert Path.cwd() == cwd
-
-
-def test_directory_restores_working_directory_after_error(tmp_path: Path) -> None:
-    cwd = Path.cwd()
-
-    with pytest.raises(RuntimeError), directory(tmp_path):
-        assert Path.cwd() == tmp_path
-        raise RuntimeError("expected failure")
+        if raises:
+            raise RuntimeError("expected failure")
 
     assert Path.cwd() == cwd
 
@@ -152,26 +148,26 @@ def test_ensure_path_is_directory_parameter(tmp_path: Path) -> None:
     assert ensure_path(path=tmp_path, is_directory=True) is tmp_path
 
 
-def test_ensure_path_file(tmp_path: Path) -> None:
-    path = tmp_path.joinpath("some_file.txt")
+@pytest.mark.parametrize(
+    ("is_directory", "name"),
+    [(False, "some_file.txt"), (True, "some_directory")],
+    ids=["file", "directory"],
+)
+def test_ensure_path_existing_type(
+    tmp_path: Path, is_directory: bool, name: str
+) -> None:
+    path = tmp_path / name
     assert not path.exists()
 
     with pytest.raises(ValueError):
-        ensure_path(path=path, is_directory=False)
+        ensure_path(path=path, is_directory=is_directory)
 
-    path.write_text("foobar", encoding="utf-8")
-    assert ensure_path(path=path, is_directory=False) is path
+    if is_directory:
+        path.mkdir()
+    else:
+        path.write_text("foobar", encoding="utf-8")
 
-
-def test_ensure_path_directory(tmp_path: Path) -> None:
-    path = tmp_path.joinpath("foobar")
-    assert not path.exists()
-
-    with pytest.raises(ValueError):
-        ensure_path(path=path, is_directory=True)
-
-    path.mkdir()
-    assert ensure_path(path=path, is_directory=True) is path
+    assert ensure_path(path=path, is_directory=is_directory) is path
 
 
 @pytest.mark.parametrize("relative", [False, True])
