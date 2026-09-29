@@ -38,6 +38,15 @@ class InstallCommand(InstallerCommand):
             multiple=False,
         ),
         option(
+            "no-active",
+            None,
+            "Do not use the currently active virtualenv. Particularly useful when "
+            "running `poetry install` within a pre-commit hook, to avoid using the "
+            "pre-commit hook's virtualenv.",
+            flag=True,
+            multiple=False,
+        ),
+        option(
             "dry-run",
             None,
             "Output the operations but do not execute anything "

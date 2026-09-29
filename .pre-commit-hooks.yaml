@@ -17,7 +17,7 @@
 - id: poetry-install
   name: poetry-install
   description: run poetry install to install dependencies from the lock file
-  entry: poetry install
+  entry: poetry install --no-active
   language: python
   pass_filenames: false
   stages: [post-checkout, post-merge]
