@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
 
     from poetry.utils.cache import FileCache
+    from tests.conftest import Config
     from tests.types import CommandTesterFactory
 
 
@@ -29,6 +30,27 @@ def test_cache_list(
     expected = f"""\
 {repositories[0]}
 {repositories[1]}
+"""
+
+    assert tester.io.fetch_output() == expected
+
+
+def test_cache_list_includes_artifacts(
+    tester: CommandTester,
+    caches: list[FileCache[dict[str, str]]],
+    repositories: list[str],
+    config: Config,
+) -> None:
+    artifacts_dir = config.artifacts_cache_directory
+    artifacts_dir.mkdir(parents=True)
+    (artifacts_dir / "wheel.whl").write_bytes(b"wheel")
+
+    tester.execute()
+
+    expected = f"""\
+{repositories[0]}
+{repositories[1]}
+artifacts
 """
 
     assert tester.io.fetch_output() == expected
