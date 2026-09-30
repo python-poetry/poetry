@@ -13,6 +13,7 @@ import pytest
 
 from poetry.installation.uninstaller import UninstallPathSet
 from poetry.installation.uninstaller import _normalize_path
+from poetry.installation.uninstaller import _protected_dirs
 from poetry.installation.uninstaller import uninstall_distribution
 from poetry.utils._compat import WINDOWS
 from poetry.utils.env import MockEnv
@@ -137,6 +138,22 @@ def test_uninstall_distribution_removes_files(tmp_path: Path) -> None:
     assert not dist_info.exists()
 
 
+def test_uninstall_distribution_with_fallback_paths(tmp_path: Path) -> None:
+    # env.paths["fallbacks"] is a list of paths rather than a single path.
+    env = _make_env(tmp_path)
+    fallback = env.path / "fallback"
+    fallback.mkdir()
+    env.paths["fallbacks"] = [str(fallback)]
+    _, installed = _install_fake_distribution(env)
+
+    assert _normalize_path(fallback) in _protected_dirs(env)
+    assert uninstall_distribution(env, "demo") is not None
+
+    for path in installed:
+        assert not path.exists()
+    assert fallback.exists()
+
+
 def test_uninstall_distribution_removes_entire_dist_info(tmp_path: Path) -> None:
     # The .dist-info directory belongs solely to one distribution, so it is
     # removed whole - including files an installer added without listing them in
@@ -170,9 +187,7 @@ def test_uninstall_distribution_tolerates_already_removed_dist_info(
 
     dist = next(iter(env.site_packages.distributions(name="demo")))
     dist_parent = dist._path.parent  # type: ignore[attr-defined]
-    protected = {_normalize_path(p) for p in env.paths.values() if p}
-    protected.add(_normalize_path(env.path))
-    pathset = UninstallPathSet(dist, env.path, protected_dirs=protected)
+    pathset = UninstallPathSet(dist, env.path, protected_dirs=_protected_dirs(env))
     assert dist.files
     for entry in dist.files:
         pathset.add(os.path.join(dist_parent, entry))
@@ -436,9 +451,7 @@ def test_prune_empty_dirs_tolerates_already_removed_dir(tmp_path: Path) -> None:
     _install_fake_distribution(env, with_script=False)
     dist = next(iter(env.site_packages.distributions(name="demo")))
 
-    protected = {_normalize_path(p) for p in env.paths.values() if p}
-    protected.add(_normalize_path(env.path))
-    pathset = UninstallPathSet(dist, env.path, protected_dirs=protected)
+    pathset = UninstallPathSet(dist, env.path, protected_dirs=_protected_dirs(env))
 
     purelib = Path(env.paths["purelib"])
     # A nested namespace dir that is never created on disk (as if a concurrent

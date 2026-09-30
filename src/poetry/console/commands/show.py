@@ -154,11 +154,10 @@ lists all packages available."""
             return 1
 
         locked_repo = self.poetry.locker.locked_repository()
+        root = self.project_with_activated_groups_only()
 
         if package:
-            return self._display_single_package_information(package, locked_repo)
-
-        root = self.project_with_activated_groups_only()
+            return self._display_single_package_information(package, locked_repo, root)
 
         # Show tree view if requested
         if self.option("tree"):
@@ -173,19 +172,28 @@ lists all packages available."""
         return "poetry lock"
 
     def _display_single_package_information(
-        self, package: str, locked_repository: Repository
+        self, package: str, locked_repository: Repository, root: ProjectPackage
     ) -> int:
         locked_packages = locked_repository.packages
         canonicalized_package = canonicalize_name(package)
-        pkg = None
+        matches = [
+            locked for locked in locked_packages if locked.name == canonicalized_package
+        ]
 
-        for locked in locked_packages:
-            if locked.name == canonicalized_package:
-                pkg = locked
-                break
-
-        if not pkg:
+        if not matches:
             raise ValueError(f"Package {package} not found")
+
+        pkg = matches[0]
+        if len(matches) > 1:
+            # The lock file may contain several entries for the same name (e.g.
+            # platform- or marker-conditioned variants). Select the one that
+            # applies to the current environment, consistent with the
+            # all-packages view. Fall back to the first match if none of them
+            # apply, so the command still displays something.
+            required_locked_packages = self._required_locked_packages(
+                root, locked_packages
+            )
+            pkg = next((p for p in matches if p in required_locked_packages), pkg)
 
         required_by = reverse_deps(pkg, locked_repository)
 
@@ -258,19 +266,15 @@ lists all packages available."""
 
         return 0
 
-    def _display_packages_information(
-        self, locked_repository: Repository, root: ProjectPackage
-    ) -> int:
-        import shutil
-
+    def _required_locked_packages(
+        self, root: ProjectPackage, locked_packages: list[Package]
+    ) -> set[Package]:
+        """Return the locked packages required by the current environment."""
         from cleo.io.null_io import NullIO
 
         from poetry.puzzle.solver import Solver
-        from poetry.repositories.installed_repository import InstalledRepository
         from poetry.repositories.repository_pool import RepositoryPool
-        from poetry.utils.helpers import get_package_version_display_string
 
-        locked_packages = locked_repository.packages
         pool = RepositoryPool.from_packages(locked_packages, self.poetry.config)
         solver = Solver(
             root,
@@ -283,7 +287,18 @@ lists all packages available."""
         with solver.use_environment(self.env):
             ops = solver.solve().calculate_operations()
 
-        required_locked_packages = {op.package for op in ops if not op.skipped}
+        return {op.package for op in ops if not op.skipped}
+
+    def _display_packages_information(
+        self, locked_repository: Repository, root: ProjectPackage
+    ) -> int:
+        import shutil
+
+        from poetry.repositories.installed_repository import InstalledRepository
+        from poetry.utils.helpers import get_package_version_display_string
+
+        locked_packages = locked_repository.packages
+        required_locked_packages = self._required_locked_packages(root, locked_packages)
 
         show_latest = self.option("latest")
         show_all = self.option("all")

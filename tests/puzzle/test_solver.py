@@ -118,6 +118,273 @@ def test_solver_install_single(
     check_solver_result(transaction, [{"job": "install", "package": package_a}])
 
 
+def test_solver_local_version_variant_does_not_leak_dependencies(
+    package: ProjectPackage,
+    repo: Repository,
+    pool: RepositoryPool,
+    io: NullIO,
+    mocker: MockerFixture,
+) -> None:
+    """
+    Regression test for the "orphan decision" bug, modelled on the reported
+    `torch` / `torch+cpu` failure (`KeyError: Package('triton', '3.7.1')`).
+
+    The explicit source serves two builds of the same base version: "2.12.1+cpu",
+    which needs no "triton", and a plain "2.12.1" (the macOS wheel), whose
+    metadata does. The "setuptools" conflict makes the solver record the
+    incompatibilities of both builds before it settles on "2.12.1+cpu" -- which
+    *satisfies* the term "torch (==2.12.1)", because a local version segment is
+    ignored by "==". The discarded build's incompatibilities therefore keep
+    deriving "triton", leaving it behind as a decision that no package in the
+    solution requires.
+
+    The solver now drops such orphan decisions instead of raising a KeyError.
+    Note that this only treats the symptom: "triton" is still resolved and
+    completed for nothing, and the leak still causes false resolution failures
+    (see the xfail-ed tests below).
+    """
+
+    def torchcpu_build(version: str) -> Package:
+        return Package(
+            "torch", version, source_type="legacy", source_reference="torchcpu"
+        )
+
+    package.add_dependency(
+        Factory.create_dependency(
+            "torch", {"version": "==2.12.1", "source": "torchcpu"}
+        )
+    )
+    # Both torch builds cap setuptools at <82 while the project itself accepts
+    # any version and the lock prefers 83.0.0. Resolving that conflict is what
+    # makes the solver record the incompatibilities of both builds before it
+    # decides on one of them.
+    package.add_dependency(Factory.create_dependency("setuptools", "*"))
+
+    torchcpu = Repository("torchcpu")
+    pool.add_repository(torchcpu, priority=Priority.EXPLICIT)
+
+    torch_cpu = torchcpu_build("2.12.1+cpu")
+    torch_cpu.add_dependency(Factory.create_dependency("setuptools", "<82"))
+    torchcpu.add_package(torch_cpu)
+
+    # The same index also serves a plain 2.12.1 wheel, which does need triton.
+    torch_plain = torchcpu_build("2.12.1")
+    torch_plain.add_dependency(Factory.create_dependency("setuptools", "<82"))
+    torch_plain.add_dependency(Factory.create_dependency("triton", "==3.7.1"))
+    torchcpu.add_package(torch_plain)
+
+    repo.add_package(get_package("triton", "3.7.1"))
+    setuptools_81 = get_package("setuptools", "81.0.0")
+    repo.add_package(setuptools_81)
+    setuptools_83 = get_package("setuptools", "83.0.0")
+    repo.add_package(setuptools_83)
+
+    solver = Solver(package, pool, [], [setuptools_83], io)
+
+    complete_package_spy = mocker.spy(solver._provider, "complete_package")
+    transaction = solver.solve()
+
+    # Notably no triton: it is only required by the discarded plain build.
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": setuptools_81},
+            {"job": "install", "package": torch_cpu},
+        ],
+    )
+
+    # The assertion below isn't the point of this test, but pins down the
+    # resolution order the reproduction depends on. Which build is completed
+    # first matters: the bug only occurs because the plain 2.12.1 build is
+    # completed -- recording its triton incompatibility -- while a *different*
+    # build satisfying the same "torch (==2.12.1)" term is what gets decided.
+    # If the solver ever settled on 2.12.1 instead, triton would be a genuine
+    # dependency and this test would silently stop covering the bug.
+    assert [
+        (call.args[0].package.name, str(call.args[0].package.version))
+        for call in complete_package_spy.mock_calls
+    ] == [
+        ("root", "1.0"),
+        # locked, so preferred and decided first
+        ("setuptools", "83.0.0"),
+        # the highest torch candidate, rejected over `setuptools (<82)`
+        ("torch", "2.12.1+cpu"),
+        # the next candidate; its `triton` incompatibility is recorded here
+        ("torch", "2.12.1"),
+        # backtracking settles the setuptools conflict...
+        ("setuptools", "81.0.0"),
+        # ...and 2.12.1+cpu is decided after all, inheriting the
+        # incompatibility recorded for 2.12.1 above, which derives...
+        ("torch", "2.12.1+cpu"),
+        # ...this orphan, which nothing in the solution actually requires.
+        ("triton", "3.7.1"),
+    ]
+
+
+@pytest.mark.xfail(
+    reason=(
+        "The dependencies of a plain release leak onto its local variants,"
+        " because `==2.12.1` also matches `2.12.1+cpu`. Only the resulting"
+        " orphan decisions are handled, not the leak itself."
+    ),
+    strict=True,
+)
+def test_solver_local_version_variant_is_not_wrongly_excluded(
+    package: ProjectPackage,
+    repo: Repository,
+    pool: RepositoryPool,
+    io: NullIO,
+) -> None:
+    """
+    The second symptom of the same leak: a *false* resolution failure.
+
+    This is the setup of
+    ``test_solver_local_version_variant_does_not_leak_dependencies`` with one
+    change: the "triton" that the plain 2.12.1 build requires exists in no
+    repository. The "2.12.1+cpu" build needs no triton and satisfies
+    "torch (==2.12.1)", so the solver should settle on it and succeed.
+
+    It does select it, but then the incompatibility recorded for the plain
+    build leaks onto it exactly as in the test above -- only here the leaked
+    requirement is unsatisfiable, so instead of an orphan decision it takes the
+    whole resolution down::
+
+        selecting torch (2.12.1+cpu)
+        derived: triton (==3.7.1)
+        fact: no versions of triton match 3.7.1
+        conflict: torch (2.12.1) depends on triton (==3.7.1)
+        ! thus: torch is forbidden
+
+    Unlike an orphan decision, this cannot be repaired when aggregating the
+    solved packages, because resolution has already failed by then. A fix has
+    to stop the incompatibilities recorded for one build from applying to a
+    sibling build of the same base version.
+    """
+
+    def torchcpu_build(version: str) -> Package:
+        return Package(
+            "torch", version, source_type="legacy", source_reference="torchcpu"
+        )
+
+    package.add_dependency(
+        Factory.create_dependency(
+            "torch", {"version": "==2.12.1", "source": "torchcpu"}
+        )
+    )
+    package.add_dependency(Factory.create_dependency("setuptools", "*"))
+
+    torchcpu = Repository("torchcpu")
+    pool.add_repository(torchcpu, priority=Priority.EXPLICIT)
+
+    torch_cpu = torchcpu_build("2.12.1+cpu")
+    torch_cpu.add_dependency(Factory.create_dependency("setuptools", "<82"))
+    torchcpu.add_package(torch_cpu)
+
+    torch_plain = torchcpu_build("2.12.1")
+    torch_plain.add_dependency(Factory.create_dependency("setuptools", "<82"))
+    torch_plain.add_dependency(Factory.create_dependency("triton", "==3.7.1"))
+    torchcpu.add_package(torch_plain)
+
+    # Note: no triton in any repository, so the plain build is not installable.
+    setuptools_81 = get_package("setuptools", "81.0.0")
+    repo.add_package(setuptools_81)
+    setuptools_83 = get_package("setuptools", "83.0.0")
+    repo.add_package(setuptools_83)
+
+    solver = Solver(package, pool, [], [setuptools_83], io)
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": setuptools_81},
+            {"job": "install", "package": torch_cpu},
+        ],
+    )
+
+
+@pytest.mark.xfail(
+    reason=(
+        "The dependencies of a plain release leak onto its local variants,"
+        " because `==2.12.1` also matches `2.12.1+cpu`. Only the resulting"
+        " orphan decisions are handled, not the leak itself."
+    ),
+    strict=True,
+)
+def test_solver_local_version_variant_is_not_wrongly_excluded_via_stale_lock(
+    package: ProjectPackage,
+    repo: Repository,
+    pool: RepositoryPool,
+    io: NullIO,
+) -> None:
+    """
+    A false resolution failure from the same leak, reached by a different
+    route: here it is a *cap* rather than a missing package that leaks.
+
+    The plain 2.12.1 build caps ``setuptools (<82)`` while the root asks for
+    ``>=83``; the 2.12.1+cpu build caps nothing and satisfies ``==2.12.1``, so
+    the answer is setuptools 83.0.0 with torch 2.12.1+cpu. Because the plain
+    build's requirement is attributed to the whole ``==2.12.1`` term, the
+    2.12.1+cpu build is excluded along with it and resolution fails::
+
+        conflict: torch (2.12.1) depends on setuptools (<82)
+        ! which is caused by "root depends on torch (==2.12.1)"
+        ! thus: setuptools is required
+
+    This needs the stale lock below to reproduce: the plain build's
+    incompatibility has to be recorded while 2.12.1+cpu is still a live
+    candidate, and the locked plain build is preferred and completed first.
+    Without the lock the solver reaches 2.12.1+cpu first and never records the
+    conflicting term.
+    """
+
+    def torchcpu_build(version: str) -> Package:
+        return Package(
+            "torch", version, source_type="legacy", source_reference="torchcpu"
+        )
+
+    package.add_dependency(
+        Factory.create_dependency(
+            "torch", {"version": "==2.12.1", "source": "torchcpu"}
+        )
+    )
+    package.add_dependency(Factory.create_dependency("setuptools", ">=83"))
+
+    torchcpu = Repository("torchcpu")
+    pool.add_repository(torchcpu, priority=Priority.EXPLICIT)
+
+    # The +cpu build caps nothing and needs no triton.
+    torch_cpu = torchcpu_build("2.12.1+cpu")
+    torchcpu.add_package(torch_cpu)
+
+    torch_plain = torchcpu_build("2.12.1")
+    torch_plain.add_dependency(Factory.create_dependency("setuptools", "<82"))
+    torch_plain.add_dependency(Factory.create_dependency("triton", "==3.7.1"))
+    torchcpu.add_package(torch_plain)
+
+    repo.add_package(get_package("triton", "3.7.1"))
+    repo.add_package(get_package("setuptools", "81.0.0"))
+    setuptools_83 = get_package("setuptools", "83.0.0")
+    repo.add_package(setuptools_83)
+
+    # A stale lock pinning the *plain* build, so it is preferred and completed
+    # before 2.12.1+cpu is ever considered.
+    locked = [torchcpu_build("2.12.1"), setuptools_83]
+
+    solver = Solver(package, pool, [], locked, io)
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": setuptools_83},
+            {"job": "install", "package": torch_cpu},
+        ],
+    )
+
+
 def test_solver_remove_if_no_longer_locked(
     package: ProjectPackage, pool: RepositoryPool, io: NullIO
 ) -> None:
