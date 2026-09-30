@@ -954,8 +954,40 @@ pip install awesome[databases]
 {{% note %}}
 The dependencies specified for each `extra` must already be defined as project dependencies.
 
-Dependencies listed in [dependency groups]({{< relref "managing-dependencies#dependency-groups" >}}) cannot be specified as extras.
+Dependencies listed only in [dependency groups]({{< relref "managing-dependencies#dependency-groups" >}})
+cannot be named in `[tool.poetry.extras]` / `[project.optional-dependencies]`.
+An extra entry must point at a package from the project's main dependencies.
 {{% /note %}}
+
+You can still declare the **same** package again inside a dependency group to request
+**additional package extras** for local development. Poetry combines those extras when
+both the project extra and the group are selected for install:
+
+```toml
+[tool.poetry.dependencies]
+# Production optional dependency with its published extras
+snowflake-connector-python = { version = ">=3.2.1", optional = true, extras = ["pandas"] }
+
+[tool.poetry.group.dev.dependencies]
+# Same package again: pull in extra extras only when the dev group is installed.
+# Prefer "*" here so the main dependency keeps owning the version constraint.
+snowflake-connector-python = { version = "*", extras = ["secure-local-storage"] }
+
+[tool.poetry.extras]
+snowflake = ["snowflake-connector-python"]
+```
+
+```bash
+# Production-like: only the extras from the main dependency definition
+poetry install --only main --extras snowflake --sync
+
+# Development: main extras + the extras declared in the dev group
+poetry install --with dev --extras snowflake --sync
+```
+
+Keep the group's version as `"*"` (or otherwise compatible with the main constraint).
+Duplicating a concrete version range in both places can cause confusing conflicts later
+if only one of them is updated.
 
 
 ### plugins
