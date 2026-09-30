@@ -334,9 +334,17 @@ class Config:
         # is set via a POETRY_* environment variable
         if self._use_environment:
             if keys == ["repositories"]:
-                # repositories setting is special for now
-                repositories = self._get_environment_repositories()
-                if repositories:
+                # repositories setting is special for now:
+                # repositories that are only defined via environment variables
+                # are added to the configured ones instead of replacing them
+                env_repositories = self._get_environment_repositories()
+                if env_repositories:
+                    configured = self._config.get("repositories") or {}
+                    repositories = {
+                        name: self.get(["repositories", name]) for name in configured
+                    }
+                    for name, repository in env_repositories.items():
+                        repositories.setdefault(name, repository)
                     return repositories
 
             if keys[:2] == ["installer", "build-config-settings"]:
