@@ -144,6 +144,28 @@ def test_config_get_from_environment_variable_nested(
     assert config.get("virtualenvs.options") == expected
 
 
+def test_config_get_repositories_merges_environment_and_configured(
+    config: Config,
+    environ: Iterator[None],
+) -> None:
+    config.merge(
+        {
+            "repositories": {
+                "private": {"url": "https://private.example.com/simple/"},
+                "shared": {"url": "https://old.example.com/simple/"},
+            }
+        }
+    )
+    os.environ["POETRY_REPOSITORIES_PUBLISH_URL"] = "https://upload.example.com/"
+    os.environ["POETRY_REPOSITORIES_SHARED_URL"] = "https://new.example.com/simple/"
+
+    assert config.get("repositories") == {
+        "private": {"url": "https://private.example.com/simple/"},
+        "shared": {"url": "https://new.example.com/simple/"},
+        "publish": {"url": "https://upload.example.com/"},
+    }
+
+
 @pytest.mark.parametrize(
     ("path_config", "expected"),
     [("~/.venvs", Path.home() / ".venvs"), ("venv", Path("venv"))],

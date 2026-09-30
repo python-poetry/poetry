@@ -80,6 +80,25 @@ def test_authenticator_uses_credentials_from_config_if_not_provided(
     assert request.headers["Authorization"] == f"Basic {basic_auth}"
 
 
+def test_authenticator_uses_credentials_from_config_with_repository_from_env(
+    mock_config: Config,
+    mock_remote: None,
+    http: responses.RequestsMock,
+    environ: None,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    # A repository defined via environment variable (e.g. for publishing)
+    # must not hide the repositories from the config (or pyproject sources).
+    monkeypatch.setenv("POETRY_REPOSITORIES_UPLOAD_URL", "https://upload.example.com/")
+
+    authenticator = Authenticator(mock_config, NullIO())
+    authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
+
+    request = http.calls[-1].request
+    basic_auth = base64.b64encode(b"bar:baz").decode()
+    assert request.headers["Authorization"] == f"Basic {basic_auth}"
+
+
 def test_authenticator_does_not_send_https_credentials_over_http(
     mock_config: Config,
     mock_remote: None,
