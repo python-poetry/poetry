@@ -34,6 +34,7 @@ jobs:
       # for pull_request_target trigger (security)
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          allow-unsafe-pr-checkout: true
           persist-credentials: false
           path: poetry-docs
           ref: ${{ github.event.pull_request.head.sha }}
