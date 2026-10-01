@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import io
+import os
 import re
 import threading
 import zipfile
@@ -13,6 +15,9 @@ import pytest
 
 from poetry.core.constraints.version import parse_constraint
 
+import poetry.installation.wheel_installer as wheel_installer_module
+
+from poetry.installation.wheel_installer import WheelDestination
 from poetry.installation.wheel_installer import WheelInstaller
 from poetry.utils._compat import WINDOWS
 from poetry.utils.env import MockEnv
@@ -242,3 +247,44 @@ def test_parallel_installation_of_file_contained_in_several_wheels(
 
     # The file written last wins.
     assert target.read_bytes() == content_second
+
+
+def test_lock_is_shared_by_scheme_directories_behind_a_symlink(
+    tmp_path: Path, mocker: MockerFixture
+) -> None:
+    """
+    On Fedora a venv's platlib is under lib64, which is a symlink to lib.
+    A purelib wheel and a platlib wheel that contain the same file must
+    be written under the same lock.
+    """
+    lib = tmp_path / "lib"
+    purelib = lib / "site-packages"
+    purelib.mkdir(parents=True)
+    try:
+        os.symlink(lib, tmp_path / "lib64", target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("symlinks are not available")
+    platlib = tmp_path / "lib64" / "site-packages"
+
+    file_lock = mocker.spy(wheel_installer_module, "_file_lock")
+    destination = WheelDestination(
+        {"purelib": str(purelib), "platlib": str(platlib)},
+        interpreter="python",
+        script_kind="posix",
+    )
+    destination.write_to_fs(
+        installer.utils.Scheme("purelib"),
+        "namespace/__init__.py",
+        io.BytesIO(b"# shared\n"),
+        False,
+    )
+    destination.write_to_fs(
+        installer.utils.Scheme("platlib"),
+        "namespace/__init__.py",
+        io.BytesIO(b"# shared\n"),
+        False,
+    )
+
+    keys = [call.args[0] for call in file_lock.call_args_list]
+    assert len(keys) == 2
+    assert keys[0] == keys[1]
