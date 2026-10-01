@@ -972,6 +972,36 @@ authors = [
     assert expected in tester.io.fetch_output()
 
 
+def test_multiple_authors_interactive_skipping_the_first_keeps_the_rest(
+    tester: CommandTester,
+) -> None:
+    inputs = [
+        "1.2.3",  # Version
+        "n",  # Author, skips the first one given on the command line
+        "n",  # Interactive packages
+        "n",  # Interactive dev packages
+        "\n",  # Generate
+    ]
+
+    tester.execute(
+        "--name my-package "
+        "--description 'This is a description' "
+        "--author 'Foo Bar <foo@example.com>' "
+        "--author 'Baz Qux <baz@example.com>' "
+        "--python '>=3.8' "
+        "--license MIT",
+        inputs="\n".join(inputs),
+    )
+
+    expected = """\
+authors = [
+    {name = "Baz Qux",email = "baz@example.com"}
+]
+"""
+
+    assert expected in tester.io.fetch_output()
+
+
 def test_add_package_with_extras_and_whitespace(tester: CommandTester) -> None:
     command = tester.command
     assert isinstance(command, InitCommand)

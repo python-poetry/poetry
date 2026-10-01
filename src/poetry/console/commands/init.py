@@ -170,7 +170,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                 lambda v: self._validate_author(v, default_author or "")
             )
             author = self.ask(question)
-            authors = [author, *authors[1:]] if author else []
+            authors = [author, *authors[1:]] if author else authors[1:]
 
         license_name = self.option("license")
         if not license_name and is_interactive:
