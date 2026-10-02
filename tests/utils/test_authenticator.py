@@ -916,3 +916,23 @@ def test_repository_certificate_configuration_create(
     config.merge({"certificates": {"foo": cert_config}})
 
     assert RepositoryCertificateConfig.create("foo", config) == result
+
+
+@pytest.mark.parametrize(
+    ("env_value", "result"),
+    [
+        ("false", RepositoryCertificateConfig(verify=False)),
+        ("False", RepositoryCertificateConfig(verify=False)),
+        ("true", RepositoryCertificateConfig()),
+        ("path/to/ca.pem", RepositoryCertificateConfig(Path("path/to/ca.pem"))),
+    ],
+)
+def test_repository_certificate_configuration_create_from_environment_variable(
+    env_value: str,
+    result: RepositoryCertificateConfig,
+    config: Config,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("POETRY_CERTIFICATES_FOO_CERT", env_value)
+
+    assert RepositoryCertificateConfig.create("foo", config) == result
