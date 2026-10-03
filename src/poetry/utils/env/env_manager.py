@@ -278,6 +278,26 @@ class EnvManager:
 
     def remove(self, python: str) -> Env:
         python_path = Path(python)
+
+        env_path = python_path
+        if not env_path.is_absolute():
+            env_path = self._poetry.file.path.parent / env_path
+
+        if env_path.is_dir():
+            resolved_env_path = env_path.resolve()
+            for venv in self.list():
+                if venv.path.resolve() != resolved_env_path:
+                    continue
+
+                if self.envs_file.exists() and venv.path != self.in_project_venv:
+                    venv_minor = ".".join(str(v) for v in venv.version_info[:2])
+                    self.envs_file.remove_section(self.base_env_name, venv_minor)
+
+                self.remove_venv(venv.path)
+                return venv
+
+            raise IncorrectEnvError(python)
+
         if python_path.is_file():
             # Validate env name if provided env is a full path to python
             try:
