@@ -727,9 +727,9 @@ otherwise it will cause an error when resolving dependencies.
 
 Each item is an alternative requirement for the same dependency. Its `python` or
 `markers` expression selects the environments where that alternative applies, while
-`version` selects the dependency versions allowed in those environments. The
-environment expressions must not overlap: if two alternatives could both apply,
-Poetry cannot determine which requirement to use.
+`version` selects the dependency versions allowed in those environments. Environment
+expressions may overlap when Poetry can merge their compatible constraints. If
+overlapping alternatives impose incompatible constraints, dependency resolution fails.
 
 Choose version constraints according to what your project supports. Applications often
 use the newest compatible dependency range for each Python range, as in the example
@@ -748,8 +748,8 @@ foo = [
 ```
 
 The project's own Python constraint must cover the same Python versions. Prefer the
-fewest non-overlapping alternatives that accurately describe compatibility; splitting
-equivalent ranges into many entries increases the solver's search space and makes the
+fewest alternatives that accurately describe compatibility; splitting equivalent
+ranges into many entries increases the solver's search space and makes the
 configuration harder to maintain.
 
 ### Combining git / url / path dependencies with source repositories
