@@ -102,8 +102,11 @@ Now, all that is left is to build and publish your project using the
 [`publish`]({{< relref "cli#publish" >}}).
 
 ```bash
-poetry publish --build --repository foo-pub
+poetry publish --build --repository foo
 ```
+
+If you configured a separate publishing repository named `foo-pub` above, use
+`--repository foo-pub` instead.
 
 ## Package Sources
 
