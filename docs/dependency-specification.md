@@ -606,8 +606,8 @@ example = { version = "^1.0", python = ">=3.9,<3.13", platform = "linux", marker
 ```
 
 This installs `example` only when all three restrictions match. The shorthand
-properties are specific to `[tool.poetry.dependencies]`; dependencies in
-`[project.dependencies]` use standard PEP 508 marker expressions instead.
+properties are specific to `[tool.poetry.dependencies]`; the `dependencies`
+array in `[project]` uses standard PEP 508 marker expressions instead.
 
 ### `extra` environment marker
 
