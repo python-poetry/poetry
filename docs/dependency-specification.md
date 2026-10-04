@@ -584,6 +584,31 @@ pathlib2 = { version = "^2.2", markers = "python_version <= '3.4' or sys_platfor
 {{< /tab >}}
 {{< /tabs >}}
 
+When a dependency is declared in `[tool.poetry.dependencies]`, `python` and
+`platform` are supported convenience properties for two common environment
+restrictions. `python` accepts a Poetry version constraint and restricts the
+Python versions for which the dependency is installed. `platform` restricts
+the dependency by `sys_platform`:
+
+```toml
+[tool.poetry.dependencies]
+tomli = { version = "^2.0.1", python = "<3.11" }
+pyobjc = { version = "^10.1", platform = "darwin" }
+```
+
+Use `markers` for other environment conditions or when a condition needs
+`and`, `or`, or parentheses. If `python`, `platform`, and `markers` are used on
+the same dependency, Poetry combines them with `and`. For example:
+
+```toml
+[tool.poetry.dependencies]
+example = { version = "^1.0", python = ">=3.9,<3.13", platform = "linux", markers = "platform_machine == 'x86_64'" }
+```
+
+This installs `example` only when all three restrictions match. The shorthand
+properties are specific to `[tool.poetry.dependencies]`; dependencies in
+`[project.dependencies]` use standard PEP 508 marker expressions instead.
+
 ### `extra` environment marker
 
 Poetry populates the `extra` marker with each of the selected extras of the root package.
