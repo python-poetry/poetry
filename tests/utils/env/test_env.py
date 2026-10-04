@@ -7,6 +7,7 @@ import sys
 
 from importlib import metadata
 from pathlib import Path
+from threading import Thread
 from typing import TYPE_CHECKING
 
 import packaging.tags
