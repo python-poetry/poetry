@@ -53,6 +53,22 @@ class MarkerEnv(TypedDict):
     free_threading: bool
 
 
+class EnvPaths(TypedDict, total=False):
+    # sysconfig paths
+    stdlib: str
+    platstdlib: str
+    purelib: str
+    platlib: str
+    include: str
+    platinclude: str
+    scripts: str
+    data: str
+    # additional paths
+    fallbacks: list[str]
+    usersite: str
+    userbase: str
+
+
 class Env(ABC):
     """
     An abstract Python environment.
@@ -280,11 +296,13 @@ class Env(ABC):
         "userbase": "/home/user/.local" }`; the candidate "purelib" path would be
         `/home/user/.local/lib/python3.13/site-packages`.
         """
-        paths = self.paths.copy()
+        paths = {
+            key: value for key, value in self.paths.items() if isinstance(value, str)
+        }
 
         if (
             not self.is_venv()
-            and paths.get("userbase")
+            and (userbase := self.paths.get("userbase"))
             and ("scripts" in paths and "purelib" in paths)
         ):
             overrides: dict[str, str] = {}
@@ -294,7 +312,7 @@ class Env(ABC):
             except ValueError:
                 return paths
 
-            scheme_names = [key for key in SCHEME_NAMES if key in self.paths]
+            scheme_names = [key for key in SCHEME_NAMES if key in paths]
 
             for key in scheme_names:
                 if not is_dir_writable(path=Path(paths[key]), create=True):
@@ -305,7 +323,7 @@ class Env(ABC):
                 return paths
 
             for key in scheme_names:
-                candidate = paths[key].replace(base_path, paths["userbase"])
+                candidate = paths[key].replace(base_path, userbase)
                 if not is_dir_writable(path=Path(candidate), create=True):
                     # at least one candidate is not writable, we cannot do much here
                     return paths
@@ -332,7 +350,7 @@ class Env(ABC):
     def sys_path(self) -> list[str]: ...
 
     @cached_property
-    def paths(self) -> dict[str, str]:
+    def paths(self) -> EnvPaths:
         paths = self.get_paths()
 
         if self.is_venv():
@@ -385,7 +403,7 @@ class Env(ABC):
     def get_supported_tags(self) -> list[Tag]: ...
 
     @abstractmethod
-    def get_paths(self) -> dict[str, str]: ...
+    def get_paths(self) -> EnvPaths: ...
 
     def is_valid_for_marker(self, marker: BaseMarker) -> bool:
         valid: bool = marker.validate(self.marker_env)

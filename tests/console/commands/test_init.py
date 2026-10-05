@@ -105,6 +105,49 @@ def test_noninteractive(
     assert expected_build_system in toml_content
 
 
+def test_noninteractive_sanitizes_default_name_from_directory(
+    app: PoetryTestApplication,
+    mocker: MockerFixture,
+    poetry: Poetry,
+    repo: DummyRepository,
+    tmp_path: Path,
+) -> None:
+    command = app.find("init")
+    assert isinstance(command, InitCommand)
+    command._pool = poetry.pool
+
+    project_path = tmp_path / "my project with spaces"
+    project_path.mkdir()
+
+    p = mocker.patch("pathlib.Path.cwd")
+    p.return_value = project_path
+
+    tester = CommandTester(command)
+    tester.execute(interactive=False)
+
+    toml_content = (project_path / "pyproject.toml").read_text(encoding="utf-8")
+    assert 'name = "my-project-with-spaces"' in toml_content
+
+
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    [
+        ("foo", "foo"),
+        ("my project with spaces", "my-project-with-spaces"),
+        ("My_Package.Name", "my-package-name"),
+        ("MyProject", "myproject"),
+        ("  --my..name__ ", "my-name"),
+        # nothing survives sanitization: keep the lowercased directory name
+        # rather than returning an empty default
+        ("日本語", "日本語"),
+        ("проект", "проект"),
+        ("---", "---"),
+    ],
+)
+def test_sanitize_package_name(name: str, expected: str) -> None:
+    assert InitCommand._sanitize_package_name(name) == expected
+
+
 def test_interactive_with_dependencies(
     tester: CommandTester, repo: DummyRepository
 ) -> None:
