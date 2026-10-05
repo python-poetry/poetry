@@ -15,6 +15,12 @@ if TYPE_CHECKING:
 
 class Command(BaseCommand):
     loggers: ClassVar[list[str]] = []
+    # Loggers whose warnings should be suppressed (raised to ERROR) for this
+    # command specifically, unless running verbose/debug. Used for warnings
+    # that fire regardless of context that doesn't apply to this command
+    # (e.g. a path-dependency existence warning from a group excluded by
+    # --without/--only, see poetry-core's PathDependency.__init__).
+    suppressed_loggers: ClassVar[list[str]] = []
 
     _poetry: Poetry | None = None
 
