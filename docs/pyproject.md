@@ -798,7 +798,7 @@ Only the name and a version string are required in this case.
 requests = "^2.13.0"
 ```
 
-If you want to use a [private repository]({{< relref "repositories#using-a-private-repository" >}}),
+If you want to use a [private repository]({{< relref "repositories#private-repository-example" >}}),
 you can add it to your `pyproject.toml` file, like so:
 
 ```toml
