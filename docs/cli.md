@@ -266,6 +266,10 @@ To only remove a specific package from a cache, you have to specify the cache en
 poetry cache clear PyPI:requests:2.24.0
 ```
 
+The package version is required when clearing a single package. A key such as
+`PyPI:requests` is not supported; use `PyPI:requests:2.24.0` to clear that version,
+or `poetry cache clear PyPI --all` to clear the entire repository cache.
+
 ### cache list
 
 The `cache list` command lists Poetry's available caches.
