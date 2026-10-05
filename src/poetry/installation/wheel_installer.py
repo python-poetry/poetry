@@ -4,10 +4,12 @@ import logging
 import os
 import platform
 import sys
+import threading
 
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING
+from weakref import WeakValueDictionary
 
 from installer import install
 from installer.destinations import SchemeDictionaryDestination
@@ -31,9 +33,32 @@ if TYPE_CHECKING:
     from poetry.utils.env import Env
 
 
+# Several wheels may contain the same file (e.g. the __init__.py of a
+# pkgutil-style namespace package). Since wheels are installed in parallel,
+# two threads may write such a file at the same time, which results in a file
+# with interleaved contents. Therefore, each file is written under a lock
+# that is specific to its path.
+_file_locks: WeakValueDictionary[str, threading.Lock] = WeakValueDictionary()
+_file_locks_lock = threading.Lock()
+
+
+def _file_lock(path: str) -> threading.Lock:
+    key = os.path.normcase(path)
+    with _file_locks_lock:
+        lock = _file_locks.get(key)
+        if lock is None:
+            lock = _file_locks[key] = threading.Lock()
+
+    return lock
+
+
 class WheelDestination(SchemeDictionaryDestination):
     @cached_property
     def _abspath_scheme_cache(self) -> dict[Scheme, str]:
+        return {}
+
+    @cached_property
+    def _realpath_scheme_cache(self) -> dict[Scheme, str]:
         return {}
 
     def _abspath_scheme_dir(self, scheme: Scheme) -> str:
@@ -45,6 +70,16 @@ class WheelDestination(SchemeDictionaryDestination):
         if target_dir is None:
             target_dir = cache[scheme] = os.path.abspath(self.scheme_dict[scheme])
         return target_dir
+
+    def _realpath_scheme_dir(self, scheme: Scheme) -> str:
+        # Different schemes can point to the same directory through a symlink,
+        # e.g. platlib is lib64/... and lib64 is a symlink to lib on Fedora.
+        # Resolve the scheme directory once per scheme, not every file.
+        cache = self._realpath_scheme_cache
+        real_dir = cache.get(scheme)
+        if real_dir is None:
+            real_dir = cache[scheme] = os.path.realpath(self.scheme_dict[scheme])
+        return real_dir
 
     def write_to_fs(
         self,
@@ -100,11 +135,17 @@ class WheelDestination(SchemeDictionaryDestination):
             # that two threads try to create the directory.
             parent_folder.mkdir(parents=True, exist_ok=True)
 
-        with target_path.open("wb") as f:
-            hash_, size = copyfileobj_with_hashing(stream, f, self.hash_algorithm)
+        # The lock must be the same for the same file, whichever scheme
+        # (and whichever spelling of its directory) the wheel installs it to.
+        lock_key = (
+            self._realpath_scheme_dir(scheme) + target_path_str[len(target_dir) :]
+        )
+        with _file_lock(lock_key):
+            with target_path.open("wb") as f:
+                hash_, size = copyfileobj_with_hashing(stream, f, self.hash_algorithm)
 
-        if is_executable:
-            make_file_executable(target_path)
+            if is_executable:
+                make_file_executable(target_path)
 
         return RecordEntry(path, Hash(self.hash_algorithm, hash_), size)
 
