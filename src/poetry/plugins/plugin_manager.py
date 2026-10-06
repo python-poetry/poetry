@@ -17,15 +17,10 @@ import tomlkit
 from poetry.core.packages.project_package import ProjectPackage
 
 from poetry.__version__ import __version__
-from poetry.installation import Installer
-from poetry.packages import Locker
 from poetry.plugins.application_plugin import ApplicationPlugin
 from poetry.plugins.plugin import Plugin
-from poetry.repositories.installed_repository import InstalledRepository
 from poetry.toml import TOMLFile
 from poetry.utils._compat import tomllib
-from poetry.utils.env import Env
-from poetry.utils.env import EnvManager
 
 
 if TYPE_CHECKING:
@@ -37,6 +32,7 @@ if TYPE_CHECKING:
     from poetry.core.packages.package import Package
 
     from poetry.poetry import Poetry
+    from poetry.utils.env import Env
 
 
 logger = logging.getLogger(__name__)
@@ -54,6 +50,7 @@ class PluginManager:
     @staticmethod
     def add_project_plugin_path(directory: Path) -> None:
         from poetry.factory import Factory
+        from poetry.utils.env import EnvManager
 
         try:
             pyproject_toml = Factory.locate(directory)
@@ -134,6 +131,8 @@ class ProjectPluginCache:
 
     def ensure_plugins(self) -> None:
         from poetry.factory import Factory
+        from poetry.repositories.installed_repository import InstalledRepository
+        from poetry.utils.env import EnvManager
 
         # parse project plugins
         plugins = []
@@ -267,6 +266,10 @@ class ProjectPluginCache:
         poetry_env: Env,
         installed_packages: Sequence[Package],
     ) -> None:
+        from poetry.installation import Installer
+        from poetry.packages import Locker
+        from poetry.repositories.installed_repository import InstalledRepository
+
         project = ProjectPackage(name="poetry-project-instance", version="0")
         project.python_versions = ".".join(str(v) for v in poetry_env.version_info[:3])
         # consider all packages in Poetry's environment pinned
