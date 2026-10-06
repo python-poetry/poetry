@@ -92,6 +92,27 @@ def test_download_file_recover_from_error(
     assert http.calls[-1].request.headers["Range"] == f"bytes={file_length // 2}-"
 
 
+def test_download_file_fails_if_server_ignores_resume_range(
+    http: responses.RequestsMock, tmp_path: Path
+) -> None:
+    body = b"abcdefgh"
+    url = "https://foo.com/archive.tar.gz"
+
+    def handle_request(request: PreparedRequest) -> HttpResponse:
+        if "Range" not in request.headers:
+            return 200, {"Content-Length": "8", "Accept-Ranges": "bytes"}, body[:4]
+        return 200, {"Content-Length": "8"}, body
+
+    http.add_callback(responses.GET, url, callback=handle_request)
+    dest = tmp_path / "archive.tar.gz"
+
+    with pytest.raises(ChunkedEncodingError, match=r"ignored.*Range"):
+        download_file(url, dest, chunk_size=4, max_retries=1)
+
+    assert http.calls[-1].request.headers["Range"] == "bytes=4-"
+    assert not dest.exists()
+
+
 def test_download_file_fail_when_no_range(
     http: responses.RequestsMock, fixture_dir: FixtureDirGetter, tmp_path: Path
 ) -> None:
@@ -205,6 +226,9 @@ def test_downloader_retries_only_the_resumable_requests_errors(tmp_path: Path) -
                 "Content-Length": "8",
             }
 
+            def __init__(self, status_code: int) -> None:
+                self.status_code = status_code
+
             def raise_for_status(self) -> None: ...
             def close(self) -> None: ...
             def __enter__(self) -> _Resp:
@@ -220,8 +244,8 @@ def test_downloader_retries_only_the_resumable_requests_errors(tmp_path: Path) -
                     raise exc("stub failure")
 
         class _Session:
-            def get(self, *_: object, **__: object) -> _Resp:
-                return _Resp()
+            def get(self, *_: object, headers: dict[str, str], **__: object) -> _Resp:
+                return _Resp(status_code=206 if "Range" in headers else 200)
 
         downloader = Downloader(
             "https://example.invalid/x",
@@ -252,6 +276,9 @@ def test_downloader_stops_after_max_retries(tmp_path: Path) -> None:
             "Content-Length": "8",
         }
 
+        def __init__(self, status_code: int) -> None:
+            self.status_code = status_code
+
         def raise_for_status(self) -> None: ...
         def close(self) -> None: ...
         def __enter__(self) -> _Resp:
@@ -266,8 +293,8 @@ def test_downloader_stops_after_max_retries(tmp_path: Path) -> None:
             raise requests.exceptions.ConnectionError("stub failure")
 
     class _Session:
-        def get(self, *_: object, **__: object) -> _Resp:
-            return _Resp()
+        def get(self, *_: object, headers: dict[str, str], **__: object) -> _Resp:
+            return _Resp(status_code=206 if "Range" in headers else 200)
 
     downloader = Downloader(
         "https://example.invalid/x",
