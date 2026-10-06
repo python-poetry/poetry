@@ -5292,8 +5292,8 @@ def test_solver_does_not_update_ref_of_locked_vcs_package(
 
     assert op.package.source_type == "git"
     assert op.package.source_reference == DEFAULT_SOURCE_REF
-    assert (
-        op.package.source_resolved_reference == locked_ref if is_locked else latest_ref
+    assert op.package.source_resolved_reference == (
+        locked_ref if is_locked else latest_ref
     )
 
 
