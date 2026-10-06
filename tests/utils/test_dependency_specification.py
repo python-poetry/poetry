@@ -77,6 +77,8 @@ if TYPE_CHECKING:
         ("demo[a,b]", ({"name": "demo", "extras": ["a", "b"]},)),
         ("../demo", ({"name": "demo", "path": "../demo"},)),
         ("../demo/demo.whl", ({"name": "demo", "path": "../demo/demo.whl"},)),
+        ('"./foo bar"', ({"name": "demo", "path": "foo bar"},)),
+        ("'./foo bar'", ({"name": "demo", "path": "foo bar"},)),
         (
             "https://files.pythonhosted.org/distributions/demo-0.1.0.tar.gz",
             (
@@ -169,7 +171,11 @@ def test_parse_dependency_specification(
     # Parsing file and path dependencies reads metadata from the file or path in
     # question: for these tests we mock that out.
     def _mock(self: Path) -> bool:
-        if "/" in requirement and self == Path.cwd().joinpath(requirement):
+        req = requirement
+        quote = req[:1]
+        if quote in {'"', "'"} and req.endswith(quote) and req != quote:
+            req = req[1:-1]
+        if "/" in req and self == Path.cwd().joinpath(req):
             return True
         return original(self)
 
