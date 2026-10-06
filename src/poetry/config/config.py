@@ -427,6 +427,11 @@ class Config:
         if name.startswith("installer.build-config-settings."):
             return build_config_setting_normalizer
 
+        if name.startswith("certificates.") and name.endswith(".cert"):
+            return lambda val: (
+                boolean_normalizer(val) if boolean_validator(val.lower()) else val
+            )
+
         return lambda val: val
 
     @classmethod
