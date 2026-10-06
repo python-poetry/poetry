@@ -193,8 +193,8 @@ Poetry uses `virtualenv` to create environments. `virtualenv` stores interpreter
 `pip` in an app-data directory separate from [Poetry's cache]({{< relref "configuration#cache-directory" >}}).
 
 If environment creation fails because this data is corrupt, rerun the command with `-vvv` and find `app_data_dir` in
-the `virtualenv` output. After making sure that no Poetry or `virtualenv` processes are using the directory, delete it.
-`virtualenv` recreates the directory the next time Poetry creates an environment.
+the `virtualenv` output. Before deleting it, ensure that no Poetry or `virtualenv` process is running and that none can
+start until deletion finishes. `virtualenv` recreates the directory the next time Poetry creates an environment.
 
 The path varies by platform and `virtualenv` version. The `VIRTUALENV_OVERRIDE_APP_DATA` environment variable overrides
 it.
