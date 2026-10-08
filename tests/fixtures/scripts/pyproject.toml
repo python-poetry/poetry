@@ -12,6 +12,7 @@ python = "^3.7"
 check-argv0 = "scripts.check_argv0:main"
 exit-code = "scripts.exit_code:main"
 return-code = "scripts.return_code:main"
+file-script = { reference = "bin/file-script", type = "file" }
 
 [build-system]
 requires = ["poetry-core"]
