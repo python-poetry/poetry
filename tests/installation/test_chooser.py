@@ -453,6 +453,8 @@ def test_chooser_rejects_when_no_advertised_hash_matches_mixed_lock(
         Chooser(pool, env).choose_for(package)
 
     assert "did not match any known checksums" in str(e.value)
+    # Highest-priority advertised hash is what the skip path reports.
+    assert "sha512:" + "e" * 128 in e.value.get_text(debug=True, strip=True)
 
 
 def test_chooser_stops_checking_hashes_once_a_candidate_matches(
