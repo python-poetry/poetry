@@ -334,9 +334,22 @@ class Config:
         # is set via a POETRY_* environment variable
         if self._use_environment:
             if keys == ["repositories"]:
-                # repositories setting is special for now
-                repositories = self._get_environment_repositories()
-                if repositories:
+                # repositories setting is special for now:
+                # repositories that are only defined via environment variables
+                # are added to the configured ones instead of replacing them
+                env_repositories = self._get_environment_repositories()
+                if env_repositories:
+                    configured = self._config.get("repositories") or {}
+                    repositories = {
+                        name: self.get(["repositories", name]) for name in configured
+                    }
+                    # environment names are normalized, configured names are
+                    # not: compare both normalized so a configured repository
+                    # is not listed a second time under its environment name
+                    configured_names = {canonicalize_name(name) for name in configured}
+                    for name, repository in env_repositories.items():
+                        if canonicalize_name(name) not in configured_names:
+                            repositories[name] = repository
                     return repositories
 
             if keys[:2] == ["installer", "build-config-settings"]:
