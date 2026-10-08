@@ -870,3 +870,69 @@ include-groups = [
         assert "foobar3" in content.get("group", {})
         assert "include-groups" in content["group"]["foobar3"]
         assert content["group"]["foobar3"]["include-groups"] == ["foobar2"]
+
+
+def test_remove_from_project_optional_dependencies(
+    tester: CommandTester,
+    app: PoetryTestApplication,
+    repo: DummyRepository,
+    installed: Repository,
+) -> None:
+    repo.add_package(Package("foo", "2.0.0"))
+    repo.add_package(Package("bar", "1.0.0"))
+
+    pyproject = app.poetry.file.read()
+
+    project_optional_dependencies = tomlkit.parse(
+        """\
+[project.optional-dependencies]
+linting = [
+    "foo>=2.0",
+]
+typechecking = [
+    "bar>=1.0",
+]
+"""
+    )
+
+    pyproject["project"]["optional-dependencies"] = project_optional_dependencies[
+        "project"
+    ]["optional-dependencies"]
+    app.poetry.file.write(pyproject)
+
+    tester.execute("foo")
+
+    pyproject = app.poetry.file.read()
+    optional_dependencies = pyproject["project"]["optional-dependencies"]
+    assert "linting" not in optional_dependencies
+    assert optional_dependencies["typechecking"] == ["bar>=1.0"]
+
+
+def test_remove_last_entry_of_project_optional_dependencies_removes_the_table(
+    tester: CommandTester,
+    app: PoetryTestApplication,
+    repo: DummyRepository,
+    installed: Repository,
+) -> None:
+    repo.add_package(Package("foo", "2.0.0"))
+
+    pyproject = app.poetry.file.read()
+
+    project_optional_dependencies = tomlkit.parse(
+        """\
+[project.optional-dependencies]
+linting = [
+    "foo>=2.0",
+]
+"""
+    )
+
+    pyproject["project"]["optional-dependencies"] = project_optional_dependencies[
+        "project"
+    ]["optional-dependencies"]
+    app.poetry.file.write(pyproject)
+
+    tester.execute("foo")
+
+    pyproject = app.poetry.file.read()
+    assert "optional-dependencies" not in pyproject["project"]
