@@ -275,6 +275,32 @@ def test_unset_repository_with_periods_in_name(
     )
 
 
+def test_unset_corrupted_nested_repository(
+    tester: CommandTester, config_source: DictConfigSource
+) -> None:
+    config_source.config["repositories"] = {
+        "repo1": {"url": "https://example.com"},
+        "repo2": {"url": {"url": "https://invalid.com"}},
+    }
+
+    tester.execute("repositories.repo2 --unset")
+    assert "repo2" not in config_source.config["repositories"]
+    assert config_source.config["repositories"]["repo1"]["url"] == "https://example.com"
+
+
+def test_config_list_with_corrupted_repository_entry(
+    tester: CommandTester, config_source: DictConfigSource
+) -> None:
+    config_source.config["repositories"] = {
+        "repo2": {"url": {"url": "https://invalid.com"}},
+    }
+
+    tester.execute("--list")
+    assert (
+        'repositories.repo2.url.url = "https://invalid.com"' in tester.io.fetch_output()
+    )
+
+
 def test_unset_value_not_exists(tester: CommandTester) -> None:
     with pytest.raises(ValueError) as e:
         tester.execute("foobar --unset")

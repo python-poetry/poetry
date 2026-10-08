@@ -6,6 +6,7 @@ import logging
 import time
 import urllib.parse
 
+from collections.abc import Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -73,6 +74,13 @@ class AuthenticatorRepositoryConfig:
     _path_segments: list[str] = dataclasses.field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
+        if not isinstance(self.url, str):
+            self.scheme = ""
+            self.netloc = ""
+            self.path = ""
+            self._path_segments = []
+            return
+
         parsed_url = urllib.parse.urlsplit(self.url)
         self.scheme = parsed_url.scheme
         self.netloc = parsed_url.netloc
@@ -416,8 +424,20 @@ class Authenticator:
     def configured_repositories(self) -> dict[str, AuthenticatorRepositoryConfig]:
         if self._configured_repositories is None:
             self._configured_repositories = {}
-            for repository_name in self._config.get("repositories", []):
+            repositories = self._config.get("repositories", {})
+            if not isinstance(repositories, Mapping):
+                logger.warning("Repositories configuration is invalid; skipping.")
+                return self._configured_repositories
+
+            for repository_name in repositories:
                 url = self._config.get(["repositories", repository_name, "url"])
+                if not isinstance(url, str):
+                    logger.warning(
+                        "Repository '%s' has an invalid url configured in settings;"
+                        " skipping.",
+                        repository_name,
+                    )
+                    continue
                 self._configured_repositories[repository_name] = (
                     AuthenticatorRepositoryConfig(repository_name, url)
                 )
