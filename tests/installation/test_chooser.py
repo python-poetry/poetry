@@ -379,6 +379,82 @@ def test_chooser_accepts_a_hashless_link_whose_computed_hash_matches(
     assert link.filename == "isort-4.3.4.tar.gz"
 
 
+def test_chooser_accepts_any_matching_hash_when_lock_mixes_algorithms(
+    env: MockEnv, pool: RepositoryPool, mocker: MockerFixture
+) -> None:
+    """A PEP 691 index may list several hashes per file. If the lock entry for
+    the package mixes algorithms (one file sha256, another sha512), a file is
+    still valid when any of its advertised hashes is already in the lock.
+    """
+    sha256_wheel = "sha256:" + "a" * 64
+    sha512_sdist = "sha512:" + "b" * 128
+    other_sha512 = "c" * 128
+
+    package = Package(
+        "markupsafe",
+        "3.0.1",
+        source_type="legacy",
+        source_reference="foo",
+        source_url="https://legacy.foo.bar/simple/",
+    )
+    package.files = [
+        {"file": "MarkupSafe-3.0.1-py3-none-any.whl", "hash": sha256_wheel},
+        {"file": "markupsafe-3.0.1.tar.gz", "hash": sha512_sdist},
+    ]
+
+    wheel = Link(
+        "https://legacy.foo.bar/MarkupSafe-3.0.1-py3-none-any.whl",
+        hashes={"sha256": "a" * 64, "sha512": other_sha512},
+    )
+    sdist = Link(
+        "https://legacy.foo.bar/markupsafe-3.0.1.tar.gz",
+        hashes={"sha512": "b" * 128},
+    )
+
+    mocker.patch.object(
+        LegacyRepository, "find_links_for_package", return_value=[wheel, sdist]
+    )
+    calculate_sha256 = mocker.patch.object(LegacyRepository, "calculate_sha256")
+
+    link = Chooser(pool, env).choose_for(package)
+
+    assert link.filename == "MarkupSafe-3.0.1-py3-none-any.whl"
+    calculate_sha256.assert_not_called()
+
+
+def test_chooser_rejects_when_no_advertised_hash_matches_mixed_lock(
+    env: MockEnv, pool: RepositoryPool, mocker: MockerFixture
+) -> None:
+    """Mixed lock algorithms must not accept a file whose advertised hashes
+    are all unknown, even when a higher-priority algorithm is present.
+    """
+    package = Package(
+        "markupsafe",
+        "3.0.1",
+        source_type="legacy",
+        source_reference="foo",
+        source_url="https://legacy.foo.bar/simple/",
+    )
+    package.files = [
+        {"file": "MarkupSafe-3.0.1-py3-none-any.whl", "hash": "sha256:" + "a" * 64},
+        {"file": "markupsafe-3.0.1.tar.gz", "hash": "sha512:" + "b" * 128},
+    ]
+
+    wheel = Link(
+        "https://legacy.foo.bar/MarkupSafe-3.0.1-py3-none-any.whl",
+        hashes={"sha256": "d" * 64, "sha512": "e" * 128},
+    )
+
+    mocker.patch.object(
+        LegacyRepository, "find_links_for_package", return_value=[wheel]
+    )
+
+    with pytest.raises(PoetryRuntimeError) as e:
+        Chooser(pool, env).choose_for(package)
+
+    assert "did not match any known checksums" in str(e.value)
+
+
 def test_chooser_stops_checking_hashes_once_a_candidate_matches(
     env: MockEnv, pool: RepositoryPool, mocker: MockerFixture
 ) -> None:

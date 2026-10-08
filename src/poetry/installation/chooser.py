@@ -227,16 +227,23 @@ class Chooser:
             # A link that advertises no hash is not trusted: the lock file requires
             # a hash for this package, so fall through and compute one to compare.
             link_hash: str | None = None
-            if (candidates := locked_hash_names.intersection(link.hashes.keys())) and (
-                hash_name := get_highest_priority_hash_type(candidates, link.filename)
-            ):
-                link_hash = f"{hash_name}:{link.hashes[hash_name]}"
+            advertised_algorithms = locked_hash_names.intersection(link.hashes.keys())
+            if advertised_algorithms:
+                # Any locked digest is enough: PEP 691 files may list several hashes,
+                # and a package lock entry may mix algorithms across files.
+                for name in advertised_algorithms:
+                    candidate = f"{name}:{link.hashes[name]}"
+                    if candidate in locked_hashes:
+                        return link
+                if hash_name := get_highest_priority_hash_type(
+                    advertised_algorithms, link.filename
+                ):
+                    link_hash = f"{hash_name}:{link.hashes[hash_name]}"
 
             elif isinstance(repository, HTTPRepository):
                 link_hash = repository.calculate_sha256(link)
-
-            if link_hash in locked_hashes:
-                return link
+                if link_hash in locked_hashes:
+                    return link
 
             skipped.append((link.filename, link_hash))
             logger.debug(
