@@ -343,8 +343,13 @@ class Config:
                     repositories = {
                         name: self.get(["repositories", name]) for name in configured
                     }
+                    # environment names are normalized, configured names are
+                    # not: compare both normalized so a configured repository
+                    # is not listed a second time under its environment name
+                    configured_names = {canonicalize_name(name) for name in configured}
                     for name, repository in env_repositories.items():
-                        repositories.setdefault(name, repository)
+                        if canonicalize_name(name) not in configured_names:
+                            repositories[name] = repository
                     return repositories
 
             if keys[:2] == ["installer", "build-config-settings"]:

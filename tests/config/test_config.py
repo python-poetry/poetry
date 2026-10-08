@@ -167,6 +167,30 @@ def test_config_get_repositories_merges_environment_and_configured(
 
 
 @pytest.mark.parametrize(
+    ("configured_name", "env_name"),
+    [("my_repo", "MY_REPO"), ("my-repo", "MY_REPO"), ("MyRepo", "MYREPO")],
+)
+def test_config_get_repositories_does_not_duplicate_configured_repository(
+    config: Config,
+    environ: Iterator[None],
+    configured_name: str,
+    env_name: str,
+) -> None:
+    config.merge(
+        {"repositories": {configured_name: {"url": "https://old.example.com/simple/"}}}
+    )
+    os.environ[f"POETRY_REPOSITORIES_{env_name}_URL"] = (
+        "https://new.example.com/simple/"
+    )
+    os.environ["POETRY_REPOSITORIES_PUBLISH_URL"] = "https://upload.example.com/"
+
+    assert config.get("repositories") == {
+        configured_name: {"url": "https://new.example.com/simple/"},
+        "publish": {"url": "https://upload.example.com/"},
+    }
+
+
+@pytest.mark.parametrize(
     ("path_config", "expected"),
     [("~/.venvs", Path.home() / ".venvs"), ("venv", Path("venv"))],
 )
