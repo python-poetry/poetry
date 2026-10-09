@@ -296,6 +296,24 @@ def test_install_only_plugins(tester: CommandTester, mocker: MockerFixture) -> N
     assert "Installing the current project" not in tester.io.fetch_output()
 
 
+def test_only_plugins_conflicts_with_dry_run(
+    tester: CommandTester, mocker: MockerFixture
+) -> None:
+    assert isinstance(tester.command, InstallerCommand)
+    ensure_project_plugins = mocker.patch(
+        "poetry.plugins.plugin_manager.PluginManager.ensure_project_plugins"
+    )
+
+    tester.execute("--only-plugins --dry-run")
+
+    assert tester.status_code == 1
+    assert (
+        tester.io.fetch_error()
+        == "You cannot specify `--dry-run` when using `--only-plugins`.\n"
+    )
+    ensure_project_plugins.assert_not_called()
+
+
 def test_only_plugins_conflicts_with_no_plugins(
     tester: CommandTester, mocker: MockerFixture
 ) -> None:

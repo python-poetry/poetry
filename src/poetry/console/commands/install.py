@@ -131,6 +131,13 @@ you can set the "package-mode" to false in your pyproject.toml file.
                 )
                 return 1
 
+            if self.option("dry-run"):
+                self.line_error(
+                    "<error>You cannot specify `<fg=yellow;options=bold>--dry-run</>`"
+                    " when using `<fg=yellow;options=bold>--only-plugins</>`.</error>"
+                )
+                return 1
+
             PluginManager.ensure_project_plugins(self.poetry, self.io)
             return 0
 
