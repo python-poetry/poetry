@@ -577,7 +577,7 @@ class Application(BaseApplication):
         if not isinstance(command, EnvCommand) or isinstance(command, SelfCommand):
             return
 
-        if command._env is not None:
+        if command._env is not None or self._installs_only_plugins(command, event.io):
             return
 
         from poetry.utils.env import EnvManager
@@ -606,10 +606,22 @@ class Application(BaseApplication):
 
         # If the command already has an installer
         # we skip this step
-        if command._installer is not None:
+        if command._installer is not None or cls._installs_only_plugins(
+            command, event.io
+        ):
             return
 
         cls.configure_installer_for_command(command, event.io)
+
+    @staticmethod
+    def _installs_only_plugins(command: Command, io: IO) -> bool:
+        # `install --only-plugins` installs into Poetry's own environment, so
+        # it needs neither the project's environment nor an installer for it.
+        from poetry.console.commands.install import InstallCommand
+
+        return isinstance(command, InstallCommand) and bool(
+            io.input.option("only-plugins")
+        )
 
     @staticmethod
     def configure_installer_for_command(command: InstallerCommand, io: IO) -> None:

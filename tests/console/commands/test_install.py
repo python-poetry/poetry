@@ -280,6 +280,60 @@ def test_install_ensures_project_plugins(
     assert ensure_project_plugins.call_count == call_count
 
 
+def test_install_only_plugins(tester: CommandTester, mocker: MockerFixture) -> None:
+    assert isinstance(tester.command, InstallerCommand)
+    run = mocker.patch.object(tester.command.installer, "run", return_value=0)
+    ensure_project_plugins = mocker.patch(
+        "poetry.plugins.plugin_manager.PluginManager.ensure_project_plugins"
+    )
+
+    tester.execute("--only-plugins")
+
+    assert tester.status_code == 0
+    assert ensure_project_plugins.call_count == 1
+    # Neither the dependencies nor the project itself are installed.
+    run.assert_not_called()
+    assert "Installing the current project" not in tester.io.fetch_output()
+
+
+def test_only_plugins_conflicts_with_dry_run(
+    tester: CommandTester, mocker: MockerFixture
+) -> None:
+    assert isinstance(tester.command, InstallerCommand)
+    ensure_project_plugins = mocker.patch(
+        "poetry.plugins.plugin_manager.PluginManager.ensure_project_plugins"
+    )
+
+    tester.execute("--only-plugins --dry-run")
+
+    assert tester.status_code == 1
+    assert (
+        tester.io.fetch_error()
+        == "You cannot specify `--dry-run` when using `--only-plugins`.\n"
+    )
+    ensure_project_plugins.assert_not_called()
+
+
+def test_only_plugins_conflicts_with_no_plugins(
+    tester: CommandTester, mocker: MockerFixture
+) -> None:
+    assert isinstance(tester.command, InstallerCommand)
+    run = mocker.patch.object(tester.command.installer, "run", return_value=0)
+    ensure_project_plugins = mocker.patch(
+        "poetry.plugins.plugin_manager.PluginManager.ensure_project_plugins"
+    )
+
+    tester.execute("--only-plugins --no-plugins")
+
+    assert tester.status_code == 1
+    assert (
+        tester.io.fetch_error()
+        == "You cannot specify `--no-plugins` when using `--only-plugins`.\n"
+    )
+    ensure_project_plugins.assert_not_called()
+    run.assert_not_called()
+
+
 def test_extras_conflicts_all_extras(
     tester: CommandTester, mocker: MockerFixture
 ) -> None:
