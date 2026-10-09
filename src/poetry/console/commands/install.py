@@ -54,6 +54,13 @@ class InstallCommand(InstallerCommand):
         option("all-groups", None, "Install dependencies from all groups."),
         option("only-root", None, "Exclude all dependencies."),
         option(
+            "only-plugins",
+            None,
+            "Install only the plugins the project requires"
+            " (<comment>tool.poetry.requires-plugins</>), not its dependencies"
+            " or the project itself.",
+        ),
+        option(
             "compile",
             None,
             "Compile Python source files to bytecode.",
@@ -73,6 +80,11 @@ dependencies and not including the current project, run the command with the
 <info>--no-root</info> option like below:
 
 <info> poetry install --no-root</info>
+
+To install only the plugins the project requires, for example so that they are
+available to <info>poetry export</info> or <info>poetry build</info>, use the <info>--only-plugins</info> option:
+
+<info> poetry install --only-plugins</info>
 
 If you want to use Poetry only for dependency management but not for packaging,
 you can set the "package-mode" to false in your pyproject.toml file.
@@ -110,6 +122,17 @@ you can set the "package-mode" to false in your pyproject.toml file.
         from poetry.core.masonry.utils.module import ModuleOrPackageNotFoundError
 
         from poetry.masonry.builders.editable import EditableBuilder
+
+        if self.option("only-plugins"):
+            if self.option("no-plugins"):
+                self.line_error(
+                    "<error>You cannot specify `<fg=yellow;options=bold>--no-plugins</>`"
+                    " when using `<fg=yellow;options=bold>--only-plugins</>`.</error>"
+                )
+                return 1
+
+            PluginManager.ensure_project_plugins(self.poetry, self.io)
+            return 0
 
         if not self.option("no-plugins"):
             PluginManager.ensure_project_plugins(self.poetry, self.io)
