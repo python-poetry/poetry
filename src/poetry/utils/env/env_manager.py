@@ -283,7 +283,10 @@ class EnvManager:
         if not env_path.is_absolute():
             env_path = self._poetry.file.path.parent / env_path
 
-        if env_path.is_dir():
+        # A Python version like `3.11` may also be a directory in the project.
+        # Treat bare version arguments as versions, not virtualenv paths.
+        is_python_version = re.fullmatch(r"(?:python)?\d+(?:\.\d+){0,2}", python) is not None
+        if env_path.is_dir() and not is_python_version:
             resolved_env_path = env_path.resolve()
             for venv in self.list():
                 if venv.path.resolve() != resolved_env_path:
