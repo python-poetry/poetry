@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-import tomlkit
+import tomlrt
 
 from poetry.toml.file import TOMLFile
 
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 @pytest.fixture
 def venv_activate_37(venv_cache: Path, venv_name: str) -> None:
     envs_file = TOMLFile(venv_cache / "envs.toml")
-    doc = tomlkit.document()
+    doc = tomlrt.Document()
     doc[venv_name] = {"minor": "3.7", "patch": "3.7.0"}
     envs_file.write(doc)
 

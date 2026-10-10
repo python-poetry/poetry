@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from tomlkit.items import Array
+from tomlrt import Array
 
 from poetry.factory import Factory
 
