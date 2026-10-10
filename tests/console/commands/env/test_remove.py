@@ -73,7 +73,7 @@ def test_remove_by_python_version_when_directory_has_version_name(
 
     assert not (venv_cache / f"{venv_name}-py3.6").exists()
     assert tester.io.fetch_output() == (
-        f"Deleted virtualenv: {venv_cache / venv_name}-py3.6\\n"
+        f"Deleted virtualenv: {venv_cache / venv_name}-py3.6\n"
     )
 
 
