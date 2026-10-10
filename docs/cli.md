@@ -157,6 +157,10 @@ poetry add --editable ./my-package/
 poetry add --editable git+ssh://github.com/sdispater/pendulum.git#develop
 ```
 
+For an editable VCS dependency, Poetry clones the repository into the virtual environment's `src` directory (for example, `.venv/src/pendulum`) and installs that checkout in editable mode. Imports therefore use the code in that checkout, so local edits are reflected without reinstalling the dependency.
+
+Treat this checkout as managed by Poetry rather than as your primary working copy: install and update operations may replace or reset it to the revision recorded in the lock file. If you are developing two projects together, clone the dependency outside the virtual environment and add that checkout as an editable path dependency instead.
+
 Alternatively, you can specify it in the `pyproject.toml` file. It means that changes in the local directory will be reflected directly in environment.
 
 ```toml
