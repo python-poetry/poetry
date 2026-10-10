@@ -44,6 +44,39 @@ def test_remove_by_python_version(
     assert tester.io.fetch_output() == expected
 
 
+def test_remove_by_python_version_when_directory_has_version_name(
+    mocker: MockerFixture,
+    tester: CommandTester,
+    venvs_in_cache_dirs: list[str],
+    venv_name: str,
+    venv_cache: Path,
+) -> None:
+    # A project can have a directory named "3.6". It must not override a
+    # version argument to `poetry env remove`.
+    from pathlib import Path
+
+    original_is_dir = Path.is_dir
+    mocker.patch.object(
+        Path,
+        "is_dir",
+        autospec=True,
+        side_effect=lambda path: (
+            True if path.name == "3.6" else original_is_dir(path)
+        ),
+    )
+    mocker.patch(
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(Version.parse("3.6.6")),
+    )
+
+    tester.execute("3.6")
+
+    assert not (venv_cache / f"{venv_name}-py3.6").exists()
+    assert tester.io.fetch_output() == (
+        f"Deleted virtualenv: {venv_cache / venv_name}-py3.6\n"
+    )
+
+
 def test_remove_by_name(
     tester: CommandTester,
     venvs_in_cache_dirs: list[str],
@@ -148,6 +181,32 @@ def test_remove_in_project(tester: CommandTester, venvs_in_project_dir: Path) ->
     assert venvs_in_project_dir.exists()
 
     tester.execute()
+
+    assert not venvs_in_project_dir.exists()
+
+    expected = f"Deleted virtualenv: {venvs_in_project_dir}\n"
+    assert tester.io.fetch_output() == expected
+
+
+def test_remove_in_project_by_directory_name(
+    tester: CommandTester, venvs_in_project_dir: Path
+) -> None:
+    assert venvs_in_project_dir.exists()
+
+    tester.execute(".venv")
+
+    assert not venvs_in_project_dir.exists()
+
+    expected = f"Deleted virtualenv: {venvs_in_project_dir}\n"
+    assert tester.io.fetch_output() == expected
+
+
+def test_remove_in_project_by_directory_path(
+    tester: CommandTester, venvs_in_project_dir: Path
+) -> None:
+    assert venvs_in_project_dir.exists()
+
+    tester.execute(str(venvs_in_project_dir))
 
     assert not venvs_in_project_dir.exists()
 
