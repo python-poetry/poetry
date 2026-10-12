@@ -270,6 +270,9 @@ If the plugin is not installed in Poetry's own environment when running `poetry 
 it will be installed only for the current project under `.poetry/plugins`
 in the project's directory.
 
+To install the project's plugins without installing its dependencies or the project itself,
+for example to run `poetry export` or `poetry build` in a container, use `poetry install --only-plugins`.
+
 The syntax to specify `plugins` is the same as for [dependencies]({{< relref "managing-dependencies" >}}).
 Plugins can be installed in editable mode using path dependencies with `develop = true`,
 which is useful for plugin development.
