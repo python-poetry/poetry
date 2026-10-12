@@ -11,7 +11,6 @@ from poetry.config.config import PackageFilterPolicy
 from poetry.console.exceptions import ConsoleMessage
 from poetry.console.exceptions import PoetryRuntimeError
 from poetry.repositories.http_repository import HTTPRepository
-from poetry.utils.helpers import get_highest_priority_hash_type
 from poetry.utils.wheel import Wheel
 
 
@@ -227,10 +226,23 @@ class Chooser:
             # A link that advertises no hash is not trusted: the lock file requires
             # a hash for this package, so fall through and compute one to compare.
             link_hash: str | None = None
-            if (candidates := locked_hash_names.intersection(link.hashes.keys())) and (
-                hash_name := get_highest_priority_hash_type(candidates, link.filename)
-            ):
-                link_hash = f"{hash_name}:{link.hashes[hash_name]}"
+            if candidates := locked_hash_names.intersection(link.hashes.keys()):
+                # Accept a match on any algorithm the lock also records. The index
+                # may advertise a higher-priority hash (e.g. sha512) whose value
+                # differs from the lock while a lower-priority hash (e.g. sha256)
+                # matches, in which case the file is still authentic. The previous
+                # behaviour picked only the single highest-priority hash name and
+                # discarded the rest, so a valid sha256 match was ignored. See #11130.
+                link_hash = next(
+                    (
+                        h
+                        for h in (
+                            f"{name}:{link.hashes[name]}" for name in candidates
+                        )
+                        if h in locked_hashes
+                    ),
+                    None,
+                )
 
             elif isinstance(repository, HTTPRepository):
                 link_hash = repository.calculate_sha256(link)

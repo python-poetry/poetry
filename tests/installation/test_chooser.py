@@ -482,3 +482,69 @@ def test_chooser_md5_remote_fallback_to_sha256_inline_calculation(
     ]
     res = chooser.choose_for(package)
     assert res.filename == "demo-0.1.0.tar.gz"
+
+
+def test_chooser_accepts_link_when_any_advertised_hash_matches_lock(
+    env: MockEnv, pool: RepositoryPool, mocker: MockerFixture
+) -> None:
+    """When a package's lock entry records more than one hash algorithm, a
+    distribution whose index advertises a higher-priority hash (e.g. sha512)
+    with a value that differs from the lock must still be accepted if a
+    lower-priority hash it advertises (e.g. sha256) matches the lock. The old
+    behaviour picked the single highest-priority hash name and discarded the
+    rest, so a valid sha256 match was ignored. See #11130.
+    """
+    sha256 = "a" * 64
+    locked_sha512 = "b" * 128
+    link_sha512 = "c" * 128  # differs from the locked sha512
+
+    package = Package(
+        "isort",
+        "4.3.4",
+        source_type="legacy",
+        source_reference="foo",
+        source_url="https://legacy.foo.bar/simple/",
+    )
+    package.files = [
+        {"file": "isort-4.3.4.tar.gz", "hash": f"sha256:{sha256}"},
+        {"file": "isort-4.3.4.tar.gz", "hash": f"sha512:{locked_sha512}"},
+    ]
+
+    link = Link(
+        "https://legacy.foo.bar/isort-4.3.4.tar.gz",
+        hashes={"sha256": sha256, "sha512": link_sha512},
+    )
+    mocker.patch.object(
+        LegacyRepository, "find_links_for_package", return_value=[link]
+    )
+
+    chosen = Chooser(pool, env).choose_for(package)
+    assert chosen is link
+
+
+def test_chooser_rejects_link_when_no_advertised_hash_matches_lock(
+    env: MockEnv, pool: RepositoryPool, mocker: MockerFixture
+) -> None:
+    """Regression guard for #11130: if none of the advertised hashes match the
+    lock, the distribution is still rejected.
+    """
+    package = Package(
+        "isort",
+        "4.3.4",
+        source_type="legacy",
+        source_reference="foo",
+        source_url="https://legacy.foo.bar/simple/",
+    )
+    package.files = [{"file": "isort-4.3.4.tar.gz", "hash": f"sha256:{'a' * 64}"}]
+
+    link = Link(
+        "https://legacy.foo.bar/isort-4.3.4.tar.gz",
+        hashes={"sha256": "z" * 64, "sha512": "z" * 128},
+    )
+    mocker.patch.object(
+        LegacyRepository, "find_links_for_package", return_value=[link]
+    )
+
+    with pytest.raises(PoetryRuntimeError) as e:
+        Chooser(pool, env).choose_for(package)
+    assert "did not match any known checksums" in str(e.value)
