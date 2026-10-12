@@ -217,33 +217,27 @@ class Chooser:
             links, key=lambda link: self._sort_key(package, link), reverse=True
         )
 
-        locked_hashes = {f["hash"] for f in package.files}
-        if not locked_hashes:
+        if not package.files:
             return ordered_links[0]
 
         skipped = []
-        locked_hash_names = {h.split(":")[0] for h in locked_hashes}
         for link in ordered_links:
+            locked_hashes = {
+                f["hash"] for f in package.files if f["file"] == link.filename
+            }
+            locked_hash_names = {h.split(":")[0] for h in locked_hashes}
             # A link that advertises no hash is not trusted: the lock file requires
             # a hash for this package, so fall through and compute one to compare.
             link_hash: str | None = None
-            advertised_algorithms = locked_hash_names.intersection(link.hashes.keys())
-            if advertised_algorithms:
-                # Any locked digest is enough: PEP 691 files may list several hashes,
-                # and a package lock entry may mix algorithms across files.
-                for name in advertised_algorithms:
-                    candidate = f"{name}:{link.hashes[name]}"
-                    if candidate in locked_hashes:
-                        return link
-                if hash_name := get_highest_priority_hash_type(
-                    advertised_algorithms, link.filename
-                ):
-                    link_hash = f"{hash_name}:{link.hashes[hash_name]}"
-
+            if (candidates := locked_hash_names.intersection(link.hashes.keys())) and (
+                hash_name := get_highest_priority_hash_type(candidates, link.filename)
+            ):
+                link_hash = f"{hash_name}:{link.hashes[hash_name]}"
             elif isinstance(repository, HTTPRepository):
                 link_hash = repository.calculate_sha256(link)
-                if link_hash in locked_hashes:
-                    return link
+
+            if link_hash in locked_hashes:
+                return link
 
             skipped.append((link.filename, link_hash))
             logger.debug(
@@ -254,7 +248,7 @@ class Chooser:
 
         reason = f"Downloaded distributions for <b>{package.pretty_name} ({package.pretty_version})</> did not match any known checksums in your lock file."
         link_hashes = "\n".join(f"  - {link}({h})" for link, h in skipped)
-        known_hashes = "\n".join(f"  - {h}" for h in locked_hashes)
+        known_hashes = "\n".join(f"  - {f['hash']}" for f in package.files)
         messages = [
             ConsoleMessage(
                 "<options=bold>Causes:</>\n"
