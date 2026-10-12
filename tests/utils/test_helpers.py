@@ -377,7 +377,7 @@ def test_extractall_sdist_no_symlink_path_traversal_via_directory_symlink(
         # tarfile.OutsideDestinationError does not exist
         exception = ValueError
 
-    # 2026-10-10: Filters may reject the path or normalize it inside dest.
+    # Filters may reject the path or normalize it inside dest.
     try:
         extractall(source=archive, dest=dest, zip=False)
     except exception:
