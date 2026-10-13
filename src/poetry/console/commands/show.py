@@ -40,6 +40,16 @@ def reverse_deps(pkg: Package, repo: Repository) -> dict[str, str]:
     return required_by
 
 
+def get_package_source(package: Package) -> str:
+    if package.source_type is None:
+        return "PyPI"
+
+    if package.source_type == "legacy":
+        return package.source_reference or package.source_url or "PyPI"
+
+    return package.source_url or package.source_reference or package.source_type
+
+
 class OutputFormats(str, Enum):
     JSON = "json"
     TEXT = "text"
@@ -79,6 +89,7 @@ class ShowCommand(GroupCommand, EnvCommand):
             None,
             "Do not truncate the output based on the terminal width.",
         ),
+        option("source", None, "Show the source of each package."),
         option(
             "format",
             "f",
@@ -140,6 +151,12 @@ lists all packages available."""
         if self.option("format") != OutputFormats.TEXT and self.option("tree"):
             self.line_error(
                 "<error>Error: --tree option can only be used with the text output option.</error>"
+            )
+            return 1
+
+        if self.option("source") and self.option("tree"):
+            self.line_error(
+                "<error>Error: --source cannot be used with --tree.</error>"
             )
             return 1
 
@@ -229,6 +246,8 @@ lists all packages available."""
                 "version": pkg.pretty_version,
                 "description": pkg.description,
             }
+            if self.option("source"):
+                package_info["source"] = get_package_source(pkg)
             if pkg.requires:
                 package_info["dependencies"] = {
                     dependency.pretty_name: dependency.pretty_constraint
@@ -246,6 +265,10 @@ lists all packages available."""
             ["<info>version</>", f" : <b>{pkg.pretty_version}</b>"],
             ["<info>description</>", f" : {pkg.description}"],
         ]
+        if self.option("source"):
+            rows.insert(
+                2, ["<info>source</>", f" : <c1>{get_package_source(pkg)}</c1>"]
+            )
 
         self.table(rows=rows, style="compact").render()
 
@@ -304,12 +327,14 @@ lists all packages available."""
         show_all = self.option("all")
         show_top_level = self.option("top-level")
         show_why = self.option("why")
+        show_source = self.option("source")
         width = (
             sys.maxsize
             if self.option("no-truncate")
             else shutil.get_terminal_size().columns
         )
-        name_length = version_length = latest_length = required_by_length = 0
+        name_length = version_length = latest_length = source_length = 0
+        required_by_length = 0
         latest_packages = {}
         latest_statuses = {}
         installed_repo = InstalledRepository.load(self.env)
@@ -344,7 +369,9 @@ lists all packages available."""
                     version_length = max(
                         version_length,
                         len(
-                            get_package_version_display_string(
+                            locked.pretty_version
+                            if show_source and locked.is_direct_origin()
+                            else get_package_version_display_string(
                                 locked, root=self.poetry.file.path.parent
                             )
                         ),
@@ -364,12 +391,19 @@ lists all packages available."""
                             required_by_length,
                             len(" from " + ",".join(required_by.keys())),
                         )
+
+                    if show_source:
+                        source_length = max(
+                            source_length, len(get_package_source(locked))
+                        )
             else:
                 name_length = max(name_length, current_length)
                 version_length = max(
                     version_length,
                     len(
-                        get_package_version_display_string(
+                        locked.pretty_version
+                        if show_source and locked.is_direct_origin()
+                        else get_package_version_display_string(
                             locked, root=self.poetry.file.path.parent
                         )
                     ),
@@ -380,6 +414,9 @@ lists all packages available."""
                     required_by_length = max(
                         required_by_length, len(" from " + ",".join(required_by.keys()))
                     )
+
+                if show_source:
+                    source_length = max(source_length, len(get_package_source(locked)))
 
         if self.option("format") == OutputFormats.JSON:
             packages = []
@@ -413,6 +450,9 @@ lists all packages available."""
                         latest, root=self.poetry.file.path.parent
                     )
 
+                if show_source:
+                    package["source"] = get_package_source(locked)
+
                 if show_why:
                     required_by = reverse_deps(locked, locked_repository)
                     if required_by:
@@ -429,8 +469,14 @@ lists all packages available."""
         write_version = name_length + version_length + 3 <= width
         write_latest = name_length + version_length + latest_length + 3 <= width
 
+        source_end_column = name_length + version_length + latest_length + source_length
+        write_source = show_source and (source_end_column + 3) <= width
         why_end_column = (
-            name_length + version_length + latest_length + required_by_length
+            name_length
+            + version_length
+            + latest_length
+            + (source_length if write_source else 0)
+            + required_by_length
         )
         write_why = show_why and (why_end_column + 3) <= width
         write_description = (why_end_column + 24) <= width
@@ -471,8 +517,12 @@ lists all packages available."""
                 f"{name:{name_length - len(install_marker)}}{install_marker}</>"
             )
             if write_version:
-                version = get_package_version_display_string(
-                    locked, root=self.poetry.file.path.parent
+                version = (
+                    locked.pretty_version
+                    if show_source and locked.is_direct_origin()
+                    else get_package_version_display_string(
+                        locked, root=self.poetry.file.path.parent
+                    )
                 )
                 line += f" <b>{version:{version_length}}</b>"
             if show_latest:
@@ -491,6 +541,9 @@ lists all packages available."""
                     )
                     line += f" <fg={color}>{version:{latest_length}}</>"
 
+            if write_source:
+                line += f" {get_package_source(locked):{source_length}}"
+
             if write_why:
                 required_by = reverse_deps(locked, locked_repository)
                 if required_by:
@@ -508,6 +561,9 @@ lists all packages available."""
 
                 if show_latest:
                     remaining -= latest_length
+
+                if write_source:
+                    remaining -= source_length + 1
 
                 if len(locked.description) > remaining:
                     description = description[: remaining - 3] + "..."
