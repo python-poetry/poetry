@@ -725,6 +725,33 @@ The constraints **must** have different requirements (like `python`)
 otherwise it will cause an error when resolving dependencies.
 {{% /note %}}
 
+Each item is an alternative requirement for the same dependency. Its `python` or
+`markers` expression selects the environments where that alternative applies, while
+`version` selects the dependency versions allowed in those environments. Environment
+expressions may overlap when Poetry can merge their compatible constraints. If
+overlapping alternatives impose incompatible constraints, dependency resolution fails.
+
+Choose version constraints according to what your project supports. Applications often
+use the newest compatible dependency range for each Python range, as in the example
+above. Libraries should generally keep each range as broad as their compatibility
+allows, so that applications depending on the library retain flexibility. For example,
+if `foo` 1.3 supports every Python version in the project but `foo` 1.4 requires Python
+3.7 or newer, a library can express both compatibility ranges without excluding 1.3 on
+newer Python versions:
+
+```toml
+[tool.poetry.dependencies]
+foo = [
+    {version = ">=1.3,<1.4", python = ">=3.6,<3.7"},
+    {version = ">=1.3,<2.0", python = ">=3.7"}
+]
+```
+
+The project's own Python constraint must cover the same Python versions. Prefer the
+fewest alternatives that accurately describe compatibility; splitting equivalent
+ranges into many entries increases the solver's search space and makes the
+configuration harder to maintain.
+
 ### Combining git / url / path dependencies with source repositories
 
 Direct origin (`git`/ `url`/ `path`) dependencies can satisfy the requirement of a dependency that
