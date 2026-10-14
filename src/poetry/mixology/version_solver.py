@@ -40,10 +40,11 @@ def _effective_marker(dependency: Dependency) -> BaseMarker:
     The marker describing when a dependency actually applies: its own marker
     intersected with the marker of the package that required it (a dependency is
     only reached when its requiring package applies).
+
+    Extras in the transitive marker belong to the root marker world. Extras in
+    the dependency's own marker are local to its requiring package.
     """
-    return dependency.transitive_marker.without_extras().intersect(
-        dependency.marker.without_extras()
-    )
+    return dependency.transitive_marker.intersect(dependency.marker.without_extras())
 
 
 class Preference(IntEnum):
