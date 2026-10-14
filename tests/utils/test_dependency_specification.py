@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import gzip
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -16,6 +18,7 @@ if TYPE_CHECKING:
 
     from poetry.utils.cache import ArtifactCache
     from poetry.utils.dependency_specification import DependencySpec
+    from tests.types import FixtureDirGetter
 
 
 @pytest.mark.parametrize(
@@ -143,6 +146,16 @@ if TYPE_CHECKING:
             ),
         ),
         (
+            "demo[a] @ https://example.com/demo.whl[b]",
+            (
+                {
+                    "name": "demo",
+                    "url": "https://example.com/demo.whl[b]",
+                    "extras": ["a"],
+                },
+            ),
+        ),
+        (
             (
                 'cachecontrol[filecache] (>=0.12.9,<0.13.0); python_version >= "3.6"'
                 ' and python_version < "4.0"'
@@ -184,3 +197,53 @@ def test_parse_dependency_specification(
         RequirementsParser(artifact_cache=artifact_cache).parse(requirement)
         in expected_variants
     )
+
+
+@pytest.mark.parametrize("extras", [[], ["a"], ["a", "b"]])
+@pytest.mark.parametrize("prefix", ["", "./"])
+@pytest.mark.parametrize(
+    "filename",
+    ["demo-0.1.2-py2.py3-none-any.whl", "demo-0.1.0.tar.gz", "demo-0.1.0.tar"],
+)
+def test_parse_local_file_dependency(
+    tmp_path: Path,
+    fixture_dir: FixtureDirGetter,
+    artifact_cache: ArtifactCache,
+    extras: list[str],
+    prefix: str,
+    filename: str,
+) -> None:
+    source_name = filename + ".gz" if filename.endswith(".tar") else filename
+    source = fixture_dir("distributions") / source_name
+    path = tmp_path / filename
+    data = source.read_bytes()
+    path.write_bytes(gzip.decompress(data) if filename.endswith(".tar") else data)
+
+    requirement = prefix + path.name
+    expected: DependencySpec = {"name": "demo", "path": path.name}
+    if extras:
+        requirement += f"[{','.join(extras)}]"
+        expected["extras"] = extras
+
+    assert (
+        RequirementsParser(
+            artifact_cache=artifact_cache,
+            cwd=tmp_path,
+        ).parse(requirement)
+        == expected
+    )
+
+
+@pytest.mark.parametrize(
+    "requirement", ["demo", "demo[a]", "demo@^1.0", "demo>=1", "demo[a,b]>=1"]
+)
+def test_parse_bare_package_name_does_not_check_path(
+    mocker: MockerFixture,
+    artifact_cache: ArtifactCache,
+    requirement: str,
+) -> None:
+    parser = RequirementsParser(artifact_cache=artifact_cache)
+    parse_path = mocker.patch.object(parser, "_parse_path", wraps=parser._parse_path)
+
+    assert parser.parse(requirement)["name"] == "demo"
+    parse_path.assert_not_called()
