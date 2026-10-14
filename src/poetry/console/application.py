@@ -11,6 +11,7 @@ from typing import cast
 
 from cleo._utils import find_similar_names
 from cleo.application import Application as BaseApplication
+from cleo.commands.list_command import ListCommand
 from cleo.events.console_command_event import ConsoleCommandEvent
 from cleo.events.console_events import COMMAND
 from cleo.events.event_dispatcher import EventDispatcher
@@ -30,6 +31,7 @@ from poetry.utils.helpers import ensure_path
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from cleo.commands.command import Command as BaseCommand
     from cleo.events.event import Event
     from cleo.io.inputs.definition import Definition
     from cleo.io.inputs.input import Input
@@ -121,6 +123,12 @@ Since <info>Poetry (<b>2.0.0</>)</>, the <c1>shell</> command is not installed b
 }
 
 
+class PoetryListCommand(ListCommand):
+    description = "Python dependency management and packaging made easy."
+
+    help = "Learn more: <info>https://python-poetry.org/</info>"
+
+
 class Application(BaseApplication):
     def __init__(self) -> None:
         super().__init__("poetry", __version__)
@@ -141,6 +149,13 @@ class Application(BaseApplication):
 
         command_loader = CommandLoader({name: load_command(name) for name in COMMANDS})
         self.set_command_loader(command_loader)
+
+    @property
+    def default_commands(self) -> list[BaseCommand]:
+        return [
+            PoetryListCommand() if command.name == "list" else command
+            for command in super().default_commands
+        ]
 
     @property
     def _default_definition(self) -> Definition:
