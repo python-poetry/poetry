@@ -6,6 +6,8 @@ import pytest
 
 from poetry.core.constraints.version import Version
 
+from poetry.utils._compat import WINDOWS
+from poetry.utils.env.exceptions import IncorrectEnvError
 from tests.console.commands.env.helpers import check_output_wrapper
 
 
@@ -15,6 +17,7 @@ if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
     from pytest_mock import MockerFixture
 
+    from tests.helpers import PoetryTestApplication
     from tests.types import CommandTesterFactory
 
 
@@ -44,37 +47,62 @@ def test_remove_by_python_version(
     assert tester.io.fetch_output() == expected
 
 
-def test_remove_by_python_version_when_directory_has_version_name(
+@pytest.mark.parametrize("selector", ["3.6", "python3.6", "python", "custom-python"])
+def test_remove_by_selector_when_directory_has_same_name(
     mocker: MockerFixture,
     tester: CommandTester,
+    app: PoetryTestApplication,
     venvs_in_cache_dirs: list[str],
     venv_name: str,
     venv_cache: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    selector: str,
 ) -> None:
-    # A project can have a directory named "3.6". It must not override a
-    # version argument to `poetry env remove`.
-    from pathlib import Path
-
-    original_is_dir = Path.is_dir
-    mocker.patch.object(
-        Path,
-        "is_dir",
-        autospec=True,
-        side_effect=lambda path: (
-            True if path.name == "3.6" else original_is_dir(path)
-        ),
-    )
+    source_dir = app.poetry.file.path.parent / selector
+    source_dir.mkdir()
+    sentinel = source_dir / "source.txt"
+    sentinel.write_text("preserve source", encoding="utf-8")
+    # A real PATH entry makes executable lookup independent of host aliases.
+    # Execution is mocked below; Windows lookup expects an executable suffix.
+    executable_dir = tmp_path / "bin"
+    executable_dir.mkdir()
+    executable = executable_dir / (selector + ".exe" if WINDOWS else selector)
+    executable.touch()
+    executable.chmod(0o755)
+    monkeypatch.setenv("PATH", str(executable_dir))
     mocker.patch(
         "subprocess.check_output",
         side_effect=check_output_wrapper(Version.parse("3.6.6")),
     )
 
-    tester.execute("3.6")
+    tester.execute(selector)
 
     assert not (venv_cache / f"{venv_name}-py3.6").exists()
+    assert sentinel.read_text(encoding="utf-8") == "preserve source"
     assert tester.io.fetch_output() == (
         f"Deleted virtualenv: {venv_cache / venv_name}-py3.6\n"
     )
+
+
+@pytest.mark.parametrize("absolute", [False, True])
+def test_remove_rejects_explicit_source_directory(
+    tester: CommandTester,
+    app: PoetryTestApplication,
+    venvs_in_cache_dirs: list[str],
+    venv_cache: Path,
+    absolute: bool,
+) -> None:
+    source_dir = app.poetry.file.path.parent / "python"
+    source_dir.mkdir()
+    sentinel = source_dir / "source.txt"
+    sentinel.write_text("preserve source", encoding="utf-8")
+
+    with pytest.raises(IncorrectEnvError):
+        tester.execute(f'"{source_dir}"' if absolute else "./python")
+
+    assert sentinel.read_text(encoding="utf-8") == "preserve source"
+    assert all((venv_cache / name).is_dir() for name in venvs_in_cache_dirs)
 
 
 def test_remove_by_name(

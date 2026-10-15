@@ -5,6 +5,7 @@ import hashlib
 import os
 import plistlib
 import re
+import shutil
 import subprocess
 import sys
 
@@ -283,10 +284,15 @@ class EnvManager:
         if not env_path.is_absolute():
             env_path = self._poetry.file.path.parent / env_path
 
-        # A Python version like `3.11` may also be a directory in the project.
-        # Treat bare version arguments as versions, not virtualenv paths.
-        is_python_version = re.fullmatch(r"(?:python)?\d+(?:\.\d+){0,2}", python) is not None
-        if env_path.is_dir() and not is_python_version:
+        # Bare versions and PATH executables remain selectors even when a
+        # project source directory has the same name. Explicit paths do not.
+        is_python_version = (
+            re.fullmatch(r"(?:python)?\d+(?:\.\d+){0,2}", python) is not None
+        )
+        is_path_executable = (
+            python_path.name == python and shutil.which(python) is not None
+        )
+        if env_path.is_dir() and not (is_python_version or is_path_executable):
             resolved_env_path = env_path.resolve()
             for venv in self.list():
                 if venv.path.resolve() != resolved_env_path:
