@@ -725,6 +725,32 @@ The constraints **must** have different requirements (like `python`)
 otherwise it will cause an error when resolving dependencies.
 {{% /note %}}
 
+### Using different package sources for different platforms
+
+Use mutually exclusive markers to choose a package source for each platform. Each `source` must refer
+to a configured package source. For example, to use a private index on Linux and PyPI elsewhere:
+
+```toml
+[tool.poetry.dependencies]
+foo = [
+    { version = "^1.0", markers = "sys_platform == 'linux'", source = "internal" },
+    { version = "^1.0", markers = "sys_platform != 'linux'", source = "pypi" },
+]
+
+[[tool.poetry.source]]
+name = "internal"
+url = "https://packages.example.org/simple/"
+priority = "explicit"
+
+[[tool.poetry.source]]
+name = "pypi"
+priority = "primary"
+```
+
+The markers choose which requirement applies; `source` restricts where Poetry searches for that
+requirement. Explicit priority keeps the private index from being searched for unrelated dependencies.
+See [Package sources]({{< relref "repositories#package-sources" >}}) for source priorities and configuration.
+
 ### Combining git / url / path dependencies with source repositories
 
 Direct origin (`git`/ `url`/ `path`) dependencies can satisfy the requirement of a dependency that
