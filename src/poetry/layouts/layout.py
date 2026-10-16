@@ -20,6 +20,7 @@ from poetry.pyproject.toml import PyProjectTOML
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
+    from collections.abc import Sequence
 
     from tomlkit.items import InlineTable
     from tomlkit.toml_document import TOMLDocument
@@ -66,6 +67,7 @@ class Layout:
         description: str = "",
         readme_format: str = "md",
         author: str | None = None,
+        authors: Sequence[str] | None = None,
         license: str | None = None,
         python: str | None = None,
         dependencies: Mapping[str, str | Mapping[str, Any]] | None = None,
@@ -86,10 +88,9 @@ class Layout:
         self._dependencies = dependencies or {}
         self._dev_dependencies = dev_dependencies or {}
 
-        if not author:
-            author = "Your Name <you@example.com>"
-
-        self._author = author
+        self._authors = list(authors or ([author] if author else []))
+        if not self._authors:
+            self._authors = ["Your Name <you@example.com>"]
 
     @property
     def basedir(self) -> Path:
@@ -147,15 +148,16 @@ class Layout:
         project_content["name"] = self._project
         project_content["version"] = self._version
         project_content["description"] = self._description
-        m = AUTHOR_REGEX.match(self._author)
-        if m is None:
-            # This should not happen because author has been validated before.
-            raise ValueError(f"Invalid author: {self._author}")
-        else:
-            author = {"name": m.group("name")}
+        for author in self._authors:
+            m = AUTHOR_REGEX.match(author)
+            if m is None:
+                # This should not happen because authors are validated before.
+                raise ValueError(f"Invalid author: {author}")
+
+            author_content = {"name": m.group("name")}
             if email := m.group("email"):
-                author["email"] = email
-            project_content["authors"].append(author)
+                author_content["email"] = email
+            project_content["authors"].append(author_content)
 
         if self._license:
             project_content["license"] = self._license
