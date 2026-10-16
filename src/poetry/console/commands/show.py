@@ -310,6 +310,7 @@ lists all packages available."""
             else shutil.get_terminal_size().columns
         )
         name_length = version_length = latest_length = required_by_length = 0
+        compact_version_length = compact_latest_length = 0
         latest_packages = {}
         latest_statuses = {}
         installed_repo = InstalledRepository.load(self.env)
@@ -341,6 +342,9 @@ lists all packages available."""
 
                 if not self.option("outdated") or update_status != "up-to-date":
                     name_length = max(name_length, current_length)
+                    compact_version_length = max(
+                        compact_version_length, len(locked.pretty_version)
+                    )
                     version_length = max(
                         version_length,
                         len(
@@ -357,6 +361,9 @@ lists all packages available."""
                             )
                         ),
                     )
+                    compact_latest_length = max(
+                        compact_latest_length, len(latest.pretty_version)
+                    )
 
                     if show_why:
                         required_by = reverse_deps(locked, locked_repository)
@@ -366,6 +373,9 @@ lists all packages available."""
                         )
             else:
                 name_length = max(name_length, current_length)
+                compact_version_length = max(
+                    compact_version_length, len(locked.pretty_version)
+                )
                 version_length = max(
                     version_length,
                     len(
@@ -426,8 +436,18 @@ lists all packages available."""
 
             return 0
 
+        compact_versions = False
         write_version = name_length + version_length + 3 <= width
+        if not write_version:
+            compact_versions = True
+            version_length = compact_version_length
+            write_version = name_length + version_length + 3 <= width
+        compact_latest_versions = False
         write_latest = name_length + version_length + latest_length + 3 <= width
+        if show_latest and not write_latest:
+            compact_latest_versions = True
+            latest_length = compact_latest_length
+            write_latest = name_length + version_length + latest_length + 3 <= width
 
         why_end_column = (
             name_length + version_length + latest_length + required_by_length
@@ -471,8 +491,12 @@ lists all packages available."""
                 f"{name:{name_length - len(install_marker)}}{install_marker}</>"
             )
             if write_version:
-                version = get_package_version_display_string(
-                    locked, root=self.poetry.file.path.parent
+                version = (
+                    locked.pretty_version
+                    if compact_versions
+                    else get_package_version_display_string(
+                        locked, root=self.poetry.file.path.parent
+                    )
                 )
                 line += f" <b>{version:{version_length}}</b>"
             if show_latest:
@@ -486,8 +510,12 @@ lists all packages available."""
                     elif update_status == "update-possible":
                         color = "yellow"
 
-                    version = get_package_version_display_string(
-                        latest, root=self.poetry.file.path.parent
+                    version = (
+                        latest.pretty_version
+                        if compact_latest_versions
+                        else get_package_version_display_string(
+                            latest, root=self.poetry.file.path.parent
+                        )
                     )
                     line += f" <fg={color}>{version:{latest_length}}</>"
 
