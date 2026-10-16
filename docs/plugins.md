@@ -269,6 +269,12 @@ custom-plugin = {path = "custom_plugin", develop = true}
 If the plugin is not installed in Poetry's own environment when running `poetry install`,
 it will be installed only for the current project under `.poetry/plugins`
 in the project's directory.
+Newly installed application plugins are activated during that same `install` or `sync`
+command, so their `TERMINATE` listeners can run immediately. Events that have already
+been dispatched, such as `COMMAND`, are not replayed for newly installed plugins.
+This activates newly discovered plugins; it does not reload modules that have already
+been imported. If installing project plugins replaces an already loaded plugin or
+one of its dependencies, start a new Poetry invocation to use the installed version.
 
 The syntax to specify `plugins` is the same as for [dependencies]({{< relref "managing-dependencies" >}}).
 Plugins can be installed in editable mode using path dependencies with `develop = true`,

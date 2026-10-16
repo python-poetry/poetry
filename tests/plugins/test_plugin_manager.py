@@ -155,6 +155,112 @@ def test_load_plugins_and_activate(
     assert io.fetch_output() == "Setting readmes\n"
 
 
+def test_project_plugin_path_is_added_only_once(
+    tmp_path: Path, mocker: MockerFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "pyproject.toml").touch()
+    plugin_path = tmp_path / ProjectPluginCache.PATH
+    plugin_path.mkdir(parents=True)
+    monkeypatch.setattr(sys, "path", sys.path.copy())
+    env = mocker.Mock()
+    env.sys_path = sys.path
+    mocker.patch(
+        "poetry.plugins.plugin_manager.EnvManager.get_system_env", return_value=env
+    )
+    addsitedir = mocker.patch("poetry.plugins.plugin_manager.addsitedir")
+
+    PluginManager.add_project_plugin_path(tmp_path)
+    PluginManager.add_project_plugin_path(tmp_path)
+
+    assert sys.path.count(str(plugin_path)) == 1
+    addsitedir.assert_called_once_with(str(plugin_path))
+
+
+@pytest.mark.parametrize("existing_path", [False, True])
+def test_new_project_plugin_pth_files(
+    tmp_path: Path,
+    mocker: MockerFixture,
+    monkeypatch: pytest.MonkeyPatch,
+    existing_path: bool,
+) -> None:
+    (tmp_path / "pyproject.toml").touch()
+    plugin_path = tmp_path / ProjectPluginCache.PATH
+    plugin_path.mkdir(parents=True)
+    marker = tmp_path / "executions.txt"
+    old_pth = plugin_path / "old.pth"
+    old_pth.write_text(
+        f"import pathlib; pathlib.Path({str(marker)!r}).open('a').write('old\\n')\n"
+    )
+    monkeypatch.setattr(sys, "path", sys.path.copy())
+    env = mocker.Mock()
+    env.sys_path = sys.path
+    mocker.patch(
+        "poetry.plugins.plugin_manager.EnvManager.get_system_env", return_value=env
+    )
+    if existing_path:
+        sys.path.append(str(plugin_path))
+        marker.write_text("old\n")
+    known = PluginManager.add_project_plugin_path(tmp_path)
+    assert marker.read_text() == "old\n"
+
+    editable_source = tmp_path / "editable-source"
+    editable_source.mkdir()
+    (plugin_path / "new.pth").write_text(
+        f"{editable_source}\n"
+        f"import pathlib; pathlib.Path({str(marker)!r}).open('a').write('new\\n')\n"
+    )
+    known = PluginManager.add_project_plugin_path(tmp_path, known_pth_files=known)
+    assert marker.read_text() == "old\nnew\n"
+    assert str(editable_source) in sys.path
+    PluginManager.add_project_plugin_path(tmp_path, known_pth_files=known)
+    assert marker.read_text() == "old\nnew\n"
+    assert sys.path[0] == str(plugin_path)
+    assert sys.path.count(str(plugin_path)) == 1
+
+
+def test_reload_plugins_activates_only_new_entry_points(
+    manager_factory: ManagerFactory,
+    poetry: Poetry,
+    io: BufferedIO,
+    mocker: MockerFixture,
+) -> None:
+    from importlib.metadata import EntryPoint
+
+    existing = EntryPoint(
+        name="existing",
+        value="tests.plugins.test_plugin_manager:MyPlugin",
+        group=Plugin.group,
+    )
+    added = EntryPoint(
+        name="added",
+        value="tests.plugins.test_plugin_manager:MyPlugin",
+        group=Plugin.group,
+    )
+    entry_points = mocker.patch(
+        "poetry.plugins.plugin_manager.metadata.entry_points", return_value=[existing]
+    )
+    manager = manager_factory()
+    manager.load_plugins()
+    manager.activate(poetry, io)
+    assert io.fetch_output() == "Setting readmes\n"
+
+    # Metadata discovery creates fresh EntryPoint instances on each query.
+    entry_points.return_value = [
+        EntryPoint(name=existing.name, value=existing.value, group=existing.group),
+        added,
+    ]
+    manager.load_plugins()
+    manager.activate(poetry, io, only_new=True)
+    assert io.fetch_output() == "Setting readmes\n"
+    manager.load_plugins()
+    manager.activate(poetry, io, only_new=True)
+    assert io.fetch_output() == ""
+
+    # Preserve the ability to activate all plugins explicitly.
+    manager.activate(poetry, io)
+    assert io.fetch_output() == "Setting readmes\nSetting readmes\n"
+
+
 def test_load_plugins_with_invalid_plugin(
     manager_factory: ManagerFactory,
     poetry: Poetry,

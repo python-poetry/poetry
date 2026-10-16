@@ -37,6 +37,7 @@ if TYPE_CHECKING:
     from cleo.io.outputs.output import Output
 
     from poetry.console.commands.installer_command import InstallerCommand
+    from poetry.plugins.plugin_manager import PluginManager
     from poetry.poetry import Poetry
 
 
@@ -130,6 +131,8 @@ class Application(BaseApplication):
         self._disable_plugins = False
         self._disable_cache = False
         self._plugins_loaded = False
+        self._plugin_manager: PluginManager | None = None
+        self._project_plugin_pth_files: set[Path] = set()
         self._working_directory = Path.cwd()
         self._project_directory: Path | None = None
 
@@ -638,12 +641,28 @@ class Application(BaseApplication):
             from poetry.plugins.application_plugin import ApplicationPlugin
             from poetry.plugins.plugin_manager import PluginManager
 
-            PluginManager.add_project_plugin_path(self.project_directory)
+            self._project_plugin_pth_files = PluginManager.add_project_plugin_path(
+                self.project_directory
+            )
             manager = PluginManager(ApplicationPlugin.group)
             manager.load_plugins()
             manager.activate(self)
+            self._plugin_manager = manager
 
         self._plugins_loaded = True
+
+    def load_project_plugins(self) -> None:
+        if self._disable_plugins:
+            return
+
+        from poetry.plugins.plugin_manager import PluginManager
+
+        self._project_plugin_pth_files = PluginManager.add_project_plugin_path(
+            self.project_directory, known_pth_files=self._project_plugin_pth_files
+        )
+        if self._plugin_manager is not None:
+            self._plugin_manager.load_plugins()
+            self._plugin_manager.activate(self, only_new=True)
 
 
 def main() -> int:
