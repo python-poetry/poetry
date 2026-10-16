@@ -7,6 +7,8 @@ from cleo.io.null_io import NullIO
 from packaging.utils import canonicalize_name
 
 from poetry.installation.executor import Executor
+from poetry.puzzle.resolution import ResolutionStrategy
+from poetry.puzzle.resolution import parse_resolution_strategy
 from poetry.puzzle.transaction import Transaction
 from poetry.repositories import Repository
 from poetry.repositories import RepositoryPool
@@ -62,6 +64,7 @@ class Installer:
         self._groups: Iterable[NormalizedName] | None = None
         self._skip_directory = False
         self._lock = False
+        self._resolution_strategy = ResolutionStrategy.HIGHEST
 
         self._whitelist: list[NormalizedName] = []
 
@@ -147,6 +150,13 @@ class Installer:
 
         return self
 
+    def resolution_strategy(
+        self, resolution_strategy: ResolutionStrategy | str
+    ) -> Installer:
+        self._resolution_strategy = parse_resolution_strategy(resolution_strategy)
+
+        return self
+
     def skip_directory(self, skip_directory: bool = False) -> Installer:
         self._skip_directory = skip_directory
 
@@ -196,6 +206,7 @@ class Installer:
             locked_repository.packages,
             locked_repository.packages,
             self._io,
+            resolution_strategy=self._resolution_strategy,
         )
 
         # Always re-solve directory dependencies, otherwise we can't determine
@@ -243,6 +254,7 @@ class Installer:
                 self._installed_repository.packages,
                 locked_repository.packages,
                 self._io,
+                resolution_strategy=self._resolution_strategy,
             )
 
             with solver.provider.use_source_root(

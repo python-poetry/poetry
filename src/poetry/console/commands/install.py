@@ -20,6 +20,7 @@ class InstallCommand(InstallerCommand):
 
     options: ClassVar[list[Option]] = [
         *InstallerCommand._group_dependency_options(),
+        InstallerCommand._resolution_strategy_option(),
         option(
             "sync",
             None,
@@ -163,6 +164,9 @@ you can set the "package-mode" to false in your pyproject.toml file.
                 extras += extra.split()
 
         self.installer.extras(extras)
+        self.installer.resolution_strategy(
+            self.option("resolution-strategy") or "highest"
+        )
 
         self.installer.only_groups(self.activated_groups)
         self.installer.skip_directory(self.option("no-directory"))

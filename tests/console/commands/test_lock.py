@@ -220,6 +220,93 @@ def test_lock_path_dependency_deleted_from_pyproject(
     assert {p.name for p in packages} == set()
 
 
+def test_lock_resolution_strategy_retains_lock_and_regenerates(
+    command_tester_factory: CommandTesterFactory,
+    poetry_with_old_lockfile: Poetry,
+    repo: DummyRepository,
+) -> None:
+    repo.add_package(get_package("sampleproject", "1.3.1"))
+    repo.add_package(get_package("sampleproject", "2.0.0"))
+    locker = Locker(
+        lock=poetry_with_old_lockfile.pyproject.file.path.parent / "poetry.lock",
+        pyproject_data=poetry_with_old_lockfile.locker._pyproject_data,
+    )
+    poetry_with_old_lockfile.set_locker(locker)
+
+    assert (
+        command_tester_factory("lock", poetry=poetry_with_old_lockfile).execute(
+            "--regenerate"
+        )
+        == 0
+    )
+    assert (
+        locker.locked_repository().package("sampleproject", Version.parse("2.0.0"))
+        is not None
+    )
+
+    assert (
+        command_tester_factory("lock", poetry=poetry_with_old_lockfile).execute(
+            "--resolution-strategy=lowest"
+        )
+        == 0
+    )
+    assert (
+        locker.locked_repository().package("sampleproject", Version.parse("2.0.0"))
+        is not None
+    )
+
+    assert (
+        command_tester_factory("lock", poetry=poetry_with_old_lockfile).execute(
+            "--regenerate --resolution-strategy=lowest"
+        )
+        == 0
+    )
+    assert (
+        locker.locked_repository().package("sampleproject", Version.parse("1.3.1"))
+        is not None
+    )
+
+
+def test_lock_resolution_strategy_is_deterministic(
+    command_tester_factory: CommandTesterFactory,
+    poetry_with_old_lockfile: Poetry,
+    repo: DummyRepository,
+) -> None:
+    repo.add_package(get_package("sampleproject", "1.3.1"))
+    repo.add_package(get_package("sampleproject", "2.0.0"))
+    locker = Locker(
+        lock=poetry_with_old_lockfile.pyproject.file.path.parent / "poetry.lock",
+        pyproject_data=poetry_with_old_lockfile.locker._pyproject_data,
+    )
+    poetry_with_old_lockfile.set_locker(locker)
+
+    assert (
+        command_tester_factory("lock", poetry=poetry_with_old_lockfile).execute(
+            "--regenerate --resolution-strategy=lowest"
+        )
+        == 0
+    )
+    first_lock = locker.lock.read_text(encoding="utf-8")
+    assert (
+        command_tester_factory("lock", poetry=poetry_with_old_lockfile).execute(
+            "--regenerate --resolution-strategy=lowest"
+        )
+        == 0
+    )
+
+    assert locker.lock.read_text(encoding="utf-8") == first_lock
+
+
+def test_lock_rejects_invalid_resolution_strategy(
+    command_tester_factory: CommandTesterFactory,
+    poetry_with_old_lockfile: Poetry,
+) -> None:
+    tester = command_tester_factory("lock", poetry=poetry_with_old_lockfile)
+
+    with pytest.raises(ValueError, match="Invalid resolution strategy"):
+        tester.execute("--regenerate --resolution-strategy=middle")
+
+
 @pytest.mark.parametrize("regenerate", [True, False])
 def test_lock_with_incompatible_lockfile(
     command_tester_factory: CommandTesterFactory,
