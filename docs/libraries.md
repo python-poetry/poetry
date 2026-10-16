@@ -128,7 +128,7 @@ Sometimes, you may want to keep your library private but also be accessible to y
 In this case, you will need to use a private repository.
 
 In order to publish to a private repository, you will need to add it to your
-global list of repositories. See [Adding a repository]({{< relref "repositories#adding-a-repository" >}})
+global list of repositories. See [Package sources]({{< relref "repositories#package-source-constraint" >}})
 for more information.
 
 Once this is done, you can publish your package to the repository like so:
