@@ -273,8 +273,10 @@ Newly installed application plugins are activated during that same `install` or 
 command, so their `TERMINATE` listeners can run immediately. Events that have already
 been dispatched, such as `COMMAND`, are not replayed for newly installed plugins.
 This activates newly discovered plugins; it does not reload modules that have already
-been imported. If installing project plugins replaces an already loaded plugin or
-one of its dependencies, start a new Poetry invocation to use the installed version.
+been imported. A replacement entry point with the same name in the same distribution
+is not activated alongside its already loaded version, even if its import target changed.
+If installing project plugins replaces an already loaded plugin or one of its dependencies,
+start a new Poetry invocation to use the installed version.
 
 The syntax to specify `plugins` is the same as for [dependencies]({{< relref "managing-dependencies" >}}).
 Plugins can be installed in editable mode using path dependencies with `develop = true`,

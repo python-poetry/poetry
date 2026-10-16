@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 
 import tomlkit
 
+from packaging.utils import canonicalize_name
 from poetry.core.packages.project_package import ProjectPackage
 
 from poetry.__version__ import __version__
@@ -32,6 +33,7 @@ from poetry.utils.env import EnvManager
 if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import Any
+    from typing import ClassVar
 
     from cleo.io.io import IO
     from poetry.core.packages.dependency import Dependency
@@ -48,10 +50,12 @@ class PluginManager:
     This class registers and activates plugins.
     """
 
+    _processed_project_plugin_paths: ClassVar[set[Path]] = set()
+
     def __init__(self, group: str) -> None:
         self._group = group
         self._plugins: list[Plugin] = []
-        self._loaded_entry_points: set[metadata.EntryPoint] = set()
+        self._loaded_entry_points: set[tuple[str | None, str, str]] = set()
         self._activated_plugin_count = 0
 
     @staticmethod
@@ -78,8 +82,12 @@ class PluginManager:
             # insert at the beginning to allow overriding dependencies
             system_path.insert(0, plugin_path_string)
             # Existing .pth files must not execute again during rediscovery.
-            if not already_added:
+            if (
+                not already_added
+                or plugin_path not in PluginManager._processed_project_plugin_paths
+            ):
                 addsitedir(plugin_path_string)
+                PluginManager._processed_project_plugin_paths.add(plugin_path)
             elif known_pth_files is not None:
                 # Only files created during installation need processing. In
                 # particular, do not execute existing import lines a second time.
@@ -98,9 +106,16 @@ class PluginManager:
         plugin_entrypoints = self.get_plugin_entry_points()
 
         for ep in plugin_entrypoints:
-            if ep not in self._loaded_entry_points:
+            # A replacement version can change the import target. Retain the
+            # already active version until the next process instead of loading
+            # both. Different distributions may legitimately share a name.
+            distribution = (
+                canonicalize_name(ep.dist.metadata["Name"]) if ep.dist else None
+            )
+            key = (distribution, ep.group, ep.name)
+            if key not in self._loaded_entry_points:
                 self._load_plugin_entry_point(ep)
-                self._loaded_entry_points.add(ep)
+                self._loaded_entry_points.add(key)
 
     def get_plugin_entry_points(self) -> list[metadata.EntryPoint]:
         return list(metadata.entry_points(group=self._group))

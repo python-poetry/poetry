@@ -115,6 +115,9 @@ def test_install_activates_new_project_plugins(
 
     # Keep the same entry point identity when querying metadata a second time.
     ep = mocker.Mock()
+    ep.name = "project-plugin"
+    ep.group = ApplicationPlugin.group
+    ep.dist = None
     ep.load.return_value = ProjectPlugin
     mocker.patch(
         "poetry.plugins.plugin_manager.metadata.entry_points",

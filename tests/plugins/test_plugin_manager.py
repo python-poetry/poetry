@@ -198,8 +198,8 @@ def test_new_project_plugin_pth_files(
         "poetry.plugins.plugin_manager.EnvManager.get_system_env", return_value=env
     )
     if existing_path:
+        # sys.path membership alone does not mean .pth files were processed.
         sys.path.append(str(plugin_path))
-        marker.write_text("old\n")
     known = PluginManager.add_project_plugin_path(tmp_path)
     assert marker.read_text() == "old\n"
 
@@ -259,6 +259,75 @@ def test_reload_plugins_activates_only_new_entry_points(
     # Preserve the ability to activate all plugins explicitly.
     manager.activate(poetry, io)
     assert io.fetch_output() == "Setting readmes\nSetting readmes\n"
+
+
+def test_reload_plugins_retains_loaded_replacement(
+    manager_factory: ManagerFactory,
+    poetry: Poetry,
+    io: BufferedIO,
+    mocker: MockerFixture,
+) -> None:
+    from importlib.metadata import EntryPoint
+
+    existing = EntryPoint(
+        name="existing", value="old_plugin:Plugin", group=Plugin.group
+    )
+    replacement = EntryPoint(
+        name="existing", value="new_plugin:Plugin", group=Plugin.group
+    )
+    points = mocker.patch(
+        "poetry.plugins.plugin_manager.metadata.entry_points", return_value=[existing]
+    )
+    manager = manager_factory()
+    load = mocker.patch.object(manager, "_load_plugin_entry_point")
+    load.side_effect = lambda ep: manager._add_plugin(MyPlugin())
+    manager.load_plugins()
+    manager.activate(poetry, io)
+    assert io.fetch_output() == "Setting readmes\n"
+
+    points.return_value = [replacement]
+    manager.load_plugins()
+    manager.activate(poetry, io, only_new=True)
+    assert io.fetch_output() == ""
+    load.assert_called_once_with(existing)
+
+
+@pytest.mark.parametrize("different_distribution", [False, True])
+def test_reload_plugins_distinguishes_distributions(
+    manager_factory: ManagerFactory,
+    mocker: MockerFixture,
+    tmp_path: Path,
+    different_distribution: bool,
+) -> None:
+    from importlib.metadata import EntryPoint
+    from importlib.metadata import PathDistribution
+
+    def point(folder: str, distribution: str, value: str) -> EntryPoint:
+        path = tmp_path / folder
+        path.mkdir()
+        (path / "METADATA").write_text(f"Name: {distribution}\nVersion: 1.0\n")
+        (path / "entry_points.txt").write_text(f"[poetry.plugin]\nshared = {value}\n")
+        return next(iter(PathDistribution(path).entry_points))
+
+    original = point("old", "my-plugin", "old:Plugin")
+    replacement = point(
+        "new",
+        "different-plugin" if different_distribution else "my_plugin",
+        "new:Plugin",
+    )
+    points = mocker.patch(
+        "poetry.plugins.plugin_manager.metadata.entry_points", return_value=[original]
+    )
+    manager = manager_factory()
+    load = mocker.patch.object(manager, "_load_plugin_entry_point")
+    manager.load_plugins()
+    points.return_value = [replacement]
+    manager.load_plugins()
+    assert load.call_args_list == (
+        [mocker.call(original), mocker.call(replacement)]
+        if different_distribution
+        else [mocker.call(original)]
+    )
 
 
 def test_load_plugins_with_invalid_plugin(
