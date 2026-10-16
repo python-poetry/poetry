@@ -186,7 +186,7 @@ If you want to install different versions of Poetry in parallel, a good approach
 
 The installer creates a `poetry` wrapper in a well-known, platform-specific directory:
 
-- `$HOME/.local/bin` on Unix.
+- `$HOME/.local/bin` on Linux/Unix.
 - `%APPDATA%\Python\Scripts` on Windows.
 - `$POETRY_HOME/bin` if `$POETRY_HOME` is set.
 
