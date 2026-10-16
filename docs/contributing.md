@@ -204,6 +204,15 @@ base branch. A maintainer might ask you to ensure the branch is up-to-date prior
 All pull requests, unless otherwise instructed, need to be first accepted into the `main` branch. Maintainers will
 generally decide if any backports to other branches are required, and carry them out as needed.
 
+#### Performance contributions
+
+Performance contributions should result in a significant improvement when running a Poetry command.
+Micro-optimizations that do not meet this criterion are only acceptable if they do not decrease code readability.
+
+When making performance measurements, you can set the `POETRY_FORCE_HTTP_CACHE` environment variable
+to force using the HTTP cache. This helps make performance measurements more consistent by reducing
+variability from network requests.
+
 ### Issue triage
 
 {{% note %}}
