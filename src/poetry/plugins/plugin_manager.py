@@ -9,11 +9,13 @@ import sys
 from functools import cached_property
 from importlib import metadata
 from pathlib import Path
+from site import addpackage
 from site import addsitedir
 from typing import TYPE_CHECKING
 
 import tomlkit
 
+from packaging.utils import canonicalize_name
 from poetry.core.packages.project_package import ProjectPackage
 
 from poetry.__version__ import __version__
@@ -31,6 +33,7 @@ from poetry.utils.env import EnvManager
 if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import Any
+    from typing import ClassVar
 
     from cleo.io.io import IO
     from poetry.core.packages.dependency import Dependency
@@ -47,43 +50,81 @@ class PluginManager:
     This class registers and activates plugins.
     """
 
+    _processed_project_plugin_paths: ClassVar[set[Path]] = set()
+
     def __init__(self, group: str) -> None:
         self._group = group
         self._plugins: list[Plugin] = []
+        self._loaded_entry_points: set[tuple[str | None, str, str]] = set()
+        self._activated_plugin_count = 0
 
     @staticmethod
-    def add_project_plugin_path(directory: Path) -> None:
+    def add_project_plugin_path(
+        directory: Path, *, known_pth_files: set[Path] | None = None
+    ) -> set[Path]:
+        """Add the plugin path and process .pth files added since discovery."""
         from poetry.factory import Factory
 
         try:
             pyproject_toml = Factory.locate(directory)
         except RuntimeError:
             # no pyproject.toml -> no project plugins
-            return
+            return set()
 
         plugin_path = pyproject_toml.parent / ProjectPluginCache.PATH
+        pth_files = set(plugin_path.glob("*.pth"))
         if plugin_path.exists():
+            plugin_path_string = str(plugin_path)
+            system_path = EnvManager.get_system_env(naive=True).sys_path
+            already_added = plugin_path_string in system_path
+            if already_added:
+                system_path.remove(plugin_path_string)
             # insert at the beginning to allow overriding dependencies
-            EnvManager.get_system_env(naive=True).sys_path.insert(0, str(plugin_path))
-            # process .pth files (among other things)
-            addsitedir(str(plugin_path))
+            system_path.insert(0, plugin_path_string)
+            # Existing .pth files must not execute again during rediscovery.
+            if (
+                not already_added
+                or plugin_path not in PluginManager._processed_project_plugin_paths
+            ):
+                addsitedir(plugin_path_string)
+                PluginManager._processed_project_plugin_paths.add(plugin_path)
+            elif known_pth_files is not None:
+                # Only files created during installation need processing. In
+                # particular, do not execute existing import lines a second time.
+                for path in sorted(pth_files - known_pth_files):
+                    if not path.name.startswith("."):
+                        addpackage(plugin_path_string, path.name, None)
+        return pth_files
 
     @classmethod
     def ensure_project_plugins(cls, poetry: Poetry, io: IO) -> None:
         ProjectPluginCache(poetry, io).ensure_plugins()
 
     def load_plugins(self) -> None:
+        # A second discovery after installing project plugins must not instantiate
+        # plugins that have already registered commands or event listeners.
         plugin_entrypoints = self.get_plugin_entry_points()
 
         for ep in plugin_entrypoints:
-            self._load_plugin_entry_point(ep)
+            # A replacement version can change the import target. Retain the
+            # already active version until the next process instead of loading
+            # both. Different distributions may legitimately share a name.
+            distribution = (
+                canonicalize_name(ep.dist.metadata["Name"]) if ep.dist else None
+            )
+            key = (distribution, ep.group, ep.name)
+            if key not in self._loaded_entry_points:
+                self._load_plugin_entry_point(ep)
+                self._loaded_entry_points.add(key)
 
     def get_plugin_entry_points(self) -> list[metadata.EntryPoint]:
         return list(metadata.entry_points(group=self._group))
 
-    def activate(self, *args: Any, **kwargs: Any) -> None:
-        for plugin in self._plugins:
+    def activate(self, *args: Any, only_new: bool = False, **kwargs: Any) -> None:
+        start = self._activated_plugin_count if only_new else 0
+        for index, plugin in enumerate(self._plugins[start:], start=start):
             plugin.activate(*args, **kwargs)
+            self._activated_plugin_count = index + 1
 
     def _add_plugin(self, plugin: Plugin) -> None:
         if not isinstance(plugin, (Plugin, ApplicationPlugin)):

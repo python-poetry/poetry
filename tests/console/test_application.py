@@ -86,6 +86,107 @@ def test_application_execute_plugin_command(with_add_command_plugin: None) -> No
     assert tester.status_code == 0
 
 
+@pytest.mark.parametrize("command", ["install", "sync"])
+@pytest.mark.parametrize("no_plugins", [False, True])
+@pytest.mark.parametrize("already_installed", [False, True])
+def test_install_activates_new_project_plugins(
+    command: str,
+    no_plugins: bool,
+    already_installed: bool,
+    mocker: MockerFixture,
+    set_project_context: SetProjectContext,
+) -> None:
+    from cleo.events.console_events import TERMINATE
+
+    from poetry.plugins.plugin_manager import PluginManager
+
+    installed = already_installed
+    activated = []
+    terminated = []
+
+    class ProjectPlugin(AddCommandPlugin):
+        def activate(self, application: Application) -> None:
+            super().activate(application)
+            activated.append(application)
+            assert application.event_dispatcher is not None
+            application.event_dispatcher.add_listener(
+                TERMINATE, lambda *args: terminated.append(command)
+            )
+
+    # Keep the same entry point identity when querying metadata a second time.
+    ep = mocker.Mock()
+    ep.name = "project-plugin"
+    ep.group = ApplicationPlugin.group
+    ep.dist = None
+    ep.load.return_value = ProjectPlugin
+    mocker.patch(
+        "poetry.plugins.plugin_manager.metadata.entry_points",
+        side_effect=lambda **kwargs: (
+            [ep] if installed and kwargs.get("group") == ApplicationPlugin.group else []
+        ),
+    )
+
+    def ensure_plugins(*args: object) -> None:
+        nonlocal installed
+        installed = True
+
+    ensure = mocker.patch.object(
+        PluginManager, "ensure_project_plugins", side_effect=ensure_plugins
+    )
+    mocker.patch("poetry.installation.installer.Installer.run", return_value=0)
+
+    with set_project_context("sample_project"):
+        app = Application()
+        tester = ApplicationTester(app)
+        tester.execute(f"{command} --no-root" + (" --no-plugins" if no_plugins else ""))
+
+    assert tester.status_code == 0
+    assert len(activated) == (0 if no_plugins else 1)
+    assert terminated == ([] if no_plugins else [command])
+    assert ensure.call_count == (0 if no_plugins else 1)
+    if not no_plugins:
+        assert app.find("foo").name == "foo"
+
+
+@pytest.mark.parametrize("command", ["install", "sync"])
+def test_install_processes_only_new_project_plugin_pth_files(
+    command: str,
+    tmp_path: Path,
+    mocker: MockerFixture,
+    monkeypatch: pytest.MonkeyPatch,
+    set_project_context: SetProjectContext,
+) -> None:
+    from poetry.plugins.plugin_manager import PluginManager
+
+    marker = tmp_path / "executions.txt"
+    monkeypatch.setattr(sys, "path", sys.path.copy())
+    env = mocker.Mock()
+    env.sys_path = sys.path
+    mocker.patch.object(EnvManager, "get_system_env", return_value=env)
+    mocker.patch("poetry.installation.installer.Installer.run", return_value=0)
+
+    with set_project_context("sample_project") as project:
+        plugin_path = project / ProjectPluginCache.PATH
+        plugin_path.mkdir(parents=True)
+        (plugin_path / "old.pth").write_text(
+            f"import pathlib; pathlib.Path({str(marker)!r}).open('a').write('old\\n')\n"
+        )
+
+        def ensure_plugins(*args: object) -> None:
+            (plugin_path / "new.pth").write_text(
+                f"import pathlib; pathlib.Path({str(marker)!r}).open('a').write('new\\n')\n"
+            )
+
+        mocker.patch.object(
+            PluginManager, "ensure_project_plugins", side_effect=ensure_plugins
+        )
+        tester = ApplicationTester(Application())
+        tester.execute(f"{command} --no-root")
+
+    assert tester.status_code == 0
+    assert marker.read_text() == "old\nnew\n"
+
+
 def test_application_execute_plugin_command_with_plugins_disabled(
     with_add_command_plugin: None,
 ) -> None:
