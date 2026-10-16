@@ -238,7 +238,7 @@ list of installed packages
                 # Clean up now-empty lists (normalize with legacy behavior)
                 # Only remove groups that became empty due to include-group cleanup,
                 # not the target group itself (which is handled by the caller)
-                if not group_content and group_key != group_name:
+                if to_remove and not group_content and group_key != group_name:
                     groups_to_remove.append(group_key)
 
             for group_key in groups_to_remove:
@@ -250,11 +250,10 @@ list of installed packages
         if "group" in poetry_content:
             groups_to_remove = []
             for group_key, group_content in poetry_content["group"].items():
-                if "include-groups" not in group_content:
+                if group_name not in group_content.get("include-groups", []):
                     continue
 
-                if group_name in group_content["include-groups"]:
-                    group_content["include-groups"].remove(group_name)
+                group_content["include-groups"].remove(group_name)
 
                 if not group_content["include-groups"]:
                     del group_content["include-groups"]
