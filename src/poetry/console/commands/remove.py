@@ -216,6 +216,7 @@ list of installed packages
         """
         Removes references to the given group from other groups.
         """
+        removed_groups = set()
         # 1. PEP 735: [dependency-groups]
         if "dependency-groups" in content:
             groups_to_remove = []
@@ -237,22 +238,22 @@ list of installed packages
                 # Clean up now-empty lists (normalize with legacy behavior)
                 # Only remove groups that became empty due to include-group cleanup,
                 # not the target group itself (which is handled by the caller)
-                if not group_content and group_key != group_name:
+                if to_remove and not group_content and group_key != group_name:
                     groups_to_remove.append(group_key)
 
             for group_key in groups_to_remove:
                 del content["dependency-groups"][group_key]
+                removed_groups.add(group_key)
 
         # 2. Legacy: [tool.poetry.group.<name>] include-groups = [...]
         poetry_content = content.get("tool", {}).get("poetry", {})
         if "group" in poetry_content:
             groups_to_remove = []
             for group_key, group_content in poetry_content["group"].items():
-                if "include-groups" not in group_content:
+                if group_name not in group_content.get("include-groups", []):
                     continue
 
-                if group_name in group_content["include-groups"]:
-                    group_content["include-groups"].remove(group_name)
+                group_content["include-groups"].remove(group_name)
 
                 if not group_content["include-groups"]:
                     del group_content["include-groups"]
@@ -262,3 +263,10 @@ list of installed packages
 
             for group_key in groups_to_remove:
                 del poetry_content["group"][group_key]
+                removed_groups.add(group_key)
+
+        for removed_group in removed_groups:
+            if removed_group not in content.get(
+                "dependency-groups", {}
+            ) and removed_group not in poetry_content.get("group", {}):
+                self._remove_references_to_group(removed_group, content)
