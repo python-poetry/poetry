@@ -15,6 +15,7 @@ from poetry.config.config import PackageFilterPolicy
 from poetry.config.config import boolean_normalizer
 from poetry.config.config import int_normalizer
 from poetry.config.config import str_list_normalizer
+from poetry.exceptions import PoetryError
 from poetry.utils.password_manager import PasswordManager
 from tests.helpers import flatten_dict
 from tests.helpers import isolated_environment
@@ -35,6 +36,18 @@ def get_options_based_on_normalizer(normalizer: Normalizer) -> Iterator[str]:
     for k in flattened_config:
         if Config._get_normalizer(k) == normalizer:
             yield k
+
+
+def test_invalid_integer_from_environment() -> None:
+    config = Config(use_environment=True)
+
+    with (
+        isolated_environment({"POETRY_REQUESTS_MAX_RETRIES": "abc"}),
+        pytest.raises(PoetryError) as e,
+    ):
+        config.get("requests.max-retries")
+
+    assert str(e.value) == "Invalid value for POETRY_REQUESTS_MAX_RETRIES: 'abc'"
 
 
 @pytest.mark.parametrize(
