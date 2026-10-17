@@ -673,6 +673,41 @@ def test_authenticator_matches_repository_with_bytes_url(config: Config) -> None
     assert repository.name == "private"
 
 
+def test_repository_config_supports_none_url() -> None:
+    repository = AuthenticatorRepositoryConfig(
+        "empty-repo",
+        None,  # type: ignore[arg-type]
+    )
+    assert repository.url is None
+    assert repository.scheme == ""
+    assert repository.netloc == ""
+    assert repository.path == ""
+    assert repository._path_segments == []
+    assert repository.path_match_key("/any/path") == (0, False)
+
+
+def test_authenticator_handles_empty_repository_section_without_url(
+    config: Config,
+) -> None:
+    # Reproducer for #11080: empty [repositories.<name>] section with no url key
+    config.merge(
+        {
+            "repositories": {
+                "company-internal": {},
+            },
+        }
+    )
+
+    authenticator = Authenticator(config, NullIO())
+    assert "company-internal" in authenticator.configured_repositories
+    repository = authenticator.configured_repositories["company-internal"]
+    assert repository.name == "company-internal"
+    assert repository.url is None
+    assert repository.scheme == ""
+    assert repository.netloc == ""
+    assert repository.path == ""
+
+
 @pytest.mark.parametrize(
     ("url", "expected"),
     [

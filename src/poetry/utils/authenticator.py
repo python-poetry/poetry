@@ -73,6 +73,13 @@ class AuthenticatorRepositoryConfig:
     _path_segments: list[str] = dataclasses.field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
+        if self.url is None:
+            self.scheme = ""
+            self.netloc = ""
+            self.path = ""
+            self._path_segments = []
+            return
+
         if isinstance(self.url, bytes):
             self.url = self.url.decode()
         parsed_url = urllib.parse.urlsplit(self.url)
