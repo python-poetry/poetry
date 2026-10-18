@@ -870,3 +870,59 @@ include-groups = [
         assert "foobar3" in content.get("group", {})
         assert "include-groups" in content["group"]["foobar3"]
         assert content["group"]["foobar3"]["include-groups"] == ["foobar2"]
+
+
+@pytest.mark.parametrize("pep_735", [True, False])
+def test_remove_group_cleans_up_references_to_indirectly_removed_groups(
+    pep_735: bool,
+    tester: CommandTester,
+    app: PoetryTestApplication,
+    repo: DummyRepository,
+    installed: Repository,
+) -> None:
+    """
+    Groups that are deleted while cleaning up references to a removed group
+    must not stay referenced by other groups either.
+    """
+    installed.add_package(Package("foo", "2.0.0"))
+    repo.add_package(Package("foo", "2.0.0"))
+
+    pyproject = app.poetry.file.read()
+
+    if pep_735:
+        groups_content = tomlkit.parse(
+            """\
+[dependency-groups]
+lint = ["foo (>=2.0,<3.0)"]
+tools = [{ include-group = "lint" }]
+dev = [{ include-group = "tools" }]
+"""
+        )
+        pyproject["dependency-groups"] = groups_content["dependency-groups"]
+    else:
+        groups_content = tomlkit.parse(
+            """\
+[tool.poetry.group.lint.dependencies]
+foo = "^2.0.0"
+
+[tool.poetry.group.tools]
+include-groups = ["lint"]
+
+[tool.poetry.group.dev]
+include-groups = ["tools"]
+"""
+        )
+        pyproject["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
+    app.poetry.file.write(pyproject)
+
+    app.poetry.package.add_dependency(
+        Factory.create_dependency("foo", "^2.0.0", groups=["lint"])
+    )
+
+    tester.execute("foo --group lint")
+
+    pyproject = app.poetry.file.read()
+
+    # "lint" is deleted, which empties "tools", which in turn empties "dev"
+    assert "dependency-groups" not in pyproject
+    assert "group" not in pyproject["tool"]["poetry"]
