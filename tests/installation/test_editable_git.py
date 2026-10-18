@@ -64,16 +64,19 @@ def git_package(tmp_path: Path) -> Callable[..., Package]:
         revision = porcelain.commit(
             str(root), message=name.encode(), author=b"Aarav <aaravsjadav@gmail.com>"
         ).decode()
-        return Package(
+        package = Package(
             name,
             "1.0",
             source_type="git",
-            source_url=f"file://localhost{root.as_posix()}",
             source_reference=revision,
             source_resolved_reference=revision,
             source_subdirectory=subdirectory or None,
             develop=True,
         )
+        # Use the native local path so drive letters and spaces reach Dulwich
+        # unchanged, bypassing poetry-core's Git URL normalization.
+        package._source_url = str(root)
+        return package
 
     return create
 
@@ -174,7 +177,7 @@ def test_reinstall_preserves_checkout_and_edits(
         executor.execute([Update(_installed_source(tmp_venv, "first"), same_revision)])
         == 0
     )
-    assert module.exists()
+    assert module.read_text(encoding="utf-8") == 'VALUE = "local edit"\n'
 
 
 def test_update_removes_old_owned_checkout_after_install(
@@ -338,12 +341,25 @@ def test_uninstall_matches_owned_subdirectory(
 
 
 def test_uninstall_matches_owned_origin(
-    git_package: Callable[..., Package], executor: Executor, tmp_venv: VirtualEnv
+    git_package: Callable[..., Package],
+    executor: Executor,
+    tmp_venv: VirtualEnv,
+    tmp_path: Path,
 ) -> None:
-    assert executor.execute([Install(git_package("first"))]) == 0
-    unrelated = executor._git_source.prepare(git_package("first", owner="another"))
+    first = git_package("first")
+    other_origin = tmp_path / "another" / "repository"
+    other_origin.parent.mkdir()
+    porcelain.clone(str(tmp_path / "owner" / "repository"), str(other_origin)).close()
+    alternative = first.clone()
+    alternative._source_url = str(other_origin)
+    assert executor.execute([Install(first)]) == 0
+    unrelated = executor._git_source.prepare(alternative)
     source = _installed_path(tmp_venv, "first")
-    assert executor.execute([Uninstall(_installed_source(tmp_venv, "first"))]) == 0
+    installed = _installed_source(tmp_venv, "first")
+    assert installed.source_url != alternative.source_url
+    with Repo(str(source)) as installed_repo, Repo(str(unrelated)) as unrelated_repo:
+        assert installed_repo.head() == unrelated_repo.head()
+    assert executor.execute([Uninstall(installed)]) == 0
     assert not source.exists()
     assert unrelated.is_dir()
 
