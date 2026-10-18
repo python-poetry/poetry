@@ -95,7 +95,10 @@ To remove a repository (repo is a short alias for repositories):
             "installer.re-resolve": (boolean_validator, boolean_normalizer),
             "installer.parallel": (boolean_validator, boolean_normalizer),
             "installer.builtin-uninstall": (boolean_validator, boolean_normalizer),
-            "installer.max-workers": (lambda val: int_validator(val, 1), int_normalizer),
+            "installer.max-workers": (
+                lambda val: int_validator(val, 1),
+                int_normalizer,
+            ),
             "installer.no-binary": (
                 PackageFilterPolicy.validator,
                 PackageFilterPolicy.normalize,
@@ -105,7 +108,10 @@ To remove a repository (repo is a short alias for repositories):
                 PackageFilterPolicy.normalize,
             ),
             "solver.lazy-wheel": (boolean_validator, boolean_normalizer),
-            "solver.min-release-age": (lambda val: int_validator(val, 0), int_normalizer),
+            "solver.min-release-age": (
+                lambda val: int_validator(val, 0),
+                int_normalizer,
+            ),
             "solver.min-release-age-exclude": (
                 PackageFilterPolicy.validator,
                 PackageFilterPolicy.normalize,
