@@ -68,18 +68,13 @@ class EditableGitSource:
                 name=path.name,
                 revision=package.source_resolved_reference or package.source_reference,
             )
-            subdirectory = package.source_subdirectory
-            if subdirectory:
-                subdirectory = Path(subdirectory).as_posix()
-                if subdirectory == ".":
-                    subdirectory = None
             with atomic_open(path.with_name(path.name + ".json")) as marker:
                 marker.write(
                     json.dumps(
                         {
                             "package": package.name,
                             "reference": package.source_reference,
-                            "subdirectory": subdirectory,
+                            "subdirectory": package.source_subdirectory,
                         }
                     ).encode("utf-8")
                 )
@@ -106,11 +101,14 @@ class EditableGitSource:
             except (OSError, ValueError, KeyError, NotGitRepository):
                 return None
             subdirectory = source.relative_to(path).as_posix()
+            # Source comparison also preserves the path spelling in the lock file.
             return (
                 info.origin,
                 marker.get("reference"),
                 info.revision,
-                None if subdirectory == "." else subdirectory,
+                marker.get(
+                    "subdirectory", None if subdirectory == "." else subdirectory
+                ),
             )
         return None
 

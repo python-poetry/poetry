@@ -290,9 +290,7 @@ def test_local_commit_checkout_cleanup(
     assert local_revision != original_revision
     installed = _installed_source(tmp_venv, "first")
     assert installed.source_resolved_reference == local_revision
-    assert installed.source_subdirectory == (
-        None if subdirectory in {"", "."} else subdirectory
-    )
+    assert installed.source_subdirectory == (subdirectory or None)
     if operation == "uninstall":
         assert executor.execute([Uninstall(installed)]) == 0
     else:
@@ -348,3 +346,20 @@ def test_uninstall_matches_owned_origin(
     assert executor.execute([Uninstall(_installed_source(tmp_venv, "first"))]) == 0
     assert not source.exists()
     assert unrelated.is_dir()
+
+
+@pytest.mark.parametrize("subdirectory", ["", ".", "project", "project/."])
+def test_declared_subdirectory_is_idempotent(
+    git_package: Callable[..., Package],
+    executor: Executor,
+    tmp_venv: VirtualEnv,
+    subdirectory: str,
+) -> None:
+    requested = git_package("first", subdirectory=subdirectory)
+    expected = requested.clone()
+    assert executor.execute([Install(requested)]) == 0
+    installed = _installed_source(tmp_venv, "first")
+    assert installed.source_subdirectory == expected.source_subdirectory
+    operations = Transaction([], [expected], [installed]).calculate_operations()
+    assert len(operations) == 1
+    assert operations[0].skipped
