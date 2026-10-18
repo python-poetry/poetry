@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import shutil
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -262,3 +264,87 @@ def test_absolute_local_git_origin_cleanup(
     assert executor.execute([Uninstall(installed)]) == 0
     assert not checkout.exists()
     assert (tmp_path / "owner/repository").exists()
+
+
+@pytest.mark.parametrize("operation", ["uninstall", "update"])
+@pytest.mark.parametrize("subdirectory", ["", "project", "."])
+def test_local_commit_checkout_cleanup(
+    git_package: Callable[..., Package],
+    executor: Executor,
+    tmp_venv: VirtualEnv,
+    operation: str,
+    subdirectory: str,
+) -> None:
+    requested = git_package("first", subdirectory=subdirectory)
+    original_revision = requested.source_resolved_reference
+    assert executor.execute([Install(requested)]) == 0
+    project = _installed_path(tmp_venv, "first")
+    checkout = project.parent if subdirectory and subdirectory != "." else project
+    (project / "first/__init__.py").write_text(
+        'VALUE = "local commit"\n', encoding="utf-8"
+    )
+    porcelain.add(str(checkout))
+    local_revision = porcelain.commit(
+        str(checkout), message=b"local commit", author=b"Aarav <aaravsjadav@gmail.com>"
+    ).decode()
+    assert local_revision != original_revision
+    installed = _installed_source(tmp_venv, "first")
+    assert installed.source_resolved_reference == local_revision
+    assert installed.source_subdirectory == (
+        None if subdirectory in {"", "."} else subdirectory
+    )
+    if operation == "uninstall":
+        assert executor.execute([Uninstall(installed)]) == 0
+    else:
+        replacement = git_package("first", subdirectory=subdirectory, value="updated")
+        assert executor.execute([Update(installed, replacement)]) == 0
+        assert _installed_path(tmp_venv, "first").is_dir()
+        assert (
+            tmp_venv.run("python", "-c", "import first; print(first.VALUE)").strip()
+            == "updated"
+        )
+    assert not checkout.exists()
+    assert not checkout.with_name(checkout.name + ".json").exists()
+
+
+def test_uninstall_retains_ambiguous_owned_sources(
+    git_package: Callable[..., Package], executor: Executor, tmp_venv: VirtualEnv
+) -> None:
+    assert executor.execute([Install(git_package("first"))]) == 0
+    installed = _installed_source(tmp_venv, "first")
+    source = _installed_path(tmp_venv, "first")
+    duplicate = source.with_name("first-duplicate")
+    shutil.copytree(source, duplicate)
+    shutil.copyfile(
+        source.with_name(source.name + ".json"),
+        duplicate.with_name(duplicate.name + ".json"),
+    )
+    assert executor.execute([Uninstall(installed)]) == 0
+    assert source.is_dir()
+    assert duplicate.is_dir()
+
+
+def test_uninstall_matches_owned_subdirectory(
+    git_package: Callable[..., Package], executor: Executor, tmp_venv: VirtualEnv
+) -> None:
+    requested = git_package("first", subdirectory="project")
+    alternative = requested.clone()
+    alternative._source_subdirectory = "another-project"
+    assert executor.execute([Install(requested)]) == 0
+    unrelated = executor._git_source.prepare(alternative)
+    installed = _installed_source(tmp_venv, "first")
+    source = _installed_path(tmp_venv, "first")
+    assert executor.execute([Uninstall(installed)]) == 0
+    assert not source.exists()
+    assert unrelated.is_dir()
+
+
+def test_uninstall_matches_owned_origin(
+    git_package: Callable[..., Package], executor: Executor, tmp_venv: VirtualEnv
+) -> None:
+    assert executor.execute([Install(git_package("first"))]) == 0
+    unrelated = executor._git_source.prepare(git_package("first", owner="another"))
+    source = _installed_path(tmp_venv, "first")
+    assert executor.execute([Uninstall(_installed_source(tmp_venv, "first"))]) == 0
+    assert not source.exists()
+    assert unrelated.is_dir()

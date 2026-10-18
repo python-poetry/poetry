@@ -68,10 +68,19 @@ class EditableGitSource:
                 name=path.name,
                 revision=package.source_resolved_reference or package.source_reference,
             )
+            subdirectory = package.source_subdirectory
+            if subdirectory:
+                subdirectory = Path(subdirectory).as_posix()
+                if subdirectory == ".":
+                    subdirectory = None
             with atomic_open(path.with_name(path.name + ".json")) as marker:
                 marker.write(
                     json.dumps(
-                        {"package": package.name, "reference": package.source_reference}
+                        {
+                            "package": package.name,
+                            "reference": package.source_reference,
+                            "subdirectory": subdirectory,
+                        }
                     ).encode("utf-8")
                 )
         except Exception:
@@ -94,7 +103,7 @@ class EditableGitSource:
                 marker = json.loads(
                     path.with_name(path.name + ".json").read_text(encoding="utf-8")
                 )
-            except (OSError, ValueError, NotGitRepository):
+            except (OSError, ValueError, KeyError, NotGitRepository):
                 return None
             subdirectory = source.relative_to(path).as_posix()
             return (
@@ -109,17 +118,48 @@ class EditableGitSource:
         if not package.develop or not package.source_url:
             return
         source = Path(package.source_url)
-        candidates = (source, *source.parents) if source.is_absolute() else ()
-        if package.source_type == "git":
-            candidates = (*candidates, self.path_for(package))
-        for path in candidates:
-            if not self._owns(path, package):
-                continue
-            if preserve is not None and preserve.resolve().is_relative_to(
-                path.resolve()
-            ):
-                return
-            if path.exists():
-                remove_directory(path, force=True)
-            path.with_name(path.name + ".json").unlink()
+        if source.is_absolute():
+            for path in (source, *source.parents):
+                if self._owns(path, package):
+                    if not self._preserved(path, preserve):
+                        self._delete(path)
+                    return
+        if package.source_type != "git":
             return
+
+        # Local commits can change HEAD without changing the checkout directory.
+        # Match the installed Git metadata instead of deriving its path from HEAD.
+        matches = []
+        candidates = dict.fromkeys(
+            (self.path_for(package), *self._root.glob(f"{package.name}-*"))
+        )
+        for path in candidates:
+            if not self._owns(path, package) or self._preserved(path, preserve):
+                continue
+            try:
+                info = Git.info(path)
+                marker = json.loads(
+                    path.with_name(path.name + ".json").read_text(encoding="utf-8")
+                )
+            except (OSError, ValueError, KeyError, NotGitRepository):
+                continue
+            if (
+                info.origin == package.source_url
+                and info.revision == package.source_resolved_reference
+                and marker.get("subdirectory") == package.source_subdirectory
+            ):
+                matches.append(path)
+        if len(matches) == 1:
+            self._delete(matches[0])
+
+    @staticmethod
+    def _preserved(path: Path, preserve: Path | None) -> bool:
+        return preserve is not None and preserve.resolve().is_relative_to(
+            path.resolve()
+        )
+
+    @staticmethod
+    def _delete(path: Path) -> None:
+        if path.exists():
+            remove_directory(path, force=True)
+        path.with_name(path.name + ".json").unlink()
