@@ -146,6 +146,20 @@ def test_cannot_set_invalid_value(tester: CommandTester) -> None:
     assert str(e.value) == '"foo" is an invalid value for virtualenvs.create'
 
 
+@pytest.mark.parametrize(
+    "setting",
+    ["requests.max-retries", "installer.max-workers", "solver.min-release-age"],
+)
+@pytest.mark.parametrize("value", ["foo", "1.5", ""])
+def test_cannot_set_non_integer_value(
+    tester: CommandTester, setting: str, value: str
+) -> None:
+    with pytest.raises(RuntimeError) as e:
+        tester.execute(f"{setting} '{value}'")
+
+    assert str(e.value) == f'"{value}" is an invalid value for {setting}'
+
+
 def test_cannot_unset_with_value(tester: CommandTester) -> None:
     with pytest.raises(RuntimeError) as e:
         tester.execute("virtualenvs.create false --unset")
