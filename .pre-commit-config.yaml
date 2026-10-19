@@ -23,17 +23,17 @@ repos:
       - id: check-docstring-first
 
   - repo: https://github.com/pre-commit/pre-commit
-    rev: v4.6.2
+    rev: v4.7.0
     hooks:
       - id: validate_manifest
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.6
+    rev: v0.17.1
     hooks:
       - id: ruff-check
       - id: ruff-format
 
   - repo: https://github.com/woodruffw/zizmor-pre-commit
-    rev: v1.30.0
+    rev: v1.31.1
     hooks:
       - id: zizmor
