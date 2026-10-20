@@ -624,6 +624,7 @@ def test_is_venv_returns_false_when_paths_are_equal(tmp_path: Path) -> None:
     assert env.is_venv() is False
 
 
+@pytest.mark.skipif(os.name == "nt", reason="Symlinks are not support for Windows")
 def test_generic_env_is_venv_with_symlinked_path(tmp_path: Path) -> None:
     """https://github.com/python-poetry/poetry/issues/10991"""
     real_dir = tmp_path / "3.14.6"
