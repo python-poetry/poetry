@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import shutil
+
 from typing import TYPE_CHECKING
 
 import pytest
@@ -14,6 +16,8 @@ from tests.console.commands.self.utils import get_self_command_dependencies
 
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from cleo.testers.command_tester import CommandTester
 
     from tests.helpers import DummyRepository
@@ -178,14 +182,17 @@ def test_add_with_relative_path(
     tester: CommandTester,
     repo: DummyRepository,
     fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
 ) -> None:
     repo.add_package(Package("pendulum", "1.4.4"))
-    path = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
+    path = tmp_path / "dist" / "demo-0.1.0-py2.py3-none-any.whl"
+    path.parent.mkdir()
+    shutil.copy(fixture_dir("distributions") / path.name, path)
 
     # A relative path is relative to the current working directory
     # and not to the system project in Poetry's config directory.
-    with directory(path.parent.parent):
-        tester.execute("distributions/demo-0.1.0-py2.py3-none-any.whl")
+    with directory(tmp_path):
+        tester.execute("dist/demo-0.1.0-py2.py3-none-any.whl")
 
     expected = f"""\
 
