@@ -9,6 +9,7 @@ from poetry.core.packages.package import Package
 from poetry.console.commands.add import AddCommand
 from poetry.console.commands.self.self_command import SelfCommand
 from poetry.factory import Factory
+from poetry.utils.helpers import directory
 from tests.console.commands.self.utils import get_self_command_dependencies
 
 
@@ -17,6 +18,7 @@ if TYPE_CHECKING:
 
     from tests.helpers import DummyRepository
     from tests.types import CommandTesterFactory
+    from tests.types import FixtureDirGetter
 
 
 @pytest.fixture()
@@ -170,6 +172,38 @@ Writing lock file
 """
 
     assert_plugin_add_result(tester, expected, url)
+
+
+def test_add_with_relative_path(
+    tester: CommandTester,
+    repo: DummyRepository,
+    fixture_dir: FixtureDirGetter,
+) -> None:
+    repo.add_package(Package("pendulum", "1.4.4"))
+    path = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
+
+    # A relative path is relative to the current working directory
+    # and not to the system project in Poetry's config directory.
+    with directory(path.parent.parent):
+        tester.execute("distributions/demo-0.1.0-py2.py3-none-any.whl")
+
+    expected = f"""\
+
+Updating dependencies
+Resolving dependencies...
+
+Package operations: 2 installs, 0 updates, 0 removals
+
+  - Installing pendulum (1.4.4)
+  - Installing demo (0.1.0 {path.as_posix()})
+
+Writing lock file
+"""
+
+    assert tester.io.fetch_output() == expected
+    dependencies = get_self_command_dependencies()
+    assert dependencies
+    assert dependencies[0] == f"demo @ {path.as_uri()}"
 
 
 def test_add_existing_plugin_warns_about_no_operation(
