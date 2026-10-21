@@ -144,6 +144,171 @@ pytest   3.7.3 Pytest package
         assert tester.io.fetch_output() == expected
 
 
+@output_format_parametrize
+def test_show_with_source(
+    output_format: str,
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+) -> None:
+    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
+    poetry.package.add_dependency(
+        Factory.create_dependency(
+            "internal-package",
+            {"version": "^1.0.0", "source": "internal"},
+        )
+    )
+
+    cachy_010 = get_package("cachy", "0.1.0")
+    cachy_010.description = "Cachy package"
+    internal_package_100 = get_package("internal-package", "1.0.0")
+    internal_package_100.description = "Internal package"
+
+    installed.add_package(cachy_010)
+    installed.add_package(internal_package_100)
+
+    assert isinstance(poetry.locker, DummyLocker)
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "internal-package",
+                    "version": "1.0.0",
+                    "description": "Internal package",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "source": {
+                        "type": "legacy",
+                        "url": "https://example.com/simple/",
+                        "reference": "internal",
+                    },
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "files": {"cachy": [], "internal-package": []},
+            },
+        }
+    )
+
+    tester.execute(f"--source {output_format}")
+
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "installed_status": "installed",
+                "version": "0.1.0",
+                "source": "PyPI",
+                "description": "Cachy package",
+            },
+            {
+                "name": "internal-package",
+                "installed_status": "installed",
+                "version": "1.0.0",
+                "source": "internal",
+                "description": "Internal package",
+            },
+        ]
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = """\
+cachy            0.1.0 PyPI     Cachy package
+internal-package 1.0.0 internal Internal package
+"""
+        assert tester.io.fetch_output() == expected
+
+
+def test_show_with_source_long_direct_url_keeps_descriptions(
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+) -> None:
+    direct_url = "https://example.com/aaaaaaaaaaa.whl"
+    poetry.package.add_dependency(
+        Factory.create_dependency("regular-package", "^1.0.0")
+    )
+    poetry.package.add_dependency(
+        Factory.create_dependency("direct-package", {"url": direct_url})
+    )
+
+    regular_package = get_package("regular-package", "1.0.0")
+    regular_package.description = "Regular package"
+    direct_package = get_package("direct-package", "1.0.0")
+    direct_package.description = "Direct package"
+    direct_package._source_type = "url"
+    direct_package._source_url = direct_url
+
+    installed.add_package(regular_package)
+    installed.add_package(direct_package)
+
+    assert isinstance(poetry.locker, DummyLocker)
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "regular-package",
+                    "version": "1.0.0",
+                    "description": "Regular package",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "direct-package",
+                    "version": "1.0.0",
+                    "description": "Direct package",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "source": {
+                        "type": "url",
+                        "url": direct_url,
+                    },
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "files": {"regular-package": [], "direct-package": []},
+            },
+        }
+    )
+
+    tester.execute("--source --no-truncate")
+
+    source_width = len(direct_url)
+    expected = (
+        f"{'regular-package':<15} {'1.0.0':<5} {'PyPI':<{source_width}} Regular package\n"
+        f"{'direct-package':<15} {'1.0.0':<5} {direct_url:<{source_width}} Direct package\n"
+    )
+    assert tester.io.fetch_output() == expected
+
+
+def test_show_with_source_rejects_tree(tester: CommandTester) -> None:
+    tester.execute("--source --tree")
+
+    assert tester.status_code == 1
+    assert tester.io.fetch_error() == "Error: --source cannot be used with --tree.\n"
+
+
 def _configure_project_with_groups(poetry: Poetry, installed: Repository) -> None:
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
 
