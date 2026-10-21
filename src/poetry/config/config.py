@@ -135,7 +135,7 @@ class PackageFilterPolicy:
             if (
                 not name
                 or (cls.is_reserved(name) and len(names) == 1)
-                or re.match(r"^[a-zA-Z\d_-]+$", name)
+                or re.match(r"^[a-zA-Z\d._-]+$", name)
             ):
                 continue
             return False
