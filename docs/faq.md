@@ -273,10 +273,10 @@ Similar to `PIP_REQUESTS_TIMEOUT`, the **experimental** environment variable `PO
 can be set to alter this value.
 
 
-### How do I migrate an existing Poetry project using `tools.poetry` section to use the new `project` section (PEP 621)?
+### How do I migrate an existing Poetry project using `tool.poetry` section to use the new `project` section (PEP 621)?
 
 {{% note %}}
-Poetry `>=2.0.0` should seamlessly support both `tools.poetry` section only configuration as well using the `project` section. This
+Poetry `>=2.0.0` should seamlessly support both `tool.poetry` section only configuration as well using the `project` section. This
 lets you decide when and if you would like to migrate to using the `project` section as [described by PyPA](https://packaging.python.org/en/latest/specifications/pyproject-toml/#declaring-project-metadata-the-project-table).
 
 See documentation on [the `pyproject.toml` file]({{< relref "pyproject" >}}), for information specific to Poetry.
@@ -432,5 +432,5 @@ build-backend = "poetry.core.masonry.api"
 {{% note %}}
 - The `classifiers` property is dynamic to allow Poetry to create and manage Python classifiers in accordance with supported Python version.
 - The `python` dependency, in this example was replaced with `project.requires-python`. However, note that if you need an upper bound on supported Python versions refer to the documentation [here]({{< relref "pyproject#requires-python" >}}).
-- The [`requires-poetry`]({{< relref "pyproject#requires-poetry" >}}) is added to the `tools.poetry` section.
+- The [`requires-poetry`]({{< relref "pyproject#requires-poetry" >}}) is added to the `tool.poetry` section.
 {{% /note %}}
