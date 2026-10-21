@@ -380,7 +380,13 @@ To remove a repository (repo is a short alias for repositories):
             raise RuntimeError("You can only pass one value.")
 
         value = values[0]
-        if not validator(value):
+        try:
+            valid = validator(value)
+        except ValueError:
+            # Some validators (e.g. those that parse integers) raise instead
+            # of returning False; surface them like any other invalid value.
+            valid = False
+        if not valid:
             raise RuntimeError(f'"{value}" is an invalid value for {key}')
 
         source.add_property(key, normalizer(value))
