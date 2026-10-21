@@ -534,6 +534,13 @@ To only install the project itself with no dependencies, use the `--only-root` f
 poetry install --only-root
 ```
 
+To only install the plugins the project requires (`tool.poetry.requires-plugins`),
+without its dependencies or the project itself, use the `--only-plugins` flag.
+
+```bash
+poetry install --only-plugins
+```
+
 See [Dependency groups]({{< relref "managing-dependencies#dependency-groups" >}}) for more information
 about dependency groups.
 
@@ -596,6 +603,7 @@ poetry install --compile
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
 * `--only-root`: Install only the root project, exclude all dependencies.
+* `--only-plugins`: Install only the plugins the project requires, exclude its dependencies and the project itself (conflicts with `--no-plugins`).
 * `--sync`: Synchronize the environment with the locked packages and the specified groups. (**Deprecated**, use `poetry sync` instead)
 * `--no-root`: Do not install the root package (your project).
 * `--no-directory`: Skip all directory path dependencies (including transitive ones).
@@ -1277,6 +1285,13 @@ To only install the project itself with no dependencies, use the `--only-root` f
 poetry sync --only-root
 ```
 
+To only install the plugins the project requires (`tool.poetry.requires-plugins`),
+without its dependencies or the project itself, use the `--only-plugins` flag.
+
+```bash
+poetry sync --only-plugins
+```
+
 See [Dependency groups]({{< relref "managing-dependencies#dependency-groups" >}}) for more information
 about dependency groups.
 
@@ -1337,6 +1352,7 @@ poetry sync --compile
 * `--with`: The optional dependency groups to include.
 * `--only`: The only dependency groups to include.
 * `--only-root`: Install only the root project, exclude all dependencies.
+* `--only-plugins`: Install only the plugins the project requires, exclude its dependencies and the project itself (conflicts with `--no-plugins`).
 * `--no-root`: Do not install the root package (your project).
 * `--no-directory`: Skip all directory path dependencies (including transitive ones).
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables `--verbose`).
