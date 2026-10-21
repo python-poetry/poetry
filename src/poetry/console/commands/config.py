@@ -27,10 +27,23 @@ from poetry.console.commands.command import Command
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from cleo.io.inputs.argument import Argument
     from cleo.io.inputs.option import Option
 
     from poetry.config.config_source import ConfigSource
+
+
+def _int_validator(minimum: int) -> Callable[[str], bool]:
+    def validator(val: str) -> bool:
+        try:
+            return int(val) >= minimum
+        except ValueError:
+            return False
+
+    return validator
+
 
 CONFIG_MIGRATIONS = [
     ConfigSourceMigration(
@@ -90,11 +103,11 @@ To remove a repository (repo is a short alias for repositories):
             "virtualenvs.use-poetry-python": (boolean_validator, boolean_normalizer),
             "virtualenvs.prompt": (str, str),
             "system-git-client": (boolean_validator, boolean_normalizer),
-            "requests.max-retries": (lambda val: int(val) >= 0, int_normalizer),
+            "requests.max-retries": (_int_validator(0), int_normalizer),
             "installer.re-resolve": (boolean_validator, boolean_normalizer),
             "installer.parallel": (boolean_validator, boolean_normalizer),
             "installer.builtin-uninstall": (boolean_validator, boolean_normalizer),
-            "installer.max-workers": (lambda val: int(val) > 0, int_normalizer),
+            "installer.max-workers": (_int_validator(1), int_normalizer),
             "installer.no-binary": (
                 PackageFilterPolicy.validator,
                 PackageFilterPolicy.normalize,
@@ -104,7 +117,7 @@ To remove a repository (repo is a short alias for repositories):
                 PackageFilterPolicy.normalize,
             ),
             "solver.lazy-wheel": (boolean_validator, boolean_normalizer),
-            "solver.min-release-age": (lambda val: int(val) >= 0, int_normalizer),
+            "solver.min-release-age": (_int_validator(0), int_normalizer),
             "solver.min-release-age-exclude": (
                 PackageFilterPolicy.validator,
                 PackageFilterPolicy.normalize,
