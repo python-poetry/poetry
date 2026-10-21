@@ -61,7 +61,9 @@ def test_python_get_preferred_default(config: Config, python_version: Version) -
     python = Python.get_preferred_python(config)
 
     assert python.executable.resolve() == Path(sys.executable).resolve()
-    assert python.version == python_version
+    # Without an unversioned "python" on PATH, get_preferred_python() falls back
+    # to get_system_python(), which does not include the pre-release suffix.
+    assert python.version in {python_version, Python.get_system_python().version}
 
 
 def test_get_preferred_python_use_poetry_python_disabled(
