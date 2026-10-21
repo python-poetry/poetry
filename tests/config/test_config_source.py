@@ -148,3 +148,17 @@ def test_config_source_migration_dry_run(
     assert migration.dry_run(config_source, io) is expected_result
     assert io.fetch_output().strip() == expected_output
     assert config_source.config == original_config
+
+
+def test_config_source_migration_apply_missing_key_is_noop(
+    config_source: DictConfigSource,
+) -> None:
+    migration = ConfigSourceMigration(
+        old_key="virtualenvs.missing-key",
+        new_key="virtualenvs.use-poetry-python",
+    )
+    original_config = deepcopy(config_source.config)
+
+    migration.apply(config_source)
+
+    assert config_source.config == original_config
