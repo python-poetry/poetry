@@ -11,6 +11,7 @@ from cleo.io.buffered_io import BufferedIO
 from cleo.io.null_io import NullIO
 from packaging.utils import canonicalize_name
 
+from poetry.exceptions import PoetryError
 from poetry.factory import Factory
 from poetry.publishing.publisher import Publisher
 
@@ -92,8 +93,30 @@ def test_publish_raises_error_for_undefined_repository(
     )
     publisher = Publisher(poetry, NullIO())
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(PoetryError) as excinfo:
         publisher.publish("my-repo", None, None)
+
+    assert str(excinfo.value) == (
+        "The repository 'my-repo' is not defined. Please set it with "
+        "`poetry config repositories.my-repo <url>`."
+    )
+
+
+def test_publish_raises_error_for_repository_without_url(
+    fixture_dir: FixtureDirGetter, config: Config
+) -> None:
+    poetry = Factory().create_poetry(fixture_dir("sample_project"))
+    poetry._config = config
+    poetry.config.merge({"repositories": {"my-repo": {}}})
+    publisher = Publisher(poetry, NullIO())
+
+    with pytest.raises(PoetryError) as excinfo:
+        publisher.publish("my-repo", None, None)
+
+    assert str(excinfo.value) == (
+        "The repository 'my-repo' is missing a url. Please set it with "
+        "`poetry config repositories.my-repo <url>`."
+    )
 
 
 def assert_publish_uses_token_if_it_exists(
