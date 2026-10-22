@@ -97,6 +97,8 @@ class AuthenticatorRepositoryConfig:
         (i.e. all repository segments are shared).
         Higher keys are better matches.
         """
+        if self.url is None:
+            return 0, False
         segments = _path_segments(path)
         shared = 0
         for own, other in zip(self._path_segments, segments):
