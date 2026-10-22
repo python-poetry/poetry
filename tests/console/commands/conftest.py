@@ -46,21 +46,14 @@ def init_basic_toml_no_readme(init_basic_toml: str) -> str:
 
 
 @pytest.fixture()
-def new_basic_toml() -> str:
-    return """\
-[project]
-name = "my-package"
-version = "1.2.3"
-description = "This is a description"
-authors = [
-    {name = "Your Name",email = "you@example.com"}
-]
-license = "MIT"
-readme = "README.md"
-requires-python = ">=3.6"
+def new_basic_toml(init_basic_toml: str) -> str:
+    return (
+        init_basic_toml
+        + """\
 dependencies = [
 ]
 
 [tool.poetry]
 packages = [{include = "my_package", from = "src"}]
 """
+    )
