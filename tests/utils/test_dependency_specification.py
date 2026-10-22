@@ -88,6 +88,29 @@ if TYPE_CHECKING:
         ),
         # PEP 508 inputs
         (
+            "two @ git+https://github.com/demo/subdirectories.git#subdirectory=two",
+            (
+                {
+                    "git": "https://github.com/demo/subdirectories.git",
+                    "name": "two",
+                    "subdirectory": "two",
+                },
+            ),
+        ),
+        (
+            'two[foo] @ git+https://github.com/demo/subdirectories.git@main#subdirectory=two ; python_version >= "3.10"',
+            (
+                {
+                    "git": "https://github.com/demo/subdirectories.git",
+                    "name": "two",
+                    "rev": "main",
+                    "subdirectory": "two",
+                    "extras": ["foo"],
+                    "markers": 'python_version >= "3.10"',
+                },
+            ),
+        ),
+        (
             "poetry-core (>=1.0.7,<1.1.0)",
             ({"name": "poetry-core", "version": ">=1.0.7,<1.1.0"},),
         ),
