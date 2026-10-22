@@ -470,13 +470,15 @@ Writing lock file
         ),
     ],
 )
+@pytest.mark.parametrize("pep508", [False, True])
 def test_add_git_constraint_with_subdirectory(
     url: str,
     rev: str | None,
+    pep508: bool,
     app: PoetryTestApplication,
     tester: CommandTester,
 ) -> None:
-    tester.execute(url)
+    tester.execute(f'"two @ {url}"' if pep508 else url)
 
     expected = """\
 Updating dependencies
