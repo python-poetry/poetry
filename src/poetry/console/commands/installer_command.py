@@ -2,12 +2,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from cleo.helpers import option
+
 from poetry.console.commands.env_command import EnvCommand
 from poetry.console.commands.group_command import GroupCommand
 from poetry.utils.password_manager import PoetryKeyring
 
 
 if TYPE_CHECKING:
+    from cleo.io.inputs.option import Option
     from cleo.io.io import IO
 
     from poetry.installation.installer import Installer
@@ -25,6 +28,15 @@ class InstallerCommand(GroupCommand, EnvCommand):
 
         self.installer.set_package(self.poetry.package)
         self.installer.set_locker(self.poetry.locker)
+
+    @staticmethod
+    def _resolution_strategy_option() -> Option:
+        return option(
+            "resolution-strategy",
+            None,
+            "Select the version preference used when resolving dependencies.",
+            flag=False,
+        )
 
     @property
     def installer(self) -> Installer:
