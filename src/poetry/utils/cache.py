@@ -335,7 +335,7 @@ class ArtifactCache:
         return min(candidates)[1]
 
     def _get_cached_archives(self, cache_dir: Path) -> list[Path]:
-        archive_types = ["whl", "tar.gz", "tar.bz2", "bz2", "zip"]
+        archive_types = ["whl", "tar.gz", "tar.bz2", "tar.xz", "bz2", "zip"]
         paths: list[Path] = []
         for archive_type in archive_types:
             paths += cache_dir.glob(f"*.{archive_type}")

@@ -224,6 +224,20 @@ def test_get_cached_archives(fixture_dir: FixtureDirGetter) -> None:
     )
 
 
+@pytest.mark.parametrize("strict", [True, False])
+def test_get_cached_tar_xz_archive(tmp_path: Path, strict: bool) -> None:
+    cache = ArtifactCache(cache_dir=tmp_path)
+    link = Link("https://example.com/demo-0.1.0.tar.xz")
+    directory = cache.get_cache_directory_for_link(link)
+    directory.mkdir(parents=True)
+    archive = directory / link.filename
+    archive.touch()
+
+    assert (
+        cache.get_cached_archive_for_link(link, strict=strict, env=MockEnv()) == archive
+    )
+
+
 @pytest.mark.parametrize(
     ("link", "strict", "available_packages"),
     [
