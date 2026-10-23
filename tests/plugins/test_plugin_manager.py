@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 import shutil
+import subprocess
 import sys
 
 from pathlib import Path
@@ -165,6 +167,25 @@ def test_load_plugins_with_invalid_plugin(
 
     with pytest.raises(TypeError):
         manager.load_plugins()
+
+
+def test_no_installer_imports_when_importing_plugin_manager() -> None:
+    """
+    The plugin manager is imported for every command,
+    so it must not import the installer stack, which is only
+    required for installing project plugins.
+    """
+    code = (
+        "import sys, json;"
+        "import poetry.plugins.plugin_manager;"
+        "print(json.dumps(sorted(sys.modules)))"
+    )
+    loaded_modules = json.loads(
+        subprocess.run(
+            [sys.executable, "-c", code], capture_output=True, text=True, check=True
+        ).stdout
+    )
+    assert "poetry.installation" not in loaded_modules
 
 
 def test_add_project_plugin_path(
@@ -379,7 +400,7 @@ def test_ensure_plugins_install_missing_plugins(
     cache = ProjectPluginCache(poetry_with_plugins, io)
     install_spy = mocker.spy(cache, "_install")
     execute_mock = mocker.patch(
-        "poetry.plugins.plugin_manager.Installer._execute", return_value=0
+        "poetry.installation.installer.Installer._execute", return_value=0
     )
 
     cache.ensure_plugins()
@@ -433,7 +454,7 @@ def test_ensure_plugins_install_only_missing_plugins(
     cache = ProjectPluginCache(poetry_with_plugins, io)
     install_spy = mocker.spy(cache, "_install")
     execute_mock = mocker.patch(
-        "poetry.plugins.plugin_manager.Installer._execute", return_value=0
+        "poetry.installation.installer.Installer._execute", return_value=0
     )
 
     cache.ensure_plugins()
@@ -484,7 +505,7 @@ def test_ensure_plugins_install_overwrite_wrong_version_plugins(
     cache = ProjectPluginCache(poetry_with_plugins, io)
     install_spy = mocker.spy(cache, "_install")
     execute_mock = mocker.patch(
-        "poetry.plugins.plugin_manager.Installer._execute", return_value=0
+        "poetry.installation.installer.Installer._execute", return_value=0
     )
 
     cache.ensure_plugins()
@@ -544,7 +565,7 @@ def test_ensure_plugins_pins_other_installed_packages(
     cache = ProjectPluginCache(poetry_with_plugins, io)
     install_spy = mocker.spy(cache, "_install")
     execute_mock = mocker.patch(
-        "poetry.plugins.plugin_manager.Installer._execute", return_value=0
+        "poetry.installation.installer.Installer._execute", return_value=0
     )
 
     with pytest.raises(SolverProblemError):
