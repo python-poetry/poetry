@@ -13,3 +13,7 @@ RETRY_AFTER_HEADER = "retry-after"
 
 # Server response codes to retry requests on.
 STATUS_FORCELIST = [429, 500, 501, 502, 503, 504]
+
+# Force the use of cached http responses even if they are stale.
+# This is useful for performance analyses to rule out a source of uncertainty.
+FORCE_HTTP_CACHE = os.getenv("POETRY_FORCE_HTTP_CACHE", "").lower() in ("true", "1")
