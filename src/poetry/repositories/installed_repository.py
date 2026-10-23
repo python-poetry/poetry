@@ -14,6 +14,7 @@ from poetry.core.packages.utils.utils import is_python_project
 from poetry.core.packages.utils.utils import url_to_path
 from poetry.core.utils.helpers import module_name
 
+from poetry.installation.git_source import EditableGitSource
 from poetry.repositories.repository import Repository
 from poetry.utils._compat import getencoding
 from poetry.utils.env import VirtualEnv
@@ -115,7 +116,7 @@ class InstalledRepository(Repository):
             path.name.endswith(".dist-info")
             and path.joinpath("direct_url.json").exists()
         ):
-            return cls._create_package_from_pep610(path, dist_metadata)
+            return cls._create_package_from_pep610(path, dist_metadata, env)
 
         is_standard_package = env.is_path_relative_to_lib(path)
 
@@ -184,7 +185,7 @@ class InstalledRepository(Repository):
 
     @classmethod
     def _create_package_from_pep610(
-        cls, path: Path, dist_metadata: metadata.PackageMetadata
+        cls, path: Path, dist_metadata: metadata.PackageMetadata, env: Env
     ) -> Package:
         source_type = None
         source_url = None
@@ -231,6 +232,16 @@ class InstalledRepository(Repository):
             source_subdirectory=source_subdirectory,
             develop=develop,
         )
+
+        if develop and source_type == "directory" and source_url:
+            git_info = EditableGitSource(env.path).metadata(Path(source_url), package)
+            if git_info is not None:
+                origin, reference, revision, subdirectory = git_info
+                package._source_type = "git"
+                package._source_url = origin
+                package._source_reference = reference
+                package._source_resolved_reference = revision
+                package._source_subdirectory = subdirectory
 
         package.description = dist_metadata.get(  # type: ignore[attr-defined]
             "summary",
