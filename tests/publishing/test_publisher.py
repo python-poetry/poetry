@@ -189,21 +189,27 @@ def test_publish_uses_client_cert(
     ]
 
 
+@pytest.mark.parametrize(
+    ("env_name", "repository_name"),
+    [("FOO", "foo"), ("FOO2", "foo2"), ("FOO_2", "foo-2")],
+)
 def test_publish_read_from_environment_variable(
     fixture_dir: FixtureDirGetter,
     environ: None,
     mocker: MockerFixture,
     config: Config,
+    env_name: str,
+    repository_name: str,
 ) -> None:
-    os.environ["POETRY_REPOSITORIES_FOO_URL"] = "https://foo.bar"
-    os.environ["POETRY_HTTP_BASIC_FOO_USERNAME"] = "bar"
-    os.environ["POETRY_HTTP_BASIC_FOO_PASSWORD"] = "baz"
+    os.environ[f"POETRY_REPOSITORIES_{env_name}_URL"] = "https://foo.bar"
+    os.environ[f"POETRY_HTTP_BASIC_{env_name}_USERNAME"] = "bar"
+    os.environ[f"POETRY_HTTP_BASIC_{env_name}_PASSWORD"] = "baz"
     uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
     uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
     poetry = Factory().create_poetry(fixture_dir("sample_project"))
     publisher = Publisher(poetry, NullIO())
 
-    publisher.publish("foo", None, None)
+    publisher.publish(repository_name, None, None)
 
     assert uploader_auth.call_args == [("bar", "baz")]
     assert uploader_upload.call_args == [
