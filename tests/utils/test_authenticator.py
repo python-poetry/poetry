@@ -5,6 +5,10 @@ import logging
 import re
 import uuid
 
+from datetime import datetime
+from datetime import timedelta
+from datetime import timezone
+from email.utils import format_datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import NoReturn
@@ -336,6 +340,101 @@ def test_authenticator_request_respects_retry_header(
 
     response = authenticator.request("get", sdist_uri)
     assert sleep.call_args[0] == (42.0,)
+    assert response.text == content
+
+
+def test_authenticator_request_respects_retry_header_http_date(
+    mocker: MockerFixture,
+    config: Config,
+    http: responses.RequestsMock,
+) -> None:
+    sleep = mocker.patch("time.sleep")
+    sdist_uri = f"https://foo.bar/files/{uuid.uuid4()!s}/foo-0.1.0.tar.gz"
+    content = str(uuid.uuid4())
+    seen: list[str] = []
+    retry_date = datetime.now(timezone.utc) + timedelta(seconds=42)
+
+    def callback(request: requests.PreparedRequest) -> HttpResponse:
+        assert request.url
+        if not seen.count(request.url):
+            seen.append(request.url)
+            # RFC 9110 also allows an HTTP-date instead of a delay in seconds.
+            retry_after = format_datetime(retry_date, usegmt=True)
+            return 503, {"Retry-After": retry_after}, "Retry later"
+
+        return 200, {}, content
+
+    http.add_callback(responses.GET, sdist_uri, callback=callback)
+    authenticator = Authenticator(config, NullIO())
+
+    response = authenticator.request("get", sdist_uri)
+    assert sleep.call_args[0] == (pytest.approx(42.0, abs=2),)
+    assert response.text == content
+
+
+def test_authenticator_request_respects_retry_header_http_date_in_the_past(
+    mocker: MockerFixture,
+    config: Config,
+    http: responses.RequestsMock,
+) -> None:
+    sleep = mocker.patch("time.sleep")
+    sdist_uri = f"https://foo.bar/files/{uuid.uuid4()!s}/foo-0.1.0.tar.gz"
+    content = str(uuid.uuid4())
+    seen: list[str] = []
+    retry_date = datetime.now(timezone.utc) - timedelta(seconds=42)
+
+    def callback(request: requests.PreparedRequest) -> HttpResponse:
+        assert request.url
+        if not seen.count(request.url):
+            seen.append(request.url)
+            retry_after = format_datetime(retry_date, usegmt=True)
+            return 503, {"Retry-After": retry_after}, "Retry later"
+
+        return 200, {}, content
+
+    http.add_callback(responses.GET, sdist_uri, callback=callback)
+    authenticator = Authenticator(config, NullIO())
+
+    response = authenticator.request("get", sdist_uri)
+    assert sleep.call_args[0] == (0.0,)
+    assert response.text == content
+
+
+@pytest.mark.parametrize(
+    ["retry_after", "expected_delay"],
+    [
+        # not a delay in seconds nor an HTTP-date
+        ("no delay given", 0.5),
+        # not a valid delay in seconds (RFC 9110 requires digits), but
+        # sleeping a negative number of seconds is a bug just the same
+        ("-5", 0.0),
+    ],
+)
+def test_authenticator_request_ignores_unusable_retry_header(
+    mocker: MockerFixture,
+    config: Config,
+    http: responses.RequestsMock,
+    retry_after: str,
+    expected_delay: float,
+) -> None:
+    sleep = mocker.patch("time.sleep")
+    sdist_uri = f"https://foo.bar/files/{uuid.uuid4()!s}/foo-0.1.0.tar.gz"
+    content = str(uuid.uuid4())
+    seen: list[str] = []
+
+    def callback(request: requests.PreparedRequest) -> HttpResponse:
+        assert request.url
+        if not seen.count(request.url):
+            seen.append(request.url)
+            return 503, {"Retry-After": retry_after}, "Retry later"
+
+        return 200, {}, content
+
+    http.add_callback(responses.GET, sdist_uri, callback=callback)
+    authenticator = Authenticator(config, NullIO())
+
+    response = authenticator.request("get", sdist_uri)
+    assert sleep.call_args[0] == (expected_delay,)
     assert response.text == content
 
 
