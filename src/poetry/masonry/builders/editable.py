@@ -126,7 +126,14 @@ class EditableBuilder(Builder):
 
         try:
             pth_file = self._env.site_packages.write_text(
-                pth_file, content, encoding=getencoding()
+                pth_file,
+                content,
+                # .pth files are decoded as UTF-8 by interpreters >= 3.12.4
+                # (the locale fallback is deprecated for removal); older
+                # interpreters read them with the locale encoding only.
+                encoding="utf-8"
+                if self._env.version_info[:3] >= (3, 12, 4)
+                else getencoding(),
             )
             self._debug(
                 f"  - Adding <c2>{pth_file.name}</c2> to <b>{pth_file.parent}</b> for"
