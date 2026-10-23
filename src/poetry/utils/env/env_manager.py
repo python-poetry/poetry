@@ -555,7 +555,7 @@ class EnvManager:
         ]
 
         if prompt is not None:
-            args.extend(["--prompt", prompt])
+            args.append(f"--prompt={prompt}")
 
         for flag, value in flags.items():
             if value is True:
