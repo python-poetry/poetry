@@ -6,8 +6,9 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
+    from typing import Self
+
     from poetry.core.packages.package import Package
-    from typing_extensions import Self
 
 
 class Operation(ABC):

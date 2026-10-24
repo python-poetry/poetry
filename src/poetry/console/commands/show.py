@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import sys
 
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING
 from typing import ClassVar
 
@@ -40,7 +40,7 @@ def reverse_deps(pkg: Package, repo: Repository) -> dict[str, str]:
     return required_by
 
 
-class OutputFormats(str, Enum):
+class OutputFormats(StrEnum):
     JSON = "json"
     TEXT = "text"
 

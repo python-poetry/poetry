@@ -7,6 +7,7 @@ import os
 import shutil
 
 from base64 import urlsafe_b64encode
+from locale import getencoding
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -16,7 +17,6 @@ from poetry.core.masonry.utils.package_include import PackageInclude
 
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import decode
-from poetry.utils._compat import getencoding
 from poetry.utils.env import build_environment
 from poetry.utils.helpers import is_dir_writable
 from poetry.utils.pip import pip_install

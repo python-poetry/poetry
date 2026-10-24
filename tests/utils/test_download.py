@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
 from typing import Literal
+from typing import Self
 
 import pytest
 import responses
@@ -207,7 +208,7 @@ def test_downloader_retries_only_the_resumable_requests_errors(tmp_path: Path) -
 
             def raise_for_status(self) -> None: ...
             def close(self) -> None: ...
-            def __enter__(self) -> _Resp:
+            def __enter__(self) -> Self:
                 return self
 
             def __exit__(self, *_: object) -> Literal[False]:
@@ -254,7 +255,7 @@ def test_downloader_stops_after_max_retries(tmp_path: Path) -> None:
 
         def raise_for_status(self) -> None: ...
         def close(self) -> None: ...
-        def __enter__(self) -> _Resp:
+        def __enter__(self) -> Self:
             return self
 
         def __exit__(self, *_: object) -> Literal[False]:
