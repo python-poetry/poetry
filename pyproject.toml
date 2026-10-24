@@ -20,7 +20,7 @@ dependencies = [
     "requests (>=2.26,<3.0)",
     "requests-toolbelt (>=1.0.0,<2.0.0)",
     "shellingham (>=1.5,<2.0)",
-    "tomlkit (>=0.11.4,<1.0.0)",
+    "tomlrt (>=2.2.1,<3)",
     # trove-classifiers uses calver, so version is unclamped
     "trove-classifiers (>=2022.5.19)",
     "virtualenv (>=20.26.6)",
