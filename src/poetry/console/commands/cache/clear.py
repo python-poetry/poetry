@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 
 from typing import TYPE_CHECKING
 from typing import ClassVar
@@ -15,8 +16,12 @@ from poetry.utils.cache import FileCache
 
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from cleo.io.inputs.argument import Argument
     from cleo.io.inputs.option import Option
+
+ARTIFACTS_CACHE_NAME = "artifacts"
 
 
 class CacheClearCommand(Command):
@@ -41,6 +46,10 @@ class CacheClearCommand(Command):
             root = ""
 
         config = Config.create()
+
+        if root == ARTIFACTS_CACHE_NAME:
+            return self._clear_artifacts(config.artifacts_cache_directory)
+
         cache_dir = config.repository_cache_directory / root
 
         try:
@@ -56,22 +65,13 @@ class CacheClearCommand(Command):
                     "Add the --all option if you want to clear all cache entries"
                 )
 
-            if not cache_dir.exists():
-                self.line(
-                    f"No cache entries for {root}" if root else "No cache entries"
-                )
-                return 0
-
-            # Calculate number of entries
-            entries_count = sum(
-                len(files) for _path, _dirs, files in os.walk(str(cache_dir))
+            artifacts_dir = config.artifacts_cache_directory if not root else None
+            return self._clear_all(
+                cache_dir=cache_dir,
+                cache=cache,
+                root=root,
+                artifacts_dir=artifacts_dir,
             )
-
-            delete = self.confirm(f"<question>Delete {entries_count} entries?</>", True)
-            if not delete:
-                return 0
-
-            cache.flush()
         elif len(parts) == 2:
             raise RuntimeError(
                 "Only specifying the package name is not yet supported. "
@@ -94,3 +94,55 @@ class CacheClearCommand(Command):
             raise ValueError("Invalid cache key")
 
         return 0
+
+    def _clear_artifacts(self, artifacts_dir: Path) -> int:
+        if not self.option("all"):
+            raise RuntimeError(
+                "Add the --all option if you want to clear all cache entries"
+            )
+
+        if not artifacts_dir.exists():
+            self.line(f"No cache entries for {ARTIFACTS_CACHE_NAME}")
+            return 0
+
+        entries_count = self._count_entries(artifacts_dir)
+        delete = self.confirm(f"<question>Delete {entries_count} entries?</>", True)
+        if not delete:
+            return 0
+
+        shutil.rmtree(artifacts_dir)
+        return 0
+
+    def _clear_all(
+        self,
+        *,
+        cache_dir: Path,
+        cache: FileCache[object],
+        root: str,
+        artifacts_dir: Path | None,
+    ) -> int:
+        dirs = [cache_dir]
+        if artifacts_dir is not None:
+            dirs.append(artifacts_dir)
+
+        existing_dirs = [path for path in dirs if path.exists()]
+        if not existing_dirs:
+            self.line(f"No cache entries for {root}" if root else "No cache entries")
+            return 0
+
+        entries_count = sum(self._count_entries(path) for path in existing_dirs)
+
+        delete = self.confirm(f"<question>Delete {entries_count} entries?</>", True)
+        if not delete:
+            return 0
+
+        if cache_dir.exists():
+            cache.flush()
+        if artifacts_dir is not None and artifacts_dir.exists():
+            shutil.rmtree(artifacts_dir)
+
+        return 0
+
+    @staticmethod
+    def _count_entries(path: Path) -> int:
+        return sum(len(files) for _path, _dirs, files in os.walk(str(path)))
