@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from datetime import UTC
 from datetime import datetime
-from datetime import timezone
 from io import BytesIO
 from typing import TYPE_CHECKING
 from typing import Any
@@ -101,7 +101,7 @@ def test_find_packages_min_release_age(
     # Set "now" to 2017-08-20 with min-release-age=10 days.
     # Cutoff = 2017-08-10. Versions with any file uploaded after that are filtered.
     # Note that 2.19.0 is uploaded in the future ;)
-    repo._min_release_age_cutoff = datetime(2017, 8, 10, tzinfo=timezone.utc)
+    repo._min_release_age_cutoff = datetime(2017, 8, 10, tzinfo=UTC)
     repo._min_release_age_exclude = min_release_age_exclude
     packages = repo.find_packages(Factory.create_dependency("requests", ">=2.18.0"))
 
@@ -128,7 +128,7 @@ def test_find_packages_min_release_age_multiple_calls(
 ) -> None:
     """See test_find_packages_min_release_age for basic setup."""
     repo = pypi_repository
-    repo._min_release_age_cutoff = datetime(2017, 8, 10, tzinfo=timezone.utc)
+    repo._min_release_age_cutoff = datetime(2017, 8, 10, tzinfo=UTC)
 
     repo.find_packages(Factory.create_dependency("requests", constraints[0]))
     repo.find_packages(Factory.create_dependency("requests", constraints[1]))

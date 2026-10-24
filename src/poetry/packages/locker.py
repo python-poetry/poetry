@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import re
+import tomllib
 import warnings
 
 from hashlib import sha256
@@ -31,7 +32,6 @@ from poetry.__version__ import __version__
 from poetry.packages.transitive_package_info import TransitivePackageInfo
 from poetry.packages.transitive_package_info import group_sort_key
 from poetry.toml.file import TOMLFile
-from poetry.utils._compat import tomllib
 
 
 if TYPE_CHECKING:
