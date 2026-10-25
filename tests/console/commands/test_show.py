@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import tomllib
 
 from collections.abc import Callable
 from typing import TYPE_CHECKING
@@ -15,7 +16,6 @@ from poetry.core.packages.dependency_group import DependencyGroup
 
 from poetry.factory import Factory
 from poetry.repositories.repository_pool import Priority
-from poetry.utils._compat import tomllib
 from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.helpers import DummyLocker
 from tests.helpers import DummyRepository

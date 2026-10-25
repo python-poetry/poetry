@@ -3,8 +3,8 @@ from __future__ import annotations
 import base64
 import re
 
+from datetime import UTC
 from datetime import datetime
-from datetime import timezone
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -298,7 +298,7 @@ def test_find_packages_min_release_age(
     repo = legacy_repository
     # ipython fixture upload times:
     #   4.1.0rc1: 2016-01-26, 5.7.0: 2018-05-10, 7.5.0: 2019-04-25
-    repo._min_release_age_cutoff = datetime(2018, 10, 6, tzinfo=timezone.utc)
+    repo._min_release_age_cutoff = datetime(2018, 10, 6, tzinfo=UTC)
     repo._min_release_age_exclude = min_release_age_exclude
     packages = repo.find_packages(Factory.create_dependency("ipython", "*"))
 
@@ -320,7 +320,7 @@ def test_find_packages_min_release_age_multiple_calls(
 ) -> None:
     """See test_find_packages_min_release_age for basic setup."""
     repo = legacy_repository
-    repo._min_release_age_cutoff = datetime(2017, 10, 6, tzinfo=timezone.utc)
+    repo._min_release_age_cutoff = datetime(2017, 10, 6, tzinfo=UTC)
 
     repo.find_packages(Factory.create_dependency("ipython", constraints[0]))
     repo.find_packages(Factory.create_dependency("ipython", constraints[1]))
