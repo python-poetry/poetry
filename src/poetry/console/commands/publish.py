@@ -88,7 +88,11 @@ the config command.
                         f"ready for publishing in {dist_dir}. Build anyway!</warning>"
                     )
 
-            exit_code = self.call("build", args=f"--output {dist_dir}")
+            # The build command is called with an argument string that cleo parses
+            # using its own tokenizer, so the output directory has to be quoted to
+            # be kept as a single argument (e.g. it may contain spaces).
+            escaped_dist_dir = str(Path(dist_dir)).replace('"', '\\"')
+            exit_code = self.call("build", args=f'--output "{escaped_dist_dir}"')
             if exit_code:
                 return exit_code
 
