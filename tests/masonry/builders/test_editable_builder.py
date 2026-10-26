@@ -5,6 +5,7 @@ import json
 import os
 import shutil
 
+from locale import getencoding
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -18,7 +19,6 @@ from poetry.core.packages.package import Package
 from poetry.factory import Factory
 from poetry.masonry.builders.editable import EditableBuilder
 from poetry.repositories.installed_repository import InstalledRepository
-from poetry.utils._compat import getencoding
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import EnvManager
 from poetry.utils.env import MockEnv

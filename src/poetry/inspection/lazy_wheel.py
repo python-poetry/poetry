@@ -29,10 +29,10 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
     from collections.abc import Iterator
     from types import TracebackType
+    from typing import Self
 
     from packaging.metadata import RawMetadata
     from requests import Session
-    from typing_extensions import Self
 
     from poetry.utils.authenticator import Authenticator
 
