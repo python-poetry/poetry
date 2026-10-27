@@ -1992,3 +1992,32 @@ def test_add_poetry_dependencies_if_necessary(
             "allow-prereleases": True,
         }
     }
+
+
+def test_add_latest_to_main_when_present_in_other_group(
+    project_factory: ProjectFactory, command_tester_factory: CommandTesterFactory
+) -> None:
+    poetry = project_factory(
+        name="foobar",
+        pyproject_content="""\
+[project]
+name = "foobar"
+version = "0.1.0"
+requires-python = ">=3.9"
+
+[dependency-groups]
+dev = ["cachy (>=0.1.0,<0.2.0)"]
+""",
+    )
+    tester = command_tester_factory("add", poetry=poetry)
+
+    tester.execute("cachy@latest")
+
+    assert tester.status_code == 1
+    error = tester.io.fetch_error()
+    assert "Incompatible constraints in requirements of foobar (0.1.0)" in error
+    assert (
+        "cachy is already a dependency of the following group(s): dev. "
+        "To change its constraint there, use `poetry add --group dev cachy@latest`."
+    ) in error
+    assert "No changes were applied." in error

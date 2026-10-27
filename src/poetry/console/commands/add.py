@@ -15,6 +15,7 @@ from poetry.core.packages.dependency_group import MAIN_GROUP
 
 from poetry.console.commands.init import InitCommand
 from poetry.console.commands.installer_command import InstallerCommand
+from poetry.puzzle.provider import IncompatibleConstraintsError
 
 
 if TYPE_CHECKING:
@@ -387,7 +388,30 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
         self.installer.whitelist([r["name"] for r in requirements])
 
-        status = self.installer.run()
+        try:
+            status = self.installer.run()
+        except IncompatibleConstraintsError as e:
+            self.line_error(f"\n<error>{e}</error>")
+            for _constraint in requirements:
+                name = canonicalize_name(str(_constraint["name"]))
+                other_groups = sorted(
+                    g
+                    for g in self.poetry.package.dependency_group_names(True)
+                    if g != canonicalize_name(group)
+                    and any(
+                        d.name == name
+                        for d in self.poetry.package.dependency_group(g).dependencies
+                    )
+                )
+                if other_groups:
+                    self.line_error(
+                        f"\n<c1>{name}</c1> is already a dependency of the"
+                        f" following group(s): {', '.join(other_groups)}."
+                        " To change its constraint there, use"
+                        f" `poetry add --group {other_groups[0]} {name}@latest`."
+                    )
+            self.line_error("\nNo changes were applied.")
+            return 1
 
         if status == 0 and not self.option("dry-run"):
             self.poetry.file.write(content)
