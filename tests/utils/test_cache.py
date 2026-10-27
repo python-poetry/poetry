@@ -121,22 +121,20 @@ def test_cache_file_removed_before_read(
 
 
 @pytest.mark.parametrize("corrupt", [False, True])
-def test_cache_cleanup_file_already_removed(
+def test_cache_cleanup_file_removed_before_unlink(
     corrupt: bool, poetry_file_cache: FileCache[Any], mocker: MockerFixture
 ) -> None:
     poetry_file_cache.put("key1", "value", minutes=-1)
     path = poetry_file_cache._path("key1")
     if corrupt:
         path.write_bytes(b"")
-    deserialize = poetry_file_cache._deserialize
+    unlink = Path.unlink
 
-    def deserialize_after_removal(data: bytes) -> Any:
-        path.unlink()
-        return deserialize(data)
+    def unlink_after_removal(path: Path, missing_ok: bool = False) -> None:
+        unlink(path)
+        unlink(path, missing_ok=missing_ok)
 
-    mocker.patch.object(
-        FileCache, "_deserialize", side_effect=deserialize_after_removal
-    )
+    mocker.patch.object(Path, "unlink", autospec=True, side_effect=unlink_after_removal)
 
     assert poetry_file_cache.get("key1") is None
     assert not path.exists()
