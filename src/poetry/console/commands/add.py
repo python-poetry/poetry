@@ -232,6 +232,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
             source=self.option("source"),
         )
 
+        new_dependencies: dict[NormalizedName, Dependency] = {}
         for _constraint in requirements:
             version = _constraint.get("version")
             if version is not None:
@@ -312,6 +313,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                 root_dir=self.poetry.file.path.parent,
             )
             self.poetry.package.add_dependency(dependency)
+            new_dependencies[canonical_constraint_name] = dependency
 
             if use_project_section or use_groups_section:
                 pep_section = (
@@ -394,21 +396,38 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
             self.line_error(f"\n<error>{e}</error>")
             for _constraint in requirements:
                 name = canonicalize_name(str(_constraint["name"]))
-                other_groups = sorted(
-                    g
-                    for g in self.poetry.package.dependency_group_names(True)
-                    if g != canonicalize_name(group)
-                    and any(
-                        d.name == name
+                new_dependency = new_dependencies.get(name)
+                other_groups: list[str] = []
+                conflicting_groups: list[str] = []
+                for g in sorted(self.poetry.package.dependency_group_names(True)):
+                    if g == canonicalize_name(group):
+                        continue
+                    existing = [
+                        d
                         for d in self.poetry.package.dependency_group(g).dependencies
+                        if d.name == name
+                    ]
+                    if not existing:
+                        continue
+                    other_groups.append(g)
+                    if new_dependency is not None and any(
+                        d.constraint.intersect(new_dependency.constraint).is_empty()
+                        for d in existing
+                    ):
+                        conflicting_groups.append(g)
+                if conflicting_groups:
+                    self.line_error(
+                        f"\n<c1>{name}</c1> is already a dependency of the"
+                        " following group(s) with a conflicting constraint:"
+                        f" {', '.join(conflicting_groups)}."
+                        " To change its constraint there, use:"
                     )
-                )
-                if other_groups:
+                    for g in conflicting_groups:
+                        self.line_error(f"  `poetry add --group {g} {name}@latest`")
+                elif other_groups:
                     self.line_error(
                         f"\n<c1>{name}</c1> is already a dependency of the"
                         f" following group(s): {', '.join(other_groups)}."
-                        " To change its constraint there, use"
-                        f" `poetry add --group {other_groups[0]} {name}@latest`."
                     )
             self.line_error("\nNo changes were applied.")
             return 1
