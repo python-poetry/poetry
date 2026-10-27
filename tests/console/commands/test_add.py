@@ -2070,3 +2070,29 @@ def test_add_conflict_leaves_pyproject_and_lock_unchanged(
     assert tester.status_code == 1
     assert pyproject.read_bytes() == pyproject_before
     assert (lock.read_bytes() if lock.exists() else None) == lock_before
+
+
+def test_add_latest_hint_ignores_marker_disjoint_group(
+    project_factory: ProjectFactory, command_tester_factory: CommandTesterFactory
+) -> None:
+    poetry = project_factory(
+        name="foobar",
+        pyproject_content="""\
+[project]
+name = "foobar"
+version = "0.1.0"
+requires-python = ">=3.9"
+
+[dependency-groups]
+linux = ["cachy (>=0.1.0,<0.2.0) ; sys_platform == 'linux'"]
+win = ["cachy (>=0.1.0,<0.2.0) ; sys_platform == 'win32'"]
+""",
+    )
+    tester = command_tester_factory("add", poetry=poetry)
+
+    tester.execute("cachy@0.2.0 --markers \"sys_platform == 'linux'\"")
+
+    assert tester.status_code == 1
+    error = tester.io.fetch_error()
+    assert "`poetry add --group linux cachy@latest`" in error
+    assert "--group win " not in error

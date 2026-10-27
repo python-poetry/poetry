@@ -12,6 +12,7 @@ from cleo.helpers import option
 from packaging.utils import canonicalize_name
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.dependency_group import MAIN_GROUP
+from poetry.core.packages.utils.utils import get_python_constraint_from_marker
 
 from poetry.console.commands.init import InitCommand
 from poetry.console.commands.installer_command import InstallerCommand
@@ -412,6 +413,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                     other_groups.append(g)
                     if new_dependency is not None and any(
                         d.constraint.intersect(new_dependency.constraint).is_empty()
+                        and self._markers_overlap(d, new_dependency)
                         for d in existing
                     ):
                         conflicting_groups.append(g)
@@ -422,8 +424,10 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                         f" {', '.join(conflicting_groups)}."
                         " To change its constraint there, use:"
                     )
-                    for g in conflicting_groups:
-                        self.line_error(f"  `poetry add --group {g} {name}@latest`")
+                    for conflicting_group in conflicting_groups:
+                        self.line_error(
+                            f"  `poetry add --group {conflicting_group} {name}@latest`"
+                        )
                 elif other_groups:
                     self.line_error(
                         f"\n<c1>{name}</c1> is already a dependency of the"
@@ -436,6 +440,18 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
             self.poetry.file.write(content)
 
         return status
+
+    def _markers_overlap(self, first: Dependency, second: Dependency) -> bool:
+        # Same relevance test as Provider._is_relevant_marker applied to the
+        # marker intersection: the resolver only reports a conflict for
+        # dependencies whose markers overlap within the project's python range.
+        marker = first.marker.intersect(second.marker)
+        return (
+            not marker.is_empty()
+            and self.poetry.package.python_constraint.allows_any(
+                get_python_constraint_from_marker(marker)
+            )
+        )
 
     def get_existing_packages_from_input(
         self,
