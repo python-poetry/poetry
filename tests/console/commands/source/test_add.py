@@ -105,6 +105,17 @@ def test_source_add_error_no_url(tester: CommandTester) -> None:
     assert tester.status_code == 1
 
 
+def test_source_add_error_invalid_priority(
+    tester: CommandTester, source_one: Source
+) -> None:
+    tester.execute(f"--priority=bogus {source_one.name} {source_one.url}")
+    assert (
+        tester.io.fetch_error().strip()
+        == "Invalid priority 'bogus'. Must be one of: primary, supplemental, explicit."
+    )
+    assert tester.status_code == 1
+
+
 def test_source_add_error_pypi(tester: CommandTester) -> None:
     tester.execute("pypi https://test.pypi.org/simple/")
     assert (

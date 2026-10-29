@@ -6,8 +6,7 @@ from typing import ClassVar
 from cleo.helpers import argument
 from cleo.helpers import option
 from cleo.io.null_io import NullIO
-from tomlkit import table
-from tomlkit.items import AoT
+from tomlrt import AoT
 
 from poetry.config.source import Source
 from poetry.console.commands.command import Command
@@ -76,7 +75,15 @@ class SourceAddCommand(Command):
             )
             priority = Priority.PRIMARY
         else:
-            priority = Priority[priority_str.upper()]
+            try:
+                priority = Priority[priority_str.upper()]
+            except KeyError:
+                self.line_error(
+                    f"<error>Invalid priority '{priority_str}'. Must be one of:"
+                    f" {', '.join(p.name.lower() for p in Priority)}.</error>"
+                )
+
+                return 1
 
         sources = AoT([])
         new_source = Source(name=name, url=url, priority=priority)
@@ -106,11 +113,7 @@ class SourceAddCommand(Command):
             return 1
 
         content = self.poetry.pyproject.data
-        if "tool" not in content:
-            content["tool"] = table()
-        if "poetry" not in content["tool"]:
-            content["tool"]["poetry"] = table()
-        self.poetry.pyproject.poetry_config["source"] = sources
+        content.install(("tool", "poetry", "source"), sources)
         self.poetry.pyproject.save()
 
         return 0

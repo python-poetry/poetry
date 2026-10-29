@@ -17,9 +17,9 @@ from poetry.utils._compat import WINDOWS
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+    from typing import Self
 
     from poetry.core.constraints.version import Version
-    from typing_extensions import Self
 
 
 class ShutilWhichPythonProvider(findpython.BaseProvider):  # type: ignore[misc]
