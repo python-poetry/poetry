@@ -346,6 +346,48 @@ as the target environment managed by Poetry. If Poetry and your project are inst
 is likely to upgrade or uninstall its own dependencies (causing hard-to-debug and understand errors).
 {{% /note %}}
 
+**GitHub Actions example**
+
+The following Linux workflow installs a pinned Poetry version in its own environment, then installs your project's
+locked dependencies into a separate `.venv`. It assumes that `pyproject.toml` and `poetry.lock` are committed and that
+`pytest` is included in a non-optional dependency group. Adapt the Python version, Poetry version, selected groups,
+and test command to your project.
+
+```yaml
+name: Tests
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    env:
+      POETRY_VIRTUALENVS_IN_PROJECT: "true"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Install Poetry
+        run: |
+          python -m venv "$RUNNER_TEMP/poetry"
+          "$RUNNER_TEMP/poetry/bin/python" -m pip install "poetry==2.5.1"
+          echo "$RUNNER_TEMP/poetry/bin" >> "$GITHUB_PATH"
+      - name: Install project dependencies
+        run: poetry sync --no-interaction
+      - name: Run tests
+        run: poetry run pytest
+```
+
+Use `poetry sync` in CI to install from the lock file. Generate or update the lock file during development and commit it
+before running this workflow. The Poetry environment is added to `PATH`, but is not activated; this keeps its
+dependencies separate from the project's environment.
+
 {{< /tab >}}
 {{< /tabs >}}
 
