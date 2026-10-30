@@ -45,6 +45,13 @@ def int_normalizer(val: str) -> int:
     return int(val)
 
 
+def int_validator(val: str, min_val: int = 0) -> bool:
+    try:
+        return int(val) >= min_val
+    except (ValueError, TypeError):
+        return False
+
+
 def str_list_normalizer(val: str) -> list[str]:
     return [vs for v in val.split(",") if (vs := v.strip())]
 
