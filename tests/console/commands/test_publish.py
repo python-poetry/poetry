@@ -226,7 +226,6 @@ def test_publish_dist_dir_with_spaces_and_build_options(
     tmp_venv: VirtualEnv,
     command_tester_factory: CommandTesterFactory,
     dist_dir: str,
-    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     source_dir = fixture_dir("simple_project")
     target_dir = tmp_path / "project"
@@ -240,15 +239,13 @@ def test_publish_dist_dir_with_spaces_and_build_options(
     poetry = Factory().create_poetry(target_dir)
     tester = command_tester_factory("publish", poetry, environment=tmp_venv)
 
-    output_dir = target_dir / ("my dist" if dist_dir == "absolute" else dist_dir)
-    dist_dir_option = str(output_dir)
-    if dist_dir != "absolute":
-        # Exercise a relative --dist-dir as well: the value must still reach the
-        # build command as a single argument, resolved against the working directory.
-        monkeypatch.chdir(target_dir)
-        dist_dir_option = dist_dir
+    if dist_dir == "absolute":
+        output_dir = target_dir / "my dist"
+        dist_dir = str(output_dir)
+    else:
+        output_dir = target_dir / dist_dir
 
-    exit_code = tester.execute(f'--dist-dir "{dist_dir_option}" --dry-run --build')
+    exit_code = tester.execute(f'--dist-dir "{dist_dir}" --dry-run --build')
 
     assert exit_code == 0
 
