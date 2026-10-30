@@ -6,6 +6,10 @@ import logging
 import time
 import urllib.parse
 
+from contextlib import suppress
+from datetime import datetime
+from datetime import timezone
+from email.utils import parsedate_to_datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -36,6 +40,30 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
+
+
+def _parse_retry_after(retry_after: str) -> float | None:
+    """Return the delay in seconds from a ``Retry-After`` header value.
+
+    RFC 9110 allows both a delay in seconds and an HTTP-date. ``None`` is
+    returned if the value cannot be parsed, so that the caller can fall back
+    to exponential backoff instead of failing.
+    """
+    retry_after = retry_after.strip()
+
+    with suppress(ValueError):
+        return max(float(retry_after), 0.0)
+
+    try:
+        retry_date = parsedate_to_datetime(retry_after)
+    except ValueError:
+        return None
+
+    if retry_date.tzinfo is None:
+        # A date without a time zone is interpreted as UTC.
+        retry_date = retry_date.replace(tzinfo=timezone.utc)
+
+    return max((retry_date - datetime.now(timezone.utc)).total_seconds(), 0.0)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -304,7 +332,9 @@ class Authenticator:
         if response is not None:
             retry_after = response.headers.get(RETRY_AFTER_HEADER, "")
             if retry_after:
-                return float(retry_after)
+                delay = _parse_retry_after(retry_after)
+                if delay is not None:
+                    return delay
 
         return 0.5 * attempt
 
