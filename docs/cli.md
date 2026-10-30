@@ -260,6 +260,10 @@ To only clear all packages from the `PyPI` repository, run:
 poetry cache clear PyPI --all
 ```
 
+Clearing a named repository cache removes its cached package metadata and HTTP
+responses. It does not remove downloaded wheels or source archives stored in
+Poetry's separate artifact cache, or installed packages in a virtual environment.
+
 To only remove a specific package from a cache, you have to specify the cache entry in the following form `cache:package:version`:
 
 ```bash
