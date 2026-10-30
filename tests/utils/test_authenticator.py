@@ -20,6 +20,7 @@ from poetry.console.exceptions import PoetryRuntimeError
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.authenticator import AuthenticatorRepositoryConfig
 from poetry.utils.authenticator import RepositoryCertificateConfig
+from poetry.utils.authenticator import _path_segments
 from poetry.utils.password_manager import PoetryKeyring
 
 
@@ -636,6 +637,75 @@ def test_repository_config_path_match_key(
         "repo", f"https://foo.bar{repository_path}"
     )
     assert repository.path_match_key(request_path) == expected
+
+
+def test_repository_config_supports_bytes_url_and_path() -> None:
+    repository = AuthenticatorRepositoryConfig(
+        "repo",
+        b"https://foo.bar/repo/private",  # type: ignore[arg-type]
+    )
+    assert repository.url == "https://foo.bar/repo/private"
+    assert repository.path == "/repo/private"
+    assert repository.path_match_key(b"/repo/private/pkg.whl") == (2, True)
+    assert repository.path_match_key("/repo/private/pkg.whl") == (2, True)
+
+
+def test_path_segments_supports_bytes() -> None:
+    assert _path_segments(b"/repo/private/pkg.whl") == ["repo", "private", "pkg.whl"]
+    assert _path_segments(b"") == []
+
+
+def test_authenticator_matches_repository_with_bytes_url(config: Config) -> None:
+    config.merge(
+        {
+            "repositories": {
+                "private": {"url": "https://foo.bar/repo/private"},
+            },
+        }
+    )
+
+    authenticator = Authenticator(config, NullIO())
+    repository = authenticator.get_repository_config_for_url(
+        b"https://foo.bar/repo/private/pkg.whl"
+    )
+
+    assert repository is not None
+    assert repository.name == "private"
+
+
+def test_repository_config_supports_none_url() -> None:
+    repository = AuthenticatorRepositoryConfig(
+        "empty-repo",
+        None,  # type: ignore[arg-type]
+    )
+    assert repository.url is None
+    assert repository.scheme == ""
+    assert repository.netloc == ""
+    assert repository.path == ""
+    assert repository._path_segments == []
+    assert repository.path_match_key("/any/path") == (0, False)
+
+
+def test_authenticator_handles_empty_repository_section_without_url(
+    config: Config,
+) -> None:
+    # Reproducer for #11080: empty [repositories.<name>] section with no url key
+    config.merge(
+        {
+            "repositories": {
+                "company-internal": {},
+            },
+        }
+    )
+
+    authenticator = Authenticator(config, NullIO())
+    assert "company-internal" in authenticator.configured_repositories
+    repository = authenticator.configured_repositories["company-internal"]
+    assert repository.name == "company-internal"
+    assert repository.url is None
+    assert repository.scheme == ""
+    assert repository.netloc == ""
+    assert repository.path == ""
 
 
 @pytest.mark.parametrize(
