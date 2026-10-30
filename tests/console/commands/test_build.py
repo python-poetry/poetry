@@ -9,6 +9,7 @@ import pytest
 
 from cleo.io.null_io import NullIO
 from cleo.testers.application_tester import ApplicationTester
+from poetry.core.packages.utils.utils import splitext
 
 from poetry.console.application import Application
 from poetry.console.commands.build import BuildCommand
@@ -65,17 +66,28 @@ def test_build_format_is_not_valid(tmp_tester: CommandTester) -> None:
         tmp_tester.execute("--format not_valid")
 
 
-@pytest.mark.parametrize("format", ["sdist", "wheel", "all"])
+@pytest.mark.parametrize(
+    ("format", "expected_suffixes"),
+    [
+        ("sdist", {".tar.gz"}),
+        ("wheel", {".whl"}),
+        ("all", {".tar.gz", ".whl"}),
+    ],
+)
 def test_build_creates_packages_in_dist_directory_if_no_output_is_specified(
-    tmp_tester: CommandTester, tmp_project_path: Path, tmp_poetry: Poetry, format: str
+    tmp_tester: CommandTester,
+    tmp_project_path: Path,
+    tmp_poetry: Poetry,
+    format: str,
+    expected_suffixes: set[str],
 ) -> None:
     shutil.rmtree(tmp_project_path / "dist")
     tmp_tester.execute(f"--format {format}")
     build_artifacts = tuple(
         (tmp_project_path / "dist").glob(get_package_glob(tmp_poetry))
     )
-    assert len(build_artifacts) > 0
-    assert all(archive.exists() for archive in build_artifacts)
+    assert {splitext(archive)[1] for archive in build_artifacts} == expected_suffixes
+    assert len(build_artifacts) == len(expected_suffixes)
 
 
 def test_build_with_local_version_label(
