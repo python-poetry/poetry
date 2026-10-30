@@ -12,9 +12,11 @@ from cleo.helpers import option
 from packaging.utils import canonicalize_name
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.dependency_group import MAIN_GROUP
+from poetry.core.packages.utils.utils import get_python_constraint_from_marker
 
 from poetry.console.commands.init import InitCommand
 from poetry.console.commands.installer_command import InstallerCommand
+from poetry.puzzle.provider import IncompatibleConstraintsError
 
 
 if TYPE_CHECKING:
@@ -231,6 +233,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
             source=self.option("source"),
         )
 
+        new_dependencies: dict[NormalizedName, Dependency] = {}
         for _constraint in requirements:
             version = _constraint.get("version")
             if version is not None:
@@ -311,6 +314,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                 root_dir=self.poetry.file.path.parent,
             )
             self.poetry.package.add_dependency(dependency)
+            new_dependencies[canonical_constraint_name] = dependency
 
             if use_project_section or use_groups_section:
                 pep_section = (
@@ -387,12 +391,67 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
         self.installer.whitelist([r["name"] for r in requirements])
 
-        status = self.installer.run()
+        try:
+            status = self.installer.run()
+        except IncompatibleConstraintsError as e:
+            self.line_error(f"\n<error>{e}</error>")
+            for _constraint in requirements:
+                name = canonicalize_name(str(_constraint["name"]))
+                new_dependency = new_dependencies.get(name)
+                other_groups: list[str] = []
+                conflicting_groups: list[str] = []
+                for g in sorted(self.poetry.package.dependency_group_names(True)):
+                    if g == canonicalize_name(group):
+                        continue
+                    existing = [
+                        d
+                        for d in self.poetry.package.dependency_group(g).dependencies
+                        if d.name == name
+                    ]
+                    if not existing:
+                        continue
+                    other_groups.append(g)
+                    if new_dependency is not None and any(
+                        d.constraint.intersect(new_dependency.constraint).is_empty()
+                        and self._markers_overlap(d, new_dependency)
+                        for d in existing
+                    ):
+                        conflicting_groups.append(g)
+                if conflicting_groups:
+                    self.line_error(
+                        f"\n<c1>{name}</c1> is already a dependency of the"
+                        " following group(s) with a conflicting constraint:"
+                        f" {', '.join(conflicting_groups)}."
+                        " To change its constraint there, use:"
+                    )
+                    for conflicting_group in conflicting_groups:
+                        self.line_error(
+                            f"  `poetry add --group {conflicting_group} {name}@latest`"
+                        )
+                elif other_groups:
+                    self.line_error(
+                        f"\n<c1>{name}</c1> is already a dependency of the"
+                        f" following group(s): {', '.join(other_groups)}."
+                    )
+            self.line_error("\nNo changes were applied.")
+            return 1
 
         if status == 0 and not self.option("dry-run"):
             self.poetry.file.write(content)
 
         return status
+
+    def _markers_overlap(self, first: Dependency, second: Dependency) -> bool:
+        # Same relevance test as Provider._is_relevant_marker applied to the
+        # marker intersection: the resolver only reports a conflict for
+        # dependencies whose markers overlap within the project's python range.
+        marker = first.marker.intersect(second.marker)
+        return (
+            not marker.is_empty()
+            and self.poetry.package.python_constraint.allows_any(
+                get_python_constraint_from_marker(marker)
+            )
+        )
 
     def get_existing_packages_from_input(
         self,
