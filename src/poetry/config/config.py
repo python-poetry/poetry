@@ -19,6 +19,7 @@ from packaging.utils import canonicalize_name
 from poetry.config.config_source import split_key
 from poetry.config.dict_config_source import DictConfigSource
 from poetry.config.file_config_source import FileConfigSource
+from poetry.exceptions import PoetryError
 from poetry.locations import CONFIG_DIR
 from poetry.locations import DEFAULT_CACHE_DIR
 from poetry.locations import data_dir
@@ -345,7 +346,12 @@ class Config:
                 env = "POETRY_" + "_".join(k.upper().replace("-", "_") for k in keys)
                 env_value = os.getenv(env)
                 if env_value is not None:
-                    return self.process(self._get_normalizer(keys)(env_value))
+                    try:
+                        return self.process(self._get_normalizer(keys)(env_value))
+                    except ValueError as e:
+                        raise PoetryError(
+                            f"Invalid value for {env}: {env_value!r}"
+                        ) from e
 
         value = self._config
 
