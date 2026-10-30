@@ -215,7 +215,11 @@ list of installed packages
     ) -> None:
         """
         Removes references to the given group from other groups.
+
+        Groups that become empty because of this cleanup are deleted, and the
+        references to them are removed as well.
         """
+        removed_groups: list[str] = []
         # 1. PEP 735: [dependency-groups]
         if "dependency-groups" in content:
             groups_to_remove = []
@@ -242,6 +246,7 @@ list of installed packages
 
             for group_key in groups_to_remove:
                 del content["dependency-groups"][group_key]
+            removed_groups.extend(groups_to_remove)
 
         # 2. Legacy: [tool.poetry.group.<name>] include-groups = [...]
         poetry_content = content.get("tool", {}).get("poetry", {})
@@ -262,3 +267,12 @@ list of installed packages
 
             for group_key in groups_to_remove:
                 del poetry_content["group"][group_key]
+            removed_groups.extend(groups_to_remove)
+
+        # 3. Groups deleted above may themselves be included by other groups
+        for removed_group in removed_groups:
+            if removed_group in content.get("dependency-groups", {}) or (
+                removed_group in poetry_content.get("group", {})
+            ):
+                continue
+            self._remove_references_to_group(removed_group, content)
