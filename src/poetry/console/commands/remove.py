@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
+from collections.abc import MutableMapping
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -14,8 +16,6 @@ from poetry.console.commands.installer_command import InstallerCommand
 
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
-
     from cleo.io.inputs.argument import Argument
     from cleo.io.inputs.option import Option
 
@@ -116,6 +116,10 @@ list of installed packages
                     ):
                         self._remove_references_to_group(group_name, content)
 
+            removed |= self._remove_packages_from_optional_dependencies(
+                packages, project_content
+            )
+
         elif group == "dev" and "dev-dependencies" in poetry_content:
             # We need to account for the old `dev-dependencies` section
             removed = self._remove_packages(
@@ -207,6 +211,47 @@ list of installed packages
 
         for package in removed:
             group.remove_dependency(package)
+
+        return removed
+
+    def _remove_packages_from_optional_dependencies(
+        self,
+        packages: list[str],
+        project_content: MutableMapping[str, Any],
+    ) -> set[str]:
+        """
+        Removes packages from the ``[project.optional-dependencies]`` sections.
+
+        Optional dependencies of a PEP 621 project do not live in
+        ``[project.dependencies]`` but in the extras of
+        ``[project.optional-dependencies]``, so removing them requires looking at
+        those lists. Extras that become empty are dropped as well.
+        """
+        optional_dependencies = project_content.get("optional-dependencies")
+        if not isinstance(optional_dependencies, MutableMapping):
+            return set()
+
+        removed = set()
+        for requirements in list(optional_dependencies.values()):
+            if not isinstance(requirements, list):
+                continue
+            for requirement in requirements.copy():
+                if not isinstance(requirement, str):
+                    continue
+                dependency_name = canonicalize_name(
+                    Dependency.create_from_pep_508(requirement).name
+                )
+                for package in packages:
+                    if canonicalize_name(package) == dependency_name:
+                        requirements.remove(requirement)
+                        removed.add(package)
+
+        for extra in list(optional_dependencies):
+            if not optional_dependencies[extra]:
+                del optional_dependencies[extra]
+
+        if not optional_dependencies:
+            del project_content["optional-dependencies"]
 
         return removed
 
