@@ -218,6 +218,48 @@ def test_publish_dist_dir_and_build_options(
     assert "- Uploading simple_project-1.2.3-py2.py3-none-any.whl" in error
 
 
+@pytest.mark.parametrize("dist_dir", ["to build/dist", "absolute"])
+def test_publish_dist_dir_with_spaces_and_build_options(
+    http: responses.RequestsMock,
+    fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
+    tmp_venv: VirtualEnv,
+    command_tester_factory: CommandTesterFactory,
+    dist_dir: str,
+) -> None:
+    source_dir = fixture_dir("simple_project")
+    target_dir = tmp_path / "project"
+    shutil.copytree(str(source_dir), str(target_dir))
+
+    # Remove dist dir as it will be built again
+    shutil.rmtree(target_dir / "dist")
+
+    http.post("https://upload.pypi.org/legacy/", status=409, body="Conflict")
+
+    poetry = Factory().create_poetry(target_dir)
+    tester = command_tester_factory("publish", poetry, environment=tmp_venv)
+
+    if dist_dir == "absolute":
+        output_dir = target_dir / "my dist"
+        dist_dir = str(output_dir)
+    else:
+        output_dir = target_dir / dist_dir
+
+    exit_code = tester.execute(f'--dist-dir "{dist_dir}" --dry-run --build')
+
+    assert exit_code == 0
+
+    output = tester.io.fetch_output()
+    error = tester.io.fetch_error()
+
+    assert "Publishing simple-project (1.2.3) to PyPI" in output
+    assert "- Uploading simple_project-1.2.3.tar.gz" in error
+    assert "- Uploading simple_project-1.2.3-py2.py3-none-any.whl" in error
+
+    assert (output_dir / "simple_project-1.2.3.tar.gz").exists()
+    assert (output_dir / "simple_project-1.2.3-py2.py3-none-any.whl").exists()
+
+
 def test_publish_build_no_interaction_skips_confirmation(
     app_tester: ApplicationTester, mocker: MockerFixture
 ) -> None:
@@ -244,7 +286,7 @@ def test_publish_build_no_interaction_skips_confirmation(
     assert (
         "Warning: There are 1 files ready for publishing in dist. Build anyway!"
     ) in output
-    command_call.assert_called_once_with("build", args="--output dist")
+    command_call.assert_called_once_with("build", args='--output "dist"')
     assert publisher_publish.call_count == 1
 
 
