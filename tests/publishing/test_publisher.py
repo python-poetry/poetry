@@ -195,19 +195,79 @@ def test_publish_read_from_environment_variable(
     mocker: MockerFixture,
     config: Config,
 ) -> None:
-    os.environ["POETRY_REPOSITORIES_FOO_URL"] = "https://foo.bar"
-    os.environ["POETRY_HTTP_BASIC_FOO_USERNAME"] = "bar"
-    os.environ["POETRY_HTTP_BASIC_FOO_PASSWORD"] = "baz"
+    os.environ["POETRY_REPOSITORIES_MY_REPO_URL"] = "https://foo.bar"
+    os.environ["POETRY_HTTP_BASIC_MY_REPO_USERNAME"] = "bar"
+    os.environ["POETRY_HTTP_BASIC_MY_REPO_PASSWORD"] = "baz"
+    os.environ["POETRY_CERTIFICATES_MY_REPO_CERT"] = "path/to/ca.pem"
     uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
     uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
     poetry = Factory().create_poetry(fixture_dir("sample_project"))
     publisher = Publisher(poetry, NullIO())
 
-    publisher.publish("foo", None, None)
+    publisher.publish("my_repo", None, None)
 
     assert uploader_auth.call_args == [("bar", "baz")]
     assert uploader_upload.call_args == [
         ("https://foo.bar",),
+        {
+            "cert": Path("path/to/ca.pem"),
+            "client_cert": None,
+            "dry_run": False,
+            "skip_existing": False,
+        },
+    ]
+
+
+def test_publish_prefers_exact_repository_name_over_normalized_name(
+    fixture_dir: FixtureDirGetter, mocker: MockerFixture, config: Config
+) -> None:
+    uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
+    uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
+    poetry = Factory().create_poetry(fixture_dir("sample_project"))
+    poetry._config = config
+    poetry.config.merge(
+        {
+            "repositories": {
+                "my_repo": {"url": "https://underscore.example"},
+                "my-repo": {"url": "https://hyphen.example"},
+            },
+            "http-basic": {
+                "my_repo": {"username": "underscore", "password": "secret"},
+                "my-repo": {"username": "hyphen", "password": "secret"},
+            },
+        }
+    )
+    publisher = Publisher(poetry, NullIO())
+
+    publisher.publish("my_repo", None, None)
+
+    assert uploader_auth.call_args == [("underscore", "secret")]
+    assert uploader_upload.call_args == [
+        ("https://underscore.example",),
+        {"cert": True, "client_cert": None, "dry_run": False, "skip_existing": False},
+    ]
+
+
+def test_publish_supports_normalized_repository_name(
+    fixture_dir: FixtureDirGetter, mocker: MockerFixture, config: Config
+) -> None:
+    uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
+    uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
+    poetry = Factory().create_poetry(fixture_dir("sample_project"))
+    poetry._config = config
+    poetry.config.merge(
+        {
+            "repositories": {"my-repo": {"url": "https://hyphen.example"}},
+            "http-basic": {"my-repo": {"username": "hyphen", "password": "secret"}},
+        }
+    )
+    publisher = Publisher(poetry, NullIO())
+
+    publisher.publish("my_repo", None, None)
+
+    assert uploader_auth.call_args == [("hyphen", "secret")]
+    assert uploader_upload.call_args == [
+        ("https://hyphen.example",),
         {"cert": True, "client_cert": None, "dry_run": False, "skip_existing": False},
     ]
 
