@@ -265,6 +265,7 @@ list of installed packages
                 del poetry_content["group"][group_key]
                 removed_groups.add(group_key)
 
+        # 3. Recursively clean references to newly removed groups
         for removed_group in removed_groups:
             if removed_group not in content.get(
                 "dependency-groups", {}
