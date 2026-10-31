@@ -153,6 +153,12 @@ class RequirementsParser:
         return None
 
     def _parse_path(self, requirement: str) -> DependencySpec | None:
+        # Shells keep a matching outer quote pair on local paths that contain
+        # spaces. Path() would otherwise look for a name that includes the quotes.
+        quote = requirement[:1]
+        if quote in {'"', "'"} and requirement.endswith(quote) and requirement != quote:
+            requirement = requirement[1:-1]
+
         if (os.path.sep in requirement or "/" in requirement) and (
             self._cwd.joinpath(requirement).exists()
             or (
