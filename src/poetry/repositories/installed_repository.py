@@ -42,7 +42,7 @@ class InstalledRepository(Repository):
         """
         Process a .pth file within the site-packages directories, and return any valid
         paths. We skip executable .pth files as there is no reliable means to do this
-        without side-effects to current run-time. Mo check is made that the item refers
+        without side-effects to current run-time. No check is made that the item refers
         to a directory rather than a file, however, in order to maintain backwards
         compatibility, we allow non-existing paths to be discovered. The latter
         behaviour is different to how Python's site-specific hook configuration works.
