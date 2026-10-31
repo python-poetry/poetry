@@ -94,8 +94,8 @@ class PluginManager:
     def _get_plugin_name(entry_point: metadata.EntryPoint) -> str:
         name = f'"{entry_point.name}" plugin'
         dist = entry_point.dist
-        if dist is not None and (dist_name := dist.metadata.get("Name")):
-            name += f" ({dist_name} {dist.metadata.get('Version')})"
+        if dist is not None and (dist_name := dist.name):
+            name += f" ({dist_name} {dist.version})"
 
         return name
 
