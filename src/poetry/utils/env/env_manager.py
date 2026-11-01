@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import contextlib
 import hashlib
 import os
 import plistlib
@@ -239,6 +240,20 @@ class EnvManager:
                     config=self._poetry.config, io=self._io
                 )
                 python_minor = python.minor_version.to_string()
+
+                if not self._poetry.package.python_constraint.allows(
+                    python.patch_version
+                ):
+                    # create_venv() falls back to a compatible Python in this case
+                    # without recording it in envs.toml,
+                    # so look for the environment it would have created.
+                    with contextlib.suppress(NoCompatiblePythonVersionFoundError):
+                        compatible = Python.get_compatible_python(poetry=self._poetry)
+                        compatible_minor = compatible.minor_version.to_string()
+                        if (
+                            venv_path / f"{self.base_env_name}-py{compatible_minor}"
+                        ).is_dir():
+                            python_minor = compatible_minor
 
             name = f"{self.base_env_name}-py{python_minor.strip()}"
 
