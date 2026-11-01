@@ -639,6 +639,8 @@ def test_config_installer_parallel(
         ("pytest", ["pytest"]),
         ("PyTest", ["pytest"]),
         ("pytest,black", ["pytest", "black"]),
+        ("ruamel.yaml", ["ruamel-yaml"]),
+        ("zope.interface,black", ["zope-interface", "black"]),
         ("", []),
     ],
 )
