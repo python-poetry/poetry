@@ -671,6 +671,141 @@ def test_get_ignores_empty_env_prefix(
     assert venv.path == in_project_venv_dir
 
 
+@pytest.fixture
+def incompatible_preferred_python(
+    poetry: Poetry,
+    config: Config,
+    mocker: MockerFixture,
+    mocked_python_register: MockedPythonRegister,
+) -> None:
+    os.environ.pop("VIRTUAL_ENV", None)
+    os.environ.pop("CONDA_PREFIX", None)
+    config.config["virtualenvs"]["use-poetry-python"] = True
+    poetry.package.python_versions = "~3.8"
+    mocker.patch(
+        "poetry.utils.env.python.Python.get_system_python",
+        return_value=mocked_python_register("3.10.8", make_system=True),
+    )
+
+
+@pytest.mark.usefixtures("incompatible_preferred_python")
+def test_get_finds_env_of_compatible_python(
+    manager: EnvManager,
+    mocker: MockerFixture,
+    config_virtualenvs_path: Path,
+    venv_name: str,
+    mocked_python_register: MockedPythonRegister,
+) -> None:
+    """
+    If the preferred Python is incompatible, create_venv() falls back to a compatible
+    Python without recording it in envs.toml, so get() has to find that environment.
+
+    See: https://github.com/python-poetry/poetry/issues/7190
+    """
+    mocked_python_register("3.8.16")
+    venv = config_virtualenvs_path / f"{venv_name}-py3.8"
+    venv.mkdir(parents=True)
+    mocker.patch(
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(Version.parse("3.8.16")),
+    )
+
+    env = manager.get()
+
+    assert env.is_venv()
+    assert env.path == venv
+    assert not manager.envs_file.exists()
+
+
+@pytest.mark.usefixtures("incompatible_preferred_python")
+def test_get_uses_system_env_if_compatible_python_has_no_env(
+    manager: EnvManager,
+    mocked_python_register: MockedPythonRegister,
+) -> None:
+    mocked_python_register("3.8.16")
+
+    env = manager.get()
+
+    assert not env.is_venv()
+
+
+@pytest.mark.usefixtures("incompatible_preferred_python")
+@pytest.mark.parametrize("has_compatible_python", [False, True])
+def test_get_keeps_env_of_incompatible_preferred_python_if_no_compatible_env_exists(
+    manager: EnvManager,
+    mocker: MockerFixture,
+    config_virtualenvs_path: Path,
+    venv_name: str,
+    mocked_python_register: MockedPythonRegister,
+    has_compatible_python: bool,
+) -> None:
+    if has_compatible_python:
+        mocked_python_register("3.8.16")
+    venv = config_virtualenvs_path / f"{venv_name}-py3.10"
+    venv.mkdir(parents=True)
+    mocker.patch(
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(Version.parse("3.10.8")),
+    )
+
+    env = manager.get()
+
+    assert env.path == venv
+
+
+@pytest.mark.usefixtures("incompatible_preferred_python")
+def test_get_prefers_explicitly_activated_env_over_env_of_compatible_python(
+    manager: EnvManager,
+    mocker: MockerFixture,
+    config_virtualenvs_path: Path,
+    venv_name: str,
+    mocked_python_register: MockedPythonRegister,
+) -> None:
+    mocked_python_register("3.8.16")
+    (config_virtualenvs_path / f"{venv_name}-py3.8").mkdir(parents=True)
+    venv = config_virtualenvs_path / f"{venv_name}-py3.10"
+    venv.mkdir()
+
+    doc = tomlrt.Document()
+    doc[venv_name] = {"minor": "3.10", "patch": "3.10.8"}
+    manager.envs_file.write(doc)
+
+    mocker.patch(
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(Version.parse("3.10.8")),
+    )
+
+    env = manager.get()
+
+    assert env.path == venv
+
+
+@pytest.mark.usefixtures("incompatible_preferred_python")
+def test_create_venv_reuses_env_of_compatible_python_without_warning(
+    manager: EnvManager,
+    mocker: MockerFixture,
+    config_virtualenvs_path: Path,
+    venv_name: str,
+    io: BufferedIO,
+    mocked_python_register: MockedPythonRegister,
+) -> None:
+    mocked_python_register("3.8.16")
+    venv = config_virtualenvs_path / f"{venv_name}-py3.8"
+    venv.mkdir(parents=True)
+    mocker.patch(
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(Version.parse("3.8.16")),
+    )
+    mocker.patch("poetry.utils.env.VirtualEnv.is_sane", return_value=True)
+    m = mocker.patch("poetry.utils.env.EnvManager.build_venv")
+
+    env = manager.create_venv()
+
+    assert env.path == venv
+    m.assert_not_called()
+    assert "Trying to find and use a compatible version" not in io.fetch_error()
+
+
 def test_list(
     tmp_path: Path,
     manager: EnvManager,
