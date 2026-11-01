@@ -108,7 +108,7 @@ def test_find_downloadable_versions(constraint: str | None) -> None:
             assert len({v.implementation for v in versions}) >= 2
 
 
-def find_downloadable_versions_include_incompatible() -> None:
+def test_find_downloadable_versions_include_incompatible() -> None:
     assert len(
         list(Python.find_downloadable_versions(include_incompatible=True))
     ) > len(list(Python.find_downloadable_versions()))
