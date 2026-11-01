@@ -161,7 +161,8 @@ def test_cannot_set_invalid_integer_value(
     tester: CommandTester, setting: str, value: str
 ) -> None:
     with pytest.raises(RuntimeError) as e:
-        tester.execute(f"{setting} {value}")
+        # "--" is required so that negative numbers are not parsed as options
+        tester.execute(f"{setting} -- {value}")
 
     assert str(e.value) == f'"{value}" is an invalid value for {setting}'
 
