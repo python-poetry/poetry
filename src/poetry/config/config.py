@@ -19,6 +19,7 @@ from packaging.utils import canonicalize_name
 from poetry.config.config_source import split_key
 from poetry.config.dict_config_source import DictConfigSource
 from poetry.config.file_config_source import FileConfigSource
+from poetry.exceptions import PoetryError
 from poetry.locations import CONFIG_DIR
 from poetry.locations import DEFAULT_CACHE_DIR
 from poetry.locations import data_dir
@@ -50,6 +51,23 @@ def int_validator(val: str, min_val: int = 0) -> bool:
 
 def int_normalizer(val: str) -> int:
     return int(val)
+
+
+# Integer settings and the smallest value each of them accepts.
+INT_SETTINGS: dict[str, int] = {
+    "installer.max-workers": 1,
+    "requests.max-retries": 0,
+    "solver.min-release-age": 0,
+}
+
+
+def int_setting_validator(name: str | Sequence[str]) -> Callable[[str], bool] | None:
+    if not isinstance(name, str):
+        name = ".".join(name)
+    min_val = INT_SETTINGS.get(name)
+    if min_val is None:
+        return None
+    return lambda val: int_validator(val, min_val)
 
 
 def str_list_normalizer(val: str) -> list[str]:
@@ -352,6 +370,12 @@ class Config:
                 env = "POETRY_" + "_".join(k.upper().replace("-", "_") for k in keys)
                 env_value = os.getenv(env)
                 if env_value is not None:
+                    validator = int_setting_validator(keys)
+                    if validator is not None and not validator(env_value):
+                        raise PoetryError(
+                            f"Invalid value for environment variable "
+                            f"{env}: {env_value!r}"
+                        )
                     return self.process(self._get_normalizer(keys)(env_value))
 
         value = self._config
@@ -414,11 +438,7 @@ class Config:
         if name == "virtualenvs.path":
             return lambda val: str(Path(val))
 
-        if name in {
-            "installer.max-workers",
-            "requests.max-retries",
-            "solver.min-release-age",
-        }:
+        if name in INT_SETTINGS:
             return int_normalizer
 
         if name in {

@@ -15,6 +15,7 @@ from poetry.config.config import PackageFilterPolicy
 from poetry.config.config import boolean_normalizer
 from poetry.config.config import int_normalizer
 from poetry.config.config import str_list_normalizer
+from poetry.exceptions import PoetryError
 from poetry.utils.password_manager import PasswordManager
 from tests.helpers import flatten_dict
 from tests.helpers import isolated_environment
@@ -142,6 +143,29 @@ def test_config_get_from_environment_variable_nested(
             )
 
     assert config.get("virtualenvs.options") == expected
+
+
+@pytest.mark.parametrize(
+    ("name", "env_var", "env_value"),
+    [
+        ("requests.max-retries", "POETRY_REQUESTS_MAX_RETRIES", "not-a-number"),
+        ("installer.max-workers", "POETRY_INSTALLER_MAX_WORKERS", "not-a-number"),
+        ("solver.min-release-age", "POETRY_SOLVER_MIN_RELEASE_AGE", "not-a-number"),
+        # Integer settings also reject values below their documented minimum.
+        ("installer.max-workers", "POETRY_INSTALLER_MAX_WORKERS", "0"),
+    ],
+)
+def test_config_get_from_environment_variable_invalid_int(
+    config: Config,
+    environ: Iterator[None],
+    name: str,
+    env_var: str,
+    env_value: str,
+) -> None:
+    os.environ[env_var] = env_value
+
+    with pytest.raises(PoetryError, match=env_var):
+        config.get(name)
 
 
 @pytest.mark.parametrize(
