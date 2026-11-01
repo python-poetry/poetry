@@ -293,7 +293,13 @@ To remove a repository (repo is a short alias for repositories):
                     username = values[0]
                     # Only username, so we prompt for password
                     password = self.secret("Password:")
-                    assert isinstance(password, str)
+                    if password is None:
+                        # Nothing was entered or the command runs non-interactively
+                        raise ValueError(
+                            'You must pass a password (use "" for an empty one). '
+                            "Example: poetry config "
+                            f"{self.argument('key')} {username} password"
+                        )
                 elif len(values) != 2:
                     raise ValueError(
                         "Expected one or two arguments "
