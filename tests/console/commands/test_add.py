@@ -1992,3 +1992,107 @@ def test_add_poetry_dependencies_if_necessary(
             "allow-prereleases": True,
         }
     }
+
+
+def test_add_latest_to_main_when_present_in_other_group(
+    project_factory: ProjectFactory, command_tester_factory: CommandTesterFactory
+) -> None:
+    poetry = project_factory(
+        name="foobar",
+        pyproject_content="""\
+[project]
+name = "foobar"
+version = "0.1.0"
+requires-python = ">=3.9"
+
+[dependency-groups]
+dev = ["cachy (>=0.1.0,<0.2.0)"]
+""",
+    )
+    tester = command_tester_factory("add", poetry=poetry)
+
+    tester.execute("cachy@latest")
+
+    assert tester.status_code == 1
+    error = tester.io.fetch_error()
+    assert "Incompatible constraints in requirements of foobar (0.1.0)" in error
+    assert (
+        "cachy is already a dependency of the following group(s) with a"
+        " conflicting constraint: dev."
+    ) in error
+    assert "`poetry add --group dev cachy@latest`" in error
+    assert "No changes were applied." in error
+
+
+_TWO_OTHER_GROUPS_PYPROJECT = """\
+[project]
+name = "foobar"
+version = "0.1.0"
+requires-python = ">=3.9"
+
+[dependency-groups]
+a = ["cachy (>=0.2.0,<0.3.0)"]
+z = ["cachy (>=0.1.0,<0.2.0)"]
+"""
+
+
+def test_add_latest_hint_names_only_conflicting_group(
+    project_factory: ProjectFactory, command_tester_factory: CommandTesterFactory
+) -> None:
+    poetry = project_factory(
+        name="foobar", pyproject_content=_TWO_OTHER_GROUPS_PYPROJECT
+    )
+    tester = command_tester_factory("add", poetry=poetry)
+
+    tester.execute("cachy@0.2.0")
+
+    assert tester.status_code == 1
+    error = tester.io.fetch_error()
+    assert "`poetry add --group z cachy@latest`" in error
+    assert "--group a " not in error
+    assert "No changes were applied." in error
+
+
+def test_add_conflict_leaves_pyproject_and_lock_unchanged(
+    project_factory: ProjectFactory, command_tester_factory: CommandTesterFactory
+) -> None:
+    poetry = project_factory(
+        name="foobar", pyproject_content=_TWO_OTHER_GROUPS_PYPROJECT
+    )
+    pyproject = poetry.file.path
+    lock = pyproject.parent / "poetry.lock"
+    pyproject_before = pyproject.read_bytes()
+    lock_before = lock.read_bytes() if lock.exists() else None
+    tester = command_tester_factory("add", poetry=poetry)
+
+    tester.execute("cachy@0.2.0")
+
+    assert tester.status_code == 1
+    assert pyproject.read_bytes() == pyproject_before
+    assert (lock.read_bytes() if lock.exists() else None) == lock_before
+
+
+def test_add_latest_hint_ignores_marker_disjoint_group(
+    project_factory: ProjectFactory, command_tester_factory: CommandTesterFactory
+) -> None:
+    poetry = project_factory(
+        name="foobar",
+        pyproject_content="""\
+[project]
+name = "foobar"
+version = "0.1.0"
+requires-python = ">=3.9"
+
+[dependency-groups]
+linux = ["cachy (>=0.1.0,<0.2.0) ; sys_platform == 'linux'"]
+win = ["cachy (>=0.1.0,<0.2.0) ; sys_platform == 'win32'"]
+""",
+    )
+    tester = command_tester_factory("add", poetry=poetry)
+
+    tester.execute("cachy@0.2.0 --markers \"sys_platform == 'linux'\"")
+
+    assert tester.status_code == 1
+    error = tester.io.fetch_error()
+    assert "`poetry add --group linux cachy@latest`" in error
+    assert "--group win " not in error
