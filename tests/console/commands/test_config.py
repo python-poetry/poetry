@@ -505,6 +505,19 @@ def test_unset_http_basic(
     assert "foo" not in auth_config_source.config["http-basic"]
 
 
+def test_set_http_basic_without_password_non_interactive(
+    tester: CommandTester, auth_config_source: DictConfigSource
+) -> None:
+    with pytest.raises(ValueError) as e:
+        tester.execute("http-basic.foo username", interactive=False)
+
+    assert str(e.value) == (
+        'You must pass a password (use "" for an empty one). '
+        "Example: poetry config http-basic.foo username password"
+    )
+    assert "http-basic" not in auth_config_source.config
+
+
 def test_set_http_basic_unsuccessful_multiple_values(
     tester: CommandTester,
 ) -> None:
