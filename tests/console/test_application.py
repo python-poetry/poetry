@@ -51,9 +51,25 @@ class AddCommandPlugin(ApplicationPlugin):
     commands: ClassVar[list[type[Command]]] = [FooCommand]
 
 
+class AboutCommand(Command):
+    name = "about"
+
+    def handle(self) -> int:
+        return 0
+
+
+class AddExistingCommandPlugin(ApplicationPlugin):
+    commands: ClassVar[list[type[Command]]] = [AboutCommand]
+
+
 @pytest.fixture
 def with_add_command_plugin(mocker: MockerFixture) -> None:
     mock_metadata_entry_points(mocker, AddCommandPlugin)
+
+
+@pytest.fixture
+def with_add_existing_command_plugin(mocker: MockerFixture) -> None:
+    mock_metadata_entry_points(mocker, AddExistingCommandPlugin)
 
 
 def test_application_with_plugins(with_add_command_plugin: None) -> None:
@@ -97,6 +113,25 @@ def test_application_execute_plugin_command_with_plugins_disabled(
     assert tester.io.fetch_output() == ""
     assert "The requested command foo does not exist." in tester.io.fetch_error()
     assert tester.status_code == 1
+
+
+def test_application_with_failing_plugin(
+    with_add_existing_command_plugin: None,
+) -> None:
+    tester = ApplicationTester(Application())
+    tester.execute("about")
+
+    error = tester.io.fetch_error()
+    assert (
+        'Failed to activate the "my-plugin" plugin: The command "about" already exists.'
+    ) in error
+    assert "You can run Poetry with --no-plugins to disable all plugins" in error
+    assert tester.status_code == 1
+
+    tester = ApplicationTester(Application())
+    tester.execute("about --no-plugins")
+
+    assert tester.status_code == 0
 
 
 @pytest.mark.parametrize("with_project_plugins", [False, True])
