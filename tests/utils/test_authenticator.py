@@ -5,6 +5,7 @@ import logging
 import re
 import uuid
 
+from itertools import pairwise
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import NoReturn
@@ -916,3 +917,243 @@ def test_repository_certificate_configuration_create(
     config.merge({"certificates": {"foo": cert_config}})
 
     assert RepositoryCertificateConfig.create("foo", config) == result
+
+
+@pytest.fixture
+def netrc(tmp_path: Path, monkeypatch: MonkeyPatch) -> Path:
+    """Point requests to a netrc file that exists only once a test writes to it."""
+    netrc_file = tmp_path / "netrc"
+    monkeypatch.setenv("NETRC", str(netrc_file))
+    return netrc_file
+
+
+def write_netrc(netrc_file: Path, host: str) -> None:
+    netrc_file.touch(mode=0o600)
+    netrc_file.write_text(
+        f"machine {host} login netrcuser password netrcpw\n", encoding="utf-8"
+    )
+
+
+def basic_auth_per_hop(http: responses.RequestsMock) -> list[str | None]:
+    headers = [call.request.headers.get("Authorization") for call in http.calls]
+    return [
+        base64.b64decode(header.split()[1]).decode() if header else None
+        for header in headers
+    ]
+
+
+@pytest.mark.parametrize("status", [301, 302, 307, 308])
+def test_authenticator_keeps_configured_credentials_on_same_host_redirect(
+    mock_config: Config, netrc: Path, http: responses.RequestsMock, status: int
+) -> None:
+    write_netrc(netrc, "foo.bar")
+    http.get(
+        "https://foo.bar/simple",
+        status=status,
+        headers={"Location": "https://foo.bar/simple/"},
+    )
+    http.get("https://foo.bar/simple/")
+
+    Authenticator(mock_config, NullIO()).request("get", "https://foo.bar/simple")
+
+    assert basic_auth_per_hop(http) == ["bar:baz", "bar:baz"]
+
+
+def test_authenticator_uses_netrc_on_redirect_without_configured_credentials(
+    config: Config, netrc: Path, http: responses.RequestsMock
+) -> None:
+    write_netrc(netrc, "foo.bar")
+    http.get(
+        "https://foo.bar/simple",
+        status=301,
+        headers={"Location": "https://foo.bar/simple/"},
+    )
+    http.get("https://foo.bar/simple/")
+
+    Authenticator(config, NullIO()).request("get", "https://foo.bar/simple")
+
+    assert basic_auth_per_hop(http) == ["netrcuser:netrcpw", "netrcuser:netrcpw"]
+
+
+@pytest.mark.parametrize(
+    ("netrc_host", "expected"),
+    [
+        (None, None),
+        ("cdn.example", "netrcuser:netrcpw"),
+    ],
+)
+def test_authenticator_drops_credentials_on_cross_host_redirect(
+    mock_config: Config,
+    netrc: Path,
+    http: responses.RequestsMock,
+    netrc_host: str | None,
+    expected: str | None,
+) -> None:
+    if netrc_host:
+        write_netrc(netrc, netrc_host)
+    http.get(
+        "https://foo.bar/simple",
+        status=302,
+        headers={"Location": "https://cdn.example/f"},
+    )
+    http.get("https://cdn.example/f")
+
+    Authenticator(mock_config, NullIO()).request("get", "https://foo.bar/simple")
+
+    assert basic_auth_per_hop(http) == ["bar:baz", expected]
+
+
+@pytest.mark.parametrize(
+    ("credentials", "expected"),
+    [
+        ({"username": "other", "password": "secret"}, "other:secret"),
+        ({"username": "other"}, "other:"),
+        ({"password": "secret"}, ":secret"),
+    ],
+)
+def test_authenticator_uses_target_credentials_on_cross_host_redirect(
+    mock_config: Config,
+    netrc: Path,
+    http: responses.RequestsMock,
+    with_simple_keyring: None,
+    credentials: dict[str, str],
+    expected: str,
+) -> None:
+    write_netrc(netrc, "other.example")
+    mock_config.merge(
+        {
+            "repositories": {"other": {"url": "https://other.example/simple/"}},
+            "http-basic": {"other": credentials},
+        }
+    )
+    http.get(
+        "https://foo.bar/simple",
+        status=302,
+        headers={"Location": "https://other.example/simple/"},
+    )
+    http.get("https://other.example/simple/")
+
+    Authenticator(mock_config, NullIO()).request("get", "https://foo.bar/simple")
+
+    assert basic_auth_per_hop(http) == ["bar:baz", expected]
+
+
+def test_authenticator_scopes_credentials_to_each_host_of_a_redirect_chain(
+    mock_config: Config, netrc: Path, http: responses.RequestsMock
+) -> None:
+    http.get(
+        "https://foo.bar/simple",
+        status=302,
+        headers={"Location": "https://cdn.example/f"},
+    )
+    http.get(
+        "https://cdn.example/f",
+        status=302,
+        headers={"Location": "https://foo.bar/files/f"},
+    )
+    http.get("https://foo.bar/files/f")
+
+    Authenticator(mock_config, NullIO()).request("get", "https://foo.bar/simple")
+
+    assert basic_auth_per_hop(http) == ["bar:baz", None, "bar:baz"]
+
+
+@pytest.mark.parametrize("location", ["/simple/", "https://foo.bar/simple/"])
+def test_authenticator_keeps_url_provided_credentials_on_same_host_redirect(
+    mock_config: Config, netrc: Path, http: responses.RequestsMock, location: str
+) -> None:
+    write_netrc(netrc, "foo.bar")
+    http.get(
+        re.compile(r"^https://(?:[^@]+@)?foo\.bar/simple$"),
+        status=301,
+        headers={"Location": location},
+    )
+    http.get(re.compile(r"^https://(?:[^@]+@)?foo\.bar/simple/$"))
+
+    Authenticator(mock_config, NullIO()).request("get", "https://u:p@foo.bar/simple")
+
+    assert basic_auth_per_hop(http) == ["u:p", "u:p"]
+
+
+def test_authenticator_keeps_explicit_header_on_same_host_redirect(
+    config: Config, netrc: Path, http: responses.RequestsMock
+) -> None:
+    http.get(
+        "https://foo.bar/simple",
+        status=301,
+        headers={"Location": "https://foo.bar/simple/"},
+    )
+    http.get("https://foo.bar/simple/")
+    header = "Basic " + base64.b64encode(b"u:p").decode()
+
+    Authenticator(config, NullIO()).request(
+        "get", "https://foo.bar/simple", headers={"Authorization": header}
+    )
+
+    assert basic_auth_per_hop(http) == ["u:p", "u:p"]
+
+
+def test_authenticator_does_not_send_https_credentials_over_http_on_redirect(
+    mock_config: Config, netrc: Path, http: responses.RequestsMock
+) -> None:
+    http.get(
+        "https://foo.bar/simple",
+        status=301,
+        headers={"Location": "http://foo.bar/simple/"},
+    )
+    http.get("http://foo.bar/simple/")
+
+    Authenticator(mock_config, NullIO()).request("get", "https://foo.bar/simple")
+
+    assert basic_auth_per_hop(http) == ["bar:baz", None]
+
+
+@pytest.mark.parametrize(
+    "hops",
+    [
+        ["https://foo.bar/simple", "http://foo.bar/simple/"],
+        ["https://cdn.example/f", "http://foo.bar/simple/"],
+        ["https://foo.bar/simple", "http://cdn.example/f", "http://foo.bar/simple/"],
+    ],
+)
+def test_authenticator_does_not_send_keyring_credentials_over_http_on_redirect(
+    config: Config,
+    netrc: Path,
+    repo: dict[str, dict[str, str]],
+    http: responses.RequestsMock,
+    with_simple_keyring: None,
+    dummy_keyring: DummyBackend,
+    poetry_keyring: PoetryKeyring,
+    hops: list[str],
+) -> None:
+    config.merge({"repositories": repo})
+    dummy_keyring.set_default_service_credential(
+        "foo.bar", SimpleCredential("foo", "bar")
+    )
+    for url, location in pairwise(hops):
+        http.get(url, status=302, headers={"Location": location})
+    http.get(hops[-1])
+
+    Authenticator(config, NullIO()).request("get", hops[0])
+
+    assert not any(
+        auth
+        for url, auth in zip(hops, basic_auth_per_hop(http), strict=True)
+        if url.startswith("http://")
+    )
+
+
+@pytest.mark.parametrize("repo", [{"foo": {"url": "http://foo.bar/simple/"}}])
+def test_authenticator_sends_http_repository_credentials_over_http_on_redirect(
+    mock_config: Config, netrc: Path, http: responses.RequestsMock
+) -> None:
+    http.get(
+        "http://cdn.example/f",
+        status=302,
+        headers={"Location": "http://foo.bar/simple/"},
+    )
+    http.get("http://foo.bar/simple/")
+
+    Authenticator(mock_config, NullIO()).request("get", "http://cdn.example/f")
+
+    assert basic_auth_per_hop(http) == [None, "bar:baz"]
