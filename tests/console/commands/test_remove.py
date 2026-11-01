@@ -867,3 +867,189 @@ include-groups = [
         assert "foobar3" in content.get("group", {})
         assert "include-groups" in content["group"]["foobar3"]
         assert content["group"]["foobar3"]["include-groups"] == ["foobar2"]
+
+
+@pytest.mark.parametrize("group_style", ["pep735", "poetry", "mixed"])
+@pytest.mark.parametrize("args", ["", " --group lint"])
+@pytest.mark.parametrize("reverse_order", [False, True])
+def test_remove_cleans_up_nested_group_references(
+    group_style: str,
+    args: str,
+    reverse_order: bool,
+    project_factory: ProjectFactory,
+    command_tester_factory: CommandTesterFactory,
+    repo: DummyRepository,
+) -> None:
+    groups = {
+        "pep735": """\
+[dependency-groups]
+lint = ["foo>=1"]
+left = [{ include-group = "lint" }]
+right = [{ include-group = "lint" }]
+tools = [{ include-group = "left" }, { include-group = "right" }]
+dev = [{ include-group = "tools" }, "bar>=1"]
+""",
+        "poetry": """\
+[tool.poetry.group.lint.dependencies]
+foo = ">=1"
+[tool.poetry.group.left]
+include-groups = ["lint"]
+[tool.poetry.group.right]
+include-groups = ["lint"]
+[tool.poetry.group.tools]
+include-groups = ["left", "right"]
+[tool.poetry.group.dev]
+include-groups = ["tools"]
+[tool.poetry.group.dev.dependencies]
+bar = ">=1"
+""",
+        "mixed": """\
+[dependency-groups]
+lint = ["foo>=1"]
+right = [{ include-group = "lint" }]
+dev = [{ include-group = "tools" }, "bar>=1"]
+[tool.poetry.group.left]
+include-groups = ["lint"]
+[tool.poetry.group.tools]
+include-groups = ["left", "right"]
+""",
+    }[group_style]
+    pyproject = tomlrt.loads("[tool.poetry]\npackage-mode = false\n" + groups)
+    if reverse_order:
+        if "dependency-groups" in pyproject:
+            pyproject["dependency-groups"] = tomlrt.Table.section(
+                dict(reversed(list(pyproject["dependency-groups"].items())))
+            )
+        if "group" in pyproject["tool"]["poetry"]:
+            pyproject["tool"]["poetry"]["group"] = tomlrt.Table.section(
+                dict(reversed(list(pyproject["tool"]["poetry"]["group"].items())))
+            )
+    poetry = project_factory(
+        name="nested-groups",
+        pyproject_content=tomlrt.dumps(pyproject),
+    )
+    repo.add_package(Package("foo", "1.0"))
+    repo.add_package(Package("bar", "1.0"))
+    tester = command_tester_factory("remove", poetry=poetry)
+
+    assert tester.execute(f"foo{args} --lock") == 0
+
+    content = poetry.file.read()
+    if group_style == "poetry":
+        assert content["tool"]["poetry"]["group"] == {
+            "dev": {"dependencies": {"bar": ">=1"}}
+        }
+    else:
+        assert content["dependency-groups"] == {"dev": ["bar>=1"]}
+        assert "group" not in content["tool"]["poetry"]
+
+    # A successful removal must leave a project that Poetry can load again.
+    reloaded = Factory().create_poetry(poetry.file.path.parent)
+    assert {dep.name for dep in reloaded.package.all_requires} == {"bar"}
+    assert {
+        package.name for package in reloaded.locker.locked_repository().packages
+    } == {"bar"}
+    assert reloaded.locker.is_fresh()
+
+
+def test_remove_preserves_references_to_groups_still_defined_in_other_section(
+    project_factory: ProjectFactory,
+    command_tester_factory: CommandTesterFactory,
+    repo: DummyRepository,
+) -> None:
+    poetry = project_factory(
+        name="mixed-groups",
+        pyproject_content="""\
+[tool.poetry]
+package-mode = false
+[dependency-groups]
+lint = ["foo>=1"]
+tools = [{ include-group = "lint" }]
+dev = [{ include-group = "tools" }]
+[tool.poetry.group.tools.dependencies]
+bar = ">=1"
+""",
+    )
+    repo.add_package(Package("foo", "1.0"))
+    repo.add_package(Package("bar", "1.0"))
+    tester = command_tester_factory("remove", poetry=poetry)
+
+    assert tester.execute("foo --group lint --lock") == 0
+
+    content = poetry.file.read()
+    assert content["dependency-groups"] == {"dev": [{"include-group": "tools"}]}
+    assert content["tool"]["poetry"]["group"] == {
+        "tools": {"dependencies": {"bar": ">=1"}}
+    }
+
+    reloaded = Factory().create_poetry(poetry.file.path.parent)
+    assert {
+        dep.name for dep in reloaded.package.dependency_group("dev").dependencies
+    } == {"bar"}
+    assert {
+        package.name for package in reloaded.locker.locked_repository().packages
+    } == {"bar"}
+    assert reloaded.locker.is_fresh()
+
+
+@pytest.mark.parametrize("pep_735", [True, False])
+def test_remove_preserves_unrelated_empty_groups(
+    pep_735: bool,
+    project_factory: ProjectFactory,
+    command_tester_factory: CommandTesterFactory,
+    repo: DummyRepository,
+) -> None:
+    groups = (
+        """\
+[dependency-groups]
+lint = ["foo>=1"]
+tools = [{ include-group = "lint" }]
+dev = [{ include-group = "tools" }, "bar>=1"]
+unrelated = []
+unrelated-parent = [{ include-group = "unrelated" }]
+"""
+        if pep_735
+        else """\
+[tool.poetry.group.lint.dependencies]
+foo = ">=1"
+[tool.poetry.group.tools]
+include-groups = ["lint"]
+[tool.poetry.group.dev]
+include-groups = ["tools"]
+[tool.poetry.group.dev.dependencies]
+bar = ">=1"
+[tool.poetry.group.unrelated]
+include-groups = []
+[tool.poetry.group.unrelated-parent]
+include-groups = ["unrelated"]
+"""
+    )
+    poetry = project_factory(
+        name="unrelated-groups",
+        pyproject_content="[tool.poetry]\npackage-mode = false\n" + groups,
+    )
+    repo.add_package(Package("foo", "1.0"))
+    repo.add_package(Package("bar", "1.0"))
+    tester = command_tester_factory("remove", poetry=poetry)
+
+    assert tester.execute("foo --group lint --lock") == 0
+
+    pyproject = poetry.file.read()
+    if pep_735:
+        assert pyproject["dependency-groups"] == {
+            "dev": ["bar>=1"],
+            "unrelated": [],
+            "unrelated-parent": [{"include-group": "unrelated"}],
+        }
+    else:
+        assert pyproject["tool"]["poetry"]["group"] == {
+            "dev": {"dependencies": {"bar": ">=1"}},
+            "unrelated": {"include-groups": []},
+            "unrelated-parent": {"include-groups": ["unrelated"]},
+        }
+    reloaded = Factory().create_poetry(poetry.file.path.parent)
+    assert {dep.name for dep in reloaded.package.all_requires} == {"bar"}
+    assert {
+        package.name for package in reloaded.locker.locked_repository().packages
+    } == {"bar"}
+    assert reloaded.locker.is_fresh()
