@@ -149,6 +149,10 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
         project_content = content.get("project", Table.section())
         poetry_content = content.get("tool", {}).get("poetry", Table.section())
         groups_content = content.get("dependency-groups", {})
+        if group != MAIN_GROUP:
+            group = self._find_group_key(
+                group, groups_content, poetry_content.get("group", {})
+            )
         project_name = (
             canonicalize_name(name)
             if (name := project_content.get("name", poetry_content.get("name")))
