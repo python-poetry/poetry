@@ -488,6 +488,8 @@ poetry config http-basic.pypi <username> <password>
 
 You can also specify the username and password when using the `publish` command
 with the `--username` and `--password` options.
+If you pass only one of them and no API token is configured, the other one is taken from the credentials
+configured for the repository.
 
 If a system keyring is available and supported, the password is stored to and retrieved from the keyring. In the above example, the credential will be stored using the name `poetry-repository-pypi`. If access to keyring fails or is unsupported, this will fall back to writing the password to the `auth.toml` file along with the username.
 
