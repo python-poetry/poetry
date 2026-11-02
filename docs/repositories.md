@@ -582,6 +582,16 @@ header-based cache for almost all HTTP requests.
 Further, every HTTP backed package source caches metadata associated with a package once it is fetched or generated.
 Additionally, downloaded files (package distributions) are also cached.
 
+### Caching in CI
+
+Poetry's package metadata and artifact caches support partial cache restoration. A CI cache restored from a less
+specific key (for example, from an earlier version of `poetry.lock`) can still be reused: Poetry reads matching cached
+entries and downloads or regenerates entries that are missing or outdated.
+
+For CI jobs, cache the `artifacts` and `cache` directories inside Poetry's configured
+[`cache-dir`]({{< relref "configuration#cache-dir" >}}). Avoid treating the entire cache directory as one
+environment-independent cache, because it also contains data such as virtual environments.
+
 ## Debugging Issues
 If you encounter issues with package sources, one of the simplest steps you might take to debug an issue is rerunning
 your command with the `--no-cache` flag.
