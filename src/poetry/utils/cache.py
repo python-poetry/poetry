@@ -123,8 +123,7 @@ class FileCache(Generic[T]):
         :param key: The cache key
         """
         path = self._path(key)
-        if path.exists():
-            path.unlink()
+        path.unlink(missing_ok=True)
 
     def flush(self) -> None:
         """
@@ -151,11 +150,11 @@ class FileCache(Generic[T]):
     def _get_payload(self, key: str) -> T | None:
         path = self._path(key)
 
-        if not path.exists():
+        try:
+            with path.open("rb") as f:
+                file_content = f.read()
+        except FileNotFoundError:
             return None
-
-        with path.open("rb") as f:
-            file_content = f.read()
 
         try:
             payload = self._deserialize(file_content)
