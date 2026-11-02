@@ -83,6 +83,17 @@ you can set the "package-mode" to false in your pyproject.toml file.
         "poetry.inspection.info",
     ]
 
+    # poetry-core's PathDependency.__init__ eagerly warns if a path
+    # dependency's directory doesn't exist, regardless of --with/--without/
+    # --only group selection (the group-aware check happens later, in
+    # Installer, and is what actually determines whether a missing path is
+    # an error). Suppress the premature warning here so a path dependency in
+    # an excluded group (e.g. a dev-only local package not present in a
+    # Docker image) doesn't get flagged for a group that was never going to
+    # be installed. install.py -> chef.py -> installer.py still raises a
+    # real error for any missing path that *is* actually needed.
+    suppressed_loggers: ClassVar[list[str]] = ["poetry.core.packages.path_dependency"]
+
     @property
     def activated_groups(self) -> set[NormalizedName]:
         if self.option("only-root"):
