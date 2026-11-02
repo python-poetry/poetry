@@ -82,6 +82,17 @@ def test_virtualenvs_with_spaces_in_their_path_work_as_expected(
     assert venv.run("python", "-V").startswith("Python")
 
 
+@pytest.mark.parametrize("prompt", ["project-py3.10", "-project-py3.10", "--foo"])
+def test_build_venv_prompt_may_start_with_a_dash(
+    tmp_path: Path, manager: EnvManager, prompt: str
+) -> None:
+    venv_path = tmp_path / "venv"
+
+    manager.build_venv(venv_path, prompt=prompt)
+
+    assert f'prompt = "{prompt}"' in (venv_path / "pyvenv.cfg").read_text()
+
+
 def test_env_commands_with_spaces_in_their_arg_work_as_expected(
     tmp_path: Path, manager: EnvManager
 ) -> None:
