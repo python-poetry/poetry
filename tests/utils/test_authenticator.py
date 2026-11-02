@@ -16,11 +16,13 @@ import responses
 from cleo.io.null_io import NullIO
 from keyring.credentials import SimpleCredential
 
+from poetry.__version__ import __version__
 from poetry.console.exceptions import PoetryRuntimeError
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.authenticator import AuthenticatorRepositoryConfig
 from poetry.utils.authenticator import RepositoryCertificateConfig
 from poetry.utils.password_manager import PoetryKeyring
+from poetry.utils.user_agent import get_user_agent
 
 
 if TYPE_CHECKING:
@@ -56,6 +58,13 @@ def mock_config(config: Config, repo: dict[str, dict[str, str]]) -> Config:
     )
 
     return config
+
+
+def test_authenticator_user_agent(config: Config) -> None:
+    session = Authenticator(config, NullIO()).create_session()
+
+    assert session.headers["User-Agent"] == get_user_agent()
+    assert session.headers["User-Agent"].startswith(f"poetry/{__version__} ")
 
 
 def test_authenticator_uses_url_provided_credentials(
