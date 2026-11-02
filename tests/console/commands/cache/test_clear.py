@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from poetry.utils.cache import FileCache
+    from tests.conftest import Config
 
 T = TypeVar("T")
 
@@ -26,6 +27,19 @@ def tester() -> ApplicationTester:
     return tester
 
 
+@pytest.fixture
+def artifacts_cache_dir(config: Config) -> Path:
+    return config.artifacts_cache_directory
+
+
+@pytest.fixture
+def artifact_file(artifacts_cache_dir: Path) -> Path:
+    path = artifacts_cache_dir / "ab" / "cd" / "ef" / "pkg-1.0.0-py3-none-any.whl"
+    path.parent.mkdir(parents=True)
+    path.write_bytes(b"wheel")
+    return path
+
+
 @pytest.mark.parametrize("inputs", ["yes", "no"])
 def test_cache_clear_all(
     tester: ApplicationTester,
@@ -33,6 +47,8 @@ def test_cache_clear_all(
     repositories: list[str],
     repository_dirs: list[Path],
     caches: list[FileCache[dict[str, str]]],
+    artifact_file: Path,
+    artifacts_cache_dir: Path,
     inputs: str,
 ) -> None:
     exit_code = tester.execute("cache clear --all", inputs=inputs)
@@ -47,6 +63,7 @@ def test_cache_clear_all(
         assert not caches[0].has("cleo:0.2")
         assert not caches[1].has("cachy:0.1")
         assert not caches[1].has("cashy:0.2")
+        assert not artifacts_cache_dir.exists()
     else:
         assert any((repository_cache_dir / repositories[0]).iterdir())
         assert any((repository_cache_dir / repositories[1]).iterdir())
@@ -54,6 +71,7 @@ def test_cache_clear_all(
         assert caches[0].has("cleo:0.2")
         assert caches[1].has("cachy:0.1")
         assert caches[1].has("cashy:0.2")
+        assert artifact_file.exists()
 
 
 @pytest.mark.parametrize("inputs", ["yes", "no"])
@@ -141,3 +159,52 @@ def test_cache_clear_pkg(
         assert caches[1].has("cashy:0.2")
 
     assert caches[0].has("cachy:0.1")
+    assert caches[0].has("cleo:0.2")
+
+
+@pytest.mark.parametrize("inputs", ["yes", "no"])
+def test_cache_clear_artifacts(
+    tester: ApplicationTester,
+    caches: list[FileCache[dict[str, str]]],
+    artifact_file: Path,
+    artifacts_cache_dir: Path,
+    inputs: str,
+) -> None:
+    exit_code = tester.execute("cache clear artifacts --all", inputs=inputs)
+
+    assert exit_code == 0
+    assert tester.io.fetch_output() == ""
+
+    if inputs == "yes":
+        assert not artifacts_cache_dir.exists()
+    else:
+        assert artifact_file.exists()
+
+    # Repository caches must remain untouched.
+    assert caches[0].has("cachy:0.1")
+    assert caches[0].has("cleo:0.2")
+    assert caches[1].has("cachy:0.1")
+    assert caches[1].has("cashy:0.2")
+
+
+def test_cache_clear_artifacts_no_entries(tester: ApplicationTester) -> None:
+    exit_code = tester.execute("cache clear artifacts --all")
+
+    assert exit_code == 0
+    assert tester.io.fetch_output().strip() == "No cache entries for artifacts"
+
+
+@pytest.mark.parametrize("inputs", ["yes", "no"])
+def test_cache_clear_all_preserves_artifacts_for_named_repo(
+    tester: ApplicationTester,
+    repositories: list[str],
+    caches: list[FileCache[dict[str, str]]],
+    artifact_file: Path,
+    inputs: str,
+) -> None:
+    exit_code = tester.execute(f"cache clear {repositories[0]} --all", inputs=inputs)
+
+    assert exit_code == 0
+    assert artifact_file.exists()
+    assert caches[1].has("cachy:0.1")
+    assert caches[1].has("cashy:0.2")
