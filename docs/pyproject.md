@@ -373,6 +373,31 @@ Example (from [`poetry-plugin-export`](https://github.com/python-poetry/poetry-p
 export = "poetry_plugin_export.plugins:ExportApplicationPlugin"
 ```
 
+Entry points register metadata; they do not import or run the referenced code when
+the package is installed. The application that consumes the group decides when to
+load and use its plugins. For example, a plugin for your own application could declare:
+
+```toml
+[project.entry-points."my_application.plugins"]
+example = "my_package.plugin:ExamplePlugin"
+```
+
+After installing that package into your application's environment, the application
+can discover and load the registered objects with the Python standard library:
+
+```python
+from importlib.metadata import entry_points
+
+for entry_point in entry_points(group="my_application.plugins"):
+    plugin_class = entry_point.load()
+    # Instantiate or call the object according to your application's plugin interface.
+```
+
+Unlike [`project.scripts`]({{< relref "#scripts" >}}), an arbitrary entry-point group
+does not create command-line executables. The `poetry.plugin` and
+`poetry.application.plugin` groups specifically extend Poetry itself; see
+[Plugins]({{< relref "plugins" >}}) for their interfaces and installation instructions.
+
 ### dependencies
 
 The `dependencies` of the project.
