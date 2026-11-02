@@ -89,6 +89,80 @@ def test_next_phase_version(
     assert command.increment_version(version, rule, True).text == expected
 
 
+@pytest.mark.parametrize(
+    "version, rule, next_phase, expected",
+    [
+        ("1.1.0", "major", False, "2.0.0.dev0"),
+        ("1.1.0", "minor", False, "1.2.0.dev0"),
+        ("1.1.0", "patch", False, "1.1.1.dev0"),
+        ("1.1.0", "premajor", False, "2.0.0a0.dev0"),
+        ("1.1.0", "preminor", False, "1.2.0a0.dev0"),
+        ("1.1.0", "prepatch", False, "1.1.1a0.dev0"),
+        ("1.1.0", "prerelease", False, "1.1.1a0.dev0"),
+        ("2.0.0.dev0", "major", False, "2.0.0.dev1"),
+        ("1.1.0.dev0", "minor", False, "1.1.0.dev1"),
+        ("1.1.1a0.dev0", "prerelease", False, "1.1.1a0.dev1"),
+    ],
+)
+def test_dev_version_creates_or_increments_dev_release(
+    version: str,
+    rule: str,
+    next_phase: bool,
+    expected: str,
+    command: VersionCommand,
+) -> None:
+    assert (
+        command.increment_version(version, rule, next_phase, dev=True).text == expected
+    )
+
+
+@pytest.mark.parametrize(
+    "version, rule, next_phase, expected",
+    [
+        ("1.1.1.dev0", "minor", False, "1.2.0.dev0"),
+        ("1.1.0a2.dev1", "prerelease", True, "1.1.0b0.dev0"),
+    ],
+)
+def test_dev_version_resets_dev_release_when_base_changes(
+    version: str,
+    rule: str,
+    next_phase: bool,
+    expected: str,
+    command: VersionCommand,
+) -> None:
+    assert (
+        command.increment_version(version, rule, next_phase, dev=True).text == expected
+    )
+
+
+@pytest.mark.parametrize(
+    "version, rule, next_phase, expected",
+    [
+        ("2.0.0.dev1", "major", False, "2.0.0"),
+        ("1.1.1a0.dev1", "prerelease", False, "1.1.1a0"),
+        ("1.1.0a2.dev1", "prerelease", True, "1.1.0b0"),
+    ],
+)
+def test_version_without_dev_flag_removes_dev_release(
+    version: str,
+    rule: str,
+    next_phase: bool,
+    expected: str,
+    command: VersionCommand,
+) -> None:
+    assert command.increment_version(version, rule, next_phase).text == expected
+
+
+def test_dev_option_requires_bump_rule(command: VersionCommand) -> None:
+    with pytest.raises(ValueError) as e:
+        command.increment_version("1.0.0", "2.0.0", dev=True)
+
+    assert (
+        str(e.value) == "The --dev option can only be used with a bump rule, "
+        "not an explicit version."
+    )
+
+
 def test_version_show(tester: CommandTester) -> None:
     tester.execute()
     assert tester.io.fetch_output() == "simple-project 1.2.3\n"
@@ -122,6 +196,13 @@ def test_phase_version_update(tester: CommandTester) -> None:
     tester.command.poetry.package._set_version("1.2.4a0")
     tester.execute("prerelease --next-phase")
     assert tester.io.fetch_output() == "Bumping version from 1.2.4a0 to 1.2.4b0\n"
+
+
+def test_dev_version_update(tester: CommandTester) -> None:
+    assert isinstance(tester.command, VersionCommand)
+    tester.command.poetry.package._set_version("1.1.0")
+    tester.execute("major --dev")
+    assert tester.io.fetch_output() == "Bumping version from 1.1.0 to 2.0.0.dev0\n"
 
 
 def test_dry_run(tester: CommandTester) -> None:
