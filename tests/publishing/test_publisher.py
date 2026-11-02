@@ -219,6 +219,7 @@ def test_publish_read_from_environment_variable(
         ({"username": "foo"}, None, "cli-pass", ("foo", "cli-pass")),
         ({"username": "foo", "password": "bar"}, "cli-user", None, ("cli-user", "bar")),
         ({"username": "foo", "password": "bar"}, None, "cli-pass", ("foo", "cli-pass")),
+        ({"username": "foo", "password": "bar"}, "", "", ("foo", "bar")),
     ],
 )
 def test_publish_merges_given_and_configured_credentials(
