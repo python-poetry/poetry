@@ -60,6 +60,31 @@ def test_package_filter_policy_normalizes_and_matches_packages() -> None:
 
 
 @pytest.mark.parametrize(
+    ("policy", "expected"),
+    [
+        ("pytest", True),
+        ("PyTest,black", True),
+        ("ruamel.yaml", True),
+        ("ruamel.yaml,zope.interface", True),
+        (":all:", True),
+        ("foo bar", False),
+        ("foo,,bar", True),
+    ],
+)
+def test_package_filter_policy_validator(policy: str, expected: bool) -> None:
+    assert PackageFilterPolicy.validator(policy) is expected
+
+
+def test_package_filter_policy_normalizes_dotted_package_names() -> None:
+    policy = PackageFilterPolicy("ruamel.yaml")
+
+    assert policy.packages == frozenset({"ruamel-yaml"})
+    assert policy.allows("something.else")
+    assert not policy.allows("Ruamel.YAML")
+    assert policy.has_exact_package("ruamel.yaml")
+
+
+@pytest.mark.parametrize(
     ("name", "value"),
     [
         ("installer.parallel", True),

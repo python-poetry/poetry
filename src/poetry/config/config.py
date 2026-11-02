@@ -142,7 +142,9 @@ class PackageFilterPolicy:
             if (
                 not name
                 or (cls.is_reserved(name) and len(names) == 1)
-                or re.match(r"^[a-zA-Z\d_-]+$", name)
+                # PEP 508 names may contain periods (e.g. "ruamel.yaml");
+                # they are normalized to dashes by canonicalize_name().
+                or re.match(r"^[a-zA-Z\d._-]+$", name)
             ):
                 continue
             return False

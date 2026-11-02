@@ -260,6 +260,27 @@ def test_set_repository_with_periods_in_name(
     }
 
 
+@pytest.mark.parametrize(
+    ("setting", "value", "expected"),
+    [
+        ("installer.no-binary", "ruamel.yaml", ["ruamel-yaml"]),
+        ("installer.only-binary", "zope.interface", ["zope-interface"]),
+        ("solver.min-release-age-exclude", "ruamel.yaml", ["ruamel-yaml"]),
+    ],
+)
+def test_set_package_filter_setting_with_dotted_package_name(
+    tester: CommandTester,
+    config_source: DictConfigSource,
+    setting: str,
+    value: str,
+    expected: list[str],
+) -> None:
+    tester.execute(f"{setting} {value}")
+
+    section, name = setting.split(".")
+    assert config_source.config[section][name] == expected
+
+
 def test_display_repository_with_periods_in_name(tester: CommandTester) -> None:
     tester.execute("repositories.my.repo https://bar.com/simple/")
     tester.execute("repositories.my.repo")
