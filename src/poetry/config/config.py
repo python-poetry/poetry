@@ -41,6 +41,13 @@ def boolean_normalizer(val: str) -> bool:
     return val.lower() in ["true", "1"]
 
 
+def int_validator(val: str, min_val: int = 0) -> bool:
+    try:
+        return int(val) >= min_val
+    except (ValueError, TypeError):
+        return False
+
+
 def int_normalizer(val: str) -> int:
     return int(val)
 
