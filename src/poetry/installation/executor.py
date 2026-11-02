@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import csv
 import functools
 import itertools
@@ -18,6 +19,7 @@ from poetry.core.packages.utils.link import Link
 from poetry.console.exceptions import PoetryRuntimeError
 from poetry.installation.chef import Chef
 from poetry.installation.chooser import Chooser
+from poetry.installation.git_source import EditableGitSource
 from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
 from poetry.installation.operations import Update
@@ -31,7 +33,6 @@ from poetry.utils.env import EnvCommandError
 from poetry.utils.helpers import get_file_hash
 from poetry.utils.helpers import get_highest_priority_hash_type
 from poetry.utils.helpers import pluralize
-from poetry.utils.helpers import remove_directory
 from poetry.utils.isolated_build import IsolatedBuildBackendError
 from poetry.utils.isolated_build import IsolatedBuildInstallError
 from poetry.utils.log_utils import format_build_wheel_log
@@ -73,6 +74,7 @@ class Executor:
         build_constraints: Mapping[NormalizedName, list[Dependency]] | None = None,
     ) -> None:
         self._env = env
+        self._git_source = EditableGitSource(env.path)
         self._io = io
         self._dry_run = False
         self._enabled = True
@@ -586,6 +588,12 @@ class Executor:
         package = operation.package
 
         cleanup_archive: bool = False
+        editable_source = (
+            self._git_source.path_for(package)
+            if package.source_type == "git" and package.develop
+            else None
+        )
+        source_existed = editable_source is not None and editable_source.exists()
         if package.source_type == "git":
             archive = self._prepare_git_archive(operation)
             cleanup_archive = operation.package.develop
@@ -607,17 +615,29 @@ class Executor:
         )
         self._write(operation, message)
 
+        installed = False
         try:
             if operation.job_type == "update":
                 # Uninstall the old version first. If this fails, the install is
                 # aborted so the new version is not installed over the old one.
                 assert isinstance(operation, Update)
-                result_code = self._remove(operation.initial_package)
+                result_code = self._remove(
+                    operation.initial_package, remove_source=False
+                )
                 if result_code != 0:
                     return result_code
 
             self._wheel_installer.install(archive)
+            installed = True
+            if isinstance(operation, Update):
+                self._git_source.remove(
+                    operation.initial_package,
+                    preserve=editable_source,
+                )
         finally:
+            if not installed and editable_source is not None and not source_existed:
+                with contextlib.suppress(OSError):
+                    self._git_source.remove(package)
             if cleanup_archive:
                 archive.unlink()
 
@@ -626,23 +646,22 @@ class Executor:
     def _update(self, operation: Install | Update) -> int:
         return self._install(operation)
 
-    def _remove(self, package: Package) -> int:
-        # If we have a VCS package, remove its source directory
-        if package.source_type == "git":
-            src_dir = self._env.path / "src" / package.name
-            if src_dir.exists():
-                remove_directory(src_dir, force=True)
-
+    def _remove(self, package: Package, *, remove_source: bool = True) -> int:
         if self._use_builtin_uninstall:
             # The builtin uninstaller removes the files directly and raises if a
             # file cannot be removed. uninstall_distribution returns None when
             # there is nothing to uninstall (not installed, outside env, in
             # stdlib, missing RECORD); treat that as a successful no-op.
             uninstall_distribution(self._env, package.name)
+            if remove_source:
+                self._git_source.remove(package)
             return 0
 
         try:
-            return self.run_pip("uninstall", package.name, "-y")
+            result = self.run_pip("uninstall", package.name, "-y")
+            if result == 0 and remove_source:
+                self._git_source.remove(package)
+            return result
         except EnvCommandError as e:
             if "not installed" in str(e):
                 return 0
@@ -702,15 +721,23 @@ class Executor:
         )
         self._write(operation, message)
 
-        source = Git.clone(
-            url=package.source_url,
-            source_root=self._env.path / "src",
-            revision=package.source_resolved_reference or package.source_reference,
-        )
+        source_existed = False
+        if package.develop:
+            source_existed = self._git_source.path_for(package).exists()
+            source_path = self._git_source.prepare(package)
+        else:
+            source_path = Path(
+                Git.clone(
+                    url=package.source_url,
+                    source_root=self._env.path / "src",
+                    revision=package.source_resolved_reference
+                    or package.source_reference,
+                ).path
+            )
 
         # Now we just need to install from the source directory
         original_url = package.source_url
-        package._source_url = str(source.path)
+        package._source_url = str(source_path)
 
         output_dir = None
         if package.source_resolved_reference and not package.develop:
@@ -723,6 +750,9 @@ class Executor:
         try:
             archive = self._prepare_archive(operation, output_dir=output_dir)
         except Exception:
+            if package.develop and not source_existed:
+                with contextlib.suppress(OSError):
+                    self._git_source.remove(package)
             # always reset source_url in case of an error for correct output
             package._source_url = original_url
             raise
@@ -954,8 +984,11 @@ class Executor:
             dir_info["editable"] = True
 
         assert package.source_url is not None
+        source_url = package.source_url
+        if package.source_type == "git" and package.source_subdirectory:
+            source_url = str(Path(source_url) / package.source_subdirectory)
         return {
-            "url": self._path_to_file_url(package.source_url),
+            "url": self._path_to_file_url(source_url),
             "dir_info": dir_info,
         }
 
