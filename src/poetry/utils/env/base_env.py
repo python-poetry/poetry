@@ -503,6 +503,15 @@ class Env(ABC):
         """
         Return path to the given executable.
         """
+        resolved_path = Path(bin)
+        if resolved_path.is_absolute() and resolved_path.exists():
+            # ``bin`` is already a resolved path to an existing file (for example a
+            # ``type = "file"`` script from ``[tool.poetry.scripts]``), so it must be
+            # executed as-is. Treating it like a bare command name and appending a
+            # platform-specific suffix (``.exe`` on Windows) below would corrupt an
+            # already-correct path.
+            return str(resolved_path)
+
         if self._is_windows and not bin.endswith(".exe"):
             bin_path = self._bin_dir / (bin + ".exe")
         else:
