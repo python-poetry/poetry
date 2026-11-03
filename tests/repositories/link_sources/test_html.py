@@ -38,6 +38,22 @@ def test_root_page_package_names(root_page: SimpleRepositoryHTMLRootPage) -> Non
     assert root_page.package_names == ["poetry", "poetry-core", "requests"]
 
 
+def test_root_page_package_names_from_absolute_hrefs() -> None:
+    # PEP 503 allows absolute URLs on the root page; the names are used to
+    # build the project page URL, so only the last path segment belongs there.
+    page = SimpleRepositoryHTMLRootPage(
+        """\
+        <!DOCTYPE html>
+        <html><body>
+            <a href="https://mirror.example.com/simple/demo/">demo</a><br>
+            <a href="/simple/other/">other</a><br>
+        </body></html>
+        """
+    )
+
+    assert page.package_names == ["demo", "other"]
+
+
 @pytest.mark.parametrize(
     "attributes, expected_link",
     [
