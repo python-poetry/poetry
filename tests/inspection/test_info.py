@@ -15,6 +15,7 @@ from build import ProjectBuilder
 from packaging.metadata import parse_email
 from pkginfo.distribution import NewMetadataVersion
 
+from poetry.exceptions import UninterpretableRequirementError
 from poetry.inspection.info import PackageInfo
 from poetry.inspection.info import PackageInfoError
 from poetry.utils.env import VirtualEnv
@@ -438,3 +439,36 @@ def test_info_prefer_poetry_config_over_egg_info(fixture_dir: FixtureDirGetter) 
         fixture_dir("inspection") / "demo_with_obsolete_egg_info"
     )
     demo_check_info(info)
+
+
+def test_info_to_package_strips_invalid_marker() -> None:
+    info = PackageInfo(
+        name="foo", version="1.0", requires_dist=['idna; python_version == "invalid"']
+    )
+
+    package = info.to_package()
+
+    assert [dep.to_pep_508() for dep in package.requires] == ["idna"]
+
+
+def test_info_to_package_skips_malformed_requirement() -> None:
+    info = PackageInfo(
+        name="foo", version="1.0", requires_dist=['idna>-3.0; extra == "all"']
+    )
+
+    package = info.to_package()
+
+    assert package.requires == []
+
+
+def test_info_to_package_rejects_uninterpretable_requirement() -> None:
+    info = PackageInfo(
+        name="foo",
+        version="1.0",
+        requires_dist=['idna; "pointer_bits::64" in sys_abi_info'],
+    )
+
+    with pytest.raises(UninterpretableRequirementError) as e:
+        info.to_package()
+
+    assert 'idna; "pointer_bits::64" in sys_abi_info' in str(e.value)
