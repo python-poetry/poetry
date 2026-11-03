@@ -41,6 +41,14 @@ def _use_simple_keyring(with_simple_keyring: None) -> None:
     pass
 
 
+@pytest.mark.parametrize("name", ["pypi", "PyPI", "Pypi", "PYPI"])
+def test_reserved_repository_name_is_rejected_case_insensitively(
+    name: str,
+) -> None:
+    with pytest.raises(ValueError, match="reserved"):
+        LegacyRepository(name, "https://example.com/simple/")
+
+
 def test_page_relative_links_path_are_correct(
     legacy_repository: LegacyRepository,
 ) -> None:

@@ -35,7 +35,9 @@ class LegacyRepository(HTTPRepository):
         disable_cache: bool = False,
         pool_size: int = requests.adapters.DEFAULT_POOLSIZE,
     ) -> None:
-        if name == "pypi":
+        # Repository names are case-insensitive everywhere else (the pool keys and
+        # Factory.create_package_source both lower them), so the reserved name must be too.
+        if name.lower() == "pypi":
             raise ValueError("The name [pypi] is reserved for repositories")
 
         super().__init__(
