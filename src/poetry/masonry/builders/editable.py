@@ -107,7 +107,7 @@ class EditableBuilder(Builder):
 
     def _add_pth(self) -> list[Path]:
         paths = {
-            include.base.resolve().as_posix()
+            include.base.absolute().as_posix()
             for include in self._module.includes
             if isinstance(include, PackageInclude)
             and (include.is_module() or include.is_package())
