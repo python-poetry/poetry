@@ -294,19 +294,32 @@ class Config:
     def artifacts_cache_directory(self) -> Path:
         return Path(self.get("cache-dir")).expanduser() / "artifacts"
 
+    @staticmethod
+    def _to_path(value: Any, setting_name: str) -> Path:
+        try:
+            return Path(value).expanduser()
+        except TypeError as e:
+            # Imported here to keep poetry.config free of a module level cycle.
+            from poetry.console.exceptions import PoetryRuntimeError
+
+            raise PoetryRuntimeError(
+                f'"{value}" is an invalid value for {setting_name}'
+            ) from e
+
+
     @property
     def virtualenvs_path(self) -> Path:
         path = self.get("virtualenvs.path")
         if path is None:
             path = Path(self.get("cache-dir")) / "virtualenvs"
-        return Path(path).expanduser()
+        return self._to_path(path, "virtualenvs.path")
 
     @property
     def python_installation_dir(self) -> Path:
         path = self.get("python.installation-dir")
         if path is None:
             path = Path(self.get("data-dir")) / "python"
-        return Path(path).expanduser()
+        return self._to_path(path, "python.installation-dir")
 
     @property
     def installer_max_workers(self) -> int:

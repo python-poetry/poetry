@@ -15,6 +15,7 @@ from poetry.config.config import PackageFilterPolicy
 from poetry.config.config import boolean_normalizer
 from poetry.config.config import int_normalizer
 from poetry.config.config import str_list_normalizer
+from poetry.console.exceptions import PoetryRuntimeError
 from poetry.utils.password_manager import PasswordManager
 from tests.helpers import flatten_dict
 from tests.helpers import isolated_environment
@@ -196,3 +197,18 @@ def test_config_get_from_environment_variable_build_config_settings(
             assert configured_value is None
         else:
             assert configured_value == json.loads(value)
+
+
+@pytest.mark.parametrize(
+    ("setting", "property_name"),
+    [
+        ("virtualenvs.path", "virtualenvs_path"),
+        ("python.installation-dir", "python_installation_dir"),
+    ],
+)
+def test_a_path_setting_of_the_wrong_type_names_the_setting(setting, property_name):
+    config = Config()
+    config.merge({"virtualenvs": {"path": 123}, "python": {"installation-dir": 123}})
+
+    with pytest.raises(PoetryRuntimeError, match=f'"123" is an invalid value for {setting}'):
+        getattr(config, property_name)
