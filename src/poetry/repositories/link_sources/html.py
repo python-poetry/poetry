@@ -98,6 +98,9 @@ class SimpleRepositoryHTMLRootPage(SimpleRepositoryRootPage):
 
         for anchor in self._parsed:
             if href := anchor.get("href"):
-                results.append(href.rstrip("/"))
+                # PEP 503 allows the href to be an absolute URL, but these
+                # names are used to build the project page URL, so keep only
+                # the last path segment.
+                results.append(href.rstrip("/").rsplit("/", 1)[-1])
 
         return results
