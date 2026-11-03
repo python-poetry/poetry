@@ -35,7 +35,11 @@ class ShutilWhichPythonProvider(findpython.BaseProvider):  # type: ignore[misc]
     @classmethod
     def find_python_by_name(cls, name: str) -> findpython.PythonVersion | None:
         if path := shutil.which(name):
-            return findpython.PythonVersion(executable=Path(path))
+            python = findpython.PythonVersion(executable=Path(path))
+            # e.g. the Microsoft Store alias in WindowsApps, which is found on PATH
+            # but cannot run when the Store Python is not installed
+            if python.is_valid():
+                return python
         return None
 
 
