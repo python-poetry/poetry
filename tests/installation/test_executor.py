@@ -455,6 +455,19 @@ Package operations: 2 installs, 0 updates, 0 removals
     } == {"simple_project": None, "demo": build_constraints_demo}
 
 
+@pytest.mark.parametrize("disable_cache", [False, True])
+def test_executor_passes_disable_cache_to_its_chef(
+    config: Config,
+    pool: RepositoryPool,
+    io: BufferedIO,
+    env: MockEnv,
+    disable_cache: bool,
+) -> None:
+    executor = Executor(env, pool, config, io, disable_cache=disable_cache)
+
+    assert executor._chef._disable_cache is disable_cache
+
+
 @pytest.mark.parametrize(
     "operations, has_warning",
     [

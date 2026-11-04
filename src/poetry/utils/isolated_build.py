@@ -97,9 +97,12 @@ class IsolatedBuildInstallError(IsolatedBuildBaseError):
 
 
 class IsolatedEnv(BaseIsolatedEnv):
-    def __init__(self, env: Env, pool: RepositoryPool) -> None:
+    def __init__(
+        self, env: Env, pool: RepositoryPool, *, disable_cache: bool = False
+    ) -> None:
         self._env = env
         self._pool = pool
+        self._disable_cache = disable_cache
 
     @property
     def python_executable(self) -> str:
@@ -163,6 +166,7 @@ class IsolatedEnv(BaseIsolatedEnv):
             self._pool,
             Config.create(),
             InstalledRepository.load(self._env),
+            disable_cache=self._disable_cache,
         )
         installer.update(True)
 
@@ -180,6 +184,7 @@ def isolated_builder(
     pool: RepositoryPool | None = None,
     *,
     build_constraints: list[Dependency] | None = None,
+    disable_cache: bool = False,
 ) -> Iterator[ProjectBuilder]:
     from build import ProjectBuilder
     from pyproject_hooks import quiet_subprocess_runner
@@ -207,7 +212,7 @@ def isolated_builder(
         executable=python_executable,
         flags={"no-pip": True},
     ) as venv:
-        env = IsolatedEnv(venv, pool)
+        env = IsolatedEnv(venv, pool, disable_cache=disable_cache)
         stdout = StringIO()
         try:
             builder = ProjectBuilder.from_isolated_env(
