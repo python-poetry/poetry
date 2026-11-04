@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 from poetry.utils._compat import WINDOWS
+from poetry.utils.env.base_env import Env
 from poetry.utils.env.virtual_env import VirtualEnv
 
 
@@ -74,12 +75,14 @@ class GenericEnv(VirtualEnv):
                 self._pip_executable = pip_executable
 
     def execute(self, bin: str, *args: str, **kwargs: Any) -> int:
+        if not self._is_windows:
+            # Use the same POSIX subprocess path as Env to preserve plugin
+            # termination hooks. Bypass VirtualEnv.execute here because
+            # GenericEnv must not alter the calling environment's PATH.
+            return Env.execute(self, bin, *args, **kwargs)
+
         command = self.get_command_from_bin(bin) + list(args)
         env = kwargs.pop("env", dict(os.environ))
-
-        if not self._is_windows:
-            return os.execvpe(command[0], command, env=env)
-
         exe = subprocess.Popen(command, env=env, **kwargs)
         exe.communicate()
 
