@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextlib
 import os
 import re
+import signal
 import subprocess
 import sys
 import sysconfig
@@ -481,7 +482,12 @@ class Env(ABC):
             # Keep Poetry alive so plugins can clean up after the command exits.
             # Replacing this process with execvpe skips the TERMINATE event and
             # atexit handlers (see #8092).
-            returncode = subprocess.run(command, env=env, check=False).returncode
+            try:
+                returncode = subprocess.run(command, env=env, check=False).returncode
+            except KeyboardInterrupt:
+                # The terminal sends Ctrl+C to both Poetry and its child.
+                # Let command termination dispatch plugin cleanup normally.
+                return 128 + signal.SIGINT
             # Preserve the shell convention for processes terminated by a signal.
             return 128 - returncode if returncode < 0 else returncode
 
