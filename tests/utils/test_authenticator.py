@@ -17,6 +17,7 @@ from cleo.io.null_io import NullIO
 from keyring.credentials import SimpleCredential
 
 from poetry.console.exceptions import PoetryRuntimeError
+from poetry.exceptions import PoetryError
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.authenticator import AuthenticatorRepositoryConfig
 from poetry.utils.authenticator import RepositoryCertificateConfig
@@ -673,20 +674,20 @@ def test_authenticator_matches_repository_with_bytes_url(config: Config) -> None
     assert repository.name == "private"
 
 
-def test_repository_config_supports_none_url() -> None:
-    repository = AuthenticatorRepositoryConfig(
-        "empty-repo",
-        None,  # type: ignore[arg-type]
+def test_repository_config_raises_error_for_missing_url() -> None:
+    with pytest.raises(PoetryError) as exc_info:
+        AuthenticatorRepositoryConfig(
+            "empty-repo",
+            None,  # type: ignore[arg-type]
+        )
+
+    assert str(exc_info.value) == (
+        "The repository 'empty-repo' is missing a url. "
+        "Please set it with `poetry config repositories.empty-repo <url>`."
     )
-    assert repository.url is None
-    assert repository.scheme == ""
-    assert repository.netloc == ""
-    assert repository.path == ""
-    assert repository._path_segments == []
-    assert repository.path_match_key("/any/path") == (0, False)
 
 
-def test_authenticator_handles_empty_repository_section_without_url(
+def test_authenticator_raises_error_for_empty_repository_section_without_url(
     config: Config,
 ) -> None:
     # Reproducer for #11080: empty [repositories.<name>] section with no url key
@@ -699,13 +700,13 @@ def test_authenticator_handles_empty_repository_section_without_url(
     )
 
     authenticator = Authenticator(config, NullIO())
-    assert "company-internal" in authenticator.configured_repositories
-    repository = authenticator.configured_repositories["company-internal"]
-    assert repository.name == "company-internal"
-    assert repository.url is None
-    assert repository.scheme == ""
-    assert repository.netloc == ""
-    assert repository.path == ""
+    with pytest.raises(PoetryError) as exc_info:
+        _ = authenticator.configured_repositories
+
+    assert str(exc_info.value) == (
+        "The repository 'company-internal' is missing a url. "
+        "Please set it with `poetry config repositories.company-internal <url>`."
+    )
 
 
 @pytest.mark.parametrize(
