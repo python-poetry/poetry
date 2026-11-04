@@ -184,6 +184,27 @@ def test_execute_preserves_poetry_process(
     replace_process.assert_not_called()
 
 
+@pytest.mark.skipif(WINDOWS, reason="GenericEnv uses a separate Windows command path")
+def test_generic_env_execute_preserves_poetry_process(
+    tmp_venv: VirtualEnv, mocker: MockerFixture
+) -> None:
+    """GenericEnv must not replace Poetry or rewrite its environment (#8092)."""
+    generic_env = GenericEnv(tmp_venv.path)
+    replace_process = mocker.patch(
+        "os.execvpe", side_effect=AssertionError("Poetry process was replaced")
+    )
+    rewrite_environment = mocker.patch.object(
+        VirtualEnv,
+        "get_temp_environ",
+        side_effect=AssertionError("GenericEnv rewrote the environment"),
+    )
+
+    assert generic_env.execute("python", "-c", "import sys; sys.exit(17)") == 17
+    assert generic_env.execute("python", "-c", "pass") == 0
+    replace_process.assert_not_called()
+    rewrite_environment.assert_not_called()
+
+
 @pytest.mark.skipif(WINDOWS, reason="POSIX child processes use negative signal codes")
 def test_execute_translates_child_signal_exit_code(tmp_venv: VirtualEnv) -> None:
     """The CLI should return the conventional 128 + signal exit status."""
