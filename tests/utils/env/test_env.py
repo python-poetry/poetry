@@ -197,6 +197,16 @@ def test_execute_translates_child_signal_exit_code(tmp_venv: VirtualEnv) -> None
     )
 
 
+@pytest.mark.skipif(WINDOWS, reason="Ctrl+C handling is POSIX-only")
+def test_execute_interrupt_returns_shell_status(
+    tmp_venv: VirtualEnv, mocker: MockerFixture
+) -> None:
+    """Ctrl+C should return an exit status so plugin termination can run."""
+    mocker.patch("subprocess.run", side_effect=KeyboardInterrupt())
+
+    assert tmp_venv.execute("python", "-c", "pass") == 128 + signal.SIGINT
+
+
 def test_run_with_keyboard_interrupt(
     tmp_path: Path, tmp_venv: VirtualEnv, mocker: MockerFixture
 ) -> None:
