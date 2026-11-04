@@ -483,7 +483,11 @@ class Env(ABC):
             # Replacing this process with execvpe skips the TERMINATE event and
             # atexit handlers (see #8092).
             try:
-                returncode = subprocess.run(command, env=env, check=False).returncode
+                # argv is intentionally an argument list, not a shell command.
+                # Never invoke a shell here: arguments must not be reinterpreted.
+                returncode = subprocess.run(
+                    command, env=env, check=False, shell=False
+                ).returncode
             except KeyboardInterrupt:
                 # The terminal sends Ctrl+C to both Poetry and its child.
                 # Let command termination dispatch plugin cleanup normally.
