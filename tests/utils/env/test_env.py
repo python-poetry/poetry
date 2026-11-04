@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import re
+import signal
 import subprocess
 import sys
 
@@ -166,6 +167,34 @@ def test_env_get_supported_tags_free_threading(
 @pytest.mark.skipif(os.name == "nt", reason="Symlinks are not support for Windows")
 def test_env_has_symlinks_on_nix(tmp_path: Path, tmp_venv: VirtualEnv) -> None:
     assert os.path.islink(tmp_venv.python)
+
+
+@pytest.mark.skipif(WINDOWS, reason="Windows execution does not replace Poetry")
+def test_execute_preserves_poetry_process(
+    tmp_venv: VirtualEnv, mocker: MockerFixture
+) -> None:
+    """See #8092: plugin cleanup must run after poetry run returns."""
+    replace_process = mocker.patch(
+        "os.execvpe", side_effect=AssertionError("Poetry process was replaced")
+    )
+
+    assert tmp_venv.execute("python", "-c", "import sys; sys.exit(23)") == 23
+    # A second invocation proves that the parent process is still alive.
+    assert tmp_venv.execute("python", "-c", "pass") == 0
+    replace_process.assert_not_called()
+
+
+@pytest.mark.skipif(WINDOWS, reason="POSIX child processes use negative signal codes")
+def test_execute_translates_child_signal_exit_code(tmp_venv: VirtualEnv) -> None:
+    """The CLI should return the conventional 128 + signal exit status."""
+    assert (
+        tmp_venv.execute(
+            "python",
+            "-c",
+            "import os, signal; os.kill(os.getpid(), signal.SIGTERM)",
+        )
+        == 128 + signal.SIGTERM
+    )
 
 
 def test_run_with_keyboard_interrupt(
