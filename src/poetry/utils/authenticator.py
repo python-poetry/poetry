@@ -73,12 +73,11 @@ class AuthenticatorRepositoryConfig:
     _path_segments: list[str] = dataclasses.field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
-        if self.url is None:
-            self.scheme = ""
-            self.netloc = ""
-            self.path = ""
-            self._path_segments = []
-            return
+        if not self.url:
+            raise PoetryError(
+                f"The repository {self.name!r} is missing a url. "
+                f"Please set it with `poetry config repositories.{self.name} <url>`."
+            )
 
         if isinstance(self.url, bytes):
             self.url = self.url.decode()
@@ -97,8 +96,6 @@ class AuthenticatorRepositoryConfig:
         (i.e. all repository segments are shared).
         Higher keys are better matches.
         """
-        if self.url is None:
-            return 0, False
         segments = _path_segments(path)
         shared = 0
         for own, other in zip(self._path_segments, segments):
@@ -429,6 +426,11 @@ class Authenticator:
             self._configured_repositories = {}
             for repository_name in self._config.get("repositories", []):
                 url = self._config.get(["repositories", repository_name, "url"])
+                if not url:
+                    raise PoetryError(
+                        f"The repository {repository_name!r} is missing a url. "
+                        f"Please set it with `poetry config repositories.{repository_name} <url>`."
+                    )
                 self._configured_repositories[repository_name] = (
                     AuthenticatorRepositoryConfig(repository_name, url)
                 )
