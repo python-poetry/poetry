@@ -961,14 +961,14 @@ files = [
 
 [[package]]
 name = "findpython"
-version = "0.8.0"
+version = "0.9.0"
 description = "A utility to find python versions on your system"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    { file = "findpython-0.8.0-py3-none-any.whl", hash = "sha256:4a61ee1618a8b55014f7d41f59345d322be93f6ce62395bdccccc651b3f7e28a" },
-    { file = "findpython-0.8.0.tar.gz", hash = "sha256:53b32264874dfa5990bd09d717819386d8db3149d89fe20f88fe1078de286bae" },
+    { file = "findpython-0.9.0-py3-none-any.whl", hash = "sha256:0d58e63106cab47a48793cc7b51faba3956caa46b3b8043c92d738bfef5e2a33" },
+    { file = "findpython-0.9.0.tar.gz", hash = "sha256:497c6b5eb13734be2542dfb6a93267946339601cbc2f1138c8cd4d40311fefe5" },
 ]
 
 [package.dependencies]
@@ -2399,4 +2399,4 @@ type = ["pytest-mypy (>=1.0.1) ; platform_python_implementation != \"PyPy\""]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<4"
-content-hash = "d2229bfd6735858e0017668465dd83738f34358fb7fc44269ca67ae9fee86742"
+content-hash = "f6fe78dada25bba0375f07b226577d8f9c8eed64a7ccf1595e39480b0c687332"
