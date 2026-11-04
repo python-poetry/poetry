@@ -15,8 +15,6 @@ from poetry.utils.env.virtual_env import VirtualEnv
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from poetry.utils.env.base_env import Env
-
 
 class GenericEnv(VirtualEnv):
     def __init__(
