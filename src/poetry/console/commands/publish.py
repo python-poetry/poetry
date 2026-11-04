@@ -13,6 +13,24 @@ if TYPE_CHECKING:
     from cleo.io.inputs.option import Option
 
 
+def _build_output_args(dist_dir: str) -> str:
+    """Quote the output directory for the nested ``build`` command.
+
+    Cleo parses the argument string with its own tokenizer, so the directory
+    has to be quoted to stay a single argument (it may contain spaces). That
+    tokenizer treats a backslash before the closing quote as an escaped
+    quote, and path normalization drops trailing separators except on a
+    Windows root (``C:\\``, ``\\\\server\\share\\``, ``\\``). Append a dot
+    component so the quote is not escaped; ``Path()`` drops it again when
+    the build command resolves the directory.
+    """
+    escaped = str(Path(dist_dir)).replace('"', '\\"')
+    if escaped.endswith("\\"):
+        escaped += "."
+
+    return f'--output "{escaped}"'
+
+
 class PublishCommand(Command):
     name = "publish"
     description = "Publishes a package to a remote repository."
@@ -88,13 +106,7 @@ the config command.
                         f"ready for publishing in {dist_dir}. Build anyway!</warning>"
                     )
 
-            # The build command is called with an argument string that cleo parses
-            # using its own tokenizer, so the output directory has to be quoted to
-            # be kept as a single argument (e.g. it may contain spaces).
-            # Normalizing the path also drops a trailing directory separator,
-            # which would otherwise escape the closing quote.
-            escaped_dist_dir = str(Path(dist_dir)).replace('"', '\\"')
-            exit_code = self.call("build", args=f'--output "{escaped_dist_dir}"')
+            exit_code = self.call("build", args=_build_output_args(dist_dir))
             if exit_code:
                 return exit_code
 

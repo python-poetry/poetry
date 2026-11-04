@@ -13,7 +13,9 @@ import requests
 import responses
 
 from cleo.io.inputs.argv_input import ArgvInput
+from cleo.io.inputs.token_parser import TokenParser
 
+from poetry.console.commands.publish import _build_output_args
 from poetry.factory import Factory
 
 
@@ -271,6 +273,21 @@ def test_publish_dist_dir_with_spaces_and_build_options(
     # A trailing separator used to escape the closing quote of the build
     # argument, so the artifacts ended up in a directory with a literal quote.
     assert not output_dir.with_name(output_dir.name + '"').exists()
+
+
+@pytest.mark.parametrize(
+    ("dist_dir", "expected"),
+    [
+        ("C:\\", "C:\\."),
+        ("\\\\server\\share\\", "\\\\server\\share\\."),
+        ("\\", "\\."),
+    ],
+)
+def test_build_output_args_escape_final_separator(dist_dir: str, expected: str) -> None:
+    # A Windows drive or UNC root keeps its trailing separator, which would
+    # escape the closing quote in cleo's tokenizer. The added dot must parse
+    # back to the same directory as a single argument.
+    assert TokenParser().parse(_build_output_args(dist_dir)) == ["--output", expected]
 
 
 def test_publish_build_no_interaction_skips_confirmation(
