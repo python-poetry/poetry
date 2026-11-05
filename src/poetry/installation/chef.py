@@ -9,7 +9,6 @@ from zipfile import is_zipfile
 
 from poetry.core.packages.utils.utils import splitext
 
-from poetry.utils._compat import WINDOWS
 from poetry.utils.helpers import extractall
 from poetry.utils.isolated_build import isolated_builder
 
@@ -141,8 +140,7 @@ class Chef:
                 except PermissionError as e:
                     # Windows may block replacing a cached wheel being installed.
                     if (
-                        WINDOWS
-                        and e.winerror in (5, 32)
+                        getattr(e, "winerror", None) in (5, 32)
                         and destination == archive.parent
                         and is_zipfile(cached_wheel)
                     ):
