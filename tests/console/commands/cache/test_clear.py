@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 from typing import TYPE_CHECKING
 from typing import TypeVar
 
@@ -152,6 +154,27 @@ def test_cache_clear_rejects_parent_traversal(
     sentinel.write_text("keep", encoding="utf-8")
 
     exit_code = tester.execute("cache clear ../.. --all", inputs="yes")
+
+    assert sentinel.exists(), "directory outside the repository cache was deleted"
+    assert exit_code == 1
+    assert "is not a valid repository cache" in tester.io.fetch_error()
+
+
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="Creating symlinks on Windows requires extra privileges",
+)
+def test_cache_clear_rejects_symlinked_repository_subdir(
+    tester: ApplicationTester, repository_cache_dir: Path, tmp_path: Path
+) -> None:
+    repository_cache_dir.mkdir(parents=True)
+    target = tmp_path / "outside"
+    target.mkdir()
+    sentinel = target / "sentinel"
+    sentinel.write_text("keep", encoding="utf-8")
+    (repository_cache_dir / "linked_repo").symlink_to(target, target_is_directory=True)
+
+    exit_code = tester.execute("cache clear linked_repo --all", inputs="yes")
 
     assert sentinel.exists(), "directory outside the repository cache was deleted"
     assert exit_code == 1
