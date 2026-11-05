@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import ClassVar
 
@@ -41,10 +42,11 @@ class CacheClearCommand(Command):
             root = ""
 
         config = Config.create()
-        cache_dir = config.repository_cache_directory / root
+        repository_cache_dir = Path(os.path.abspath(config.repository_cache_directory))
+        cache_dir = Path(os.path.abspath(config.repository_cache_directory / root))
 
         try:
-            cache_dir.relative_to(config.repository_cache_directory)
+            cache_dir.relative_to(repository_cache_dir)
         except ValueError:
             raise ValueError(f"{root} is not a valid repository cache")
 
