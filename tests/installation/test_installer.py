@@ -7,9 +7,9 @@ import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import cast
 
 import pytest
+import tomlrt
 
 from cleo.io.buffered_io import BufferedIO
 from cleo.io.inputs.input import Input
@@ -43,7 +43,6 @@ if TYPE_CHECKING:
 
     from _pytest.fixtures import FixtureRequest
     from pytest_mock import MockerFixture
-    from tomlkit import TOMLDocument
 
     from poetry.repositories.legacy_repository import LegacyRepository
     from poetry.repositories.pypi_repository import PyPiRepository
@@ -193,10 +192,10 @@ def fixture(name: str, data: dict[str, Any] | None = None) -> dict[str, Any]:
 
     if data:
         # if data is provided write it, this is helpful for generating fixtures
-        # we expect lock data to be compatible with TOMLDocument for our purposes
-        file.write(cast("TOMLDocument", data))
+        doc = tomlrt.Document(data)
+        file.write(doc)
 
-    content: dict[str, Any] = file.read()
+    content = file.read()
 
     return content
 
@@ -765,6 +764,39 @@ def test_run_install_with_synchronization(
 
     assert isinstance(installer.executor, TestExecutor)
     assert {r.name for r in installer.executor.removals} == expected_removals
+
+
+def test_run_install_with_synchronization_removes_missing_directory_dependency(
+    installer: Installer,
+    locker: Locker,
+    installed: CustomInstalledRepository,
+    tmp_path: Path,
+) -> None:
+    installed.add_package(
+        Package(
+            "demo",
+            "1.0",
+            source_type="directory",
+            source_url=str(tmp_path / "missing"),
+        )
+    )
+
+    lock_data = {
+        "package": [],
+        "metadata": {
+            "lock-version": "2.1",
+            "python-versions": "*",
+            "content-hash": "123456789",
+        },
+    }
+    locker.locked(True)
+    locker.mock_lock_data(lock_data)
+
+    installer.requires_synchronization(True)
+    result = installer.run()
+    assert result == 0
+
+    assert installer.executor.removals_count == 1
 
 
 @pytest.mark.parametrize("lock_version", ("1.1", "2.1"))
