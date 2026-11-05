@@ -125,12 +125,16 @@ class Chef:
 
             # Keep the wheel out of cache lookups until the backend finishes.
             with TemporaryDirectory(dir=destination, prefix=".poetry-wheel-") as stage:
+                staging_dir = Path(stage).resolve()
                 wheel = self._prepare(
                     sdist_dir,
-                    Path(stage),
+                    staging_dir,
                     config_settings=config_settings,
                     build_constraints=build_constraints,
-                )
+                ).resolve()
+                if not wheel.is_relative_to(staging_dir):
+                    # Preserve outputs that the backend returned from elsewhere.
+                    return wheel
                 cached_wheel = destination / wheel.name
                 try:
                     return wheel.replace(cached_wheel)

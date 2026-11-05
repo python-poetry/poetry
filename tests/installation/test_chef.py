@@ -100,6 +100,25 @@ def test_prepare_sdist_publishes_only_completed_wheels(
     assert observed == [False]
 
 
+def test_prepare_sdist_leaves_external_wheel_in_place(
+    artifact_cache: ArtifactCache,
+    fixture_dir: FixtureDirGetter,
+    mocker: MockerFixture,
+    pool: RepositoryPool,
+    tmp_path: Path,
+) -> None:
+    chef = Chef(artifact_cache, EnvManager.get_system_env(), pool)
+    archive = (fixture_dir("distributions") / "demo-0.1.0.tar.gz").resolve()
+    external_wheel = tmp_path / "demo-0.1.0-py2.py3-none-any.whl"
+    shutil.copyfile(fixture_dir("distributions") / external_wheel.name, external_wheel)
+    mocker.patch.object(chef, "_prepare", return_value=external_wheel)
+    destination = tmp_path / "cache"
+
+    assert chef.prepare(archive, output_dir=destination) == external_wheel
+    assert external_wheel.is_file()
+    assert not list(destination.iterdir())
+
+
 @pytest.mark.skipif(
     sys.platform != "win32", reason="Windows blocks replacing open files"
 )
