@@ -169,12 +169,12 @@ def test_cache_clear_rejects_symlinked_repository_subdir(
 ) -> None:
     repository_cache_dir.mkdir(parents=True)
     target = tmp_path / "outside"
-    target.mkdir()
-    sentinel = target / "sentinel"
+    (target / "sub").mkdir(parents=True)
+    sentinel = target / "sub" / "sentinel"
     sentinel.write_text("keep", encoding="utf-8")
     (repository_cache_dir / "linked_repo").symlink_to(target, target_is_directory=True)
 
-    exit_code = tester.execute("cache clear linked_repo --all", inputs="yes")
+    exit_code = tester.execute("cache clear linked_repo/sub --all", inputs="yes")
 
     assert sentinel.exists(), "directory outside the repository cache was deleted"
     assert exit_code == 1
