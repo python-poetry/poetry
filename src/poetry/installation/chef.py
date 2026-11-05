@@ -5,9 +5,11 @@ import tempfile
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
+from zipfile import is_zipfile
 
 from poetry.core.packages.utils.utils import splitext
 
+from poetry.utils._compat import WINDOWS
 from poetry.utils.helpers import extractall
 from poetry.utils.isolated_build import isolated_builder
 
@@ -121,12 +123,27 @@ class Chef:
 
             destination.mkdir(parents=True, exist_ok=True)
 
-            return self._prepare(
-                sdist_dir,
-                destination,
-                config_settings=config_settings,
-                build_constraints=build_constraints,
-            )
+            # Keep the wheel out of cache lookups until the backend finishes.
+            with TemporaryDirectory(dir=destination, prefix=".poetry-wheel-") as stage:
+                wheel = self._prepare(
+                    sdist_dir,
+                    Path(stage),
+                    config_settings=config_settings,
+                    build_constraints=build_constraints,
+                )
+                cached_wheel = destination / wheel.name
+                try:
+                    return wheel.replace(cached_wheel)
+                except PermissionError as e:
+                    # Windows may block replacing a cached wheel being installed.
+                    if (
+                        WINDOWS
+                        and e.winerror in (5, 32)
+                        and destination == archive.parent
+                        and is_zipfile(cached_wheel)
+                    ):
+                        return cached_wheel
+                    raise
 
     def _should_prepare(self, archive: Path) -> bool:
         return archive.is_dir() or not self._is_wheel(archive)
