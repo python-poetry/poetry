@@ -187,6 +187,19 @@ def test_cache_clear_artifacts(
     assert caches[1].has("cashy:0.2")
 
 
+@pytest.mark.parametrize(
+    "selector", ["artifacts:demo:1.0", "artifacts:demo", "artifacts:a:b:c"]
+)
+def test_cache_clear_artifacts_rejects_selectors(
+    tester: ApplicationTester, artifact_file: Path, selector: str
+) -> None:
+    exit_code = tester.execute(f"cache clear {selector} --all", inputs="yes")
+
+    assert exit_code == 1
+    assert "Artifact cache selectors are not supported" in tester.io.fetch_error()
+    assert artifact_file.read_bytes() == b"wheel"
+
+
 def test_cache_clear_artifacts_no_entries(tester: ApplicationTester) -> None:
     exit_code = tester.execute("cache clear artifacts --all")
 

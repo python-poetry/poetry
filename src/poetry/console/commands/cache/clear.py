@@ -48,6 +48,8 @@ class CacheClearCommand(Command):
         config = Config.create()
 
         if root == ARTIFACTS_CACHE_NAME:
+            if len(parts) != 1:
+                raise ValueError("Artifact cache selectors are not supported")
             return self._clear_artifacts(config.artifacts_cache_directory)
 
         cache_dir = config.repository_cache_directory / root
