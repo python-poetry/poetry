@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import os
+import platform
 import sys
 
 from functools import cached_property
@@ -251,7 +252,7 @@ class Python:
             python=findpython.PythonVersion(
                 executable=Path(sys.executable),
                 _version=packaging.version.Version(
-                    ".".join(str(v) for v in sys.version_info[:3])
+                    platform.python_version().rstrip("+")
                 ),
             )
         )

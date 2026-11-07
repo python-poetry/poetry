@@ -6,6 +6,7 @@ import zipfile
 
 from functools import cached_property
 from importlib import metadata
+from locale import getencoding
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import NamedTuple
@@ -13,7 +14,6 @@ from typing import NamedTuple
 import pytest
 
 from poetry.repositories.installed_repository import InstalledRepository
-from poetry.utils._compat import getencoding
 from poetry.utils.env import EnvManager
 from poetry.utils.env import MockEnv
 from poetry.utils.env import VirtualEnv
