@@ -306,6 +306,33 @@ def test_builder_installs_project_gui_scripts(
     assert (str(cmd_script_file) in record_entries) is windows
 
 
+def test_builder_pth_keeps_unresolved_project_path(
+    tmp_path: Path, fixture_dir: FixtureDirGetter
+) -> None:
+    # e.g. a project on a mapped network drive, which resolve() would turn into
+    # the underlying UNC path
+    real_project = tmp_path / "real" / "simple_project"
+    shutil.copytree(fixture_dir("simple_project"), real_project)
+    project = tmp_path / "simple_project"
+    try:
+        project.symlink_to(real_project, target_is_directory=True)
+    except OSError:
+        pytest.skip("symlinks are not supported")
+
+    poetry = Factory().create_poetry(project)
+    env_manager = EnvManager(poetry)
+    venv_path = tmp_path / "venv"
+    env_manager.build_venv(venv_path)
+    tmp_venv = VirtualEnv(venv_path)
+
+    EditableBuilder(poetry, tmp_venv, NullIO()).build()
+
+    pth_file = tmp_venv.site_packages.find(Path("simple_project.pth"))[0]
+    assert pth_file.read_text(encoding="utf-8").strip(os.linesep) == (
+        project.absolute().as_posix()
+    )
+
+
 def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
     mocker: MockerFixture, extended_poetry: Poetry, tmp_path: Path
 ) -> None:
