@@ -131,6 +131,28 @@ def test_config_get_from_environment_variable(
     assert config.get(name) is value
 
 
+@pytest.mark.parametrize(
+    ("name", "env_var"),
+    [
+        ("requests.max-retries", "POETRY_REQUESTS_MAX_RETRIES"),
+        ("installer.max-workers", "POETRY_INSTALLER_MAX_WORKERS"),
+        ("solver.min-release-age", "POETRY_SOLVER_MIN_RELEASE_AGE"),
+    ],
+)
+def test_config_get_from_environment_variable_invalid_integer(
+    config: Config,
+    environ: Iterator[None],
+    name: str,
+    env_var: str,
+) -> None:
+    os.environ[env_var] = "abc"
+
+    expected_error = f'"abc" is an invalid value for {name}'
+
+    with pytest.raises(ValueError, match=re.escape(expected_error)):
+        config.get(name)
+
+
 def test_config_get_from_environment_variable_nested(
     config: Config,
     environ: Iterator[None],
