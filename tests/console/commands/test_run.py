@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import subprocess
-
 from typing import TYPE_CHECKING
 
 import pytest
@@ -197,12 +195,7 @@ def test_run_script_exit_code(
     poetry_with_scripts: Poetry,
     command_tester_factory: CommandTesterFactory,
     tmp_venv: VirtualEnv,
-    mocker: MockerFixture,
 ) -> None:
-    mocker.patch(
-        "os.execvpe",
-        lambda file, args, env: subprocess.call([file, *args[1:]], env=env),
-    )
     install_tester = command_tester_factory(
         "install",
         poetry=poetry_with_scripts,
@@ -231,10 +224,6 @@ def test_run_script_sys_argv0(
     sys.argv[0] must be set to the full path of the script.
     """
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=tmp_venv)
-    mocker.patch(
-        "os.execvpe",
-        lambda file, args, env: subprocess.call([file, *args[1:]], env=env),
-    )
 
     install_tester = command_tester_factory(
         "install",
