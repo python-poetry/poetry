@@ -14,6 +14,7 @@ from build import BuildBackendException
 from build import ProjectBuilder
 from packaging.metadata import parse_email
 from pkginfo.distribution import NewMetadataVersion
+from poetry.core.packages.directory_dependency import DirectoryDependency
 
 from poetry.inspection.info import PackageInfo
 from poetry.inspection.info import PackageInfoError
@@ -438,3 +439,58 @@ def test_info_prefer_poetry_config_over_egg_info(fixture_dir: FixtureDirGetter) 
         fixture_dir("inspection") / "demo_with_obsolete_egg_info"
     )
     demo_check_info(info)
+
+
+def test_to_package_keeps_develop_flag_from_poetry_enrichment(
+    tmp_path: Path,
+) -> None:
+    """
+    A PEP 621 project that enriches a path dependency with `develop = true`
+    in `[tool.poetry.dependencies]` must keep that flag when the project is
+    used as a (transitive) directory dependency, in the same way as a pure
+    `[tool.poetry.dependencies]` project does.
+    """
+    lib_path = tmp_path / "lib"
+    lib_path.mkdir()
+    base_path = tmp_path / "base"
+    base_path.mkdir()
+    (lib_path / "pyproject.toml").write_text(
+        """\
+[project]
+name = "lib"
+version = "1.2.3"
+description = "Some description."
+requires-python = ">=3.9"
+dependencies = ["base @ ../base"]
+
+[tool.poetry.dependencies]
+base = { develop = true }
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+""",
+        encoding="utf-8",
+    )
+    (base_path / "pyproject.toml").write_text(
+        """\
+[project]
+name = "base"
+version = "1.2.3"
+description = "Some description."
+requires-python = ">=3.9"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+""",
+        encoding="utf-8",
+    )
+
+    info = PackageInfo(name="lib", version="1.2.3")
+    package = info.to_package(root_dir=lib_path)
+
+    (dependency,) = package.requires
+    assert isinstance(dependency, DirectoryDependency)
+    assert dependency.name == "base"
+    assert dependency.develop is True

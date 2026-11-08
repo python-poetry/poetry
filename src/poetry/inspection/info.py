@@ -16,6 +16,7 @@ import pkginfo
 from poetry.core.constraints.version import Version
 from poetry.core.factory import Factory
 from poetry.core.packages.dependency import Dependency
+from poetry.core.packages.dependency_group import MAIN_GROUP
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.utils import splitext
 from poetry.core.pyproject.toml import PyProjectTOML
@@ -163,7 +164,17 @@ class PackageInfo:
             poetry_package = self._get_poetry_package(path=path)
             if poetry_package:
                 package.extras = poetry_package.extras
-                for dependency in poetry_package.requires:
+                # Use the enriched main-group dependencies (like the locker does
+                # for the root package) instead of the plain PEP 621 requirements
+                # so that poetry-specific information like the develop flag of
+                # path or git dependencies is not lost.
+                if poetry_package.has_dependency_group(MAIN_GROUP):
+                    dependencies = poetry_package.dependency_group(
+                        MAIN_GROUP
+                    ).dependencies_for_locking
+                else:
+                    dependencies = poetry_package.requires
+                for dependency in dependencies:
                     package.add_dependency(dependency)
 
                 return package
