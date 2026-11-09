@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 from typing import TYPE_CHECKING
 
 import pytest
@@ -12,6 +14,9 @@ from poetry.toml import TOMLFile
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+    from pytest_mock import MockerFixture
+    from tomlkit.toml_document import TOMLDocument
 
 
 def test_file_config_source_add_property(tmp_path: Path) -> None:
@@ -142,3 +147,90 @@ def test_file_config_source_remove_property_with_list_keys(
     assert "my.repo" not in repos
     other = data["repositories"]
     assert other["other"]["url"] == "https://other.com/simple/"
+
+
+def test_file_config_source_name(tmp_path: Path) -> None:
+    config = tmp_path.joinpath("config.toml")
+    config.touch()
+
+    config_source = FileConfigSource(TOMLFile(config))
+
+    assert config_source.name == str(config)
+
+
+def test_file_config_source_remove_missing_property_is_noop(tmp_path: Path) -> None:
+    config_data = {"system-git-client": True}
+
+    config = tmp_path.joinpath("config.toml")
+    with config.open(mode="w", encoding="utf-8") as f:
+        f.write(tomlkit.dumps(config_data))
+
+    config_source = FileConfigSource(TOMLFile(config))
+
+    original_file = config.read_bytes()
+
+    config_source.remove_property("virtualenvs.use-poetry-python")
+
+    assert config.read_bytes() == original_file
+
+
+def test_file_config_source_add_property_creates_missing_file(tmp_path: Path) -> None:
+    config = tmp_path.joinpath("config.toml")
+    assert not config.exists()
+
+    config_source = FileConfigSource(TOMLFile(config))
+
+    config_source.add_property("virtualenvs.create", False)
+
+    assert config.exists()
+    assert config_source._file.read() == {"virtualenvs": {"create": False}}
+
+
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="permission bits are not meaningful on Windows",
+)
+def test_file_config_source_creates_file_with_owner_only_permissions(
+    tmp_path: Path,
+) -> None:
+    config = tmp_path.joinpath("config.toml")
+    assert not config.exists()
+
+    config_source = FileConfigSource(TOMLFile(config))
+
+    config_source.add_property("system-git-client", True)
+
+    assert config.exists()
+    assert config.stat().st_mode & 0o077 == 0
+
+
+def test_file_config_source_rolls_back_on_write_failure(
+    tmp_path: Path,
+    mocker: MockerFixture,
+) -> None:
+    config_data = {"system-git-client": True}
+
+    config = tmp_path.joinpath("config.toml")
+    with config.open(mode="w", encoding="utf-8") as f:
+        f.write(tomlkit.dumps(config_data))
+
+    config_source = FileConfigSource(TOMLFile(config))
+
+    real_write = config_source.file.write
+    calls: list[int] = []
+
+    def flaky_write(data: TOMLDocument) -> None:
+        calls.append(1)
+        if len(calls) == 1:
+            raise OSError("disk full")
+        real_write(data)
+
+    write = mocker.patch.object(config_source.file, "write", side_effect=flaky_write)
+
+    with pytest.raises(OSError, match="disk full"):
+        config_source.add_property("system-git-client", False)
+
+    assert write.call_count == 2
+    assert write.call_args_list[0].args[0] == {"system-git-client": False}
+    assert write.call_args_list[1].args[0] == config_data
+    assert config_source.file.read() == config_data
