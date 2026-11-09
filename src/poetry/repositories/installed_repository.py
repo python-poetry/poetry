@@ -5,6 +5,7 @@ import json
 import logging
 
 from importlib import metadata
+from locale import getencoding
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -15,7 +16,6 @@ from poetry.core.packages.utils.utils import url_to_path
 from poetry.core.utils.helpers import module_name
 
 from poetry.repositories.repository import Repository
-from poetry.utils._compat import getencoding
 from poetry.utils.env import VirtualEnv
 
 
@@ -42,7 +42,7 @@ class InstalledRepository(Repository):
         """
         Process a .pth file within the site-packages directories, and return any valid
         paths. We skip executable .pth files as there is no reliable means to do this
-        without side-effects to current run-time. Mo check is made that the item refers
+        without side-effects to current run-time. No check is made that the item refers
         to a directory rather than a file, however, in order to maintain backwards
         compatibility, we allow non-existing paths to be discovered. The latter
         behaviour is different to how Python's site-specific hook configuration works.
@@ -124,6 +124,7 @@ class InstalledRepository(Repository):
         source_reference = None
         source_resolved_reference = None
         source_subdirectory = None
+        develop = False
         if is_standard_package:
             if path.name.endswith(".dist-info"):
                 paths = cls.get_package_paths(env=env, name=dist_metadata["name"])
@@ -146,6 +147,7 @@ class InstalledRepository(Repository):
                         # TODO: handle multiple source directories?
                         if is_editable_package:
                             source_type = "directory"
+                            develop = True
                             path = paths.pop()
                             if path.name == "src":
                                 path = path.parent
@@ -170,6 +172,7 @@ class InstalledRepository(Repository):
             source_reference=source_reference,
             source_resolved_reference=source_resolved_reference,
             source_subdirectory=source_subdirectory,
+            develop=develop,
         )
 
         package.description = dist_metadata.get(  # type: ignore[attr-defined]

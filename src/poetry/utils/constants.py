@@ -7,7 +7,7 @@ import os
 POETRY_SYSTEM_PROJECT_NAME = "poetry-instance"
 
 # Timeout for HTTP requests using the requests library.
-REQUESTS_TIMEOUT = int(os.getenv("POETRY_REQUESTS_TIMEOUT", 15))
+REQUESTS_TIMEOUT = int(os.getenv("POETRY_REQUESTS_TIMEOUT", "15"))
 
 RETRY_AFTER_HEADER = "retry-after"
 

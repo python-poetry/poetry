@@ -7,6 +7,7 @@ import sys
 import sysconfig
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from packaging.tags import Tag
 from packaging.tags import interpreter_name
@@ -15,6 +16,10 @@ from packaging.tags import sys_tags
 
 from poetry.utils.env.base_env import Env
 from poetry.utils.env.base_env import MarkerEnv
+
+
+if TYPE_CHECKING:
+    from poetry.utils.env.base_env import EnvPaths
 
 
 class SystemEnv(Env):
@@ -30,10 +35,10 @@ class SystemEnv(Env):
     def sys_path(self) -> list[str]:
         return sys.path
 
-    def get_paths(self) -> dict[str, str]:
+    def get_paths(self) -> EnvPaths:
         import site
 
-        paths = sysconfig.get_paths().copy()
+        paths: EnvPaths = {**sysconfig.get_paths()}  # type: ignore[typeddict-item]
 
         if site.check_enableusersite():
             paths["usersite"] = site.getusersitepackages()
@@ -78,7 +83,7 @@ class SystemEnv(Env):
         }
 
     def is_venv(self) -> bool:
-        return self._path != self._base
+        return self._path != self.base
 
     def _get_lib_dirs(self) -> list[Path]:
         return super()._get_lib_dirs() + [Path(d) for d in site.getsitepackages()]

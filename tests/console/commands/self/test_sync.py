@@ -10,7 +10,7 @@ from poetry.console.commands.self.sync import SelfSyncCommand
 
 # import all tests from the self install command
 # and run them for sync by overriding the command fixture
-from tests.console.commands.self.test_install import *  # noqa: F403
+from tests.console.commands.self.test_install import *
 
 
 if TYPE_CHECKING:

@@ -154,7 +154,15 @@ class Application(BaseApplication):
 
         definition.add_option(
             Option(
-                "--no-cache", flag=True, description="Disables Poetry source caches."
+                "--no-cache",
+                flag=True,
+                description=(
+                    "Disables the use of Poetry's caches (cached package metadata and"
+                    " dist files from configured package sources) for the duration of"
+                    " the command, forcing Poetry to behave as if it had a cold cache."
+                    " This does not delete the caches; use `poetry cache clear`"
+                    " to remove cached data."
+                ),
             )
         )
 
@@ -262,7 +270,7 @@ class Application(BaseApplication):
                 io.write_error_line("")
                 e.write(io)
                 io.write_error_line("")
-            except CleoCommandNotFoundError as e:
+            except CleoCommandNotFoundError:
                 command = self._get_command_name(io)
 
                 if command is not None and (
@@ -299,7 +307,7 @@ class Application(BaseApplication):
                     self._error_write_command_suggestions(io, suggested_names)
                     return 1
 
-                raise e
+                raise
 
         return exit_code
 

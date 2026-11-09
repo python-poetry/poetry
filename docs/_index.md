@@ -18,7 +18,7 @@ Poetry offers a lockfile to ensure repeatable installs, and can build your proje
 
 ## System requirements
 
-Poetry requires **Python 3.10+**. It is multi-platform and the goal is to make it work equally well
+Poetry requires **Python 3.11+**. It is multi-platform and the goal is to make it work equally well
 on Linux, macOS and Windows.
 
 ## Installation
@@ -40,7 +40,7 @@ See the **advanced** installation instructions to use a preview or alternate ver
 **Install pipx**
 
 If `pipx` is not already installed, you can follow any of the options in the
-[official pipx installation instructions](https://pipx.pypa.io/stable/how-to/install-pipx/).
+[official pipx installation instructions](https://pipx.pypa.io/stable/how-to/install-pipx.html).
 Any non-ancient version of `pipx` will do.
 
 {{< /step >}}

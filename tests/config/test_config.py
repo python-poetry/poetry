@@ -10,8 +10,6 @@ from typing import Any
 
 import pytest
 
-from deepdiff.diff import DeepDiff
-
 from poetry.config.config import Config
 from poetry.config.config import PackageFilterPolicy
 from poetry.config.config import boolean_normalizer
@@ -35,8 +33,12 @@ def get_options_based_on_normalizer(normalizer: Normalizer) -> Iterator[str]:
     flattened_config = flatten_dict(obj=Config.default_config, delimiter=".")
 
     for k in flattened_config:
-        if Config._get_normalizer(k) == normalizer:
+        if Config.get_normalizer(k) == normalizer:
             yield k
+
+
+def test_config_settings_in_sync_with_default_config() -> None:
+    assert set(Config.settings) == set(flatten_dict(Config.default_config))
 
 
 @pytest.mark.parametrize(
@@ -197,4 +199,4 @@ def test_config_get_from_environment_variable_build_config_settings(
         if invalid:
             assert configured_value is None
         else:
-            assert not DeepDiff(configured_value, json.loads(value))
+            assert configured_value == json.loads(value)

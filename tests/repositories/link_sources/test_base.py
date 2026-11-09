@@ -40,7 +40,7 @@ def link_source(mocker: MockerFixture) -> LinkSource:
     url = "https://example.org"
     link_source = LinkSource(url)
     mocker.patch(
-        f"{LinkSource.__module__}.{LinkSource.__qualname__}._link_cache",
+        f"{LinkSource.__module__}.{LinkSource.__qualname__}._link_factory_cache",
         new_callable=PropertyMock,
         return_value=defaultdict(
             lambda: defaultdict(list),
@@ -49,10 +49,12 @@ def link_source(mocker: MockerFixture) -> LinkSource:
                     list,
                     {
                         Version.parse("0.1.0"): [
-                            Link(f"{url}/demo-0.1.0.tar.gz"),
-                            Link(f"{url}/demo-0.1.0-py2.py3-none-any.whl"),
+                            lambda: Link(f"{url}/demo-0.1.0.tar.gz"),
+                            lambda: Link(f"{url}/demo-0.1.0-py2.py3-none-any.whl"),
                         ],
-                        Version.parse("0.1.1"): [Link(f"{url}/demo-0.1.1.tar.gz")],
+                        Version.parse("0.1.1"): [
+                            lambda: Link(f"{url}/demo-0.1.1.tar.gz")
+                        ],
                     },
                 ),
             },

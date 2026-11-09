@@ -82,6 +82,9 @@
   "urls": [
     {
       "comment_text": "",
+      "core-metadata": {
+        "sha256": "e606fa46dd3258448b1e676f40ed5392dfc1398ad4fca2fce8aef38698f4c3c2"
+      },
       "digests": {
         "md5": "e770e65750c42f40b97b0ed738d0f859",
         "sha256": "098be851f30be5bcb2c7537798d44314f576e53818ba9def25141ae4dce8b25d"
@@ -102,6 +105,7 @@
     },
     {
       "comment_text": "",
+      "core-metadata": false,
       "digests": {
         "md5": "942a6a383dc94da90cf58f5adcf028a4",
         "sha256": "ec62f7e0e9d4814656b0172dbd592fea06127c6556ff5651eb5d2c8768671fd4"

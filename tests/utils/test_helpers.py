@@ -1,93 +1,68 @@
 from __future__ import annotations
 
-import base64
 import contextlib
-import re
 import sys
 import tarfile
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Any
 
 import pytest
-import responses
-
-from poetry.core.utils.helpers import parse_requires
-from requests.exceptions import ChunkedEncodingError
 
 from poetry.utils._compat import WINDOWS
-from poetry.utils.helpers import Downloader
-from poetry.utils.helpers import HTTPRangeRequestSupportedError
-from poetry.utils.helpers import download_file
+from poetry.utils.download import Downloader
+from poetry.utils.download import HTTPRangeRequestSupportedError
+from poetry.utils.download import download_file
+from poetry.utils.helpers import directory
 from poetry.utils.helpers import ensure_path
 from poetry.utils.helpers import extractall
 from poetry.utils.helpers import get_file_hash
 from poetry.utils.helpers import get_highest_priority_hash_type
+from poetry.utils.helpers import merge_dicts
 
 
 if TYPE_CHECKING:
-    from requests import PreparedRequest
-
-    from tests.conftest import Config
     from tests.types import FixtureDirGetter
-    from tests.types import HttpResponse
 
 
-def test_parse_requires() -> None:
-    requires = """\
-jsonschema>=2.6.0.0,<3.0.0.0
-lockfile>=0.12.0.0,<0.13.0.0
-pip-tools>=1.11.0.0,<2.0.0.0
-pkginfo>=1.4.0.0,<2.0.0.0
-pyrsistent>=0.14.2.0,<0.15.0.0
-toml>=0.9.0.0,<0.10.0.0
-cleo>=0.6.0.0,<0.7.0.0
-cachy>=0.1.1.0,<0.2.0.0
-cachecontrol>=0.12.4.0,<0.13.0.0
-requests>=2.18.0.0,<3.0.0.0
-msgpack-python>=0.5.0.0,<0.6.0.0
-pyparsing>=2.2.0.0,<3.0.0.0
-requests-toolbelt>=0.8.0.0,<0.9.0.0
+def test_directory_restores_working_directory(tmp_path: Path) -> None:
+    cwd = Path.cwd()
 
-[:(python_version >= "2.7.0.0" and python_version < "2.8.0.0")\
- or (python_version >= "3.4.0.0" and python_version < "3.5.0.0")]
-typing>=3.6.0.0,<4.0.0.0
+    with directory(tmp_path):
+        assert Path.cwd() == tmp_path
 
-[:python_version >= "2.7.0.0" and python_version < "2.8.0.0"]
-virtualenv>=15.2.0.0,<16.0.0.0
-pathlib2>=2.3.0.0,<3.0.0.0
+    assert Path.cwd() == cwd
 
-[:python_version >= "3.4.0.0" and python_version < "3.6.0.0"]
-zipfile36>=0.1.0.0,<0.2.0.0
 
-[dev]
-isort@ git+git://github.com/timothycrosley/isort.git@e63ae06ec7d70b06df9e528357650281a3d3ec22#egg=isort
-"""
-    result = parse_requires(requires)
-    # fmt: off
-    expected = [
-        "jsonschema>=2.6.0.0,<3.0.0.0",
-        "lockfile>=0.12.0.0,<0.13.0.0",
-        "pip-tools>=1.11.0.0,<2.0.0.0",
-        "pkginfo>=1.4.0.0,<2.0.0.0",
-        "pyrsistent>=0.14.2.0,<0.15.0.0",
-        "toml>=0.9.0.0,<0.10.0.0",
-        "cleo>=0.6.0.0,<0.7.0.0",
-        "cachy>=0.1.1.0,<0.2.0.0",
-        "cachecontrol>=0.12.4.0,<0.13.0.0",
-        "requests>=2.18.0.0,<3.0.0.0",
-        "msgpack-python>=0.5.0.0,<0.6.0.0",
-        "pyparsing>=2.2.0.0,<3.0.0.0",
-        "requests-toolbelt>=0.8.0.0,<0.9.0.0",
-        'typing>=3.6.0.0,<4.0.0.0 ; (python_version >= "2.7.0.0" and python_version < "2.8.0.0") or (python_version >= "3.4.0.0" and python_version < "3.5.0.0")',
-        'virtualenv>=15.2.0.0,<16.0.0.0 ; python_version >= "2.7.0.0" and python_version < "2.8.0.0"',
-        'pathlib2>=2.3.0.0,<3.0.0.0 ; python_version >= "2.7.0.0" and python_version < "2.8.0.0"',
-        'zipfile36>=0.1.0.0,<0.2.0.0 ; python_version >= "3.4.0.0" and python_version < "3.6.0.0"',
-        'isort@ git+git://github.com/timothycrosley/isort.git@e63ae06ec7d70b06df9e528357650281a3d3ec22#egg=isort ; extra == "dev"',
-    ]
-    # fmt: on
-    assert result == expected
+def test_directory_restores_working_directory_after_error(tmp_path: Path) -> None:
+    cwd = Path.cwd()
+
+    with pytest.raises(RuntimeError), directory(tmp_path):
+        assert Path.cwd() == tmp_path
+        raise RuntimeError("expected failure")
+
+    assert Path.cwd() == cwd
+
+
+def test_merge_dicts_merges_nested_mappings() -> None:
+    config = {
+        "installer": {"parallel": True, "max-workers": 4},
+        "virtualenvs": {"create": True},
+    }
+
+    merge_dicts(
+        config,
+        {
+            "installer": {"max-workers": 8},
+            "repositories": {"foo": {"url": "https://foo.example/simple/"}},
+        },
+    )
+
+    assert config == {
+        "installer": {"parallel": True, "max-workers": 8},
+        "virtualenvs": {"create": True},
+        "repositories": {"foo": {"url": "https://foo.example/simple/"}},
+    }
 
 
 def test_default_hash(fixture_dir: FixtureDirGetter) -> None:
@@ -142,93 +117,6 @@ def test_guaranteed_hash(
     assert get_file_hash(file_path, hash_name) == expected
 
 
-def test_download_file(
-    http: responses.RequestsMock, fixture_dir: FixtureDirGetter, tmp_path: Path
-) -> None:
-    file_path = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
-    url = "https://foo.com/demo-0.1.0.tar.gz"
-    http.get(url, body=file_path.read_bytes())
-    dest = tmp_path / "demo-0.1.0.tar.gz"
-
-    download_file(url, dest)
-
-    expect_sha_256 = "9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad"
-    assert get_file_hash(dest) == expect_sha_256
-    assert http.calls[-1].request.headers["Accept-Encoding"] == "Identity"
-
-
-def test_download_file_recover_from_error(
-    http: responses.RequestsMock, fixture_dir: FixtureDirGetter, tmp_path: Path
-) -> None:
-    file_path = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
-    file_body = file_path.read_bytes()
-    file_length = len(file_body)
-    url = "https://foo.com/demo-0.1.0.tar.gz"
-
-    def handle_request(request: PreparedRequest) -> HttpResponse:
-        if request.headers.get("Range") is None:
-            response_headers = {
-                "Content-Length": str(file_length),
-                "Accept-Ranges": "bytes",
-            }
-            return 200, response_headers, file_body[: file_length // 2]
-        else:
-            start = int(
-                request.headers.get("Range", "bytes=0-").split("=")[1].split("-")[0]
-            )
-            response_headers = {"Content-Length": str(len(file_body[start:]))}
-            return 206, response_headers, file_body[start:]
-
-    http.add_callback(responses.GET, url, callback=handle_request)
-    dest = tmp_path / "demo-0.1.0.tar.gz"
-
-    download_file(url, dest, chunk_size=file_length // 2, max_retries=1)
-
-    expect_sha_256 = "9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad"
-    assert get_file_hash(dest) == expect_sha_256
-    assert http.calls[-1].request.headers["Accept-Encoding"] == "Identity"
-    assert http.calls[-1].request.headers["Range"] == f"bytes={file_length // 2}-"
-
-
-def test_download_file_fail_when_no_range(
-    http: responses.RequestsMock, fixture_dir: FixtureDirGetter, tmp_path: Path
-) -> None:
-    file_path = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
-    file_body = file_path.read_bytes()
-    file_length = len(file_body)
-    url = "https://foo.com/demo-0.1.0.tar.gz"
-
-    def handle_request(request: PreparedRequest) -> HttpResponse:
-        response_headers = {"Content-Length": str(file_length)}
-        return 200, response_headers, file_body[: file_length // 2]
-
-    http.add_callback(responses.GET, url, callback=handle_request)
-    dest = tmp_path / "demo-0.1.0.tar.gz"
-    with pytest.raises(ChunkedEncodingError):
-        download_file(url, dest, chunk_size=file_length // 2, max_retries=1)
-
-
-def test_download_file_fail_when_first_chunk_failed(
-    http: responses.RequestsMock, fixture_dir: FixtureDirGetter, tmp_path: Path
-) -> None:
-    file_path = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
-    file_body = file_path.read_bytes()
-    file_length = len(file_body)
-    url = "https://foo.com/demo-0.1.0.tar.gz"
-
-    def handle_request(request: PreparedRequest) -> tuple[int, dict[str, Any], bytes]:
-        response_headers = {
-            "Content-Length": str(file_length),
-            "Accept-Ranges": "bytes",
-        }
-        return 200, response_headers, file_body[: file_length // 2]
-
-    http.add_callback(responses.GET, url, callback=handle_request)
-    dest = tmp_path / "demo-0.1.0.tar.gz"
-    with pytest.raises(ChunkedEncodingError):
-        download_file(url, dest, chunk_size=file_length, max_retries=1)
-
-
 @pytest.mark.parametrize(
     "hash_types,expected",
     [
@@ -240,68 +128,6 @@ def test_download_file_fail_when_first_chunk_failed(
 )
 def test_highest_priority_hash_type(hash_types: set[str], expected: str | None) -> None:
     assert get_highest_priority_hash_type(hash_types, "Blah") == expected
-
-
-@pytest.mark.parametrize("accepts_ranges", [False, True])
-@pytest.mark.parametrize("raise_accepts_ranges", [False, True])
-def test_download_file_raise_accepts_ranges(
-    http: responses.RequestsMock,
-    fixture_dir: FixtureDirGetter,
-    tmp_path: Path,
-    accepts_ranges: bool,
-    raise_accepts_ranges: bool,
-) -> None:
-    filename = "demo-0.1.0-py2.py3-none-any.whl"
-
-    def handle_request(request: PreparedRequest) -> tuple[int, dict[str, Any], bytes]:
-        file_path = fixture_dir("distributions") / filename
-        response_headers = {}
-        if accepts_ranges:
-            response_headers["Accept-Ranges"] = "bytes"
-        return 200, response_headers, file_path.read_bytes()
-
-    url = f"https://foo.com/{filename}"
-    http.add_callback(responses.GET, url, callback=handle_request)
-    dest = tmp_path / filename
-
-    if accepts_ranges and raise_accepts_ranges:
-        with pytest.raises(HTTPRangeRequestSupportedError):
-            download_file(url, dest, raise_accepts_ranges=raise_accepts_ranges)
-        assert not dest.exists()
-    else:
-        download_file(url, dest, raise_accepts_ranges=raise_accepts_ranges)
-        assert dest.is_file()
-
-
-def test_downloader_uses_authenticator_by_default(
-    config: Config,
-    http: responses.RequestsMock,
-    tmp_working_directory: Path,
-) -> None:
-    import poetry.utils.authenticator
-
-    # force set default authenticator to None so that it is recreated using patched config
-    poetry.utils.authenticator._authenticator = None
-
-    config.merge(
-        {
-            "repositories": {"foo": {"url": "https://foo.bar/files/"}},
-            "http-basic": {"foo": {"username": "bar", "password": "baz"}},
-        }
-    )
-
-    http.get(
-        re.compile("^https?://foo.bar/(.+?)$"),
-    )
-
-    Downloader(
-        "https://foo.bar/files/foo-0.1.0.tar.gz",
-        tmp_working_directory / "foo-0.1.0.tar.gz",
-    )
-
-    request = http.calls[-1].request
-    basic_auth = base64.b64encode(b"bar:baz").decode()
-    assert request.headers["Authorization"] == f"Basic {basic_auth}"
 
 
 def test_ensure_path_converts_string(tmp_path: Path) -> None:
@@ -373,13 +199,7 @@ def test_extractall_sdist_no_path_traversal(
     has_data_filter = hasattr(tarfile, "data_filter")
     # The stdlib implementation just strips the leading "/" from absolute paths
     # and extracts them relative to the target directory (except for Windows).
-    # We do not care and raise an error.
-    raises = (
-        relative
-        or WINDOWS
-        or not has_data_filter
-        or sys.version_info[:3] in {(3, 10, 12), (3, 11, 4)}
-    )
+    raises = relative or WINDOWS
     exceptions: tuple[type[Exception], ...]
     if has_data_filter:
         if relative:
@@ -402,6 +222,67 @@ def test_extractall_sdist_no_path_traversal(
         # check that expected location exists, otherwise we have to check
         # that there is no traversal in an unexpected location
         assert (dest / target.as_posix().lstrip("/")).exists()
+
+
+def test_extractall_sdist_old_python_owner_filter(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The fallback filter must not hand None to old TarFile.chown()."""
+    import io
+
+    archive = tmp_path / "owner.tar.gz"
+    dest = tmp_path / "dest"
+    dest.mkdir()
+    with tarfile.open(archive, "w:gz") as tar:
+        member = tarfile.TarInfo("file.txt")
+        member.size = 4
+        tar.addfile(member, io.BytesIO(b"data"))
+
+    # Take the fallback path and skip the stdlib filter, as on old Python.
+    monkeypatch.setattr(sys, "version_info", (3, 10, 12))
+    monkeypatch.setattr(
+        tarfile.TarFile,
+        "_get_filter_function",
+        lambda self, filter: lambda member, dest_path: member,
+        raising=False,
+    )
+
+    original_getmembers = tarfile.TarFile.getmembers
+
+    def unowned_members(self: tarfile.TarFile) -> list[tarfile.TarInfo]:
+        members = original_getmembers(self)
+        for member in members:
+            for attr in ("uid", "gid", "uname", "gname"):
+                # object.__setattr__ because the declared types are not optional
+                object.__setattr__(member, attr, None)
+        return members
+
+    monkeypatch.setattr(tarfile.TarFile, "getmembers", unowned_members)
+
+    def lookup(name: str) -> int:
+        """Behaves like pwd.getpwnam()/grp.getgrnam() for an unknown name."""
+        if not isinstance(name, str):
+            raise TypeError(f"argument must be str, not {type(name).__name__}")
+        raise KeyError(name)
+
+    chown_args: list[tuple[int, int, str, str]] = []
+
+    def old_chown(
+        self: tarfile.TarFile, member: tarfile.TarInfo, target: str, numeric_owner: bool
+    ) -> None:
+        # Old TarFile.chown() resolved the names and caught only KeyError.
+        with contextlib.suppress(KeyError):
+            lookup(member.gname)
+        with contextlib.suppress(KeyError):
+            lookup(member.uname)
+        chown_args.append((member.uid, member.gid, member.uname, member.gname))
+
+    monkeypatch.setattr(tarfile.TarFile, "chown", old_chown)
+
+    extractall(source=archive, dest=dest, zip=False)
+
+    assert (dest / "file.txt").read_bytes() == b"data"
+    assert chown_args == [(-1, -1, "", "")]
 
 
 @pytest.mark.parametrize("link_type", [tarfile.SYMTYPE, tarfile.LNKTYPE])
@@ -463,6 +344,50 @@ def test_extractall_sdist_no_symlink_path_traversal(
         assert not target.exists()
 
 
+def test_extractall_sdist_no_symlink_path_traversal_via_directory_symlink(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """
+    A symlink "dir" pointing at "." is created first. A later member is then
+    named "dir/../traversal.txt". The path looks safe when resolving ".."
+    without resolving the symlink.
+    """
+    import io
+    import tarfile
+
+    archive = tmp_path / "traversal.tar.gz"
+    dest = tmp_path / "dest"
+    dest.mkdir()
+
+    with tarfile.open(archive, "w:gz") as tar:
+        symlink = tarfile.TarInfo("dir")
+        symlink.type = tarfile.SYMTYPE
+        symlink.linkname = "."
+        tar.addfile(symlink)
+
+        data = b"path traversal"
+        regular = tarfile.TarInfo("dir/../traversal.txt")
+        regular.size = len(data)
+        tar.addfile(regular, io.BytesIO(data))
+
+    exception: type[Exception]
+    if hasattr(tarfile, "data_filter"):
+        exception = tarfile.OutsideDestinationError
+    else:
+        # tarfile.OutsideDestinationError does not exist
+        exception = ValueError
+
+    # Filters may reject the path or normalize it inside dest.
+    try:
+        extractall(source=archive, dest=dest, zip=False)
+    except exception:
+        pass
+    else:
+        assert (dest / "traversal.txt").read_bytes() == data
+
+    assert not (tmp_path / "traversal.txt").exists()
+
+
 @pytest.mark.parametrize("existing", [False, True])
 def test_extractall_wheel_no_path_traversal(
     tmp_path: Path, wheel_with_path_traversal: Path, existing: bool
@@ -508,3 +433,25 @@ def test_extractall_wheel_no_path_traversal_via_symlink(
         assert target.read_text(encoding="utf-8") == "original"
     else:
         assert not target.exists()
+
+
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    [
+        ("Downloader", Downloader),
+        ("download_file", download_file),
+        ("HTTPRangeRequestSupportedError", HTTPRangeRequestSupportedError),
+    ],
+)
+def test_deprecated_helpers_download_reexports(name: str, expected: object) -> None:
+    from poetry.utils import helpers
+
+    with pytest.warns(DeprecationWarning, match=r"poetry\.utils\.download"):
+        assert getattr(helpers, name) is expected
+
+
+def test_unknown_helpers_attribute_still_raises_attribute_error() -> None:
+    from poetry.utils import helpers
+
+    with pytest.raises(AttributeError):
+        helpers.definitely_not_a_real_attribute  # noqa: B018

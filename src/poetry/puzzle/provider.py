@@ -17,6 +17,8 @@ from cleo.ui.progress_indicator import ProgressIndicator
 from poetry.core.constraints.version import EmptyConstraint
 from poetry.core.constraints.version import Version
 from poetry.core.constraints.version import VersionRange
+from poetry.core.packages.dependency import Dependency
+from poetry.core.packages.package import Package
 from poetry.core.packages.utils.utils import get_python_constraint_from_marker
 from poetry.core.version.markers import AnyMarker
 from poetry.core.version.markers import parse_marker
@@ -44,10 +46,8 @@ if TYPE_CHECKING:
     from cleo.io.io import IO
     from packaging.utils import NormalizedName
     from poetry.core.constraints.version import VersionConstraint
-    from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.directory_dependency import DirectoryDependency
     from poetry.core.packages.file_dependency import FileDependency
-    from poetry.core.packages.package import Package
     from poetry.core.packages.package import PackageFile
     from poetry.core.packages.url_dependency import URLDependency
     from poetry.core.packages.vcs_dependency import VCSDependency
@@ -58,6 +58,21 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
+
+
+# A package is sometimes required at conflicting versions under markers that are
+# mutually exclusive (e.g. one requirement applies only on Windows and the other
+# only on Linux). These requirements do not really conflict, but the resolver
+# cannot tell. To resolve such a case we re-run resolution twice, each run
+# restricted to one side of the markers, so that only one requirement applies.
+#
+# A run's restriction is passed as an override carrying a marker. Overrides are
+# keyed by package, but this restriction belongs to no real package, so we key it
+# by this stand-in. Its name is not a valid package name and so cannot clash with
+# a real package. Only the override's marker is ever read; the stand-in itself is
+# never resolved or installed.
+MARKER_SPLIT = "|marker-split|"
+_MARKER_SPLIT_PACKAGE = Package(MARKER_SPLIT, "0")
 
 
 class IncompatibleConstraintsError(Exception):
@@ -142,9 +157,9 @@ class Provider:
         )
 
         self._explicit_sources: dict[str, str] = {}
-        for package in locked or []:
-            self._locked[package.name].append(
-                DependencyPackage(package.to_dependency(), package)
+        for locked_package in locked or []:
+            self._locked[locked_package.name].append(
+                DependencyPackage(locked_package.to_dependency(), locked_package)
             )
         for dependency_packages in self._locked.values():
             dependency_packages.sort(
@@ -172,6 +187,32 @@ class Provider:
                     dep.marker
                 )
         return overrides_marker_intersection
+
+    def marker_split_overrides(
+        self, marker: BaseMarker
+    ) -> tuple[dict[Package, dict[str, Dependency]], ...]:
+        """
+        Build the overrides for two resolution runs, one restricted to ``marker``
+        and one restricted to its complement (see MARKER_SPLIT).
+
+        The restriction is carried by a stand-in dependency under the stand-in
+        package. When already inside such a split, narrow the existing restriction
+        rather than adding another, so there is always exactly one.
+        """
+        overrides = []
+        for side in (marker, marker.invert()):
+            new_overrides = {
+                package: dict(package_overrides)
+                for package, package_overrides in self._overrides.items()
+            }
+            current = new_overrides.get(_MARKER_SPLIT_PACKAGE, {}).get(MARKER_SPLIT)
+            if current is not None:
+                side = current.marker.intersect(side)
+            stand_in = Dependency(MARKER_SPLIT, "*")
+            stand_in.marker = side
+            new_overrides[_MARKER_SPLIT_PACKAGE] = {MARKER_SPLIT: stand_in}
+            overrides.append(new_overrides)
+        return tuple(overrides)
 
     @functools.cached_property
     def _python_constraint(self) -> VersionConstraint:
@@ -468,13 +509,14 @@ class Provider:
     ) -> DependencyPackage:
         package = dependency_package.package
         dependency = dependency_package.dependency
+        is_direct_origin = package.is_direct_origin()
 
         if package.is_root():
             dependency_package = dependency_package.clone()
             package = dependency_package.package
             dependency = dependency_package.dependency
             requires = package.all_requires
-        elif package.is_direct_origin():
+        elif is_direct_origin:
             requires = package.requires
         else:
             if (
@@ -518,6 +560,19 @@ class Provider:
             # Find all the optional dependencies that are wanted - taking care to allow
             # for self-referential extras.
             stack = sorted(dependency.extras)
+
+            # For direct origin dependencies from the lock file,
+            # only used extra dependencies are found in `requires`.
+            # If the package locked for a direct origin dependency is reused,
+            # its `requires` have been pruned down to whatever extras were active
+            # in an earlier resolution. This is an issue in subsequent resolutions
+            # if an additional extra is requested via changes in the pyproject.toml.
+            # (Dependencies from repositories are looked up again
+            # so that this is not issue for them.)
+            if is_direct_origin:
+                requires = requires.copy()
+                requires_extras = {extra for dep in requires for extra in dep.in_extras}
+
             while stack:
                 extra = stack.pop()
                 if extra in found_extras:
@@ -530,6 +585,8 @@ class Provider:
                         stack += sorted(extra_dependency.extras)
                     else:
                         optional_dependencies.add(extra_dependency.name)
+                        if is_direct_origin and extra not in requires_extras:
+                            requires.append(extra_dependency)
 
             # If some extras/features were required, we need to add a special dependency
             # representing the base package to the current package.
@@ -553,6 +610,13 @@ class Provider:
                 continue
 
             if dep.name in self.UNSAFE_PACKAGES:
+                continue
+
+            # When this run is restricted to a set of markers (see MARKER_SPLIT),
+            # skip any dependency that cannot apply within that set; otherwise its
+            # requirements would leak into a run where it never applies (see
+            # #5506).
+            if self._overrides_marker_intersection.intersect(dep.marker).is_empty():
                 continue
 
             if self._env:
@@ -645,9 +709,18 @@ class Provider:
                 active_extras = (
                     self._active_root_extras if package.is_root() else found_extras
                 )
-                deps = self._resolve_overlapping_markers(package, deps, active_extras)
+                deps = self._resolve_overlapping_markers(
+                    package,
+                    deps,
+                    active_extras,
+                    cover_leftover_marker_space=True,
+                )
             else:
-                # There are duplicates with different extras.
+                # Resolve overlaps within each subgroup of duplicates that share
+                # the same extras. The leftover marker space (where no dep in a
+                # subgroup is required) is covered by the sibling subgroups, so
+                # _resolve_overlapping_markers must not synthesise an
+                # empty-constraint dep for it (see #10447).
                 for complete_dep_name, deps_by_extra in duplicates_by_extras.items():
                     if len(deps_by_extra) > 1:
                         duplicates_by_extras[complete_dep_name] = (
@@ -952,6 +1025,8 @@ class Provider:
         package: Package,
         dependencies: list[Dependency],
         active_extras: Collection[NormalizedName] | None,
+        *,
+        cover_leftover_marker_space: bool = False,
     ) -> list[Dependency]:
         """
         Convert duplicate dependencies with potentially overlapping markers
@@ -1009,6 +1084,10 @@ class Provider:
                 raise IncompatibleConstraintsError(package, *used_dependencies)
 
             if not any(uses):
+                if not cover_leftover_marker_space:
+                    # Caller is responsible for the leftover marker space.
+                    continue
+
                 # This is an edge case where the dependency is not required
                 # for the resulting marker. However, we have to consider it anyway
                 #  in order to not miss other dependencies later, for instance:

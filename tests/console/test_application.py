@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import json
 import re
 import shutil
+import subprocess
+import sys
 
 from typing import TYPE_CHECKING
 from typing import ClassVar
@@ -206,10 +209,6 @@ def test_application_verify_cache_flag_at_install(
             ["--project", "/path/project/dir", "env", "list"],
         ),
         (
-            ["-P/path/project/dir", "env", "list"],
-            ["--project", "/path/project/dir", "env", "list"],
-        ),
-        (
             ["-v", "run", "-P/path/project/dir", "echo", "--help"],
             [
                 "--verbose",
@@ -245,3 +244,27 @@ def test_application_input_configuration_and_sorting(
 
     io_input = cast("ArgvInput", app._io.input)
     assert io_input._tokens == result
+
+
+def test_no_slow_imports_when_importing_the_cli_entrypoint() -> None:
+    """
+    This test checks that modules that are slow to import
+    (and not required for all commands) are not imported
+    when importing the CLI entrypoint.
+    """
+    code = (
+        "import sys, json;"
+        "import poetry.console.application;"
+        "print(json.dumps(sorted(sys.modules)))"
+    )
+    loaded_modules = json.loads(
+        subprocess.run(
+            [sys.executable, "-c", code],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            check=True,
+        ).stdout
+    )
+    assert "requests" not in loaded_modules
+    assert "urllib3" not in loaded_modules

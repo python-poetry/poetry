@@ -14,7 +14,13 @@ from poetry.repositories.parsers.html_page_parser import HTMLPageParser
 
 
 if TYPE_CHECKING:
-    from poetry.repositories.link_sources.base import LinkCache
+    from poetry.repositories.link_sources.base import LinkFactory
+    from poetry.repositories.link_sources.base import LinkFactoryCache
+
+
+def _const_factory(link: Link) -> LinkFactory:
+    """Wrap an already-built link in a factory for the link cache."""
+    return lambda: link
 
 
 class HTMLPage(LinkSource):
@@ -27,8 +33,8 @@ class HTMLPage(LinkSource):
         self._base_url: str | None = parser.base_url
 
     @cached_property
-    def _link_cache(self) -> LinkCache:
-        links: LinkCache = defaultdict(lambda: defaultdict(list))
+    def _link_factory_cache(self) -> LinkFactoryCache:
+        links: LinkFactoryCache = defaultdict(lambda: defaultdict(list))
         base_url = self._base_url or self._url
         for anchor in self._parsed:
             if href := anchor.get("href"):
@@ -60,9 +66,14 @@ class HTMLPage(LinkSource):
                 if link.ext not in self.SUPPORTED_FORMATS:
                     continue
 
-                pkg = self.link_package_data(link)
-                if pkg:
-                    links[pkg.name][pkg.version].append(link)
+                # The HTML API has no separate filename field, so the filename
+                # (needed to parse name and version) has to be derived from the
+                # URL, which means the Link is built eagerly here. The cache
+                # stores factories, so it is wrapped in one that just returns it.
+                name_and_version = self._link_package_name_and_version(link.filename)
+                if name_and_version:
+                    name, version = name_and_version
+                    links[name][version].append(_const_factory(link))
 
         return links
 

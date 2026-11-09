@@ -11,12 +11,11 @@ from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import TypedDict
 
 from poetry.utils.env.base_env import Env
 from poetry.utils.env.base_env import MarkerEnv
-from poetry.utils.env.script_strings import GET_BASE_PREFIX
-from poetry.utils.env.script_strings import GET_ENVIRONMENT_INFO
-from poetry.utils.env.script_strings import GET_PATHS
+from poetry.utils.env.script_strings import GET_ENVIRONMENT_DATA
 from poetry.utils.env.script_strings import GET_PLATFORMS
 from poetry.utils.env.script_strings import GET_SYS_PATH
 
@@ -25,6 +24,14 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from packaging.tags import Tag
+
+    from poetry.utils.env.base_env import EnvPaths
+
+
+class _EnvironmentData(TypedDict):
+    base_prefix: str
+    marker_env: MarkerEnv
+    paths: EnvPaths
 
 
 class VirtualEnv(Env):
@@ -35,13 +42,18 @@ class VirtualEnv(Env):
     def __init__(self, path: Path, base: Path | None = None) -> None:
         super().__init__(path, base)
 
-        # If base is None, it probably means this is
-        # a virtualenv created from VIRTUAL_ENV.
-        # In this case we need to get sys.base_prefix
-        # from inside the virtualenv.
-        if base is None:
-            output = self.run_python_script(GET_BASE_PREFIX)
-            self._base = Path(output.strip())
+    @property
+    def base(self) -> Path:
+        if self._base is None:
+            self._base = Path(self._environment_data["base_prefix"])
+
+        return self._base
+
+    @cached_property
+    def _environment_data(self) -> _EnvironmentData:
+        output = self.run_python_script(GET_ENVIRONMENT_DATA)
+        data: _EnvironmentData = json.loads(output)
+        return data
 
     @property
     def sys_path(self) -> list[str]:
@@ -95,17 +107,13 @@ class VirtualEnv(Env):
         ]
 
     def get_marker_env(self) -> MarkerEnv:
-        output = self.run_python_script(GET_ENVIRONMENT_INFO)
-
-        env: MarkerEnv = json.loads(output)
+        env = deepcopy(self._environment_data["marker_env"])
         # Lists and tuples are the same in JSON and loaded as list.
         env["version_info"] = tuple(env["version_info"])  # type: ignore[typeddict-item]
         return env
 
-    def get_paths(self) -> dict[str, str]:
-        output = self.run_python_script(GET_PATHS)
-        paths: dict[str, str] = json.loads(output)
-        return paths
+    def get_paths(self) -> EnvPaths:
+        return deepcopy(self._environment_data["paths"])
 
     def is_venv(self) -> bool:
         return True

@@ -6,9 +6,9 @@ import hashlib
 from collections import defaultdict
 from contextlib import contextmanager
 from contextlib import suppress
+from datetime import UTC
 from datetime import datetime
 from datetime import timedelta
-from datetime import timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
@@ -21,7 +21,7 @@ from packaging.metadata import parse_email
 from packaging.utils import canonicalize_name
 from poetry.core.constraints.version import Version
 from poetry.core.constraints.version import VersionConstraint
-from poetry.core.constraints.version import parse_constraint
+from poetry.core.constraints.version import parse_marker_version_constraint
 from poetry.core.packages.dependency import Dependency
 from poetry.core.version.markers import parse_marker
 
@@ -36,8 +36,8 @@ from poetry.repositories.link_sources.html import HTMLPage
 from poetry.repositories.link_sources.json import SimpleJsonPage
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.constants import REQUESTS_TIMEOUT
-from poetry.utils.helpers import HTTPRangeRequestSupportedError
-from poetry.utils.helpers import download_file
+from poetry.utils.download import HTTPRangeRequestSupportedError
+from poetry.utils.download import download_file
 from poetry.utils.helpers import get_highest_priority_hash_type
 from poetry.utils.patterns import wheel_file_re
 
@@ -76,7 +76,8 @@ class HTTPRepository(CachedRepository):
             pool_size=pool_size,
         )
         self._authenticator.add_repository(name, url)
-        self.get_page = functools.lru_cache(maxsize=None)(self._get_page)
+        self.get_page = functools.cache(self._get_page)
+        self._find_packages = functools.cache(self._find_packages_uncached)  # type: ignore[method-assign]
 
         self._lazy_wheel = config.get("solver.lazy-wheel", True)
         self._max_retries = config.get("requests.max-retries", 0)
@@ -93,9 +94,9 @@ class HTTPRepository(CachedRepository):
             ) or self._is_url_excluded_from_min_release_age(exclude_sources):
                 self._min_release_age = 0
             else:
-                self._min_release_age_cutoff = datetime.now(
-                    tz=timezone.utc
-                ) - timedelta(days=self._min_release_age)
+                self._min_release_age_cutoff = datetime.now(tz=UTC) - timedelta(
+                    days=self._min_release_age
+                )
                 self._min_release_age_exclude = {
                     canonicalize_name(n)
                     for n in (config.get("solver.min-release-age-exclude") or [])
@@ -146,11 +147,14 @@ class HTTPRepository(CachedRepository):
         )
 
     @contextmanager
-    def _cached_or_downloaded_file(
+    def _downloaded_file(
         self, link: Link, *, raise_accepts_ranges: bool = False
     ) -> Iterator[Path]:
         self._log(f"Downloading: {link.url}", level="debug")
         with TemporaryDirectory(ignore_cleanup_errors=True) as temp_dir:
+            # TODO: remove check as soon as this is handled in poetry-core
+            if "/" in link.filename or "\\" in link.filename:
+                raise ValueError(f"Invalid filename: '{link.filename}'")
             filepath = Path(temp_dir) / link.filename
             self._download(
                 link.url, filepath, raise_accepts_ranges=raise_accepts_ranges
@@ -178,7 +182,7 @@ class HTTPRepository(CachedRepository):
                 return True
         return False
 
-    def _find_packages(
+    def _find_packages_uncached(
         self, name: NormalizedName, constraint: VersionConstraint
     ) -> list[Package]:
         """
@@ -246,7 +250,7 @@ class HTTPRepository(CachedRepository):
                 return package_info
 
         try:
-            with self._cached_or_downloaded_file(
+            with self._downloaded_file(
                 link, raise_accepts_ranges=raise_accepts_ranges
             ) as filepath:
                 return PackageInfo.from_wheel(filepath)
@@ -265,7 +269,7 @@ class HTTPRepository(CachedRepository):
     def _get_info_from_sdist(self, link: Link) -> PackageInfo:
         from poetry.inspection.info import PackageInfo
 
-        with self._cached_or_downloaded_file(link) as filepath:
+        with self._downloaded_file(link) as filepath:
             return PackageInfo.from_sdist(filepath)
 
     def _get_info_from_metadata(self, link: Link) -> PackageInfo | None:
@@ -370,8 +374,12 @@ class HTTPRepository(CachedRepository):
 
                 if info.requires_python or py3_info.requires_python:
                     info.requires_python = str(
-                        parse_constraint(info.requires_python or "^2.7").union(
-                            parse_constraint(py3_info.requires_python or "^3")
+                        parse_marker_version_constraint(
+                            info.requires_python or "^2.7"
+                        ).union(
+                            parse_marker_version_constraint(
+                                py3_info.requires_python or "^3"
+                            )
                         )
                     )
 
@@ -501,7 +509,7 @@ class HTTPRepository(CachedRepository):
         return data.asdict()
 
     def calculate_sha256(self, link: Link) -> str | None:
-        with self._cached_or_downloaded_file(link) as filepath:
+        with self._downloaded_file(link) as filepath:
             hash_name = get_highest_priority_hash_type(link.hashes, link.filename)
             known_hash = None
             with suppress(ValueError, AttributeError):

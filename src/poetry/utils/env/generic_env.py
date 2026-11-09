@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import os
 import re
 import subprocess
@@ -9,7 +8,6 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 from poetry.utils._compat import WINDOWS
-from poetry.utils.env.script_strings import GET_PATHS
 from poetry.utils.env.virtual_env import VirtualEnv
 
 
@@ -58,11 +56,7 @@ class GenericEnv(VirtualEnv):
                 )
 
                 if python_executables:
-                    executable = python_executables[0]
-                    if executable.endswith(".exe"):
-                        executable = executable[:-4]
-
-                    python_executable = executable
+                    python_executable = python_executables[0].removesuffix(".exe")
 
             if not pip_executable:
                 pip_executables = sorted(
@@ -71,21 +65,13 @@ class GenericEnv(VirtualEnv):
                     if re.match(r"pip(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
                 )
                 if pip_executables:
-                    pip_executable = pip_executables[0]
-                    if pip_executable.endswith(".exe"):
-                        pip_executable = pip_executable[:-4]
+                    pip_executable = pip_executables[0].removesuffix(".exe")
 
             if python_executable:
                 self._executable = python_executable
 
             if pip_executable:
                 self._pip_executable = pip_executable
-
-    def get_paths(self) -> dict[str, str]:
-        output = self.run_python_script(GET_PATHS)
-
-        paths: dict[str, str] = json.loads(output)
-        return paths
 
     def execute(self, bin: str, *args: str, **kwargs: Any) -> int:
         command = self.get_command_from_bin(bin) + list(args)
@@ -103,4 +89,4 @@ class GenericEnv(VirtualEnv):
         return super(VirtualEnv, self)._run(cmd, **kwargs)
 
     def is_venv(self) -> bool:
-        return self._path != self._base
+        return self._path != self.base

@@ -29,10 +29,10 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
     from collections.abc import Iterator
     from types import TracebackType
+    from typing import Self
 
     from packaging.metadata import RawMetadata
     from requests import Session
-    from typing_extensions import Self
 
     from poetry.utils.authenticator import Authenticator
 
@@ -96,7 +96,7 @@ def metadata_from_wheel_url(
     except Exception as e:
         if isinstance(e, LazyWheelUnsupportedError):
             # this is expected when the code handles issues with lazy wheel metadata retrieval correctly
-            raise e
+            raise
 
         logger.debug(
             "There was an unexpected %s when handling lazy wheel metadata retrieval for %s from %s: %s",

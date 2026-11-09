@@ -3,8 +3,8 @@ from __future__ import annotations
 import base64
 import re
 
+from datetime import UTC
 from datetime import datetime
-from datetime import timezone
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -183,11 +183,11 @@ def test_get_package_information_pep_658(
         assert (
             package.requires == isort_package.requires == [Dependency("futures", "*")]
         )
-        assert (
-            str(package.python_constraint)
-            == str(isort_package.python_constraint)
-            == ">=2.7,<3.0.dev0 || >=3.4.dev0"
-        )
+        assert package.python_constraint == isort_package.python_constraint
+        assert str(package.python_constraint) in {
+            ">=2.7,<3.0 || >=3.4",
+            ">=2.7,<3.0.dev0 || >=3.4.dev0",
+        }
 
 
 def test_get_package_information_skips_dependencies_with_invalid_constraints(
@@ -260,11 +260,10 @@ def test_find_packages_only_prereleases(
 
     assert len(packages) == count
 
-    if count >= 0:
-        for package in packages:
-            assert package.source_type == "legacy"
-            assert package.source_reference == repo.name
-            assert package.source_url == repo.url
+    for package in packages:
+        assert package.source_type == "legacy"
+        assert package.source_reference == repo.name
+        assert package.source_url == repo.url
 
 
 @pytest.mark.parametrize(
@@ -298,7 +297,7 @@ def test_find_packages_min_release_age(
     repo = legacy_repository
     # ipython fixture upload times:
     #   4.1.0rc1: 2016-01-26, 5.7.0: 2018-05-10, 7.5.0: 2019-04-25
-    repo._min_release_age_cutoff = datetime(2018, 10, 6, tzinfo=timezone.utc)
+    repo._min_release_age_cutoff = datetime(2018, 10, 6, tzinfo=UTC)
     repo._min_release_age_exclude = min_release_age_exclude
     packages = repo.find_packages(Factory.create_dependency("ipython", "*"))
 
@@ -320,7 +319,7 @@ def test_find_packages_min_release_age_multiple_calls(
 ) -> None:
     """See test_find_packages_min_release_age for basic setup."""
     repo = legacy_repository
-    repo._min_release_age_cutoff = datetime(2017, 10, 6, tzinfo=timezone.utc)
+    repo._min_release_age_cutoff = datetime(2017, 10, 6, tzinfo=UTC)
 
     repo.find_packages(Factory.create_dependency("ipython", constraints[0]))
     repo.find_packages(Factory.create_dependency("ipython", constraints[1]))
@@ -654,7 +653,7 @@ def test_cached_or_downloaded_file_supports_trailing_slash(
     legacy_repository: LegacyRepository,
 ) -> None:
     repo = legacy_repository
-    with repo._cached_or_downloaded_file(
+    with repo._downloaded_file(
         Link("https://files.pythonhosted.org/pytest-3.5.0-py2.py3-none-any.whl/")
     ) as filepath:
         assert filepath.name == "pytest-3.5.0-py2.py3-none-any.whl"

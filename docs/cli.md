@@ -43,7 +43,7 @@ This is useful in CI/CD pipelines or scripts where you cannot easily modify comm
 * `--version (-V)`: Display this application version.
 * `--no-interaction (-n)`: Do not ask any interactive question.
 * `--no-plugins`: Disables plugins.
-* `--no-cache`: Disables Poetry source caches.
+* `--no-cache`: Disables the use of [Poetry's caches]({{< relref "#cache" >}}) (cached package metadata and dist files from configured package sources) for the duration of the command, forcing Poetry to behave as if it had a cold cache. This does not delete the caches; use `poetry cache clear` to remove cached data.
 * `--directory=DIRECTORY (-C)`: The working directory for the Poetry command (defaults to the current working directory). All command-line arguments will be resolved relative to the given directory.
 * `--project=PROJECT (-P)`: Specify another path as the project root. All command-line arguments will be resolved relative to the current working directory or directory specified using `--directory` option if used.
 
@@ -301,7 +301,7 @@ The `config` command allows you to edit poetry config settings and repositories.
 poetry config --list
 ```
 
-### Usage
+Usage:
 
 ````bash
 poetry config [options] [setting-key] [setting-value1] ... [setting-valueN]
@@ -338,6 +338,15 @@ The `debug info` command shows debug information about Poetry and your project's
 
 The `debug resolve` command helps when debugging dependency resolution issues. The command attempts to resolve your
 dependencies and list the chosen packages and versions.
+
+You can also pass one or more package names to resolve only those packages instead of your project's dependencies.
+
+#### Options
+
+* `--extras (-E)`: Extras to activate for the dependency. Only used when package names are passed.
+* `--python`: Python version(s) to use for resolution.
+* `--tree`: Display the dependency tree.
+* `--install`: Show what would be installed for the current system.
 
 ### debug tags
 
@@ -469,6 +478,7 @@ poetry init
 * `--python` Compatible Python versions.
 * `--dependency`: Package to require with a version constraint. Should be in the format `foo:1.0.0`.
 * `--dev-dependency`: Development requirements, see `--dependency`.
+* `--license (-l)`: License of the package.
 
 ## install
 
@@ -721,6 +731,7 @@ my-package
 * `--python` Compatible Python versions.
 * `--dependency`: Package to require with a version constraint. Should be in the format `foo:1.0.0`.
 * `--dev-dependency`: Development requirements, see `--dependency`.
+* `--license (-l)`: License of the package.
 
 ## publish
 
@@ -846,34 +857,94 @@ The `run` command executes the given command inside the project's virtualenv.
 poetry run python -V
 ```
 
-It can also execute one of the scripts defined in `pyproject.toml`.
+Any extra arguments are forwarded to the command:
 
-So, if you have a script defined like this:
+```bash
+poetry run python scripts/train.py --epochs 10
+poetry run pytest tests/ -k "test_login"
+```
 
-{{< tabs tabTotal="2" tabID1="script-project" tabID2=script-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
+The `run` command can also execute [console scripts (Python entry points)]({{< relref "pyproject#scripts" >}})
+defined in the `pyproject.toml` file.
+
+A console script (entry point) maps a **command name** to a Python callable with
+the form `package.module:function`. Poetry must be able to import that module and
+call that function after the project is installed into the environment.
+
+For example, with this layout:
+
+```text
+my-package/
+├── pyproject.toml
+└── my_package/
+    ├── __init__.py
+    └── console.py
+```
+
+and this configuration:
+
+{{< tabs tabTotal="2" tabID1="script-project" tabID2="script-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
 
 {{< tab tabID="script-project" >}}
 ```toml
 [project]
+name = "my-package"
 # ...
 [project.scripts]
-my-script = "my_module:main"
+greet = "my_package.console:main"
 ```
 {{< /tab >}}
 
 {{< tab tabID="script-poetry" >}}
 ```toml
+[tool.poetry]
+name = "my-package"
+# ...
 [tool.poetry.scripts]
-my-script = "my_module:main"
+greet = "my_package.console:main"
 ```
 {{< /tab >}}
 {{< /tabs >}}
 
-You can execute it like so:
+where `my_package/console.py` contains:
+
+```python
+import argparse
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Greet someone.")
+    parser.add_argument("name", nargs="?", default="World")
+    args = parser.parse_args()
+    print(f"Hello, {args.name}!")
+```
+
+install the project so the script wrapper is created, then run it:
 
 ```bash
-poetry run my-script
+poetry install
+poetry run greet
+poetry run greet Ada
 ```
+
+{{% note %}}
+After adding or changing scripts, re-run `poetry install` so the wrappers are
+updated. See [`project.scripts`]({{< relref "pyproject#scripts" >}}) for the
+canonical guidance.
+{{% /note %}}
+
+{{% note %}}
+`poetry run python path/to/script.py` runs a file directly and does **not**
+require a `[project.scripts]` entry. Use `[project.scripts]` when you want an
+installable command name (also available after installing your package with pip).
+{{% /note %}}
+
+Common problems:
+
+* **Command not found**: the script name is missing from `pyproject.toml`, or you
+  have not run `poetry install` since adding it.
+* **`ModuleNotFoundError`**: the dotted path on the right-hand side does not match
+  your package layout (wrong package/module name, or the package is not installed).
+* **`AttributeError`**: the name after `:` does not exist in that module.
 
 Note that this command has no option.
 
@@ -889,7 +960,7 @@ poetry search requests pendulum
 PyPI no longer allows for the search of packages without a browser. Please use https://pypi.org/search
 (via a browser) instead.
 
-For more information, please see [warehouse documentation](https://warehouse.pypa.io/api-reference/xml-rpc.html#deprecated-methods)
+For more information, please see [PyPI API documentation](https://docs.pypi.org/api/#api-preference)
 and this [discussion](https://discuss.python.org/t/fastly-interfering-with-pypi-search/73597/6).
 {{% /note %}}
 
@@ -898,8 +969,8 @@ and this [discussion](https://discuss.python.org/t/fastly-interfering-with-pypi-
 The `self` namespace groups subcommands to manage the Poetry installation itself.
 
 {{% note %}}
-Use of these commands will create the required `pyproject.toml` and `poetry.lock` files in your
-[configuration directory]({{< relref "configuration" >}}).
+Use of these commands will create the required `pyproject.toml` and `poetry.lock` files
+for Poetry's runtime environment in your [configuration directory]({{< relref "configuration" >}}).
 {{% /note %}}
 
 {{% warning %}}
@@ -916,8 +987,8 @@ also be used to upgrade Poetry's own dependencies or inject additional packages 
 environment
 
 {{% note %}}
-The `self add` command works exactly like the [`add` command](#add). However, is different in that the packages
-managed are for Poetry's runtime environment.
+The `self add` command works exactly like the [`add` command](#add).
+However, it is different in that the packages managed are for Poetry's runtime environment.
 
 The package specification formats supported by the `self add` command are the same as the ones supported
 by the [`add` command](#add).
@@ -955,8 +1026,8 @@ The `self install` command ensures all additional packages specified are install
 runtime environment.
 
 {{% note %}}
-The `self install` command works similar to the [`install` command](#install). However,
-it is different in that the packages managed are for Poetry's runtime environment.
+The `self install` command works similarly to the [`install` command](#install).
+However, it is different in that the packages managed are for Poetry's runtime environment.
 {{% /note %}}
 
 ```bash
@@ -970,8 +1041,9 @@ poetry self install
 
 ### self lock
 
-The `self lock` command reads this Poetry installation's system `pyproject.toml` file. The system
-dependencies are locked in the corresponding `poetry.lock` file.
+The `self lock` command reads this Poetry installation's `pyproject.toml` file
+located in the [configuration directory]({{< relref "configuration" >}}).
+Poetry's own dependencies are locked in the corresponding `poetry.lock` file.
 
 ```bash
 poetry self lock
@@ -1028,8 +1100,8 @@ The `self sync` command ensures all additional (and no other) packages specified
 are installed in the current runtime environment.
 
 {{% note %}}
-The `self sync` command works similar to the [`sync` command](#sync). However,
-it is different in that the packages managed are for Poetry's runtime environment.
+The `self sync` command works similarly to the [`sync` command](#sync).
+However, it is different in that the packages managed are for Poetry's runtime environment.
 {{% /note %}}
 
 ```bash
@@ -1042,16 +1114,26 @@ poetry self sync
 
 ### self update
 
-The `self update` command updates Poetry version in its current runtime environment.
+The `self update` command updates the Poetry version and its dependencies
+in its current runtime environment.
 
 {{% note %}}
-The `self update` command works exactly like the [`update` command](#update). However,
-is different in that the packages managed are for Poetry's runtime environment.
+The `self update` command works exactly like the [`update` command](#update).
+However, it is different in that the packages managed are for Poetry's runtime environment.
 {{% /note %}}
 
 ```bash
 poetry self update
 ```
+
+{{% note %}}
+`self update` uses the package sources configured in Poetry's own `pyproject.toml` file,
+which is located in the [configuration directory]({{< relref "configuration" >}}).
+To update Poetry from a custom package source, add a `tool.poetry.source` entry using
+the format described in [Package Sources]({{< relref "repositories/#package-sources" >}}).
+Sources configured in the current project's `pyproject.toml` do not affect `self update`.
+Poetry preserves existing `tool.poetry.source` entries when it regenerates this file.
+{{% /note %}}
 
 #### Options
 
@@ -1316,6 +1398,13 @@ You can do this using the `add` command.
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables `--verbose`).
 * `--lock` : Do not perform install (only update the lockfile).
 * `--sync`: Synchronize the environment with the locked packages and the specified groups.
+
+{{% note %}}
+The group options determine which dependency groups are installed or synchronized in the
+environment. They do not limit resolution of the lock file: `poetry.lock` keeps one consistent
+solution for all declared groups, so packages that belong to an excluded group can still change.
+To restrict which packages Poetry updates, pass their names to the command.
+{{% /note %}}
 
 {{% note %}}
 When `--only` is specified, `--with` and `--without` options are ignored.

@@ -4,8 +4,10 @@ import csv
 import hashlib
 import json
 import os
+import shutil
 
 from base64 import urlsafe_b64encode
+from locale import getencoding
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -15,7 +17,6 @@ from poetry.core.masonry.utils.package_include import PackageInclude
 
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import decode
-from poetry.utils._compat import getencoding
 from poetry.utils.env import build_environment
 from poetry.utils.helpers import is_dir_writable
 from poetry.utils.pip import pip_install
@@ -153,8 +154,10 @@ class EditableBuilder(Builder):
             )
             return []
 
-        scripts = entry_points.get("console_scripts", [])
-        for script in scripts:
+        scripts = [
+            (script, False) for script in entry_points.get("console_scripts", [])
+        ] + [(script, True) for script in entry_points.get("gui_scripts", [])]
+        for script, is_gui in scripts:
             name, script_with_extras = script.split(" = ")
             script_without_extras = script_with_extras.split("[")[0]
             try:
@@ -200,7 +203,12 @@ class EditableBuilder(Builder):
 
             if WINDOWS:
                 cmd_script = script_file.with_suffix(".cmd")
-                cmd = WINDOWS_CMD_TEMPLATE.format(python=self._env.python, script=name)
+                python = (
+                    self._env.python.with_name("pythonw.exe")
+                    if is_gui
+                    else self._env.python
+                )
+                cmd = WINDOWS_CMD_TEMPLATE.format(python=python, script=name)
                 self._debug(
                     f"  - Adding the <c2>{cmd_script.name}</c2> script wrapper to"
                     f" <b>{scripts_path}</b>"
@@ -210,6 +218,41 @@ class EditableBuilder(Builder):
                     f.write(decode(cmd))
 
                 added.append(cmd_script)
+
+        # Handle file scripts (type = "file" in [tool.poetry.scripts])
+        for name, specification in self._poetry.local_config.get("scripts", {}).items():
+            if isinstance(specification, dict) and specification.get("type") == "file":
+                source = specification.get("reference")
+                if not source:
+                    self._io.write_error_line(
+                        f"  - File script <c2>{name}</c2> is missing"
+                        ' a "reference" field'
+                    )
+                    continue
+                source_path = self._path / source
+
+                if not source_path.exists():
+                    self._io.write_error_line(
+                        f"  - File script <c2>{name}</c2> references"
+                        f" <b>{source}</b> which does not exist"
+                    )
+                    continue
+
+                if not source_path.is_file():
+                    self._io.write_error_line(
+                        f"  - File script <c2>{name}</c2> references"
+                        f" <b>{source}</b> which is not a file"
+                    )
+                    continue
+
+                target = scripts_path.joinpath(name)
+                self._debug(
+                    f"  - Adding the <c2>{name}</c2> file script"
+                    f" to <b>{scripts_path}</b>"
+                )
+                shutil.copy2(source_path, target)
+                target.chmod(0o755)
+                added.append(target)
 
         return added
 
@@ -225,8 +268,7 @@ class EditableBuilder(Builder):
         )
 
         builder.prepare_metadata(dist_info.parent)
-        for path in sorted(f for f in dist_info.rglob("*") if f.is_file()):
-            added_files.append(path)
+        added_files.extend(sorted(f for f in dist_info.rglob("*") if f.is_file()))
 
         with dist_info.joinpath("INSTALLER").open("w", encoding="utf-8") as f:
             f.write("poetry")

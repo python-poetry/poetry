@@ -64,6 +64,7 @@
   "urls": [
     {
       "comment_text": "",
+      "core-metadata": false,
       "digests": {
         "md5": "4a2617b5254748828d09349fc4eff6bd",
         "sha256": "b5a127599b3f27847fba6119de0fcb70832a8041b103701a708b7c7d044faa38"

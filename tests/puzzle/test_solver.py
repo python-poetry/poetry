@@ -118,6 +118,273 @@ def test_solver_install_single(
     check_solver_result(transaction, [{"job": "install", "package": package_a}])
 
 
+def test_solver_local_version_variant_does_not_leak_dependencies(
+    package: ProjectPackage,
+    repo: Repository,
+    pool: RepositoryPool,
+    io: NullIO,
+    mocker: MockerFixture,
+) -> None:
+    """
+    Regression test for the "orphan decision" bug, modelled on the reported
+    `torch` / `torch+cpu` failure (`KeyError: Package('triton', '3.7.1')`).
+
+    The explicit source serves two builds of the same base version: "2.12.1+cpu",
+    which needs no "triton", and a plain "2.12.1" (the macOS wheel), whose
+    metadata does. The "setuptools" conflict makes the solver record the
+    incompatibilities of both builds before it settles on "2.12.1+cpu" -- which
+    *satisfies* the term "torch (==2.12.1)", because a local version segment is
+    ignored by "==". The discarded build's incompatibilities therefore keep
+    deriving "triton", leaving it behind as a decision that no package in the
+    solution requires.
+
+    The solver now drops such orphan decisions instead of raising a KeyError.
+    Note that this only treats the symptom: "triton" is still resolved and
+    completed for nothing, and the leak still causes false resolution failures
+    (see the xfail-ed tests below).
+    """
+
+    def torchcpu_build(version: str) -> Package:
+        return Package(
+            "torch", version, source_type="legacy", source_reference="torchcpu"
+        )
+
+    package.add_dependency(
+        Factory.create_dependency(
+            "torch", {"version": "==2.12.1", "source": "torchcpu"}
+        )
+    )
+    # Both torch builds cap setuptools at <82 while the project itself accepts
+    # any version and the lock prefers 83.0.0. Resolving that conflict is what
+    # makes the solver record the incompatibilities of both builds before it
+    # decides on one of them.
+    package.add_dependency(Factory.create_dependency("setuptools", "*"))
+
+    torchcpu = Repository("torchcpu")
+    pool.add_repository(torchcpu, priority=Priority.EXPLICIT)
+
+    torch_cpu = torchcpu_build("2.12.1+cpu")
+    torch_cpu.add_dependency(Factory.create_dependency("setuptools", "<82"))
+    torchcpu.add_package(torch_cpu)
+
+    # The same index also serves a plain 2.12.1 wheel, which does need triton.
+    torch_plain = torchcpu_build("2.12.1")
+    torch_plain.add_dependency(Factory.create_dependency("setuptools", "<82"))
+    torch_plain.add_dependency(Factory.create_dependency("triton", "==3.7.1"))
+    torchcpu.add_package(torch_plain)
+
+    repo.add_package(get_package("triton", "3.7.1"))
+    setuptools_81 = get_package("setuptools", "81.0.0")
+    repo.add_package(setuptools_81)
+    setuptools_83 = get_package("setuptools", "83.0.0")
+    repo.add_package(setuptools_83)
+
+    solver = Solver(package, pool, [], [setuptools_83], io)
+
+    complete_package_spy = mocker.spy(solver._provider, "complete_package")
+    transaction = solver.solve()
+
+    # Notably no triton: it is only required by the discarded plain build.
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": setuptools_81},
+            {"job": "install", "package": torch_cpu},
+        ],
+    )
+
+    # The assertion below isn't the point of this test, but pins down the
+    # resolution order the reproduction depends on. Which build is completed
+    # first matters: the bug only occurs because the plain 2.12.1 build is
+    # completed -- recording its triton incompatibility -- while a *different*
+    # build satisfying the same "torch (==2.12.1)" term is what gets decided.
+    # If the solver ever settled on 2.12.1 instead, triton would be a genuine
+    # dependency and this test would silently stop covering the bug.
+    assert [
+        (call.args[0].package.name, str(call.args[0].package.version))
+        for call in complete_package_spy.mock_calls
+    ] == [
+        ("root", "1.0"),
+        # locked, so preferred and decided first
+        ("setuptools", "83.0.0"),
+        # the highest torch candidate, rejected over `setuptools (<82)`
+        ("torch", "2.12.1+cpu"),
+        # the next candidate; its `triton` incompatibility is recorded here
+        ("torch", "2.12.1"),
+        # backtracking settles the setuptools conflict...
+        ("setuptools", "81.0.0"),
+        # ...and 2.12.1+cpu is decided after all, inheriting the
+        # incompatibility recorded for 2.12.1 above, which derives...
+        ("torch", "2.12.1+cpu"),
+        # ...this orphan, which nothing in the solution actually requires.
+        ("triton", "3.7.1"),
+    ]
+
+
+@pytest.mark.xfail(
+    reason=(
+        "The dependencies of a plain release leak onto its local variants,"
+        " because `==2.12.1` also matches `2.12.1+cpu`. Only the resulting"
+        " orphan decisions are handled, not the leak itself."
+    ),
+    strict=True,
+)
+def test_solver_local_version_variant_is_not_wrongly_excluded(
+    package: ProjectPackage,
+    repo: Repository,
+    pool: RepositoryPool,
+    io: NullIO,
+) -> None:
+    """
+    The second symptom of the same leak: a *false* resolution failure.
+
+    This is the setup of
+    ``test_solver_local_version_variant_does_not_leak_dependencies`` with one
+    change: the "triton" that the plain 2.12.1 build requires exists in no
+    repository. The "2.12.1+cpu" build needs no triton and satisfies
+    "torch (==2.12.1)", so the solver should settle on it and succeed.
+
+    It does select it, but then the incompatibility recorded for the plain
+    build leaks onto it exactly as in the test above -- only here the leaked
+    requirement is unsatisfiable, so instead of an orphan decision it takes the
+    whole resolution down::
+
+        selecting torch (2.12.1+cpu)
+        derived: triton (==3.7.1)
+        fact: no versions of triton match 3.7.1
+        conflict: torch (2.12.1) depends on triton (==3.7.1)
+        ! thus: torch is forbidden
+
+    Unlike an orphan decision, this cannot be repaired when aggregating the
+    solved packages, because resolution has already failed by then. A fix has
+    to stop the incompatibilities recorded for one build from applying to a
+    sibling build of the same base version.
+    """
+
+    def torchcpu_build(version: str) -> Package:
+        return Package(
+            "torch", version, source_type="legacy", source_reference="torchcpu"
+        )
+
+    package.add_dependency(
+        Factory.create_dependency(
+            "torch", {"version": "==2.12.1", "source": "torchcpu"}
+        )
+    )
+    package.add_dependency(Factory.create_dependency("setuptools", "*"))
+
+    torchcpu = Repository("torchcpu")
+    pool.add_repository(torchcpu, priority=Priority.EXPLICIT)
+
+    torch_cpu = torchcpu_build("2.12.1+cpu")
+    torch_cpu.add_dependency(Factory.create_dependency("setuptools", "<82"))
+    torchcpu.add_package(torch_cpu)
+
+    torch_plain = torchcpu_build("2.12.1")
+    torch_plain.add_dependency(Factory.create_dependency("setuptools", "<82"))
+    torch_plain.add_dependency(Factory.create_dependency("triton", "==3.7.1"))
+    torchcpu.add_package(torch_plain)
+
+    # Note: no triton in any repository, so the plain build is not installable.
+    setuptools_81 = get_package("setuptools", "81.0.0")
+    repo.add_package(setuptools_81)
+    setuptools_83 = get_package("setuptools", "83.0.0")
+    repo.add_package(setuptools_83)
+
+    solver = Solver(package, pool, [], [setuptools_83], io)
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": setuptools_81},
+            {"job": "install", "package": torch_cpu},
+        ],
+    )
+
+
+@pytest.mark.xfail(
+    reason=(
+        "The dependencies of a plain release leak onto its local variants,"
+        " because `==2.12.1` also matches `2.12.1+cpu`. Only the resulting"
+        " orphan decisions are handled, not the leak itself."
+    ),
+    strict=True,
+)
+def test_solver_local_version_variant_is_not_wrongly_excluded_via_stale_lock(
+    package: ProjectPackage,
+    repo: Repository,
+    pool: RepositoryPool,
+    io: NullIO,
+) -> None:
+    """
+    A false resolution failure from the same leak, reached by a different
+    route: here it is a *cap* rather than a missing package that leaks.
+
+    The plain 2.12.1 build caps ``setuptools (<82)`` while the root asks for
+    ``>=83``; the 2.12.1+cpu build caps nothing and satisfies ``==2.12.1``, so
+    the answer is setuptools 83.0.0 with torch 2.12.1+cpu. Because the plain
+    build's requirement is attributed to the whole ``==2.12.1`` term, the
+    2.12.1+cpu build is excluded along with it and resolution fails::
+
+        conflict: torch (2.12.1) depends on setuptools (<82)
+        ! which is caused by "root depends on torch (==2.12.1)"
+        ! thus: setuptools is required
+
+    This needs the stale lock below to reproduce: the plain build's
+    incompatibility has to be recorded while 2.12.1+cpu is still a live
+    candidate, and the locked plain build is preferred and completed first.
+    Without the lock the solver reaches 2.12.1+cpu first and never records the
+    conflicting term.
+    """
+
+    def torchcpu_build(version: str) -> Package:
+        return Package(
+            "torch", version, source_type="legacy", source_reference="torchcpu"
+        )
+
+    package.add_dependency(
+        Factory.create_dependency(
+            "torch", {"version": "==2.12.1", "source": "torchcpu"}
+        )
+    )
+    package.add_dependency(Factory.create_dependency("setuptools", ">=83"))
+
+    torchcpu = Repository("torchcpu")
+    pool.add_repository(torchcpu, priority=Priority.EXPLICIT)
+
+    # The +cpu build caps nothing and needs no triton.
+    torch_cpu = torchcpu_build("2.12.1+cpu")
+    torchcpu.add_package(torch_cpu)
+
+    torch_plain = torchcpu_build("2.12.1")
+    torch_plain.add_dependency(Factory.create_dependency("setuptools", "<82"))
+    torch_plain.add_dependency(Factory.create_dependency("triton", "==3.7.1"))
+    torchcpu.add_package(torch_plain)
+
+    repo.add_package(get_package("triton", "3.7.1"))
+    repo.add_package(get_package("setuptools", "81.0.0"))
+    setuptools_83 = get_package("setuptools", "83.0.0")
+    repo.add_package(setuptools_83)
+
+    # A stale lock pinning the *plain* build, so it is preferred and completed
+    # before 2.12.1+cpu is ever considered.
+    locked = [torchcpu_build("2.12.1"), setuptools_83]
+
+    solver = Solver(package, pool, [], locked, io)
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": setuptools_83},
+            {"job": "install", "package": torch_cpu},
+        ],
+    )
+
+
 def test_solver_remove_if_no_longer_locked(
     package: ProjectPackage, pool: RepositoryPool, io: NullIO
 ) -> None:
@@ -2063,6 +2330,289 @@ def test_solver_duplicate_dependencies_sub_dependencies(
     )
 
 
+def test_solver_duplicate_dependencies_conditional_sibling_with_transitive_conflict(
+    solver: Solver, repo: Repository, package: ProjectPackage
+) -> None:
+    """
+    Regression test for https://github.com/python-poetry/poetry/issues/5506.
+
+    The root depends on A and on B with two mutually exclusive markers
+    selecting different versions of B. A itself transitively forces a
+    specific version of B. On the override branch where A's marker does
+    not apply, A must be ignored - otherwise A's transitive constraint
+    on B spuriously conflicts with the overridden version of B.
+    """
+    package.add_dependency(
+        Factory.create_dependency(
+            "A", {"version": "1.0", "markers": "sys_platform != 'darwin'"}
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency(
+            "B", {"version": "1.0", "markers": "sys_platform != 'darwin'"}
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency(
+            "B", {"version": "2.0", "markers": "sys_platform == 'darwin'"}
+        )
+    )
+
+    package_a = get_package("A", "1.0")
+    package_a.add_dependency(Factory.create_dependency("B", "1.0"))
+
+    package_b10 = get_package("B", "1.0")
+    package_b20 = get_package("B", "2.0")
+
+    repo.add_package(package_a)
+    repo.add_package(package_b10)
+    repo.add_package(package_b20)
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": package_b10},
+            {"job": "install", "package": package_a},
+            {"job": "install", "package": package_b20},
+        ],
+    )
+
+
+def test_solver_conditional_sibling_with_transitive_conflict_single_constraint(
+    solver: Solver, repo: Repository, package: ProjectPackage
+) -> None:
+    """
+    Regression test for https://github.com/python-poetry/poetry/issues/5506.
+
+    Unlike the multi-constraint variant above, B is required by the root with
+    only a single constraint guarded by a marker. The conflicting requirement
+    for B is contributed transitively by A, whose marker is disjoint with B's.
+    Since B is not a duplicate in the root's own requirements, no override is
+    triggered for it directly: the root must instead be split on A's marker so
+    that A (and its transitive dependency on B 1.0) is dropped in the marker
+    world where the root pins B 2.0.
+    """
+    package.add_dependency(
+        Factory.create_dependency(
+            "A", {"version": "1.0", "markers": "sys_platform != 'darwin'"}
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency(
+            "B", {"version": "2.0", "markers": "sys_platform == 'darwin'"}
+        )
+    )
+
+    package_a = get_package("A", "1.0")
+    package_a.add_dependency(Factory.create_dependency("B", "1.0"))
+
+    package_b10 = get_package("B", "1.0")
+    package_b20 = get_package("B", "2.0")
+
+    repo.add_package(package_a)
+    repo.add_package(package_b10)
+    repo.add_package(package_b20)
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": package_b10},
+            {"job": "install", "package": package_a},
+            {"job": "install", "package": package_b20},
+        ],
+    )
+
+    solved_packages = transaction.get_solved_packages()
+    assert solved_packages[package_a].markers[MAIN_GROUP] == parse_marker(
+        "sys_platform != 'darwin'"
+    )
+    assert solved_packages[package_b10].markers[MAIN_GROUP] == parse_marker(
+        "sys_platform != 'darwin'"
+    )
+    assert solved_packages[package_b20].markers[MAIN_GROUP] == parse_marker(
+        "sys_platform == 'darwin'"
+    )
+
+
+def test_solver_conditional_transitive_conflict_without_root_requirement(
+    solver: Solver, repo: Repository, package: ProjectPackage
+) -> None:
+    """
+    Regression test for https://github.com/python-poetry/poetry/issues/5506.
+
+    Neither clashing requirement on B comes from the root. The root depends on C
+    and D under mutually exclusive markers, and C and D each require a different,
+    incompatible version of B. The two requirements on B come from different
+    packages, so the provider never pairs them up; but as they never apply
+    together, resolution should still succeed by handling each marker case
+    separately rather than reporting a conflict.
+    """
+    package.add_dependency(
+        Factory.create_dependency(
+            "C", {"version": "1.0", "markers": "sys_platform != 'darwin'"}
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency(
+            "D", {"version": "1.0", "markers": "sys_platform == 'darwin'"}
+        )
+    )
+
+    package_c = get_package("C", "1.0")
+    package_c.add_dependency(Factory.create_dependency("B", "1.0"))
+    package_d = get_package("D", "1.0")
+    package_d.add_dependency(Factory.create_dependency("B", "2.0"))
+
+    package_b10 = get_package("B", "1.0")
+    package_b20 = get_package("B", "2.0")
+
+    repo.add_package(package_c)
+    repo.add_package(package_d)
+    repo.add_package(package_b10)
+    repo.add_package(package_b20)
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": package_b10},
+            {"job": "install", "package": package_b20},
+            {"job": "install", "package": package_c},
+            {"job": "install", "package": package_d},
+        ],
+    )
+
+    solved_packages = transaction.get_solved_packages()
+    assert solved_packages[package_c].markers[MAIN_GROUP] == parse_marker(
+        "sys_platform != 'darwin'"
+    )
+    assert solved_packages[package_d].markers[MAIN_GROUP] == parse_marker(
+        "sys_platform == 'darwin'"
+    )
+    assert solved_packages[package_b10].markers[MAIN_GROUP] == parse_marker(
+        "sys_platform != 'darwin'"
+    )
+    assert solved_packages[package_b20].markers[MAIN_GROUP] == parse_marker(
+        "sys_platform == 'darwin'"
+    )
+
+
+def test_solver_conditional_transitive_conflict_nested_independent_splits(
+    solver: Solver, repo: Repository, package: ProjectPackage
+) -> None:
+    """
+    Regression test for https://github.com/python-poetry/poetry/issues/5506.
+
+    Two independent version conflicts: one on B (distinguished only by
+    ``sys_platform``) and one on F (distinguished only by ``python_version``).
+    Resolving the first requires splitting on ``sys_platform``; the second
+    conflict then surfaces within each side and requires a further split on
+    ``python_version``. Each package must end up with exactly its own marker, with
+    no marker from the other conflict mixed in.
+    """
+    package.add_dependency(
+        Factory.create_dependency(
+            "C", {"version": "1.0", "markers": "sys_platform != 'darwin'"}
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency(
+            "D", {"version": "1.0", "markers": "sys_platform == 'darwin'"}
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency(
+            "E", {"version": "1.0", "markers": "python_version < '3.9'"}
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency(
+            "G", {"version": "1.0", "markers": "python_version >= '3.9'"}
+        )
+    )
+
+    package_c = get_package("C", "1.0")
+    package_c.add_dependency(Factory.create_dependency("B", "1.0"))
+    package_d = get_package("D", "1.0")
+    package_d.add_dependency(Factory.create_dependency("B", "2.0"))
+    package_e = get_package("E", "1.0")
+    package_e.add_dependency(Factory.create_dependency("F", "1.0"))
+    package_g = get_package("G", "1.0")
+    package_g.add_dependency(Factory.create_dependency("F", "2.0"))
+
+    package_b10 = get_package("B", "1.0")
+    package_b20 = get_package("B", "2.0")
+    package_f10 = get_package("F", "1.0")
+    package_f20 = get_package("F", "2.0")
+
+    for pkg in (
+        package_c,
+        package_d,
+        package_e,
+        package_g,
+        package_b10,
+        package_b20,
+        package_f10,
+        package_f20,
+    ):
+        repo.add_package(pkg)
+
+    transaction = solver.solve()
+
+    solved_packages = transaction.get_solved_packages()
+    assert solved_packages[package_b10].markers[MAIN_GROUP] == parse_marker(
+        "sys_platform != 'darwin'"
+    )
+    assert solved_packages[package_b20].markers[MAIN_GROUP] == parse_marker(
+        "sys_platform == 'darwin'"
+    )
+    assert solved_packages[package_f10].markers[MAIN_GROUP] == parse_marker(
+        "python_version < '3.9'"
+    )
+    assert solved_packages[package_f20].markers[MAIN_GROUP] == parse_marker(
+        "python_version >= '3.9'"
+    )
+
+
+def test_solver_conditional_transitive_conflict_overlapping_markers_still_fails(
+    solver: Solver, repo: Repository, package: ProjectPackage
+) -> None:
+    """
+    The #5506 recovery must only apply when the clashing requirements are never
+    active together. Here C and D apply under markers that can both be true at
+    once, so their incompatible requirements on B are a genuine conflict and
+    resolution must still fail.
+    """
+    package.add_dependency(
+        Factory.create_dependency(
+            "C", {"version": "1.0", "markers": "sys_platform != 'darwin'"}
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency(
+            "D", {"version": "1.0", "markers": "python_version >= '3.9'"}
+        )
+    )
+
+    package_c = get_package("C", "1.0")
+    package_c.add_dependency(Factory.create_dependency("B", "1.0"))
+    package_d = get_package("D", "1.0")
+    package_d.add_dependency(Factory.create_dependency("B", "2.0"))
+
+    repo.add_package(package_c)
+    repo.add_package(package_d)
+    repo.add_package(get_package("B", "1.0"))
+    repo.add_package(get_package("B", "2.0"))
+
+    with pytest.raises(SolverProblemError):
+        solver.solve()
+
+
 def test_solver_duplicate_dependencies_with_overlapping_markers_simple(
     solver: Solver, repo: Repository, package: ProjectPackage
 ) -> None:
@@ -2143,7 +2693,7 @@ def test_solver_duplicate_dependencies_with_overlapping_markers_complex(
     for dep in deps:
         opencv_package.add_dependency(dep)
 
-    for version in {"1.13.3", "1.21.2", "1.19.3", "1.14.5", "1.17.3"}:
+    for version in ("1.13.3", "1.21.2", "1.19.3", "1.14.5", "1.17.3"):
         repo.add_package(get_package("numpy", version))
     repo.add_package(opencv_package)
 
@@ -4742,8 +5292,8 @@ def test_solver_does_not_update_ref_of_locked_vcs_package(
 
     assert op.package.source_type == "git"
     assert op.package.source_reference == DEFAULT_SOURCE_REF
-    assert (
-        op.package.source_resolved_reference == locked_ref if is_locked else latest_ref
+    assert op.package.source_resolved_reference == (
+        locked_ref if is_locked else latest_ref
     )
 
 
@@ -5244,6 +5794,87 @@ def test_solver_resolves_duplicate_dependencies_with_restricted_extras(
                 {"job": "install", "package": package_a},
             ]
         ),
+    )
+
+
+def test_solver_resolves_duplicate_extra_dependencies_missing_from_requires(
+    package: ProjectPackage,
+    pool: RepositoryPool,
+    repo: Repository,
+    io: NullIO,
+) -> None:
+    """
+    Same shape as test_solver_resolves_duplicate_dependencies_with_restricted_extras,
+    but neither same-named dependency is added to package_a's own `requires`
+    (only `extras`), simulating a package reused from the lock file whose
+    `requires` was pruned down to whatever extras were active during an
+    earlier resolution (regression test for #10314).
+    """
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "*", "extras": ["foo"]})
+    )
+
+    package_a = Package("A", "1.0", source_type="url", source_url="https://example.org")
+    package_b1 = get_package("B", "1.0")
+    package_b2 = get_package("B", "2.0")
+
+    dep1 = get_dependency("B", "^1.0", optional=True)
+    dep1.marker = parse_marker("sys_platform == 'win32' and extra == 'foo'")
+    dep2 = get_dependency("B", "^2.0", optional=True)
+    dep2.marker = parse_marker("sys_platform == 'linux' and extra == 'foo'")
+    package_a.extras = {canonicalize_name("foo"): [dep1, dep2]}
+
+    repo.add_package(package_b1)
+    repo.add_package(package_b2)
+
+    solver = Solver(package, pool, [], [package_a], io)
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        (
+            [
+                {"job": "install", "package": package_b1},
+                {"job": "install", "package": package_b2},
+                {"job": "install", "package": package_a},
+            ]
+        ),
+    )
+
+
+def test_solver_resolves_optional_dependencies_and_group_with_extras(
+    package: ProjectPackage,
+    pool: RepositoryPool,
+    repo: Repository,
+    io: NullIO,
+) -> None:
+    """Regression test for https://github.com/python-poetry/poetry/issues/10447."""
+    dep_alchemy = get_dependency("A", "*", optional=True)
+    dep_alchemy._in_extras = [canonicalize_name("alchemy")]
+    dep_databases = get_dependency("A", "*", optional=True)
+    dep_databases._in_extras = [canonicalize_name("databases")]
+    package.extras = {
+        canonicalize_name("alchemy"): [dep_alchemy],
+        canonicalize_name("databases"): [dep_databases],
+    }
+    package.add_dependency(dep_alchemy)
+    package.add_dependency(dep_databases)
+    package.add_dependency(
+        Factory.create_dependency(
+            "A", {"version": "*", "extras": ["mypy"]}, groups=["test"]
+        )
+    )
+
+    package_a = get_package("A", "1.0")
+    package_a.extras = {canonicalize_name("mypy"): []}
+    repo.add_package(package_a)
+
+    solver = Solver(package, pool, [], [], io)
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [{"job": "install", "package": package_a}],
     )
 
 

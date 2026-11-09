@@ -5,13 +5,13 @@ import json
 import os
 import shutil
 
+from locale import getencoding
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
 
 from cleo.io.null_io import NullIO
-from deepdiff.diff import DeepDiff
 from poetry.core.constraints.version import Version
 from poetry.core.masonry.metadata import Metadata
 from poetry.core.packages.package import Package
@@ -19,7 +19,6 @@ from poetry.core.packages.package import Package
 from poetry.factory import Factory
 from poetry.masonry.builders.editable import EditableBuilder
 from poetry.repositories.installed_repository import InstalledRepository
-from poetry.utils._compat import getencoding
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import EnvManager
 from poetry.utils.env import MockEnv
@@ -167,13 +166,12 @@ def test_builder_installs_proper_files_for_standard_packages(
     assert dist_info.joinpath("RECORD").exists()
     assert dist_info.joinpath("direct_url.json").exists()
 
-    assert not DeepDiff(
-        {
-            "dir_info": {"editable": True},
-            "url": simple_poetry.file.path.parent.as_uri(),
-        },
-        json.loads(dist_info.joinpath("direct_url.json").read_text(encoding="utf-8")),
-    )
+    assert json.loads(
+        dist_info.joinpath("direct_url.json").read_text(encoding="utf-8")
+    ) == {
+        "dir_info": {"editable": True},
+        "url": simple_poetry.file.path.parent.as_uri(),
+    }
 
     assert dist_info.joinpath("INSTALLER").read_text(encoding="utf-8") == "poetry"
     assert (
@@ -263,6 +261,49 @@ if __name__ == '__main__':
 """
 
     assert tmp_venv._bin_dir.joinpath("fox").read_text(encoding="utf-8") == fox_script
+
+
+@pytest.mark.parametrize("windows", (True, False))
+def test_builder_installs_project_gui_scripts(
+    tmp_path: Path,
+    fixture_dir: FixtureDirGetter,
+    mocker: MockerFixture,
+    windows: bool,
+) -> None:
+    project = tmp_path / "simple_project"
+    shutil.copytree(fixture_dir("simple_project"), project)
+    with project.joinpath("pyproject.toml").open("a", encoding="utf-8") as f:
+        f.write('\n[project.gui-scripts]\nfoo-gui = "foo:bar"\n')
+
+    poetry = Factory().create_poetry(project)
+    env_manager = EnvManager(poetry)
+    venv_path = tmp_path / "venv"
+    env_manager.build_venv(venv_path)
+    tmp_venv = VirtualEnv(venv_path)
+    mocker.patch("poetry.masonry.builders.editable.WINDOWS", windows)
+
+    EditableBuilder(poetry, tmp_venv, NullIO()).build()
+
+    script_file = tmp_venv._bin_dir.joinpath("foo-gui")
+    cmd_script_file = script_file.with_suffix(".cmd")
+    assert script_file.exists()
+    assert cmd_script_file.exists() is windows
+    if windows:
+        console_cmd = tmp_venv._bin_dir.joinpath("foo.cmd").read_text(encoding="utf-8")
+        gui_cmd = cmd_script_file.read_text(encoding="utf-8")
+        assert f'"{tmp_venv.python}"' in console_cmd
+        assert f'"{tmp_venv.python.with_name("pythonw.exe")}"' in gui_cmd
+
+    dist_info = tmp_venv.site_packages.find(Path("simple_project-1.2.3.dist-info"))[0]
+    assert "[gui_scripts]\nfoo-gui=foo:bar\n" in dist_info.joinpath(
+        "entry_points.txt"
+    ).read_text(encoding="utf-8")
+
+    with dist_info.joinpath("RECORD").open(encoding="utf-8", newline="") as f:
+        record_entries = {row[0] for row in csv.reader(f)}
+
+    assert str(script_file) in record_entries
+    assert (str(cmd_script_file) in record_entries) is windows
 
 
 def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
@@ -422,3 +463,107 @@ def test_builder_catches_bad_scripts_too_many_colon(
     assert "foo::bar" in msg
     # and some hint about what is wrong
     assert "Too many" in msg
+
+
+@pytest.fixture()
+def file_scripts_poetry(fixture_dir: FixtureDirGetter) -> Poetry:
+    poetry = Factory().create_poetry(fixture_dir("file_scripts_project"))
+    return poetry
+
+
+def test_builder_installs_file_scripts(
+    file_scripts_poetry: Poetry,
+    tmp_path: Path,
+) -> None:
+    env_manager = EnvManager(file_scripts_poetry)
+    venv_path = tmp_path / "venv"
+    env_manager.build_venv(venv_path)
+    tmp_venv = VirtualEnv(venv_path)
+
+    builder = EditableBuilder(file_scripts_poetry, tmp_venv, NullIO())
+    builder.build()
+
+    # The file script should be copied to the venv bin directory
+    script_path = tmp_venv._bin_dir.joinpath("my-script")
+    assert script_path.exists(), (
+        f"File script 'my-script' was not copied to {tmp_venv._bin_dir}"
+    )
+
+    # Check script content matches the source
+    source_content = (
+        file_scripts_poetry.file.path.parent / "bin" / "my-script.sh"
+    ).read_text(encoding="utf-8")
+    assert script_path.read_text(encoding="utf-8") == source_content
+
+    # Check the file is executable
+    assert os.access(script_path, os.X_OK)
+
+    # The console entry point should also be installed
+    console_script = tmp_venv._bin_dir.joinpath("console-entry")
+    assert console_script.exists(), (
+        f"Console script 'console-entry' was not installed to {tmp_venv._bin_dir}"
+    )
+
+
+def test_builder_skips_missing_file_script(
+    fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
+) -> None:
+    from cleo.io.buffered_io import BufferedIO
+
+    poetry = Factory().create_poetry(fixture_dir("file_scripts_missing_ref_project"))
+    env_manager = EnvManager(poetry)
+    venv_path = tmp_path / "venv"
+    env_manager.build_venv(venv_path)
+    tmp_venv = VirtualEnv(venv_path)
+
+    io = BufferedIO()
+    builder = EditableBuilder(poetry, tmp_venv, io)
+    builder.build()
+
+    # The file script for the missing reference must not be created
+    script_path = tmp_venv._bin_dir.joinpath("missing-script")
+    assert not script_path.exists()
+
+    # The error message should be logged
+    error_output = io.fetch_error()
+    assert "missing-script" in error_output
+    assert "does not exist" in error_output
+
+
+def test_builder_skips_directory_file_script(
+    fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
+) -> None:
+    from cleo.io.buffered_io import BufferedIO
+
+    poetry = Factory().create_poetry(fixture_dir("file_scripts_dir_ref_project"))
+    env_manager = EnvManager(poetry)
+    venv_path = tmp_path / "venv"
+    env_manager.build_venv(venv_path)
+    tmp_venv = VirtualEnv(venv_path)
+
+    io = BufferedIO()
+    builder = EditableBuilder(poetry, tmp_venv, io)
+    builder.build()
+
+    # The file script for the directory reference must not be created
+    script_path = tmp_venv._bin_dir.joinpath("dir-script")
+    assert not script_path.exists()
+
+    # The error message should be logged
+    error_output = io.fetch_error()
+    assert "dir-script" in error_output
+    assert "is not a file" in error_output
+
+
+def test_builder_skips_file_script_missing_reference_field(
+    fixture_dir: FixtureDirGetter,
+) -> None:
+    """A file script with no reference field is rejected at config validation
+    time (poetry-core's extra-scripts schema requires `reference`), so this
+    case is never reached by EditableBuilder. This test documents the
+    schema-level enforcement.
+    """
+    with pytest.raises(RuntimeError, match="The Poetry configuration is invalid"):
+        Factory().create_poetry(fixture_dir("file_scripts_no_ref_field_project"))
