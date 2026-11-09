@@ -7,7 +7,6 @@ import sys
 import threading
 import time
 
-from concurrent.futures import wait
 from concurrent.futures.thread import ThreadPoolExecutor
 from typing import TYPE_CHECKING
 
@@ -33,6 +32,7 @@ class Example:
     def __init__(self, value: int = 0, name: str = "default") -> None:
         self.value = value
         self._name = name
+        self.compute_barrier: threading.Barrier | None = None
 
     @classmethod
     def compute_value(cls, name: str, ts: float) -> int:
@@ -42,8 +42,11 @@ class Example:
         return sum(range(1_00_000))
 
     def _compute_value(self) -> int:
-        # we block the thread here to ensure contention
-        time.sleep(0.05)
+        if self.compute_barrier is not None:
+            self.compute_barrier.wait(10)
+        else:
+            # we block the thread here to ensure contention
+            time.sleep(0.05)
         return self.compute_value(self._name, time.time())
 
     @functools.cached_property
@@ -85,20 +88,24 @@ def test_threading_single_thread_safe() -> None:
 
 def run_in_threads(instance: Example, property_name: str) -> None:
     results = []
-    # Synchronize thread start so all workers enter __get__ before any thread
-    # finishes computing the property. Without this, on Python 3.12+ where
-    # functools.cached_property is lockless, the test for maximum-contention
-    # call counts is racy.
+    # Lockless getters must all start computing before any result is cached.
+    # A barrier at thread start alone cannot guarantee this ordering.
+    if property_name == "value_functools_cache" or (
+        property_name == "value_functools_cached_property" and IS_PY_312
+    ):
+        instance.compute_barrier = threading.Barrier(WORKER_COUNT)
+
     barrier = threading.Barrier(WORKER_COUNT)
 
     def access_property() -> None:
         barrier.wait(10)
         results.append(instance.__getattribute__(property_name))
 
-    executor = ThreadPoolExecutor(max_workers=WORKER_COUNT)
-    futures = [executor.submit(access_property) for _ in range(WORKER_COUNT)]
+    with ThreadPoolExecutor(max_workers=WORKER_COUNT) as executor:
+        futures = [executor.submit(access_property) for _ in range(WORKER_COUNT)]
+        for future in futures:
+            future.result(timeout=10)
 
-    wait(futures, 10)
     assert len(results) == WORKER_COUNT
     assert all(result == (EXPECTED_VALUE + instance.value) for result in results)
 
