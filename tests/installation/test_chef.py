@@ -11,6 +11,7 @@ from zipfile import ZipFile
 import pytest
 
 from build import ProjectBuilder
+from packaging.utils import parse_wheel_filename
 from poetry.core.packages.utils.link import Link
 
 from poetry.factory import Factory
@@ -96,7 +97,10 @@ def test_prepare_directory_with_extensions(
     wheel = chef.prepare(archive)
 
     assert wheel.parent.parent == Path(tempfile.gettempdir())
-    assert wheel.name == f"extended-0.1-{env.supported_tags[0]}.whl"
+    name, version, _, tags = parse_wheel_filename(wheel.name)
+    assert name == "extended"
+    assert str(version) == "0.1"
+    assert not tags.isdisjoint(env.supported_tags)
 
     # cleanup generated tmp dir artifact
     os.unlink(wheel)

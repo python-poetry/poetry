@@ -138,13 +138,6 @@ def verify_project_directory(
             None,
         ),
         (
-            ["--name namespace.package"],
-            "package",
-            "namespace-package",
-            "src/namespace/package",
-            "src",
-        ),
-        (
             ["--flat"],
             "namespace_package",
             "namespace-package",

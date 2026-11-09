@@ -204,8 +204,6 @@ class VersionSolver:
                 next = self._choose_package_version()
 
             return self._result()
-        except Exception:
-            raise
         finally:
             self._log(
                 f"Version solving took {time.time() - start:.3f} seconds.\n"
@@ -610,7 +608,7 @@ class VersionSolver:
                                 package.version,
                                 repository_name=repo,
                             )
-                        except Exception:
+                        except Exception:  # noqa: BLE001, S110
                             pass
                         else:
                             break

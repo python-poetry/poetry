@@ -13,7 +13,6 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 
-import tomlkit
 import virtualenv
 
 from cleo.io.null_io import NullIO
@@ -39,6 +38,8 @@ from poetry.utils.helpers import remove_directory
 
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from cleo.io.io import IO
 
     from poetry.poetry import Poetry
@@ -92,7 +93,7 @@ class EnvManager:
 
     ENVS_FILE = "envs.toml"
 
-    def __init__(self, poetry: Poetry, io: None | IO = None) -> None:
+    def __init__(self, poetry: Poetry, io: IO | None = None) -> None:
         self._poetry = poetry
         self._io = io or NullIO()
 
@@ -137,7 +138,7 @@ class EnvManager:
 
             return self.get(reload=True)
 
-        envs = tomlkit.document()
+        envs: dict[str, Any] = {}
         if self.envs_file.exists():
             envs = self.envs_file.read()
             current_env = envs.get(self.base_env_name)
@@ -378,18 +379,27 @@ class EnvManager:
         if not env.is_sane():
             force = True
 
-        if env.is_venv() and not force:
+        supported_python = self._poetry.package.python_constraint
+        create_venv = self._poetry.config.get("virtualenvs.create")
+
+        if (env.is_venv() and not force) or not create_venv:
             # Already inside a virtualenv.
             current_python = Version.parse(
                 ".".join(str(c) for c in env.version_info[:3])
             )
-            if not self._poetry.package.python_constraint.allows(current_python):
+            if not supported_python.allows(current_python):
                 raise InvalidCurrentPythonVersionError(
-                    self._poetry.package.python_versions, str(current_python)
+                    self._poetry.package.python_versions,
+                    str(current_python),
+                    note=(
+                        'Please change python executable via the "env use" command.'
+                        if create_venv
+                        else "Poetry cannot switch to a compatible Python version because"
+                        " virtualenv creation is disabled."
+                    ),
                 )
             return env
 
-        create_venv = self._poetry.config.get("virtualenvs.create")
         in_project_venv = self.use_in_project_venv()
         venv_prompt = self._poetry.config.get("virtualenvs.prompt")
 
@@ -407,7 +417,6 @@ class EnvManager:
         if not name:
             name = self._poetry.package.name
 
-        supported_python = self._poetry.package.python_constraint
         if not supported_python.allows(python.patch_version):
             # The currently activated or chosen Python version
             # is not compatible with the Python constraint specified
@@ -560,7 +569,7 @@ class EnvManager:
 
         cli_result = virtualenv.cli_run(args, setup_logging=False)
 
-        # Exclude the venv folder from from macOS Time Machine backups
+        # Exclude the venv folder from macOS Time Machine backups
         # TODO: Add backup-ignore markers for other platforms too
         if sys.platform == "darwin":
             import xattr
@@ -582,7 +591,7 @@ class EnvManager:
         except OSError as e:
             # Continue only if e.errno == 16
             if e.errno != 16:  # ERRNO 16: Device or resource busy
-                raise e
+                raise
 
         # Delete all files and folders but the toplevel one. This is because sometimes
         # the venv folder is mounted by the OS, such as in a docker volume. In such

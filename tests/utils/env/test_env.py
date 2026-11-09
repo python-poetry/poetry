@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING
 import packaging.tags
 import pytest
 
-from deepdiff.diff import DeepDiff
 from installer.utils import SCHEME_NAMES
 
 from poetry.factory import Factory
@@ -114,6 +113,35 @@ def test_env_get_supported_tags_matches_inside_virtualenv(
 
     assert venv.get_supported_tags() == expected_tags
     assert run_python_script_spy.call_count == expected_call_count
+
+
+def test_env_discovery_returns_independent_data(
+    tmp_path: Path, manager: EnvManager
+) -> None:
+    venv_path = tmp_path / "Virtual Env"
+    manager.build_venv(venv_path)
+    venv = VirtualEnv(venv_path)
+
+    marker_env = venv.get_marker_env()
+    marker_env["python_version"] = "0"
+    assert venv.get_marker_env()["python_version"] != "0"
+
+    paths = venv.get_paths()
+    paths["purelib"] = "changed"
+    assert venv.get_paths()["purelib"] != "changed"
+
+
+def test_env_discovery_preserves_explicit_base(
+    tmp_path: Path, manager: EnvManager
+) -> None:
+    venv_path = tmp_path / "Virtual Env"
+    manager.build_venv(venv_path)
+    base = tmp_path / "base"
+    venv = VirtualEnv(venv_path, base=base)
+
+    venv.get_paths()
+
+    assert venv.base == base
 
 
 @pytest.mark.skipif(
@@ -217,8 +245,8 @@ def test_call_does_not_block_on_full_pipe(
     script.write_text(
         f"""\
 import sys
-for i in range(10000):
-    print('just print a lot of text to fill the buffer', file={out})
+# one big write: far exceeds any OS pipe buffer (4 KiB default on Windows, 64 KiB on Linux)
+{out}.write("x" * 1_000_000)
 """,
         encoding="utf-8",
     )
@@ -229,10 +257,11 @@ for i in range(10000):
 
     results: list[int] = []
     # use a separate thread, so that the test does not block in case of error
-    thread = Thread(target=target, args=(results,))
+    thread = Thread(target=target, args=(results,), daemon=True)
     thread.start()
-    thread.join(1)  # must not block
-    assert results and results[0] == 0
+    thread.join(10)  # a real deadlock never finishes; absorb slow runners
+    assert not thread.is_alive()
+    assert results == [0]
 
 
 def test_run_python_script_called_process_error(
@@ -529,7 +558,7 @@ def test_command_from_bin_preserves_relative_path(manager: EnvManager) -> None:
 def system_env_read_only(system_env: SystemEnv, mocker: MockerFixture) -> SystemEnv:
     original_is_dir_writable = is_dir_writable
 
-    read_only_paths = {system_env.paths[key] for key in SCHEME_NAMES}
+    read_only_paths = {system_env.paths[key] for key in SCHEME_NAMES}  # type: ignore[literal-required]
 
     def mock_is_dir_writable(path: Path, create: bool = False) -> bool:
         if str(path) in read_only_paths:
@@ -542,14 +571,14 @@ def system_env_read_only(system_env: SystemEnv, mocker: MockerFixture) -> System
 
 
 def test_env_scheme_dict_returns_original_when_writable(system_env: SystemEnv) -> None:
-    assert not DeepDiff(system_env.scheme_dict, system_env.paths, ignore_order=True)
+    assert system_env.scheme_dict == system_env.paths
 
 
 def test_env_scheme_dict_returns_modified_when_read_only(
     system_env_read_only: SystemEnv,
 ) -> None:
     scheme_dict = system_env_read_only.scheme_dict
-    assert DeepDiff(scheme_dict, system_env_read_only.paths, ignore_order=True)
+    assert scheme_dict != system_env_read_only.paths
 
     paths = system_env_read_only.paths
     assert all(

@@ -356,7 +356,7 @@ def test_get_cached_archive_for_link_no_race_condition(
         for task in tasks:
             try:
                 results.add(task.result())
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pytest.fail(traceback.format_exc())
         assert results == {cache.get_cache_directory_for_link(link) / link.filename}
         download_mock.assert_called_once()

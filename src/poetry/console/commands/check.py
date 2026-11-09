@@ -180,8 +180,10 @@ class CheckCommand(Command):
             check_result["errors"] += ["poetry.lock was not found."]
         if self.poetry.locker.is_locked() and not self.poetry.locker.is_fresh():
             check_result["errors"] += [
-                "pyproject.toml changed significantly since poetry.lock was last generated. "
-                "Run `poetry lock` to fix the lock file."
+                (
+                    "pyproject.toml changed significantly since poetry.lock was last generated. "
+                    "Run `poetry lock` to fix the lock file."
+                )
             ]
 
         return_code = 0

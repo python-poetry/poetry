@@ -5,6 +5,7 @@ import json
 import logging
 
 from importlib import metadata
+from locale import getencoding
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -15,7 +16,6 @@ from poetry.core.packages.utils.utils import url_to_path
 from poetry.core.utils.helpers import module_name
 
 from poetry.repositories.repository import Repository
-from poetry.utils._compat import getencoding
 from poetry.utils.env import VirtualEnv
 
 
@@ -124,6 +124,7 @@ class InstalledRepository(Repository):
         source_reference = None
         source_resolved_reference = None
         source_subdirectory = None
+        develop = False
         if is_standard_package:
             if path.name.endswith(".dist-info"):
                 paths = cls.get_package_paths(env=env, name=dist_metadata["name"])
@@ -146,6 +147,7 @@ class InstalledRepository(Repository):
                         # TODO: handle multiple source directories?
                         if is_editable_package:
                             source_type = "directory"
+                            develop = True
                             path = paths.pop()
                             if path.name == "src":
                                 path = path.parent
@@ -170,6 +172,7 @@ class InstalledRepository(Repository):
             source_reference=source_reference,
             source_resolved_reference=source_resolved_reference,
             source_subdirectory=source_subdirectory,
+            develop=develop,
         )
 
         package.description = dist_metadata.get(  # type: ignore[attr-defined]

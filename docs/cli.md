@@ -301,7 +301,7 @@ The `config` command allows you to edit poetry config settings and repositories.
 poetry config --list
 ```
 
-### Usage
+Usage:
 
 ````bash
 poetry config [options] [setting-key] [setting-value1] ... [setting-valueN]
@@ -469,6 +469,7 @@ poetry init
 * `--python` Compatible Python versions.
 * `--dependency`: Package to require with a version constraint. Should be in format `foo:1.0.0`.
 * `--dev-dependency`: Development requirements, see `--dependency`.
+* `--license (-l)`: License of the package.
 
 ## install
 
@@ -721,6 +722,7 @@ my-package
 * `--python` Compatible Python versions.
 * `--dependency`: Package to require with a version constraint. Should be in format `foo:1.0.0`.
 * `--dev-dependency`: Development requirements, see `--dependency`.
+* `--license (-l)`: License of the package.
 
 ## publish
 
@@ -846,34 +848,94 @@ The `run` command executes the given command inside the project's virtualenv.
 poetry run python -V
 ```
 
-It can also execute one of the scripts defined in `pyproject.toml`.
+Any extra arguments are forwarded to the command:
 
-So, if you have a script defined like this:
+```bash
+poetry run python scripts/train.py --epochs 10
+poetry run pytest tests/ -k "test_login"
+```
 
-{{< tabs tabTotal="2" tabID1="script-project" tabID2=script-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
+The `run` command can also execute [console scripts (Python entry points)]({{< relref "pyproject#scripts" >}})
+defined in the `pyproject.toml` file.
+
+A console script (entry point) maps a **command name** to a Python callable with
+the form `package.module:function`. Poetry must be able to import that module and
+call that function after the project is installed into the environment.
+
+For example, with this layout:
+
+```text
+my-package/
+├── pyproject.toml
+└── my_package/
+    ├── __init__.py
+    └── console.py
+```
+
+and this configuration:
+
+{{< tabs tabTotal="2" tabID1="script-project" tabID2="script-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
 
 {{< tab tabID="script-project" >}}
 ```toml
 [project]
+name = "my-package"
 # ...
 [project.scripts]
-my-script = "my_module:main"
+greet = "my_package.console:main"
 ```
 {{< /tab >}}
 
 {{< tab tabID="script-poetry" >}}
 ```toml
+[tool.poetry]
+name = "my-package"
+# ...
 [tool.poetry.scripts]
-my-script = "my_module:main"
+greet = "my_package.console:main"
 ```
 {{< /tab >}}
 {{< /tabs >}}
 
-You can execute it like so:
+where `my_package/console.py` contains:
+
+```python
+import argparse
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Greet someone.")
+    parser.add_argument("name", nargs="?", default="World")
+    args = parser.parse_args()
+    print(f"Hello, {args.name}!")
+```
+
+install the project so the script wrapper is created, then run it:
 
 ```bash
-poetry run my-script
+poetry install
+poetry run greet
+poetry run greet Ada
 ```
+
+{{% note %}}
+After adding or changing scripts, re-run `poetry install` so the wrappers are
+updated. See [`project.scripts`]({{< relref "pyproject#scripts" >}}) for the
+canonical guidance.
+{{% /note %}}
+
+{{% note %}}
+`poetry run python path/to/script.py` runs a file directly and does **not**
+require a `[project.scripts]` entry. Use `[project.scripts]` when you want an
+installable command name (also available after installing your package with pip).
+{{% /note %}}
+
+Common problems:
+
+* **Command not found**: the script name is missing from `pyproject.toml`, or you
+  have not run `poetry install` since adding it.
+* **`ModuleNotFoundError`**: the dotted path on the right-hand side does not match
+  your package layout (wrong package/module name, or the package is not installed).
+* **`AttributeError`**: the name after `:` does not exist in that module.
 
 Note that this command has no option.
 
@@ -889,7 +951,7 @@ poetry search requests pendulum
 PyPI no longer allows for the search of packages without a browser. Please use https://pypi.org/search
 (via a browser) instead.
 
-For more information, please see [warehouse documentation](https://warehouse.pypa.io/api-reference/xml-rpc.html#deprecated-methods)
+For more information, please see [PyPI API documentation](https://docs.pypi.org/api/#api-preference)
 and this [discussion](https://discuss.python.org/t/fastly-interfering-with-pypi-search/73597/6).
 {{% /note %}}
 
@@ -1327,6 +1389,13 @@ You can do this using the `add` command.
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables `--verbose`).
 * `--lock` : Do not perform install (only update the lockfile).
 * `--sync`: Synchronize the environment with the locked packages and the specified groups.
+
+{{% note %}}
+The group options determine which dependency groups are installed or synchronized in the
+environment. They do not limit resolution of the lock file: `poetry.lock` keeps one consistent
+solution for all declared groups, so packages that belong to an excluded group can still change.
+To restrict which packages Poetry updates, pass their names to the command.
+{{% /note %}}
 
 {{% note %}}
 When `--only` is specified, `--with` and `--without` options are ignored.

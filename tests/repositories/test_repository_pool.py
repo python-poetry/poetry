@@ -53,7 +53,7 @@ def test_adding_repositories_with_same_name_twice_raises_value_error() -> None:
         RepositoryPool([repo1]).add_repository(repo2)
 
 
-@pytest.mark.parametrize("priority", (p for p in Priority))
+@pytest.mark.parametrize("priority", list(Priority))
 def test_repository_from_single_repo_pool(priority: Priority) -> None:
     repo = LegacyRepository("foo", "https://foo.bar")
     pool = RepositoryPool()

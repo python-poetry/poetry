@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "file-scripts-dir-ref-project"
+version = "1.0.0"
+description = "A project with a file script referencing a directory."
+authors = ["Test Author <test@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+
+[tool.poetry.scripts]
+dir-script = { reference = "bin/some-directory", type = "file" }
+console-entry = "file_scripts_dir_ref_project:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

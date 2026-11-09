@@ -69,7 +69,7 @@ poetry add --source foo private-package
 
 Great, now all that is left is to publish your package. Assuming you'd want to share it privately
 with your team, you can configure the
-[Upload API](https://warehouse.pypa.io/api-reference/legacy.html#upload-api) endpoint for your
+[Upload API](https://docs.pypi.org/api/upload/) endpoint for your
 [publishable repository](#publishable-repositories).
 
 ```bash
@@ -332,7 +332,7 @@ to be provided only by one specific source to avoid dependency confusion attacks
 #### Python Package Index (PyPI)
 
 Poetry interacts with [PyPI](https://pypi.org) via its
-[JSON API](https://warehouse.pypa.io/api-reference/json.html). This is used to retrieve a requested
+[JSON API](https://docs.pypi.org/api/json/). This is used to retrieve a requested
 package's versions, metadata, files, etc.
 
 {{% note %}}
@@ -430,7 +430,7 @@ well.
 
 Poetry treats repositories to which you publish packages as user-specific and not project-specific
 configuration unlike [package sources](#package-sources). Poetry, today, only supports the
-[Legacy Upload API](https://warehouse.pypa.io/api-reference/legacy.html#upload-api) when publishing
+[Legacy Upload API](https://docs.pypi.org/api/upload/) when publishing
 your project.
 
 These are configured using the [`config`]({{< relref "cli#config" >}}) command, under the
@@ -442,7 +442,7 @@ poetry config repositories.testpypi https://test.pypi.org/legacy/
 
 {{% note %}}
 
-[Legacy Upload API](https://warehouse.pypa.io/api-reference/legacy.html#upload-api) URLs are
+[Legacy Upload API](https://docs.pypi.org/api/upload/) URLs are
 typically different to the same one provided by the repository for the simple API. You'll note that
 in the example of [Test PyPI](https://test.pypi.org/), both the host (`test.pypi.org`) as
 well as the path (`/legacy`) are different to its simple API (`https://test.pypi.org/simple`).

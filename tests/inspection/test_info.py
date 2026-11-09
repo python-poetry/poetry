@@ -72,7 +72,7 @@ def demo_setup(source_dir: Path) -> Path:
 def demo_setup_cfg(source_dir: Path) -> Path:
     setup_cfg = source_dir / "setup.cfg"
     setup_cfg.write_text(
-        "\n".join(
+        "\n".join(  # noqa: FLY002
             [
                 "[metadata]",
                 "name = demo",
@@ -370,7 +370,7 @@ def test_info_setup_simple(mocker: MockerFixture, demo_setup: Path) -> None:
     spy = mocker.spy(VirtualEnv, "run")
     info = PackageInfo.from_directory(demo_setup)
 
-    assert spy.call_count == 6
+    assert spy.call_count == 3
     demo_check_info(info, requires_dist={"package"})
 
 

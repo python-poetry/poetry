@@ -108,11 +108,6 @@ def test_yanked(
         # new
         ({"core-metadata": False}, False, {}),
         ({"core-metadata": True}, True, {}),
-        (
-            {"core-metadata": {"sha1": "1234", "sha256": "abcd"}},
-            True,
-            {"sha1": "1234", "sha256": "abcd"},
-        ),
         ({"core-metadata": {}}, False, {}),
         (
             {"core-metadata": {"sha1": "1234", "sha256": "abcd"}},

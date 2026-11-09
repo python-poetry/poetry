@@ -50,6 +50,7 @@
   "urls": [
     {
       "comment_text": "",
+      "core-metadata": false,
       "digests": {
         "md5": "677602ec38bc1c7b72de6128d90d846b",
         "sha256": "91b564e092f3135b2bac70dbd23d283da5ad50269766a76648787b69fe702c7e"

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import tomllib
 
 from collections.abc import Callable
 from typing import TYPE_CHECKING
@@ -14,9 +15,10 @@ from poetry.core.packages.dependency_group import MAIN_GROUP
 from poetry.core.packages.dependency_group import DependencyGroup
 
 from poetry.factory import Factory
-from poetry.utils._compat import tomllib
+from poetry.repositories.repository_pool import Priority
 from tests.helpers import MOCK_DEFAULT_GIT_REVISION
 from tests.helpers import DummyLocker
+from tests.helpers import DummyRepository
 from tests.helpers import get_package
 
 
@@ -25,7 +27,6 @@ if TYPE_CHECKING:
 
     from poetry.poetry import Poetry
     from poetry.repositories import Repository
-    from tests.helpers import DummyRepository
     from tests.types import CommandTesterFactory
 
 
@@ -1858,6 +1859,122 @@ cachy (!) 0.1.1 Cachy package
         assert tester.io.fetch_output() == expected
 
 
+@output_format_parametrize
+def test_show_single_package_selects_env_compatible_duplicate(
+    output_format: str,
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    repo: DummyRepository,
+) -> None:
+    """
+    When the lock file has several marker-conditioned entries for the same
+    package, `poetry show <package>` must report the version applicable to the
+    current environment (darwin here), matching what `poetry show` reports.
+    """
+    poetry.package.add_dependency(
+        Factory.create_dependency("cachy", {"version": "0.1.0", "platform": "linux"})
+    )
+    poetry.package.add_dependency(
+        Factory.create_dependency("cachy", {"version": "0.1.1", "platform": "darwin"})
+    )
+
+    assert isinstance(poetry.locker, DummyLocker)
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "files": [],
+                },
+                {
+                    "name": "cachy",
+                    "version": "0.1.1",
+                    "description": "Cachy package",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "files": [],
+                },
+            ],
+            "metadata": {"content-hash": "123456789"},
+        }
+    )
+
+    tester.execute(f"cachy {output_format}")
+
+    if "json" in output_format:
+        result = json.loads(tester.io.fetch_output())
+        assert result["version"] == "0.1.1"
+    else:
+        output = tester.io.fetch_output()
+        assert "0.1.1" in output
+        assert "0.1.0" not in output
+
+
+@output_format_parametrize
+def test_show_single_package_with_duplicate_falls_back_when_env_excluded(
+    output_format: str,
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    repo: DummyRepository,
+) -> None:
+    """
+    If none of the duplicate lock entries applies to the current environment,
+    `poetry show <package>` should still display a version (the first match)
+    rather than raising.
+    """
+    poetry.package.add_dependency(
+        Factory.create_dependency("cachy", {"version": "0.1.0", "platform": "linux"})
+    )
+    poetry.package.add_dependency(
+        Factory.create_dependency("cachy", {"version": "0.1.1", "platform": "win32"})
+    )
+
+    assert isinstance(poetry.locker, DummyLocker)
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "files": [],
+                },
+                {
+                    "name": "cachy",
+                    "version": "0.1.1",
+                    "description": "Cachy package",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "files": [],
+                },
+            ],
+            "metadata": {"content-hash": "123456789"},
+        }
+    )
+
+    tester.execute(f"cachy {output_format}")
+
+    if "json" in output_format:
+        result = json.loads(tester.io.fetch_output())
+        assert result["version"] == "0.1.0"
+    else:
+        output = tester.io.fetch_output()
+        assert "0.1.0" in output
+        assert "0.1.1" not in output
+
+
 def test_show_tree(
     tester: CommandTester, poetry: Poetry, installed: Repository
 ) -> None:
@@ -2570,6 +2687,187 @@ def test_url_dependency_is_not_outdated_by_repository_package(
         assert json.loads(tester.io.fetch_output()) == expected
     else:
         expected = ""
+        assert tester.io.fetch_output() == expected
+
+
+@output_format_parametrize
+def test_show_outdated_explicit_source(
+    output_format: str,
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    repo: DummyRepository,
+) -> None:
+    explicit_repo = DummyRepository(name="explicit")
+    poetry.pool.add_repository(explicit_repo, priority=Priority.EXPLICIT)
+
+    poetry.package.add_dependency(
+        Factory.create_dependency("cachy", {"version": "^0.1.0", "source": "explicit"})
+    )
+
+    cachy_010 = get_package("cachy", "0.1.0")
+    cachy_010.description = "Cachy package"
+    cachy_020 = get_package("cachy", "0.2.0")
+    cachy_020.description = "Cachy package"
+
+    installed.add_package(cachy_010)
+
+    # Only the explicit repository knows about cachy; it must still be
+    # consulted when checking for a newer version.
+    explicit_repo.add_package(cachy_010)
+    explicit_repo.add_package(cachy_020)
+
+    assert isinstance(poetry.locker, DummyLocker)
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "source": {
+                        "type": "legacy",
+                        "url": "https://foo.bar/explicit",
+                        "reference": "explicit",
+                    },
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "files": {"cachy": []},
+            },
+        }
+    )
+
+    tester.execute(f"--outdated {output_format}")
+
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.1.0",
+                "latest_version": "0.2.0",
+                "description": "Cachy package",
+                "installed_status": "installed",
+            },
+        ]
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = """\
+cachy 0.1.0 0.2.0 Cachy package
+"""
+        assert tester.io.fetch_output() == expected
+
+
+@output_format_parametrize
+def test_show_outdated_multiple_constraints_uses_locked_source(
+    output_format: str,
+    tester: CommandTester,
+    poetry: Poetry,
+    installed: Repository,
+    repo: DummyRepository,
+) -> None:
+    # A package may be declared with several constraints (different markers and
+    # sources). The lookup for the latest version must use the source of the
+    # constraint active in the current environment -- i.e. the one that was
+    # locked -- not simply the first declared constraint. MockEnv reports
+    # sys_platform == "darwin", so the darwin constraint (sourced from
+    # "explicit-darwin") is the active one.
+    explicit_linux = DummyRepository(name="explicit-linux")
+    explicit_darwin = DummyRepository(name="explicit-darwin")
+    poetry.pool.add_repository(explicit_linux, priority=Priority.EXPLICIT)
+    poetry.pool.add_repository(explicit_darwin, priority=Priority.EXPLICIT)
+
+    # The linux constraint is declared first, so a naive first-match lookup
+    # would query the wrong ("explicit-linux") source.
+    poetry.package.add_dependency(
+        Factory.create_dependency(
+            "cachy",
+            {
+                "version": "^0.1.0",
+                "source": "explicit-linux",
+                "markers": "sys_platform == 'linux'",
+            },
+        )
+    )
+    poetry.package.add_dependency(
+        Factory.create_dependency(
+            "cachy",
+            {
+                "version": "^0.1.0",
+                "source": "explicit-darwin",
+                "markers": "sys_platform == 'darwin'",
+            },
+        )
+    )
+
+    cachy_010 = get_package("cachy", "0.1.0")
+    cachy_010.description = "Cachy package"
+    cachy_020 = get_package("cachy", "0.2.0")  # newer, but on the WRONG source
+    cachy_020.description = "Cachy package"
+    cachy_030 = get_package("cachy", "0.3.0")  # newer, on the locked source
+    cachy_030.description = "Cachy package"
+
+    installed.add_package(cachy_010)
+
+    explicit_linux.add_package(cachy_010)
+    explicit_linux.add_package(cachy_020)
+    explicit_darwin.add_package(cachy_010)
+    explicit_darwin.add_package(cachy_030)
+
+    assert isinstance(poetry.locker, DummyLocker)
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "source": {
+                        "type": "legacy",
+                        "url": "https://foo.bar/explicit-darwin",
+                        "reference": "explicit-darwin",
+                    },
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "files": {"cachy": []},
+            },
+        }
+    )
+
+    tester.execute(f"--outdated {output_format}")
+
+    expected: str | list[dict[str, str]] = ""
+    if "json" in output_format:
+        expected = [
+            {
+                "name": "cachy",
+                "version": "0.1.0",
+                "latest_version": "0.3.0",
+                "description": "Cachy package",
+                "installed_status": "installed",
+            },
+        ]
+        assert json.loads(tester.io.fetch_output()) == expected
+    else:
+        expected = """\
+cachy 0.1.0 0.3.0 Cachy package
+"""
         assert tester.io.fetch_output() == expected
 
 

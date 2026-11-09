@@ -270,7 +270,7 @@ class Application(BaseApplication):
                 io.write_error_line("")
                 e.write(io)
                 io.write_error_line("")
-            except CleoCommandNotFoundError as e:
+            except CleoCommandNotFoundError:
                 command = self._get_command_name(io)
 
                 if command is not None and (
@@ -307,7 +307,7 @@ class Application(BaseApplication):
                     self._error_write_command_suggestions(io, suggested_names)
                     return 1
 
-                raise e
+                raise
 
         return exit_code
 

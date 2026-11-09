@@ -11,7 +11,7 @@ from typing import ClassVar
 
 from cleo.helpers import option
 from packaging.utils import canonicalize_name
-from tomlkit import inline_table
+from tomlrt import Table
 
 from poetry.console.commands.command import Command
 from poetry.console.commands.env_command import EnvCommand
@@ -23,7 +23,6 @@ if TYPE_CHECKING:
     from cleo.io.inputs.option import Option
     from packaging.utils import NormalizedName
     from poetry.core.packages.package import Package
-    from tomlkit.items import InlineTable
 
     from poetry.repositories import RepositoryPool
 
@@ -128,7 +127,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         name = self.option("name")
         if not name:
-            name = project_path.name.lower()
+            name = self._sanitize_package_name(project_path.name)
 
             if is_interactive:
                 question = self.create_question(
@@ -253,13 +252,18 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             layout_.create(project_path, with_pyproject=False)
 
         content = layout_.generate_project_content(project_path)
-        for section, item in content.items():
-            pyproject.data.append(section, item)
+        for section, value in content.items():
+            if section == "tool":
+                # Preserve existing entries in the shared [tool] namespace.
+                for tool_name, tool_config in value.items():
+                    pyproject.data.install(("tool", tool_name), tool_config)
+            else:
+                pyproject.data[section] = value
 
         if is_interactive:
             self.line("<info>Generated file</info>")
             self.line("")
-            self.line(pyproject.data.as_string().replace("\r\n", "\n"))
+            self.line(pyproject.data.render().replace("\r\n", "\n"))
             self.line("")
 
         if is_interactive and not self.confirm("Do you confirm generation?", True):
@@ -475,7 +479,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             cwd=cwd,
         )
         return [
-            parser.parse(re.sub(r"@\s*latest$", "", requirement, flags=re.I))
+            parser.parse(re.sub(r"@\s*latest$", "", requirement, flags=re.IGNORECASE))
             for requirement in requirements
         ]
 
@@ -483,17 +487,37 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         requires: Requirements = {}
         for requirement in requirements:
             name = requirement.pop("name")
-            constraint: str | InlineTable
+            constraint: str | Table
             if "version" in requirement and len(requirement) == 1:
                 constraint = requirement["version"]
             else:
-                constraint = inline_table()
-                constraint.trivia.trail = "\n"
-                constraint.update(requirement)
+                constraint = Table.inline(requirement)
 
             requires[name] = constraint
 
         return requires
+
+    @staticmethod
+    def _sanitize_package_name(name: str) -> str:
+        """Turn an arbitrary string (e.g. a directory name) into a name that
+        conforms to the PyPA name format.
+        https://packaging.python.org/en/latest/specifications/name-normalization/#name-format
+
+        Characters outside the format are replaced with a hyphen and the result
+        is canonicalized, so ``My_Package.Name`` gives ``my-package-name``.
+        A canonical name is the least error-prone default; it can still be
+        edited in pyproject.toml.
+
+        A directory name that holds no ASCII alphanumerics at all (say a
+        non-Latin script) sanitizes to an empty string, which is not a usable
+        default. Fall back to the lowercased directory name in that case, which
+        is what this used to do for every directory: a name in a non-Latin
+        script is kept rather than replaced with a placeholder.
+        """
+        replaced = re.sub(r"[^A-Za-z0-9._-]+", "-", name)
+        sanitized = replaced.strip("-._")
+
+        return canonicalize_name(sanitized) if sanitized else name.lower()
 
     @staticmethod
     def _validate_author(author: str, default: str) -> str | None:

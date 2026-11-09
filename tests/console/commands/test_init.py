@@ -105,6 +105,49 @@ def test_noninteractive(
     assert expected_build_system in toml_content
 
 
+def test_noninteractive_sanitizes_default_name_from_directory(
+    app: PoetryTestApplication,
+    mocker: MockerFixture,
+    poetry: Poetry,
+    repo: DummyRepository,
+    tmp_path: Path,
+) -> None:
+    command = app.find("init")
+    assert isinstance(command, InitCommand)
+    command._pool = poetry.pool
+
+    project_path = tmp_path / "my project with spaces"
+    project_path.mkdir()
+
+    p = mocker.patch("pathlib.Path.cwd")
+    p.return_value = project_path
+
+    tester = CommandTester(command)
+    tester.execute(interactive=False)
+
+    toml_content = (project_path / "pyproject.toml").read_text(encoding="utf-8")
+    assert 'name = "my-project-with-spaces"' in toml_content
+
+
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    [
+        ("foo", "foo"),
+        ("my project with spaces", "my-project-with-spaces"),
+        ("My_Package.Name", "my-package-name"),
+        ("MyProject", "myproject"),
+        ("  --my..name__ ", "my-name"),
+        # nothing survives sanitization: keep the lowercased directory name
+        # rather than returning an empty default
+        ("日本語", "日本語"),
+        ("проект", "проект"),
+        ("---", "---"),
+    ],
+)
+def test_sanitize_package_name(name: str, expected: str) -> None:
+    assert InitCommand._sanitize_package_name(name) == expected
+
+
 def test_interactive_with_dependencies(
     tester: CommandTester, repo: DummyRepository
 ) -> None:
@@ -143,20 +186,19 @@ name = "my-package"
 version = "1.2.3"
 description = "This is a description"
 authors = [
-    {name = "Your Name",email = "you@example.com"}
+    { name = "Your Name", email = "you@example.com" },
 ]
 license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
     "pendulum (>=2.0.0,<3.0.0)",
-    "flask (>=2.0.0,<3.0.0)"
+    "flask (>=2.0.0,<3.0.0)",
 ]
 
 [dependency-groups]
 dev = [
-    "pytest (>=3.6.0,<4.0.0)"
+    "pytest (>=3.6.0,<4.0.0)",
 ]
-
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
@@ -199,7 +241,7 @@ name = "my-package"
 version = "1.2.3"
 description = "This is a description"
 authors = [
-    {name = "Your Name",email = "you@example.com"}
+    { name = "Your Name", email = "you@example.com" },
 ]
 license = "MIT"
 requires-python = ">=3.6"
@@ -229,7 +271,7 @@ name = "my-package"
 version = "1.2.3"
 description = ""
 authors = [
-    {{name = "Your Name",email = "you@example.com"}}
+    {{ name = "Your Name", email = "you@example.com" }},
 ]
 requires-python = ">={python}"
 """
@@ -267,17 +309,17 @@ name = "my-package"
 version = "1.2.3"
 description = "This is a description"
 authors = [
-    {name = "Your Name",email = "you@example.com"}
+    { name = "Your Name", email = "you@example.com" },
 ]
 license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
-    "demo @ git+https://github.com/demo/demo.git"
+    "demo @ git+https://github.com/demo/demo.git",
 ]
 
 [dependency-groups]
 dev = [
-    "pytest (>=3.6.0,<4.0.0)"
+    "pytest (>=3.6.0,<4.0.0)",
 ]
 """
 
@@ -362,17 +404,17 @@ name = "my-package"
 version = "1.2.3"
 description = "This is a description"
 authors = [
-    {name = "Your Name",email = "you@example.com"}
+    { name = "Your Name", email = "you@example.com" },
 ]
 license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
-    "demo @ git+https://github.com/demo/demo.git@develop"
+    "demo @ git+https://github.com/demo/demo.git@develop",
 ]
 
 [dependency-groups]
 dev = [
-    "pytest (>=3.6.0,<4.0.0)"
+    "pytest (>=3.6.0,<4.0.0)",
 ]
 """
 
@@ -410,17 +452,17 @@ name = "my-package"
 version = "1.2.3"
 description = "This is a description"
 authors = [
-    {name = "Your Name",email = "you@example.com"}
+    { name = "Your Name", email = "you@example.com" },
 ]
 license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
-    "demo @ git+https://github.com/demo/pyproject-demo.git"
+    "demo @ git+https://github.com/demo/pyproject-demo.git",
 ]
 
 [dependency-groups]
 dev = [
-    "pytest (>=3.6.0,<4.0.0)"
+    "pytest (>=3.6.0,<4.0.0)",
 ]
 """
 
@@ -465,17 +507,17 @@ name = "my-package"
 version = "1.2.3"
 description = "This is a description"
 authors = [
-    {{name = "Your Name",email = "you@example.com"}}
+    {{ name = "Your Name", email = "you@example.com" }},
 ]
 license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
-    "demo @ {demo_uri}"
+    "demo @ {demo_uri}",
 ]
 
 [dependency-groups]
 dev = [
-    "pytest (>=3.6.0,<4.0.0)"
+    "pytest (>=3.6.0,<4.0.0)",
 ]
 """
     assert expected in tester.io.fetch_output()
@@ -519,17 +561,17 @@ name = "my-package"
 version = "1.2.3"
 description = "This is a description"
 authors = [
-    {{name = "Your Name",email = "you@example.com"}}
+    {{ name = "Your Name", email = "you@example.com" }},
 ]
 license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
-    "demo @ {demo_uri}"
+    "demo @ {demo_uri}",
 ]
 
 [dependency-groups]
 dev = [
-    "pytest (>=3.6.0,<4.0.0)"
+    "pytest (>=3.6.0,<4.0.0)",
 ]
 """
 
@@ -574,17 +616,17 @@ name = "my-package"
 version = "1.2.3"
 description = "This is a description"
 authors = [
-    {{name = "Your Name",email = "you@example.com"}}
+    {{ name = "Your Name", email = "you@example.com" }},
 ]
 license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
-    "demo @ {demo_uri}"
+    "demo @ {demo_uri}",
 ]
 
 [dependency-groups]
 dev = [
-    "pytest (>=3.6.0,<4.0.0)"
+    "pytest (>=3.6.0,<4.0.0)",
 ]
 """
 
@@ -621,18 +663,18 @@ name = "my-package"
 version = "1.2.3"
 description = "This is a description"
 authors = [
-    {name = "Your Name",email = "you@example.com"}
+    { name = "Your Name", email = "you@example.com" },
 ]
 license = "MIT"
 requires-python = ">=3.8"
 dependencies = [
     "foo (==1.19.2)",
-    "pendulum (>=2.0.0,<3.0.0)"
+    "pendulum (>=2.0.0,<3.0.0)",
 ]
 
 [dependency-groups]
 dev = [
-    "pytest (==3.6.0)"
+    "pytest (==3.6.0)",
 ]
 """
 
@@ -658,7 +700,7 @@ name = "my-package"
 version = "1.2.3"
 description = "This is a description"
 authors = [
-    {name = "Your Name",email = "you@example.com"}
+    { name = "Your Name", email = "you@example.com" },
 ]
 license = "MIT"
 requires-python = ">=3.6"
@@ -689,12 +731,12 @@ name = "my-package"
 version = "1.2.3"
 description = "This is a description"
 authors = [
-    {name = "Your Name",email = "you@example.com"}
+    { name = "Your Name", email = "you@example.com" },
 ]
 license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
-    "pendulum (>=2.0.0,<3.0.0)"
+    "pendulum (>=2.0.0,<3.0.0)",
 ]
 """
 
@@ -731,13 +773,13 @@ name = "my-package"
 version = "1.2.3"
 description = "This is a description"
 authors = [
-    {name = "Your Name",email = "you@example.com"}
+    { name = "Your Name", email = "you@example.com" },
 ]
 license = "MIT"
 requires-python = ">=3.6"
 dependencies = [
     "pendulum (>=2.0.0,<3.0.0)",
-    "pyramid (>=1.10,<2.0)"
+    "pyramid (>=1.10,<2.0)",
 ]
 """
     assert expected in tester.io.fetch_output()
@@ -768,7 +810,7 @@ name = "my-package"
 version = "1.2.3"
 description = "This is a description"
 authors = [
-    {name = "Your Name",email = "you@example.com"}
+    { name = "Your Name", email = "you@example.com" },
 ]
 license = "MIT"
 requires-python = ">=3.6"
@@ -777,7 +819,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "pytest (>=3.6.0,<4.0.0)"
+    "pytest (>=3.6.0,<4.0.0)",
 ]
 """
 
@@ -814,7 +856,7 @@ name = "my-package"
 version = "1.2.3"
 description = "This is a description"
 authors = [
-    {name = "Your Name",email = "you@example.com"}
+    { name = "Your Name", email = "you@example.com" },
 ]
 license = "MIT"
 requires-python = ">=3.6"
@@ -824,7 +866,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest (>=3.6.0,<4.0.0)",
-    "pytest-requests (>=0.2.0,<0.3.0)"
+    "pytest-requests (>=0.2.0,<0.3.0)",
 ]
 """
 
@@ -861,17 +903,17 @@ name = "my-package"
 version = "1.2.3"
 description = "This is a description"
 authors = [
-    {name = "Foo Bar",email = "foo@example.com"}
+    { name = "Foo Bar", email = "foo@example.com" },
 ]
 license = "MIT"
 requires-python = ">=3.8"
 dependencies = [
-    "pendulum (>=2.0.0,<3.0.0)"
+    "pendulum (>=2.0.0,<3.0.0)",
 ]
 
 [dependency-groups]
 dev = [
-    "pytest (>=3.6.0,<4.0.0)"
+    "pytest (>=3.6.0,<4.0.0)",
 ]
 """
 
@@ -960,11 +1002,11 @@ name = "my-package"
 version = "0.1.0"
 description = ""
 authors = [
-    {name = "Your Name",email = "you@example.com"}
+    { name = "Your Name", email = "you@example.com" },
 ]
 requires-python = ">=3.6"
 dependencies = [
-    "foo (>=1.19.2,<2.0.0)"
+    "foo (>=1.19.2,<2.0.0)",
 ]
 """
     assert f"{existing_section}\n{expected}" in pyproject_file.read_text(
@@ -1080,7 +1122,7 @@ def test_package_include(
     include: str | None,
 ) -> None:
     tester.execute(
-        inputs="\n".join(
+        inputs="\n".join(  # noqa: FLY002
             (
                 package_name,
                 "",  # Version
@@ -1097,7 +1139,7 @@ def test_package_include(
 
     packages = ""
     if include and module_name(package_name) != include:
-        packages = f'\n[tool.poetry]\npackages = [{{include = "{include}"}}]\n'
+        packages = f'\n[tool.poetry]\npackages = [{{ include = "{include}" }}]\n'
 
     expected = (
         "[project]\n"
@@ -1105,7 +1147,7 @@ def test_package_include(
         'version = "0.1.0"\n'
         'description = ""\n'
         "authors = [\n"
-        '    {name = "poetry"}\n'
+        '    { name = "poetry" },\n'
         "]\n"
         'requires-python = ">=3.10"\n'
         "dependencies = [\n"

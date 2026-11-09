@@ -475,12 +475,14 @@ def test_clone_with_lfs_files(tmp_path: Path) -> None:
 
     # Configure .gitattributes to track large files with LFS
     gitattributes = source_path / ".gitattributes"
-    gitattributes.write_text("*.bin filter=lfs diff=lfs merge=lfs -text\n")
+    gitattributes.write_text(
+        "*.bin filter=lfs diff=lfs merge=lfs -text\n", encoding="utf-8"
+    )
     porcelain.add(repo, str(gitattributes))
 
     # Create a regular file
     regular_file = source_path / "regular.txt"
-    regular_file.write_text("This is a regular file")
+    regular_file.write_text("This is a regular file", encoding="utf-8")
     porcelain.add(repo, str(regular_file))
 
     # Create an LFS file with a pointer
@@ -494,7 +496,7 @@ def test_clone_with_lfs_files(tmp_path: Path) -> None:
         f"oid sha256:{lfs_object_id}\n"
         f"size {len(lfs_content)}\n"
     )
-    lfs_file.write_text(lfs_pointer)
+    lfs_file.write_text(lfs_pointer, encoding="utf-8")
     porcelain.add(repo, str(lfs_file))
 
     # Commit the files
@@ -521,11 +523,13 @@ def test_clone_with_lfs_files(tmp_path: Path) -> None:
 
     # Verify regular file is present
     assert (clone_dir / "regular.txt").exists()
-    assert (clone_dir / "regular.txt").read_text() == "This is a regular file"
+    assert (clone_dir / "regular.txt").read_text(
+        encoding="utf-8"
+    ) == "This is a regular file"
 
     # Verify .gitattributes is present
     assert (clone_dir / ".gitattributes").exists()
-    assert "filter=lfs" in (clone_dir / ".gitattributes").read_text()
+    assert "filter=lfs" in (clone_dir / ".gitattributes").read_text(encoding="utf-8")
 
     # Verify LFS file is present with actual content (not just pointer)
     # The LFS system should automatically retrieve the actual content
