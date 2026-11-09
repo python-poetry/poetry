@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import re
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -13,14 +12,9 @@ from cleo.helpers import argument
 from cleo.helpers import option
 from installer.utils import canonicalize_name
 
-from poetry.config.config import PackageFilterPolicy
+from poetry.config.config import Config
 from poetry.config.config import boolean_normalizer
 from poetry.config.config import boolean_validator
-from poetry.config.config import build_config_setting_normalizer
-from poetry.config.config import build_config_setting_validator
-from poetry.config.config import int_normalizer
-from poetry.config.config import int_validator
-from poetry.config.config import str_list_normalizer
 from poetry.config.config_source import UNSET
 from poetry.config.config_source import ConfigSourceMigration
 from poetry.config.config_source import PropertyNotFoundError
@@ -74,64 +68,11 @@ To remove a repository (repo is a short alias for repositories):
 
     LIST_PROHIBITED_SETTINGS: ClassVar[set[str]] = {"http-basic", "pypi-token"}
 
-    @property
-    def unique_config_values(self) -> dict[str, tuple[Any, Any]]:
-        unique_config_values = {
-            "cache-dir": (str, lambda val: str(Path(val))),
-            "data-dir": (str, lambda val: str(Path(val))),
-            "virtualenvs.create": (boolean_validator, boolean_normalizer),
-            "virtualenvs.in-project": (boolean_validator, boolean_normalizer),
-            "virtualenvs.options.always-copy": (boolean_validator, boolean_normalizer),
-            "virtualenvs.options.system-site-packages": (
-                boolean_validator,
-                boolean_normalizer,
-            ),
-            "virtualenvs.options.no-pip": (boolean_validator, boolean_normalizer),
-            "virtualenvs.path": (str, lambda val: str(Path(val))),
-            "virtualenvs.use-poetry-python": (boolean_validator, boolean_normalizer),
-            "virtualenvs.prompt": (str, str),
-            "system-git-client": (boolean_validator, boolean_normalizer),
-            "requests.max-retries": (lambda val: int_validator(val, 0), int_normalizer),
-            "installer.re-resolve": (boolean_validator, boolean_normalizer),
-            "installer.parallel": (boolean_validator, boolean_normalizer),
-            "installer.builtin-uninstall": (boolean_validator, boolean_normalizer),
-            "installer.max-workers": (
-                lambda val: int_validator(val, 1),
-                int_normalizer,
-            ),
-            "installer.no-binary": (
-                PackageFilterPolicy.validator,
-                PackageFilterPolicy.normalize,
-            ),
-            "installer.only-binary": (
-                PackageFilterPolicy.validator,
-                PackageFilterPolicy.normalize,
-            ),
-            "solver.lazy-wheel": (boolean_validator, boolean_normalizer),
-            "solver.min-release-age": (
-                lambda val: int_validator(val, 0),
-                int_normalizer,
-            ),
-            "solver.min-release-age-exclude": (
-                PackageFilterPolicy.validator,
-                PackageFilterPolicy.normalize,
-            ),
-            "solver.min-release-age-exclude-source": (
-                lambda val: bool(val.strip()),
-                str_list_normalizer,
-            ),
-            "keyring.enabled": (boolean_validator, boolean_normalizer),
-            "python.installation-dir": (str, lambda val: str(Path(val))),
-        }
-
-        return unique_config_values
-
     def handle(self) -> int:
         from pathlib import Path
 
         from poetry.core.pyproject.exceptions import PyProjectError
 
-        from poetry.config.config import Config
         from poetry.config.file_config_source import FileConfigSource
         from poetry.locations import CONFIG_DIR
         from poetry.toml.file import TOMLFile
@@ -211,7 +152,7 @@ To remove a repository (repo is a short alias for repositories):
 
                 self.line(str(value))
             else:
-                if setting_key not in self.unique_config_values:
+                if setting_key not in Config.settings:
                     raise ValueError(f"There is no {setting_key} setting.")
 
                 value = config.get(setting_key)
@@ -225,7 +166,7 @@ To remove a repository (repo is a short alias for repositories):
 
         values: list[str] = self.argument("value")
 
-        if setting_key in self.unique_config_values:
+        if setting_key in Config.settings:
             if self.option("unset"):
                 config.config_source.remove_property(setting_key)
                 return 0
@@ -233,7 +174,6 @@ To remove a repository (repo is a short alias for repositories):
             return self._handle_single_value(
                 config.config_source,
                 setting_key,
-                self.unique_config_values[setting_key],
                 values,
             )
 
@@ -358,8 +298,8 @@ To remove a repository (repo is a short alias for repositories):
                 settings = {}
 
             for value in values:
-                if build_config_setting_validator(value):
-                    config_settings = build_config_setting_normalizer(value)
+                if Config.get_validator(key)(value):
+                    config_settings = Config.get_normalizer(key)(value)
                     for setting_name, item in config_settings.items():
                         settings[setting_name] = item
                 else:
@@ -378,10 +318,10 @@ To remove a repository (repo is a short alias for repositories):
         self,
         source: ConfigSource,
         key: str,
-        callbacks: tuple[Any, Any],
         values: list[Any],
     ) -> int:
-        validator, normalizer = callbacks
+        validator = Config.get_validator(key)
+        normalizer = Config.get_normalizer(key)
 
         if len(values) > 1:
             raise RuntimeError("You can only pass one value.")
