@@ -4,9 +4,9 @@ import contextlib
 import logging
 import shutil
 
+from datetime import UTC
 from datetime import datetime
 from datetime import timedelta
-from datetime import timezone
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -51,7 +51,7 @@ def test_min_release_age_and_cutoff_is_set(
 ) -> None:
     config.merge({"solver": {"min-release-age": min_release_age}})
 
-    mocked_now = datetime(2017, 8, 20, tzinfo=timezone.utc)
+    mocked_now = datetime(2017, 8, 20, tzinfo=UTC)
     mocker.patch(  # type: ignore[call-overload]
         "poetry.repositories.http_repository.datetime",
         wraps=datetime,
@@ -201,7 +201,7 @@ def test_min_release_age_exclude_source(
 )
 def test_is_version_too_recent(links: list[Link], expected: bool) -> None:
     repo = MockRepository()
-    repo._min_release_age_cutoff = datetime(2017, 8, 10, tzinfo=timezone.utc)
+    repo._min_release_age_cutoff = datetime(2017, 8, 10, tzinfo=UTC)
     assert repo._is_version_too_recent(links) == expected
 
 

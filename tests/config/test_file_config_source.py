@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-import tomlkit
+import tomlrt
 
 from poetry.config.config_source import PropertyNotFoundError
 from poetry.config.file_config_source import FileConfigSource
@@ -44,7 +44,7 @@ def test_file_config_source_remove_property(tmp_path: Path) -> None:
 
     config = tmp_path.joinpath("config.toml")
     with config.open(mode="w", encoding="utf-8") as f:
-        f.write(tomlkit.dumps(config_data))
+        f.write(tomlrt.dumps(config_data))
 
     config_source = FileConfigSource(TOMLFile(config))
 
@@ -69,7 +69,7 @@ def test_file_config_source_get_property(tmp_path: Path) -> None:
 
     config = tmp_path.joinpath("config.toml")
     with config.open(mode="w", encoding="utf-8") as f:
-        f.write(tomlkit.dumps(config_data))
+        f.write(tomlrt.dumps(config_data))
 
     config_source = FileConfigSource(TOMLFile(config))
 
