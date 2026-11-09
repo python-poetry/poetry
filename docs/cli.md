@@ -339,6 +339,15 @@ The `debug info` command shows debug information about Poetry and your project's
 The `debug resolve` command helps when debugging dependency resolution issues. The command attempts to resolve your
 dependencies and list the chosen packages and versions.
 
+You can also pass one or more package names to resolve only those packages instead of your project's dependencies.
+
+#### Options
+
+* `--extras (-E)`: Extras to activate for the dependency. Only used when package names are passed.
+* `--python`: Python version(s) to use for resolution.
+* `--tree`: Display the dependency tree.
+* `--install`: Show what would be installed for the current system.
+
 ### debug tags
 
 The `debug tags` command is useful when you want to see the supported packaging tags for your project's active
