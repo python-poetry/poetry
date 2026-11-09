@@ -408,15 +408,19 @@ not configure the system Git client's HTTPS connection.
 {{< tabs tabTotal="2" tabID1="path-project" tabID2="path-poetry" tabName1="[project]" tabName2="[tool.poetry]">}}
 
 {{< tab tabID="path-project" >}}
-In the `project` section, you can only use absolute paths:
+In the `project` section, you can only use absolute paths. For a directory dependency:
 
 ```toml
 [project]
-# directory
 dependencies = [
     "my-package @ file:///absolute/path/to/my-package"
 ]
-# file
+```
+
+Alternatively, for an archive dependency:
+
+```toml
+[project]
 dependencies = [
     "my-package @ file:///absolute/path/to/my-package/dist/my-package-0.1.0.tar.gz"
 ]
@@ -425,14 +429,17 @@ dependencies = [
 
 {{< tab tabID="path-poetry" >}}
 To depend on a library located in a local directory or file,
-you can use the `path` property:
+you can use the `path` property. For a directory dependency:
 
 ```toml
 [tool.poetry.dependencies]
-# directory
 my-package = { path = "../my-package/", develop = true }
+```
 
-# file
+Alternatively, for an archive dependency:
+
+```toml
+[tool.poetry.dependencies]
 my-package = { path = "../my-package/dist/my-package-0.1.0.tar.gz" }
 ```
 
