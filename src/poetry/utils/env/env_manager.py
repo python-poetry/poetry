@@ -13,7 +13,6 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 
-import tomlkit
 import virtualenv
 
 from cleo.io.null_io import NullIO
@@ -39,6 +38,8 @@ from poetry.utils.helpers import remove_directory
 
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from cleo.io.io import IO
 
     from poetry.poetry import Poetry
@@ -137,7 +138,7 @@ class EnvManager:
 
             return self.get(reload=True)
 
-        envs = tomlkit.document()
+        envs: dict[str, Any] = {}
         if self.envs_file.exists():
             envs = self.envs_file.read()
             current_env = envs.get(self.base_env_name)

@@ -5,14 +5,13 @@ import json
 import logging
 import shutil
 import sys
+import tomllib
 
 from functools import cached_property
 from importlib import metadata
 from pathlib import Path
 from site import addsitedir
 from typing import TYPE_CHECKING
-
-import tomlkit
 
 from poetry.core.packages.project_package import ProjectPackage
 
@@ -23,7 +22,6 @@ from poetry.plugins.application_plugin import ApplicationPlugin
 from poetry.plugins.plugin import Plugin
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.toml import TOMLFile
-from poetry.utils._compat import tomllib
 from poetry.utils.env import Env
 from poetry.utils.env import EnvManager
 
@@ -298,12 +296,7 @@ class ProjectPluginCache:
     def _write_config(self) -> None:
         self._ensure_cache_directory()
 
-        document = tomlkit.document()
-
-        for key, value in self._config.items():
-            document[key] = value
-
-        TOMLFile(self._config_file).write(data=document)
+        TOMLFile(self._config_file).write(data=self._config)
 
     def _ensure_cache_directory(self) -> None:
         if self._path.exists():
