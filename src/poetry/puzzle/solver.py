@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     from collections.abc import Collection
     from collections.abc import Iterator
     from collections.abc import Sequence
+    from typing import Self
 
     from cleo.io.io import IO
     from packaging.utils import NormalizedName
@@ -34,7 +35,6 @@ if TYPE_CHECKING:
     from poetry.core.packages.package import Package
     from poetry.core.packages.project_package import ProjectPackage
     from poetry.core.version.markers import BaseMarker
-    from typing_extensions import Self
 
     from poetry.puzzle.transaction import Transaction
     from poetry.repositories import RepositoryPool

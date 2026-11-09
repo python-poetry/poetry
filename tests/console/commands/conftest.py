@@ -28,7 +28,7 @@ name = "my-package"
 version = "1.2.3"
 description = "This is a description"
 authors = [
-    {name = "Your Name",email = "you@example.com"}
+    { name = "Your Name", email = "you@example.com" },
 ]
 license = "MIT"
 readme = "README.md"
@@ -53,7 +53,7 @@ name = "my-package"
 version = "1.2.3"
 description = "This is a description"
 authors = [
-    {name = "Your Name",email = "you@example.com"}
+    { name = "Your Name", email = "you@example.com" },
 ]
 license = "MIT"
 readme = "README.md"
@@ -62,5 +62,5 @@ dependencies = [
 ]
 
 [tool.poetry]
-packages = [{include = "my_package", from = "src"}]
+packages = [{ include = "my_package", from = "src" }]
 """
