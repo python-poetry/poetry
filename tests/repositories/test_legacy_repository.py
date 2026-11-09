@@ -260,11 +260,10 @@ def test_find_packages_only_prereleases(
 
     assert len(packages) == count
 
-    if count >= 0:
-        for package in packages:
-            assert package.source_type == "legacy"
-            assert package.source_reference == repo.name
-            assert package.source_url == repo.url
+    for package in packages:
+        assert package.source_type == "legacy"
+        assert package.source_reference == repo.name
+        assert package.source_url == repo.url
 
 
 @pytest.mark.parametrize(
