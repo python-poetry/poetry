@@ -1631,12 +1631,7 @@ hide the original error
 """
 
     if isinstance(exception, CalledProcessError):
-        expected_output += (
-            "\n    | Command '['pip']' returned non-zero exit status 1."
-            "\n    | "
-            "\n    | original error"
-            "\n"
-        )
+        expected_output += f"\n    | {exception}\n    | \n    | original error\n"
 
     expected_output += f"""
 Note: This error originates from the build backend, and is likely not a problem \

@@ -33,8 +33,12 @@ def get_options_based_on_normalizer(normalizer: Normalizer) -> Iterator[str]:
     flattened_config = flatten_dict(obj=Config.default_config, delimiter=".")
 
     for k in flattened_config:
-        if Config._get_normalizer(k) == normalizer:
+        if Config.get_normalizer(k) == normalizer:
             yield k
+
+
+def test_config_settings_in_sync_with_default_config() -> None:
+    assert set(Config.settings) == set(flatten_dict(Config.default_config))
 
 
 @pytest.mark.parametrize(
