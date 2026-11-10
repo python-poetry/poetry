@@ -350,6 +350,22 @@ If your project uses a build script, it is run implicitly in the following scena
 2. When `poetry build` is run, it is executed prior to building distributions.
 3. When a PEP 517 build is triggered from source or sdist by another build frontend.
 
+### Why is my build script's output missing from `poetry build`?
+
+When `poetry build` runs your build script in an isolated environment, it captures the script's standard output and
+standard error. Output from a successful build is not displayed, even with `-v`, `-vv`, or `-vvv`. If the build fails,
+the captured output is included in the error message.
+
+To inspect the script's output while developing it, install its build dependencies in your project's virtual environment
+as described above under **Add Build Dependencies**, then run the script directly from the project root:
+
+```sh
+poetry run python scripts/build-extension.py
+```
+
+Replace `scripts/build-extension.py` with the path configured in `tool.poetry.build.script`.
+This runs the script in your project's environment rather than Poetry's isolated build environment.
+
 ### How does Poetry ensure my build script's dependencies are met?
 Prior to executing the build script, Poetry creates a temporary virtual environment with your project's active Python
 version and then installs all dependencies specified under `build-system.requires` into this environment. It should be
