@@ -231,7 +231,7 @@ def test_get_cached_archives(fixture_dir: FixtureDirGetter) -> None:
             "https://files.pythonhosted.org/demo-0.1.0.tar.gz",
             True,
             [
-                Path("/cache/demo-0.1.0-py2.py3-none-any"),
+                Path("/cache/demo-0.1.0-py2.py3-none-any.whl"),
                 Path("/cache/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl"),
                 Path("/cache/demo-0.1.0-cp37-cp37-macosx_10_15_x86_64.whl"),
             ],
@@ -315,7 +315,7 @@ def test_get_found_cached_archive_for_link(
         cache,
         "_get_cached_archives",
         return_value=[
-            Path("/cache/demo-0.1.0-py2.py3-none-any"),
+            Path("/cache/demo-0.1.0-py2.py3-none-any.whl"),
             Path("/cache/demo-0.1.0.tar.gz"),
             Path("/cache/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl"),
             Path("/cache/demo-0.1.0-cp37-cp37-macosx_10_15_x86_64.whl"),
@@ -325,6 +325,45 @@ def test_get_found_cached_archive_for_link(
     archive = cache.get_cached_archive_for_link(Link(link), strict=strict, env=env)
 
     assert Path(cached) == archive
+
+
+@pytest.mark.parametrize("reverse_archives", [False, True])
+@pytest.mark.parametrize(
+    ("supported_tags", "expected_filename"),
+    [
+        (
+            [Tag("cp38", "cp38", "macosx_10_15_x86_64"), Tag("py3", "none", "any")],
+            "demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl",
+        ),
+        (
+            [Tag("py3", "none", "any"), Tag("cp38", "cp38", "macosx_10_15_x86_64")],
+            "demo-0.1.0-py2.py3-none-any.whl",
+        ),
+    ],
+)
+def test_get_cached_archive_for_link_respects_supported_tag_order(
+    mocker: MockerFixture,
+    supported_tags: list[Tag],
+    expected_filename: str,
+    reverse_archives: bool,
+) -> None:
+    cache = ArtifactCache(cache_dir=Path())
+    env = MockEnv(supported_tags=supported_tags)
+    archives = [
+        Path("/cache/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl"),
+        Path("/cache/demo-0.1.0-py2.py3-none-any.whl"),
+    ]
+    if reverse_archives:
+        archives.reverse()
+    mocker.patch.object(cache, "_get_cached_archives", return_value=archives)
+
+    archive = cache.get_cached_archive_for_link(
+        Link("https://files.pythonhosted.org/demo-0.1.0.tar.gz"),
+        strict=False,
+        env=env,
+    )
+
+    assert archive == Path("/cache") / expected_filename
 
 
 def test_get_cached_archive_for_link_no_race_condition(
