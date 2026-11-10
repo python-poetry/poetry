@@ -213,6 +213,43 @@ def test_publish_read_from_environment_variable(
 
 
 @pytest.mark.parametrize(
+    ("configured", "cli_username", "cli_password", "expected"),
+    [
+        ({"password": "bar"}, "cli-user", None, ("cli-user", "bar")),
+        ({"username": "foo"}, None, "cli-pass", ("foo", "cli-pass")),
+        ({"username": "foo", "password": "bar"}, "cli-user", None, ("cli-user", "bar")),
+        ({"username": "foo", "password": "bar"}, None, "cli-pass", ("foo", "cli-pass")),
+        ({"username": "foo", "password": "bar"}, "", "", ("foo", "bar")),
+    ],
+)
+def test_publish_merges_given_and_configured_credentials(
+    fixture_dir: FixtureDirGetter,
+    mocker: MockerFixture,
+    config: Config,
+    configured: dict[str, str],
+    cli_username: str | None,
+    cli_password: str | None,
+    expected: tuple[str, str],
+) -> None:
+    uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
+    mocker.patch("poetry.publishing.uploader.Uploader.upload")
+
+    poetry = Factory().create_poetry(fixture_dir("sample_project"))
+    poetry._config = config
+    poetry.config.merge(
+        {
+            "repositories": {"foo": {"url": "https://foo.bar"}},
+            "http-basic": {"foo": configured},
+        }
+    )
+    publisher = Publisher(poetry, NullIO())
+
+    publisher.publish("foo", cli_username, cli_password)
+
+    assert uploader_auth.call_args == [expected]
+
+
+@pytest.mark.parametrize(
     ("configured_url", "expected_url"),
     [
         # Missing trailing slash — should be added
