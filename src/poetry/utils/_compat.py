@@ -1,20 +1,11 @@
 from __future__ import annotations
 
-import locale
 import sys
 import warnings
 
 from contextlib import suppress
-from pathlib import Path
-
-
-if sys.version_info < (3, 11):
-    # compatibility for python <3.11
-    import tomli as tomllib
-else:
-    import tomllib
-
 from importlib import metadata as _metadata
+from pathlib import Path
 
 
 WINDOWS = sys.platform == "win32"
@@ -44,13 +35,6 @@ def encode(string: str, encodings: list[str] | None = None) -> bytes:
             return string.encode(encoding)
 
     return string.encode(encodings[0], errors="ignore")
-
-
-def getencoding() -> str:
-    if sys.version_info < (3, 11):
-        return locale.getpreferredencoding()
-    else:
-        return locale.getencoding()
 
 
 def is_relative_to(path1: Path, path2: Path) -> bool:
@@ -96,6 +80,4 @@ __all__ = [
     "WINDOWS",
     "decode",
     "encode",
-    "getencoding",
-    "tomllib",
 ]
