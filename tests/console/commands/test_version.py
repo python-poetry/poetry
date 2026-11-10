@@ -61,6 +61,8 @@ def poetry_with_underscore(
         ("1.2.3beta1", "prerelease", "1.2.3b2"),
         ("1.2.3b1", "prerelease", "1.2.3b2"),
         ("1.2.3", "prerelease", "1.2.4a0"),
+        ("1.2.3.dev1", "prerelease", "1.2.3a0"),
+        ("1.2.3.post1.dev1", "prerelease", "1.2.4a0"),
         ("0.0.0", "1.2.3", "1.2.3"),
     ],
 )
@@ -81,6 +83,7 @@ def test_increment_version(
         ("1.2.3-beta.1", "prerelease", "1.2.3rc0"),
         ("1.2.3-beta1", "prerelease", "1.2.3rc0"),
         ("1.2.3beta1", "prerelease", "1.2.3rc0"),
+        ("1.2.3.dev1", "prerelease", "1.2.3a0"),
     ],
 )
 def test_next_phase_version(
