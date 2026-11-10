@@ -219,6 +219,7 @@ list of installed packages
         removed_groups = set()
         # 1. PEP 735: [dependency-groups]
         if "dependency-groups" in content:
+            normalized_group_name = canonicalize_name(group_name)
             groups_to_remove = []
             for group_key, group_content in content["dependency-groups"].items():
                 if not isinstance(group_content, list):
@@ -226,9 +227,12 @@ list of installed packages
 
                 to_remove = []
                 for item in group_content:
+                    if not isinstance(item, dict):
+                        continue
+                    include_group = item.get("include-group")
                     if (
-                        isinstance(item, dict)
-                        and item.get("include-group") == group_name
+                        isinstance(include_group, str)
+                        and canonicalize_name(include_group) == normalized_group_name
                     ):
                         to_remove.append(item)
 
