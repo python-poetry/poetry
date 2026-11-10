@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import shutil
 
 from pathlib import Path
@@ -11,6 +12,10 @@ import pytest
 import requests
 import responses
 
+from cleo.io.inputs.argv_input import ArgvInput
+from cleo.io.inputs.token_parser import TokenParser
+
+from poetry.console.commands.publish import _build_output_args
 from poetry.factory import Factory
 
 
@@ -218,7 +223,9 @@ def test_publish_dist_dir_and_build_options(
     assert "- Uploading simple_project-1.2.3-py2.py3-none-any.whl" in error
 
 
-@pytest.mark.parametrize("dist_dir", ["to build/dist", "absolute"])
+@pytest.mark.parametrize(
+    "dist_dir", ["to build/dist", "to build/dist" + os.sep, "absolute"]
+)
 def test_publish_dist_dir_with_spaces_and_build_options(
     http: responses.RequestsMock,
     fixture_dir: FixtureDirGetter,
@@ -245,7 +252,12 @@ def test_publish_dist_dir_with_spaces_and_build_options(
     else:
         output_dir = target_dir / dist_dir
 
-    exit_code = tester.execute(f'--dist-dir "{dist_dir}" --dry-run --build')
+    # CommandTester parses a string with cleo's tokenizer, which cannot represent
+    # an argument that ends with a backslash, so pass the tokens directly.
+    tester.io.set_input(
+        ArgvInput(["publish", "--dist-dir", dist_dir, "--dry-run", "--build"])
+    )
+    exit_code = tester.command.run(tester.io)
 
     assert exit_code == 0
 
@@ -258,6 +270,24 @@ def test_publish_dist_dir_with_spaces_and_build_options(
 
     assert (output_dir / "simple_project-1.2.3.tar.gz").exists()
     assert (output_dir / "simple_project-1.2.3-py2.py3-none-any.whl").exists()
+    # A trailing separator used to escape the closing quote of the build
+    # argument, so the artifacts ended up in a directory with a literal quote.
+    assert not output_dir.with_name(output_dir.name + '"').exists()
+
+
+@pytest.mark.parametrize(
+    ("dist_dir", "expected"),
+    [
+        ("C:\\", "C:\\."),
+        ("\\\\server\\share\\", "\\\\server\\share\\."),
+        ("\\", "\\."),
+    ],
+)
+def test_build_output_args_escape_final_separator(dist_dir: str, expected: str) -> None:
+    # A Windows drive or UNC root keeps its trailing separator, which would
+    # escape the closing quote in cleo's tokenizer. The added dot must parse
+    # back to the same directory as a single argument.
+    assert TokenParser().parse(_build_output_args(dist_dir)) == ["--output", expected]
 
 
 def test_publish_build_no_interaction_skips_confirmation(
