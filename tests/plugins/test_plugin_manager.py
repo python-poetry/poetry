@@ -3,6 +3,7 @@ from __future__ import annotations
 import shutil
 import sys
 
+from importlib import metadata
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import ClassVar
@@ -63,6 +64,11 @@ class InvalidPlugin:
     def activate(self, poetry: Poetry, io: IO) -> None:
         io.write_line("Updating version")
         poetry.package.version = Version.parse("9.9.9")
+
+
+class FailingPlugin(Plugin):
+    def activate(self, poetry: Poetry, io: IO) -> None:
+        raise ValueError("Something went wrong.")
 
 
 @pytest.fixture
@@ -141,6 +147,18 @@ def with_invalid_plugin(mocker: MockerFixture) -> None:
     mock_metadata_entry_points(mocker, InvalidPlugin)
 
 
+@pytest.fixture
+def with_failing_plugin(mocker: MockerFixture, tmp_path: Path) -> None:
+    dist_info = tmp_path / "my_plugin-1.2.3.dist-info"
+    dist_info.mkdir()
+    (dist_info / "METADATA").write_text(
+        "Name: my-plugin\nVersion: 1.2.3\n", encoding="utf-8"
+    )
+    mock_metadata_entry_points(
+        mocker, FailingPlugin, dist=metadata.PathDistribution(dist_info)
+    )
+
+
 def test_load_plugins_and_activate(
     manager_factory: ManagerFactory,
     poetry: Poetry,
@@ -165,6 +183,64 @@ def test_load_plugins_with_invalid_plugin(
 
     with pytest.raises(TypeError):
         manager.load_plugins()
+
+
+def test_load_plugins_with_failing_import(
+    manager_factory: ManagerFactory, mocker: MockerFixture
+) -> None:
+    mocker.patch.object(
+        metadata,
+        "entry_points",
+        return_value=[
+            metadata.EntryPoint(
+                name="my-plugin",
+                group=Plugin.group,
+                value="poetry.does_not_exist:MyPlugin",
+            )
+        ],
+    )
+    manager = manager_factory()
+
+    with pytest.raises(RuntimeError) as e:
+        manager.load_plugins()
+
+    assert str(e.value) == (
+        "Failed to load the \"my-plugin\" plugin: No module named 'poetry.does_not_exist'"
+        "\n\nYou can run Poetry with --no-plugins to disable all plugins,"
+        " for example to update or remove the plugin causing this."
+    )
+    assert isinstance(e.value.__cause__, ModuleNotFoundError)
+
+
+@pytest.mark.parametrize(
+    ("error", "reason"),
+    [
+        (ValueError("Something went wrong."), "Something went wrong."),
+        (AssertionError(), "AssertionError"),
+    ],
+)
+def test_activate_with_failing_plugin(
+    manager_factory: ManagerFactory,
+    poetry: Poetry,
+    io: BufferedIO,
+    with_failing_plugin: None,
+    mocker: MockerFixture,
+    error: Exception,
+    reason: str,
+) -> None:
+    mocker.patch.object(FailingPlugin, "activate", side_effect=error)
+    manager = manager_factory()
+    manager.load_plugins()
+
+    with pytest.raises(RuntimeError) as e:
+        manager.activate(poetry, io)
+
+    assert str(e.value) == (
+        f'Failed to activate the "my-plugin" plugin (my-plugin 1.2.3): {reason}\n\n'
+        "You can run Poetry with --no-plugins to disable all plugins,"
+        " for example to update or remove the plugin causing this."
+    )
+    assert e.value.__cause__ is error
 
 
 def test_add_project_plugin_path(
