@@ -952,6 +952,38 @@ include-groups = ["left", "right"]
     assert reloaded.locker.is_fresh()
 
 
+def test_remove_cleans_up_differently_spelled_include_group(
+    project_factory: ProjectFactory,
+    command_tester_factory: CommandTesterFactory,
+    repo: DummyRepository,
+) -> None:
+    # PEP 735 requires tools to normalize group names before comparisons, so
+    # an `include-group` spelled differently from the removed group's key must
+    # still be cleaned up.
+    poetry = project_factory(
+        name="differently-spelled-include",
+        pyproject_content="""\
+[tool.poetry]
+package-mode = false
+[dependency-groups]
+lint_tools = ["foo>=1"]
+ci = [{ include-group = "lint-tools" }, "bar>=1"]
+""",
+    )
+    repo.add_package(Package("foo", "1.0"))
+    repo.add_package(Package("bar", "1.0"))
+    tester = command_tester_factory("remove", poetry=poetry)
+
+    assert tester.execute("foo --lock") == 0
+
+    content = poetry.file.read()
+    assert content["dependency-groups"] == {"ci": ["bar>=1"]}
+
+    # A successful removal must leave a project that Poetry can load again.
+    reloaded = Factory().create_poetry(poetry.file.path.parent)
+    assert {dep.name for dep in reloaded.package.all_requires} == {"bar"}
+
+
 def test_remove_preserves_references_to_groups_still_defined_in_other_section(
     project_factory: ProjectFactory,
     command_tester_factory: CommandTesterFactory,
