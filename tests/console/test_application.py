@@ -66,6 +66,16 @@ def test_application_with_plugins(with_add_command_plugin: None) -> None:
     assert tester.status_code == 0
 
 
+def test_application_help_describes_poetry() -> None:
+    tester = ApplicationTester(Application())
+
+    tester.execute("--help")
+
+    output = tester.io.fetch_output()
+    assert "Python dependency management and packaging made easy." in output
+    assert "Learn more: https://python-poetry.org/" in output
+
+
 def test_application_with_plugins_disabled(with_add_command_plugin: None) -> None:
     app = Application()
 
