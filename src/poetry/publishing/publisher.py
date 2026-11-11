@@ -4,6 +4,7 @@ import logging
 
 from typing import TYPE_CHECKING
 
+from poetry.exceptions import PoetryError
 from poetry.publishing.uploader import Uploader
 from poetry.utils.authenticator import Authenticator
 
@@ -56,8 +57,15 @@ class Publisher:
         else:
             # Retrieving config information
             url = self._poetry.config.get(["repositories", repository_name, "url"])
-            if url is None:
-                raise RuntimeError(f"Repository {repository_name} is not defined")
+            if not url:
+                if repository_name in self._poetry.config.get("repositories", {}):
+                    reason = "is missing a url"
+                else:
+                    reason = "is not defined"
+                raise PoetryError(
+                    f"The repository {repository_name!r} {reason}. Please set it with "
+                    f"`poetry config repositories.{repository_name} <url>`."
+                )
             url = _normalize_legacy_repository_url(url)
 
         if not (username and password):
