@@ -1330,6 +1330,39 @@ def test_executor_should_append_subdirectory_for_git(
     assert archive_arg == tmp_venv.path / "src/subdirectories/two"
 
 
+def test_executor_should_append_subdirectory_for_git_with_relative_venv(
+    mocker: MockerFixture,
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    config: Config,
+    artifact_cache: ArtifactCache,
+    io: BufferedIO,
+    wheel: Path,
+) -> None:
+    package = Package(
+        "demo",
+        "0.1.2",
+        source_type="git",
+        source_reference="master",
+        source_resolved_reference="654321",
+        source_url="https://github.com/demo/subdirectories.git",
+        source_subdirectory="two",
+    )
+    package.root_dir = Path("my_venv/src/subdirectories/two")
+
+    relative_venv = MockEnv(path=Path("my_venv"))
+    chef = Chef(artifact_cache, relative_venv, Factory.create_pool(config))
+    chef.set_directory_wheel(wheel)
+    spy = mocker.spy(chef, "prepare")
+
+    executor = Executor(relative_venv, pool, config, io)
+    executor._chef = chef
+    executor.execute([Install(package)])
+
+    archive_arg = spy.call_args[0][0]
+    assert archive_arg == (relative_venv.path / "src/subdirectories/two").resolve()
+
+
 def test_executor_should_install_multiple_packages_from_same_git_repository(
     mocker: MockerFixture,
     tmp_venv: VirtualEnv,
