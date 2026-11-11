@@ -118,6 +118,41 @@ class AuthenticatorRepositoryConfig:
         return credential
 
 
+class _AuthenticatorSession(requests.Session):
+    def __init__(self, authenticator: Authenticator) -> None:
+        super().__init__()
+        self._authenticator = authenticator
+
+    def rebuild_auth(
+        self, prepared_request: requests.PreparedRequest, response: requests.Response
+    ) -> None:
+        url = prepared_request.url
+        assert url is not None
+
+        # requests.Session.rebuild_auth() unconditionally prefers netrc credentials,
+        # overriding credentials that are still valid for the redirect target.
+        strip_auth = self.should_strip_auth(response.request.url, url)  # type: ignore[no-untyped-call]
+        if "Authorization" in prepared_request.headers and not strip_auth:
+            return
+
+        # The keyring fallback for unmatched urls is not covered by the https guard
+        # of get_repository_config_for_url(), so never use it for plain http.
+        if (
+            urllib.parse.urlsplit(url).scheme == "https"
+            or self._authenticator.get_repository_config_for_url(url) is not None
+        ):
+            credential = self._authenticator.get_credentials_for_url(url)
+            if credential.username is not None or credential.password is not None:
+                prepared_request.prepare_auth(
+                    requests.auth.HTTPBasicAuth(
+                        credential.username or "", credential.password or ""
+                    )
+                )
+                return
+
+        super().rebuild_auth(prepared_request, response)  # type: ignore[no-untyped-call]
+
+
 class Authenticator:
     def __init__(
         self,
@@ -157,7 +192,7 @@ class Authenticator:
         self._user_agent = user_agent("poetry", __version__)
 
     def create_session(self) -> requests.Session:
-        session = requests.Session()
+        session = _AuthenticatorSession(self)
         session.headers["User-Agent"] = self._user_agent
 
         if self._cache_control is None:
