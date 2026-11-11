@@ -19,6 +19,7 @@ from packaging.utils import canonicalize_name
 from poetry.config.config_source import split_key
 from poetry.config.dict_config_source import DictConfigSource
 from poetry.config.file_config_source import FileConfigSource
+from poetry.exceptions import PoetryError
 from poetry.locations import CONFIG_DIR
 from poetry.locations import DEFAULT_CACHE_DIR
 from poetry.locations import data_dir
@@ -406,7 +407,17 @@ class Config:
                 env = "POETRY_" + "_".join(k.upper().replace("-", "_") for k in keys)
                 env_value = os.getenv(env)
                 if env_value is not None:
-                    return self.process(self.get_normalizer(keys)(env_value))
+                    normalizer = self.get_normalizer(keys)
+                    # Integer settings have a validator that can reject the value. Report the
+                    # environment variable instead of letting int() raise a bare ValueError.
+                    # Other normalizers coerce unknown values and keep doing so.
+                    if normalizer is int_normalizer and not self.get_validator(keys)(
+                        env_value
+                    ):
+                        raise PoetryError(
+                            f"Invalid value for environment variable {env}: {env_value!r}"
+                        )
+                    return self.process(normalizer(env_value))
 
         value = self._config
 
