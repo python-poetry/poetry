@@ -113,6 +113,7 @@ you can set the "package-mode" to false in your pyproject.toml file.
 
         if not self.option("no-plugins"):
             PluginManager.ensure_project_plugins(self.poetry, self.io)
+            self.get_application().load_project_plugins()
 
         if self.option("extras") and self.option("all-extras"):
             self.line_error(
