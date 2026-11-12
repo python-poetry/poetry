@@ -204,8 +204,9 @@ lists all packages available."""
                 # of them in turn
                 packages = [pkg]
                 if required_by:
+                    required_by_names = {canonicalize_name(r) for r in required_by}
                     packages = [
-                        p for p in locked_packages for r in required_by if p.name == r
+                        p for p in locked_packages if p.name in required_by_names
                     ]
                 else:
                     # if no rev-deps exist we'll make this clear as it can otherwise

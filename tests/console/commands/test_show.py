@@ -2155,6 +2155,54 @@ a 0.0.1
     assert tester.io.fetch_output() == expected
 
 
+def test_show_tree_why_package_required_by_non_normalized_name(
+    tester: CommandTester, poetry: Poetry, installed: Repository
+) -> None:
+    poetry.package.add_dependency(Factory.create_dependency("Foo_Bar", "=0.0.1"))
+
+    foo_bar = get_package("Foo_Bar", "0.0.1")
+    foo_bar.add_dependency(Factory.create_dependency("b", "=0.0.1"))
+    installed.add_package(foo_bar)
+
+    b = get_package("b", "0.0.1")
+    installed.add_package(b)
+
+    assert isinstance(poetry.locker, DummyLocker)
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "Foo_Bar",
+                    "version": "0.0.1",
+                    "dependencies": {"b": "=0.0.1"},
+                    "python-versions": "*",
+                    "optional": False,
+                },
+                {
+                    "name": "b",
+                    "version": "0.0.1",
+                    "python-versions": "*",
+                    "optional": False,
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "files": {"Foo_Bar": [], "b": []},
+            },
+        }
+    )
+
+    tester.execute("--tree --why b")
+
+    expected = """Foo_Bar 0.0.1
+└── b =0.0.1
+"""
+
+    assert tester.io.fetch_output() == expected
+
+
 def test_show_tree_shared_dependency_not_marked_circular(
     tester: CommandTester, poetry: Poetry, installed: Repository
 ) -> None:
