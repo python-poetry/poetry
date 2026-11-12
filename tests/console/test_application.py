@@ -16,6 +16,7 @@ from cleo.testers.application_tester import ApplicationTester
 
 from poetry.console.application import Application
 from poetry.console.commands.command import Command
+from poetry.console.commands.installer_command import InstallerCommand
 from poetry.plugins.application_plugin import ApplicationPlugin
 from poetry.plugins.plugin_manager import ProjectPluginCache
 from poetry.repositories.cached_repository import CachedRepository
@@ -134,6 +135,30 @@ def test_application_project_plugins(
         assert sys_path[0] == str(project_plugin_path)
     else:
         assert sys_path[0] != str(project_plugin_path)
+
+
+@pytest.mark.parametrize("command", ["install", "sync"])
+def test_application_only_plugins_does_not_set_up_project_env(
+    command: str, mocker: MockerFixture, set_project_context: SetProjectContext
+) -> None:
+    create_venv = mocker.patch.object(EnvManager, "create_venv")
+    ensure_project_plugins = mocker.patch(
+        "poetry.plugins.plugin_manager.PluginManager.ensure_project_plugins"
+    )
+
+    with set_project_context("sample_project"):
+        app = Application()
+        tester = ApplicationTester(app)
+        tester.execute(f"{command} --only-plugins")
+
+    assert tester.status_code == 0
+    ensure_project_plugins.assert_called_once()
+    # The plugins go into Poetry's own environment, so the project's
+    # environment is neither created nor needed.
+    create_venv.assert_not_called()
+    installer_command = app.find(command)
+    assert isinstance(installer_command, InstallerCommand)
+    assert installer_command._installer is None
 
 
 @pytest.mark.parametrize("disable_cache", [True, False])
