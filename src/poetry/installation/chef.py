@@ -29,11 +29,17 @@ class ChefError(Exception): ...
 
 class Chef:
     def __init__(
-        self, artifact_cache: ArtifactCache, env: Env, pool: RepositoryPool
+        self,
+        artifact_cache: ArtifactCache,
+        env: Env,
+        pool: RepositoryPool,
+        *,
+        disable_cache: bool = False,
     ) -> None:
         self._env = env
         self._pool = pool
         self._artifact_cache = artifact_cache
+        self._disable_cache = disable_cache
 
     def prepare(
         self,
@@ -80,6 +86,7 @@ class Chef:
             python_executable=self._env.python,
             pool=self._pool,
             build_constraints=build_constraints,
+            disable_cache=self._disable_cache,
         ) as builder:
             return Path(
                 builder.build(
