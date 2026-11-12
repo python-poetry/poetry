@@ -32,6 +32,8 @@ from poetry.utils.password_manager import PasswordManager
 
 
 if TYPE_CHECKING:
+    from datetime import datetime
+
     from cleo.io.io import IO
 
 
@@ -118,6 +120,65 @@ class AuthenticatorRepositoryConfig:
         return credential
 
 
+class AtomicSeparateBodyFileCache(SeparateBodyFileCache):
+    """
+    Cache that only publishes an entry once its body is readable.
+
+    A cache entry consists of a metadata file and a separate body file, and the
+    controller writes the metadata first. A concurrent lookup in between the two
+    writes finds the metadata without the body, which deserializes into a
+    response with an empty body. For a package index that means "this package
+    has no releases", so a parallel install concludes that a dependency does not
+    exist.
+
+    Writing the body before the metadata closes the window, so an entry only
+    becomes readable once it is complete. Metadata that is still in flight, or
+    that an interrupted write left behind, counts as a miss instead of an empty
+    response.
+    """
+
+    def __init__(self, directory: Path) -> None:
+        super().__init__(directory)
+        # Metadata of entries whose body has not been written yet. Held back so
+        # that the metadata file appears only after its body file.
+        self._pending_metadata: dict[str, bytes] = {}
+
+    def set(
+        self, key: str, value: bytes, expires: int | datetime | None = None
+    ) -> None:
+        if self._body_path(key).exists():
+            # An entry for this key is already stored in full. This happens when
+            # a revalidation only refreshes the headers of the cached response,
+            # and it must not be held back: no body follows, so nothing would
+            # ever publish it.
+            super().set(key, value, expires)
+            return
+
+        self._pending_metadata[key] = value
+
+    def set_body(self, key: str, body: bytes) -> None:
+        super().set_body(key, body)
+
+        metadata = self._pending_metadata.pop(key, None)
+        if metadata is not None:
+            super().set(key, metadata)
+
+    def get(self, key: str) -> bytes | None:
+        # Metadata without a body belongs to an entry that is still being
+        # published or to a write that was interrupted. Neither can be served,
+        # so report a miss and let the caller fetch the entry again.
+        if not self._body_path(key).exists():
+            return None
+        return super().get(key)
+
+    def delete(self, key: str) -> None:
+        self._pending_metadata.pop(key, None)
+        super().delete(key)
+
+    def _body_path(self, key: str) -> Path:
+        return Path(self._fn(key) + ".body")
+
+
 class Authenticator:
     def __init__(
         self,
@@ -141,7 +202,7 @@ class Authenticator:
         # Poetry >= 2.4: SeparateBodyCache -> directory "_http_"
         # See https://github.com/python-poetry/poetry/pull/10816 for details.
         self._cache_control = (
-            SeparateBodyFileCache(
+            AtomicSeparateBodyFileCache(
                 self._config.repository_cache_directory
                 / (cache_id or "_default_cache")
                 / "_http_"
