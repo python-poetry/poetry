@@ -184,3 +184,38 @@ def test_parse_dependency_specification(
         RequirementsParser(artifact_cache=artifact_cache).parse(requirement)
         in expected_variants
     )
+
+
+
+def test_parse_path_requirement_keeps_brackets_before_extras(
+    mocker: MockerFixture,
+    artifact_cache: ArtifactCache,
+) -> None:
+    """A trailing extra must not truncate an earlier '[' in the path."""
+    requirement = "../libs/foo[bar]/pkg[dev]"
+    path = "../libs/foo[bar]/pkg"
+    original = Path.exists
+
+    def _mock(self: Path) -> bool:
+        if self == Path.cwd().joinpath(path):
+            return True
+        return original(self)
+
+    mocker.patch("pathlib.Path.exists", _mock)
+    mocker.patch(
+        "poetry.inspection.info.get_pep517_metadata",
+        return_value=PackageInfo(name="demo", version="0.1.2"),
+    )
+
+    assert RequirementsParser(artifact_cache=artifact_cache).parse(requirement) == {
+        "name": "demo",
+        "path": path,
+        "extras": ["dev"],
+    }
+
+
+    # Hyphenated extra names must still parse ( '-' is a literal, not a range).
+    assert RequirementsParser(artifact_cache=artifact_cache).parse("demo[foo-bar]") == {
+        "name": "demo",
+        "extras": ["foo-bar"],
+    }

@@ -77,10 +77,14 @@ class RequirementsParser:
             return specification
 
         extras = []
-        extras_m = re.search(r"\[([\w\d,-_ ]+)\]$", requirement)
+        extras_m = re.search(r"\[([\w\d,_ -]+)\]$", requirement)
         if extras_m:
             extras = [e.strip() for e in extras_m.group(1).split(",")]
-            requirement, _ = requirement.split("[")
+            # Use the match span (not split on the first '[') so a path or
+            # URL that contains '[' earlier in the string is preserved. The
+            # character class keeps '-' at the end so it is a literal hyphen
+            # rather than a range that would also swallow '/' and ']'.
+            requirement = requirement[: extras_m.start()]
 
         specification = (
             self._parse_url(requirement)
@@ -196,10 +200,10 @@ class RequirementsParser:
 
         if " " in pair:
             name, version = pair.split(" ", 1)
-            extras_m = re.search(r"\[([\w\d,-_]+)\]$", name)
+            extras_m = re.search(r"\[([\w\d,_-]+)\]$", name)
             if extras_m:
                 extras = [e.strip() for e in extras_m.group(1).split(",")]
-                name, _ = name.split("[")
+                name = name[: extras_m.start()]
 
             require["name"] = name
             if version != "latest":
@@ -210,18 +214,18 @@ class RequirementsParser:
             )
             if m:
                 name, constraint = m.group(1), m.group(2)
-                extras_m = re.search(r"\[([\w\d,-_]+)\]$", name)
+                extras_m = re.search(r"\[([\w\d,_-]+)\]$", name)
                 if extras_m:
                     extras = [e.strip() for e in extras_m.group(1).split(",")]
-                    name, _ = name.split("[")
+                    name = name[: extras_m.start()]
 
                 require["name"] = name
                 require["version"] = constraint
             else:
-                extras_m = re.search(r"\[([\w\d,-_]+)\]$", pair)
+                extras_m = re.search(r"\[([\w\d,_-]+)\]$", pair)
                 if extras_m:
                     extras = [e.strip() for e in extras_m.group(1).split(",")]
-                    pair, _ = pair.split("[")
+                    pair = pair[: extras_m.start()]
 
                 require["name"] = pair
 
