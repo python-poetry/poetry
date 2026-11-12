@@ -333,6 +333,12 @@ class EnvManager:
             )
         except CalledProcessError as e:
             raise EnvCommandError(e)
+        except FileNotFoundError as e:
+            # The executable derived from the argument (e.g. "3.99" ->
+            # "python3.99") is not installed, or not on the PATH.
+            raise ValueError(
+                f'<warning>Environment "{python}" does not exist.</warning>'
+            ) from e
 
         python_version = Version.parse(python_version_string.strip())
         minor = f"{python_version.major}.{python_version.minor}"

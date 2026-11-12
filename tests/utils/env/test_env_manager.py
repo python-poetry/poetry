@@ -715,6 +715,26 @@ def test_remove_by_python_version(
     assert not expected_venv_path.exists()
 
 
+def test_remove_by_unavailable_python_version(
+    tmp_path: Path,
+    manager: EnvManager,
+    poetry: Poetry,
+    config: Config,
+    mocker: MockerFixture,
+    venv_name: str,
+) -> None:
+    config.merge({"virtualenvs": {"path": str(tmp_path)}})
+
+    (tmp_path / f"{venv_name}-py3.6").mkdir()
+
+    # The interpreter derived from the argument ("3.99" -> "python3.99") is
+    # not installed on this machine.
+    mocker.patch("subprocess.check_output", side_effect=FileNotFoundError("python3.99"))
+
+    with pytest.raises(ValueError, match='Environment "python3.99" does not exist.'):
+        manager.remove("3.99")
+
+
 def test_remove_by_name(
     tmp_path: Path,
     manager: EnvManager,
