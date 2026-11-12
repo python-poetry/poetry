@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import contextlib
 import os
+import platform
 import sys
 
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import NamedTuple
-from typing import cast
 from typing import overload
 
 import findpython
@@ -173,31 +173,31 @@ class Python:
 
     @property
     def name(self) -> str:
-        return cast("str", self._python.name)
+        return self._python.name
 
     @property
     def executable(self) -> Path:
-        return cast("Path", self._python.interpreter)
+        return self._python.interpreter
 
     @property
     def implementation(self) -> str:
-        return cast("str", self._python.implementation.lower())
+        return self._python.implementation.lower()
 
     @property
     def free_threaded(self) -> bool:
-        return cast("bool", self._python.freethreaded)
+        return self._python.freethreaded
 
     @property
     def major(self) -> int:
-        return cast("int", self._python.major)
+        return self._python.major
 
     @property
     def minor(self) -> int:
-        return cast("int", self._python.minor)
+        return self._python.minor
 
     @property
     def patch(self) -> int:
-        return cast("int", self._python.patch)
+        return self._python.patch
 
     @property
     def version(self) -> Version:
@@ -237,7 +237,7 @@ class Python:
 
         # fallback to findpython, restrict to finding only executables
         # named "python" as the intention here is just that, nothing more
-        if python := findpython.find("python"):
+        if python := findpython.find("python"):  # type: ignore[assignment]
             return cls(python=python)
 
         return None
@@ -251,7 +251,7 @@ class Python:
             python=findpython.PythonVersion(
                 executable=Path(sys.executable),
                 _version=packaging.version.Version(
-                    ".".join(str(v) for v in sys.version_info[:3])
+                    platform.python_version().rstrip("+")
                 ),
             )
         )
