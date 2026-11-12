@@ -214,8 +214,20 @@ def test_parse_path_requirement_keeps_brackets_before_extras(
     }
 
 
-    # Hyphenated extra names must still parse ( '-' is a literal, not a range).
-    assert RequirementsParser(artifact_cache=artifact_cache).parse("demo[foo-bar]") == {
-        "name": "demo",
-        "extras": ["foo-bar"],
-    }
+    # Hyphenated and dotted extras on a path, so we exercise the extras regex
+    # rather than the PEP 508 parser.
+    for extra, expected in (("foo-bar", ["foo-bar"]), ("foo.bar", ["foo.bar"])):
+        req = f"../libs/foo[bar]/pkg[{extra}]"
+        original = Path.exists
+
+        def _mock_extra(self: Path, _path=f"../libs/foo[bar]/pkg") -> bool:
+            if self == Path.cwd().joinpath(_path):
+                return True
+            return original(self)
+
+        mocker.patch("pathlib.Path.exists", _mock_extra)
+        assert RequirementsParser(artifact_cache=artifact_cache).parse(req) == {
+            "name": "demo",
+            "path": path,
+            "extras": expected,
+        }
