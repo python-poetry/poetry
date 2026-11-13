@@ -17,9 +17,11 @@ from cleo.io.null_io import NullIO
 from keyring.credentials import SimpleCredential
 
 from poetry.console.exceptions import PoetryRuntimeError
+from poetry.exceptions import PoetryError
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.authenticator import AuthenticatorRepositoryConfig
 from poetry.utils.authenticator import RepositoryCertificateConfig
+from poetry.utils.authenticator import _path_segments
 from poetry.utils.password_manager import PoetryKeyring
 
 
@@ -636,6 +638,41 @@ def test_repository_config_path_match_key(
         "repo", f"https://foo.bar{repository_path}"
     )
     assert repository.path_match_key(request_path) == expected
+
+
+def test_repository_config_raises_error_for_missing_url() -> None:
+    with pytest.raises(PoetryError) as exc_info:
+        AuthenticatorRepositoryConfig(
+            "empty-repo",
+            None,  # type: ignore[arg-type]
+        )
+
+    assert str(exc_info.value) == (
+        "The repository 'empty-repo' is missing a url. "
+        "Please set it with `poetry config repositories.empty-repo <url>`."
+    )
+
+
+def test_authenticator_raises_error_for_empty_repository_section_without_url(
+    config: Config,
+) -> None:
+    # Reproducer for #11080: empty [repositories.<name>] section with no url key
+    config.merge(
+        {
+            "repositories": {
+                "company-internal": {},
+            },
+        }
+    )
+
+    authenticator = Authenticator(config, NullIO())
+    with pytest.raises(PoetryError) as exc_info:
+        _ = authenticator.configured_repositories
+
+    assert str(exc_info.value) == (
+        "The repository 'company-internal' is missing a url. "
+        "Please set it with `poetry config repositories.company-internal <url>`."
+    )
 
 
 @pytest.mark.parametrize(
