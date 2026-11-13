@@ -554,6 +554,50 @@ def test_command_from_bin_preserves_relative_path(manager: EnvManager) -> None:
     assert command == ["./foo.py"]
 
 
+@pytest.mark.parametrize(
+    ("command", "files", "expected"),
+    [
+        ("demo", ["Scripts/demo.cmd"], "Scripts/demo.cmd"),
+        ("demo.cmd", ["Scripts/demo.cmd"], "Scripts/demo.cmd"),
+        ("demo", ["demo.cmd"], "demo.cmd"),
+        ("demo.cmd", ["demo.cmd"], "demo.cmd"),
+        ("demo", ["Scripts/demo.exe", "Scripts/demo.cmd"], "Scripts/demo.exe"),
+        ("demo", ["demo.exe", "Scripts/demo.cmd"], "demo.exe"),
+        ("demo.exe", ["Scripts/demo.cmd"], None),
+    ],
+)
+def test_command_from_bin_windows_wrappers(
+    tmp_path: Path, command: str, files: list[str], expected: str | None
+) -> None:
+    env = SystemEnv(path=tmp_path)
+    env._is_windows = True
+    env._bin_dir = tmp_path / "Scripts"
+    for filename in files:
+        path = tmp_path / filename
+        path.parent.mkdir(exist_ok=True)
+        path.touch()
+
+    assert env.get_command_from_bin(command) == [
+        str(tmp_path / expected) if expected else command
+    ]
+
+
+@pytest.mark.skipif(not WINDOWS, reason="Uses Windows path semantics")
+@pytest.mark.parametrize("command", ["./demo", r".\demo", "tools/demo", r"tools\demo"])
+@pytest.mark.parametrize("suffix", ["", ".cmd"])
+def test_command_from_bin_windows_preserves_relative_path(
+    tmp_path: Path, command: str, suffix: str
+) -> None:
+    env = SystemEnv(path=tmp_path)
+    for directory in (".", "tools"):
+        script = env._bin_dir / directory / "demo.cmd"
+        script.parent.mkdir(parents=True, exist_ok=True)
+        script.touch()
+
+    command += suffix
+    assert env.get_command_from_bin(command) == [command]
+
+
 @pytest.fixture
 def system_env_read_only(system_env: SystemEnv, mocker: MockerFixture) -> SystemEnv:
     original_is_dir_writable = is_dir_writable
