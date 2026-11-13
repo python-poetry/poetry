@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
     from pathlib import Path
 
+    from pytest_mock import MockerFixture
     from requests import PreparedRequest
 
     from poetry.config.config import Config
@@ -135,6 +136,7 @@ def test_download_file_fail_when_first_chunk_failed(
 @pytest.mark.parametrize("accepts_ranges", [False, True])
 @pytest.mark.parametrize("raise_accepts_ranges", [False, True])
 def test_download_file_raise_accepts_ranges(
+    mocker: MockerFixture,
     http: responses.RequestsMock,
     fixture_dir: FixtureDirGetter,
     tmp_path: Path,
@@ -154,13 +156,30 @@ def test_download_file_raise_accepts_ranges(
     http.add_callback(responses.GET, url, callback=handle_request)
     dest = tmp_path / filename
 
+    spy_close = mocker.spy(Downloader, "close")
+
     if accepts_ranges and raise_accepts_ranges:
         with pytest.raises(HTTPRangeRequestSupportedError):
             download_file(url, dest, raise_accepts_ranges=raise_accepts_ranges)
         assert not dest.exists()
+        assert spy_close.call_count == 1
     else:
         download_file(url, dest, raise_accepts_ranges=raise_accepts_ranges)
         assert dest.is_file()
+
+
+def test_downloader_close(
+    http: responses.RequestsMock,
+    tmp_path: Path,
+) -> None:
+    url = "https://foo.com/demo.txt"
+    http.get(url, body=b"demo")
+    dest = tmp_path / "demo.txt"
+
+    downloader = Downloader(url, dest)
+    assert not downloader._response.raw.closed
+    downloader.close()
+    assert downloader._response.raw.closed
 
 
 def test_downloader_uses_authenticator_by_default(
