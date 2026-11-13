@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from typing import ClassVar
 
 from cleo.helpers import argument
-from tomlkit.items import AoT
+from tomlrt import AoT
 
 from poetry.console.commands.command import Command
 

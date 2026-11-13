@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 from logging import LogRecord
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -33,6 +35,35 @@ def test_format(
 ) -> None:
     mocker.patch("sys.path", [str(Path("syspath"))])
     record = LogRecord(record_name, 0, record_pathname, 0, record_msg, (), None)
+    formatter = IOFormatter()
+    assert formatter.format(record) == expected
+
+
+@pytest.mark.parametrize(
+    "record_name",
+    [
+        "poetry.core.masonry.builders.builder",
+        "poetry.core.masonry.builders.sdist",
+        "poetry.core.masonry.builders.wheel",
+    ],
+)
+def test_format_applies_builder_formatter(record_name: str) -> None:
+    record = LogRecord(record_name, 0, "foo/bar.py", 0, "Building foo", (), None)
+    formatter = IOFormatter()
+    assert formatter.format(record) == "  - Building <info>foo</info>"
+
+
+@pytest.mark.parametrize(
+    ("levelno", "expected"),
+    [
+        (logging.DEBUG, "<debug>msg</>"),
+        (logging.INFO, "<fg=blue>msg</>"),
+        (logging.WARNING, "<fg=yellow>msg</>"),
+        (logging.ERROR, "<fg=red>msg</>"),
+    ],
+)
+def test_format_wraps_colored_levels(levelno: int, expected: str) -> None:
+    record = LogRecord("poetry", levelno, "foo/bar.py", 0, "msg", (), None)
     formatter = IOFormatter()
     assert formatter.format(record) == expected
 

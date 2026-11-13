@@ -111,8 +111,11 @@ repos:
     hooks:
     -   id: poetry-check
     -   id: poetry-lock
-    -   id: poetry-export
     -   id: poetry-install
+-   repo: https://github.com/python-poetry/poetry-plugin-export
+    rev: ''  # add version here
+    hooks:
+    -   id: poetry-export
 ```
 
 A `.pre-commit-config.yaml` example for a monorepo setup or if the `pyproject.toml` file is not in the root directory:
@@ -126,10 +129,13 @@ repos:
         args: ["-C", "./subdirectory"]
     -   id: poetry-lock
         args: ["-C", "./subdirectory"]
-    -   id: poetry-export
-        args: ["-C", "./subdirectory", "-f", "requirements.txt", "-o", "./subdirectory/requirements.txt"]
     -   id: poetry-install
         args: ["-C", "./subdirectory"]
+-   repo: https://github.com/python-poetry/poetry-plugin-export
+    rev: ''  # add version here
+    hooks:
+    -   id: poetry-export
+        args: ["-C", "./subdirectory", "-f", "requirements.txt", "-o", "./subdirectory/requirements.txt"]
 ```
 
 ## FAQ

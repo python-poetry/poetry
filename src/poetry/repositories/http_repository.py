@@ -6,9 +6,9 @@ import hashlib
 from collections import defaultdict
 from contextlib import contextmanager
 from contextlib import suppress
+from datetime import UTC
 from datetime import datetime
 from datetime import timedelta
-from datetime import timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
@@ -94,9 +94,9 @@ class HTTPRepository(CachedRepository):
             ) or self._is_url_excluded_from_min_release_age(exclude_sources):
                 self._min_release_age = 0
             else:
-                self._min_release_age_cutoff = datetime.now(
-                    tz=timezone.utc
-                ) - timedelta(days=self._min_release_age)
+                self._min_release_age_cutoff = datetime.now(tz=UTC) - timedelta(
+                    days=self._min_release_age
+                )
                 self._min_release_age_exclude = {
                     canonicalize_name(n)
                     for n in (config.get("solver.min-release-age-exclude") or [])

@@ -41,6 +41,13 @@ def boolean_normalizer(val: str) -> bool:
     return val.lower() in ["true", "1"]
 
 
+def int_validator(val: str, min_val: int = 0) -> bool:
+    try:
+        return int(val) >= min_val
+    except (ValueError, TypeError):
+        return False
+
+
 def int_normalizer(val: str) -> int:
     return int(val)
 
@@ -143,6 +150,32 @@ class PackageFilterPolicy:
         return True
 
 
+def path_normalizer(val: str) -> str:
+    return str(Path(val))
+
+
+@dataclasses.dataclass(frozen=True)
+class ConfigSetting:
+    validator: Callable[[str], bool]
+    normalizer: Callable[[str], Any]
+
+
+_BOOLEAN_SETTING = ConfigSetting(boolean_validator, boolean_normalizer)
+_PATH_SETTING = ConfigSetting(bool, path_normalizer)
+_STRING_SETTING = ConfigSetting(bool, str)
+_STR_LIST_SETTING = ConfigSetting(lambda val: bool(val.strip()), str_list_normalizer)
+_NON_NEGATIVE_INT_SETTING = ConfigSetting(
+    lambda val: int_validator(val, 0), int_normalizer
+)
+_POSITIVE_INT_SETTING = ConfigSetting(lambda val: int_validator(val, 1), int_normalizer)
+_PACKAGE_FILTER_SETTING = ConfigSetting(
+    PackageFilterPolicy.validator, PackageFilterPolicy.normalize
+)
+_BUILD_CONFIG_SETTINGS_SETTING = ConfigSetting(
+    build_config_setting_validator, build_config_setting_normalizer
+)
+
+
 logger = logging.getLogger(__name__)
 
 _default_config: Config | None = None
@@ -187,6 +220,34 @@ class Config:
         "keyring": {
             "enabled": True,
         },
+    }
+
+    # validator and normalizer for each setting in default_config (flattened)
+    settings: ClassVar[dict[str, ConfigSetting]] = {
+        "cache-dir": _PATH_SETTING,
+        "data-dir": _PATH_SETTING,
+        "virtualenvs.create": _BOOLEAN_SETTING,
+        "virtualenvs.in-project": _BOOLEAN_SETTING,
+        "virtualenvs.path": _PATH_SETTING,
+        "virtualenvs.options.always-copy": _BOOLEAN_SETTING,
+        "virtualenvs.options.system-site-packages": _BOOLEAN_SETTING,
+        "virtualenvs.options.no-pip": _BOOLEAN_SETTING,
+        "virtualenvs.use-poetry-python": _BOOLEAN_SETTING,
+        "virtualenvs.prompt": _STRING_SETTING,
+        "requests.max-retries": _NON_NEGATIVE_INT_SETTING,
+        "installer.re-resolve": _BOOLEAN_SETTING,
+        "installer.parallel": _BOOLEAN_SETTING,
+        "installer.max-workers": _POSITIVE_INT_SETTING,
+        "installer.no-binary": _PACKAGE_FILTER_SETTING,
+        "installer.only-binary": _PACKAGE_FILTER_SETTING,
+        "installer.builtin-uninstall": _BOOLEAN_SETTING,
+        "python.installation-dir": _PATH_SETTING,
+        "solver.lazy-wheel": _BOOLEAN_SETTING,
+        "solver.min-release-age": _NON_NEGATIVE_INT_SETTING,
+        "solver.min-release-age-exclude": _PACKAGE_FILTER_SETTING,
+        "solver.min-release-age-exclude-source": _STR_LIST_SETTING,
+        "system-git-client": _BOOLEAN_SETTING,
+        "keyring.enabled": _BOOLEAN_SETTING,
     }
 
     def __init__(self, use_environment: bool = True) -> None:
@@ -345,7 +406,7 @@ class Config:
                 env = "POETRY_" + "_".join(k.upper().replace("-", "_") for k in keys)
                 env_value = os.getenv(env)
                 if env_value is not None:
-                    return self.process(self._get_normalizer(keys)(env_value))
+                    return self.process(self.get_normalizer(keys)(env_value))
 
         value = self._config
 
@@ -384,50 +445,23 @@ class Config:
 
         return re.sub(r"{(.+?)}", resolve_from_config, value)
 
-    @staticmethod
-    def _get_normalizer(name: str | Sequence[str]) -> Callable[[str], Any]:
+    @classmethod
+    def _get_setting(cls, name: str | Sequence[str]) -> ConfigSetting | None:
         if not isinstance(name, str):
             name = ".".join(name)
-        if name in {
-            "virtualenvs.create",
-            "virtualenvs.in-project",
-            "virtualenvs.options.always-copy",
-            "virtualenvs.options.no-pip",
-            "virtualenvs.options.system-site-packages",
-            "virtualenvs.use-poetry-python",
-            "installer.re-resolve",
-            "installer.parallel",
-            "installer.builtin-uninstall",
-            "solver.lazy-wheel",
-            "system-git-client",
-            "keyring.enabled",
-        }:
-            return boolean_normalizer
-
-        if name == "virtualenvs.path":
-            return lambda val: str(Path(val))
-
-        if name in {
-            "installer.max-workers",
-            "requests.max-retries",
-            "solver.min-release-age",
-        }:
-            return int_normalizer
-
-        if name in {
-            "installer.no-binary",
-            "installer.only-binary",
-            "solver.min-release-age-exclude",
-        }:
-            return PackageFilterPolicy.normalize
-
-        if name == "solver.min-release-age-exclude-source":
-            return str_list_normalizer
-
         if name.startswith("installer.build-config-settings."):
-            return build_config_setting_normalizer
+            return _BUILD_CONFIG_SETTINGS_SETTING
+        return cls.settings.get(name)
 
-        return lambda val: val
+    @classmethod
+    def get_normalizer(cls, name: str | Sequence[str]) -> Callable[[str], Any]:
+        setting = cls._get_setting(name)
+        return setting.normalizer if setting else lambda val: val
+
+    @classmethod
+    def get_validator(cls, name: str | Sequence[str]) -> Callable[[str], bool]:
+        setting = cls._get_setting(name)
+        return setting.validator if setting else lambda val: True
 
     @classmethod
     def create(cls, reload: bool = False) -> Config:
