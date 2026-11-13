@@ -76,6 +76,10 @@ with your team, you can configure the
 poetry config repositories.foo https://pypi.example.org/legacy/
 ```
 
+The upload URL can differ from the `/simple/` URL used to install packages. Use the upload endpoint
+documented by your repository provider; `/legacy/` is an example, not a required path for every server.
+Adding a package source with `poetry source add` does not configure a publishing repository.
+
 {{% note %}}
 
 If you need to use a different credential for your [package source](#package-sources), then it is
