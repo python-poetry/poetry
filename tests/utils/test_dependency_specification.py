@@ -65,6 +65,22 @@ if TYPE_CHECKING:
             ),
         ),
         ("demo", ({"name": "demo"},)),
+        ("demo@latest", ({"name": "demo"},)),
+        ("demo[a,b]@latest", ({"name": "demo", "extras": ["a", "b"]},)),
+        (
+            'demo@latest ; python_version >= "3.8"',
+            ({"name": "demo", "markers": 'python_version >= "3.8"'},),
+        ),
+        (
+            'demo[a,b]@latest ; python_version >= "3.8"',
+            (
+                {
+                    "name": "demo",
+                    "markers": 'python_version >= "3.8"',
+                    "extras": ["a", "b"],
+                },
+            ),
+        ),
         ("demo@1.0.0", ({"name": "demo", "version": "1.0.0"},)),
         ("demo@^1.0.0", ({"name": "demo", "version": "^1.0.0"},)),
         ("demo@==1.0.0", ({"name": "demo", "version": "==1.0.0"},)),
