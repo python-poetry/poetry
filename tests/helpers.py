@@ -103,6 +103,7 @@ def mock_clone(
     url: str,
     *_: Any,
     source_root: Path | None = None,
+    name: str | None = None,
     **__: Any,
 ) -> MockDulwichRepo:
     # Checking source to determine which folder we need to copy
@@ -118,7 +119,7 @@ def mock_clone(
         source_root = Path(Config.create().get("cache-dir")) / "src"
 
     assert parsed.name is not None
-    dest = source_root / parsed.name
+    dest = source_root / (name or parsed.name)
     dest.mkdir(parents=True, exist_ok=True)
 
     copy_path(folder, dest)
