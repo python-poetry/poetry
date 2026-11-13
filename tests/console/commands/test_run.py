@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import subprocess
 
 from typing import TYPE_CHECKING
@@ -162,9 +163,14 @@ def test_run_has_helpful_error_when_command_not_found(
         " dependencies on Windows"
     ),
 )
+@pytest.mark.parametrize("long_path", [False, True])
+@pytest.mark.parametrize("script_name", ["quix", "quix with spaces"])
 def test_run_console_scripts_of_editable_dependencies_on_windows(
     tmp_venv: VirtualEnv,
     command_tester_factory: CommandTesterFactory,
+    monkeypatch: pytest.MonkeyPatch,
+    long_path: bool,
+    script_name: str,
 ) -> None:
     """
     On Windows, Poetry installs console scripts of editable dependencies by creating
@@ -185,12 +191,20 @@ def test_run_console_scripts_of_editable_dependencies_on_windows(
     """
     tester = command_tester_factory("run", environment=tmp_venv)
 
-    cmd_script_file = tmp_venv._bin_dir / "quix.cmd"
+    cmd_script_file = tmp_venv._bin_dir / f"{script_name}.cmd"
     # `/b` ensures we only exit the script instead of any cmd.exe proc that called it
-    cmd_script_file.write_text("exit /b 123", encoding="locale")
+    cmd_script_file.write_text(
+        '@echo off\nif "%~1"=="argument with spaces" (exit /b 123) else (exit /b 1)\n',
+        encoding="locale",
+    )
+    if long_path:
+        # cmd.exe discards environment variables longer than 8191 characters.
+        monkeypatch.setenv(
+            "PATH", os.pathsep.join([os.environ["PATH"], *[r"C:\unused"] * 1000])
+        )
     # We prove that the CMD script executed successfully by verifying the exit code
     # matches what we wrote in the script
-    assert tester.execute("quix") == 123
+    assert tester.execute(f'"{script_name}" "argument with spaces"') == 123
 
 
 def test_run_script_exit_code(
