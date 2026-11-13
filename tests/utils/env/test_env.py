@@ -582,6 +582,22 @@ def test_command_from_bin_windows_wrappers(
     ]
 
 
+@pytest.mark.skipif(not WINDOWS, reason="Uses Windows path semantics")
+@pytest.mark.parametrize("command", ["./demo", r".\demo", "tools/demo", r"tools\demo"])
+@pytest.mark.parametrize("suffix", ["", ".cmd"])
+def test_command_from_bin_windows_preserves_relative_path(
+    tmp_path: Path, command: str, suffix: str
+) -> None:
+    env = SystemEnv(path=tmp_path)
+    for directory in (".", "tools"):
+        script = env._bin_dir / directory / "demo.cmd"
+        script.parent.mkdir(parents=True, exist_ok=True)
+        script.touch()
+
+    command += suffix
+    assert env.get_command_from_bin(command) == [command]
+
+
 @pytest.fixture
 def system_env_read_only(system_env: SystemEnv, mocker: MockerFixture) -> SystemEnv:
     original_is_dir_writable = is_dir_writable

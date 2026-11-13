@@ -11,6 +11,8 @@ from poetry.utils._compat import WINDOWS
 
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from cleo.testers.application_tester import ApplicationTester
     from cleo.testers.command_tester import CommandTester
     from pytest_mock import MockerFixture
@@ -205,6 +207,39 @@ def test_run_console_scripts_of_editable_dependencies_on_windows(
     # We prove that the CMD script executed successfully by verifying the exit code
     # matches what we wrote in the script
     assert tester.execute(f'"{script_name}" "argument with spaces"') == 123
+
+
+@pytest.mark.skipif(not WINDOWS, reason="CMD scripts are specific to Windows")
+@pytest.mark.parametrize(
+    "command",
+    [
+        r".\demo",
+        r"tools\demo",
+        "{drive}demo",
+        "{working_dir}/demo",
+        r"{working_dir}\demo",
+    ],
+)
+@pytest.mark.parametrize("suffix", ["", ".cmd"])
+def test_run_windows_wrapper_preserves_explicit_path(
+    tmp_path: Path,
+    tmp_venv: VirtualEnv,
+    command_tester_factory: CommandTesterFactory,
+    monkeypatch: pytest.MonkeyPatch,
+    command: str,
+    suffix: str,
+) -> None:
+    working_dir = tmp_path / "working directory"
+    for root, code in ((working_dir, 123), (tmp_venv._bin_dir, 42)):
+        for directory in (".", "tools"):
+            script = root / directory / "demo.cmd"
+            script.parent.mkdir(parents=True, exist_ok=True)
+            script.write_text(f"@exit /b {code}\n", encoding="locale")
+    monkeypatch.chdir(working_dir)
+    tester = command_tester_factory("run", environment=tmp_venv)
+
+    command = command.format(drive=working_dir.drive, working_dir=working_dir)
+    assert tester.execute(f'"{command}{suffix}"') == 123
 
 
 def test_run_script_exit_code(
