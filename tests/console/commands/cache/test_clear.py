@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 from typing import TYPE_CHECKING
 from typing import TypeVar
 
@@ -141,3 +143,39 @@ def test_cache_clear_pkg(
         assert caches[1].has("cashy:0.2")
 
     assert caches[0].has("cachy:0.1")
+
+
+def test_cache_clear_rejects_parent_traversal(
+    tester: ApplicationTester, repository_cache_dir: Path
+) -> None:
+    repository_cache_dir.mkdir(parents=True)
+    sentinel = repository_cache_dir.parent.parent / "artifacts" / "sentinel"
+    sentinel.parent.mkdir(parents=True)
+    sentinel.write_text("keep", encoding="utf-8")
+
+    exit_code = tester.execute("cache clear ../.. --all", inputs="yes")
+
+    assert sentinel.exists(), "directory outside the repository cache was deleted"
+    assert exit_code == 1
+    assert "is not a valid repository cache" in tester.io.fetch_error()
+
+
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="Creating symlinks on Windows requires extra privileges",
+)
+def test_cache_clear_rejects_symlinked_repository_subdir(
+    tester: ApplicationTester, repository_cache_dir: Path, tmp_path: Path
+) -> None:
+    repository_cache_dir.mkdir(parents=True)
+    target = tmp_path / "outside"
+    (target / "sub").mkdir(parents=True)
+    sentinel = target / "sub" / "sentinel"
+    sentinel.write_text("keep", encoding="utf-8")
+    (repository_cache_dir / "linked_repo").symlink_to(target, target_is_directory=True)
+
+    exit_code = tester.execute("cache clear linked_repo/sub --all", inputs="yes")
+
+    assert sentinel.exists(), "directory outside the repository cache was deleted"
+    assert exit_code == 1
+    assert "is not a valid repository cache" in tester.io.fetch_error()
