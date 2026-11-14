@@ -908,7 +908,7 @@ def mocked_python_register(
             info = version.split(".")
             executable_name = f"python{info[0]}.{info[1]}"
 
-        class MockPythonVersion(findpython.PythonVersion):  # type: ignore[misc]
+        class MockPythonVersion(findpython.PythonVersion):
             @property
             def implementation(self) -> str:
                 return implementation or platform.python_implementation()
@@ -987,7 +987,7 @@ def with_no_active_python(mocker: MockerFixture) -> MagicMock:
 
 @pytest.fixture
 def mock_python_version(mocker: MockerFixture) -> None:
-    class MockPythonVersion(findpython.PythonVersion):  # type: ignore[misc]
+    class MockPythonVersion(findpython.PythonVersion):
         @property
         def implementation(self) -> str:
             return "PyPy" if "pypy" in str(self.executable) else "CPython"

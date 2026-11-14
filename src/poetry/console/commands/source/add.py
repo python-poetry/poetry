@@ -75,7 +75,15 @@ class SourceAddCommand(Command):
             )
             priority = Priority.PRIMARY
         else:
-            priority = Priority[priority_str.upper()]
+            try:
+                priority = Priority[priority_str.upper()]
+            except KeyError:
+                self.line_error(
+                    f"<error>Invalid priority '{priority_str}'. Must be one of:"
+                    f" {', '.join(p.name.lower() for p in Priority)}.</error>"
+                )
+
+                return 1
 
         sources = AoT([])
         new_source = Source(name=name, url=url, priority=priority)

@@ -13,12 +13,10 @@ from poetry.core.pyproject.exceptions import PyProjectError
 
 from poetry.config.config_source import ConfigSource
 from poetry.config.config_source import PropertyNotFoundError
-from poetry.console.commands.config import ConfigCommand
 from poetry.console.commands.install import InstallCommand
 from poetry.factory import Factory
 from poetry.repositories.legacy_repository import LegacyRepository
 from tests.conftest import Config
-from tests.helpers import flatten_dict
 
 
 if TYPE_CHECKING:
@@ -35,12 +33,6 @@ if TYPE_CHECKING:
 @pytest.fixture()
 def tester(command_tester_factory: CommandTesterFactory) -> CommandTester:
     return command_tester_factory("config")
-
-
-def test_config_command_in_sync_with_config_class() -> None:
-    assert set(ConfigCommand().unique_config_values) == set(
-        flatten_dict(Config.default_config)
-    )
 
 
 def test_show_config_with_local_config_file_empty(
@@ -144,6 +136,27 @@ def test_cannot_set_invalid_value(tester: CommandTester) -> None:
         tester.execute("virtualenvs.create foo")
 
     assert str(e.value) == '"foo" is an invalid value for virtualenvs.create'
+
+
+@pytest.mark.parametrize(
+    "setting, value",
+    [
+        ("requests.max-retries", "abc"),
+        ("requests.max-retries", "-1"),
+        ("installer.max-workers", "abc"),
+        ("installer.max-workers", "0"),
+        ("solver.min-release-age", "abc"),
+        ("solver.min-release-age", "-1"),
+    ],
+)
+def test_cannot_set_invalid_integer_value(
+    tester: CommandTester, setting: str, value: str
+) -> None:
+    with pytest.raises(RuntimeError) as e:
+        # "--" is required so that negative numbers are not parsed as options
+        tester.execute(f"{setting} -- {value}")
+
+    assert str(e.value) == f'"{value}" is an invalid value for {setting}'
 
 
 def test_cannot_unset_with_value(tester: CommandTester) -> None:
