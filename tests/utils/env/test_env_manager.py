@@ -403,6 +403,38 @@ def test_activate_activates_recreates_for_different_patch(
     assert (tmp_path / f"{venv_name}-py3.7").exists()
 
 
+def test_activate_preserves_existing_virtualenv_with_stale_patch(
+    tmp_path: Path,
+    manager: EnvManager,
+    config: Config,
+    mocker: MockerFixture,
+    venv_name: str,
+    mocked_python_register: MockedPythonRegister,
+) -> None:
+    os.environ.pop("VIRTUAL_ENV", None)
+    config.merge({"virtualenvs": {"path": str(tmp_path)}})
+    manager.envs_file.write({venv_name: {"minor": "3.7", "patch": "3.7.0"}})
+
+    venv = tmp_path / f"{venv_name}-py3.7"
+    venv.mkdir()
+    installed_file = venv / "installed.txt"
+    installed_file.write_text("installed package", encoding="utf-8")
+
+    mocked_python_register("3.7.1")
+    mocker.patch("subprocess.check_output", side_effect=check_output_wrapper())
+    mocker.patch("poetry.utils.env.VirtualEnv.is_sane", return_value=True)
+    build_venv_m = mocker.patch(
+        "poetry.utils.env.EnvManager.build_venv", side_effect=build_venv
+    )
+
+    env = manager.activate("python3.7")
+
+    build_venv_m.assert_not_called()
+    assert installed_file.read_text(encoding="utf-8") == "installed package"
+    assert env.path == venv
+    assert manager.envs_file.read()[venv_name] == {"minor": "3.7", "patch": "3.7.1"}
+
+
 def test_activate_does_not_recreate_when_switching_minor(
     tmp_path: Path,
     manager: EnvManager,
