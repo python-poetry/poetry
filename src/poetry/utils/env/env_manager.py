@@ -150,7 +150,7 @@ class EnvManager:
                     current_minor == python_instance.minor_version.to_string()
                     and current_patch != python_instance.patch_version.to_string()
                 ):
-                    # We need to recreate
+                    # We might need to recreate (checked against the venv below)
                     create = True
 
         venv = (
@@ -169,8 +169,7 @@ class EnvManager:
                 _venv = VirtualEnv(venv)
                 current_patch = ".".join(str(v) for v in _venv.version_info[:3])
 
-                if python_instance.patch_version.to_string() != current_patch:
-                    create = True
+                create = python_instance.patch_version.to_string() != current_patch
 
             self.create_venv(python=python_instance, force=create)
 
