@@ -73,12 +73,6 @@ class AuthenticatorRepositoryConfig:
     _path_segments: list[str] = dataclasses.field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
-        if not self.url:
-            raise PoetryError(
-                f"The repository {self.name!r} is missing a url. "
-                f"Please set it with `poetry config repositories.{self.name} <url>`."
-            )
-
         parsed_url = urllib.parse.urlsplit(self.url)
         self.scheme = parsed_url.scheme
         self.netloc = parsed_url.netloc
