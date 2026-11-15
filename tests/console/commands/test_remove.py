@@ -1053,3 +1053,46 @@ include-groups = ["unrelated"]
         package.name for package in reloaded.locker.locked_repository().packages
     } == {"bar"}
     assert reloaded.locker.is_fresh()
+
+
+def test_remove_cleans_up_differently_spelled_legacy_include_group(
+    project_factory: ProjectFactory,
+    command_tester_factory: CommandTesterFactory,
+    repo: DummyRepository,
+) -> None:
+    # The legacy `[tool.poetry.group]` section needs the same PEP 735 name
+    # normalization as `[dependency-groups]`: an `include-groups` entry spelled
+    # differently from the removed group's key must still be cleaned up,
+    # otherwise the project no longer loads.
+    poetry = project_factory(
+        name="differently-spelled-legacy-include",
+        pyproject_content="""\
+[tool.poetry]
+package-mode = false
+[tool.poetry.group.lint_tools.dependencies]
+foo = ">=1"
+[tool.poetry.group.ci]
+include-groups = ["lint-tools"]
+[tool.poetry.group.ci.dependencies]
+bar = ">=1"
+""",
+    )
+    repo.add_package(Package("foo", "1.0"))
+    repo.add_package(Package("bar", "1.0"))
+    tester = command_tester_factory("remove", poetry=poetry)
+
+    assert tester.execute("foo --group lint_tools --lock") == 0
+
+    content = poetry.file.read()
+    assert "lint_tools" not in content["tool"]["poetry"]["group"]
+    assert content["tool"]["poetry"]["group"] == {
+        "ci": {"dependencies": {"bar": ">=1"}}
+    }
+
+    # A successful removal must leave a project that Poetry can load again.
+    reloaded = Factory().create_poetry(poetry.file.path.parent)
+    assert {dep.name for dep in reloaded.package.all_requires} == {"bar"}
+    assert {
+        package.name for package in reloaded.locker.locked_repository().packages
+    } == {"bar"}
+    assert reloaded.locker.is_fresh()

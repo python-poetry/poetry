@@ -248,14 +248,23 @@ list of installed packages
         # 2. Legacy: [tool.poetry.group.<name>] include-groups = [...]
         poetry_content = content.get("tool", {}).get("poetry", {})
         if "group" in poetry_content:
+            normalized_group_name = canonicalize_name(group_name)
             groups_to_remove = []
             for group_key, group_content in poetry_content["group"].items():
-                if group_name not in group_content.get("include-groups", []):
+                include_groups: list[Any] = group_content.get("include-groups", [])
+                stale_references = [
+                    name
+                    for name in include_groups
+                    if isinstance(name, str)
+                    and canonicalize_name(name) == normalized_group_name
+                ]
+                if not stale_references:
                     continue
 
-                group_content["include-groups"].remove(group_name)
+                for name in stale_references:
+                    include_groups.remove(name)
 
-                if not group_content["include-groups"]:
+                if not include_groups:
                     del group_content["include-groups"]
 
                     if not group_content:
