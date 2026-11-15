@@ -109,10 +109,8 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
             if rule == "prepatch":
                 new = new.first_prerelease()
         elif rule == "prerelease":
-            if parsed.is_unstable():
-                pre = parsed.pre
-                assert pre is not None
-                pre = pre.next_phase() if next_phase else pre.next()
+            if parsed.pre is not None:
+                pre = parsed.pre.next_phase() if next_phase else parsed.pre.next()
                 new = Version(parsed.epoch, parsed.release, pre)
             else:
                 new = parsed.next_patch().first_prerelease()
