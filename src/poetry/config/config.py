@@ -406,7 +406,16 @@ class Config:
                 env = "POETRY_" + "_".join(k.upper().replace("-", "_") for k in keys)
                 env_value = os.getenv(env)
                 if env_value is not None:
-                    return self.process(self.get_normalizer(keys)(env_value))
+                    normalizer = self.get_normalizer(keys)
+
+                    if normalizer is int_normalizer and not self.get_validator(keys)(
+                        env_value
+                    ):
+                        raise ValueError(
+                            f'"{env_value}" is an invalid value for {".".join(keys)}'
+                        )
+
+                    return self.process(normalizer(env_value))
 
         value = self._config
 
