@@ -418,6 +418,11 @@ class Authenticator:
             self._configured_repositories = {}
             for repository_name in self._config.get("repositories", []):
                 url = self._config.get(["repositories", repository_name, "url"])
+                if not url:
+                    raise PoetryError(
+                        f"The repository {repository_name!r} is missing a url. "
+                        f"Please set it with `poetry config repositories.{repository_name} <url>`."
+                    )
                 self._configured_repositories[repository_name] = (
                     AuthenticatorRepositoryConfig(repository_name, url)
                 )
