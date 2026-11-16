@@ -94,13 +94,14 @@ list of installed packages
             )
 
             for group_name, standard_section, poetry_section in group_sections:
-                removed |= self._remove_packages(
+                removed_in_group = self._remove_packages(
                     packages=packages,
                     standard_section=standard_section,
                     poetry_section=poetry_section,
                     group_name=group_name,
                 )
-                if group_name != MAIN_GROUP:
+                removed |= removed_in_group
+                if group_name != MAIN_GROUP and removed_in_group:
                     if (
                         not poetry_section
                         and "dependencies" in poetry_groups_content.get(group_name, {})
