@@ -339,6 +339,15 @@ The `debug info` command shows debug information about Poetry and your project's
 The `debug resolve` command helps when debugging dependency resolution issues. The command attempts to resolve your
 dependencies and list the chosen packages and versions.
 
+You can also pass one or more package names to resolve only those packages instead of your project's dependencies.
+
+#### Options
+
+* `--extras (-E)`: Extras to activate for the dependency. Only used when package names are passed.
+* `--python`: Python version(s) to use for resolution.
+* `--tree`: Display the dependency tree.
+* `--install`: Show what would be installed for the current system.
+
 ### debug tags
 
 The `debug tags` command is useful when you want to see the supported packaging tags for your project's active
@@ -1420,17 +1429,18 @@ If you would like to use semantic versioning for your project, please see
 
 The table below illustrates the effect of these rules with concrete examples.
 
-| rule       | before  | after   |
-| ---------- |---------|---------|
-| major      | 1.3.0   | 2.0.0   |
-| minor      | 2.1.4   | 2.2.0   |
-| patch      | 4.1.1   | 4.1.2   |
-| premajor   | 1.0.2   | 2.0.0a0 |
-| preminor   | 1.0.2   | 1.1.0a0 |
-| prepatch   | 1.0.2   | 1.0.3a0 |
-| prerelease | 1.0.2   | 1.0.3a0 |
-| prerelease | 1.0.3a0 | 1.0.3a1 |
-| prerelease | 1.0.3b0 | 1.0.3b1 |
+| rule       | before     | after   |
+| ---------- | ---------- | ------- |
+| major      | 1.3.0      | 2.0.0   |
+| minor      | 2.1.4      | 2.2.0   |
+| patch      | 4.1.1      | 4.1.2   |
+| premajor   | 1.0.2      | 2.0.0a0 |
+| preminor   | 1.0.2      | 1.1.0a0 |
+| prepatch   | 1.0.2      | 1.0.3a0 |
+| prerelease | 1.0.2      | 1.0.3a0 |
+| prerelease | 1.0.3a0    | 1.0.3a1 |
+| prerelease | 1.0.3b0    | 1.0.3b1 |
+| prerelease | 1.0.3.dev0 | 1.0.3a0 |
 
 The option `--next-phase` allows the increment of prerelease phase versions.
 

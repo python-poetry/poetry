@@ -51,7 +51,7 @@ def test_python_get_version_on_the_fly() -> None:
 def test_python_get_system_python() -> None:
     python = Python.get_system_python()
 
-    assert python.executable.resolve() == findpython.find().executable.resolve()
+    assert python.executable.resolve() == findpython.find().executable.resolve()  # type: ignore[union-attr]
     assert python.version == Version.parse(
         ".".join(str(v) for v in sys.version_info[:3])
     )

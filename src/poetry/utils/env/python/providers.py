@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 import findpython
 
+from findpython.providers.base import BaseProvider
 from findpython.providers.path import PathProvider
 
 from poetry.config.config import Config
@@ -22,7 +23,7 @@ if TYPE_CHECKING:
     from poetry.core.constraints.version import Version
 
 
-class ShutilWhichPythonProvider(findpython.BaseProvider):  # type: ignore[misc]
+class ShutilWhichPythonProvider(BaseProvider):
     @classmethod
     def create(cls) -> Self | None:
         return cls()
@@ -40,7 +41,7 @@ class ShutilWhichPythonProvider(findpython.BaseProvider):  # type: ignore[misc]
 
 
 @dataclasses.dataclass
-class PoetryPythonPathProvider(PathProvider):  # type: ignore[misc]
+class PoetryPythonPathProvider(PathProvider):
     @classmethod
     def installation_dir(
         cls, version: Version, implementation: str, free_threaded: bool
