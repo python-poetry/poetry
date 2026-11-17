@@ -217,6 +217,7 @@ list of installed packages
         Removes references to the given group from other groups.
         """
         removed_groups = set()
+        normalized_group_name = canonicalize_name(group_name)
         # 1. PEP 735: [dependency-groups]
         if "dependency-groups" in content:
             groups_to_remove = []
@@ -228,7 +229,9 @@ list of installed packages
                 for item in group_content:
                     if (
                         isinstance(item, dict)
-                        and item.get("include-group") == group_name
+                        and isinstance(item.get("include-group"), str)
+                        and canonicalize_name(item["include-group"])
+                        == normalized_group_name
                     ):
                         to_remove.append(item)
 
@@ -248,7 +251,6 @@ list of installed packages
         # 2. Legacy: [tool.poetry.group.<name>] include-groups = [...]
         poetry_content = content.get("tool", {}).get("poetry", {})
         if "group" in poetry_content:
-            normalized_group_name = canonicalize_name(group_name)
             groups_to_remove = []
             for group_key, group_content in poetry_content["group"].items():
                 include_groups: list[Any] = group_content.get("include-groups", [])
