@@ -29,6 +29,7 @@ from poetry.utils.constants import RETRY_AFTER_HEADER
 from poetry.utils.constants import STATUS_FORCELIST
 from poetry.utils.password_manager import HTTPAuthCredential
 from poetry.utils.password_manager import PasswordManager
+from poetry.utils.threading import atomic_cached_property
 
 
 if TYPE_CHECKING:
@@ -132,9 +133,6 @@ class Authenticator:
         self._sessions_for_netloc: dict[str, requests.Session] = {}
         self._credentials: dict[str, HTTPAuthCredential] = {}
         self._certs: dict[str, RepositoryCertificateConfig] = {}
-        self._configured_repositories: (
-            dict[str, AuthenticatorRepositoryConfig] | None
-        ) = None
         self._password_manager = PasswordManager(self._config)
 
         # Poetry < 2.4: FileCache -> directory "_http"
@@ -412,22 +410,21 @@ class Authenticator:
             return RepositoryCertificateConfig()
         return self.configured_repositories[name].certs(self._config)
 
-    @property
+    @atomic_cached_property
     def configured_repositories(self) -> dict[str, AuthenticatorRepositoryConfig]:
-        if self._configured_repositories is None:
-            self._configured_repositories = {}
-            for repository_name in self._config.get("repositories", []):
-                url = self._config.get(["repositories", repository_name, "url"])
-                if not url:
-                    raise PoetryError(
-                        f"The repository {repository_name!r} is missing a url. "
-                        f"Please set it with `poetry config repositories.{repository_name} <url>`."
-                    )
-                self._configured_repositories[repository_name] = (
-                    AuthenticatorRepositoryConfig(repository_name, url)
+        repositories = {}
+        for repository_name in self._config.get("repositories", []):
+            url = self._config.get(["repositories", repository_name, "url"])
+            if not url:
+                raise PoetryError(
+                    f"The repository {repository_name!r} is missing a url. "
+                    f"Please set it with `poetry config repositories.{repository_name} <url>`."
                 )
+            repositories[repository_name] = AuthenticatorRepositoryConfig(
+                repository_name, url
+            )
 
-        return self._configured_repositories
+        return repositories
 
     def reset_credentials_cache(self) -> None:
         self.get_repository_config_for_url.cache_clear()
