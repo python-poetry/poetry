@@ -94,12 +94,15 @@ list of installed packages
             )
 
             for group_name, standard_section, poetry_section in group_sections:
-                removed |= self._remove_packages(
+                removed_in_group = self._remove_packages(
                     packages=packages,
                     standard_section=standard_section,
                     poetry_section=poetry_section,
                     group_name=group_name,
                 )
+                removed |= removed_in_group
+                if group_name == MAIN_GROUP and removed_in_group:
+                    self._remove_extras_references(removed_in_group, poetry_content)
                 if group_name != MAIN_GROUP:
                     if (
                         not poetry_section
@@ -209,6 +212,36 @@ list of installed packages
             group.remove_dependency(package)
 
         return removed
+
+    def _remove_extras_references(
+        self, removed_packages: set[str], poetry_content: dict[str, Any]
+    ) -> None:
+        """
+        Removes references to the given packages from [tool.poetry.extras],
+        including extras that become empty and an extras section that becomes
+        empty.
+        """
+        if not poetry_content.get("extras"):
+            return
+
+        removed_names = {canonicalize_name(package) for package in removed_packages}
+        for extra_name, requirements in list(poetry_content["extras"].items()):
+            if not isinstance(requirements, list):
+                continue
+            remaining = [
+                requirement
+                for requirement in requirements
+                if canonicalize_name(requirement) not in removed_names
+            ]
+            if len(remaining) == len(requirements):
+                continue
+            if remaining:
+                poetry_content["extras"][extra_name] = remaining
+            else:
+                del poetry_content["extras"][extra_name]
+
+        if not poetry_content["extras"]:
+            del poetry_content["extras"]
 
     def _remove_references_to_group(
         self, group_name: str, content: dict[str, Any]
