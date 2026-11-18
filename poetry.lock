@@ -1699,18 +1699,32 @@ install = ["backports.zstd (>=1.0.0) ; python_version < \"3.14\""]
 
 [[package]]
 name = "pkginfo"
-version = "1.13"
+version = "1.13.3"
 description = "Query metadata from sdists / bdists / installed packages."
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
+markers = "python_version < \"3.15\""
 files = [
-    {file = "pkginfo-1.13-py3-none-any.whl", hash = "sha256:37e1bfb7b5b149829e6f140a225b517c4c8808d8d164f68137b9492023874061"},
-    {file = "pkginfo-1.13.tar.gz", hash = "sha256:4f70471c643f71fe84a06230c0e33c5c5b12a33b2fd21bff14ddaef5a974adb1"},
+    {file = "pkginfo-1.13.3-py3-none-any.whl", hash = "sha256:66520cd19fddf3faa9554d68dcc0e6801944275bf612e8b581dfba968a9b4cc9"},
+    {file = "pkginfo-1.13.3.tar.gz", hash = "sha256:ad74cc8184b28b77b06cccc49361fd0fdc56fd87e307425ce1c2b7596dbe3185"},
 ]
 
 [package.extras]
 testing = ["pytest", "pytest-cov", "wheel"]
+
+[[package]]
+name = "pkginfo"
+version = "2.0"
+description = "Query metadata from sdists / bdists / installed packages"
+optional = false
+python-versions = ">=3.11"
+groups = ["main"]
+markers = "python_version >= \"3.15\""
+files = [
+    {file = "pkginfo-2.0-py3-none-any.whl", hash = "sha256:98c7aaa804dfe017b0de65d4b41a2f4649a656f43d3c21525b13e8075716fa1b"},
+    {file = "pkginfo-2.0.tar.gz", hash = "sha256:f7b4f267881785582c923631a0fa7e275b0d390a5cbab54aa4ec0ecc7eddb375"},
+]
 
 [[package]]
 name = "platformdirs"
@@ -2663,4 +2677,4 @@ type = ["pytest-mypy (>=1.0.1) ; platform_python_implementation != \"PyPy\""]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "793a83bdd20e70d3c149b8faa2c512eb90e4a2fdf110ac95f426f7e175185836"
+content-hash = "c6c51cd47139f5606aae08ecac5d598d33271e1a997ba2f58922972fe7a8e5f3"
