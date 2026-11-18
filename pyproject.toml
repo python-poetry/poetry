@@ -195,6 +195,8 @@ markers = [
     "skip_git_mock: mark tests that should not auto-apply git_mock",
 ]
 log_cli_level = "INFO"
+faulthandler_timeout = 300
+faulthandler_exit_on_timeout = true
 
 
 [tool.coverage.report]
