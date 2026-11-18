@@ -17,14 +17,13 @@ from packaging.metadata import RawMetadata
 from packaging.metadata import parse_email
 from poetry.core.constraints.version import Version
 from poetry.core.masonry.utils.helpers import distribution_name
-from requests_toolbelt import user_agent
 from requests_toolbelt.multipart import MultipartEncoder
 from requests_toolbelt.multipart import MultipartEncoderMonitor
 
-from poetry.__version__ import __version__
 from poetry.publishing.hash_manager import HashManager
 from poetry.utils.constants import REQUESTS_TIMEOUT
 from poetry.utils.patterns import wheel_file_re
+from poetry.utils.user_agent import get_user_agent
 
 
 if TYPE_CHECKING:
@@ -48,8 +47,7 @@ class Uploader:
 
     @property
     def user_agent(self) -> str:
-        agent: str = user_agent("poetry", __version__)
-        return agent
+        return get_user_agent()
 
     @property
     def default_dist_dir(self) -> Path:

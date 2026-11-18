@@ -119,6 +119,17 @@ This also works for secret settings, like credentials:
 export POETRY_HTTP_BASIC_MY_REPOSITORY_PASSWORD=secret
 ```
 
+### Add caller data to the User-Agent
+
+Set `POETRY_USER_AGENT_USER_DATA` to append caller-provided context to the
+User-Agent on requests made by Poetry, including package downloads and uploads.
+The value is sent to configured package repositories, so use only non-sensitive
+context.
+
+```bash
+export POETRY_USER_AGENT_USER_DATA=build/42
+```
+
 ## Configuration sources
 
 When a setting is set in multiple places, Poetry applies the following precedence
