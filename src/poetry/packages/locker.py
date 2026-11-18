@@ -408,22 +408,17 @@ class Locker:
         metadata = cast("dict[str, Any]", self.lock_data["metadata"])
 
         # Storing of package files and hashes has been through a few generations in
-        # the lockfile, we can read them all:
+        # the lockfile, we can read all supported ones:
         #
         # - latest and preferred is that this is read per package, from
-        #   package.files
-        # - oldest is that hashes were stored in metadata.hashes without filenames
-        # - in between those two, hashes were stored alongside filenames in
-        #   metadata.files
+        #   package.files (lock file version 2.0 and later)
+        # - before that, hashes were stored alongside filenames in metadata.files
+        #
+        # (Hashes without filenames in metadata.hashes were only used by lock files
+        # without a lock-version, which are not supported anymore.)
         package_files = info.get("files")
         if package_files is not None:
             package.files = package_files
-        elif "hashes" in metadata:
-            hashes = cast("dict[str, Any]", metadata["hashes"])
-            # Strictly speaking, this is not correct,
-            # but we do not know the file names here,
-            # so we just set both file and hash.
-            package.files = [{"file": h, "hash": h} for h in hashes[name]]
         elif source_type in {"git", "directory", "url"}:
             package.files = []
         else:
