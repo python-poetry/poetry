@@ -907,6 +907,83 @@ def test_run_whitelist_remove(
     assert installer.executor.removals_count == 1
 
 
+def test_run_whitelist_always_updates_directory_dependencies(
+    installer: Installer,
+    locker: Locker,
+    repo: Repository,
+    package: ProjectPackage,
+    fixture_dir: FixtureDirGetter,
+) -> None:
+    """
+    The lock file contains a variant of the directory dependency "quix" that does
+    not depend on "sampleproject". Although only "A" is updated, "quix" should
+    be re-solved like it is when refreshing the lock file.
+    """
+    root_dir = fixture_dir("old_lock_path_dependency")
+    package.root_dir = root_dir
+    package.python_versions = "^3.8"
+    locker.set_lock_path(root_dir)
+    lock_data = {
+        "package": [
+            {
+                "name": "A",
+                "version": "1.0",
+                "optional": False,
+                "platform": "*",
+                "python-versions": "*",
+                "checksum": [],
+            },
+            {
+                "name": "B",
+                "version": "1.0",
+                "optional": False,
+                "platform": "*",
+                "python-versions": "*",
+                "checksum": [],
+            },
+            {
+                "name": "quix",
+                "version": "1.2.3",
+                "optional": False,
+                "platform": "*",
+                "python-versions": "~2.7 || ^3.4",
+                "checksum": [],
+                "source": {"type": "directory", "url": "quix"},
+            },
+        ],
+        "metadata": {
+            "lock-version": "2.1",
+            "python-versions": "^3.8",
+            "content-hash": "123456789",
+            "files": {"A": [], "B": [], "quix": []},
+        },
+    }
+    fix_lock_data(lock_data)
+    locker.locked(True)
+    locker.mock_lock_data(lock_data)
+    repo.add_package(get_package("A", "1.0"))
+    repo.add_package(get_package("A", "1.1"))
+    repo.add_package(get_package("B", "1.0"))
+    repo.add_package(get_package("B", "1.1"))
+    repo.add_package(get_package("sampleproject", "1.3.1"))
+
+    package.add_dependency(Factory.create_dependency("A", "*"))
+    package.add_dependency(Factory.create_dependency("B", "*"))
+    package.add_dependency(
+        Factory.create_dependency("quix", {"path": "quix"}, root_dir=root_dir)
+    )
+
+    installer.update(True)
+    installer.whitelist(["A"])
+
+    result = installer.run()
+    assert result == 0
+
+    locked = {p["name"]: p["version"] for p in locker.written_data["package"]}
+    assert locked == {"A": "1.1", "B": "1.0", "quix": "1.2.3", "sampleproject": "1.3.1"}
+    assert installer.executor.installations_count == 4
+
+
 def test_add_with_sub_dependencies(
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ) -> None:
