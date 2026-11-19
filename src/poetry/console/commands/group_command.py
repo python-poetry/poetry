@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from typing import TYPE_CHECKING
+from typing import Any
 
 from cleo.helpers import option
 from packaging.utils import NormalizedName
@@ -12,6 +13,8 @@ from poetry.console.exceptions import GroupNotFoundError
 
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from cleo.io.inputs.option import Option
     from poetry.core.packages.project_package import ProjectPackage
 
@@ -61,6 +64,21 @@ class GroupCommand(Command):
         Can be overridden to adapt behavior.
         """
         return None
+
+    @staticmethod
+    def _find_group_key(group: str, *sections: Mapping[str, Any]) -> str:
+        """
+        Return the key under which the given group is declared in one of the
+        given pyproject sections, comparing normalized group names.
+        Fall back to the given group name if it is not declared yet.
+        """
+        canonical_group = canonicalize_name(group)
+        for section in sections:
+            for key in section:
+                if canonicalize_name(key) == canonical_group:
+                    return key
+
+        return group
 
     @property
     def default_groups(self) -> set[str]:
