@@ -1,13 +1,16 @@
 name: Documentation Preview
 
+# Exactly one of the two triggers passes the deploy job's condition:
+# - PRs from branches of this repository run via pull_request, so maintainers
+#   can modify and test this workflow. No label is required.
+# - PRs from forks run via pull_request_target (which uses the workflow from the
+#   base branch) and only when labeled as impact/docs.
 on:
   pull_request:
-    # allow repository maintainers to modify and test workflow
     paths:
       - ".github/workflows/docs.yaml"
+      - "docs/**"
   pull_request_target:  # zizmor: ignore[dangerous-triggers]
-    # enable runs for this workflow when labeled as documentation only
-    # prevent execution when the workflow itself is modified from a fork
     types:
       - labeled
       - synchronize
@@ -19,8 +22,15 @@ jobs:
     name: Build & Deploy
     runs-on: ubuntu-latest
     if: >
-      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'impact/docs'))
-      || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+      || (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.full_name != github.repository
+          && contains(github.event.pull_request.labels.*.name, 'impact/docs'))
+    # Cancel stale runs so that an older run cannot deploy or update the comment
+    # after a newer one. This is defined on the job (not the workflow) so that
+    # runs whose job is skipped by the condition above do not cancel others.
+    concurrency:
+      group: docs-preview-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
     permissions:
       contents: read
       pull-requests: write
