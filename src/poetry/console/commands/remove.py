@@ -117,13 +117,25 @@ list of installed packages
                         self._remove_references_to_group(group_name, content)
 
         elif group == "dev" and "dev-dependencies" in poetry_content:
-            # We need to account for the old `dev-dependencies` section
+            # We need to account for the old `dev-dependencies` section,
+            # which may coexist with a dev group in [dependency-groups]
             removed = self._remove_packages(
-                packages, [], poetry_content["dev-dependencies"], "dev"
+                packages,
+                groups_content.get("dev", []),
+                poetry_content["dev-dependencies"],
+                "dev",
             )
 
             if not poetry_content["dev-dependencies"]:
                 del poetry_content["dev-dependencies"]
+            if "dev" in groups_content and not groups_content["dev"]:
+                del groups_content["dev"]
+            if (
+                "dev" not in groups_content
+                and "dev" not in poetry_groups_content
+                and "dev-dependencies" not in poetry_content
+            ):
+                self._remove_references_to_group(group, content)
         else:
             removed = set()
             if group_content := poetry_groups_content.get(group):
