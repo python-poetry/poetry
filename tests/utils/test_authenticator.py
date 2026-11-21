@@ -655,6 +655,13 @@ def test_authenticator_raises_error_for_empty_repository_section_without_url(
     )
 
 
+def test_authenticator_reports_non_string_repository_url(config: Config) -> None:
+    config.merge({"repositories": {"broken": {"url": {"url": "https://example.org/"}}}})
+    authenticator = Authenticator(config, NullIO())
+    with pytest.raises(PoetryError, match="repository 'broken' must have a string url"):
+        _ = authenticator.configured_repositories
+
+
 def test_authenticator_does_not_cache_partial_repositories_on_missing_url(
     config: Config,
 ) -> None:

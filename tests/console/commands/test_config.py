@@ -9,10 +9,12 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from cleo.testers.application_tester import ApplicationTester
 from poetry.core.pyproject.exceptions import PyProjectError
 
 from poetry.config.config_source import ConfigSource
 from poetry.config.config_source import PropertyNotFoundError
+from poetry.console.application import Application
 from poetry.console.commands.install import InstallCommand
 from poetry.factory import Factory
 from poetry.repositories.legacy_repository import LegacyRepository
@@ -286,6 +288,33 @@ def test_unset_repository_with_periods_in_name(
     assert config_source.config["repositories"]["other"]["url"] == (
         "https://other.com/simple/"
     )
+
+
+def test_repair_repository_with_nested_url(
+    tmp_path: Path, config_source: DictConfigSource
+) -> None:
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "sample"\nversion = "1"\n'
+        '[[tool.poetry.source]]\nname = "mirror"\nurl = "https://example.org/"\n',
+        encoding="utf-8",
+    )
+    (tmp_path / "poetry.toml").write_text(
+        "[virtualenvs]\ncreate = false\n", encoding="utf-8"
+    )
+    config_source.config["repositories"] = {
+        "mirror": {"url": "https://example.org/"},
+        "broken": {"url": {"url": "https://example.org/"}},
+    }
+    tester = ApplicationTester(Application())
+    assert tester.execute(f'--project "{tmp_path}" config --list') == 0
+    assert "virtualenvs.create = false" in tester.io.fetch_output()
+    assert (
+        tester.execute(f'--project "{tmp_path}" config --unset repositories.broken')
+        == 0
+    )
+    assert config_source.config["repositories"] == {
+        "mirror": {"url": "https://example.org/"}
+    }
 
 
 def test_unset_value_not_exists(tester: CommandTester) -> None:
