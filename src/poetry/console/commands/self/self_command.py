@@ -30,6 +30,12 @@ if TYPE_CHECKING:
 class SelfCommand(InstallerCommand):
     ADDITIONAL_PACKAGE_GROUP = canonicalize_name("additional")
 
+    def __init__(self) -> None:
+        # The directory Poetry was invoked from (see handle()).
+        self._working_directory = Path.cwd()
+
+        super().__init__()
+
     @staticmethod
     def get_default_system_pyproject_file() -> Path:
         # We separate this out to avoid unwanted side effect during testing while
@@ -145,5 +151,7 @@ class SelfCommand(InstallerCommand):
 
         self.reset()
 
+        # Remember the original working directory, e.g. to resolve relative paths.
+        self._working_directory = Path.cwd()
         with directory(self.system_pyproject.parent):
             return self._system_project_handle()
