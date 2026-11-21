@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import sys
 import tempfile
 
 from pathlib import Path
@@ -59,6 +60,95 @@ def test_prepare_sdist(
 
     assert wheel.parent == destination
     assert wheel.name == "demo-0.1.0-py3-none-any.whl"
+
+
+@pytest.mark.parametrize("build_fails", [False, True])
+def test_prepare_sdist_publishes_only_completed_wheels(
+    build_fails: bool,
+    artifact_cache: ArtifactCache,
+    fixture_dir: FixtureDirGetter,
+    mocker: MockerFixture,
+    pool: RepositoryPool,
+    tmp_path: Path,
+) -> None:
+    chef = Chef(artifact_cache, EnvManager.get_system_env(), pool)
+    archive = (fixture_dir("distributions") / "demo-0.1.0.tar.gz").resolve()
+    destination = tmp_path / "cache"
+    cached_wheel = destination / "demo-0.1.0-py3-none-any.whl"
+    observed = []
+
+    def build_wheel(source: Path, output: Path, **kwargs: object) -> Path:
+        wheel = output / cached_wheel.name
+        wheel.write_bytes(b"unfinished wheel")
+        observed.append(cached_wheel.exists())
+        if build_fails:
+            raise RuntimeError("backend failed")
+        with ZipFile(wheel, "w") as complete:
+            complete.writestr("demo.py", "pass")
+        return wheel
+
+    mocker.patch.object(chef, "_prepare", side_effect=build_wheel)
+    if build_fails:
+        with pytest.raises(RuntimeError, match="backend failed"):
+            chef.prepare(archive, output_dir=destination)
+        assert not list(destination.iterdir())
+    else:
+        assert chef.prepare(archive, output_dir=destination) == cached_wheel
+        with ZipFile(cached_wheel) as complete:
+            assert complete.read("demo.py") == b"pass"
+        assert list(destination.iterdir()) == [cached_wheel]
+    assert observed == [False]
+
+
+def test_prepare_sdist_leaves_external_wheel_in_place(
+    artifact_cache: ArtifactCache,
+    fixture_dir: FixtureDirGetter,
+    mocker: MockerFixture,
+    pool: RepositoryPool,
+    tmp_path: Path,
+) -> None:
+    chef = Chef(artifact_cache, EnvManager.get_system_env(), pool)
+    archive = (fixture_dir("distributions") / "demo-0.1.0.tar.gz").resolve()
+    external_wheel = tmp_path / "demo-0.1.0-py2.py3-none-any.whl"
+    shutil.copyfile(fixture_dir("distributions") / external_wheel.name, external_wheel)
+    mocker.patch.object(chef, "_prepare", return_value=external_wheel)
+    destination = tmp_path / "cache"
+
+    assert chef.prepare(archive, output_dir=destination) == external_wheel
+    assert external_wheel.is_file()
+    assert not list(destination.iterdir())
+
+
+@pytest.mark.skipif(
+    sys.platform != "win32", reason="Windows blocks replacing open files"
+)
+def test_prepare_sdist_keeps_completed_wheel_in_use(
+    artifact_cache: ArtifactCache,
+    fixture_dir: FixtureDirGetter,
+    mocker: MockerFixture,
+    pool: RepositoryPool,
+    tmp_path: Path,
+) -> None:
+    chef = Chef(artifact_cache, EnvManager.get_system_env(), pool)
+    destination = tmp_path / "cache"
+    destination.mkdir()
+    archive = destination / "demo-0.1.0.tar.gz"
+    shutil.copyfile(fixture_dir("distributions") / archive.name, archive)
+    cached_wheel = destination / "demo-0.1.0-py3-none-any.whl"
+    with ZipFile(cached_wheel, "w") as cached:
+        cached.writestr("demo.py", "cached")
+
+    def build_wheel(source: Path, output: Path, **kwargs: object) -> Path:
+        wheel = output / cached_wheel.name
+        with ZipFile(wheel, "w") as complete:
+            complete.writestr("demo.py", "new")
+        return wheel
+
+    mocker.patch.object(chef, "_prepare", side_effect=build_wheel)
+    with ZipFile(cached_wheel) as reader:
+        assert chef.prepare(archive, output_dir=destination) == cached_wheel
+        assert reader.read("demo.py") == b"cached"
+    assert set(destination.iterdir()) == {archive, cached_wheel}
 
 
 def test_prepare_directory(
