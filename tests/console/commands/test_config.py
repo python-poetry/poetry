@@ -9,10 +9,12 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from cleo.testers.application_tester import ApplicationTester
 from poetry.core.pyproject.exceptions import PyProjectError
 
 from poetry.config.config_source import ConfigSource
 from poetry.config.config_source import PropertyNotFoundError
+from poetry.console.application import Application
 from poetry.console.commands.install import InstallCommand
 from poetry.factory import Factory
 from poetry.repositories.legacy_repository import LegacyRepository
@@ -288,30 +290,31 @@ def test_unset_repository_with_periods_in_name(
     )
 
 
-def test_unset_corrupted_nested_repository(
-    tester: CommandTester, config_source: DictConfigSource
+def test_repair_repository_with_nested_url(
+    tmp_path: Path, config_source: DictConfigSource
 ) -> None:
-    config_source.config["repositories"] = {
-        "repo1": {"url": "https://example.com"},
-        "repo2": {"url": {"url": "https://invalid.com"}},
-    }
-
-    tester.execute("repositories.repo2 --unset")
-    assert "repo2" not in config_source.config["repositories"]
-    assert config_source.config["repositories"]["repo1"]["url"] == "https://example.com"
-
-
-def test_config_list_with_corrupted_repository_entry(
-    tester: CommandTester, config_source: DictConfigSource
-) -> None:
-    config_source.config["repositories"] = {
-        "repo2": {"url": {"url": "https://invalid.com"}},
-    }
-
-    tester.execute("--list")
-    assert (
-        'repositories.repo2.url.url = "https://invalid.com"' in tester.io.fetch_output()
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "sample"\nversion = "1"\n'
+        '[[tool.poetry.source]]\nname = "mirror"\nurl = "https://example.org/"\n',
+        encoding="utf-8",
     )
+    (tmp_path / "poetry.toml").write_text(
+        "[virtualenvs]\ncreate = false\n", encoding="utf-8"
+    )
+    config_source.config["repositories"] = {
+        "mirror": {"url": "https://example.org/"},
+        "broken": {"url": {"url": "https://example.org/"}},
+    }
+    tester = ApplicationTester(Application())
+    assert tester.execute(f'--project "{tmp_path}" config --list') == 0
+    assert "virtualenvs.create = false" in tester.io.fetch_output()
+    assert (
+        tester.execute(f'--project "{tmp_path}" config --unset repositories.broken')
+        == 0
+    )
+    assert config_source.config["repositories"] == {
+        "mirror": {"url": "https://example.org/"}
+    }
 
 
 def test_unset_value_not_exists(tester: CommandTester) -> None:

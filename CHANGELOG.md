@@ -1,5 +1,33 @@
 # Change Log
 
+## [2.5.2] - 2026-11-21
+
+### Changed
+
+- Allow `pkginfo>=2.0` ([#11239](https://github.com/python-poetry/poetry/pull/11239)).
+- Report a comprehensible error if a configured repository is missing a URL ([#11081](https://github.com/python-poetry/poetry/pull/11081),
+  [#11114](https://github.com/python-poetry/poetry/pull/11114),
+  [#11242](https://github.com/python-poetry/poetry/pull/11242)).
+- Report a comprehensible error for an invalid `--priority` in `poetry source add` instead of failing with a `KeyError` ([#11175](https://github.com/python-poetry/poetry/pull/11175)).
+
+### Fixed
+
+- Fix an issue where `poetry install` built an sdist before checking it against its lock file hash ([#11253](https://github.com/python-poetry/poetry/pull/11253)).
+- Fix an issue where `poetry install` rejected a distribution even though one of the hashes provided by the package index matched the hash locked for that file. ([#11131](https://github.com/python-poetry/poetry/pull/11131)).
+- Fix an issue where uninstalling a path dependency failed if its source did not exist anymore ([#11093](https://github.com/python-poetry/poetry/pull/11093)).
+- Fix an issue where `poetry version prerelease` failed for a dev release ([#11217](https://github.com/python-poetry/poetry/pull/11217)).
+
+### Docs
+
+- Document the options of `poetry debug resolve` ([#11211](https://github.com/python-poetry/poetry/pull/11211)).
+- Clarify `solver.min-release-age-exclude` and `solver.min-release-age-exclude-source` ([#11087](https://github.com/python-poetry/poetry/pull/11087)).
+- Distinguish package and upload repository URLs ([#11143](https://github.com/python-poetry/poetry/pull/11143)).
+- Explain the certificate configuration for system Git ([#11145](https://github.com/python-poetry/poetry/pull/11145)).
+- Add separate directory and archive path dependency examples ([#11079](https://github.com/python-poetry/poetry/pull/11079)).
+- Use the plugin repository for the `poetry-export` pre-commit hook ([#11213](https://github.com/python-poetry/poetry/pull/11213)).
+- Fix the incorrect `tool.poetry` section name in the FAQ ([#11150](https://github.com/python-poetry/poetry/pull/11150)).
+
+
 ## [2.5.1] - 2026-09-20
 
 ### Fixed
@@ -2859,7 +2887,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/2.5.1...main
+[Unreleased]: https://github.com/python-poetry/poetry/compare/2.5.2...main
+[2.5.2]: https://github.com/python-poetry/poetry/releases/tag/2.5.2
 [2.5.1]: https://github.com/python-poetry/poetry/releases/tag/2.5.1
 [2.5.0]: https://github.com/python-poetry/poetry/releases/tag/2.5.0
 [2.4.3]: https://github.com/python-poetry/poetry/releases/tag/2.4.3

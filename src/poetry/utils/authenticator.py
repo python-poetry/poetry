@@ -6,7 +6,6 @@ import logging
 import time
 import urllib.parse
 
-from collections.abc import Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -30,6 +29,7 @@ from poetry.utils.constants import RETRY_AFTER_HEADER
 from poetry.utils.constants import STATUS_FORCELIST
 from poetry.utils.password_manager import HTTPAuthCredential
 from poetry.utils.password_manager import PasswordManager
+from poetry.utils.threading import atomic_cached_property
 
 
 if TYPE_CHECKING:
@@ -74,13 +74,6 @@ class AuthenticatorRepositoryConfig:
     _path_segments: list[str] = dataclasses.field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
-        if not isinstance(self.url, str):
-            self.scheme = ""
-            self.netloc = ""
-            self.path = ""
-            self._path_segments = []
-            return
-
         parsed_url = urllib.parse.urlsplit(self.url)
         self.scheme = parsed_url.scheme
         self.netloc = parsed_url.netloc
@@ -140,9 +133,6 @@ class Authenticator:
         self._sessions_for_netloc: dict[str, requests.Session] = {}
         self._credentials: dict[str, HTTPAuthCredential] = {}
         self._certs: dict[str, RepositoryCertificateConfig] = {}
-        self._configured_repositories: (
-            dict[str, AuthenticatorRepositoryConfig] | None
-        ) = None
         self._password_manager = PasswordManager(self._config)
 
         # Poetry < 2.4: FileCache -> directory "_http"
@@ -420,29 +410,22 @@ class Authenticator:
             return RepositoryCertificateConfig()
         return self.configured_repositories[name].certs(self._config)
 
-    @property
+    @atomic_cached_property
     def configured_repositories(self) -> dict[str, AuthenticatorRepositoryConfig]:
-        if self._configured_repositories is None:
-            self._configured_repositories = {}
-            repositories = self._config.get("repositories", {})
-            if not isinstance(repositories, Mapping):
-                logger.warning("Repositories configuration is invalid; skipping.")
-                return self._configured_repositories
-
-            for repository_name in repositories:
-                url = self._config.get(["repositories", repository_name, "url"])
-                if not isinstance(url, str):
-                    logger.warning(
-                        "Repository '%s' has an invalid url configured in settings;"
-                        " skipping.",
-                        repository_name,
-                    )
-                    continue
-                self._configured_repositories[repository_name] = (
-                    AuthenticatorRepositoryConfig(repository_name, url)
+        repositories = {}
+        for repository_name in self._config.get("repositories", []):
+            url = self._config.get(["repositories", repository_name, "url"])
+            if not url or not isinstance(url, str):
+                problem = "is missing a url" if not url else "must have a string url"
+                raise PoetryError(
+                    f"The repository {repository_name!r} {problem}. "
+                    f"Please set it with `poetry config repositories.{repository_name} <url>`."
                 )
+            repositories[repository_name] = AuthenticatorRepositoryConfig(
+                repository_name, url
+            )
 
-        return self._configured_repositories
+        return repositories
 
     def reset_credentials_cache(self) -> None:
         self.get_repository_config_for_url.cache_clear()

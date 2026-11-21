@@ -1,13 +1,16 @@
 name: Documentation Preview
 
+# Exactly one of the two triggers passes the deploy job's condition:
+# - PRs from branches of this repository run via pull_request, so maintainers
+#   can modify and test this workflow. No label is required.
+# - PRs from forks run via pull_request_target (which uses the workflow from the
+#   base branch) and only when labeled as impact/docs.
 on:
   pull_request:
-    # allow repository maintainers to modify and test workflow
     paths:
       - ".github/workflows/docs.yaml"
+      - "docs/**"
   pull_request_target:  # zizmor: ignore[dangerous-triggers]
-    # enable runs for this workflow when labeled as documentation only
-    # prevent execution when the workflow itself is modified from a fork
     types:
       - labeled
       - synchronize
@@ -19,11 +22,19 @@ jobs:
     name: Build & Deploy
     runs-on: ubuntu-latest
     if: >
-      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'impact/docs'))
-      || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+      || (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.full_name != github.repository
+          && contains(github.event.pull_request.labels.*.name, 'impact/docs'))
+    # Cancel stale runs so that an older run cannot deploy or update the comment
+    # after a newer one. This is defined on the job (not the workflow) so that
+    # runs whose job is skipped by the condition above do not cancel others.
+    concurrency:
+      group: docs-preview-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
     permissions:
       contents: read
       pull-requests: write
+      deployments: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -43,6 +54,7 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "24"
+          package-manager-cache: false
 
       - uses: $/.github/actions/bootstrap-poetry
 
@@ -59,13 +71,23 @@ jobs:
           # Build the static website.
           npx hugo --minify --logLevel info
 
-      - uses: amondnet/vercel-action@de09aeac2ace6599ec9b11ef87558759a496bac4 # v42.3.0
+      - name: Deploy
+        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4.1.3
+        id: deploy
         with:
-          vercel-version: 50.44.0
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          scope: python-poetry
-          github-comment: true
-          working-directory: public
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          command: >-
+            pages deploy public
+            --project-name=python-poetry
+            --branch=pr-${{ github.event.pull_request.number }}
+            --commit-hash=${{ github.event.pull_request.head.sha }}
+
+      - name: Comment Preview URL
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
+        with:
+          header: docs-preview
+          message: |
+            Documentation preview: ${{ steps.deploy.outputs.deployment-url }}
+            Branch alias: ${{ steps.deploy.outputs.pages-deployment-alias-url }}

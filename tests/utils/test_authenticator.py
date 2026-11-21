@@ -17,6 +17,7 @@ from cleo.io.null_io import NullIO
 from keyring.credentials import SimpleCredential
 
 from poetry.console.exceptions import PoetryRuntimeError
+from poetry.exceptions import PoetryError
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.authenticator import AuthenticatorRepositoryConfig
 from poetry.utils.authenticator import RepositoryCertificateConfig
@@ -638,6 +639,48 @@ def test_repository_config_path_match_key(
     assert repository.path_match_key(request_path) == expected
 
 
+def test_authenticator_raises_error_for_empty_repository_section_without_url(
+    config: Config,
+) -> None:
+    # Reproducer for #11080: empty [repositories.<name>] section with no url key
+    config.merge({"repositories": {"company-internal": {}}})
+
+    authenticator = Authenticator(config, NullIO())
+    with pytest.raises(PoetryError) as exc_info:
+        _ = authenticator.configured_repositories
+
+    assert str(exc_info.value) == (
+        "The repository 'company-internal' is missing a url. "
+        "Please set it with `poetry config repositories.company-internal <url>`."
+    )
+
+
+def test_authenticator_reports_non_string_repository_url(config: Config) -> None:
+    config.merge({"repositories": {"broken": {"url": {"url": "https://example.org/"}}}})
+    authenticator = Authenticator(config, NullIO())
+    with pytest.raises(PoetryError, match="repository 'broken' must have a string url"):
+        _ = authenticator.configured_repositories
+
+
+def test_authenticator_does_not_cache_partial_repositories_on_missing_url(
+    config: Config,
+) -> None:
+    config.merge(
+        {
+            "repositories": {
+                "first": {"url": "https://first.example.com/simple/"},
+                "broken": {},
+                "last": {"url": "https://last.example.com/simple/"},
+            }
+        }
+    )
+
+    authenticator = Authenticator(config, NullIO())
+    for _ in range(2):
+        with pytest.raises(PoetryError, match="'broken' is missing a url"):
+            _ = authenticator.configured_repositories
+
+
 @pytest.mark.parametrize(
     ("url", "expected"),
     [
@@ -916,53 +959,3 @@ def test_repository_certificate_configuration_create(
     config.merge({"certificates": {"foo": cert_config}})
 
     assert RepositoryCertificateConfig.create("foo", config) == result
-
-
-def test_authenticator_configured_repositories_skips_invalid_url(
-    config: Config, caplog: LogCaptureFixture
-) -> None:
-    config.merge(
-        {
-            "repositories": {
-                "valid": {"url": "https://valid.repo/simple/"},
-                "corrupted_dict": {"url": {"url": "https://invalid.repo/simple/"}},
-                "none_url": {"url": None},
-            }
-        }
-    )
-    authenticator = Authenticator(config, NullIO())
-    configured = authenticator.configured_repositories
-
-    assert "valid" in configured
-    assert configured["valid"].url == "https://valid.repo/simple/"
-    assert "corrupted_dict" not in configured
-    assert "none_url" not in configured
-    assert (
-        "Repository 'corrupted_dict' has an invalid url configured in settings;"
-        " skipping." in caplog.text
-    )
-    assert (
-        "Repository 'none_url' has an invalid url configured in settings;"
-        " skipping." in caplog.text
-    )
-
-
-@pytest.mark.parametrize("repositories", [None, ["repo"], "invalid", 1])
-def test_authenticator_configured_repositories_skips_invalid_mapping(
-    config: Config, caplog: LogCaptureFixture, repositories: object
-) -> None:
-    config.merge({"repositories": repositories})
-    authenticator = Authenticator(config, NullIO())
-
-    assert authenticator.configured_repositories == {}
-    assert "Repositories configuration is invalid; skipping." in caplog.text
-
-
-def test_authenticator_repository_config_non_string_url() -> None:
-    from poetry.utils.authenticator import AuthenticatorRepositoryConfig
-
-    repo_config = AuthenticatorRepositoryConfig("bad", {"url": "https://invalid.repo"})  # type: ignore[arg-type]
-    assert repo_config.scheme == ""
-    assert repo_config.netloc == ""
-    assert repo_config.path == ""
-    assert repo_config.path_match_key("/simple") == (0, True)

@@ -75,6 +75,7 @@ To remove a repository (repo is a short alias for repositories):
 
         from poetry.config.file_config_source import FileConfigSource
         from poetry.exceptions import PoetryError
+        from poetry.factory import Factory
         from poetry.locations import CONFIG_DIR
         from poetry.toml.file import TOMLFile
 
@@ -85,11 +86,20 @@ To remove a repository (repo is a short alias for repositories):
         config_file = TOMLFile(CONFIG_DIR / "config.toml")
 
         try:
-            local_config_file = TOMLFile(self.poetry.file.path.parent / "poetry.toml")
+            project_file = self.poetry.file.path
+        except PoetryError:
+            # A broken repository can prevent project initialization. Its
+            # configuration must still be accessible to repair it.
+            project_file = Factory.locate(self.get_application().project_directory)
+        except (RuntimeError, PyProjectError):
+            project_file = None
+
+        if project_file is None:
+            local_config_file = TOMLFile(Path.cwd() / "poetry.toml")
+        else:
+            local_config_file = TOMLFile(project_file.with_name("poetry.toml"))
             if local_config_file.exists():
                 config.merge(local_config_file.read())
-        except (RuntimeError, PyProjectError, PoetryError):
-            local_config_file = TOMLFile(Path.cwd() / "poetry.toml")
 
         if self.option("local"):
             config.set_config_source(FileConfigSource(local_config_file))
