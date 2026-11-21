@@ -71,6 +71,26 @@ list of installed packages
         if group is None:
             # remove from all groups
             removed = set()
+
+            # The legacy `dev-dependencies` table is another place where the dev
+            # group can be defined, e.g. by projects that have not been migrated
+            # to `[dependency-groups]` or `[tool.poetry.group.dev]` yet.
+            if dev_dependencies := poetry_content.get("dev-dependencies"):
+                removed |= self._remove_packages(
+                    packages=packages,
+                    standard_section=[],
+                    poetry_section=dev_dependencies,
+                    group_name="dev",
+                )
+                if not dev_dependencies:
+                    del poetry_content["dev-dependencies"]
+                    if (
+                        "dev" not in groups_content
+                        and "dev" not in poetry_groups_content
+                    ):
+                        self._remove_references_to_group("dev", content)
+
+            has_legacy_dev_dependencies = "dev-dependencies" in poetry_content
             group_sections = []
             project_dependencies = project_content.get("dependencies", [])
             poetry_dependencies = poetry_content.get("dependencies", {})
@@ -113,6 +133,7 @@ list of installed packages
                     if (
                         group_name not in groups_content
                         and group_name not in poetry_groups_content
+                        and not (group_name == "dev" and has_legacy_dev_dependencies)
                     ):
                         self._remove_references_to_group(group_name, content)
 
