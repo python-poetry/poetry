@@ -21,6 +21,18 @@ from poetry.utils import patterns
             },
         ),
         (
+            "demo_pkg-1.2.3-2build-py2.py3-none-any.whl",
+            {
+                "namever": "demo_pkg-1.2.3",
+                "name": "demo_pkg",
+                "ver": "1.2.3",
+                "build": "2build",
+                "pyver": "py2.py3",
+                "abi": "none",
+                "plat": "any",
+            },
+        ),
+        (
             "SQLAlchemy-1.3.20-cp27-cp27mu-manylinux2010_x86_64.whl",
             {
                 "namever": "SQLAlchemy-1.3.20",
