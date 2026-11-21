@@ -21,6 +21,7 @@ from cleo.io.outputs.output import Verbosity
 from packaging.utils import canonicalize_name
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
+from poetry.core.packages.utils.link import Link
 from poetry.core.packages.utils.utils import path_to_url
 
 from poetry.factory import Factory
@@ -1174,6 +1175,49 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
         assert dest.exists(), "cached file should not be deleted"
     else:
         download_spy.assert_not_called()
+
+
+@pytest.mark.parametrize("source_type", ["url", None])
+def test_executor_verifies_sdist_hash_before_building(
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    config: Config,
+    io: BufferedIO,
+    mocker: MockerFixture,
+    fixture_dir: FixtureDirGetter,
+    source_type: str | None,
+) -> None:
+    """Building an sdist runs code from it, so an archive that does not match
+    the lock file must be rejected before the build starts.
+    """
+    built_wheel = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
+    mock_prepare = mocker.patch(
+        "poetry.installation.chef.Chef._prepare", return_value=built_wheel
+    )
+    sdist = fixture_dir("distributions") / "demo-0.1.0.tar.gz"
+    mocker.patch(
+        "poetry.utils.cache.ArtifactCache._get_cached_archive", return_value=sdist
+    )
+
+    url = "https://files.pythonhosted.org/demo-0.1.0.tar.gz"
+    if source_type == "url":
+        package = Package("demo", "0.1.0", source_type="url", source_url=url)
+    else:
+        package = Package("demo", "0.1.0")
+        mocker.patch.object(
+            Executor, "_download", lambda self, op: self._download_link(op, Link(url))
+        )
+    # The lock file pins a different hash than the one of the served archive.
+    package.files = [{"file": "demo-0.1.0.tar.gz", "hash": "sha256:" + "0" * 64}]
+
+    executor = Executor(tmp_venv, pool, config, io)
+    return_code = executor.execute([Install(package)])
+
+    output = io.fetch_output()
+    assert return_code == 1, f"\noutput: {output}\n"
+    assert "not found in known hashes" in output
+    mock_prepare.assert_not_called()
+    assert not list(tmp_venv.site_packages.distributions(name=package.name))
 
 
 @pytest.mark.parametrize(
