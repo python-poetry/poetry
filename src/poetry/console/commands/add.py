@@ -157,6 +157,7 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
         use_project_section = False
         use_groups_section = False
+        use_legacy_dev_dependencies = False
         project_dependency_names: list[NormalizedName | Literal["<include-group>"]] = []
 
         # Run-Time Deps incl. extras
@@ -182,7 +183,16 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
 
         # Dependency Groups
         else:
-            if groups_content or "group" not in poetry_content:
+            # Mirror RemoveCommand: if the dev group is defined by the
+            # deprecated but still supported [tool.poetry.dev-dependencies]
+            # section, write there instead of creating a second definition
+            # of the same group.
+            use_legacy_dev_dependencies = (
+                group == "dev" and "dev-dependencies" in poetry_content
+            )
+            if not use_legacy_dev_dependencies and (
+                groups_content or "group" not in poetry_content
+            ):
                 use_groups_section = True
                 if not groups_content:
                     groups_content = Table.section()
@@ -199,7 +209,9 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                 ]
 
             poetry_section = (
-                poetry_content.get("group", {})
+                poetry_content["dev-dependencies"]
+                if use_legacy_dev_dependencies
+                else poetry_content.get("group", {})
                 .get(group, {})
                 .get("dependencies", Table.section())
             )
@@ -363,14 +375,15 @@ The add command adds required packages to your <comment>pyproject.toml</> and in
                 project_content["dependencies"] = project_section
 
         if poetry_section:
-            path = (
-                ("tool", "poetry", "dependencies")
-                if group == MAIN_GROUP
-                else ("tool", "poetry", "group", group, "dependencies")
-            )
+            if group == MAIN_GROUP:
+                path: tuple[str, ...] = ("tool", "poetry", "dependencies")
+            elif use_legacy_dev_dependencies:
+                path = ("tool", "poetry", "dev-dependencies")
+            else:
+                path = ("tool", "poetry", "group", group, "dependencies")
             content.install(path, poetry_section)
 
-        if groups_content and group != MAIN_GROUP:
+        if groups_content and group != MAIN_GROUP and not use_legacy_dev_dependencies:
             content.install(("dependency-groups", group), groups_content[group])
 
         self.poetry.locker.set_pyproject_data(content)

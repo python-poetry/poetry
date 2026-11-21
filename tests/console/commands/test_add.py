@@ -1883,6 +1883,44 @@ def test_add_creates_dependencies_array_if_necessary(
     assert updated_pyproject["project"]["dependencies"] == ["bar (>=1.0)"]
 
 
+def test_add_dev_group_uses_existing_legacy_dev_dependencies_section(
+    project_factory: ProjectFactory,
+    repo: DummyRepository,
+    command_tester_factory: CommandTesterFactory,
+) -> None:
+    pyproject_content = """\
+[project]
+name = "simple-project"
+version = "1.2.3"
+description = "Some description."
+requires-python = ">=3.9"
+dependencies = [
+    "foo (>=1.0)",
+]
+
+[tool.poetry.dev-dependencies]
+bar = "^1.0"
+"""
+
+    poetry = project_factory(name="simple-project", pyproject_content=pyproject_content)
+
+    repo.add_package(get_package("foo", "1.0"))
+    repo.add_package(get_package("bar", "1.0"))
+    repo.add_package(get_package("certifi", "2026.10.23"))
+
+    tester = command_tester_factory("add", poetry=poetry)
+    tester.execute("certifi -D --lock")
+
+    updated_pyproject = poetry.file.read()
+    dev_deps = updated_pyproject["tool"]["poetry"]["dev-dependencies"]
+    # The dev group is already defined by the deprecated but still supported
+    # [tool.poetry.dev-dependencies] section; -D must not create a second
+    # definition of the same group.
+    assert "dependency-groups" not in updated_pyproject
+    assert dev_deps["bar"] == "^1.0"
+    assert dev_deps["certifi"] == "^2026.10.23"
+
+
 @pytest.mark.parametrize("has_poetry_section", [True, False])
 def test_add_does_not_add_poetry_dependencies_if_not_necessary(
     project_factory: ProjectFactory,
