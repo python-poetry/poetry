@@ -86,13 +86,21 @@ The `poetry env activate` command prints the activate command of the virtual env
 You can run the output command manually or feed it to the eval command of your shell to activate the environment.
 This way you won't leave the current shell.
 
-{{< tabs tabTotal="3" tabID1="bash-csh-zsh" tabID2="fish" tabID3="powershell" tabName1="Bash/Zsh/Csh" tabName2="Fish" tabName3="Powershell" >}}
+{{< tabs tabTotal="4" tabID1="bash-zsh" tabID2="csh-tcsh" tabID3="fish" tabID4="powershell" tabName1="Bash/Zsh" tabName2="Csh/Tcsh" tabName3="Fish" tabName4="Powershell" >}}
 
-{{< tab tabID="bash-csh-zsh" >}}
+{{< tab tabID="bash-zsh" >}}
 
 ```bash
 $ eval $(poetry env activate)
 (test-project-for-test) $  # Virtualenv entered
+```
+
+{{< /tab >}}
+{{< tab tabID="csh-tcsh" >}}
+
+```tcsh
+% eval `poetry env activate`
+(test-project-for-test) %  # Virtualenv entered
 ```
 
 {{< /tab >}}

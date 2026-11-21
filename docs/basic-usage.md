@@ -178,9 +178,9 @@ Likewise if you have command line tools such as `pytest` or `black` you can run 
 {{% note %}}
 If managing your own virtual environment externally, you do not need to use `poetry run` since
 you will, presumably, already have activated that virtual environment and made available the correct python instance.
-For example, these commands should output the same python path:
+In this Bash/Zsh example, all three `which` commands should print the same Python path.
 
-```shell
+```bash
 conda activate your_env_name
 which python
 poetry run which python
