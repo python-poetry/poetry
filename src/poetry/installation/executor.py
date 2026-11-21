@@ -704,13 +704,13 @@ class Executor:
 
         source = Git.clone(
             url=package.source_url,
-            source_root=self._env.path / "src",
+            source_root=(self._env.path / "src").resolve(),
             revision=package.source_resolved_reference or package.source_reference,
         )
 
         # Now we just need to install from the source directory
         original_url = package.source_url
-        package._source_url = str(source.path)
+        package._source_url = str(Path(source.path).resolve())
 
         output_dir = None
         if package.source_resolved_reference and not package.develop:
