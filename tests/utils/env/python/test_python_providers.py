@@ -11,6 +11,10 @@ from poetry.utils.env.python.providers import ShutilWhichPythonProvider
 
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
+    from pytest_mock import MockerFixture
+
     from tests.types import MockedPoetryPythonRegister
 
 
@@ -20,6 +24,17 @@ def test_shutil_which_python_provider() -> None:
     pythons = list(provider.find_pythons())
     assert len(pythons) == 1
     assert pythons[0].minor == sys.version_info.minor
+
+
+def test_shutil_which_python_provider_skips_broken_python(
+    mocker: MockerFixture, tmp_path: Path
+) -> None:
+    broken = tmp_path / "python.exe"
+    broken.touch()
+    mocker.patch("shutil.which", return_value=str(broken))
+
+    assert ShutilWhichPythonProvider.find_python_by_name("python") is None
+    assert list(ShutilWhichPythonProvider().find_pythons()) == []
 
 
 def test_poetry_python_path_provider_no_pythons() -> None:
