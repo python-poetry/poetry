@@ -1053,3 +1053,56 @@ include-groups = ["unrelated"]
         package.name for package in reloaded.locker.locked_repository().packages
     } == {"bar"}
     assert reloaded.locker.is_fresh()
+
+
+@pytest.mark.parametrize("pep_735", [True, False])
+def test_remove_without_specific_group_preserves_unrelated_empty_groups(
+    pep_735: bool,
+    project_factory: ProjectFactory,
+    command_tester_factory: CommandTesterFactory,
+    repo: DummyRepository,
+) -> None:
+    """
+    Removing without a group given removes from all groups, but must not delete
+    groups that were empty before the command and unrelated to the removed
+    packages.
+    """
+    groups = (
+        """\
+[dependency-groups]
+lint = ["foo>=1"]
+dev = [{ include-group = "lint" }]
+unrelated = []
+unrelated-parent = [{ include-group = "unrelated" }]
+"""
+        if pep_735
+        else """\
+[tool.poetry.group.lint.dependencies]
+foo = ">=1"
+[tool.poetry.group.dev]
+include-groups = ["lint"]
+[tool.poetry.group.unrelated.dependencies]
+[tool.poetry.group.unrelated-parent]
+include-groups = ["unrelated"]
+"""
+    )
+    poetry = project_factory(
+        name="unrelated-empty-groups",
+        pyproject_content="[tool.poetry]\npackage-mode = false\n" + groups,
+    )
+    repo.add_package(Package("foo", "1.0"))
+    tester = command_tester_factory("remove", poetry=poetry)
+
+    assert tester.execute("foo --lock") == 0
+
+    pyproject = poetry.file.read()
+    if pep_735:
+        assert pyproject["dependency-groups"] == {
+            "unrelated": [],
+            "unrelated-parent": [{"include-group": "unrelated"}],
+        }
+    else:
+        assert pyproject["tool"]["poetry"]["group"] == {
+            "unrelated": {"dependencies": {}},
+            "unrelated-parent": {"include-groups": ["unrelated"]},
+        }
