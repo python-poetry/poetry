@@ -189,6 +189,10 @@ class MyApplicationPlugin(ApplicationPlugin):
 
 Installed plugin packages are automatically loaded when Poetry starts up.
 
+If a plugin cannot be loaded or activated, Poetry stops with an error that names the plugin.
+You can run Poetry with `--no-plugins` to disable all plugins,
+for example to update or remove the plugin causing the error.
+
 You have multiple ways to install plugins for Poetry
 
 ### With `pipx inject`

@@ -47,7 +47,7 @@ class PluginManager:
 
     def __init__(self, group: str) -> None:
         self._group = group
-        self._plugins: list[Plugin] = []
+        self._plugins: list[tuple[Plugin, metadata.EntryPoint | None]] = []
 
     @staticmethod
     def add_project_plugin_path(directory: Path) -> None:
@@ -80,28 +80,58 @@ class PluginManager:
         return list(metadata.entry_points(group=self._group))
 
     def activate(self, *args: Any, **kwargs: Any) -> None:
-        for plugin in self._plugins:
-            plugin.activate(*args, **kwargs)
+        for plugin, entry_point in self._plugins:
+            try:
+                plugin.activate(*args, **kwargs)
+            except Exception as e:
+                if entry_point is None:
+                    name = f"{type(plugin).__name__} plugin"
+                else:
+                    name = self._get_plugin_name(entry_point)
+                raise self._plugin_error("activate", name, e) from e
 
-    def _add_plugin(self, plugin: Plugin) -> None:
+    @staticmethod
+    def _get_plugin_name(entry_point: metadata.EntryPoint) -> str:
+        name = f'"{entry_point.name}" plugin'
+        dist = entry_point.dist
+        if dist is not None and (dist_name := dist.name):
+            name += f" ({dist_name} {dist.version})"
+
+        return name
+
+    @staticmethod
+    def _plugin_error(action: str, name: str, error: Exception) -> RuntimeError:
+        reason = str(error) or type(error).__name__
+        return RuntimeError(
+            f"Failed to {action} the {name}: {reason}\n\n"
+            "You can run Poetry with --no-plugins to disable all plugins,"
+            " for example to update or remove the plugin causing this."
+        )
+
+    def _add_plugin(
+        self, plugin: Plugin, entry_point: metadata.EntryPoint | None = None
+    ) -> None:
         if not isinstance(plugin, (Plugin, ApplicationPlugin)):
             raise TypeError(
                 "The Poetry plugin must be an instance of Plugin or ApplicationPlugin"
             )
 
-        self._plugins.append(plugin)
+        self._plugins.append((plugin, entry_point))
 
     def _load_plugin_entry_point(self, ep: metadata.EntryPoint) -> None:
         logger.debug("Loading the %s plugin", ep.name)
 
-        plugin = ep.load()
+        try:
+            plugin = ep.load()
+        except Exception as e:
+            raise self._plugin_error("load", self._get_plugin_name(ep), e) from e
 
         if not issubclass(plugin, (Plugin, ApplicationPlugin)):
             raise TypeError(
                 "The Poetry plugin must be an instance of Plugin or ApplicationPlugin"
             )
 
-        self._add_plugin(plugin())
+        self._add_plugin(plugin(), ep)
 
 
 class ProjectPluginCache:
