@@ -72,6 +72,88 @@ def test_cache_forget(repository_cache_dir: Path) -> None:
     assert cache.has("key2")
 
 
+def test_cache_forget_file_removed_before_unlink(
+    poetry_file_cache: FileCache[Any], mocker: MockerFixture
+) -> None:
+    poetry_file_cache.put("key1", "value")
+    path = poetry_file_cache._path("key1")
+    unlink = Path.unlink
+
+    def unlink_after_removal(path: Path, missing_ok: bool = False) -> None:
+        unlink(path)
+        unlink(path, missing_ok=missing_ok)
+
+    mocker.patch.object(Path, "unlink", autospec=True, side_effect=unlink_after_removal)
+
+    poetry_file_cache.forget("key1")
+
+    assert not path.exists()
+
+
+@pytest.mark.parametrize("method", ["get", "has", "remember"])
+def test_cache_file_removed_before_read(
+    method: str,
+    poetry_file_cache: FileCache[Any],
+    mocker: MockerFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    poetry_file_cache.put("key1", "value")
+    open_file = Path.open
+
+    def open_after_removal(path: Path, mode: str = "r", **kwargs: Any) -> Any:
+        if mode == "rb":
+            path.unlink()
+        return open_file(path, mode, **kwargs)
+
+    with monkeypatch.context() as patcher:
+        patcher.setattr(Path, "open", open_after_removal)
+        if method == "remember":
+            callback = mocker.Mock(return_value="refreshed")
+            assert poetry_file_cache.remember("key1", callback) == "refreshed"
+            callback.assert_called_once_with()
+        else:
+            expected = None if method == "get" else False
+            assert getattr(poetry_file_cache, method)("key1") is expected
+
+    assert poetry_file_cache.get("key1") == (
+        "refreshed" if method == "remember" else None
+    )
+
+
+@pytest.mark.parametrize("corrupt", [False, True])
+def test_cache_cleanup_file_removed_before_unlink(
+    corrupt: bool, poetry_file_cache: FileCache[Any], mocker: MockerFixture
+) -> None:
+    poetry_file_cache.put("key1", "value", minutes=-1)
+    path = poetry_file_cache._path("key1")
+    if corrupt:
+        path.write_bytes(b"")
+    unlink = Path.unlink
+
+    def unlink_after_removal(path: Path, missing_ok: bool = False) -> None:
+        unlink(path)
+        unlink(path, missing_ok=missing_ok)
+
+    mocker.patch.object(Path, "unlink", autospec=True, side_effect=unlink_after_removal)
+
+    assert poetry_file_cache.get("key1") is None
+    assert not path.exists()
+
+
+@pytest.mark.parametrize("method,operation", [("get", "open"), ("forget", "unlink")])
+def test_cache_permission_error(
+    method: str,
+    operation: str,
+    poetry_file_cache: FileCache[Any],
+    mocker: MockerFixture,
+) -> None:
+    poetry_file_cache.put("key1", "value")
+    mocker.patch.object(Path, operation, side_effect=PermissionError("access denied"))
+
+    with pytest.raises(PermissionError, match="access denied"):
+        getattr(poetry_file_cache, method)("key1")
+
+
 def test_cache_flush(repository_cache_dir: Path) -> None:
     cache: FileCache[Any] = FileCache(repository_cache_dir / "cache")
     cache.put("key1", "value")
