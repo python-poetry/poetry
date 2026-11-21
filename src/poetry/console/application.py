@@ -7,6 +7,7 @@ from contextlib import suppress
 from importlib import import_module
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import ClassVar
 from typing import cast
 
 from cleo._utils import find_similar_names
@@ -122,6 +123,20 @@ Since <info>Poetry (<b>2.0.0</>)</>, the <c1>shell</> command is not installed b
 
 
 class Application(BaseApplication):
+    # Loggers raised to ERROR by a previous command's suppressed_loggers (see
+    # register_command_loggers), mapped to the level each one actually held
+    # right before it was suppressed -- so it can be restored to that value
+    # exactly, rather than to whatever level the *next* command happens to
+    # run at (which could silently override a stricter level set outside
+    # this mechanism, e.g. by an embedding caller or another library).
+    # A ClassVar because logging levels are process-global state on the
+    # named logger, shared across Application instances -- so the
+    # bookkeeping has to be process-global too, or a fresh Application()
+    # (e.g. a new test, or another
+    # poetry.console.application.Application().run() call in the same
+    # process) won't know a logger is still pending restoration.
+    _suppressed_logger_levels: ClassVar[dict[str, int]] = {}
+
     def __init__(self) -> None:
         super().__init__("poetry", __version__)
 
@@ -567,6 +582,36 @@ class Application(BaseApplication):
                 _level = logging.INFO
 
             logger.setLevel(_level)
+
+        # Raise these loggers above WARNING for this command specifically,
+        # so a warning that's irrelevant in this command's context doesn't
+        # surface. Skipped when verbose/debug so the full picture is still
+        # available on request.
+        to_suppress = (
+            set(command.suppressed_loggers) if level >= logging.WARNING else set()
+        )
+
+        # Restore any logger a previous command in this process suppressed
+        # but this one doesn't, to the level it actually held before being
+        # suppressed -- not to this command's `level`, which could silently
+        # override a stricter level set outside this mechanism (logger
+        # levels are global process state). Popped in place (rather than
+        # `self._suppressed_logger_levels = ...`) so the update lands on
+        # the shared ClassVar instead of shadowing it with a same-named
+        # instance attribute.
+        for name in set(Application._suppressed_logger_levels) - to_suppress:
+            original_level = Application._suppressed_logger_levels.pop(name)
+            logging.getLogger(name).setLevel(original_level)
+
+        # Capture each newly-suppressed logger's real current level before
+        # overwriting it, so it can be restored precisely later. Loggers
+        # already suppressed by an earlier command in this process are left
+        # alone here: their true prior level was already captured then, and
+        # they're already at ERROR.
+        for name in to_suppress - set(Application._suppressed_logger_levels):
+            logger = logging.getLogger(name)
+            Application._suppressed_logger_levels[name] = logger.level
+            logger.setLevel(logging.ERROR)
 
     def configure_env(self, event: Event, event_name: str, _: EventDispatcher) -> None:
         from poetry.console.commands.env_command import EnvCommand
