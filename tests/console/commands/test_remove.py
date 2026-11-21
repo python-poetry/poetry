@@ -1053,3 +1053,65 @@ include-groups = ["unrelated"]
         package.name for package in reloaded.locker.locked_repository().packages
     } == {"bar"}
     assert reloaded.locker.is_fresh()
+
+
+def test_remove_cleans_up_extras_references(
+    tester: CommandTester,
+    app: PoetryTestApplication,
+    repo: DummyRepository,
+    installed: Repository,
+) -> None:
+    installed.add_package(Package("foo", "2.0.0"))
+    installed.add_package(Package("bar", "1.0.0"))
+    repo.add_package(Package("foo", "2.0.0"))
+    repo.add_package(Package("bar", "1.0.0"))
+
+    pyproject = app.poetry.file.read()
+    pyproject["tool"]["poetry"]["dependencies"]["foo"] = {
+        "version": "^2.0.0",
+        "optional": True,
+    }
+    pyproject["tool"]["poetry"]["dependencies"]["bar"] = "^1.0.0"
+    pyproject["tool"]["poetry"]["extras"] = {
+        "tools": ["foo", "bar"],
+        "obsolete": ["foo"],
+    }
+    app.poetry.file.write(pyproject)
+
+    app.poetry.package.add_dependency(Factory.create_dependency("foo", "^2.0.0"))
+    app.poetry.package.add_dependency(Factory.create_dependency("bar", "^1.0.0"))
+
+    tester.execute("foo")
+
+    pyproject = app.poetry.file.read()
+    content = pyproject["tool"]["poetry"]
+    assert "foo" not in content["dependencies"]
+    assert "bar" in content["dependencies"]
+    assert content["extras"] == {"tools": ["bar"]}
+
+
+def test_remove_removes_extras_section_when_it_becomes_empty(
+    tester: CommandTester,
+    app: PoetryTestApplication,
+    repo: DummyRepository,
+    installed: Repository,
+) -> None:
+    installed.add_package(Package("foo", "2.0.0"))
+    repo.add_package(Package("foo", "2.0.0"))
+
+    pyproject = app.poetry.file.read()
+    pyproject["tool"]["poetry"]["dependencies"]["foo"] = {
+        "version": "^2.0.0",
+        "optional": True,
+    }
+    pyproject["tool"]["poetry"]["extras"] = {"tools": ["foo"]}
+    app.poetry.file.write(pyproject)
+
+    app.poetry.package.add_dependency(Factory.create_dependency("foo", "^2.0.0"))
+
+    tester.execute("foo")
+
+    pyproject = app.poetry.file.read()
+    content = pyproject["tool"]["poetry"]
+    assert "foo" not in content["dependencies"]
+    assert "extras" not in content
