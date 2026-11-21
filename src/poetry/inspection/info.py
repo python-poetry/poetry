@@ -23,6 +23,7 @@ from poetry.core.utils.helpers import parse_requires
 from poetry.core.version.markers import InvalidMarkerError
 from poetry.core.version.requirements import InvalidRequirementError
 
+from poetry.exceptions import UninterpretableRequirementError
 from poetry.utils.helpers import extractall
 from poetry.utils.isolated_build import IsolatedBuildBackendError
 from poetry.utils.isolated_build import isolated_builder
@@ -185,15 +186,37 @@ class PackageInfo:
                 )
                 req = req.split(";")[0]
                 dependency = Dependency.create_from_pep_508(req, relative_to=root_dir)
-            except InvalidRequirementError:
-                # Unable to parse requirement so we skip it
-                logger.warning(
-                    "Invalid requirement (%s) found in %s-%s dependencies, skipping",
-                    req,
-                    package.name,
-                    package.version,
-                )
-                continue
+            except InvalidRequirementError as e:
+                try:
+                    Dependency.create_from_pep_508(
+                        req.split(";")[0], relative_to=root_dir
+                    )
+                except InvalidRequirementError:
+                    # The requirement itself is malformed, not just its marker. Such
+                    # metadata is tolerated (and skipped) so that old packages with
+                    # nonsensical requirements stay installable. This re-parse is
+                    # load-bearing: without it a real typo'd constraint such as
+                    # python-language-server 0.21.2's `rope>-0.10.5` would make the
+                    # whole version unusable instead of just dropping that one dep.
+                    logger.warning(
+                        "Invalid requirement (%s) found in %s-%s dependencies,"
+                        " skipping",
+                        req,
+                        package.name,
+                        package.version,
+                    )
+                    continue
+
+                # The requirement is well-formed and only its marker cannot be
+                # parsed, either because it relies on a newer version of the spec
+                # than we support or because it is syntactically invalid. (poetry-core
+                # raises the same error for both, so we cannot tell them apart here.)
+                # Skipping the requirement would silently drop a dependency that may
+                # be required at runtime, so we consider this package version
+                # unusable instead.
+                raise UninterpretableRequirementError(
+                    req, f"{package.name}-{package.version}"
+                ) from e
 
             if dependency.in_extras:
                 # this dependency is required by an extra package

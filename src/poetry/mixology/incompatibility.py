@@ -8,6 +8,7 @@ from poetry.mixology.incompatibility_cause import NoVersionsCauseError
 from poetry.mixology.incompatibility_cause import PlatformCauseError
 from poetry.mixology.incompatibility_cause import PythonCauseError
 from poetry.mixology.incompatibility_cause import RootCauseError
+from poetry.mixology.incompatibility_cause import UninterpretableMetadataCauseError
 
 
 if TYPE_CHECKING:
@@ -134,6 +135,14 @@ class Incompatibility:
             text += f"platform {self._cause.platform}"
 
             return text
+        elif isinstance(self._cause, UninterpretableMetadataCauseError):
+            assert len(self._terms) == 1
+            assert self._terms[0].is_positive()
+
+            return (
+                f"{self._terse(self._terms[0], allow_every=True)} has a requirement"
+                f" that cannot be interpreted ({self._cause.requirement})"
+            )
         elif isinstance(self._cause, NoVersionsCauseError):
             assert len(self._terms) == 1
             assert self._terms[0].is_positive()
