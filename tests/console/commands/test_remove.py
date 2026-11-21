@@ -280,6 +280,46 @@ baz = "^1.0.0"
     assert expected in string_content
 
 
+def test_remove_without_specific_group_removes_from_legacy_dev_dependencies(
+    tester: CommandTester,
+    app: PoetryTestApplication,
+    repo: DummyRepository,
+    installed: Repository,
+) -> None:
+    """
+    The legacy [tool.poetry.dev-dependencies] table defines the dev group as
+    well, so removing without a specific group has to search it too.
+    """
+    installed.add_package(Package("foo", "2.0.0"))
+    repo.add_package(Package("foo", "2.0.0"))
+    repo.add_package(Package("baz", "1.0.0"))
+
+    pyproject = app.poetry.file.read()
+    legacy_dependencies = tomlrt.loads(
+        """\
+[tool.poetry.dev-dependencies]
+foo = "^2.0.0"
+baz = "^1.0.0"
+"""
+    )
+    pyproject["tool"]["poetry"]["dev-dependencies"] = legacy_dependencies["tool"][
+        "poetry"
+    ]["dev-dependencies"]
+    app.poetry.file.write(pyproject)
+
+    app.poetry.package.add_dependency(
+        Factory.create_dependency("foo", "^2.0.0", groups=["dev"])
+    )
+    app.poetry.package.add_dependency(
+        Factory.create_dependency("baz", "^1.0.0", groups=["dev"])
+    )
+
+    tester.execute("foo")
+
+    pyproject = app.poetry.file.read()
+    assert pyproject["tool"]["poetry"]["dev-dependencies"] == {"baz": "^1.0.0"}
+
+
 @pytest.mark.parametrize("pep_735", [True, False])
 def test_remove_with_specific_group_removes_from_specific_groups(
     pep_735: bool,
