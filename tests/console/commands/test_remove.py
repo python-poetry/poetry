@@ -125,6 +125,56 @@ bar = "^1.0.0"
     assert expected_poetry_string in string_content
 
 
+def test_remove_from_main_group_explicitly(
+    tester: CommandTester,
+    app: PoetryTestApplication,
+    repo: DummyRepository,
+    installed: Repository,
+) -> None:
+    repo.add_package(Package("foo", "2.0.0"))
+    repo.add_package(Package("bar", "1.0.0"))
+
+    pyproject = app.poetry.file.read()
+
+    content = tomlrt.loads(
+        """[project]
+dependencies = [
+    "foo>=2.0",
+    "bar>=1.0",
+]
+
+[tool.poetry.dependencies]
+foo = "^2.0.0"
+bar = "^1.0.0"
+
+[tool.poetry.group.dev.dependencies]
+foo = "^2.0.0"
+"""
+    )
+
+    pyproject["project"]["dependencies"] = content["project"]["dependencies"]
+    pyproject["tool"]["poetry"]["dependencies"] = content["tool"]["poetry"][
+        "dependencies"
+    ]
+    pyproject["tool"]["poetry"]["group"] = content["tool"]["poetry"]["group"]
+    app.poetry.file.write(pyproject)
+
+    app.poetry.package.add_dependency(Factory.create_dependency("foo", "^2.0.0"))
+    app.poetry.package.add_dependency(Factory.create_dependency("bar", "^1.0.0"))
+    app.poetry.package.add_dependency(
+        Factory.create_dependency("foo", "^2.0.0", groups=["dev"])
+    )
+
+    assert tester.execute("--group main foo") == 0
+
+    pyproject = app.poetry.file.read()
+    assert pyproject["project"]["dependencies"] == ["bar>=1.0"]
+    assert pyproject["tool"]["poetry"]["dependencies"] == {"bar": "^1.0.0"}
+    assert pyproject["tool"]["poetry"]["group"]["dev"]["dependencies"] == {
+        "foo": "^2.0.0"
+    }
+
+
 def test_remove_from_pep735_group_and_poetry_group(
     tester: CommandTester,
     app: PoetryTestApplication,

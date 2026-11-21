@@ -116,6 +116,13 @@ list of installed packages
                     ):
                         self._remove_references_to_group(group_name, content)
 
+        elif group == MAIN_GROUP:
+            removed = self._remove_packages(
+                packages=packages,
+                standard_section=project_content.get("dependencies", []),
+                poetry_section=poetry_content.get("dependencies", {}),
+                group_name=MAIN_GROUP,
+            )
         elif group == "dev" and "dev-dependencies" in poetry_content:
             # We need to account for the old `dev-dependencies` section
             removed = self._remove_packages(
