@@ -17,6 +17,7 @@ from cleo.testers.application_tester import ApplicationTester
 from poetry.console.application import Application
 from poetry.console.commands.command import Command
 from poetry.plugins.application_plugin import ApplicationPlugin
+from poetry.plugins.plugin_manager import PluginManager
 from poetry.plugins.plugin_manager import ProjectPluginCache
 from poetry.repositories.cached_repository import CachedRepository
 from poetry.utils.authenticator import Authenticator
@@ -74,6 +75,31 @@ def test_application_with_plugins_disabled(with_add_command_plugin: None) -> Non
 
     assert re.search(r"\s+foo\s+Foo Command", tester.io.fetch_output()) is None
     assert tester.status_code == 0
+
+
+@pytest.mark.parametrize("version_option", ["--version", "-V"])
+def test_application_version_does_not_load_plugins(
+    version_option: str, mocker: MockerFixture
+) -> None:
+    load_plugins = mocker.spy(PluginManager, "load_plugins")
+    tester = ApplicationTester(Application())
+
+    tester.execute(version_option)
+
+    load_plugins.assert_not_called()
+    assert tester.status_code == 0
+
+
+@pytest.mark.parametrize("command", ["run python -V", "run -- python -V"])
+def test_application_subcommand_version_loads_plugins(
+    command: str, mocker: MockerFixture
+) -> None:
+    load_plugins = mocker.spy(PluginManager, "load_plugins")
+    tester = ApplicationTester(Application())
+
+    tester.execute(command)
+
+    load_plugins.assert_called_once()
 
 
 def test_application_execute_plugin_command(with_add_command_plugin: None) -> None:
