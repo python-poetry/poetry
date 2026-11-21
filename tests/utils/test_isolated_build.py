@@ -12,6 +12,7 @@ import pytest
 from poetry.core.packages.dependency import Dependency
 
 from poetry.factory import Factory
+from poetry.installation.executor import Executor
 from poetry.puzzle.exceptions import SolverProblemError
 from poetry.puzzle.provider import IncompatibleConstraintsError
 from poetry.repositories import RepositoryPool
@@ -58,6 +59,20 @@ def test_isolated_env_install_success(pool: RepositoryPool) -> None:
         assert InstalledRepository.load(venv).find_packages(
             get_dependency("poetry-core")
         )
+
+
+@pytest.mark.parametrize("disable_cache", [False, True])
+def test_isolated_env_install_passes_disable_cache_to_its_installer(
+    mocker: MockerFixture, pool: RepositoryPool, disable_cache: bool
+) -> None:
+    executor_init = mocker.spy(Executor, "__init__")
+
+    with ephemeral_environment(Path(sys.executable)) as venv:
+        env = IsolatedEnv(venv, pool, disable_cache=disable_cache)
+        env.install({"poetry-core"})
+
+    assert executor_init.call_count == 1
+    assert executor_init.call_args.kwargs["disable_cache"] is disable_cache
 
 
 def test_isolated_env_install_with_constraints_success(pool: RepositoryPool) -> None:

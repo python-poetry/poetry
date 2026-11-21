@@ -77,7 +77,9 @@ def build_environment(
 
             from poetry.utils.isolated_build import IsolatedEnv
 
-            isolated_env = IsolatedEnv(venv, poetry.pool)
+            isolated_env = IsolatedEnv(
+                venv, poetry.pool, disable_cache=poetry.disable_cache
+            )
             isolated_env.install(poetry.pyproject.build_system.requires)
 
             yield venv

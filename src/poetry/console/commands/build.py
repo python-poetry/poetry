@@ -75,6 +75,7 @@ class BuildHandler:
             source=self.poetry.file.path.parent,
             distribution=fmt,
             python_executable=executable,
+            disable_cache=self.poetry.disable_cache,
         ) as builder:
             builder.build(fmt, target_dir, config_settings=config_settings)
 
