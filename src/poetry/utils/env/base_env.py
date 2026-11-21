@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextlib
 import os
 import re
+import signal
 import subprocess
 import sys
 import sysconfig
@@ -478,7 +479,21 @@ class Env(ABC):
         env = kwargs.pop("env", dict(os.environ))
 
         if not self._is_windows:
-            return os.execvpe(command[0], command, env=env)
+            # Keep Poetry alive so plugins can clean up after the command exits.
+            # Replacing this process with execvpe skips the TERMINATE event and
+            # atexit handlers (see #8092).
+            try:
+                # argv is intentionally an argument list, not a shell command.
+                # Never invoke a shell here: arguments must not be reinterpreted.
+                returncode = subprocess.run(
+                    command, env=env, check=False, shell=False
+                ).returncode
+            except KeyboardInterrupt:
+                # The terminal sends Ctrl+C to both Poetry and its child.
+                # Let command termination dispatch plugin cleanup normally.
+                return 128 + signal.SIGINT
+            # Preserve the shell convention for processes terminated by a signal.
+            return 128 - returncode if returncode < 0 else returncode
 
         kwargs["shell"] = True
         exe = subprocess.Popen(command, env=env, **kwargs)
