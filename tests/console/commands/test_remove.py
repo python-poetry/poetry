@@ -199,6 +199,107 @@ bar = "^1.0.0"
     assert expected_poetry_string in string_content
 
 
+def test_remove_dev_from_legacy_and_pep735_sections(
+    tester: CommandTester,
+    app: PoetryTestApplication,
+    repo: DummyRepository,
+    installed: Repository,
+) -> None:
+    """
+    The dev group may be defined both in the legacy
+    [tool.poetry.dev-dependencies] section and in [dependency-groups];
+    `remove --dev` must search both tables.
+    """
+    repo.add_package(Package("foo", "2.0.0"))
+    repo.add_package(Package("bar", "1.0.0"))
+    repo.add_package(Package("baz", "1.0.0"))
+
+    pyproject = app.poetry.file.read()
+    pep735_dependencies = tomlrt.loads(
+        """\
+[dependency-groups]
+dev = ["foo (>=2.0,<3.0)"]
+"""
+    )
+    legacy_dependencies = tomlrt.loads(
+        """\
+[tool.poetry.dev-dependencies]
+bar = "^1.0.0"
+baz = "^1.0.0"
+"""
+    )
+    pyproject["dependency-groups"] = pep735_dependencies["dependency-groups"]
+    pyproject["tool"]["poetry"]["dev-dependencies"] = legacy_dependencies["tool"][
+        "poetry"
+    ]["dev-dependencies"]
+    app.poetry.file.write(pyproject)
+
+    app.poetry.package.add_dependency(
+        Factory.create_dependency("foo", ">=2.0,<3.0", groups=["dev"])
+    )
+    app.poetry.package.add_dependency(
+        Factory.create_dependency("bar", "^1.0.0", groups=["dev"])
+    )
+    app.poetry.package.add_dependency(
+        Factory.create_dependency("baz", "^1.0.0", groups=["dev"])
+    )
+
+    tester.execute("--dev foo bar")
+
+    pyproject = app.poetry.file.read()
+    assert pyproject["tool"]["poetry"]["dev-dependencies"] == {"baz": "^1.0.0"}
+    assert "dev" not in pyproject.get("dependency-groups", {})
+
+
+def test_remove_dev_from_legacy_and_poetry_group_sections(
+    tester: CommandTester,
+    app: PoetryTestApplication,
+    repo: DummyRepository,
+    installed: Repository,
+) -> None:
+    """
+    The same dev group may also be declared in
+    [tool.poetry.group.dev.dependencies]; `remove --dev` must search that
+    table too and drop the group once it is empty.
+    """
+    repo.add_package(Package("foo", "2.0.0"))
+    repo.add_package(Package("bar", "1.0.0"))
+
+    pyproject = app.poetry.file.read()
+    legacy_dependencies = tomlrt.loads(
+        """\
+[tool.poetry.dev-dependencies]
+bar = "^1.0.0"
+"""
+    )
+    poetry_dependencies = tomlrt.loads(
+        """\
+[tool.poetry.group.dev.dependencies]
+foo = "^2.0.0"
+"""
+    )
+    pyproject["tool"]["poetry"]["dev-dependencies"] = legacy_dependencies["tool"][
+        "poetry"
+    ]["dev-dependencies"]
+    pyproject["tool"]["poetry"]["group"] = poetry_dependencies["tool"]["poetry"][
+        "group"
+    ]
+    app.poetry.file.write(pyproject)
+
+    app.poetry.package.add_dependency(
+        Factory.create_dependency("foo", "^2.0.0", groups=["dev"])
+    )
+    app.poetry.package.add_dependency(
+        Factory.create_dependency("bar", "^1.0.0", groups=["dev"])
+    )
+
+    tester.execute("--dev foo bar")
+
+    pyproject = app.poetry.file.read()
+    assert "dev-dependencies" not in pyproject["tool"]["poetry"]
+    assert "group" not in pyproject["tool"]["poetry"]
+
+
 @pytest.mark.parametrize("pep_735", [True, False])
 def test_remove_without_specific_group_removes_from_all_groups(
     pep_735: bool,
