@@ -762,6 +762,10 @@ class Executor:
             link, strict=True, download_func=download_func
         )
 
+        # Verify the original archive against the lock file before using it.
+        # Building an sdist runs code from it, so this must happen first.
+        self._populate_hashes_dict(original_archive, package)
+
         # Get potential higher prioritized cached archive, otherwise it will fall back
         # to the original archive.
         archive = self._artifact_cache.get_cached_archive_for_link(
@@ -793,9 +797,6 @@ class Executor:
                 config_settings=self._build_config_settings.get(name),
                 build_constraints=self._build_constraints.get(name),
             )
-
-        # Use the original archive to provide the correct hash.
-        self._populate_hashes_dict(original_archive, package)
 
         return archive
 
