@@ -39,6 +39,7 @@ def download_file(
     downloader = Downloader(url, dest, session, max_retries=max_retries)
 
     if raise_accepts_ranges and downloader.accepts_ranges:
+        downloader.close()
         raise HTTPRangeRequestSupportedError(f"URL {url} supports range requests.")
 
     set_indicator = False
@@ -129,6 +130,9 @@ class Downloader:
                 raise
             else:
                 break
+
+    def close(self) -> None:
+        self._response.close()
 
     def download_with_progress(self, chunk_size: int = 1024) -> Iterator[int]:
         fetched_size = 0
