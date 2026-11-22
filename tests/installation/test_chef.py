@@ -16,6 +16,7 @@ from poetry.core.packages.utils.link import Link
 
 from poetry.factory import Factory
 from poetry.installation.chef import Chef
+from poetry.installation.executor import Executor
 from poetry.repositories import RepositoryPool
 from poetry.utils.env import EnvManager
 
@@ -101,6 +102,37 @@ def test_prepare_directory_with_extensions(
     assert name == "extended"
     assert str(version) == "0.1"
     assert not tags.isdisjoint(env.supported_tags)
+
+    # cleanup generated tmp dir artifact
+    os.unlink(wheel)
+
+
+@pytest.mark.parametrize("disable_cache", [False, True])
+def test_prepare_directory_passes_disable_cache_to_the_build_env_installer(
+    config: Config,
+    config_cache_dir: Path,
+    artifact_cache: ArtifactCache,
+    fixture_dir: FixtureDirGetter,
+    tmp_path: Path,
+    mocker: MockerFixture,
+    disable_cache: bool,
+) -> None:
+    executor_init = mocker.spy(Executor, "__init__")
+    chef = Chef(
+        artifact_cache,
+        EnvManager.get_system_env(),
+        Factory.create_pool(config),
+        disable_cache=disable_cache,
+    )
+    archive = shutil.copytree(
+        fixture_dir("extended_with_no_setup").resolve(), tmp_path / "project"
+    )
+
+    wheel = chef.prepare(archive)
+
+    # every installer of the isolated build environment honours the setting
+    passed = {call.kwargs["disable_cache"] for call in executor_init.call_args_list}
+    assert passed == {disable_cache}
 
     # cleanup generated tmp dir artifact
     os.unlink(wheel)
