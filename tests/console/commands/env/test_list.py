@@ -43,6 +43,27 @@ def test_none_activated(
     assert tester.io.fetch_output().strip() == expected
 
 
+def test_lists_cached_environments_by_python_version(
+    tester: CommandTester,
+    venvs_in_cache_config: None,
+    venv_name: str,
+    venv_cache: Path,
+    mocker: MockerFixture,
+    env: MockEnv,
+) -> None:
+    mocker.patch("poetry.utils.env.EnvManager.get", return_value=env)
+    for version in ("3.11", "3.9", "3.10"):
+        (venv_cache / f"{venv_name}-py{version}").mkdir()
+
+    tester.execute()
+
+    assert tester.io.fetch_output().splitlines() == [
+        f"{venv_name}-py3.9",
+        f"{venv_name}-py3.10",
+        f"{venv_name}-py3.11",
+    ]
+
+
 def test_activated(
     tester: CommandTester,
     venvs_in_cache_dirs: list[str],
