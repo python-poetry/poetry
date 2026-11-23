@@ -261,7 +261,16 @@ class EnvManager:
 
         venv_name = self.generate_env_name(name, str(self._poetry.file.path.parent))
         venv_path = self._poetry.config.virtualenvs_path
-        env_list = [VirtualEnv(p) for p in sorted(venv_path.glob(f"{venv_name}-py*"))]
+        venv_prefix = f"{venv_name}-py"
+
+        def version_key(path: Path) -> tuple[tuple[int, ...], str]:
+            suffix = path.name.removeprefix(venv_prefix)
+            return tuple(int(part) for part in re.findall(r"[0-9]+", suffix)), suffix
+
+        env_list = [
+            VirtualEnv(path)
+            for path in sorted(venv_path.glob(f"{venv_prefix}*"), key=version_key)
+        ]
 
         if self.in_project_venv_exists():
             venv = self.in_project_venv
