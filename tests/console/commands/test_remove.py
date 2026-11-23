@@ -1053,3 +1053,87 @@ include-groups = ["unrelated"]
         package.name for package in reloaded.locker.locked_repository().packages
     } == {"bar"}
     assert reloaded.locker.is_fresh()
+
+
+@pytest.mark.parametrize(
+    "style",
+    ["pep621", "tool.poetry", "tool.poetry.group.main", "dependency-groups.main"],
+)
+def test_remove_from_main_group(
+    style: str,
+    project_factory: ProjectFactory,
+    command_tester_factory: CommandTesterFactory,
+    repo: DummyRepository,
+) -> None:
+    main_dependencies = {
+        "pep621": """\
+[project]
+name = "main-group"
+version = "0.1.0"
+dependencies = ["foo>=1", "bar>=1"]
+""",
+        "tool.poetry": """\
+[tool.poetry.dependencies]
+foo = ">=1"
+bar = ">=1"
+""",
+        "tool.poetry.group.main": """\
+[tool.poetry.group.main.dependencies]
+foo = ">=1"
+bar = ">=1"
+""",
+        "dependency-groups.main": """\
+[project]
+name = "main-group"
+version = "0.1.0"
+
+[dependency-groups]
+main = ["foo>=1", "bar>=1"]
+""",
+    }[style]
+    poetry = project_factory(
+        name="main-group",
+        pyproject_content="[tool.poetry]\npackage-mode = false\n"
+        + main_dependencies
+        + """\
+[tool.poetry.group.dev.dependencies]
+baz = ">=1"
+""",
+    )
+    repo.add_package(Package("foo", "1.0"))
+    repo.add_package(Package("bar", "1.0"))
+    repo.add_package(Package("baz", "1.0"))
+    tester = command_tester_factory("remove", poetry=poetry)
+
+    # `add --group main` writes to the main dependency sections, so `remove
+    # --group main` has to read them back from the same place.
+    assert tester.execute("foo --group main --lock") == 0
+
+    pyproject = poetry.file.read()
+    if style == "pep621":
+        assert pyproject["project"]["dependencies"] == ["bar>=1"]
+    elif style == "tool.poetry":
+        assert pyproject["tool"]["poetry"]["dependencies"] == {"bar": ">=1"}
+    elif style == "dependency-groups.main":
+        assert pyproject["dependency-groups"]["main"] == ["bar>=1"]
+    else:
+        assert pyproject["tool"]["poetry"]["group"]["main"]["dependencies"] == {
+            "bar": ">=1"
+        }
+    assert pyproject["tool"]["poetry"]["group"]["dev"]["dependencies"] == {"baz": ">=1"}
+
+    reloaded = Factory().create_poetry(poetry.file.path.parent)
+    assert {
+        dep.name for dep in reloaded.package.dependency_group("main").dependencies
+    } == {"bar"}
+    assert {
+        dep.name for dep in reloaded.package.dependency_group("dev").dependencies
+    } == {"baz"}
+    assert {
+        package.name for package in reloaded.locker.locked_repository().packages
+    } == {"bar", "baz"}
+    assert reloaded.locker.is_fresh()
+
+    # a package that only lives in another group must not be found in main
+    with pytest.raises(ValueError, match="The following packages were not found: baz"):
+        tester.execute("baz --group main")

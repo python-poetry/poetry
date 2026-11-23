@@ -124,6 +124,41 @@ list of installed packages
 
             if not poetry_content["dev-dependencies"]:
                 del poetry_content["dev-dependencies"]
+        elif group == MAIN_GROUP:
+            # `add --group main` writes to the main dependency sections
+            # (`[project] dependencies` / `[tool.poetry.dependencies]`), not to a
+            # dependency group table, so removal has to look there as well.
+            removed = self._remove_packages(
+                packages=packages,
+                standard_section=project_content.get("dependencies", []),
+                poetry_section=poetry_content.get("dependencies", {}),
+                group_name=MAIN_GROUP,
+            )
+            # A hand-written `[tool.poetry.group.main]` table is still read for the
+            # main group, so keep looking there as well.
+            if group_content := poetry_groups_content.get(MAIN_GROUP):
+                poetry_section = group_content.get("dependencies", {})
+                removed |= self._remove_packages(
+                    packages=packages,
+                    standard_section=[],
+                    poetry_section=poetry_section,
+                    group_name=MAIN_GROUP,
+                )
+                if not poetry_section and "dependencies" in group_content:
+                    del group_content["dependencies"]
+                    if not group_content:
+                        del poetry_content["group"][MAIN_GROUP]
+            # A hand-written `[dependency-groups] main` table (PEP 735) is also read
+            # for the main group, so keep looking there as well.
+            if MAIN_GROUP in groups_content:
+                removed |= self._remove_packages(
+                    packages=packages,
+                    standard_section=groups_content[MAIN_GROUP],
+                    poetry_section={},
+                    group_name=MAIN_GROUP,
+                )
+                if not groups_content[MAIN_GROUP]:
+                    del groups_content[MAIN_GROUP]
         else:
             removed = set()
             if group_content := poetry_groups_content.get(group):
