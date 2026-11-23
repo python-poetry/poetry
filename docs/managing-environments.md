@@ -18,13 +18,16 @@ To achieve this, it will first check if it's currently running inside a virtual 
 If it is, it will use it directly without creating a new one. But if it's not, it will use
 one that it has already created or create a brand new one for you.
 
-By default, Poetry will try to use the Python version used during Poetry's installation
-to create the virtual environment for the current project.
+When creating a new environment, Poetry first looks for the active Python
+interpreter. If it cannot find one, it starts with the interpreter that runs
+Poetry. Set [`virtualenvs.use-poetry-python`]({{< relref "configuration" >}})
+to `true` to make Poetry start with its own interpreter instead.
 
-However, for various reasons, this Python version might not be compatible
-with the `python` range supported by the project. In this case, Poetry will try
-to find one that is and use it. If it's unable to do so then you will be prompted
-to activate one explicitly, see [Switching environments](#switching-between-environments).
+The Python requirement in `pyproject.toml` limits which interpreters Poetry can
+use. If the preferred interpreter does not satisfy it, Poetry looks for a
+compatible interpreter already installed on your system. If discovery fails,
+you can install a suitable interpreter separately and select its executable
+with [`poetry env use`](#switching-between-environments).
 
 {{% note %}}
 If you use a tool like [pyenv](https://github.com/pyenv/pyenv) to manage different Python versions,
