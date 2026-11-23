@@ -100,6 +100,10 @@ class Downloader:
         )
         try:
             response.raise_for_status()
+            if start > 0 and response.status_code != 206:
+                raise ChunkedEncodingError(
+                    f"Server ignored the Range request while resuming {self._url}."
+                )
             return response
         except BaseException:
             response.close()
