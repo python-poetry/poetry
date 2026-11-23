@@ -9,7 +9,29 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
 
     from packaging.utils import NormalizedName
+    from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
+
+
+def expand_package_extras(
+    package: Package, extras: Collection[NormalizedName]
+) -> dict[NormalizedName, list[Dependency]]:
+    """
+    Return dependencies grouped by extra.
+    """
+    active: dict[NormalizedName, list[Dependency]] = {}
+    stack = sorted(extras)
+    while stack:
+        extra = stack.pop()
+        if extra in active:
+            continue
+        active[extra] = []
+        for dependency in package.extras.get(extra, ()):
+            if dependency.name == package.name:
+                stack.extend(sorted(dependency.extras))
+            else:
+                active[extra].append(dependency)
+    return active
 
 
 def get_extra_package_names(

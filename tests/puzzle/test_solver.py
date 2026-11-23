@@ -5797,6 +5797,100 @@ def test_solver_resolves_duplicate_dependencies_with_restricted_extras(
     )
 
 
+def test_solver_keeps_platform_branches_disjoint_for_dependency_extras(
+    solver: Solver, package: ProjectPackage, create_package: PackageFactory
+) -> None:
+    package.add_dependency(get_dependency("toolkit", {"extras": ["all"]}))
+    package.add_dependency(get_dependency("consumer"))
+    pinned = create_package("lib", "1.0")
+    fallback = create_package("lib", "2.0")
+    toolkit = create_package(
+        "toolkit",
+        "1.0",
+        extras={
+            "all": ["toolkit[cublas,nvrtc]"],
+            # As in #11262, two extras specify the same platform-specific pin.
+            "cublas": ["lib (==1.0) ; platform_machine == 'x86_64'"],
+            "nvrtc": ["lib (==1.0) ; platform_machine == 'x86_64'"],
+        },
+    )
+    create_package(
+        "consumer",
+        dependencies=[Dependency.create_from_pep_508("lib ; sys_platform == 'linux'")],
+    )
+
+    solved = solver.solve().get_solved_packages()
+
+    for machine, expected in [("x86_64", pinned), ("aarch64", fallback)]:
+        environment = {"sys_platform": "linux", "platform_machine": machine}
+        assert {
+            candidate
+            for candidate, info in solved.items()
+            if candidate.name == "lib"
+            and info.markers[MAIN_GROUP].validate(environment)
+        } == {expected}
+
+    (requirement,) = next(
+        candidate for candidate in solved if candidate == toolkit
+    ).requires
+    assert requirement.marker.validate(
+        {"platform_machine": "x86_64", "extra": {"cublas"}}
+    )
+    assert not requirement.marker.validate(
+        {"platform_machine": "x86_64", "extra": set()}
+    )
+
+
+def test_solver_keeps_extras_from_different_packages_separate(
+    solver: Solver, package: ProjectPackage, create_package: PackageFactory
+) -> None:
+    package.add_dependency(get_dependency("toolkit", {"extras": ["pinned"]}))
+    package.add_dependency(get_dependency("consumer", {"extras": ["shared"]}))
+    create_package("lib", "1.0")
+    create_package("lib", "2.0")
+    create_package(
+        "toolkit",
+        dependencies=[Dependency.create_from_pep_508("lib ; extra == 'pinned'")],
+        extras={
+            "pinned": [
+                "lib (==1.0) ; platform_machine == 'x86_64' or extra == 'shared'"
+            ],
+            "shared": [],
+        },
+    )
+    create_package("consumer", extras={"shared": ["essential"]})
+    essential = create_package("essential")
+
+    marker = solver.solve().get_solved_packages()[essential].markers[MAIN_GROUP]
+    for machine in ("x86_64", "aarch64"):
+        assert marker.validate({"platform_machine": machine})
+
+
+def test_solver_keeps_packages_outside_dependency_extra_branches(
+    solver: Solver, package: ProjectPackage, create_package: PackageFactory
+) -> None:
+    package.add_dependency(get_dependency("toolkit", {"extras": ["accelerated"]}))
+    package.add_dependency(get_dependency("essential"))
+    create_package("lib", extras={"x86": [], "arm": []})
+    toolkit = create_package(
+        "toolkit",
+        extras={
+            "accelerated": [
+                "lib[x86] ; platform_machine == 'x86_64'",
+                "lib[arm] ; platform_machine == 'aarch64'",
+            ],
+        },
+    )
+    essential = create_package("essential")
+    solved = solver.solve().get_solved_packages()
+
+    assert {
+        candidate
+        for candidate, info in solved.items()
+        if info.markers[MAIN_GROUP].validate({"platform_machine": "s390x"})
+    } == {toolkit, essential}
+
+
 def test_solver_resolves_duplicate_extra_dependencies_missing_from_requires(
     package: ProjectPackage,
     pool: RepositoryPool,
