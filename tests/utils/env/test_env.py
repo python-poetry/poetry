@@ -601,3 +601,40 @@ def test_marker_env_is_equal_for_all_envs(tmp_path: Path, manager: EnvManager) -
 
     assert venv_marker_env == generic_marker_env
     assert venv_marker_env == system_marker_env
+
+
+def test_is_venv_returns_true_when_paths_differ(tmp_path: Path) -> None:
+    path = tmp_path / "venv"
+    base = tmp_path / "base"
+    path.mkdir()
+    base.mkdir()
+
+    env = GenericEnv(path=path, base=base)
+
+    assert env.is_venv() is True
+
+
+def test_is_venv_returns_false_when_paths_are_equal(tmp_path: Path) -> None:
+    path = tmp_path / "base"
+    path.mkdir()
+
+    # Both _path and base point to the exact same folder
+    env = GenericEnv(path=path, base=path)
+
+    assert env.is_venv() is False
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Symlinks are not support for Windows")
+def test_generic_env_is_venv_with_symlinked_path(tmp_path: Path) -> None:
+    """https://github.com/python-poetry/poetry/issues/10991"""
+    real_dir = tmp_path / "3.14.6"
+    real_dir.mkdir()
+
+    symlinked_dir = tmp_path / "3.14"
+    symlinked_dir.symlink_to(real_dir, target_is_directory=True)
+
+    # path is reached via the symlink, base is the real target - same
+    # interpreter either way, so this must not be treated as a venv.
+    env = GenericEnv(path=symlinked_dir, base=real_dir)
+
+    assert env.is_venv() is False
