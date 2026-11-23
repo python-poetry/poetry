@@ -21,6 +21,7 @@ from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.utils import get_python_constraint_from_marker
 from poetry.core.version.markers import AnyMarker
+from poetry.core.version.markers import EmptyMarker
 from poetry.core.version.markers import parse_marker
 from poetry.core.version.markers import union as marker_union
 
@@ -33,6 +34,7 @@ from poetry.packages.direct_origin import DirectOrigin
 from poetry.packages.package_collection import PackageCollection
 from poetry.puzzle.exceptions import OverrideNeededError
 from poetry.repositories.repository_pool import Priority
+from poetry.utils.extras import expand_package_extras
 
 
 if TYPE_CHECKING:
@@ -73,6 +75,26 @@ logger = logging.getLogger(__name__)
 # never resolved or installed.
 MARKER_SPLIT = "|marker-split|"
 _MARKER_SPLIT_PACKAGE = Package(MARKER_SPLIT, "0")
+
+
+def get_override_marker(
+    overrides: dict[Package, dict[str, Dependency]], *, include_global_extras: bool
+) -> BaseMarker:
+    marker: BaseMarker = AnyMarker()
+    for package, dependencies in overrides.items():
+        local_extras = (
+            None
+            if package.is_root() or package == _MARKER_SPLIT_PACKAGE
+            else expand_package_extras(package, package.features).keys()
+        )
+        for dependency in dependencies.values():
+            restriction = dependency.marker
+            if local_extras is not None:
+                restriction = restriction.apply({"extra": local_extras})
+            elif not include_global_extras:
+                restriction = restriction.without_extras()
+            marker = marker.intersect(restriction)
+    return marker
 
 
 class IncompatibleConstraintsError(Exception):
@@ -180,13 +202,7 @@ class Provider:
 
     @functools.cached_property
     def _overrides_marker_intersection(self) -> BaseMarker:
-        overrides_marker_intersection: BaseMarker = AnyMarker()
-        for dep_overrides in self._overrides.values():
-            for dep in dep_overrides.values():
-                overrides_marker_intersection = overrides_marker_intersection.intersect(
-                    dep.marker
-                )
-        return overrides_marker_intersection
+        return get_override_marker(self._overrides, include_global_extras=True)
 
     def marker_split_overrides(
         self, marker: BaseMarker
@@ -552,15 +568,11 @@ class Provider:
             dependency = dependency_package.dependency
             requires = package.requires
 
-        found_extras = set()
-        optional_dependencies = set()
+        extra_dependencies = expand_package_extras(package, dependency.extras)
+        optional_dependencies: set[NormalizedName] = set()
         _dependencies = []
 
         if dependency.extras:
-            # Find all the optional dependencies that are wanted - taking care to allow
-            # for self-referential extras.
-            stack = sorted(dependency.extras)
-
             # For direct origin dependencies from the lock file,
             # only used extra dependencies are found in `requires`.
             # If the package locked for a direct origin dependency is reused,
@@ -573,20 +585,10 @@ class Provider:
                 requires = requires.copy()
                 requires_extras = {extra for dep in requires for extra in dep.in_extras}
 
-            while stack:
-                extra = stack.pop()
-                if extra in found_extras:
-                    continue
-                found_extras.add(extra)
-
-                extra_dependencies = package.extras.get(extra, [])
-                for extra_dependency in extra_dependencies:
-                    if extra_dependency.name == dependency.name:
-                        stack += sorted(extra_dependency.extras)
-                    else:
-                        optional_dependencies.add(extra_dependency.name)
-                        if is_direct_origin and extra not in requires_extras:
-                            requires.append(extra_dependency)
+            for extra, dependencies in extra_dependencies.items():
+                optional_dependencies.update(dep.name for dep in dependencies)
+                if is_direct_origin and extra not in requires_extras:
+                    requires.extend(dependencies)
 
             # If some extras/features were required, we need to add a special dependency
             # representing the base package to the current package.
@@ -630,7 +632,10 @@ class Provider:
 
             if not package.is_root() and (
                 (dep.is_optional() and dep.name not in optional_dependencies)
-                or (dep.in_extras and not set(dep.in_extras).intersection(found_extras))
+                or (
+                    dep.in_extras
+                    and extra_dependencies.keys().isdisjoint(dep.in_extras)
+                )
             ):
                 continue
 
@@ -705,22 +710,17 @@ class Provider:
             for dep in deps:
                 duplicates_by_extras[dep.complete_name].append(dep)
 
-            if len(duplicates_by_extras) == 1:
-                active_extras = (
-                    self._active_root_extras if package.is_root() else found_extras
-                )
-                deps = self._resolve_overlapping_markers(
-                    package,
-                    deps,
-                    active_extras,
-                    cover_leftover_marker_space=True,
-                )
+            root = package.is_root()
+            active_extras = (
+                self._active_root_extras if root else extra_dependencies.keys()
+            )
+            same_child_extras = len(duplicates_by_extras) == 1
+            if same_child_extras:
+                deps = self._resolve_overlapping_markers(package, deps, active_extras)
             else:
                 # Resolve overlaps within each subgroup of duplicates that share
-                # the same extras. The leftover marker space (where no dep in a
-                # subgroup is required) is covered by the sibling subgroups, so
-                # _resolve_overlapping_markers must not synthesise an
-                # empty-constraint dep for it (see #10447).
+                # the same extras. Sibling subgroups may cover the leftover space,
+                # so don't add an empty-constraint dep within a subgroup (#10447).
                 for complete_dep_name, deps_by_extra in duplicates_by_extras.items():
                     if len(deps_by_extra) > 1:
                         duplicates_by_extras[complete_dep_name] = (
@@ -744,19 +744,26 @@ class Provider:
                         dependencies.extend(d)
                     continue
 
-            if len(deps) == 1:
-                self.debug(f"<debug>Merging requirements for {dep_name}</debug>")
-                dependencies.append(deps[0])
-                continue
+            extra_environment = {} if root else {"extra": extra_dependencies.keys()}
+            relevant_deps = []
+            covered: BaseMarker = EmptyMarker()
+            for dep in deps:
+                marker = dep.marker.apply(extra_environment)
+                if not self._overrides_marker_intersection.intersect(marker).is_empty():
+                    relevant_deps.append(dep)
+                    covered = covered.union(marker)
+            deps = relevant_deps
+            if deps and (same_child_extras or not root):
+                # Preserve the part of this run where none of the requirements apply.
+                leftover = covered.invert()
+                if self._is_relevant_marker(
+                    self._overrides_marker_intersection.intersect(leftover),
+                    active_extras if root else None,
+                ):
+                    unused = deps[0].with_constraint(EmptyConstraint())
+                    unused.marker = leftover
+                    deps.append(unused)
 
-            # Sort out irrelevant requirements
-            deps = [
-                dep
-                for dep in deps
-                if not self._overrides_marker_intersection.intersect(
-                    dep.marker
-                ).is_empty()
-            ]
             if len(deps) < 2:
                 if not deps or (len(deps) == 1 and deps[0].constraint.is_empty()):
                     msg = f"<debug>No relevant requirements for {dep_name}</debug>"
@@ -1025,8 +1032,6 @@ class Provider:
         package: Package,
         dependencies: list[Dependency],
         active_extras: Collection[NormalizedName] | None,
-        *,
-        cover_leftover_marker_space: bool = False,
     ) -> list[Dependency]:
         """
         Convert duplicate dependencies with potentially overlapping markers
@@ -1045,6 +1050,8 @@ class Provider:
 
         new_dependencies = []
         for uses in itertools.product([True, False], repeat=len(dependencies)):
+            if not any(uses):
+                continue
             # intersection of markers
             # For performance optimization, we don't just intersect all markers at once,
             # but intersect them one after the other to get empty markers early.
@@ -1082,25 +1089,6 @@ class Provider:
             if constraint.is_empty():
                 # conflict in overlapping area
                 raise IncompatibleConstraintsError(package, *used_dependencies)
-
-            if not any(uses):
-                if not cover_leftover_marker_space:
-                    # Caller is responsible for the leftover marker space.
-                    continue
-
-                # This is an edge case where the dependency is not required
-                # for the resulting marker. However, we have to consider it anyway
-                #  in order to not miss other dependencies later, for instance:
-                #   • foo (1.0) ; python == 3.7
-                #   • foo (2.0) ; python == 3.8
-                #   • bar (2.0) ; python == 3.8
-                #   • bar (3.0) ; python == 3.9
-                # the last dependency would be missed without this,
-                # because the intersection with both foo dependencies is empty.
-
-                # Set constraint to empty to mark dependency as "not required".
-                constraint = EmptyConstraint()
-                used_dependencies = dependencies
 
             # build new dependency with intersected constraint and marker
             # (and correct source)

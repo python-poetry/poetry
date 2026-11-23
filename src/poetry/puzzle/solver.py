@@ -20,6 +20,7 @@ from poetry.puzzle.exceptions import OverrideNeededError
 from poetry.puzzle.exceptions import SolverProblemError
 from poetry.puzzle.provider import Indicator
 from poetry.puzzle.provider import Provider
+from poetry.puzzle.provider import get_override_marker
 
 
 if TYPE_CHECKING:
@@ -480,10 +481,7 @@ def merge_override_packages(
         Package, list[tuple[Package, TransitivePackageInfo, BaseMarker]]
     ] = {}
     for override, o_packages in override_packages:
-        override_marker: BaseMarker = AnyMarker()
-        for deps in override.values():
-            for dep in deps.values():
-                override_marker = override_marker.intersect(dep.marker.without_extras())
+        override_marker = get_override_marker(override, include_global_extras=False)
         override_marker = simplify_marker(override_marker, python_constraint)
         for package, info in o_packages.items():
             for group, marker in info.markers.items():
