@@ -148,6 +148,17 @@ list of installed packages
                     del group_content["dependencies"]
                     if not group_content:
                         del poetry_content["group"][MAIN_GROUP]
+            # A hand-written `[dependency-groups] main` table (PEP 735) is also read
+            # for the main group, so keep looking there as well.
+            if MAIN_GROUP in groups_content:
+                removed |= self._remove_packages(
+                    packages=packages,
+                    standard_section=groups_content[MAIN_GROUP],
+                    poetry_section={},
+                    group_name=MAIN_GROUP,
+                )
+                if not groups_content[MAIN_GROUP]:
+                    del groups_content[MAIN_GROUP]
         else:
             removed = set()
             if group_content := poetry_groups_content.get(group):

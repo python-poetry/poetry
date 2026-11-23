@@ -1055,7 +1055,10 @@ include-groups = ["unrelated"]
     assert reloaded.locker.is_fresh()
 
 
-@pytest.mark.parametrize("style", ["pep621", "tool.poetry", "tool.poetry.group.main"])
+@pytest.mark.parametrize(
+    "style",
+    ["pep621", "tool.poetry", "tool.poetry.group.main", "dependency-groups.main"],
+)
 def test_remove_from_main_group(
     style: str,
     project_factory: ProjectFactory,
@@ -1078,6 +1081,14 @@ bar = ">=1"
 [tool.poetry.group.main.dependencies]
 foo = ">=1"
 bar = ">=1"
+""",
+        "dependency-groups.main": """\
+[project]
+name = "main-group"
+version = "0.1.0"
+
+[dependency-groups]
+main = ["foo>=1", "bar>=1"]
 """,
     }[style]
     poetry = project_factory(
@@ -1103,6 +1114,8 @@ baz = ">=1"
         assert pyproject["project"]["dependencies"] == ["bar>=1"]
     elif style == "tool.poetry":
         assert pyproject["tool"]["poetry"]["dependencies"] == {"bar": ">=1"}
+    elif style == "dependency-groups.main":
+        assert pyproject["dependency-groups"]["main"] == ["bar>=1"]
     else:
         assert pyproject["tool"]["poetry"]["group"]["main"]["dependencies"] == {
             "bar": ">=1"
