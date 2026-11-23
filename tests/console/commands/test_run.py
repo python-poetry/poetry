@@ -45,6 +45,19 @@ def poetry_with_scripts(
     )
 
 
+@pytest.fixture
+def poetry_with_file_scripts(
+    project_factory: ProjectFactory, fixture_dir: FixtureDirGetter
+) -> Poetry:
+    source = fixture_dir("file_scripts_project")
+
+    return project_factory(
+        name="file-scripts-project",
+        pyproject_content=(source / "pyproject.toml").read_text(encoding="utf-8"),
+        source=source,
+    )
+
+
 def test_run_passes_all_args(app_tester: ApplicationTester, env: MockEnv) -> None:
     app_tester.execute("run python -V")
     assert env.executed == [["python", "-V"]]
@@ -265,3 +278,112 @@ Run `poetry install` to resolve and get rid of this message.
 
 """
     assert tester.io.fetch_error() == expected_message
+
+
+def test_run_file_script_from_reference_when_not_installed(
+    poetry_with_file_scripts: Poetry,
+    command_tester_factory: CommandTesterFactory,
+    env: MockEnv,
+) -> None:
+    tester = command_tester_factory("run", poetry=poetry_with_file_scripts)
+
+    assert tester.execute("my-script arg1 arg2") == 0
+
+    reference = poetry_with_file_scripts.file.path.parent / "bin" / "my-script.sh"
+    assert env.executed == [[str(reference), "arg1", "arg2"]]
+    assert "not installed as a script" in tester.io.fetch_error()
+
+
+def test_run_file_script_from_the_environment(
+    poetry_with_file_scripts: Poetry,
+    command_tester_factory: CommandTesterFactory,
+    env: MockEnv,
+) -> None:
+    script_dir = env.script_dirs[0]
+    script_dir.mkdir(parents=True, exist_ok=True)
+    installed_script = script_dir / f"my-script{'.cmd' if WINDOWS else ''}"
+    installed_script.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+
+    tester = command_tester_factory("run", poetry=poetry_with_file_scripts)
+
+    assert tester.execute("my-script") == 0
+    assert env.executed == [[str(installed_script)]]
+    assert tester.io.fetch_error() == ""
+
+
+def test_run_file_script_with_missing_reference(
+    project_factory: ProjectFactory,
+    fixture_dir: FixtureDirGetter,
+    command_tester_factory: CommandTesterFactory,
+    env: MockEnv,
+) -> None:
+    source = fixture_dir("file_scripts_missing_ref_project")
+    poetry = project_factory(
+        name="missing-file-script",
+        pyproject_content=(source / "pyproject.toml").read_text(encoding="utf-8"),
+        source=source,
+    )
+
+    tester = command_tester_factory("run", poetry=poetry)
+
+    assert tester.execute("missing-script") == 1
+    assert "Command not found: missing-script" in tester.io.fetch_error()
+    assert env.executed == []
+
+
+def test_run_console_script_defined_as_table(
+    project_factory: ProjectFactory,
+    fixture_dir: FixtureDirGetter,
+    command_tester_factory: CommandTesterFactory,
+    env: MockEnv,
+) -> None:
+    source = fixture_dir("file_scripts_project")
+    content = (
+        (source / "pyproject.toml")
+        .read_text(encoding="utf-8")
+        .replace(
+            'console-entry = "file_scripts_project:main"',
+            'console-entry = { reference = "file_scripts_project:main",'
+            ' type = "console" }',
+        )
+    )
+    poetry = project_factory(
+        name="file-scripts-project-console-table",
+        pyproject_content=content,
+        source=source,
+    )
+
+    tester = command_tester_factory("run", poetry=poetry)
+
+    assert tester.execute("console-entry") == 0
+    (executed,) = env.executed
+    assert executed[0] == "python"
+    assert "import_module('file_scripts_project')" in executed[2]
+
+
+@pytest.mark.skipif(WINDOWS, reason="The file script fixture uses a bash shebang.")
+def test_run_file_script_uses_the_installed_file(
+    poetry_with_file_scripts: Poetry,
+    command_tester_factory: CommandTesterFactory,
+    tmp_venv: VirtualEnv,
+    mocker: MockerFixture,
+) -> None:
+    mocker.patch(
+        "os.execvpe",
+        lambda file, args, env: subprocess.call([file, *args[1:]], env=env),
+    )
+    install_tester = command_tester_factory(
+        "install", poetry=poetry_with_file_scripts, environment=tmp_venv
+    )
+    assert install_tester.execute() == 0
+
+    installed_script = tmp_venv.script_dirs[0] / "my-script"
+    assert installed_script.exists()
+    installed_script.write_text("#!/bin/sh\nexit 42\n", encoding="utf-8")
+    installed_script.chmod(0o755)
+
+    tester = command_tester_factory(
+        "run", poetry=poetry_with_file_scripts, environment=tmp_venv
+    )
+    assert tester.execute("my-script") == 42
+    assert tester.io.fetch_error() == ""
