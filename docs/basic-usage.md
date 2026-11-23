@@ -71,9 +71,15 @@ Unlike with other packages, Poetry will not automatically install a python inter
 If you want to run Python files in your package like a script or application, you must _bring your own_ python interpreter to run them.
 {{% /note %}}
 
-Poetry will require you to explicitly specify what versions of Python you intend to support, and its universal locking
-will guarantee that your project is installable (and all dependencies claim support for) all supported Python versions.
-Again, it's important to remember that -- unlike other dependencies -- setting a Python version is merely specifying which versions of Python you intend to support.
+The Python requirement declares the versions your project supports. Poetry resolves dependencies across that range
+using dependency metadata. It checks whether individual distribution files can be installed when you run
+`poetry install` in the target environment.
+
+A lock can succeed even when a locked release has no compatible distribution for one of your targets. For example,
+standard and free-threaded CPython builds can have the same Python version but require different wheel ABI tags.
+If installation reports that no candidates are available, run `poetry debug tags` in the target environment and
+compare its tags with the files published for the failing release. If you need to support multiple targets, constrain
+the dependency to a release that provides compatible distributions for them and verify installation on each target.
 
 For example, in this `pyproject.toml` file:
 
