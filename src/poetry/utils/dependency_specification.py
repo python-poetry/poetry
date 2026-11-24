@@ -38,6 +38,8 @@ def dependency_to_specification(
         specification[dependency.vcs] = dependency.source_url
         if dependency.reference:
             specification["rev"] = dependency.reference
+        if dependency.source_subdirectory:
+            specification["subdirectory"] = dependency.source_subdirectory
     elif dependency.is_file() or dependency.is_directory():
         assert dependency.source_url is not None
         specification["path"] = dependency.source_url
