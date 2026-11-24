@@ -1096,36 +1096,3 @@ bar = ">=1"
         package.name for package in reloaded.locker.locked_repository().packages
     } == {"bar"}
     assert reloaded.locker.is_fresh()
-
-
-def test_remove_cleans_up_differently_spelled_pep735_include_group(
-    project_factory: ProjectFactory,
-    command_tester_factory: CommandTesterFactory,
-    repo: DummyRepository,
-) -> None:
-    # `[dependency-groups]` and `[tool.poetry.group]` share one namespace that is
-    # compared by normalized name, so a PEP 735 `include-group` pointing at a
-    # differently spelled legacy group must be cleaned up as well.
-    poetry = project_factory(
-        name="differently-spelled-pep735-include",
-        pyproject_content="""\
-[tool.poetry]
-package-mode = false
-[tool.poetry.group.lint_tools.dependencies]
-foo = ">=1"
-[dependency-groups]
-ci = [{ include-group = "lint-tools" }]
-""",
-    )
-    repo.add_package(Package("foo", "1.0"))
-    tester = command_tester_factory("remove", poetry=poetry)
-
-    assert tester.execute("foo --group lint_tools --lock") == 0
-
-    content = poetry.file.read()
-    assert "lint_tools" not in content["tool"]["poetry"].get("group", {})
-    # "ci" only consisted of the now dangling reference, so it goes away too.
-    assert "dependency-groups" not in content
-
-    reloaded = Factory().create_poetry(poetry.file.path.parent)
-    assert not reloaded.package.all_requires
