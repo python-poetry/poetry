@@ -174,10 +174,30 @@ def test_ensure_path_directory(tmp_path: Path) -> None:
     assert ensure_path(path=path, is_directory=True) is path
 
 
+def _force_fallback_tar_filter(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Make extractall() use its own filter, as on Python versions with a
+    broken tarfile.data_filter, and keep the stdlib from filtering again."""
+    monkeypatch.setattr(sys, "version_info", (3, 10, 12))
+    monkeypatch.setattr(
+        tarfile.TarFile,
+        "_get_filter_function",
+        lambda self, filter: lambda member, dest_path: member,
+        raising=False,
+    )
+
+
+@pytest.fixture(params=["stdlib", "fallback"])
+def tar_filter(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> str:
+    """Run a test against the stdlib data filter and against the fallback."""
+    if request.param == "fallback":
+        _force_fallback_tar_filter(monkeypatch)
+    return str(request.param)
+
+
 @pytest.mark.parametrize("relative", [False, True])
 @pytest.mark.parametrize("existing", [False, True])
 def test_extractall_sdist_no_path_traversal(
-    tmp_path: Path, relative: bool, existing: bool
+    tmp_path: Path, relative: bool, existing: bool, tar_filter: str
 ) -> None:
     import io
     import tarfile
@@ -239,13 +259,7 @@ def test_extractall_sdist_old_python_owner_filter(
         tar.addfile(member, io.BytesIO(b"data"))
 
     # Take the fallback path and skip the stdlib filter, as on old Python.
-    monkeypatch.setattr(sys, "version_info", (3, 10, 12))
-    monkeypatch.setattr(
-        tarfile.TarFile,
-        "_get_filter_function",
-        lambda self, filter: lambda member, dest_path: member,
-        raising=False,
-    )
+    _force_fallback_tar_filter(monkeypatch)
 
     original_getmembers = tarfile.TarFile.getmembers
 
@@ -289,7 +303,7 @@ def test_extractall_sdist_old_python_owner_filter(
 @pytest.mark.parametrize("relative", [False, True])
 @pytest.mark.parametrize("existing", [False, True])
 def test_extractall_sdist_no_symlink_path_traversal(
-    tmp_path: Path, link_type: bytes, relative: bool, existing: bool
+    tmp_path: Path, link_type: bytes, relative: bool, existing: bool, tar_filter: str
 ) -> None:
     import io
     import tarfile
@@ -345,7 +359,7 @@ def test_extractall_sdist_no_symlink_path_traversal(
 
 
 def test_extractall_sdist_no_symlink_path_traversal_via_directory_symlink(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, tar_filter: str
 ) -> None:
     """
     A symlink "dir" pointing at "." is created first. A later member is then
@@ -370,22 +384,97 @@ def test_extractall_sdist_no_symlink_path_traversal_via_directory_symlink(
         regular.size = len(data)
         tar.addfile(regular, io.BytesIO(data))
 
-    exception: type[Exception]
+    exceptions: tuple[type[Exception], ...]
     if hasattr(tarfile, "data_filter"):
-        exception = tarfile.OutsideDestinationError
+        # the fallback filter raises ValueError
+        exceptions = (tarfile.OutsideDestinationError, ValueError)
     else:
         # tarfile.OutsideDestinationError does not exist
-        exception = ValueError
+        exceptions = (ValueError,)
 
     # Filters may reject the path or normalize it inside dest.
     try:
         extractall(source=archive, dest=dest, zip=False)
-    except exception:
+    except exceptions:
         pass
     else:
         assert (dest / "traversal.txt").read_bytes() == data
 
     assert not (tmp_path / "traversal.txt").exists()
+
+
+def test_extractall_sdist_fallback_filter_rejects_special_files(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    archive = tmp_path / "fifo.tar.gz"
+    dest = tmp_path / "dest"
+    dest.mkdir()
+    with tarfile.open(archive, "w:gz") as tar:
+        fifo = tarfile.TarInfo("pipe")
+        fifo.type = tarfile.FIFOTYPE
+        tar.addfile(fifo)
+
+    _force_fallback_tar_filter(monkeypatch)
+
+    with pytest.raises(ValueError, match="special file pipe"):
+        extractall(source=archive, dest=dest, zip=False)
+
+    assert not (dest / "pipe").exists()
+
+
+@pytest.mark.parametrize("link_type", [tarfile.SYMTYPE, tarfile.LNKTYPE])
+def test_extractall_sdist_fallback_filter_rejects_link_replacing_destination(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, link_type: bytes
+) -> None:
+    """A link member named "." would turn the destination itself into a link
+    and redirect every later member."""
+    archive = tmp_path / "link.tar.gz"
+    dest = tmp_path / "dest"
+    dest.mkdir()
+    with tarfile.open(archive, "w:gz") as tar:
+        link = tarfile.TarInfo(".")
+        link.type = link_type
+        link.linkname = "sub"
+        tar.addfile(link)
+
+    _force_fallback_tar_filter(monkeypatch)
+
+    with pytest.raises(ValueError, match="link target is the destination directory"):
+        extractall(source=archive, dest=dest, zip=False)
+
+    assert dest.is_dir()
+    assert not dest.is_symlink()
+
+
+@pytest.mark.skipif(WINDOWS, reason="POSIX permission bits")
+@pytest.mark.parametrize(
+    ("mode", "expected"),
+    [
+        (0o777, 0o755),  # group/other write bits are dropped
+        (0o4755, 0o755),  # setuid is dropped
+        (0o666, 0o644),  # not executable by the owner: no execute bits at all
+        (0o400, 0o600),  # the owner can always read and write
+    ],
+)
+def test_extractall_sdist_fallback_filter_limits_permissions(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mode: int, expected: int
+) -> None:
+    import io
+
+    archive = tmp_path / "modes.tar.gz"
+    dest = tmp_path / "dest"
+    dest.mkdir()
+    with tarfile.open(archive, "w:gz") as tar:
+        member = tarfile.TarInfo("file.txt")
+        member.size = 4
+        member.mode = mode
+        tar.addfile(member, io.BytesIO(b"data"))
+
+    _force_fallback_tar_filter(monkeypatch)
+
+    extractall(source=archive, dest=dest, zip=False)
+
+    assert (dest / "file.txt").stat().st_mode & 0o7777 == expected
 
 
 @pytest.mark.parametrize("existing", [False, True])
