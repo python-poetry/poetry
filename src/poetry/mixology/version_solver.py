@@ -10,12 +10,14 @@ from typing import TYPE_CHECKING
 
 from poetry.core.packages.dependency import Dependency
 
+from poetry.exceptions import UninterpretableRequirementError
 from poetry.mixology.failure import SolveFailureError
 from poetry.mixology.incompatibility import Incompatibility
 from poetry.mixology.incompatibility_cause import ConflictCauseError
 from poetry.mixology.incompatibility_cause import DependencyCauseError
 from poetry.mixology.incompatibility_cause import NoVersionsCauseError
 from poetry.mixology.incompatibility_cause import RootCauseError
+from poetry.mixology.incompatibility_cause import UninterpretableMetadataCauseError
 from poetry.mixology.partial_solution import PartialSolution
 from poetry.mixology.result import SolverResult
 from poetry.mixology.set_relation import SetRelation
@@ -675,7 +677,20 @@ class VersionSolver:
         else:
             package = locked
 
-        package = self._provider.complete_package(package)
+        try:
+            package = self._provider.complete_package(package)
+        except UninterpretableRequirementError as e:
+            # The dependencies of this version cannot be determined reliably, so we
+            # must not select it. Mark the version as incompatible, which makes the
+            # solver try another one.
+            self._add_incompatibility(
+                Incompatibility(
+                    [Term(dependency.with_constraint(package.package.version), True)],
+                    UninterpretableMetadataCauseError(e.requirement),
+                )
+            )
+
+            return dependency.complete_name
 
         conflict = False
         for incompatibility in self._provider.incompatibilities_for(package):

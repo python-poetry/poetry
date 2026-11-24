@@ -67,6 +67,20 @@ class PythonCauseError(IncompatibilityCauseError):
         return self._root_python_version
 
 
+class UninterpretableMetadataCauseError(IncompatibilityCauseError):
+    """
+    The incompatibility represents a package version whose dependency metadata
+    cannot be interpreted, so that the version cannot be used safely.
+    """
+
+    def __init__(self, requirement: str) -> None:
+        self._requirement = requirement
+
+    @property
+    def requirement(self) -> str:
+        return self._requirement
+
+
 class PlatformCauseError(IncompatibilityCauseError):
     """
     The incompatibility represents a package's platform constraint

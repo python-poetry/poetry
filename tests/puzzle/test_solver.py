@@ -21,6 +21,7 @@ from poetry.core.packages.vcs_dependency import VCSDependency
 from poetry.core.version.markers import parse_marker
 
 from poetry.factory import Factory
+from poetry.inspection.info import PackageInfo
 from poetry.installation.operations import Update
 from poetry.packages import DependencyPackage
 from poetry.puzzle import Solver
@@ -39,6 +40,7 @@ if TYPE_CHECKING:
     import responses
 
     from cleo.io.null_io import NullIO
+    from poetry.core.constraints.version import Version
     from poetry.core.packages.project_package import ProjectPackage
     from pytest_mock import MockerFixture
 
@@ -69,6 +71,28 @@ def legacy_repository(legacy_repository_html: LegacyRepository) -> LegacyReposit
 def set_package_python_versions(provider: Provider, python_versions: str) -> None:
     provider._package.python_versions = python_versions
     provider._package_python_constraint = provider._package.python_constraint
+
+
+def mock_uninterpretable_metadata(
+    mocker: MockerFixture, repo: Repository, version: str, requirement: str
+) -> None:
+    """
+    Let ``repo`` build the package for ``version`` from metadata containing
+    ``requirement``, going through the regular metadata inspection.
+    """
+    original = repo.package
+
+    def package(name: str, requested_version: Version) -> Package:
+        if requested_version.to_string() != version:
+            return original(name, requested_version)
+
+        return PackageInfo(
+            name=name,
+            version=requested_version.to_string(),
+            requires_dist=[requirement],
+        ).to_package(name=name)
+
+    mocker.patch.object(repo, "package", side_effect=package)
 
 
 def check_solver_result(
@@ -5912,3 +5936,38 @@ def test_solver_logs_age_filtered_versions_on_success(
     solver.solve()
 
     log_age_filtered_versions_spy.assert_called_once_with(level="info", reset=True)
+
+
+def test_solver_skips_version_with_uninterpretable_requirement(
+    solver: Solver, repo: Repository, package: ProjectPackage, mocker: MockerFixture
+) -> None:
+    package.add_dependency(Factory.create_dependency("A", "*"))
+
+    package_a1 = get_package("A", "1.0")
+    repo.add_package(package_a1)
+    repo.add_package(get_package("A", "2.0"))
+
+    mock_uninterpretable_metadata(
+        mocker, repo, "2.0", 'B (>=1.0); "pointer_bits::64" in sys_abi_info'
+    )
+
+    transaction = solver.solve()
+
+    check_solver_result(transaction, [{"job": "install", "package": package_a1}])
+
+
+def test_solver_fails_if_only_version_has_uninterpretable_requirement(
+    solver: Solver, repo: Repository, package: ProjectPackage, mocker: MockerFixture
+) -> None:
+    package.add_dependency(Factory.create_dependency("A", "*"))
+
+    repo.add_package(get_package("A", "2.0"))
+
+    mock_uninterpretable_metadata(
+        mocker, repo, "2.0", 'B (>=1.0); "pointer_bits::64" in sys_abi_info'
+    )
+
+    with pytest.raises(SolverProblemError) as e:
+        solver.solve()
+
+    assert "cannot be interpreted" in str(e.value)
