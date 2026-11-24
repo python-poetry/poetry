@@ -248,10 +248,11 @@ def isolated_environment(
     if environ:
         os.environ.update(environ)
 
-    yield
-
-    os.environ.clear()
-    os.environ.update(original_environ)
+    try:
+        yield
+    finally:
+        os.environ.clear()
+        os.environ.update(original_environ)
 
 
 def make_entry_point_from_plugin(
