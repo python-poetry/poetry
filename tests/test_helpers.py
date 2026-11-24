@@ -287,6 +287,16 @@ class TestIsolatedEnvironment:
             os.environ["TEST_VAR"] = "test"
         assert os.environ == original_environ
 
+    def test_restores_environ_on_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("TEST_VAR", "original")
+        with (
+            pytest.raises(RuntimeError, match="boom"),
+            isolated_environment({"TEST_VAR": "temporary"}),
+        ):
+            raise RuntimeError("boom")
+
+        assert os.environ["TEST_VAR"] == "original"
+
     def test_clears_environ(self) -> None:
         os.environ["TEST_VAR"] = "test"
         with isolated_environment(clear=True):
