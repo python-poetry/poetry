@@ -740,6 +740,11 @@ def test_remove_by_name(
     assert not expected_venv_path.exists()
 
 
+def test_remove_raises_if_env_does_not_exist(manager: EnvManager) -> None:
+    with pytest.raises(ValueError, match='Environment "nosuchenv" does not exist'):
+        manager.remove("nosuchenv")
+
+
 def test_remove_by_string_with_python_and_version(
     tmp_path: Path,
     manager: EnvManager,
