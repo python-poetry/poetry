@@ -173,6 +173,36 @@ def test_config_get_from_environment_variable_invalid_int(
 
 
 @pytest.mark.parametrize(
+    ("name", "value"),
+    [
+        ("requests.max-retries", "not-a-number"),
+        ("requests.max-retries", -1),
+        ("installer.max-workers", "not-a-number"),
+        ("installer.max-workers", 0),
+        ("solver.min-release-age", "not-a-number"),
+    ],
+)
+def test_config_get_from_file_invalid_int(
+    config: Config, name: str, value: str | int
+) -> None:
+    section, key = name.split(".")
+    config.merge({section: {key: value}})
+
+    with pytest.raises(PoetryError, match=re.escape(name)):
+        config.get(name)
+
+
+@pytest.mark.parametrize(
+    "name", ["requests.max-retries", "installer.max-workers", "solver.min-release-age"]
+)
+def test_config_get_from_file_int_as_string(config: Config, name: str) -> None:
+    section, key = name.split(".")
+    config.merge({section: {key: "4"}})
+
+    assert config.get(name) == 4
+
+
+@pytest.mark.parametrize(
     ("path_config", "expected"),
     [("~/.venvs", Path.home() / ".venvs"), ("venv", Path("venv"))],
 )

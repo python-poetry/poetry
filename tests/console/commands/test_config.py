@@ -14,6 +14,7 @@ from poetry.core.pyproject.exceptions import PyProjectError
 from poetry.config.config_source import ConfigSource
 from poetry.config.config_source import PropertyNotFoundError
 from poetry.console.commands.install import InstallCommand
+from poetry.exceptions import PoetryError
 from poetry.factory import Factory
 from poetry.repositories.legacy_repository import LegacyRepository
 from tests.conftest import Config
@@ -202,6 +203,20 @@ virtualenvs.use-poetry-python = false
 """
     assert config.set_config_source.call_count == 0  # type: ignore[attr-defined]
     assert tester.io.fetch_output() == expected
+
+
+def test_unset_setting_when_project_cannot_be_loaded(
+    tester: CommandTester, mocker: MockerFixture
+) -> None:
+    mocker.patch(
+        "poetry.console.commands.command.Command.poetry",
+        new_callable=mocker.PropertyMock,
+        side_effect=PoetryError("Invalid value for installer.max-workers: 0"),
+    )
+
+    tester.execute("installer.max-workers --unset")
+
+    assert tester.status_code == 0
 
 
 def test_unset_repo_setting(
