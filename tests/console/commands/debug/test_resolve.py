@@ -7,11 +7,13 @@ import pytest
 from poetry.core.version.markers import parse_marker
 
 from poetry.factory import Factory
+from poetry.utils.env import MockEnv
 from tests.helpers import get_package
 
 
 if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
+    from pytest_mock import MockerFixture
 
     from tests.helpers import DummyRepository
     from tests.types import CommandTesterFactory
@@ -101,3 +103,45 @@ demo     0.1.2
 """
 
     assert tester.io.fetch_output() == expected
+
+
+@pytest.mark.parametrize("install", [False, True])
+@pytest.mark.parametrize("platform", ["linux", "win32"])
+@pytest.mark.parametrize("python_version", [(3, 11, 0), (3, 12, 0)])
+def test_debug_resolve_install_filters_dependencies_for_environment(
+    tester: CommandTester,
+    repo: DummyRepository,
+    mocker: MockerFixture,
+    install: bool,
+    platform: str,
+    python_version: tuple[int, int, int],
+) -> None:
+    package = get_package("app", "1.0")
+    package.add_dependency(Factory.create_dependency("common-dep", "1.0"))
+    package.add_dependency(
+        Factory.create_dependency(
+            "platform-dep", {"version": "1.0", "platform": "win32"}
+        )
+    )
+    package.add_dependency(
+        Factory.create_dependency("python-dep", {"version": "1.0", "python": "<3.12"})
+    )
+    repo.add_package(package)
+    for name in ("common-dep", "platform-dep", "python-dep"):
+        repo.add_package(get_package(name, "1.0"))
+
+    mocker.patch(
+        "poetry.utils.env.EnvManager.get",
+        return_value=MockEnv(version_info=python_version, platform=platform),
+    )
+
+    assert tester.execute("app" + (" --install" if install else "")) == 0
+
+    expected = {("app", "1.0"), ("common-dep", "1.0")}
+    if not install or platform == "win32":
+        expected.add(("platform-dep", "1.0"))
+    if not install or python_version < (3, 12, 0):
+        expected.add(("python-dep", "1.0"))
+
+    output = tester.io.fetch_output().split("Resolution results:\n\n", 1)[1]
+    assert {tuple(line.split()) for line in output.splitlines()} == expected
