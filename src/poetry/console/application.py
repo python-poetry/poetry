@@ -345,9 +345,13 @@ class Application(BaseApplication):
 
         # we use ensure_path for the directories to make sure these are valid paths
         # this will raise an exception if the path is invalid
+        # resolve to an absolute path right away: a relative directory would
+        # otherwise be resolved again relative to itself after the chdir in
+        # _run, producing nested or relative paths downstream (e.g. relative
+        # python interpreter paths in generated virtualenvs)
         self._working_directory = ensure_path(
             io.input.option("directory") or Path.cwd(), is_directory=True
-        )
+        ).resolve()
 
         self._project_directory = io.input.option("project")
         if self._project_directory is not None:
