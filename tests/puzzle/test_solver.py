@@ -5912,3 +5912,134 @@ def test_solver_logs_age_filtered_versions_on_success(
     solver.solve()
 
     log_age_filtered_versions_spy.assert_called_once_with(level="info", reset=True)
+
+
+def test_solver_can_resolve_directory_dependencies_nested_editable_pep621_enriched(
+    repo: Repository,
+    pool: RepositoryPool,
+    io: NullIO,
+    tmp_path: Path,
+) -> None:
+    """Like test_solver_can_resolve_directory_dependencies_nested_editable, but the
+    intermediate project declares its dependency in [project.dependencies] and only
+    enriches it with `develop = true` in [tool.poetry.dependencies]. The develop flag
+    must not get lost for the transitive dependency.
+    """
+    base = tmp_path
+    for name in ("quix", "bar", "foo"):
+        (base / name).mkdir()
+
+    (base / "quix" / "pyproject.toml").write_text(
+        """\
+[project]
+name = "quix"
+version = "1.2.3"
+description = "Some description."
+requires-python = ">=3.6"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+""",
+        encoding="utf-8",
+    )
+    (base / "bar" / "pyproject.toml").write_text(
+        """\
+[project]
+name = "bar"
+version = "1.2.3"
+description = "Some description."
+requires-python = ">=3.6"
+dependencies = ["quix @ ../quix"]
+
+[tool.poetry.dependencies]
+quix = { develop = true }
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+""",
+        encoding="utf-8",
+    )
+    (base / "foo" / "pyproject.toml").write_text(
+        """\
+[tool.poetry]
+name = "foo"
+version = "1.2.3"
+description = "Some description."
+authors = ["Poetry Maintainer <tests@python-poetry.org>"]
+
+[tool.poetry.dependencies]
+bar = { path = "../bar", develop = true }
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+""",
+        encoding="utf-8",
+    )
+    (base / "pyproject.toml").write_text(
+        """\
+[tool.poetry]
+name = "root"
+version = "1.2.3"
+description = "Some description."
+authors = ["Poetry Maintainer <tests@python-poetry.org>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+foo = { path = "./foo", develop = true }
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+""",
+        encoding="utf-8",
+    )
+
+    poetry = Factory().create_poetry(cwd=base)
+    package = poetry.package
+
+    solver = Solver(package, pool, [], [], io)
+
+    transaction = solver.solve()
+
+    ops = check_solver_result(
+        transaction,
+        [
+            {
+                "job": "install",
+                "package": Package(
+                    "quix",
+                    "1.2.3",
+                    source_type="directory",
+                    source_url=(base / "quix").as_posix(),
+                ),
+                "skipped": False,
+            },
+            {
+                "job": "install",
+                "package": Package(
+                    "bar",
+                    "1.2.3",
+                    source_type="directory",
+                    source_url=(base / "bar").as_posix(),
+                ),
+                "skipped": False,
+            },
+            {
+                "job": "install",
+                "package": Package(
+                    "foo",
+                    "1.2.3",
+                    source_type="directory",
+                    source_url=(base / "foo").as_posix(),
+                ),
+                "skipped": False,
+            },
+        ],
+    )
+
+    for op in ops:
+        assert op.package.source_type == "directory"
+        assert op.package.develop is True
