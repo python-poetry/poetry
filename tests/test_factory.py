@@ -23,6 +23,7 @@ from poetry.repositories.exceptions import InvalidSourceError
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.pypi_repository import PyPiRepository
 from poetry.repositories.repository_pool import Priority
+from poetry.repositories.single_page_repository import SinglePageRepository
 from poetry.toml.file import TOMLFile
 from tests.helpers import mock_metadata_entry_points
 
@@ -512,3 +513,23 @@ def test_create_package_source_invalid(
         Factory().create_poetry(fixture_dir("with_source_pypi_url"))
 
     assert str(e.value) == expected
+
+
+@pytest.mark.parametrize(
+    ("url", "expected"),
+    [
+        ("https://example.com/wheels.html", SinglePageRepository),
+        ("https://example.com/wheels.html?token=x", SinglePageRepository),
+        ("https://example.com/wheels.HTML", SinglePageRepository),
+        ("https://example.com/wheels.html#frag", SinglePageRepository),
+        ("https://example.com/simple/", LegacyRepository),
+    ],
+)
+def test_create_package_source_single_page(
+    url: str, expected: type[LegacyRepository], config: Config
+) -> None:
+    repository = Factory.create_package_source(
+        {"name": "foo", "url": url}, config=config, disable_cache=True
+    )
+
+    assert type(repository) is expected

@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import contextlib
 import logging
-import re
 
 from typing import TYPE_CHECKING
 from typing import Any
+from urllib.parse import urlsplit
 
 from cleo.io.null_io import NullIO
 from packaging.utils import NormalizedName
@@ -236,7 +236,7 @@ class Factory(BaseFactory):
 
         repository_class = LegacyRepository
 
-        if re.match(r".*\.(htm|html)$", url):
+        if urlsplit(url).path.lower().endswith((".htm", ".html")):
             repository_class = SinglePageRepository
 
         return repository_class(
