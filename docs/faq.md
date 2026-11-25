@@ -187,6 +187,18 @@ use of a virtual environment. This can also be managed by another tool.
 The Poetry team strongly encourages the use of a virtual environment.
 {{% /warning %}}
 
+### How do I clear a corrupt virtualenv cache?
+
+Poetry uses `virtualenv` to create environments. `virtualenv` stores interpreter information and seed packages such as
+`pip` in an app-data directory separate from [Poetry's cache]({{< relref "configuration#cache-directory" >}}).
+
+If environment creation fails because this data is corrupt, rerun the command with `-vvv` and find `app_data_dir` in
+the `virtualenv` output. Before deleting it, ensure that no Poetry or `virtualenv` process is running and that none can
+start until deletion finishes. `virtualenv` recreates the directory the next time Poetry creates an environment.
+
+The path varies by platform and `virtualenv` version. The `VIRTUALENV_OVERRIDE_APP_DATA` environment variable overrides
+it.
+
 ### Why is Poetry telling me that the current project's supported Python range is not compatible with one or more packages' Python requirements?
 
 Unlike `pip`, Poetry doesn't resolve for just the Python in the current environment. Instead, it makes sure that a dependency

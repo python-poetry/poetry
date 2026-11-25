@@ -176,6 +176,12 @@ You can override the data directory by setting the `POETRY_DATA_DIR` or `POETRY_
 
 You can override the cache directory by setting the `POETRY_CACHE_DIR` environment variable.
 
+{{% note %}}
+When Poetry creates an environment, `virtualenv` uses a separate app-data directory to cache interpreter information
+and seed packages such as `pip`. This directory is not controlled by `POETRY_CACHE_DIR`. See the
+[FAQ]({{< relref "faq#how-do-i-clear-a-corrupt-virtualenv-cache" >}}) for details.
+{{% /note %}}
+
 ## Available settings
 
 ### `cache-dir`
