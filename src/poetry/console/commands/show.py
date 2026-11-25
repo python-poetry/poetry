@@ -334,9 +334,9 @@ lists all packages available."""
                 if not latest:
                     latest = locked
 
-                latest_packages[locked.pretty_name] = latest
-                update_status = latest_statuses[locked.pretty_name] = (
-                    self.get_update_status(latest, locked)
+                latest_packages[locked] = latest
+                update_status = latest_statuses[locked] = self.get_update_status(
+                    latest, locked
                 )
 
                 if not self.option("outdated") or update_status != "up-to-date":
@@ -391,7 +391,7 @@ lists all packages available."""
                 if (
                     show_latest
                     and self.option("outdated")
-                    and latest_statuses[locked.pretty_name] == "up-to-date"
+                    and latest_statuses[locked] == "up-to-date"
                 ):
                     continue
 
@@ -408,7 +408,7 @@ lists all packages available."""
                 )
 
                 if show_latest:
-                    latest = latest_packages[locked.pretty_name]
+                    latest = latest_packages[locked]
                     package["latest_version"] = get_package_version_display_string(
                         latest, root=self.poetry.file.path.parent
                     )
@@ -462,7 +462,7 @@ lists all packages available."""
             if (
                 show_latest
                 and self.option("outdated")
-                and latest_statuses[locked.pretty_name] == "up-to-date"
+                and latest_statuses[locked] == "up-to-date"
             ):
                 continue
 
@@ -476,8 +476,8 @@ lists all packages available."""
                 )
                 line += f" <b>{version:{version_length}}</b>"
             if show_latest:
-                latest = latest_packages[locked.pretty_name]
-                update_status = latest_statuses[locked.pretty_name]
+                latest = latest_packages[locked]
+                update_status = latest_statuses[locked]
 
                 if write_latest:
                     color = "green"
