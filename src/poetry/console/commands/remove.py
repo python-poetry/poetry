@@ -67,6 +67,8 @@ list of installed packages
         groups_content = content.get("dependency-groups", {})
         poetry_content = content.get("tool", {}).get("poetry", {})
         poetry_groups_content = poetry_content.get("group", {})
+        if group is not None:
+            group = self._find_group_key(group, groups_content, poetry_groups_content)
 
         if group is None:
             # remove from all groups

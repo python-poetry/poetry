@@ -683,6 +683,52 @@ Using version ^1.4.4 for pendulum
         assert "group" not in pyproject["tool"]["poetry"]
 
 
+@pytest.mark.parametrize("pep_735", [True, False])
+def test_add_to_existing_group_with_non_normalized_name(
+    app: PoetryTestApplication, tester: CommandTester, pep_735: bool
+) -> None:
+    pyproject = app.poetry.file.read()
+    if pep_735:
+        groups_content = tomlrt.loads(
+            """\
+[dependency-groups]
+My_Group = [
+    "cachy (>=0.2.0,<0.3.0)",
+]
+"""
+        )
+        pyproject["dependency-groups"] = groups_content["dependency-groups"]
+    else:
+        groups_content = tomlrt.loads(
+            """\
+[tool.poetry.group.My_Group.dependencies]
+cachy = "^0.2.0"
+"""
+        )
+        pyproject["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
+    app.poetry.file.write(pyproject)
+
+    tester.execute("-G my-group pendulum")
+
+    pyproject = app.poetry.file.read()
+    if pep_735:
+        assert pyproject["dependency-groups"] == {
+            "My_Group": [
+                "cachy (>=0.2.0,<0.3.0)",
+                "pendulum (>=1.4.4,<2.0.0)",
+            ]
+        }
+    else:
+        assert pyproject["tool"]["poetry"]["group"] == {
+            "My_Group": {
+                "dependencies": {
+                    "cachy": "^0.2.0",
+                    "pendulum": "^1.4.4",
+                }
+            }
+        }
+
+
 def test_add_to_group_with_latest_overwrite_existing(
     app: PoetryTestApplication, tester: CommandTester
 ) -> None:

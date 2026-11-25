@@ -427,6 +427,59 @@ baz = "^1.0.0"
 
 
 @pytest.mark.parametrize("pep_735", [True, False])
+def test_remove_from_group_with_non_normalized_name(
+    pep_735: bool,
+    tester: CommandTester,
+    app: PoetryTestApplication,
+    repo: DummyRepository,
+    installed: Repository,
+) -> None:
+    installed.add_package(Package("foo", "2.0.0"))
+    repo.add_package(Package("foo", "2.0.0"))
+    repo.add_package(Package("baz", "1.0.0"))
+
+    pyproject = app.poetry.file.read()
+    if pep_735:
+        groups_content = tomlrt.loads(
+            """\
+[dependency-groups]
+My_Group = [
+    "foo (>=2.0,<3.0)",
+    "baz (>=1.0,<2.0)",
+]
+"""
+        )
+        pyproject["dependency-groups"] = groups_content["dependency-groups"]
+    else:
+        groups_content = tomlrt.loads(
+            """\
+[tool.poetry.group.My_Group.dependencies]
+foo = "^2.0.0"
+baz = "^1.0.0"
+"""
+        )
+        pyproject["tool"]["poetry"]["group"] = groups_content["tool"]["poetry"]["group"]
+    app.poetry.file.write(pyproject)
+
+    app.poetry.package.add_dependency(
+        Factory.create_dependency("foo", "^2.0.0", groups=["My_Group"])
+    )
+    app.poetry.package.add_dependency(
+        Factory.create_dependency("baz", "^1.0.0", groups=["My_Group"])
+    )
+
+    tester.execute("foo --group my-group")
+
+    pyproject = app.poetry.file.read()
+    if pep_735:
+        assert pyproject["dependency-groups"] == {"My_Group": ["baz (>=1.0,<2.0)"]}
+    else:
+        assert pyproject["tool"]["poetry"]["group"] == {
+            "My_Group": {"dependencies": {"baz": "^1.0.0"}}
+        }
+
+
+@pytest.mark.parametrize("pep_735", [True, False])
 def test_remove_canonicalized_named_removes_dependency_correctly(
     pep_735: bool,
     tester: CommandTester,
