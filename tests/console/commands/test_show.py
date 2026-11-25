@@ -1791,7 +1791,9 @@ cachy (!) 0.1.1 Cachy package
 
 
 @output_format_parametrize
+@pytest.mark.parametrize("option", ["", "--latest", "--outdated"])
 def test_show_all_shows_all_duplicates(
+    option: str,
     output_format: str,
     tester: CommandTester,
     poetry: Poetry,
@@ -1802,7 +1804,7 @@ def test_show_all_shows_all_duplicates(
         Factory.create_dependency("cachy", {"version": "0.1.0", "platform": "linux"})
     )
     poetry.package.add_dependency(
-        Factory.create_dependency("cachy", {"version": "0.1.1", "platform": "darwin"})
+        Factory.create_dependency("cachy", {"version": "0.1.2", "platform": "darwin"})
     )
 
     assert isinstance(poetry.locker, DummyLocker)
@@ -1817,10 +1819,15 @@ def test_show_all_shows_all_duplicates(
                     "platform": "*",
                     "python-versions": "*",
                     "files": [],
+                    "source": {
+                        "type": "legacy",
+                        "url": "https://example.org/simple/",
+                        "reference": "linux",
+                    },
                 },
                 {
                     "name": "cachy",
-                    "version": "0.1.1",
+                    "version": "0.1.2",
                     "description": "Cachy package",
                     "optional": False,
                     "platform": "*",
@@ -1832,9 +1839,13 @@ def test_show_all_shows_all_duplicates(
         }
     )
 
-    tester.execute(f"--all {output_format}")
+    linux_repo = DummyRepository(name="linux")
+    poetry.pool.add_repository(linux_repo, priority=Priority.EXPLICIT)
+    linux_repo.add_package(get_package("cachy", "0.1.1"))
+    repo.add_package(get_package("cachy", "0.1.2"))
 
-    expected: str | list[dict[str, str]] = ""
+    tester.execute(f"--all {option} {output_format}")
+
     if "json" in output_format:
         expected = [
             {
@@ -1845,18 +1856,31 @@ def test_show_all_shows_all_duplicates(
             },
             {
                 "name": "cachy",
-                "version": "0.1.1",
+                "version": "0.1.2",
                 "description": "Cachy package",
                 "installed_status": "not-installed",
             },
         ]
+        if option:
+            expected[0]["latest_version"] = "0.1.1"
+            expected[1]["latest_version"] = "0.1.2"
+        if option == "--outdated":
+            expected.pop()
         assert json.loads(tester.io.fetch_output()) == expected
     else:
-        expected = """\
-cachy     0.1.0 Cachy package
-cachy (!) 0.1.1 Cachy package
-"""
-        assert tester.io.fetch_output() == expected
+        if option:
+            expected_lines = [
+                "cachy     0.1.0 0.1.1 Cachy package",
+                "cachy (!) 0.1.2 0.1.2 Cachy package",
+            ]
+        else:
+            expected_lines = [
+                "cachy     0.1.0 Cachy package",
+                "cachy (!) 0.1.2 Cachy package",
+            ]
+        if option == "--outdated":
+            expected_lines = ["cachy     0.1.0 0.1.1 Cachy package"]
+        assert tester.io.fetch_output().splitlines() == expected_lines
 
 
 @output_format_parametrize
