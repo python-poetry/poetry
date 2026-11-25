@@ -34,6 +34,28 @@ _PACKAGE_QUIX.add_dependency(Factory.create_dependency("baz", "*"))
         ([_PACKAGE_FOO], {}, [], set()),
         # An empty extras group should return an empty list
         ([_PACKAGE_FOO], {"group0": []}, ["group0"], set()),
+        # Unknown extras are ignored, including alongside a known extra
+        ([_PACKAGE_FOO], {"group0": ["foo"]}, ["unknown"], set()),
+        (
+            [_PACKAGE_FOO, _PACKAGE_BAR],
+            {"group0": ["bar"]},
+            ["unknown", "group0"],
+            {"bar", "foo"},
+        ),
+        # Missing packages do not prevent resolving the available packages
+        (
+            [_PACKAGE_SPAM],
+            {"group0": ["foo", "spam"]},
+            ["group0"],
+            {"spam"},
+        ),
+        # A missing transitive dependency does not discard its parent
+        (
+            [_PACKAGE_BAR, _PACKAGE_SPAM],
+            {"group0": ["bar", "spam"]},
+            ["group0"],
+            {"bar", "spam"},
+        ),
         # Selecting an extras group should return the contained packages
         (
             [_PACKAGE_FOO, _PACKAGE_SPAM, _PACKAGE_BAR],
