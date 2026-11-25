@@ -217,7 +217,9 @@ class EnvManager:
         # most users have it activated all the time.
         # Treat an empty env_prefix as if no virtualenv is active, since conda
         # can leave CONDA_PREFIX set to an empty string after deactivation.
-        in_venv = bool(env_prefix) and conda_env_name != "base"
+        in_venv = bool(env_prefix) and (
+            "VIRTUAL_ENV" in os.environ or conda_env_name != "base"
+        )
 
         if not in_venv or env is not None:
             # Checking if a local virtualenv exists
