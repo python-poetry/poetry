@@ -184,3 +184,59 @@ def test_parse_dependency_specification(
         RequirementsParser(artifact_cache=artifact_cache).parse(requirement)
         in expected_variants
     )
+
+
+@pytest.mark.parametrize(
+    ("requirement", "expected_path", "expected_extras"),
+    [
+        ("./wheels/demo[dev]", "wheels/demo", ["dev"]),
+        ("./wheels[1]/demo[dev]", "wheels[1]/demo", ["dev"]),
+        ("./wheels/demo[foo.bar]", "wheels/demo", ["foo.bar"]),
+    ],
+)
+def test_parse_path_with_trailing_extras(
+    requirement: str,
+    expected_path: str,
+    expected_extras: list[str],
+    mocker: MockerFixture,
+    artifact_cache: ArtifactCache,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The trailing [dev] is an extra, not part of the path. A bracket earlier
+    # in the path must stay put. A dotted extra is valid.
+    relative = requirement[: requirement.rfind("[")]
+    (tmp_path / relative).mkdir(parents=True)
+    monkeypatch.chdir(tmp_path)
+    mocker.patch(
+        "poetry.inspection.info.get_pep517_metadata",
+        return_value=PackageInfo(name="demo", version="0.1.0"),
+    )
+
+    parsed = RequirementsParser(artifact_cache=artifact_cache).parse(requirement)
+
+    assert parsed["name"] == "demo"
+    assert parsed["path"] == expected_path
+    assert parsed["extras"] == expected_extras
+
+
+def test_parse_ipv6_url_with_trailing_extras(
+    mocker: MockerFixture,
+    artifact_cache: ArtifactCache,
+) -> None:
+    url = "http://[::1]:8000/demo-0.1.0-py3-none-any.whl"
+    package = mocker.Mock()
+    package.name = "demo"
+    package.source_url = url
+    get_package = mocker.patch(
+        "poetry.packages.direct_origin.DirectOrigin.get_package_from_url",
+        return_value=package,
+    )
+
+    parser = RequirementsParser(artifact_cache=artifact_cache)
+    parsed = parser.parse(f"{url}[dev]")
+    dotted = parser.parse(f"{url}[dev.extra]")
+
+    assert parsed == {"name": "demo", "url": url, "extras": ["dev"]}
+    assert dotted == {"name": "demo", "url": url, "extras": ["dev.extra"]}
+    assert get_package.call_args.args[-1] == url
