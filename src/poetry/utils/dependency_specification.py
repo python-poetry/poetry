@@ -77,10 +77,12 @@ class RequirementsParser:
             return specification
 
         extras = []
-        extras_m = re.search(r"\[([\w\d,-_ ]+)\]$", requirement)
+        # Hyphen has to sit at the end. Between "," and "_" it is a range, so
+        # the class swallows "/" and "]" and the match starts at the first "[".
+        extras_m = re.search(r"\[([\w\d,_ -]+)\]$", requirement)
         if extras_m:
             extras = [e.strip() for e in extras_m.group(1).split(",")]
-            requirement, _ = requirement.split("[")
+            requirement = requirement[: extras_m.start()]
 
         specification = (
             self._parse_url(requirement)
