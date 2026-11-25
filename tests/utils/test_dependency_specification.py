@@ -187,22 +187,24 @@ def test_parse_dependency_specification(
 
 
 @pytest.mark.parametrize(
-    ("requirement", "expected_path"),
+    ("requirement", "expected_path", "expected_extras"),
     [
-        ("./wheels/demo[dev]", "wheels/demo"),
-        ("./wheels[1]/demo[dev]", "wheels[1]/demo"),
+        ("./wheels/demo[dev]", "wheels/demo", ["dev"]),
+        ("./wheels[1]/demo[dev]", "wheels[1]/demo", ["dev"]),
+        ("./wheels/demo[foo.bar]", "wheels/demo", ["foo.bar"]),
     ],
 )
 def test_parse_path_with_trailing_extras(
     requirement: str,
     expected_path: str,
+    expected_extras: list[str],
     mocker: MockerFixture,
     artifact_cache: ArtifactCache,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     # The trailing [dev] is an extra, not part of the path. A bracket earlier
-    # in the path must stay put.
+    # in the path must stay put. A dotted extra is valid.
     relative = requirement[: requirement.rfind("[")]
     (tmp_path / relative).mkdir(parents=True)
     monkeypatch.chdir(tmp_path)
@@ -215,7 +217,7 @@ def test_parse_path_with_trailing_extras(
 
     assert parsed["name"] == "demo"
     assert parsed["path"] == expected_path
-    assert parsed["extras"] == ["dev"]
+    assert parsed["extras"] == expected_extras
 
 
 def test_parse_ipv6_url_with_trailing_extras(
@@ -231,7 +233,10 @@ def test_parse_ipv6_url_with_trailing_extras(
         return_value=package,
     )
 
-    parsed = RequirementsParser(artifact_cache=artifact_cache).parse(f"{url}[dev]")
+    parser = RequirementsParser(artifact_cache=artifact_cache)
+    parsed = parser.parse(f"{url}[dev]")
+    dotted = parser.parse(f"{url}[dev.extra]")
 
     assert parsed == {"name": "demo", "url": url, "extras": ["dev"]}
+    assert dotted == {"name": "demo", "url": url, "extras": ["dev.extra"]}
     assert get_package.call_args.args[-1] == url
