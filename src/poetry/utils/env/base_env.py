@@ -522,6 +522,13 @@ class Env(ABC):
                 if bin_path.exists():
                     return str(bin_path)
 
+                if Path(bin).name == bin and not bin.lower().endswith(".exe"):
+                    script = bin if bin.lower().endswith(".cmd") else bin + ".cmd"
+                    for directory in (self._bin_dir, self._path):
+                        script_path = directory / script
+                        if script_path.is_file():
+                            return str(script_path)
+
             return bin
 
         return str(bin_path)
