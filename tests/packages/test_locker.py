@@ -469,6 +469,7 @@ content-hash = "123456789"
 
     dependency_b = package.extras[canonicalize_name("b")][0]
     assert dependency_b.name == "b"
+    assert dependency_b.extras == frozenset()
 
 
 def test_locker_properly_loads_subdir(locker: Locker) -> None:

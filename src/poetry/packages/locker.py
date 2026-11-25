@@ -452,10 +452,12 @@ class Locker:
                             if not m:
                                 raise
                             dep_name = m.group(1)
-                            extras = m.group(2) or ""
+                            raw_extras = m.group(2)
                             constraint = m.group(3) or "*"
                             dependency = Dependency(
-                                dep_name, constraint, extras=extras.split(",")
+                                dep_name,
+                                constraint,
+                                extras=raw_extras.split(",") if raw_extras else None,
                             )
                         package_extras[name].append(dependency)
 
