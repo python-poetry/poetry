@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from cleo.io.buffered_io import BufferedIO
 from cleo.io.null_io import NullIO
 from cleo.testers.application_tester import ApplicationTester
 
@@ -302,3 +303,40 @@ def test_build_handler_build_isolated(
     handler.build(BuildOptions(clean=True, formats=["wheel"], output="dist"))
 
     assert mock_builder.build.call_count == 1
+
+
+def test_build_with_config_settings(
+    tmp_tester: CommandTester, tmp_project_path: Path, tmp_poetry: Poetry
+) -> None:
+    shutil.rmtree(tmp_project_path / "dist")
+    tmp_tester.execute("--config-settings local-version=cfg")
+
+    build_artifacts = tuple(
+        (tmp_project_path / "dist").glob(
+            get_package_glob(tmp_poetry, local_version="cfg")
+        )
+    )
+
+    assert len(build_artifacts) == 2
+    assert all(archive.exists() for archive in build_artifacts)
+
+
+def test_build_with_invalid_config_settings_option(tmp_tester: CommandTester) -> None:
+    with pytest.raises(
+        ValueError, match="Invalid config setting format: not-a-setting"
+    ):
+        tmp_tester.execute("--config-settings not-a-setting")
+
+
+@pytest.mark.parametrize("project", ["no_build_system", "no_build_backend"])
+def test_requires_isolated_build_warns_when_build_backend_is_missing(
+    project: str,
+    fixture_dir: FixtureDirGetter,
+    mocker: MockerFixture,
+) -> None:
+    poetry = Factory().create_poetry(fixture_dir(f"build_systems/{project}"))
+    io = BufferedIO()
+    handler = BuildHandler(poetry=poetry, env=mocker.Mock(), io=io)
+
+    assert handler._requires_isolated_build() is False
+    assert "No build backend defined" in io.fetch_error()
