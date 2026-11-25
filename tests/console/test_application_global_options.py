@@ -235,6 +235,7 @@ def test_application_with_relative_directory_parameter_uses_absolute_working_dir
 
     assert tester.status_code == 0, tester.io.fetch_error()
     application = tester.application
+    assert isinstance(application, Application)
     assert application._working_directory.is_absolute()
     assert application._working_directory == relative_project_source_directory.resolve()
 
