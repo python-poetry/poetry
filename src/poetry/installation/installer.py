@@ -62,6 +62,7 @@ class Installer:
         self._groups: Iterable[NormalizedName] | None = None
         self._skip_directory = False
         self._lock = False
+        self._ignore_lock_file = False
 
         self._whitelist: list[NormalizedName] = []
 
@@ -162,6 +163,15 @@ class Installer:
 
         return self
 
+    def ignore_lock_file(self, ignore: bool = True) -> Installer:
+        """
+        Do not use the existing lock file to determine the versions of packages
+        that are not whitelisted for an update.
+        """
+        self._ignore_lock_file = ignore
+
+        return self
+
     def is_updating(self) -> bool:
         return self._update
 
@@ -222,7 +232,11 @@ class Installer:
         lockfile_repo = LockfileRepository()
 
         if self._update:
-            if not self._lock and self._locker.is_locked():
+            if (
+                not self._lock
+                and not self._ignore_lock_file
+                and self._locker.is_locked()
+            ):
                 locked_repository = self._locker.locked_repository()
 
                 # If no packages have been whitelisted (The ones we want to update),
