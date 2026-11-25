@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import re
+import signal
 import subprocess
 import sys
 
@@ -166,6 +167,65 @@ def test_env_get_supported_tags_free_threading(
 @pytest.mark.skipif(os.name == "nt", reason="Symlinks are not support for Windows")
 def test_env_has_symlinks_on_nix(tmp_path: Path, tmp_venv: VirtualEnv) -> None:
     assert os.path.islink(tmp_venv.python)
+
+
+@pytest.mark.skipif(WINDOWS, reason="Windows execution does not replace Poetry")
+def test_execute_preserves_poetry_process(
+    tmp_venv: VirtualEnv, mocker: MockerFixture
+) -> None:
+    """See #8092: plugin cleanup must run after poetry run returns."""
+    replace_process = mocker.patch(
+        "os.execvpe", side_effect=AssertionError("Poetry process was replaced")
+    )
+
+    assert tmp_venv.execute("python", "-c", "import sys; sys.exit(23)") == 23
+    # A second invocation proves that the parent process is still alive.
+    assert tmp_venv.execute("python", "-c", "pass") == 0
+    replace_process.assert_not_called()
+
+
+@pytest.mark.skipif(WINDOWS, reason="GenericEnv uses a separate Windows command path")
+def test_generic_env_execute_preserves_poetry_process(
+    tmp_venv: VirtualEnv, mocker: MockerFixture
+) -> None:
+    """GenericEnv must not replace Poetry or rewrite its environment (#8092)."""
+    generic_env = GenericEnv(tmp_venv.path)
+    replace_process = mocker.patch(
+        "os.execvpe", side_effect=AssertionError("Poetry process was replaced")
+    )
+    rewrite_environment = mocker.patch.object(
+        VirtualEnv,
+        "get_temp_environ",
+        side_effect=AssertionError("GenericEnv rewrote the environment"),
+    )
+
+    assert generic_env.execute("python", "-c", "import sys; sys.exit(17)") == 17
+    assert generic_env.execute("python", "-c", "pass") == 0
+    replace_process.assert_not_called()
+    rewrite_environment.assert_not_called()
+
+
+@pytest.mark.skipif(WINDOWS, reason="POSIX child processes use negative signal codes")
+def test_execute_translates_child_signal_exit_code(tmp_venv: VirtualEnv) -> None:
+    """The CLI should return the conventional 128 + signal exit status."""
+    assert (
+        tmp_venv.execute(
+            "python",
+            "-c",
+            "import os, signal; os.kill(os.getpid(), signal.SIGTERM)",
+        )
+        == 128 + signal.SIGTERM
+    )
+
+
+@pytest.mark.skipif(WINDOWS, reason="Ctrl+C handling is POSIX-only")
+def test_execute_interrupt_returns_shell_status(
+    tmp_venv: VirtualEnv, mocker: MockerFixture
+) -> None:
+    """Ctrl+C should return an exit status so plugin termination can run."""
+    mocker.patch("subprocess.run", side_effect=KeyboardInterrupt())
+
+    assert tmp_venv.execute("python", "-c", "pass") == 128 + signal.SIGINT
 
 
 def test_run_with_keyboard_interrupt(
