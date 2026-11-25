@@ -205,18 +205,29 @@ virtualenvs.use-poetry-python = false
     assert tester.io.fetch_output() == expected
 
 
-def test_unset_setting_when_project_cannot_be_loaded(
-    tester: CommandTester, mocker: MockerFixture
+def test_project_local_config_used_when_project_cannot_be_loaded(
+    tester: CommandTester,
+    config: Config,
+    mocker: MockerFixture,
+    fixture_dir: FixtureDirGetter,
 ) -> None:
+    project = fixture_dir("with_local_config")
     mocker.patch(
         "poetry.console.commands.command.Command.poetry",
         new_callable=mocker.PropertyMock,
         side_effect=PoetryError("Invalid value for installer.max-workers: 0"),
     )
+    mocker.patch(
+        "poetry.factory.Factory.locate", return_value=project / "pyproject.toml"
+    )
 
-    tester.execute("installer.max-workers --unset")
+    tester.execute("virtualenvs.create")
+    assert tester.io.fetch_output() == "false\n"
 
+    tester.execute("installer.max-workers --unset --local")
     assert tester.status_code == 0
+    source = config.set_config_source.call_args[0][0]  # type: ignore[attr-defined]
+    assert source.file.path == project / "poetry.toml"
 
 
 def test_unset_repo_setting(

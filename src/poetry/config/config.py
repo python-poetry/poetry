@@ -440,7 +440,8 @@ class Config:
 
         # Values from config files are not checked when they are loaded.
         if value is not None and self.get_normalizer(keys) is int_normalizer:
-            if not self.get_validator(keys)(value):
+            # TOML floats and booleans would be truncated or converted by int().
+            if isinstance(value, (bool, float)) or not self.get_validator(keys)(value):
                 raise PoetryError(f"Invalid value for {'.'.join(keys)}: {value!r}")
             return int_normalizer(value)
 

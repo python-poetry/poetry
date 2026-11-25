@@ -179,11 +179,14 @@ def test_config_get_from_environment_variable_invalid_int(
         ("requests.max-retries", -1),
         ("installer.max-workers", "not-a-number"),
         ("installer.max-workers", 0),
+        ("installer.max-workers", 2.5),
+        ("installer.max-workers", True),
         ("solver.min-release-age", "not-a-number"),
+        ("solver.min-release-age", float("inf")),
     ],
 )
 def test_config_get_from_file_invalid_int(
-    config: Config, name: str, value: str | int
+    config: Config, name: str, value: str | float
 ) -> None:
     section, key = name.split(".")
     config.merge({section: {key: value}})
