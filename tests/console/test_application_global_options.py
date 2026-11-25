@@ -226,6 +226,19 @@ def test_application_with_relative_project_parameter(
         """)
 
 
+def test_application_with_relative_directory_parameter_uses_absolute_working_directory(
+    tester: ApplicationTester,
+    relative_project_source_directory: Path,
+) -> None:
+    """see https://github.com/python-poetry/poetry/issues/10541"""
+    tester.execute(f"--directory {relative_project_source_directory} version")
+
+    assert tester.status_code == 0, tester.io.fetch_error()
+    application = tester.application
+    assert application._working_directory.is_absolute()
+    assert application._working_directory == relative_project_source_directory.resolve()
+
+
 def test_application_with_relative_directory_parameter_and_early_poetry_access_plugin(
     tester: ApplicationTester,
     with_early_poetry_access_plugin: None,
