@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from poetry.config.source import Source
     from poetry.poetry import Poetry
     from tests.types import CommandTesterFactory
+    from tests.types import ProjectFactory
 
 
 @pytest.fixture
@@ -99,3 +100,90 @@ def test_source_remove_error(name: str, tester: CommandTester) -> None:
     tester.execute(name)
     assert tester.io.fetch_error().strip() == f"Source with name {name} was not found."
     assert tester.status_code == 1
+
+
+PYPROJECT_WITH_REFERENCED_SOURCE = """
+[tool.poetry]
+name = "source-command-test"
+version = "0.1.0"
+description = ""
+authors = ["Poetry Tester <tester@poetry.org>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+{tables}
+[[tool.poetry.source]]
+name = "existing"
+url = "https://existing.com"
+"""
+
+REFERENCE_TABLES = {
+    "main": 'mylib = {version = "^1.0", source = "existing"}',
+    "main-list": (
+        "mylib = [\n"
+        '    {version = "^1.0", source = "existing", python = ">=3.11"},\n'
+        '    {version = "^0.9", source = "existing", python = "<3.11"},\n'
+        "]"
+    ),
+    "group": (
+        "[tool.poetry.group.dev.dependencies]\n"
+        'mylib = {version = "^1.0", source = "existing"}'
+    ),
+}
+
+
+@pytest.fixture
+def poetry_with_referenced_source(
+    project_factory: ProjectFactory, request: pytest.FixtureRequest
+) -> Poetry:
+    tables = REFERENCE_TABLES[request.param]
+    return project_factory(
+        pyproject_content=PYPROJECT_WITH_REFERENCED_SOURCE.format(tables=tables)
+    )
+
+
+@pytest.mark.parametrize(
+    "poetry_with_referenced_source",
+    ["main", "main-list", "group"],
+    indirect=True,
+)
+@pytest.mark.parametrize("name", ["existing", "EXISTING"])
+def test_source_remove_referenced_by_dependency(
+    poetry_with_referenced_source: Poetry,
+    command_tester_factory: CommandTesterFactory,
+    source_existing: Source,
+    name: str,
+) -> None:
+    tester = command_tester_factory(
+        "source remove", poetry=poetry_with_referenced_source
+    )
+
+    tester.execute(name)
+
+    error = tester.io.fetch_error()
+    assert tester.status_code == 1
+    assert f'Cannot remove source "{name}"' in error
+    assert "mylib" in error
+
+    poetry_with_referenced_source.pyproject.reload()
+    assert poetry_with_referenced_source.get_sources() == [source_existing]
+
+
+def test_source_remove_unreferenced_source_kept_working(
+    project_factory: ProjectFactory,
+    command_tester_factory: CommandTesterFactory,
+    source_existing: Source,
+) -> None:
+    poetry = project_factory(
+        pyproject_content=PYPROJECT_WITH_REFERENCED_SOURCE.format(
+            tables='mylib = {version = "^1.0", source = "other"}'
+        )
+    )
+    tester = command_tester_factory("source remove", poetry=poetry)
+
+    tester.execute("existing")
+
+    assert tester.status_code == 0
+    poetry.pyproject.reload()
+    assert poetry.get_sources() == []
