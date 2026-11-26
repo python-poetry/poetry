@@ -4,6 +4,7 @@ import dataclasses
 
 from typing import TYPE_CHECKING
 
+from poetry.repositories.exceptions import InvalidSourceError
 from poetry.repositories.repository_pool import Priority
 
 
@@ -21,7 +22,14 @@ class Source:
 
     def __post_init__(self) -> None:
         if isinstance(self.priority, str):
-            self.priority = Priority[self.priority.upper()]
+            try:
+                self.priority = Priority[self.priority.upper()]
+            except KeyError:
+                raise InvalidSourceError(
+                    f"Invalid priority {self.priority!r} in source"
+                    f" {self.name!r}. Must be one of:"
+                    f" {', '.join(p.name.lower() for p in Priority)}."
+                ) from None
 
     def to_dict(self) -> dict[str, str | bool]:
         return dataclasses.asdict(
