@@ -24,6 +24,7 @@ from poetry.installation.operations import Update
 from poetry.installation.uninstaller import uninstall_distribution
 from poetry.installation.wheel_installer import WheelInstaller
 from poetry.puzzle.exceptions import SolverProblemError
+from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.utils._compat import decode
 from poetry.utils.authenticator import Authenticator
 from poetry.utils.download import Downloader
@@ -95,6 +96,13 @@ class Executor:
         self._authenticator = Authenticator(
             config, self._io, disable_cache=disable_cache, pool_size=self._max_workers
         )
+        # Sources declared in pyproject.toml are not part of the "repositories"
+        # config section, so register them to find their credentials when
+        # downloading artifacts (the repositories' own authenticators know them,
+        # this one does not).
+        for repository in pool.all_repositories:
+            if isinstance(repository, LegacyRepository):
+                self._authenticator.add_repository(repository.name, repository.url)
         self._chef = Chef(self._artifact_cache, self._env, pool)
         self._chooser = Chooser(pool, self._env, config)
 
