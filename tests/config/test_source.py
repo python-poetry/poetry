@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from poetry.config.source import Source
+from poetry.repositories.exceptions import InvalidSourceError
 from poetry.repositories.repository_pool import Priority
 
 
@@ -50,3 +51,17 @@ def test_source_priority_as_string(priority: str, expected_priority: Priority) -
         priority=priority,  # type: ignore[arg-type]
     )
     assert source.priority == expected_priority
+
+
+def test_source_invalid_priority_as_string() -> None:
+    with pytest.raises(InvalidSourceError) as e:
+        Source(
+            "foo",
+            "https://example.com",
+            priority="bogus",  # type: ignore[arg-type]
+        )
+
+    assert str(e.value) == (
+        "Invalid priority 'bogus' in source 'foo'."
+        " Must be one of: primary, supplemental, explicit."
+    )
