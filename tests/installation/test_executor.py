@@ -31,6 +31,7 @@ from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
 from poetry.installation.operations import Update
 from poetry.installation.wheel_installer import WheelInstaller
+from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.repository_pool import RepositoryPool
 from poetry.utils.cache import ArtifactCache
 from poetry.utils.env import MockEnv
@@ -171,6 +172,28 @@ def executor(
     env: MockEnv, pool: RepositoryPool, config: Config, io: BufferedIO
 ) -> Executor:
     return Executor(env, pool, config, io)
+
+
+def test_executor_uses_credentials_of_pool_repositories_for_downloads(
+    env: MockEnv, config: Config, io: BufferedIO
+) -> None:
+    # sources declared in pyproject.toml are not in the "repositories" config
+    # section, but their credentials must still be used to download artifacts
+    config.merge(
+        {"http-basic": {"pypistore": {"username": "aws", "password": "secret"}}}
+    )
+    pool = RepositoryPool()
+    pool.add_repository(
+        LegacyRepository("pypistore", "https://foo.bar/pypi/pypistore/simple/")
+    )
+    executor = Executor(env, pool, config, io)
+
+    credential = executor._authenticator.get_credentials_for_url(
+        "https://foo.bar/pypi/pypistore/files/py4j-0.10.9.7-py2.py3-none-any.whl"
+    )
+
+    assert credential.username == "aws"
+    assert credential.password == "secret"
 
 
 @pytest.fixture
