@@ -105,6 +105,18 @@ def test_noninteractive(
     assert expected_build_system in toml_content
 
 
+def test_noninteractive_invalid_author(tester: CommandTester) -> None:
+    tester.execute(
+        args="--name my-package --author 'Bob <>'",
+        interactive=False,
+    )
+
+    assert tester.io.fetch_error().strip() == (
+        "Invalid author string. Must be in the format: John Smith <john@example.com>"
+    )
+    assert tester.status_code == 1
+
+
 def test_noninteractive_sanitizes_default_name_from_directory(
     app: PoetryTestApplication,
     mocker: MockerFixture,
@@ -127,6 +139,18 @@ def test_noninteractive_sanitizes_default_name_from_directory(
 
     toml_content = (project_path / "pyproject.toml").read_text(encoding="utf-8")
     assert 'name = "my-project-with-spaces"' in toml_content
+
+
+def test_noninteractive_invalid_author(tester: CommandTester) -> None:
+    tester.execute(
+        args="--name my-package --author 'Bob <>'",
+        interactive=False,
+    )
+
+    assert tester.io.fetch_error().strip() == (
+        "Invalid author string. Must be in the format: John Smith <john@example.com>"
+    )
+    assert tester.status_code == 1
 
 
 @pytest.mark.parametrize(

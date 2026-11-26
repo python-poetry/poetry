@@ -160,6 +160,16 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             )
             question.set_validator(lambda v: self._validate_author(v, author))
             author = self.ask(question)
+        elif author:
+            # Nothing validates a non-interactive --author, which lets an
+            # invalid value reach the layout and fail there with an internal
+            # "Invalid author" error instead of this user-facing message.
+            try:
+                self._validate_author(author, author)
+            except ValueError as e:
+                self.line_error(f"<error>{e}</error>")
+
+                return 1
 
         authors = [author] if author else []
 
