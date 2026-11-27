@@ -14,7 +14,9 @@ from poetry.config.config import Config
 from poetry.config.config import PackageFilterPolicy
 from poetry.config.config import boolean_normalizer
 from poetry.config.config import int_normalizer
+from poetry.config.config import int_validator
 from poetry.config.config import str_list_normalizer
+from poetry.exceptions import InvalidSettingError
 from poetry.exceptions import PoetryError
 from poetry.utils.password_manager import PasswordManager
 from tests.helpers import flatten_dict
@@ -170,6 +172,54 @@ def test_config_get_from_environment_variable_invalid_int(
 
     with pytest.raises(PoetryError, match=env_var):
         config.get(name)
+
+
+@pytest.mark.parametrize(
+    ("name", "value"),
+    [
+        ("requests.max-retries", "not-a-number"),
+        ("requests.max-retries", -1),
+        ("installer.max-workers", "not-a-number"),
+        ("installer.max-workers", 0),
+        ("installer.max-workers", 2.5),
+        ("installer.max-workers", True),
+        ("solver.min-release-age", "not-a-number"),
+        ("solver.min-release-age", float("inf")),
+    ],
+)
+def test_config_get_from_file_invalid_int(
+    config: Config, name: str, value: str | float
+) -> None:
+    section, key = name.split(".")
+    config.merge({section: {key: value}})
+
+    with pytest.raises(InvalidSettingError, match=re.escape(name)):
+        config.get(name)
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("3", True),
+        (5, True),
+        ("-1", False),
+        (2.5, False),
+        (True, False),
+        ("abc", False),
+    ],
+)
+def test_int_validator(value: str | float, expected: bool) -> None:
+    assert int_validator(value) is expected
+
+
+@pytest.mark.parametrize(
+    "name", ["requests.max-retries", "installer.max-workers", "solver.min-release-age"]
+)
+def test_config_get_from_file_int_as_string(config: Config, name: str) -> None:
+    section, key = name.split(".")
+    config.merge({section: {key: "4"}})
+
+    assert config.get(name) == 4
 
 
 @pytest.mark.parametrize(

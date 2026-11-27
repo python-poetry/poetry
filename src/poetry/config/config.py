@@ -19,7 +19,7 @@ from packaging.utils import canonicalize_name
 from poetry.config.config_source import split_key
 from poetry.config.dict_config_source import DictConfigSource
 from poetry.config.file_config_source import FileConfigSource
-from poetry.exceptions import PoetryError
+from poetry.exceptions import InvalidSettingError
 from poetry.locations import CONFIG_DIR
 from poetry.locations import DEFAULT_CACHE_DIR
 from poetry.locations import data_dir
@@ -42,7 +42,10 @@ def boolean_normalizer(val: str) -> bool:
     return val.lower() in ["true", "1"]
 
 
-def int_validator(val: str, min_val: int = 0) -> bool:
+def int_validator(val: str | float, min_val: int = 0) -> bool:
+    # TOML floats and booleans would be truncated or converted by int().
+    if isinstance(val, (bool, float)):
+        return False
     try:
         return int(val) >= min_val
     except (ValueError, TypeError):
@@ -414,12 +417,12 @@ class Config:
                     if normalizer is int_normalizer and not self.get_validator(keys)(
                         env_value
                     ):
-                        raise PoetryError(
+                        raise InvalidSettingError(
                             f"Invalid value for environment variable {env}: {env_value!r}"
                         )
                     return self.process(normalizer(env_value))
 
-        value = self._config
+        value: Any = self._config
 
         # merge installer build config settings from the environment
         for package_name in build_config_settings:
@@ -437,6 +440,14 @@ class Config:
             # this is a configuration table, it is likely that we missed env vars
             # in order to capture them recurse, eg: virtualenvs.options
             return {k: self.get([*keys, k]) for k in value}
+
+        # Values from config files are not checked when they are loaded.
+        if value is not None and self.get_normalizer(keys) is int_normalizer:
+            if not self.get_validator(keys)(value):
+                raise InvalidSettingError(
+                    f"Invalid value for {'.'.join(keys)}: {value!r}"
+                )
+            return int_normalizer(value)
 
         return self.process(value)
 
