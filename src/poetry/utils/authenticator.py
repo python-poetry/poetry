@@ -202,10 +202,11 @@ class Authenticator:
         if credential.username is not None and credential.password is not None:
             username = urllib.parse.quote(credential.username, safe="")
             password = urllib.parse.quote(credential.password, safe="")
+            # The netloc of a url that already contains credentials includes
+            # them, so strip any userinfo before adding the credentials back.
+            netloc = parsed.netloc.rsplit("@", 1)[-1]
 
-            return (
-                f"{parsed.scheme}://{username}:{password}@{parsed.netloc}{parsed.path}"
-            )
+            return f"{parsed.scheme}://{username}:{password}@{netloc}{parsed.path}"
 
         return url
 

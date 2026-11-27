@@ -70,6 +70,28 @@ def test_authenticator_uses_url_provided_credentials(
     assert request.headers["Authorization"] == f"Basic {basic_auth}"
 
 
+def test_authenticated_url_does_not_duplicate_credentials_from_url(
+    mock_config: Config,
+) -> None:
+    authenticator = Authenticator(mock_config, NullIO())
+
+    # The netloc of a url that carries credentials includes them, so they must
+    # not be repeated in front of it.
+    assert (
+        authenticator.authenticated_url("https://foo001:bar002@foo.bar/simple/")
+        == "https://foo001:bar002@foo.bar/simple/"
+    )
+
+
+def test_authenticated_url_adds_configured_credentials(mock_config: Config) -> None:
+    authenticator = Authenticator(mock_config, NullIO())
+
+    assert (
+        authenticator.authenticated_url("https://foo.bar/simple/")
+        == "https://bar:baz@foo.bar/simple/"
+    )
+
+
 def test_authenticator_uses_credentials_from_config_if_not_provided(
     mock_config: Config, mock_remote: None, http: responses.RequestsMock
 ) -> None:
