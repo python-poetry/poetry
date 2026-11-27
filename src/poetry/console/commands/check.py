@@ -109,6 +109,10 @@ class CheckCommand(Command):
         if "dependencies" in config:
             dependency_declarations.append(config["dependencies"])
 
+        # the legacy `dev-dependencies` section is still supported (and deprecated)
+        if "dev-dependencies" in config:
+            dependency_declarations.append(config["dev-dependencies"])
+
         for group in config.get("group", {}).values():
             if "dependencies" in group:
                 dependency_declarations.append(group["dependencies"])
