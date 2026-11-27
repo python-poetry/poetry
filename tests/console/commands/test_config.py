@@ -14,6 +14,7 @@ from poetry.core.pyproject.exceptions import PyProjectError
 from poetry.config.config_source import ConfigSource
 from poetry.config.config_source import PropertyNotFoundError
 from poetry.console.commands.install import InstallCommand
+from poetry.exceptions import InvalidSettingError
 from poetry.exceptions import PoetryError
 from poetry.factory import Factory
 from poetry.repositories.legacy_repository import LegacyRepository
@@ -215,7 +216,7 @@ def test_project_local_config_used_when_project_cannot_be_loaded(
     mocker.patch(
         "poetry.console.commands.command.Command.poetry",
         new_callable=mocker.PropertyMock,
-        side_effect=PoetryError("Invalid value for installer.max-workers: 0"),
+        side_effect=InvalidSettingError("Invalid value for installer.max-workers: 0"),
     )
     mocker.patch(
         "poetry.factory.Factory.locate", return_value=project / "pyproject.toml"
@@ -228,6 +229,19 @@ def test_project_local_config_used_when_project_cannot_be_loaded(
     assert tester.status_code == 0
     source = config.set_config_source.call_args[0][0]  # type: ignore[attr-defined]
     assert source.file.path == project / "poetry.toml"
+
+
+def test_other_errors_loading_project_are_not_ignored(
+    tester: CommandTester, mocker: MockerFixture
+) -> None:
+    mocker.patch(
+        "poetry.console.commands.command.Command.poetry",
+        new_callable=mocker.PropertyMock,
+        side_effect=PoetryError("This project requires Poetry >=99"),
+    )
+
+    with pytest.raises(PoetryError, match="requires Poetry"):
+        tester.execute("--list")
 
 
 def test_unset_repo_setting(
