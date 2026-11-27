@@ -219,7 +219,7 @@ class EnvManager:
         # can leave CONDA_PREFIX set to an empty string after deactivation.
         in_venv = bool(env_prefix) and conda_env_name != "base"
 
-        if not in_venv or env is not None:
+        if not in_venv or env is not None or self.in_project_venv_exists():
             # Checking if a local virtualenv exists
             if self.in_project_venv_exists():
                 venv = self.in_project_venv
