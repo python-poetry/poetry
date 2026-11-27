@@ -190,6 +190,41 @@ Warning: Deprecated classifier\
     assert tester.io.fetch_error() == expected
 
 
+def test_check_invalid_source_in_legacy_dev_dependencies(
+    mocker: MockerFixture, tester: CommandTester, tmp_path: Path
+) -> None:
+    pyproject = tmp_path / "pyproject.toml"
+    pyproject.write_text(
+        """\
+[tool.poetry]
+name = "legacy-dev"
+version = "0.1.0"
+description = ""
+authors = ["Foo <foo@example.org>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+[tool.poetry.dev-dependencies]
+pytest = { version = "*", source = "not-exists" }
+""",
+        encoding="utf-8",
+    )
+    mocker.patch(
+        "poetry.poetry.Poetry.file",
+        return_value=TOMLFile(pyproject),
+        new_callable=mocker.PropertyMock,
+    )
+
+    tester.execute()
+
+    assert (
+        'Error: Invalid source "not-exists" referenced in dependencies.\n'
+        in tester.io.fetch_error()
+    )
+    assert tester.status_code == 1
+
+
 def test_check_private(
     mocker: MockerFixture, tester: CommandTester, fixture_dir: FixtureDirGetter
 ) -> None:
