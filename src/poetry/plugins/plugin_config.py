@@ -50,6 +50,7 @@ class PluginConfig:
         default: Any = None,
         validator: Callable[[str], bool] | None = None,
         normalizer: Callable[[str], Any] | None = None,
+        secret: bool = False,
     ) -> None:
         """
         Declare one of the plugin's settings with a default value.
@@ -58,13 +59,19 @@ class PluginConfig:
         e.g. with "poetry config" or an environment variable. The default
         value is only used if the setting is not configured already, e.g. in
         the user's or the project's configuration file.
+
+        A setting that holds a secret, e.g. a token, should be marked as
+        secret so that it is not shown in the output of "poetry config
+        --list" and cannot be read with "poetry config <key>".
         """
         self._config.add_plugin_setting(
             self._name,
             key,
             default,
             ConfigSetting(
-                validator or _accept_any_value, normalizer or _keep_value_as_is
+                validator or _accept_any_value,
+                normalizer or _keep_value_as_is,
+                secret,
             ),
         )
 

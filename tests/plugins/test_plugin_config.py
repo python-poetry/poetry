@@ -25,6 +25,7 @@ if TYPE_CHECKING:
     from cleo.io.io import IO
     from pytest_mock import MockerFixture
 
+    from poetry.plugins.plugin_config import PluginConfig
     from tests.types import FixtureDirGetter
 
 
@@ -33,15 +34,19 @@ class SettingsPlugin(Plugin):
     A plugin declaring its own settings as proposed for the plugin API.
     """
 
-    def activate(self, poetry: Poetry, io: IO) -> None:
-        self.config = poetry.config.register_plugin(self)
-        self.config.define_setting("mirror-url", "https://pypi.org/simple")
-        self.config.define_setting(
+    def declare_settings(self, config: PluginConfig) -> None:
+        config.define_setting("mirror-url", "https://pypi.org/simple")
+        config.define_setting(
             "retries", 3, validator=int_validator, normalizer=int_normalizer
         )
-        self.config.define_setting(
+        config.define_setting(
             "enabled", True, validator=boolean_validator, normalizer=boolean_normalizer
         )
+
+    def activate(self, poetry: Poetry, io: IO) -> None:
+        self.config = poetry.config.register_plugin(self)
+        self.mirror_url = self.config.get("mirror-url")
+        self.retries = self.config.get("retries")
 
 
 def test_plugin_settings_are_registered_with_their_default_values(
@@ -152,6 +157,66 @@ def test_invalid_plugin_setting_environment_variable_is_rejected(
         plugin_config.get("retries")
 
 
+def test_invalid_plugin_setting_environment_variable_is_rejected_for_any_normalizer(
+    config: Config, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    plugin_config = config.register_plugin(SettingsPlugin(), name="demo-plugin")
+    plugin_config.define_setting(
+        "enabled", True, validator=boolean_validator, normalizer=boolean_normalizer
+    )
+
+    monkeypatch.setenv("POETRY_PLUGINS_DEMO_PLUGIN_ENABLED", "not-a-boolean")
+
+    with pytest.raises(PoetryError):
+        plugin_config.get("enabled")
+
+    monkeypatch.setenv("POETRY_PLUGINS_DEMO_PLUGIN_ENABLED", "true")
+
+    assert plugin_config.get("enabled") is True
+
+
+def test_secret_plugin_settings_are_marked_as_secret(config: Config) -> None:
+    plugin_config = config.register_plugin(SettingsPlugin(), name="demo-plugin")
+    plugin_config.define_setting("token", "", secret=True)
+    plugin_config.define_setting("mirror-url", "https://pypi.org/simple")
+
+    assert config.is_secret_setting("plugins.demo-plugin.token")
+    assert not config.is_secret_setting("plugins.demo-plugin.mirror-url")
+    assert not config.is_secret_setting("virtualenvs.create")
+
+
+def test_plugin_settings_are_registered_when_the_plugin_is_loaded(
+    config: Config, mocker: MockerFixture
+) -> None:
+    mock_metadata_entry_points(mocker, SettingsPlugin)
+
+    PluginManager(Plugin.group).load_plugins()
+
+    plugin_name = canonicalize_name(SettingsPlugin.__module__.split(".", maxsplit=1)[0])
+    assert config.has_setting(f"plugins.{plugin_name}.mirror-url")
+    assert config.get(f"plugins.{plugin_name}.mirror-url") == "https://pypi.org/simple"
+    assert config.get(f"plugins.{plugin_name}.retries") == 3
+
+
+def test_settings_of_plugins_that_are_no_longer_loaded_are_removed(
+    config: Config, mocker: MockerFixture
+) -> None:
+    mock_metadata_entry_points(mocker, SettingsPlugin)
+    manager = PluginManager(Plugin.group)
+    manager.load_plugins()
+
+    plugin_name = canonicalize_name(SettingsPlugin.__module__.split(".", maxsplit=1)[0])
+    assert config.has_setting(f"plugins.{plugin_name}.mirror-url")
+
+    # the plugin is not available anymore, e.g. because it was uninstalled
+    mocker.patch("importlib.metadata.entry_points", return_value=[])
+    PluginManager(Plugin.group).load_plugins()
+
+    assert not config.has_setting(f"plugins.{plugin_name}.mirror-url")
+    assert config.get(f"plugins.{plugin_name}.mirror-url") is None
+    assert config.get(f"plugins.{plugin_name}.retries") is None
+
+
 def test_plugin_settings_are_scoped_to_the_name_of_the_plugin_package(
     config: Config,
 ) -> None:
@@ -172,8 +237,8 @@ def test_plugin_settings_are_scoped_to_the_name_of_the_plugin_package(
     )
 
 
-def test_plugin_settings_are_registered_when_the_plugin_is_activated(
-    config: Config, fixture_dir: FixtureDirGetter, mocker: MockerFixture
+def test_plugin_can_read_its_settings_in_activate(
+    config: Config, fixture_dir: FixtureDirGetter
 ) -> None:
     project_path = fixture_dir("simple_project")
     poetry = Poetry(
@@ -183,23 +248,16 @@ def test_plugin_settings_are_registered_when_the_plugin_is_activated(
         Locker(project_path / "poetry.lock", {}),
         config,
     )
+    plugin = SettingsPlugin()
+    plugin.declare_settings(config.register_plugin(plugin))
 
-    mock_metadata_entry_points(mocker, SettingsPlugin)
+    plugin.activate(poetry, BufferedIO())
 
-    manager = PluginManager(Plugin.group)
-    manager.load_plugins()
-    manager.activate(poetry, BufferedIO())
-
-    # settings are scoped to the name of the package the plugin is defined in
-    plugin_name = canonicalize_name(SettingsPlugin.__module__.split(".", maxsplit=1)[0])
-
-    assert config.get(f"plugins.{plugin_name}.mirror-url") == "https://pypi.org/simple"
-    assert config.get(f"plugins.{plugin_name}.retries") == 3
+    assert plugin.mirror_url == "https://pypi.org/simple"
+    assert plugin.retries == 3
 
 
-def test_plugin_setting_registration_fails_if_the_config_value_is_not_a_table(
-    config: Config,
-) -> None:
+def test_failed_registration_does_not_register_the_setting(config: Config) -> None:
     config.merge({"plugins": {"demo-plugin": "not-a-table"}})
     plugin_config = config.register_plugin(SettingsPlugin(), name="demo-plugin")
 
@@ -207,3 +265,23 @@ def test_plugin_setting_registration_fails_if_the_config_value_is_not_a_table(
         plugin_config.define_setting("mirror-url", "https://pypi.org/simple")
 
     assert "plugins.demo-plugin is configured as a non-table value" in str(e.value)
+    assert not config.has_setting("plugins.demo-plugin.mirror-url")
+    assert config.get("plugins.demo-plugin.mirror-url") is None
+
+
+def test_mutable_plugin_defaults_are_not_shared_between_configs() -> None:
+    default_items = ["a", "b"]
+
+    config1 = Config()
+    config1.register_plugin(SettingsPlugin(), name="demo-plugin").define_setting(
+        "items", default_items
+    )
+    config2 = Config()
+    config2.register_plugin(SettingsPlugin(), name="demo-plugin").define_setting(
+        "items", default_items
+    )
+
+    config1.get("plugins.demo-plugin.items").append("c")
+
+    assert default_items == ["a", "b"]
+    assert config2.get("plugins.demo-plugin.items") == ["a", "b"]

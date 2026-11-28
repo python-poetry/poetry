@@ -161,6 +161,7 @@ def path_normalizer(val: str) -> str:
 class ConfigSetting:
     validator: Callable[[str], bool]
     normalizer: Callable[[str], Any]
+    secret: bool = False
 
 
 _BOOLEAN_SETTING = ConfigSetting(boolean_validator, boolean_normalizer)
@@ -262,6 +263,10 @@ class Config:
         self._config_source: ConfigSource = DictConfigSource()
         self._auth_config_source: ConfigSource = DictConfigSource()
         self._plugin_settings: dict[str, ConfigSetting] = {}
+        # plugin group -> names of the plugins that declared settings
+        self._plugin_groups: dict[str, set[str]] = {}
+        # setting key -> default value that was inserted into the configuration
+        self._plugin_setting_defaults: dict[str, Any] = {}
 
     @property
     def config(self) -> dict[str, Any]:
@@ -300,7 +305,10 @@ class Config:
         if name is None:
             name = type(plugin).__module__.split(".", maxsplit=1)[0]
 
-        return PluginConfig(self, name)
+        plugin_name = canonicalize_name(name)
+        self._plugin_groups.setdefault(plugin.group, set()).add(plugin_name)
+
+        return PluginConfig(self, plugin_name)
 
     def add_plugin_setting(
         self, name: str, key: str, default: Any, setting: ConfigSetting
@@ -313,8 +321,12 @@ class Config:
         the user's or the project's configuration file.
         """
         setting_key = f"{PLUGIN_SETTINGS_SECTION}.{canonicalize_name(name)}.{key}"
+        # The setting is only registered if its default value could be applied
+        # so that a failed registration does not leave the setting behind.
+        if self._set_default_config_value(setting_key, default):
+            self._plugin_setting_defaults[setting_key] = default
+
         self._plugin_settings[setting_key] = setting
-        self._set_default_config_value(setting_key, default)
 
     def has_setting(self, name: str | Sequence[str]) -> bool:
         """
@@ -325,7 +337,40 @@ class Config:
 
         return key in self._plugin_settings or key in self.settings
 
-    def _set_default_config_value(self, key: str, default: Any) -> None:
+    def is_secret_setting(self, name: str | Sequence[str]) -> bool:
+        """
+        Whether the setting with the given name holds a secret and must not be
+        shown in the configuration output.
+        """
+        setting = self._get_setting(name)
+
+        return setting is not None and setting.secret
+
+    def reset_plugin_settings(self, group: str) -> None:
+        """
+        Drop all settings that were declared by plugins of the given group.
+
+        This is used when plugins are loaded again so that the settings of
+        plugins that are no longer available do not linger on a Config
+        instance that is cached and reused.
+        """
+        for plugin_name in self._plugin_groups.pop(group, set()):
+            prefix = f"{PLUGIN_SETTINGS_SECTION}.{plugin_name}."
+            for setting_key in [
+                key for key in self._plugin_settings if key.startswith(prefix)
+            ]:
+                del self._plugin_settings[setting_key]
+                if setting_key in self._plugin_setting_defaults:
+                    del self._plugin_setting_defaults[setting_key]
+                    self._remove_default_config_value(setting_key)
+
+    def _set_default_config_value(self, key: str, default: Any) -> bool:
+        """
+        Insert the default value for the given setting key if the setting is
+        not configured already.
+
+        Returns whether the default value was inserted.
+        """
         *parents, leaf = split_key(key)
         table: dict[str, Any] = self._config
 
@@ -343,7 +388,28 @@ class Config:
 
             table = value
 
-        table.setdefault(leaf, default)
+        if leaf in table:
+            return False
+
+        # The default value is deep-copied so that a mutable default (e.g. a
+        # list) is not shared between the plugin, this config instance and
+        # other config instances.
+        table[leaf] = deepcopy(default)
+
+        return True
+
+    def _remove_default_config_value(self, key: str) -> None:
+        *parents, leaf = split_key(key)
+        table: dict[str, Any] = self._config
+
+        for parent in parents:
+            value = table.get(parent)
+            if not isinstance(value, dict):
+                return
+
+            table = value
+
+        table.pop(leaf, None)
 
     def merge(self, config: dict[str, Any]) -> None:
         from poetry.utils.helpers import merge_dicts
@@ -476,10 +542,12 @@ class Config:
                     normalizer = self.get_normalizer(keys)
                     # Integer settings have a validator that can reject the value. Report the
                     # environment variable instead of letting int() raise a bare ValueError.
-                    # Other normalizers coerce unknown values and keep doing so.
-                    if normalizer is int_normalizer and not self.get_validator(keys)(
-                        env_value
-                    ):
+                    # Other normalizers coerce unknown values and keep doing so. Settings
+                    # declared by plugins always enforce their own validator.
+                    if (
+                        normalizer is int_normalizer
+                        or ".".join(keys) in self._plugin_settings
+                    ) and not self.get_validator(keys)(env_value):
                         raise PoetryError(
                             f"Invalid value for environment variable {env}: {env_value!r}"
                         )

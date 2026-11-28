@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from cleo.io.null_io import NullIO
+from packaging.utils import canonicalize_name
 from poetry.core.pyproject.exceptions import PyProjectError
 
 from poetry.config.config import int_normalizer
@@ -21,6 +21,8 @@ from poetry.factory import Factory
 from poetry.plugins.plugin import Plugin
 from poetry.repositories.legacy_repository import LegacyRepository
 from tests.conftest import Config
+from tests.helpers import PoetryTestApplication
+from tests.helpers import mock_metadata_entry_points
 
 
 if TYPE_CHECKING:
@@ -29,6 +31,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from poetry.config.dict_config_source import DictConfigSource
+    from poetry.plugins.plugin_config import PluginConfig
     from poetry.poetry import Poetry
     from tests.types import CommandTesterFactory
     from tests.types import FixtureDirGetter
@@ -939,17 +942,21 @@ class PluginSettingsPlugin(Plugin):
     A plugin that declares its own settings as proposed for the plugin API.
     """
 
-    def activate(self, poetry: Poetry, io: IO) -> None:
-        config = poetry.config.register_plugin(self, name="demo-plugin")
+    def declare_settings(self, config: PluginConfig) -> None:
         config.define_setting("mirror-url", "https://pypi.org/simple")
         config.define_setting(
             "retries", 3, validator=int_validator, normalizer=int_normalizer
         )
+        config.define_setting("token", "", secret=True)
+
+    def activate(self, poetry: Poetry, io: IO) -> None:
+        self.config = poetry.config.register_plugin(self, name="demo-plugin")
 
 
 @pytest.fixture()
-def plugin_settings(poetry: Poetry) -> None:
-    PluginSettingsPlugin().activate(poetry, NullIO())
+def plugin_settings(config: Config) -> None:
+    plugin = PluginSettingsPlugin()
+    plugin.declare_settings(config.register_plugin(plugin, name="demo-plugin"))
 
 
 def test_set_plugin_setting(
@@ -998,3 +1005,71 @@ def test_list_includes_plugin_settings(
 
     assert 'plugins.demo-plugin.mirror-url = "https://pypi.org/simple"' in output
     assert "plugins.demo-plugin.retries = 3" in output
+    assert "plugins.demo-plugin.token" not in output
+
+
+def test_cannot_get_secret_plugin_setting(
+    tester: CommandTester, plugin_settings: None
+) -> None:
+    with pytest.raises(ValueError) as e:
+        tester.execute("plugins.demo-plugin.token")
+
+    assert str(e.value) == "Expected a value for plugins.demo-plugin.token setting."
+
+
+def test_set_secret_plugin_setting(
+    tester: CommandTester, config: Config, plugin_settings: None
+) -> None:
+    tester.execute("plugins.demo-plugin.token s3cret")
+
+    assert config.config_source.get_property("plugins.demo-plugin.token") == "s3cret"
+
+
+def test_set_plugin_setting_without_project(
+    tester: CommandTester,
+    config: Config,
+    app: PoetryTestApplication,
+    mocker: MockerFixture,
+) -> None:
+    app._poetry = None
+    mocker.patch(
+        "poetry.factory.Factory.create_poetry",
+        side_effect=PyProjectError("[tool.poetry] section not found"),
+    )
+    mock_metadata_entry_points(mocker, PluginSettingsPlugin)
+
+    # settings of a plugin that is loaded by the plugin manager are scoped to
+    # the name of the package the plugin is defined in
+    plugin_name = canonicalize_name(
+        PluginSettingsPlugin.__module__.split(".", maxsplit=1)[0]
+    )
+    setting_key = f"plugins.{plugin_name}.retries"
+
+    tester.execute(f"{setting_key} 5")
+
+    assert config.config_source.get_property(setting_key) == 5
+
+    tester.execute(setting_key)
+
+    assert tester.io.fetch_output() == "5\n"
+
+
+def test_list_plugin_settings_without_project(
+    tester: CommandTester,
+    app: PoetryTestApplication,
+    mocker: MockerFixture,
+) -> None:
+    app._poetry = None
+    mocker.patch(
+        "poetry.factory.Factory.create_poetry",
+        side_effect=PyProjectError("[tool.poetry] section not found"),
+    )
+    mock_metadata_entry_points(mocker, PluginSettingsPlugin)
+
+    tester.execute("--list")
+
+    output = tester.io.fetch_output()
+
+    assert 'plugins.tests.mirror-url = "https://pypi.org/simple"' in output
+    assert "plugins.tests.retries = 3" in output
+    assert "plugins.tests.token" not in output

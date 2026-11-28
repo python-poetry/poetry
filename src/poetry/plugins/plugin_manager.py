@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING
 from poetry.core.packages.project_package import ProjectPackage
 
 from poetry.__version__ import __version__
+from poetry.config.config import Config
 from poetry.installation import Installer
 from poetry.packages import Locker
 from poetry.plugins.application_plugin import ApplicationPlugin
@@ -71,10 +72,16 @@ class PluginManager:
         ProjectPluginCache(poetry, io).ensure_plugins()
 
     def load_plugins(self) -> None:
+        # The settings of this plugin group are rebuilt from scratch so that
+        # the settings of plugins that are no longer available do not linger
+        # on a Config instance that is cached and reused.
+        config = Config.create()
+        config.reset_plugin_settings(self._group)
+
         plugin_entrypoints = self.get_plugin_entry_points()
 
         for ep in plugin_entrypoints:
-            self._load_plugin_entry_point(ep)
+            self._load_plugin_entry_point(ep, config)
 
     def get_plugin_entry_points(self) -> list[metadata.EntryPoint]:
         return list(metadata.entry_points(group=self._group))
@@ -91,7 +98,7 @@ class PluginManager:
 
         self._plugins.append(plugin)
 
-    def _load_plugin_entry_point(self, ep: metadata.EntryPoint) -> None:
+    def _load_plugin_entry_point(self, ep: metadata.EntryPoint, config: Config) -> None:
         logger.debug("Loading the %s plugin", ep.name)
 
         plugin = ep.load()
@@ -101,7 +108,13 @@ class PluginManager:
                 "The Poetry plugin must be an instance of Plugin or ApplicationPlugin"
             )
 
-        self._add_plugin(plugin())
+        instance = plugin()
+        self._add_plugin(instance)
+
+        # The settings of the plugin are declared as soon as it is loaded so
+        # that they are known even if the plugin is not activated, e.g. when
+        # Poetry is run outside of a project.
+        instance.declare_settings(config.register_plugin(instance))
 
 
 class ProjectPluginCache:
