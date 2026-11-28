@@ -130,6 +130,56 @@ foo-command = "poetry_demo_plugin.plugin:MyApplicationPlugin"
 A plugin **must not** remove or modify in any way the core commands of Poetry.
 {{% /warning %}}
 
+### Plugin settings
+
+Plugins can declare their own settings, which are scoped to `plugins.<plugin name>.<setting key>`
+so that they do not clash with Poetry's core settings.
+
+A setting is declared with a default value and, optionally, with a validator and a normalizer
+that are used when the setting is configured, e.g. with `poetry config` or an environment variable.
+
+```python
+from cleo.io.io import IO
+
+from poetry.config.config import int_normalizer
+from poetry.config.config import int_validator
+from poetry.plugins.plugin import Plugin
+from poetry.poetry import Poetry
+
+
+class MyPlugin(Plugin):
+
+    def activate(self, poetry: Poetry, io: IO):
+        config = poetry.config.register_plugin(self)
+        config.define_setting("mirror-url", "https://pypi.org/simple")
+        config.define_setting(
+            "retries", 3, validator=int_validator, normalizer=int_normalizer
+        )
+
+        url = config.get("mirror-url")
+        retries = config.get("retries")
+```
+
+By default, the name of the package the plugin is defined in is used to scope its settings.
+A different name can be passed to `register_plugin()`:
+
+```python
+config = poetry.config.register_plugin(self, name="my-plugin")
+```
+
+Once a setting is declared, it can be configured like any other Poetry setting:
+
+```shell
+poetry config plugins.my-plugin.mirror-url https://mirror.example.com/simple
+```
+
+or with an environment variable, e.g. `POETRY_PLUGINS_MY_PLUGIN_MIRROR_URL`.
+
+{{% note %}}
+Settings are only known while the plugin that declares them is installed and active.
+A default value is only used if the setting is not configured already,
+e.g. in the user's `config.toml` or the project's `poetry.toml`.
+{{% /note %}}
 
 ### Event handler
 

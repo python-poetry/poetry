@@ -9,17 +9,22 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from cleo.io.null_io import NullIO
 from poetry.core.pyproject.exceptions import PyProjectError
 
+from poetry.config.config import int_normalizer
+from poetry.config.config import int_validator
 from poetry.config.config_source import ConfigSource
 from poetry.config.config_source import PropertyNotFoundError
 from poetry.console.commands.install import InstallCommand
 from poetry.factory import Factory
+from poetry.plugins.plugin import Plugin
 from poetry.repositories.legacy_repository import LegacyRepository
 from tests.conftest import Config
 
 
 if TYPE_CHECKING:
+    from cleo.io.io import IO
     from cleo.testers.command_tester import CommandTester
     from pytest_mock import MockerFixture
 
@@ -927,3 +932,69 @@ def test_command_config_build_config_settings_get(
         tester.io.fetch_output().strip()
         == "No build config settings configured for bar."
     )
+
+
+class PluginSettingsPlugin(Plugin):
+    """
+    A plugin that declares its own settings as proposed for the plugin API.
+    """
+
+    def activate(self, poetry: Poetry, io: IO) -> None:
+        config = poetry.config.register_plugin(self, name="demo-plugin")
+        config.define_setting("mirror-url", "https://pypi.org/simple")
+        config.define_setting(
+            "retries", 3, validator=int_validator, normalizer=int_normalizer
+        )
+
+
+@pytest.fixture()
+def plugin_settings(poetry: Poetry) -> None:
+    PluginSettingsPlugin().activate(poetry, NullIO())
+
+
+def test_set_plugin_setting(
+    tester: CommandTester, config: Config, plugin_settings: None
+) -> None:
+    tester.execute("plugins.demo-plugin.retries 5")
+
+    assert config.config_source.get_property("plugins.demo-plugin.retries") == 5
+
+    tester.execute("plugins.demo-plugin.retries")
+
+    assert tester.io.fetch_output() == "5\n"
+
+
+def test_cannot_set_invalid_plugin_setting_value(
+    tester: CommandTester, plugin_settings: None
+) -> None:
+    with pytest.raises(RuntimeError) as e:
+        tester.execute("plugins.demo-plugin.retries not-a-number")
+
+    assert str(e.value) == (
+        '"not-a-number" is an invalid value for plugins.demo-plugin.retries'
+    )
+
+
+def test_unset_plugin_setting(
+    tester: CommandTester, config: Config, plugin_settings: None
+) -> None:
+    tester.execute("plugins.demo-plugin.retries 5")
+    tester.execute("plugins.demo-plugin.retries --unset")
+
+    with pytest.raises(PropertyNotFoundError):
+        config.config_source.get_property("plugins.demo-plugin.retries")
+
+    tester.execute("plugins.demo-plugin.retries")
+
+    assert tester.io.fetch_output() == "3\n"
+
+
+def test_list_includes_plugin_settings(
+    tester: CommandTester, plugin_settings: None
+) -> None:
+    tester.execute("--list")
+
+    output = tester.io.fetch_output()
+
+    assert 'plugins.demo-plugin.mirror-url = "https://pypi.org/simple"' in output
+    assert "plugins.demo-plugin.retries = 3" in output

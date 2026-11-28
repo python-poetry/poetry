@@ -152,7 +152,7 @@ To remove a repository (repo is a short alias for repositories):
 
                 self.line(str(value))
             else:
-                if setting_key not in Config.settings:
+                if not config.has_setting(setting_key):
                     raise ValueError(f"There is no {setting_key} setting.")
 
                 value = config.get(setting_key)
@@ -166,12 +166,13 @@ To remove a repository (repo is a short alias for repositories):
 
         values: list[str] = self.argument("value")
 
-        if setting_key in Config.settings:
+        if config.has_setting(setting_key):
             if self.option("unset"):
                 config.config_source.remove_property(setting_key)
                 return 0
 
             return self._handle_single_value(
+                config,
                 config.config_source,
                 setting_key,
                 values,
@@ -298,8 +299,8 @@ To remove a repository (repo is a short alias for repositories):
                 settings = {}
 
             for value in values:
-                if Config.get_validator(key)(value):
-                    config_settings = Config.get_normalizer(key)(value)
+                if config.get_validator(key)(value):
+                    config_settings = config.get_normalizer(key)(value)
                     for setting_name, item in config_settings.items():
                         settings[setting_name] = item
                 else:
@@ -316,12 +317,13 @@ To remove a repository (repo is a short alias for repositories):
 
     def _handle_single_value(
         self,
+        config: Config,
         source: ConfigSource,
         key: str,
         values: list[Any],
     ) -> int:
-        validator = Config.get_validator(key)
-        normalizer = Config.get_normalizer(key)
+        validator = config.get_validator(key)
+        normalizer = config.get_normalizer(key)
 
         if len(values) > 1:
             raise RuntimeError("You can only pass one value.")
