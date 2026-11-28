@@ -32,6 +32,8 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from poetry.config.config_source import ConfigSource
+    from poetry.plugins.base_plugin import BasePlugin
+    from poetry.plugins.plugin_config import PluginConfig
 
 
 def boolean_validator(val: str) -> bool:
@@ -159,6 +161,7 @@ def path_normalizer(val: str) -> str:
 class ConfigSetting:
     validator: Callable[[str], bool]
     normalizer: Callable[[str], Any]
+    secret: bool = False
 
 
 _BOOLEAN_SETTING = ConfigSetting(boolean_validator, boolean_normalizer)
@@ -180,6 +183,9 @@ _BUILD_CONFIG_SETTINGS_SETTING = ConfigSetting(
 logger = logging.getLogger(__name__)
 
 _default_config: Config | None = None
+
+# Section of the configuration in which plugins declare their own settings.
+PLUGIN_SETTINGS_SECTION = "plugins"
 
 
 class Config:
@@ -256,6 +262,11 @@ class Config:
         self._use_environment = use_environment
         self._config_source: ConfigSource = DictConfigSource()
         self._auth_config_source: ConfigSource = DictConfigSource()
+        self._plugin_settings: dict[str, ConfigSetting] = {}
+        # plugin group -> names of the plugins that declared settings
+        self._plugin_groups: dict[str, set[str]] = {}
+        # setting key -> default value that was inserted into the configuration
+        self._plugin_setting_defaults: dict[str, Any] = {}
 
     @property
     def config(self) -> dict[str, Any]:
@@ -278,6 +289,127 @@ class Config:
         self._auth_config_source = config_source
 
         return self
+
+    def register_plugin(
+        self, plugin: BasePlugin, name: str | None = None
+    ) -> PluginConfig:
+        """
+        Register a plugin that declares its own settings and return a
+        configuration view that is scoped to the settings of this plugin.
+
+        If no name is given, the name of the package the plugin is defined in
+        is used to scope the plugin's settings.
+        """
+        from poetry.plugins.plugin_config import PluginConfig
+
+        if name is None:
+            name = type(plugin).__module__.split(".", maxsplit=1)[0]
+
+        plugin_name = canonicalize_name(name)
+        self._plugin_groups.setdefault(plugin.group, set()).add(plugin_name)
+
+        return PluginConfig(self, plugin_name)
+
+    def add_plugin_setting(
+        self, name: str, key: str, default: Any, setting: ConfigSetting
+    ) -> None:
+        """
+        Declare a setting for the plugin with the given name.
+
+        The setting is scoped to "plugins.<name>.<key>" and the given default
+        value is only used if the setting is not configured already, e.g. in
+        the user's or the project's configuration file.
+        """
+        setting_key = f"{PLUGIN_SETTINGS_SECTION}.{canonicalize_name(name)}.{key}"
+        # The setting is only registered if its default value could be applied
+        # so that a failed registration does not leave the setting behind.
+        if self._set_default_config_value(setting_key, default):
+            self._plugin_setting_defaults[setting_key] = default
+
+        self._plugin_settings[setting_key] = setting
+
+    def has_setting(self, name: str | Sequence[str]) -> bool:
+        """
+        Whether a setting with the given name exists, i.e. it is either a core
+        setting or a setting declared by a plugin.
+        """
+        key = name if isinstance(name, str) else ".".join(name)
+
+        return key in self._plugin_settings or key in self.settings
+
+    def is_secret_setting(self, name: str | Sequence[str]) -> bool:
+        """
+        Whether the setting with the given name holds a secret and must not be
+        shown in the configuration output.
+        """
+        setting = self._get_setting(name)
+
+        return setting is not None and setting.secret
+
+    def reset_plugin_settings(self, group: str) -> None:
+        """
+        Drop all settings that were declared by plugins of the given group.
+
+        This is used when plugins are loaded again so that the settings of
+        plugins that are no longer available do not linger on a Config
+        instance that is cached and reused.
+        """
+        for plugin_name in self._plugin_groups.pop(group, set()):
+            prefix = f"{PLUGIN_SETTINGS_SECTION}.{plugin_name}."
+            for setting_key in [
+                key for key in self._plugin_settings if key.startswith(prefix)
+            ]:
+                del self._plugin_settings[setting_key]
+                if setting_key in self._plugin_setting_defaults:
+                    del self._plugin_setting_defaults[setting_key]
+                    self._remove_default_config_value(setting_key)
+
+    def _set_default_config_value(self, key: str, default: Any) -> bool:
+        """
+        Insert the default value for the given setting key if the setting is
+        not configured already.
+
+        Returns whether the default value was inserted.
+        """
+        *parents, leaf = split_key(key)
+        table: dict[str, Any] = self._config
+
+        for i, parent in enumerate(parents):
+            value = table.get(parent)
+            if value is None:
+                value = {}
+                table[parent] = value
+            elif not isinstance(value, dict):
+                path = ".".join(parents[: i + 1])
+                raise PoetryError(
+                    f"Unable to register the default value for the {key} setting"
+                    f" because {path} is configured as a non-table value."
+                )
+
+            table = value
+
+        if leaf in table:
+            return False
+
+        # The default value is deep-copied so that a mutable default (e.g. a
+        # list) is not shared between the plugin, this config instance and
+        # other config instances.
+        table[leaf] = deepcopy(default)
+
+        return True
+
+    def _remove_default_config_value(self, key: str) -> None:
+        *parents, leaf = split_key(key)
+        table: dict[str, Any] = self._config
+
+        for parent in parents:
+            value = table.get(parent)
+            if not isinstance(value, dict):
+                return
+
+            table = value
+
+        table.pop(leaf, None)
 
     def merge(self, config: dict[str, Any]) -> None:
         from poetry.utils.helpers import merge_dicts
@@ -410,10 +542,12 @@ class Config:
                     normalizer = self.get_normalizer(keys)
                     # Integer settings have a validator that can reject the value. Report the
                     # environment variable instead of letting int() raise a bare ValueError.
-                    # Other normalizers coerce unknown values and keep doing so.
-                    if normalizer is int_normalizer and not self.get_validator(keys)(
-                        env_value
-                    ):
+                    # Other normalizers coerce unknown values and keep doing so. Settings
+                    # declared by plugins always enforce their own validator.
+                    if (
+                        normalizer is int_normalizer
+                        or ".".join(keys) in self._plugin_settings
+                    ) and not self.get_validator(keys)(env_value):
                         raise PoetryError(
                             f"Invalid value for environment variable {env}: {env_value!r}"
                         )
@@ -456,22 +590,21 @@ class Config:
 
         return re.sub(r"{(.+?)}", resolve_from_config, value)
 
-    @classmethod
-    def _get_setting(cls, name: str | Sequence[str]) -> ConfigSetting | None:
+    def _get_setting(self, name: str | Sequence[str]) -> ConfigSetting | None:
         if not isinstance(name, str):
             name = ".".join(name)
+        if name in self._plugin_settings:
+            return self._plugin_settings[name]
         if name.startswith("installer.build-config-settings."):
             return _BUILD_CONFIG_SETTINGS_SETTING
-        return cls.settings.get(name)
+        return self.settings.get(name)
 
-    @classmethod
-    def get_normalizer(cls, name: str | Sequence[str]) -> Callable[[str], Any]:
-        setting = cls._get_setting(name)
+    def get_normalizer(self, name: str | Sequence[str]) -> Callable[[str], Any]:
+        setting = self._get_setting(name)
         return setting.normalizer if setting else lambda val: val
 
-    @classmethod
-    def get_validator(cls, name: str | Sequence[str]) -> Callable[[str], bool]:
-        setting = cls._get_setting(name)
+    def get_validator(self, name: str | Sequence[str]) -> Callable[[str], bool]:
+        setting = self._get_setting(name)
         return setting.validator if setting else lambda val: True
 
     @classmethod

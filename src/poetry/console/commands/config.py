@@ -90,6 +90,15 @@ To remove a repository (repo is a short alias for repositories):
         except (RuntimeError, PyProjectError):
             local_config_file = TOMLFile(Path.cwd() / "poetry.toml")
 
+            if not self.io.input.has_parameter_option("--no-plugins"):
+                # Without a project, regular plugins are not activated by the
+                # factory. Load them here so that their settings are known to
+                # this command.
+                from poetry.plugins.plugin import Plugin
+                from poetry.plugins.plugin_manager import PluginManager
+
+                PluginManager(Plugin.group).load_plugins()
+
         if self.option("local"):
             config.set_config_source(FileConfigSource(local_config_file))
 
@@ -98,7 +107,7 @@ To remove a repository (repo is a short alias for repositories):
             config_file.path.touch(mode=0o0600)
 
         if self.option("list"):
-            self._list_configuration(config.all(), config.raw())
+            self._list_configuration(config, config.all(), config.raw())
 
             return 0
 
@@ -113,7 +122,10 @@ To remove a repository (repo is a short alias for repositories):
 
         # show the value if no value is provided
         if not self.argument("value") and not self.option("unset"):
-            if setting_key.split(".")[0] in self.LIST_PROHIBITED_SETTINGS:
+            section = setting_key.split(".")[0]
+            if section in self.LIST_PROHIBITED_SETTINGS or config.is_secret_setting(
+                setting_key
+            ):
                 raise ValueError(f"Expected a value for {setting_key} setting.")
 
             value: str | dict[str, Any] | list[str]
@@ -123,7 +135,7 @@ To remove a repository (repo is a short alias for repositories):
             ):
                 if not m.group(1):
                     if value := config.get("installer.build-config-settings"):
-                        self._list_configuration(value, value)
+                        self._list_configuration(config, value, value)
                     else:
                         self.line("No packages configured with build config settings.")
                 else:
@@ -152,7 +164,7 @@ To remove a repository (repo is a short alias for repositories):
 
                 self.line(str(value))
             else:
-                if setting_key not in Config.settings:
+                if not config.has_setting(setting_key):
                     raise ValueError(f"There is no {setting_key} setting.")
 
                 value = config.get(setting_key)
@@ -166,12 +178,13 @@ To remove a repository (repo is a short alias for repositories):
 
         values: list[str] = self.argument("value")
 
-        if setting_key in Config.settings:
+        if config.has_setting(setting_key):
             if self.option("unset"):
                 config.config_source.remove_property(setting_key)
                 return 0
 
             return self._handle_single_value(
+                config,
                 config.config_source,
                 setting_key,
                 values,
@@ -298,8 +311,8 @@ To remove a repository (repo is a short alias for repositories):
                 settings = {}
 
             for value in values:
-                if Config.get_validator(key)(value):
-                    config_settings = Config.get_normalizer(key)(value)
+                if config.get_validator(key)(value):
+                    config_settings = config.get_normalizer(key)(value)
                     for setting_name, item in config_settings.items():
                         settings[setting_name] = item
                 else:
@@ -316,12 +329,13 @@ To remove a repository (repo is a short alias for repositories):
 
     def _handle_single_value(
         self,
+        config: Config,
         source: ConfigSource,
         key: str,
         values: list[Any],
     ) -> int:
-        validator = Config.get_validator(key)
-        normalizer = Config.get_normalizer(key)
+        validator = config.get_validator(key)
+        normalizer = config.get_normalizer(key)
 
         if len(values) > 1:
             raise RuntimeError("You can only pass one value.")
@@ -335,11 +349,17 @@ To remove a repository (repo is a short alias for repositories):
         return 0
 
     def _list_configuration(
-        self, config: dict[str, Any], raw: dict[str, Any], k: str = ""
+        self,
+        config: Config,
+        values: dict[str, Any],
+        raw: dict[str, Any],
+        k: str = "",
     ) -> None:
         orig_k = k
-        for key, value in sorted(config.items()):
-            if k + key in self.LIST_PROHIBITED_SETTINGS:
+        for key, value in sorted(values.items()):
+            if k + key in self.LIST_PROHIBITED_SETTINGS or config.is_secret_setting(
+                k + key
+            ):
                 continue
 
             raw_val = raw.get(key)
@@ -347,7 +367,7 @@ To remove a repository (repo is a short alias for repositories):
             if isinstance(value, dict):
                 k += f"{key}."
                 raw_val = cast("dict[str, Any]", raw_val)
-                self._list_configuration(value, raw_val, k=k)
+                self._list_configuration(config, value, raw_val, k=k)
                 k = orig_k
 
                 continue

@@ -34,7 +34,7 @@ def get_options_based_on_normalizer(normalizer: Normalizer) -> Iterator[str]:
     flattened_config = flatten_dict(obj=Config.default_config, delimiter=".")
 
     for k in flattened_config:
-        if Config.get_normalizer(k) == normalizer:
+        if Config().get_normalizer(k) == normalizer:
             yield k
 
 
