@@ -230,6 +230,13 @@ class Installer:
                 if not self._whitelist:
                     for pkg in locked_repository.packages:
                         self._whitelist.append(pkg.name)
+                else:
+                    # Always re-solve directory dependencies, otherwise we can't
+                    # determine if anything has changed (and the lock file contains
+                    # an invalid version).
+                    for pkg in locked_repository.packages:
+                        if pkg.source_type == "directory":
+                            self._whitelist.append(pkg.name)
 
             # Checking extras
             for extra in self._extras:
