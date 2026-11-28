@@ -171,20 +171,17 @@ class MyPlugin(Plugin):
         retries = config.get("retries")
 ```
 
-By default, the name of the package the plugin is defined in is used to scope its settings.
-A different name can be passed to `register_plugin()`:
-
-```python
-config = poetry.config.register_plugin(self, name="my-plugin")
-```
+The settings of a plugin are scoped to the canonicalized name of the package
+the plugin is defined in, i.e. the scope in which they are declared
+with `declare_settings()`.
 
 Once a setting is declared, it can be configured like any other Poetry setting:
 
 ```shell
-poetry config plugins.my-plugin.mirror-url https://mirror.example.com/simple
+poetry config plugins.poetry-demo-plugin.mirror-url https://mirror.example.com/simple
 ```
 
-or with an environment variable, e.g. `POETRY_PLUGINS_MY_PLUGIN_MIRROR_URL`.
+or with an environment variable, e.g. `POETRY_PLUGINS_POETRY_DEMO_PLUGIN_MIRROR_URL`.
 A value that is rejected by the validator of the setting is not accepted.
 
 {{% note %}}
